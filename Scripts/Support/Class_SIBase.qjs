@@ -1,0 +1,87 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Neo-Mind                                                *
+*   Created Date : 2020-10-30                                              *
+*   Last Modified: 2020-11-01                                              *
+*                                                                          *
+\**************************************************************************/
+
+
+///
+/// \brief Convenience class for representing a SIB byte
+///
+if (typeof(SIBase) === 'undefined') //avoid redefinition
+{
+	SIBase = class
+	{
+		///
+		/// \brief Constructor
+		///
+		constructor(data)
+		{
+			let parts = ParseData(data, true);
+			if (parts.length === 4)
+			{
+				this.Scale = parts[0];
+				this.Index = parts[1];
+				this.Base  = parts[2];
+				
+				this.Data  = parts[3];
+			}
+			else
+			{
+				this.Data = -1;
+			}
+		}
+			
+		///
+		/// \brief 'Static' method to create a 'SIBase' object from its components
+		///
+		static FromParts(scale, index, base)
+		{
+			/// 1.1 - Check for hex strings in Index
+			if (IsStr(index)) //WildCard + Direct Hex
+				return new this(index);
+			
+			/// 1.2 - Check for hex strings in Base
+			if (IsStr(base)) //WildCard + Direct Hex
+				return new this(base);
+			
+			/// 2.1 - If all the arguments are provided then create Instance with them
+			if (arguments.length === 3)
+				return new this([scale, index, base]);
+				
+			/// 2.2 - Return an empty one otherwise
+			return new this(0);
+		}
+
+		///
+		/// \brief toString override
+		///
+		toString()
+		{
+			return "Data = " + this.Data + " {Scale = " + this.Scale + ", Index = " + this.Index + ", Base = " + this.Base + "}";
+		}		
+	}
+	IdentifyClass(SIBase);
+}

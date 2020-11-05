@@ -1,0 +1,798 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Neo-Mind                                                *
+*   Created Date : 2020-10-30                                              *
+*   Last Modified: 2020-11-01                                              *
+*                                                                          *
+\**************************************************************************/
+
+  //==================//
+ // Helper functions //
+//==================//
+
+///
+/// \brief Equates other variable names in the array
+///        to the value of the first one
+///
+const _equate_ = (name, idx, set) => {
+	if (idx > 0)
+	{
+		eval(set[idx] + " = " + set[0]);
+		Identify(set[idx]);
+	}
+};
+
+///
+/// \brief Creates functions for all provided instructions using the name (first arg) & index
+///
+const _define_with = function(name)
+{
+	for (let idx = 1; idx < arguments.length; idx++)
+	{
+		let set = Wrap(arguments[idx]);
+		eval(
+			set[0] + " = function() { return " + name + "(" + 
+			(idx-1) + ", arguments) }"
+		);
+		Identify(set[0]);
+		
+		if (set.length > 1)
+			set.forEach(_equate_);
+	}
+};
+	
+  //==================//
+ // Stack Operations //
+//==================//
+
+function PUSH(arg)
+{
+	if (arg === undefined)
+		return " 68";
+	else
+		return _stack_op(0x50, 0xFF, [0x6A, 0x68], 6, arguments);
+}
+Identify("PUSH");
+
+function POP()
+{
+	return _stack_op(0x58, 0x8F, [], 0, arguments);
+}
+Identify("POP");
+
+///
+/// \brief Creates hex for Stack operations
+///
+_stack_op = (ocReg, ocPtr, ocImm, oper, args) =>
+{
+	let data = new OpData(args);
+	
+	let opCode;
+	switch (data.OpType)
+	{
+		case OpTypes.A:
+		case OpTypes.R:
+			if (data.TgtReg.isPlaceHolder())
+				opCode = " 5?";
+			else
+				opCode = data.TgtReg.Index + ocReg;
+			
+			break;
+		
+		case OpTypes.P:
+			opCode = ocPtr;
+			break;
+		
+		case OpTypes.I:
+			if (ocImm.length === 2)
+			{
+				opCode = (data.ImSize === 8) ? ocImm[0] : ocImm[1];
+				break;
+			}
+			
+		default:
+			return "";
+	}
+	
+	return Instr.FromParts(data, opCode, oper).toString();
+};
+
+  //==================//
+ // Control Transfer //
+//==================//
+	
+function CALL(arg)
+{
+	if (arg === undefined)
+		return " E8";
+	else
+		return _transfer_(0xE8, 2, arguments, true);
+}
+Identify("CALL");
+
+function JMP(arg)
+{
+	if (arg === undefined)
+		return " E9";
+	else
+		return _transfer_([0xEB, 0xE9], 4, arguments, false);
+}
+Identify("JMP");
+
+///
+/// \brief Creates hex for Control Transfer operations (i.e. CALL and JMP)
+///
+_transfer_ = (ocImm, oper, args, noImm8) =>
+{
+	let data = new OpData(args, noImm8);
+
+	let opCode;
+	switch (data.OpType)
+	{
+		case OpTypes.A:
+		case OpTypes.R:
+		case OpTypes.P:
+			opCode = 0xFF;
+			break;
+		
+		case OpTypes.I:
+			if (Array.isArray(ocImm))
+			{
+				if (IsNum(args[0]) && IsNum(args[1]))
+				{
+					data.Immd -= 2;
+					data.calcImmSize(noImm8);
+			
+					if (data.Immd > 0x7F)
+					{
+						data.Immd -= 3;
+						opCode = ocImm[1];
+					}
+					else
+					{
+						opCode = ocImm[0];
+					}
+				}
+				else
+				{
+					opCode = (data.ImSize === 8) ? ocImm[0] : ocImm[1];
+				}
+			}
+			else
+			{
+				if (IsNum(args[0]) && IsNum(args[1]))
+					data.Immd -= 5;
+			
+				opCode = ocImm;
+			}
+			break;			
+		
+		default:
+			return "";
+	}
+
+	return Instr.FromParts(data, opCode, oper).toString();
+};
+
+///
+/// \brief Creates Hex for returning control
+///
+RETN = (arg) =>
+{
+	let type = typeof(arg);
+	if (type === 'number')
+		return " C2" + arg.toHex(2);
+	else if (type === 'string')
+		return " C2 " + arg;
+	else
+		return " C3";
+};
+Identify("RETN");
+
+///
+/// \brief Creates Hex for Entering into a nest level
+///
+ENTER = (size, nestLevel) =>
+{
+	if (size === undefined)
+		return " C8";
+	
+	if (IsNum(size))
+		size = size.toHex(2);
+
+	if (IsNum(nestLevel))
+		nestLevel = nestLevel.toHex(1);
+
+	return " C8" + size + nestLevel;
+};
+Identify("ENTER");
+
+  //======================//
+ // Conditional Transfer //
+//======================//
+
+_define_with("_cond_jump",
+	["JO"],
+	["JNO"],
+	["JB", "JC", "JNAE"],
+	["JNB", "JNC", "JAE"],
+	["JE", "JZ"],
+	["JNE", "JNZ"],
+	["JBE", "JNA"],
+	["JNBE", "JA"],
+	["JS"],
+	["JNS"],
+	["JP", "JPE"],
+	["JNP", "JPO"],
+	["JL", "JNGE"],
+	["JNL", "JGE"],
+	["JLE", "JNG"],
+	["JNLE", "JG"]
+);
+
+///
+/// \brief Creates hex for Conditional Jumps
+///
+_cond_jump = (addon, args) =>
+{
+	let data = new OpData(args);
+	if (data.OpType === OpTypes.I)
+	{
+		if (IsNum(args[0]) && IsNum(args[1]))
+		{
+			data.Immd -= 2;
+			data.calcImmSize();
+			
+			if (data.Immd > 0x7F)			
+				data.Immd -= 3;
+		}
+		
+		let opCode = data.ImSize === 8 ? (0x70 + addon) : [0x0F, 0x80 + addon];
+		return Instr.FromParts(data, opCode).toString();
+	}
+	else	
+	{
+		return "";
+	}
+};
+
+  //================//
+ // Simple Loading //
+//================//
+
+///
+///	\brief Creates Hex for Load Effective Address
+///
+function LEA(arg)
+{
+	if (arg === undefined)
+		return " 8D";
+	
+	let data = new OpData(arguments);
+
+	switch (data.OpType)
+	{
+		case OpTypes.R_P:
+		case OpTypes.A_D:
+			if (data.OpSize >= 16) //only 16/32 bit operation allowed
+				return Instr.FromParts(data, 0x8D).toString();
+	}
+	
+	return "";
+}
+Identify("LEA");
+
+///
+/// \brief Creates Hex for Simple Move
+///
+function MOV()
+{
+	let data = new OpData(arguments, true);
+
+	let opCode;
+	switch (data.OpType)
+	{
+		case OpTypes.R_R:
+		case OpTypes.R_P:
+			opCode = 0x8B;
+			break;
+		
+		case OpTypes.D_A:
+			opCode = 0xA3;
+			break;
+		
+		case OpTypes.P_R:
+			opCode = 0x89;
+			break;
+		
+		case OpTypes.A_D:
+			opCode = 0xA1;
+			break;
+		
+		case OpTypes.A:
+		case OpTypes.R:
+			if (data.TgtReg.isPlaceHolder())
+				opCode = (data.OpSize === 8 ? " [10110...]" : " [10111...]");
+			else
+				opCode = data.TgtReg.Index + (data.OpSize === 8 ? 0xB1 : 0xB8);//B1 instead of B0 because we are decrementing below
+		
+			break;
+	
+		case OpTypes.P:
+			opCode = 0xC7;
+			break;
+		
+		default:
+			return "";
+	}
+	if (data.OpSize === 8 && IsNum(opCode))
+		opCode--;
+
+	return Instr.FromParts(data, opCode, 0).toString();
+}
+Identify("MOV");
+
+  //================//
+ // Extended Moves //
+//================//
+
+function MOVSX()
+{
+	return _ext_move([0x0F, 0xBF], arguments);
+}
+Identify("MOVSX");
+
+function MOVZX()
+{
+	return _ext_move([0x0F, 0xB7], arguments);
+}
+Identify("MOVZX");
+
+///
+/// \brief Creates Hex for Sign & Zero Extended moves
+/// 
+_ext_move = (opCode, args) =>
+{
+	let data = new OpData(args, false);
+
+	switch (data.OpType)
+	{
+		case OpTypes.R_R:
+			if (data.TgtReg.Width > data.SrcReg.Width)
+			{
+				if (data.SrcReg.Width === 8)
+					opCode[1]--;
+				break;
+			}
+			else
+				return "";
+	
+		case OpTypes.R_P:
+		case OpTypes.A_D:
+			if (data.TgtReg.Width === 16 || data.PtSize === 8)
+				opCode[1]--;
+			
+			break;
+	
+		default:
+			return "";
+	}
+
+	return Instr.FromParts(data, opCode).toString();
+}
+
+  //===================//
+ // Conditional Moves //
+//===================//
+
+_define_with("_cond_move",
+	["CMOVO"],
+	["CMOVNO"],
+	["CMOVB", "CMOVC", "CMOVNAE"],
+	["CMOVNB", "CMOVNC", "CMOVAE"],
+	["CMOVE", "CMOVZ"],
+	["CMOVNE", "CMOVNZ"],
+	["CMOVBE", "CMOVNA"],
+	["CMOVNBE", "CMOVA"],
+	["CMOVS"],
+	["CMOVNS"],
+	["CMOVP", "CMOVPE"],
+	["CMOVNP", "CMOVPO"],
+	["CMOVL", "CMOVNGE"],
+	["CMOVNL", "CMOVGE"],
+	["CMOVLE", "CMOVNG"],
+	["CMOVNLE", "CMOVG"],
+);
+
+///
+/// \brief Creates hex for Conditional MOVes (i.e. CMOVxx)
+///
+_cond_move = (addon, args) =>
+{
+	let data = new OpData(args);
+
+	switch (data.OpType)
+	{
+		case OpTypes.R_R:
+		case OpTypes.R_P:
+		case OpTypes.A_D:
+			if (data.OpSize >= 16)
+				return Instr.FromParts(data, [0x0F, 0x40 + addon]).toString();
+	}
+	
+	return "";
+};
+
+  //=====================//
+ // Conditional Setters //
+//=====================//
+
+_define_with("_cond_set",
+	["SETO"],
+	["SETNO"],
+	["SETB", "SETC", "SETNAE"],
+	["SETNB", "SETNC", "SETAE"],
+	["SETE", "SETZ"],
+	["SETNE", "SETNZ"],
+	["SETBE", "SETNA"],
+	["SETNBE", "SETA"],
+	["SETS"],
+	["SETNS"],
+	["SETP", "SETPE"],
+	["SETNP", "SETPO"],
+	["SETL", "SETNGE"],
+	["SETNL", "SETGE"],
+	["SETLE", "SETNG"],
+	["SETNLE", "SETG"],
+);
+
+///
+/// \brief Creates hex for Conditional Setters
+///
+_cond_set = (addon, args) =>
+{
+	let data = new OpData(args);
+	switch (data.OpType)
+	{
+		case OpTypes.A:
+		case OpTypes.R:
+			if (data.OpSize !== 8)
+				break;
+			
+		case OpTypes.P:
+			return Instr.FromParts(data, [0x0F, 0x90 + addon], 0).toString();
+	}
+	
+	return "";
+};
+
+  //=======================//
+ // Increment & Decrement //
+//=======================//
+
+function INC()
+{
+	return _add_sub_1(0x40, 0, arguments);
+}
+Identify("INC");
+
+function DEC()
+{
+	return _add_sub_1(0x48, 1, arguments);
+}
+Identify("DEC");
+
+///
+/// \brief Creates hex for Adding and Subtracting by 1 (i.e. INC and DEC)
+///
+_add_sub_1 = (ocReg, oper, args) =>
+{
+	let data = new OpData(args);
+	
+	let opCode;
+	switch (data.OpType)
+	{
+		case OpTypes.A:
+		case OpTypes.R:
+			if (data.OpSize >= 16)
+			{
+				opCode = data.TgtReg.isPlaceHolder() ?
+					" 4?"
+				:
+					ocReg + data.TgtReg.Index
+				;
+				
+				break;
+			}
+		
+		case OpTypes.P:
+			opCode = data.OpSize === 8 ? 0xFE : 0xFF;
+			break;
+			
+		default:
+			return "";
+	}
+	
+	return Instr.FromParts(data, opCode, oper).toString();
+};
+
+  //===========================//
+ // Multiplication & Division //
+//===========================//
+
+function MUL()
+{
+	return _mul_div(4, arguments);
+}
+Identify("MUL");
+
+function DIV()
+{
+	return _mul_div(6, arguments);
+}
+Identify("DIV");
+
+function IDIV()
+{
+	return _mul_div(7, arguments);
+}
+Identify("IDIV");
+
+///
+/// \brief Creates hex for Multiplication & Division (i.e. MUL, DIV & IDIV)
+///
+_mul_div = (oper, args) =>
+{
+	let data = new OpData(args);
+	
+	let opCode;
+	switch (data.OpType)
+	{
+		case OpTypes.A:
+		case OpTypes.R:
+		case OpTypes.P:
+			if (data.ImSize <= 0)
+			{
+				opCode = data.OpSize === 8 ? 0xF6 : 0xF7;
+				return Instr.FromParts(data, opCode, oper).toString();
+			}
+	}
+	
+	return "";
+};
+
+///
+/// \brief Creates hex for Integer Multiplication
+///
+function IMUL()
+{
+	let data = new OpData(arguments);
+
+	let opCode, oper;
+	switch (data.OpType)
+	{
+		case OpTypes.A:
+		case OpTypes.R:
+		case OpTypes.P:
+			if (data.ImSize < 0)
+			{
+				opCode = data.OpSize === 8 ? 0xF6 : 0xF7;
+				oper = 5;
+				break;
+			}
+			else if (data.OpType === OpTypes.P)
+			{
+				return "";
+			}
+			else
+			{
+				data.Source = data.Target;
+				data.OpType = OpTypes.R_R;
+			}
+		
+		case OpTypes.R_R:
+		case OpTypes.R_P:
+		case OpTypes.A_D:
+			if (data.OpSize === 8)
+			{
+				return "";
+			}
+			else if(data.Immd !== undefined)
+			{
+				if (data.ImSize < 0)
+					data.ImSize = BitWidth(data.Immd, data.OpSize === 16);
+			
+				opCode = (data.ImSize === 8) ? 0x6B : 0x69;
+			}
+			else
+			{
+				opCode = [0x0F, 0xAF];
+			}
+			break;
+	
+		default:
+			return "";
+	}
+	return Instr.FromParts(data, opCode, oper).toString();
+}
+Identify("IMUL");
+
+  //==================//
+ // Bitwise movement //
+//==================//
+
+_define_with("_bit_move",
+	"ROL", "ROR", "RCL", "RCR",
+	"SHL", "SHR", "SAL", "SAR"
+);
+
+///
+/// \brief Creates hex for Bitwise movement (i.e. Shifts and Rotations)
+///
+_bit_move = (oper, args) =>
+{
+	let data = new OpData(args);
+
+	let opCode;
+	switch (data.OpType)
+	{
+		case OpTypes.R_R:
+		case OpTypes.P_R:
+			if (data.SrcReg.equals(CL))
+			{
+				opCode = 0xD3;
+				break;
+			}
+			else
+			{
+				return "";
+			}
+	
+		case OpTypes.A:
+		case OpTypes.R:
+		case OpTypes.P:
+			let imm = data.Immd;
+			if (IsStr(imm))
+				imm = imm.toInt();
+		
+			if (imm === undefined || imm === 1)
+			{
+				data.Immd = undefined;
+				data.ImSize = -1;
+				opCode = 0xD1;
+			}
+			else
+			{
+				opCode = 0xC1;
+			}
+			break;
+		
+		default:
+			return "";
+	}
+
+	if (data.OpSize === 8)
+		opCode--;
+
+	return Instr.FromParts(data, opCode, oper).toString();
+};
+
+  //=======================================//
+ // Other Arithmetic & Logical Operations //
+//=======================================//
+
+_define_with("_arith_logic",
+	"ADD", "OR", "ADC", "SBB",
+	"AND", "SUB", "XOR", "CMP"
+);
+
+///
+/// \brief Creates hex for Arithmetic, Logical & Comparison Operators 
+///
+function _arith_logic(oper, args)
+{
+	let data = new OpData(args);
+	let addon = oper * 8;
+
+	let opCode;
+	switch (data.OpType)
+	{
+		case OpTypes.R_R:
+		case OpTypes.A_D:
+		case OpTypes.R_P:
+			opCode = addon + 3;
+			break;
+			
+		case OpTypes.D_A:
+		case OpTypes.P_R:
+			opCode = addon + 1;
+			break;
+		
+		case OpTypes.A:
+			if (data.ImSize > 8 || data.OpSize === 8)
+			{
+				opCode = addon + 5;//should be 4 for AL but it will decremented below
+				break;
+			}
+		
+		case OpTypes.R:
+		case OpTypes.P:
+			if (data.ImSize > 0) //should be always > 0 since we expect 2 args
+			{
+				opCode = (data.OpSize > 8 && data.ImSize === 8) ? 0x83 : 0x81 ;
+				break;
+			}
+		
+		default:
+			return "";
+	}
+
+	if (data.OpSize === 8)
+		opCode--;
+
+	return Instr.FromParts(data, opCode, oper).toString();
+}
+
+///
+/// \brief Creates hex for Test operation
+///
+function TEST()
+{
+	let data = new OpData(arguments, true);
+	
+	let opCode;
+	switch (data.OpType)
+	{
+		case OpTypes.R_R:
+		case OpTypes.D_A:
+		case OpTypes.P_R:
+			opCode = 0x85;
+			break;
+		
+		case OpTypes.A_D:
+		case OpTypes.R_P:
+			opCode = 0x85;
+			
+			data.SrcReg = data.TgtReg; //Change the target reg to source reg (TEST only allows Pointer to be target not the other way around)
+			data.OpType = (data.OpType === OpTypes.A_D) ? OpTypes.D_A : OpTypes.P_R; //change A_D to D_A and R_P to P_R
+			
+			break;
+		
+		case OpTypes.A:
+			opCode = 0xA9;
+			break;
+			
+		case OpTypes.R:
+		case OpTypes.P:
+			opCode = 0xF7;
+			break;
+			
+		default:
+			return "";
+	}
+	if (data.OpSize === 8)
+		opCode--;
+	
+	return Instr.FromParts(data, opCode, 0).toString();
+}
+Identify("TEST");

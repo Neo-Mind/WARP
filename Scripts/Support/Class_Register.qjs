@@ -1,0 +1,180 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Neo-Mind                                                *
+*   Created Date : 2020-10-30                                              *
+*   Last Modified: 2020-11-05                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Convenience class for representing various CPU registers
+///
+if (typeof(Register) === 'undefined') //avoid redefinition
+{
+	Register = class
+	{
+		///
+		/// \brief Constructor
+		///
+		constructor(name, bitwidth, index)
+		{
+			/// 1.1 - Assign register name
+			this.Name = name;//just for debug purpose
+			
+			/// 1.2 - Assign the index
+			this.Index = (typeof(index) === 'number' && index >= 0 && index <= 7) ? index : -1;
+			
+			/// 1.3 - Assign the bit width of the register
+			this.Width = typeof(bitwidth) === 'number' ? bitwidth : 32; //taking 32 bit by default
+		}
+	
+		///
+		/// \brief Method to compare 'Register' objects
+		///	
+		equals(tgt)
+		{
+			return (
+				(tgt instanceof Register)
+				&& tgt.Index === this.Index
+				&& tgt.Width === this.Width
+			);
+		}
+		
+		///
+		/// \brief Method to check whether the 'Register' is intended to be a placeholder
+		///
+		isPlaceHolder()
+		{
+			return (this.Index === -1);
+		}
+		
+		///
+		/// \brief Method to check whether current 'Register' is one of EAX, AX or AL
+		///
+		isAcc()
+		{
+			return (this.Index === 0);
+		}
+		
+		///
+		/// \brief Method to write out the details of the register
+		///
+		toString()
+		{
+			return (this.Name + " {" + this.Width.toString() + "bit Register, index = " + this.Index.toString() + "}");
+		}
+	}
+	
+	///
+	/// \brief Defining the 32 bit register representations
+	///
+	R32List = [];
+	[
+		'EAX', 'ECX', 'EDX', 'EBX',
+		'ESP', 'EBP', 'ESI', 'EDI',
+	].forEach((name, index) =>
+	{
+		eval(name + ' = new Register("' + name + '", 32, ' + index + ')');
+		R32List.push(eval(name));
+		IdentifyObj(name);
+	});
+	R32 = new Register("R32", 32); //Generic Placeholder
+	
+	///
+	/// \brief Defining the 16 bit register representations
+	///
+	R16List = [];
+	[
+		'AX', 'CX', 'DX', 'BX',
+		'SP', 'BP', 'SI', 'DI',
+	].forEach((name, index) =>
+	{
+		eval(name + ' = new Register("' + name + '", 16, ' + index + ')');
+		R16List.push(eval(name));
+		IdentifyObj(name);
+	});
+	R16 = new Register("R16", 16); //Generic Placeholder
+	
+	///
+	/// \brief Defining the 8 bit register representations
+	///
+	R8List = [];
+	[
+		'AL', 'CL', 'DL', 'BL',
+		'AH', 'CH', 'DH', 'BH', ///since ESP, EBP, ESI & EDI dont have 8bit counterparts these indices 
+								///are used for the higher 8bit parts of the above.
+	].forEach((name, index) =>
+	{
+		eval(name + ' = new Register("' + name + '", 8, ' + index + ')');
+		R8List.push(eval(name));
+		IdentifyObj(name);
+	});
+	R8 = new Register("R8", 8); //Generic Placeholder
+	
+	///
+	/// \brief Defining the FPU Register Stack & SSE Registers
+	///
+	ST_List = [];
+	XMM_List = [];
+	MM_List = [];
+	for (var i = 0; i < 8; i++)
+	{
+		var name = 'ST' + i;
+		eval(name + ' = new Register("' + name + '", 80, ' + i + ')');
+		ST_List.push(eval(name));
+		IdentifyObj(name);
+		
+		name = 'MM' + i;
+		eval(name + ' = new Register("' + name + '", 64, ' + i + ')');
+		MM_List.push(eval(name));
+		IdentifyObj(name);
+		
+		name = 'XMM' + i;
+		eval(name + ' = new Register("' + name + '", 128, ' + i + ')');
+		XMM_List.push(eval(name));
+		IdentifyObj(name);
+	}
+	ST$ = new Register("ST$", 80); //Generic Placeholder
+	MM$ = new Register("MM$", 64); //Generic Placeholder
+	XMM$ = new Register("XMM$", 128); //Generic Placeholder
+	
+	ST = i =>
+		i >= 0 && i <= 7 ? eval("ST" + i) : undefined;
+	
+	///
+	/// \brief Tests whether given var contains a 'Register' object
+	///
+	IsReg = v =>
+		v instanceof Register;
+	
+	  //=================//
+ 	 // Identifications //
+	//=================//
+	
+	IdentifyClass(Register);
+	IdentifyMany(
+		"R8", "R16", "R32", 
+		"ST$", "MM$", "XMM$",
+		"ST", "IsReg"
+	);
+}

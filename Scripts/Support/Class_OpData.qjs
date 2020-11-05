@@ -1,0 +1,375 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Neo-Mind                                                *
+*   Created Date : 2020-10-30                                              *
+*   Last Modified: 2020-11-05                                              *
+*                                                                          *
+\**************************************************************************/
+
+
+///
+/// \brief Operand Types
+///
+if (typeof(OpTypes) === 'undefined') //avoid redefinition
+{
+	OpTypes = {
+		ERR : 0x0,  //Some illegal operation
+		A : 0x1,  //Accumulator, <optional Immediate>
+		R : 0x2,  //Reg, <optional Immediate>
+		P : 0x3,  //Ptr [*], <optional Immediate>
+		I : 0x4,  //<optional Immediate>
+		R_R : 0x22, //Reg, Reg
+		D_A : 0x31, //[Displacement], Accumulator
+		P_R : 0x32, //Ptr [*], Reg
+		A_D : 0x13, //Accumulator, [Displacement]
+		R_P : 0x23, //Reg, Ptr [*]
+	};
+	IdentifyObj("OpTypes");
+}
+
+///
+/// \brief Convenience class for parsing Instruction arguments to determine target, source & sizes
+///
+if (typeof(OpData) === 'undefined')
+{
+	OpData = class
+	{
+		///
+		/// \brief Constructor 
+		/// \param args      => 'arguments' object or an array
+		/// \param immIsOper => indicates ImSize should follow OpSize
+		///
+		constructor(args, immIsOper = false, noOpch = false)
+		{
+			/// 1.1 - Initialize all the values
+			this.Prefix = [];
+			// this.TgtReg
+			// this.SrcReg
+			// this.Immd
+			// this.Disp
+			
+			this.OpSize = -1; //Operand size
+			this.AdSize = -1; //Address size
+			this.DpSize = -1; //Displacement size
+			this.ImSize = -1; //Immediate value size
+			this.PtSize = -1; //Pointer size override
+			this.OpType = OpTypes.ERR;
+			
+			let target, source;
+			
+			/// 1.2 - Ensure the args have a length member (array or arguments)
+			if (typeof(args) === 'undefined' || args.length === undefined)
+				return;
+			
+			/// 1.3 - Extract the values from the args
+			for (let i = 0; i < args.length; i++)
+			{
+				let arg = args[i];
+				if (arg instanceof IPrefix) //extra prefixes added
+				{
+					this.Prefix.push(arg);
+				}
+				else if (arg instanceof PtrSize) //pointer size override
+				{
+					this.OpSize = arg.Value;
+					this.PtSize = arg.Value;
+				}
+				else if (arg !== undefined)
+				{
+					if (target === undefined) //first assign Target
+						target = arg;
+					else if (source === undefined) //next source 
+						source = arg;
+					else if (this.Immd === undefined) //finally immediate value
+						this.Immd = arg;
+				}
+			}
+			
+			// Now time to parse the source & target to calculate the sizes & displacement
+			if (IsReg(source)) //*, Reg <, imm> (optional 3rd immediate)
+			{
+				/// 2.1 - Save the source as 'SrcReg' since its a register
+				this.SrcReg = source;
+				
+				if (IsReg(target))//Reg, Reg <, imm>
+				{
+					/// 2.2 - Save the target as 'TgtReg' since its a register
+					this.TgtReg = target;
+					
+					/// 2.3 - Set the target register bit width as the operand size 
+					this.OpSize = target.Width;
+					
+					/// 2.4 - Set the type to R_R
+					this.OpType = OpTypes.R_R;
+				}
+				else if (Array.isArray(target)) //Mem Ptr, Reg <, imm>
+				{
+					/// 3.1 - Parse the mem ptr to calculate other sizes & related members
+					this.parsePtr(target);
+					
+					/// 3.2 - Set the source register bit width as the operand size
+					this.OpSize = source.Width;
+					
+					/// 3.3 - Set the type to D_A or P_R 
+					///       (depends whether reg is accumulator o& the ptr only has displacement)
+					this.OpType = (source.isAcc() && target.isDispPtr()) ?
+						OpTypes.D_A //[Displacement], EAX/AX/AL <, imm>
+					:
+						OpTypes.P_R //Ptr [*], Reg <, imm>
+					;
+				}
+			}
+			else if (Array.isArray(source)) //*, Mem Ptr <, imm>
+			{
+				/// 4.1 - Calculate the address & displacement sizes from the source pointer array 
+				this.parsePtr(source);
+				
+				if (IsReg(target)) //Reg, Mem Ptr <, imm> . Only reg is acceptable as target
+				{
+					/// 4.2 - Save the target as 'TgtReg' since its a register
+					this.TgtReg = target;
+					
+					/// 4.3 - Set the target register bit width as the operand size 
+					this.OpSize = target.Width;
+					
+					/// 4.4 - Set the type to A_D or R_P 
+					///       (depends whether reg is accumulator & the ptr only has displacement)
+					this.OpType = (target.isAcc() && source.isDispPtr())?
+						OpTypes.A_D //EAX/AX/AL, [Displacement] <, imm>
+					:
+						OpTypes.R_P //Reg, Ptr [*] <, imm>
+					;
+				}
+			}
+			else if (IsReg(target)) //Reg <, imm>
+			{
+				/// 5.1 - Save the target as 'TgtReg' since its a register
+				this.TgtReg = target;
+				
+				/// 5.2 - Set the target register bit width as the operand size 
+				this.OpSize = target.Width;
+				
+				/// 5.3 - Save the source as the immediate value
+				if (source !== undefined)
+					this.Immd = source;
+				
+				/// 5.4 - Set the type to A or R based on whether register is accumulator
+				this.OpType = target.isAcc() ?
+					OpTypes.A //EAX/AX/AL <, imm>
+				:
+					OpTypes.R //Reg <, imm>
+				;
+			}
+			else if (Array.isArray(target)) //Mem Ptr <, imm>
+			{
+				/// 6.1 - Calculate the address & displacement sizes from the target pointer array 
+				this.parsePtr(target);
+			
+				/// 6.2 - Set the operand size to 32 if not already set with a PtrSize object (size cannot be auto determined)
+				if (this.OpSize === -1)
+					this.OpSize = 32;
+				
+				/// 6.3 - Save the source as the immediate value
+				if (source !== undefined)
+					this.Immd = source;
+				
+				/// 6.4 - Set the type to P
+				this.OpType = OpTypes.P; //Ptr [*] <, imm>
+			}
+			else //<imm> only
+			{
+				/// 7.1 - Set the operand size to 32 if not already set with a PtrSize object (size cannot be auto determined)
+				if (this.OpSize === -1)
+					this.OpSize = 32;
+				
+				/// 7.2 - Save the target or (target - source) as the immediate value.
+				///       the delta value is useful for CALL/JMP instructions
+				this.Immd = Distance(target, source);
+				
+				/// 7.3 - Set the type to I
+				this.OpType = OpTypes.I; //<imm>
+			}
+			
+			/// 8.1 - Calculate the immediate value size in bits
+			this.calcImmSize(immIsOper);
+			
+			/// 8.2 - Push the overrides for addr and operand sizes
+			if (this.AdSize === 16)
+				this.Prefix.unshift(AD16);
+			
+			if (noOpch)
+			{
+				this.Prefix = this.Prefix.filter(p => p instanceof IPrefix ? !p.equals(OPCH) : p !== OPCH.Value);
+			}
+			else
+			{
+				if (this.OpSize === 16)
+					this.Prefix.push(OPCH);
+			}
+		}
+		
+		///
+		/// \brief Calculates the Address and Displacement sizes for a memory ptr expression
+		///
+		parsePtr(ptr)
+		{
+			/// 1.1 - Return values for empty array (ideally shouldnt happen)
+			if (ptr.length === 0)
+			{
+				this.AdSize = 32;
+				this.DpSize = -1;
+				return;
+			}
+			
+			/// 1.2 - Retrieve the last value (serves as the displacement usually)
+			let last = ptr.last();
+			if (last.constructor.name === 'Object')
+				last = last.toString();
+			
+			if (IsNumOrStr(last))
+				this.Disp = last;
+			
+			/// 1.3 - Return values for pointer of the form [displacement]
+			if (ptr.isDispPtr())
+			{
+				this.AdSize = 32;
+				this.DpSize = 32;
+				return;
+			}
+			
+			/// 1.4 - Retrieve the first value & check if its a number
+			let first = ptr[0];
+			if (IsNumOrStr(first)) //scale*index + base mode
+			{
+				/// 1.5 - If it is then we are using SIB and the first 2 args are the S & I parts
+				this.Scale = first;
+				this.Index = ptr[1];
+				this.Base = 5; //unless a second reg is provided use the value 5
+				
+				/// 1.6 - Address size is by default 32 bits
+				this.AdSize = 32;
+
+				/// 1.7 - If no extra elements are present then displacement = 0 & Base = EBP
+				if (ptr.length === 2)
+				{
+					this.Disp = 0;
+				}
+				
+				/// 1.8 - If the 3rd element is a register it serves as the base reg
+				else if (IsReg(ptr[2]))
+				{
+					this.Base = ptr[2];
+					if (this.Base.equals(EBP)) //Intentionally EBP then set a displacement
+					{
+						this.Disp = 0;
+						this.DpSize = 8;
+					}
+				}
+				
+				/// 1.9 - If a valid displacement was found earlier & size isnt set yet then use 32
+				if (this.Disp !== undefined && this.DpSize < 0)
+					this.DpSize = 32;
+			}
+			
+			/// 2.1 - If not a number check if its a register 
+			else if(IsReg(first)) //reg + *
+			{
+				/// 2.1 - Save the register as index reg (may or may not be used as a SIB later on)
+				this.Scale = 1;
+				this.Index = first;
+				
+				/// 2.2 - No scaling => the address size is determined by
+				///       size of the register (either 16 or 32)
+				this.AdSize = Math.max(16, ptr[0].Width);//first arg should be a 16/32 bit register
+				
+				/// 2.3 - Check if 2nd arg is also a register & save it as Base if it is
+				if (IsReg(ptr[1]))
+					this.Base = ptr[1];
+				
+				/// 2.4 - If no base then check if index is ESP (then base should also be ESP)
+				else if (this.Index.equals(ESP))
+					this.Base = ESP;
+				
+				/// 2.5 - Calculate the displacement size
+				if (this.Disp !== undefined) //only defined for num or str displacements
+				{
+					let dsize = BitWidth(this.Disp);
+					this.DpSize = (dsize > 8) ? this.AdSize : dsize;
+				}
+				else if(this.Base === undefined) //[Reg]  mode
+				{
+					if (this.Index.equals(EBP) || this.Index.equals(BP)) //[EBP] & [BP] need a displacement of 1 byte with value 0
+					{
+						this.Disp = 0;
+						this.DpSize = 8;
+					}
+				}	
+			}
+		}
+		
+		///
+		/// \brief Calculates the Immediate value size 
+		///
+		calcImmSize(immIsOper = false)
+		{
+			if (this.Immd !== undefined)
+			{
+				if (immIsOper === true)
+				{
+					this.ImSize = this.OpSize;
+				}
+				else
+				{
+					this.ImSize = BitWidth(this.Immd);
+					if (this.ImSize > 8)
+						this.ImSize = this.OpSize;
+				}
+			}
+		}
+		
+		
+		///
+		/// \brief toString override
+		///
+		toString()
+		{
+			let result = "OpType = " + this.OpType + ", Prefix = " + this.Prefix + 
+			       "<br>Sizes = {OpSize = " + this.OpSize + ", AdSize = " + this.AdSize + ", DpSize = " + this.DpSize + ", ImSize = " + this.ImSize + ", PtSize = "  + this.PtSize + 
+				   "}<br>Others = {";
+				   
+			for (key in this)
+			{
+				if (key === 'OpType' || key === 'Prefix' || key.indexOf('Size') >= 0)
+					continue;
+				
+				result += key + " = " + this[key] + ", ";
+			}
+			
+			result += "}<br>";
+			
+			return result;
+		}	
+
+	}
+	IdentifyClass(OpData);
+}

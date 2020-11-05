@@ -1,0 +1,451 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Neo-Mind                                                *
+*   Created Date : 2020-10-29                                              *
+*   Last Modified: 2020-11-01                                              *
+*                                                                          *
+\**************************************************************************/
+
+  //===================//
+ // Console overrides //
+//===================//
+
+console.debug = console.log
+
+///
+/// \brief Dumps the key and value pairs of an object
+/// 
+console.dump = function(obj) 
+{
+	if (obj === undefined)
+		return;
+	
+	this.log(obj.constructor.name + " =");
+	for (key in obj)
+	{
+		this.info(TAB + key + " => " + obj[key]);
+	}
+	this.info('');
+}
+
+///
+/// \brief Shows the physical and virtual counterparts of an address
+/// 
+console.showAddr = function(phy)
+{
+	if (!IsNum(phy))
+		return;
+	
+	if (phy >= 0)
+		phy = "0x" + phy.toString(16);
+	
+	let vir = Exe.Phy2Vir(phy);
+	if (vir >= 0)
+		vir = "0x" + vir.toString(16);
+	
+	this.log("Addr = " + phy + " ( " + vir + " )");
+}
+
+///
+/// \brief Shows the physical and virtual counterparts of multiple addresses
+/// 
+console.showAddrs = function(phyArr)
+{
+	if (!Array.isArray(phyArr))
+		return;
+	
+	this.log("Addrs =")
+	phyArr.forEach( (phy, i) =>
+	{
+		if (!IsNum(phy))
+			return;
+	
+		if (phy >= 0)
+			phy = "0x" + phy.toString(16);
+		
+		let vir = Exe.Phy2Vir(phy);
+		if (vir >= 0)
+			vir = "0x" + vir.toString(16);
+		
+		this.info("[" + i + "] = " + phy + " ( " + vir + " )");
+	});
+	this.info('');
+}
+
+  //============//
+ // Converters //
+//============//
+
+///
+/// \brief Method to convert integer to bit string
+///
+Number.prototype.toBits = function(cnt = 32) 
+{
+	cnt = Math.min(cnt, 32);
+	if (this < 0)
+	{
+		let num = 0xFFFFFFFF + this + 1;
+		return (num.toString(2)).slice(-cnt);
+	}
+	else
+	{
+		return ('0'.repeat(cnt) + this.toString(2)).slice(-cnt);
+	}
+}
+
+///
+/// \brief Method to convert integer to hex string. 
+///
+Number.prototype.toHex = function(cnt = 4, bigEndian = false)
+{
+	/// 1.1 - If only endian ness is specified then count is 4 so rearrange
+	if (IsBool(cnt))
+	{
+		bigEndian = cnt;
+		cnt = 4;
+	}
+	
+	/// 1.2 - Restrict byte count to 4
+	cnt = Math.min(cnt, 4);
+	
+	/// 1.3 - Convert signed to equivalent unsigned version
+	let num = this;
+	if (num < 0)
+		num = 0xFFFFFFFF + num + 1;
+	
+	/// 2.1 - Calculate the length using the cnt
+	let len = cnt * 2;
+	
+	/// 2.2 - Use the toString method to generate the hex string (big endian)
+	let hex = ("00000000" + num.toString(16).toUpperCase()).slice(-len);
+	
+	/// 2.3 - If big endian is needed, return the string
+	if (bigEndian)
+		return hex;
+	
+	/// 2.4 - Otherwise convert it to little endian with spaces prefixed per byte
+	let result = "";
+	for (let index = 0; index < len; index += 2)
+    {
+        result = " " + hex.substr(index, 2) + result;
+    }
+    return result;
+}
+
+///
+/// \brief Method to convert 'this' Float to IEEE format hex string.
+///
+Number.prototype.toIEEE = function(bigEndian = false)
+{
+	/// 1.1 - Prefix the sign bit
+	let bin = (this < 0 ? '1' : '0'); //sign bit
+	
+	/// 1.2 - Get the integer part
+	let num = Math.abs(this);
+	
+	/// 1.3 - Initialize the exponent
+	let exp = 0;
+	
+	/// 2.1 - For numbers < 1 , decrement the exponent
+	if (num < 1)
+		for (; num < 1; num *= 2.0, exp--);
+	
+	/// 2.2 - For numbers > 2 , increment the exponent
+	else if (num > 2)
+		for (; num > 2; num /= 2.0, exp++);
+	
+	/// 2.3 - Suffix the exponent + 127 to the binary (ensure 8 bits)
+	bin += ('0'.repeat(8) + (exp + 127).toString(2)).slice(-8);  //exponent + 0x7F
+	
+	/// 2.4 - Suffix the mantissa (i.e. num) with 1. removed
+	bin += num.toString(2).slice(2);
+	
+	/// 2.5 - Clip anything beyond 32 bits
+	bin = (bin + '0'.repeat(23)).slice(0, 32);
+    
+	/// 2.6 - Convert the binary to hex and return
+	return parseInt(bin, 2).toHex(4, bigEndian);
+}
+
+///
+/// \brief Method to convert 'this' little endian hex string to equivalent integer
+///
+String.prototype.toInt = function(cnt = 4, signed = true)
+{
+	/// 1.1 - If only signed is specified rearrang accordingly
+	if (IsBool(cnt))
+	{
+		signed = cnt;
+		cnt = 4;
+	}
+	
+	/// 1.2 - Restrict the byte count
+	cnt = Math.min(cnt, 4);
+	
+	/// 1.3 - Calculate the max value possible (used for signed conversion)
+    let max = Math.pow(0x100, cnt);
+    
+	/// 2.1 - Convert to Big endian format
+    let beHex = "0x" + this.le2be().slice(-cnt*2);
+    
+	/// 2.2 - Use parseInt to convert to integer
+    let num = (-1 & parseInt(beHex, 16));
+    
+	/// 2.3 - Account for signed integer & return the result
+    if (signed && num > max/2)
+        num -= max;
+    
+    return num;
+}
+
+///
+/// \brief Method to convert 'this' ascii string to equivalent hex string
+///
+String.prototype.toHex = function()
+{
+	/// 1.1 - Initialize the result string
+	let result = "";
+	
+    for (let i = 0; i < this.length; i++)
+    {
+		/// 1.2 - Convert each charcter to equivalent hex
+        let hex = this.charCodeAt(i).toString(16).toUpperCase();
+		
+		/// 1.3 - Prefix '0' for 0-15 to ensure 2 hex chars per byte
+        if (hex.length == 1)
+            hex = '0' + hex; //prefix 0 for byte 0-F
+        
+		/// 1.4 - Prefix space
+        result += ' ' + hex;
+    }
+	
+	/// 2 - Return the result
+    return result;
+}
+
+///
+/// \brief Method to convert 'this' hex string to equivalent ascii string
+///
+String.prototype.toAscii = function()
+{
+	/// 1.1 - Split the hex string into the respective bytes (2chars each)
+	let parts = this.trim().split(/ +/);
+	
+	/// 1.2 - Initialize the result
+    let str = "";
+    
+    for (let i = 0; i < parts.length; i++)
+    {
+		/// 1.3 - Convert each part to its equivalent number
+        let ccode = parseInt(parts[i], 16);
+		
+		/// 1.4 - Convert the number to equivalent ascii character and append
+        str += String.fromCharCode(ccode);
+    }
+	
+	/// 2 - Return the result
+    return str;
+}
+
+///
+/// \brief Method to convert 'this' Little Endian Hex string to Big Endian with no spaces
+///
+String.prototype.le2be = function()
+{
+	/// 1.1 - Split based on space and reverse it and join back
+	let be = this.split(/ +/).reverse().join('');
+	
+	/// 1.2 - Prefix '0' to ensure even no of characters
+	if ((be.length % 2) !== 0)
+        be = '0' + be;
+    
+	/// 2 - Return the result
+    return be;
+}
+
+  //=========//
+ // Testers //
+//=========//
+
+///
+/// \brief Method to check for empty array
+///
+Array.prototype.isEmpty = function() 
+{
+	return this.length === 0;
+}
+
+///
+/// \brief Method to check if the array only has 1 register inside like [ECX]
+///
+Array.prototype.isRegPtr = function()
+{
+	return this.length === 1 && IsReg(this[0]);
+}
+
+///
+/// \brief Method to check if the array only has 1 displacement inside like [90442]
+///
+Array.prototype.isDispPtr = function()
+{
+	return this.length === 1 && (IsNumOrStr(this[0]) || this[0].toString().isHex());
+}
+
+///
+/// \brief Method to check for empty string
+///
+String.prototype.isEmpty = function()
+{
+	return this.length === 0;
+}
+
+///
+/// \brief Method to check whether 'this' string only has hex characters, blank space & wildcard characters
+///
+String.prototype.isHex = function()
+{
+	return this.search(/[^ a-f0-9\?\.\[\]]/i) < 0;
+}
+
+  //========//
+ // Addons //
+//========//
+
+///
+/// \brief Method to remove substring and return the modified string. Original is unaffected
+///
+String.prototype.remove = function(str)
+{
+	return this.replace(str, '');
+}
+
+///
+/// \brief Method to replace substring at specific index and return the modified string. Original is unaffected
+///
+String.prototype.replaceAt = function(index, newstr, len = -1)
+{
+	/// 1.1 - Use the new string's length as default replacement length
+	if (len <= 0)
+        len = newstr.length;
+
+	/// 1.2 - If negative index provided then consider it wrt end of string
+    if (index < 0)
+        index += this.length;
+    
+	/// 2 - Return the replaced string
+    return (this.slice(0, index) + newstr + this.slice(index + len));
+}
+
+///
+/// \brief Method to insert substring at specific index and return the modified string. Original is unaffected
+///
+String.prototype.insertAt = function(index, str)
+{
+	return this.slice(0, index) + str + this.slice(index);
+}
+
+///
+/// \brief Method to append the given hex string and return the modified string. Original is unaffected.
+///        If the data is a number it is converted to hex format first
+///
+String.prototype.appendAsHex = function(data, bc, bigEndian)
+{
+	/// 1 - Get the type of the data provided
+	let type = typeof(data);
+	
+	/// 2.1 - If it is a number append the data converted to hex and return it
+	if (type === 'number')
+		return (this + data.toHex(bc, bigEndian));
+	
+	/// 2.2 - If it is a string append the data and return it
+	if (type === 'string')
+		return (this + data);
+	
+	/// 2.3 - Return the original if neither
+	return this + '';
+}
+
+///
+/// \brief Method to get the last value easily
+///
+Array.prototype.last = function()
+{
+	return this[this.length - 1];
+}
+
+  //=============//
+ // Calculators //
+//=============//
+
+///
+/// \brief Method to calculate the byte count of 'this' hex string
+///
+String.prototype.byteCount = function()
+{
+	/// 1 - Ensure string is a hex string (also supports bitwise parts i.e. [.])
+	if (!this.isHex())
+		return -1;
+	
+	/// 2.1 - Split the string into parts based on bit wrapper '['
+	let parts = this.replace(/ +/g, '').split('[');
+	
+	/// 2.2 - Initialize the nibble length
+	let nibLen = 0;
+	
+	parts.forEach((part) => 
+	{
+		/// 2.3 - Split based on bit wrapper end ']'
+		let subParts = part.split(']');
+		
+		/// 2.4 - If it was there then left of it is binary and right is hex . Otherwise its all hex
+		if (subParts.length > 1)
+			nibLen += subParts[0].length/4 + subParts[1].length;
+		else
+			nibLen += subParts[0].length;
+	});
+		
+	/// 3 - Return the half of the length
+    return Math.round(nibLen/2);
+}
+
+  //=================//
+ // Identifications //
+//=================//
+
+Identify("console", [
+	"debug", "dump", "showAddr", "showAddrs"
+]);
+
+Identify("Array", [], [
+	"isEmpty", "isRegPtr", "isDispPtr", "last"
+]);
+
+Identify("Number", [], [
+	"toBits", "toHex", "toIEEE"
+]);
+
+Identify("String", [], [
+	"appendAsHex", "byteCount", "insertAt", "isEmpty", 
+	"isHex", "le2be", "remove", "replaceAt", "toAscii",
+	"toHex", "toInt"
+]);
