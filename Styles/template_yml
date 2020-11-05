@@ -1,0 +1,85 @@
+radius: 8
+
+font:
+    family: "Electrolize"
+    size: 9
+    sizeBig: 12
+    sizeSmall: 8
+    editFamily: "Tahoma"
+    editSize: 10
+
+paths:
+    browseBtn:
+        inactive: "Images/browse_i.png"
+        active: "Images/browse_a.png"
+
+    clearBtn:
+        inactive: "Images/clear_i.png"
+        active: "Images/clear_a.png"
+    
+    actns:
+        inactive: "Images/actns_i.png"
+        active: "Images/actns_a.png"
+    
+    extns:
+        inactive: "Images/extns_i.png"
+        active: "Images/extns_a.png"
+    
+    sort:
+        on: "Images/ascend.png"
+        off: "Images/descend.png"
+    
+    boldBtn:
+        on: "Images/bold_on.png"
+        off: "Images/bold_off.png"
+    
+    italicBtn:
+        on: "Images/italic_on.png"
+        off: "Images/italic_off.png"
+    
+    rcmdTag:
+        inactive: "Images/rcmd_i.png"
+        selected: "Images/rcmd_s.png"
+    
+    search:
+        indicator: "Images/search.png"
+    
+    sizegrip:
+        indicator: "Images/grip.png"
+    
+    msgHeader:
+        successBox: "Images/success_header.png"
+        queryBox: "Images/query_header.png"
+        warnBox: "Images/warn_header.png"
+        errBox: "Images/error_header.png"
+
+colors:
+    global:
+        background: '#FDFDFF'
+        overlay: [0x10, 0x10, 0x10, 0x80]
+        border: '#CED2E8'
+        dropDown: '#E0E8F2'
+        dropBorder: '#C8CFDF'
+        pageBG: '#F4F8FB'
+        pageBorder: '#C0D5E0'
+        
+        primary: '#3F51AD'
+        secondary: '#673AB7'
+        accent: '#9C27B0'
+        highlight: 'white'
+        acceptor: 'lightseagreen'
+        rejector: 'crimson'
+        
+        d_text: '#3850A8'
+        d_groupText: 'lightseagreen'
+        d_selectedText: 'white'
+        d_background: '#E4EAF0'
+        d_selectedBG: 'lightseagreen'
+        
+        errBox: 'crimson'
+        warnBox: 'coral'
+        successBox: 'deepskyblue'
+        queryBox: 'lightseagreen'
+    
+#    <objectName>:
+#        <property>: <value>
