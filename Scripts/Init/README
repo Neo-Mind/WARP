@@ -1,0 +1,2 @@
+Add all the initialization scripts in this folder.
+All the scripts in this folder will be loaded each time a new Executable is loaded.
