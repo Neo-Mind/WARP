@@ -1,0 +1,84 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Neo-Mind                                                *
+*   Created Date : 2020-11-06                                              *
+*   Last Modified: 2020-11-06                                              *
+*                                                                          *
+\**************************************************************************/
+
+if (typeof(ROCL) === 'undefined')
+{
+	///
+	/// \brief Hash that stores miscellaneous info about the Ragnarok client
+	///
+	ROCL =
+	{	
+		/// Initialize the expected data members
+		IsRenewal    : false, //Indicates whether executable is RE client
+		IsZero       : false, //Indicates whether executable is the new Zero client
+        HasFP        : false, //Indicates whether executable has Frame Pointer
+		
+        GetModHandle : -1,    //The VIRTUAL address of GetModuleHandleA function
+        GetProcAddr  : -1,    //The VIRTUAL address of GetProcAddress function
+        Kernel32     : -1,    //The VIRTUAL address of "KERNEL32.dll" (becomes lower case for recent clients)
+		BaseName     : "",    //BaseName of current loaded executable
+							  
+		// ImpInfo            //Data used by Custom DLL & HShield patches
+		// RsrcTree	          //Data used by Custom Icon patch
+		
+		///
+		/// \brief Extracts the new data from a loaded exe.
+		///
+		init : function()
+		{
+			/// 1.1 - Renewal clients will have rdata.grf so set based on its existence
+			this.IsRenewal = (Exe.FindAscii("rdata.grf", PHYSICAL) > 0);
+			
+			/// 1.2 - Zero clients will have the RenewSetup Zero string
+			this.IsZero = (Exe.FindAscii("Software\\Gravity Soft\\RenewSetup Zero", PHYSICAL, false) > 0);
+			
+			/// 2.1 - Clients with Frame Pointer will have the characteristic PUSH EBP & MOV EBP, ESP as the first statement and 
+			///       to avoid false match we will prefix sequence of INTs
+			this.HasFP = (Exe.FindHex(" CC CC CC CC CC 55 8B EC", Exe.GetSectBegin(CODE), Exe.GetSectBegin(CODE) + 0x500) > 0);
+			
+			/// 2.2 - Get the addresses of the respective imported functions (used commonly in various patches)
+			this.GetModHandle = Exe.FindFunc("GetModuleHandleA", "KERNEL32.dll");
+			this.GetProcAddr  = Exe.FindFunc("GetProcAddress", "KERNEL32.dll");
+	
+			/// 2.3 - Also Get the address of "KERNEL32.dll" 
+			this.Kernel32 = Exe.FindAscii("KERNEL32.dll");
+			if (this.Kernel32 < 0)
+				this.Kernel32 = Exe.FindAscii("kernel32.dll"); // new clients have it in small letters
+			
+			/// 2.4 - Set the base name
+			this.BaseName = Exe.FilePath.split(/[\\/]/).last().remove(/.exe$/);
+			
+			/// 3.1 - Unset ImpInfo member (will be used & loaded only by Custom DLL & HShield patches)
+			this.ImpInfo = undefined;
+			
+			/// 3.2 - Unset RsrcTree member (will be used & loaded only by Custom Icon patch)
+			this.RsrcTree = undefined;
+		},
+	};
+	IdentifyObj("ROCL");
+}

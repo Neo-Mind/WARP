@@ -1,0 +1,415 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Neo-Mind                                                *
+*   Created Date : 2020-11-06                                              *
+*   Last Modified: 2020-11-06                                              *
+*                                                                          *
+\**************************************************************************/
+
+if (typeof(LUAINT) === 'undefined') // avoid redefinition
+{
+	///
+	/// \brief Values denoting how to call the Allocator function
+	///
+	FnMode = {
+		Regular: 0, //Regular DIRECT call
+		Ptr: 1,     //INDIRECT call using a memory ptr
+		ZInit: 2,   //DIRECT call with a zero initialization first
+		Unknown: 3  //Self Explanatory
+	};
+	
+	///
+	/// \brief Asset describing the Lua Interface details
+	///
+	LUAINT = 
+	{
+		/// Initialize the data members
+		PushD2S: '',     //The code for PUSH OFFSET addr; ASCII "d>s"
+		PushD2D: '',     //The code for PUSH OFFSET addr; ASCII "d>d"
+		ReqJN: -1,       //The VIRTUAL address of "ReqJobName"
+		PushRJN: '',     //The code for PUSH OFFSET addr; ASCII "ReqJobName"
+		PushState: '',   //The code for PUSH DWORD PTR DS:[GlobLuaState]
+		StkConst: 0,     //The constant value used in SUB ESP, const 
+		                 //which gets executed before Lua Function name is PUSHed
+					     
+		Allocator: -1,   //The VIRTUAL address of the function which allocates
+		                 //space to store the Lua function name
+		
+		Al_Mode: FnMode.Unknown, //The mode of the allocator function above
+						
+		FnInvoker: -1,   //The VIRTUAL address of the function which invokes 
+		                 //the "Lua function" already PUSHed as argument
+
+		FileLoader: -1,  //The VIRTUAL address of the function which loads
+					     //the Lua file already PUSHed as argument
+					   
+		FL_movECX: '',   //The code for MOV ECX, DWORD PTR DS:[addr] ; where addr evaluates to GlobLuaState
+		                 //Used before CALLs to FileLoader
+		
+		Valid: false,    //Will be true if the address was extracted succesfully
+		Error: '',       //Error Object containing a message about the issue
+		                 //encountered during extraction if any
+		
+		///
+		/// \brief Extracts the new data from a loaded exe.
+		///
+		init: function()
+		{
+			/// 1.1 - Initialize Valid to false
+			this.Valid = false;
+			
+			/// 1.2 - Find the string 'd>s'
+			let addr = Exe.FindAscii("d>s");
+			if (addr < 0)
+			{
+				this.Error = new Error("LUA - 'd>s' not found");
+				return;
+			}
+			
+			/// 1.3 - Save the PUSH 'd>s' instruction
+			this.PushD2S = PUSH(addr);
+			
+			/// 1.4 - Find the string 'd>d'
+			addr = Exe.FindAscii("d>d");
+			if (addr < 0)
+			{
+				this.Error = new Error("LUA - 'd>d' not found");
+				return;
+			}
+			
+			/// 1.5 - Save the PUSH 'd>d' instruction
+			this.PushD2D = PUSH(addr);
+			
+			/// 1.6 - Find the string 'ReqJobName'
+			addr = Exe.FindAscii("ReqJobName");
+			if (addr < 0)
+			{
+				this.Error = new Error("LUA - 'ReqJobName' not found");
+				return;
+			}
+			
+			/// 1.7 - Save the address as well as PUSH 'ReqJobName' instruction
+			this.ReqJN = addr;
+			this.PushRJN = PUSH(addr);
+			
+			/// 2.1 - Find where 'ReqJobName' is used in a 'PUSH'
+			let pushcode = this.PushRJN;
+			addr = Exe.FindHex(pushcode);
+			if (addr < 0)
+			{
+				this.Error = new Error("LUA - 'ReqJobName' not used");
+				return;
+			}
+			
+			/// 2.2 - Find the ESP allocation before the PUSH
+			let code =
+				SUB(ESP, WC)	//SUB ESP, const
+			+	MOV(ECX, ESP)   //MOV ECX, ESP
+			;
+			let movAddr = Exe.FindHex(code, addr - 0x28, addr);
+			if (movAddr < 0)
+			{
+				this.Error = new Error("LUA - ESP allocation not found");
+				return;
+			}
+			
+			/// 2.3 - Save the constant used in SUB ESP
+			this.StkConst = Exe.GetInt8(movAddr + 2);
+			
+			/// 2.4 - Retrieve the instruction after the Push
+			let ins = Instr.FromAddr(addr + pushcode.byteCount());
+			
+			/// 3 - Extract & assign based on the opcode
+			switch (ins.Codes[0])
+			{
+				/// 3.1 - For DIRECT call (seen in VC6). Save the target address as 'Allocator' 
+				///       & set the type to Regular
+				case 0xE8:
+					this.Allocator = Exe.GetTgtAddr(ins.NextAddr - 4);
+					this.Al_Mode = FnMode.Regular;
+					break;
+				
+				/// 3.2 - For INDIRECT call (seen in VC9). Save the pointer address as 'Allocator'
+				///       & set the type to Ptr
+				case 0xFF:
+					if (ins.MRM.RgOp !== 2) //ensuring its a CALL DWORD PTR 
+					{
+						this.Error = new Error("LUA - 0xFF seen after PUSH 'ReqJobName', but not a CALL");
+						return;
+					}
+					
+					this.Allocator = ins.Disp;
+					this.Al_Mode = FnMode.Ptr;
+					break;
+				
+				/// 3.3 - For Zero Init DIRECT call (seen in VC10+). Save the target address as 'Allocator'
+				///       & set the type to ZInit
+				case 0xC6:
+					ins = Instr.FromAddr(ins.NextAddr);
+					if (ins.Codes[0] !== 0xE8) // Ensure the next instruction is a direct CALL
+					{
+						this.Error = new Error("LUA - No direct call found after Zero Init");
+						return;
+					}
+					this.Allocator = Exe.GetTgtAddr(ins.NextAddr - 4);
+					this.Al_Mode = FnMode.ZInit;
+					break;
+				
+				default:
+					this.Error = new Error("LUA - Unexpected instruction after PUSH 'ReqJobName'");
+					return;
+			}
+			
+			/// 3.4 - Get the next instruction's address
+			addr = ins.NextAddr;
+			
+			/// 4.1 - Find the GlobLuaState assignment (different code for different linker)
+			code = 	Exe.BuildDate < 20100817 ? MOV(EAX, [POS3WC]) :
+					Exe.Version < 11.0 ? MOV(R32, [POS3WC]) :
+										 PUSH([POS3WC]) ;
+
+			addr = Exe.FindHex(code, addr, addr + 0x10);
+			if (addr < 0)
+			{
+				this.Error = new Error("LUA - global state assignment missing");
+				return;
+			}
+			
+			/// 4.2 - Extract the GlobLuaState address & save it as a PUSH DWORD PTR
+			ins = Instr.FromAddr(addr);
+			this.PushState = PUSH( [ins.Disp] );
+			
+			/// 4.3 - Get the next address 
+			addr = ins.NextAddr;
+			
+			/// 4.4 - Find the CALL after the assignment (this is lua function invoker)
+			addr = Exe.FindHex( CALL(NEG3WC), addr, addr + 0x10 );
+			if (addr < 0)
+			{
+				this.Error = new Error("LUA - function invoker missing");
+				return;
+			}
+			
+			/// 4.5 - Save the function address.
+			this.FnInvoker = Exe.GetTgtAddr(addr + 1);
+			
+			/// 5.1 - Find the string 'Lua Files\\DataInfo\\jobName'
+			addr = Exe.FindAscii("Lua Files\\DataInfo\\jobName");
+			if (addr < 0)
+			{
+				this.Error = new Error("LUA - jobName string missing");
+				return;
+			}
+			
+			/// 5.2 - Find where it is used in a PUSH. Should be followed by a CALL
+			addr = Exe.FindHex( PUSH(addr) + CALL() );
+			if (addr < 0)
+			{
+				this.Error = new Error("LUA - jobName not used");
+				return;
+			}
+			
+			/// 5.3 - Find the GlobLuaState movement to ECX before the PUSH
+			movAddr = Exe.FindHex( MOV(ECX, [ESI, POS2WC]), addr - 10, addr);
+			if (movAddr < 0)
+				movAddr = Exe.FindHex( MOV(ECX, [POS3WC]), addr - 10, addr);
+			
+			if (movAddr < 0)
+			{
+				this.Error = new Error("LUA - global state movement missing for FileLoader");
+				return;
+			}
+			
+			/// 5.4 - Extract the function address
+			this.FileLoader = Exe.GetTgtAddr(addr + 6);
+			
+			/// 5.5 - Extract the MOV ECX
+			this.FL_movECX = Instr.FromAddr(movAddr).toString();
+			
+			/// 6 - Set Empty message & validity to true.
+			this.Error = '';
+			this.Valid = true;
+		},
+		
+		///
+		/// \brief Creates and returns code for calling a Lua function inside the loaded executable
+		///
+		createCaller: function(name, nameAddr, at, format, reg)
+		{
+			/// 1.1 - Sanity Check (Ensure we have a valid object)
+			if (!this.Valid)
+				return false;
+			
+			/// 1.2 - Select the appropriate PUSH instruction based on the format
+			let PUSH_fmt = format === "d>s" ? this.PushD2S : this.PushD2D;
+			
+			/// 2.1 - Prepare the code step by step
+			
+			// first PUSH funcNameLength for ptr call type allocator 
+			let code = this.Al_Mode === FnMode.Ptr ? PUSH(name.length) : ''; //PUSH len
+			
+			// next the common part of code where the format and args are pushed
+			code +=
+				PUSH_0          		//PUSH 0
+			+	PUSH(ESP)               //PUSH ESP
+			+	PUSH(reg)            	//PUSH reg32_A
+			+	PUSH_fmt                //PUSH argFormat ; ASCII "d>s" or "d>d"
+			+	SUB(ESP, this.StkConst) //SUB ESP, StkConst
+			+   MOV(ECX, ESP)           //MOV ECX, ESP
+			;
+			
+			// next comes the Allocator prep code which varies based on type
+			switch (this.Al_Mode)
+			{
+				case FnMode.Regular:
+					code += 
+						LEA(EAX, [ESP, this.StkConst + 0x10]) //LEA EAX, [ESP + const]; where const = StkConst + 16
+					+	PUSH_EAX							  //PUSH EAX
+					;
+					break;
+				
+				case FnMode.ZInit:
+					code +=
+						MOV([ECX, 0x14], 0xF)    //MOV DWORD PTR DS:[ECX+14], 0F
+					+   MOV([ECX, 0x10], 0x0)    //MOV DWORD PTR DS:[ECX+10], 0
+					+   MOV(BYTE_PTR, [ECX], 0)  //MOV BYTE PTR DS:[ECX], 0
+					+   PUSH(name.length)        //PUSH len
+					;
+					break;
+			}
+			
+			// next the name push
+			code += PUSH(nameAddr);	//PUSH OFFSET nameAddr; ASCII <name>
+
+			// next the CALL to Allocator which varies based on type
+			if (this.Al_Mode === FnMode.Ptr)
+				code += CALL([this.Allocator]); //CALL DWORD PTR DS:[Allocator]
+			else
+				code += CALL(this.Allocator, Exe.Phy2Vir(at + code.byteCount())); //CALL Allocator
+			
+			// next push the global lua state
+			code += this.PushState; //PUSH DWORD PTR DS:[GlobLuaState]
+				
+			// next CALL the FnInvoker
+			code += CALL(this.FnInvoker, Exe.Phy2Vir(at + code.byteCount())); //CALL FnInvoker
+			
+			// finally add the stack restoration steps
+			code +=
+				ADD(ESP, this.StkConst + 0x10) //ADD ESP, const ; same const as used above
+			+	POP(EAX)                       //POP EAX
+			;
+			
+			if (this.Al_Mode === FnMode.Regular)
+				code += ADD(ESP, 4);
+			
+			/// 2.2 - Return the code created
+			return code;
+		},
+		
+		///
+		/// \brief Adds code for loading lua files at specified target address
+		///
+		addLoaders: function(files, refName, tgt = -1)
+		{
+			/// 1.1 - Find the string inside refName
+			let refAddr = Exe.FindText(refName);
+			if (refAddr < 0)
+				return "Reference file missing";
+			
+			/// 1.2 - Find where its used in a PUSH (it should be immediately followed by a CALL)
+			let addr = Exe.FindHex( PUSH(refAddr) + CALL() );
+			if (addr < 0)
+				return "Reference file not used";
+			
+			/// 1.3 - Find the ECX movement right before it.
+			let hookAddr = Exe.FindHex(this.FL_movECX, addr - 10, addr);
+			if (hookAddr < 0)
+				return "ECX assignment missing";
+			
+			/// 1.4 - Save the VIRTUAL location after the CALL
+			let retnVir = Exe.Phy2Vir(addr + 10);
+			
+			/// 2.1 - Prepare the template to use for each file & save its size
+			let template = 
+				Exe.GetHex(hookAddr, addr - hookAddr)
+			+	PUSH(MakeFiller(1))
+			+	CALL(MakeFiller(2))
+			;
+			let tsize = template.byteCount();
+			
+			/// 2.2 - Calculate total code size 
+			let csize = tsize * (files.length + 1) + 7; //5 for the JMP at the end and 2 NULL bytes for seperation
+			
+			/// 2.3 - Prepare the strings to be appended at the end of the code
+			let strings = files.join('\x00').toHex();
+			let ssize = strings.byteCount();
+			
+			/// 2.4 - If no address is specified then allocate space for it
+			if (tgt < 0)
+			{
+				tgt = Exe.FindSpace(csize + ssize);
+				if (tgt < 0)
+					throw NOGAPMSG;
+			}
+			
+			/// 2.5 - Save the target's VIRTUAL address
+			let tgtVir = Exe.Phy2Vir(tgt);
+			 
+			/// 3.1 - Initialize the code variable, set the initial CALL distance 
+			///       and address of first string
+			let code = "";
+			let dist = this.FileLoader - (tgtVir + tsize);
+			let strAddr = tgtVir + csize;
+			
+			files.forEach( file =>
+			{
+				/// 3.2 - Fill the template with the string address & distance and
+				///       append to the code
+				code += SwapFillers(template, [1, 2], [strAddr, dist]);
+				
+				/// 3.3 - Update the strAddr to the next string location
+				strAddr += file.length + 1;
+				
+				/// 3.4 - Update the distance for the next CALL
+				dist -= tsize;
+			});
+			
+			/// 3.5 - Append the final entry (for the reference string).
+			code += SwapFillers(template, [1, 2], [refAddr, dist]);
+			
+			/// 3.6 - Append the JMP at the end along with the 2 NULLs
+			code += JMP(retnVir, tgtVir + csize - 7) + " 00 00"; 
+			
+			/// 4.1 - Add the code & strings to the executable
+			Exe.AddHex(tgt, code + strings, csize + ssize);
+			
+			/// 4.2 - Enforce a JMP from hookAddr to target
+			Exe.SetUint16(hookAddr, 0xE990);
+			Exe.SetTgtAddr(hookAddr + 2, tgtVir);
+			
+			/// 4.3 - Return the target address
+			return tgt;
+		},
+	};
+	IdentifyObj("LUAINT");
+}
