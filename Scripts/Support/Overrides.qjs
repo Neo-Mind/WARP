@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-10-29                                              *
-*   Last Modified: 2020-11-01                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -30,7 +30,7 @@
  // Console overrides //
 //===================//
 
-console.debug = console.log
+console.debug = console.log;
 
 ///
 /// \brief Dumps the key and value pairs of an object
@@ -46,7 +46,7 @@ console.dump = function(obj)
 		this.info(TAB + key + " => " + obj[key]);
 	}
 	this.info('');
-}
+};
 
 ///
 /// \brief Shows the physical and virtual counterparts of an address
@@ -64,7 +64,7 @@ console.showAddr = function(phy)
 		vir = "0x" + vir.toString(16);
 	
 	this.log("Addr = " + phy + " ( " + vir + " )");
-}
+};
 
 ///
 /// \brief Shows the physical and virtual counterparts of multiple addresses
@@ -90,7 +90,7 @@ console.showAddrs = function(phyArr)
 		this.info("[" + i + "] = " + phy + " ( " + vir + " )");
 	});
 	this.info('');
-}
+};
 
   //============//
  // Converters //
@@ -111,7 +111,7 @@ Number.prototype.toBits = function(cnt = 32)
 	{
 		return ('0'.repeat(cnt) + this.toString(2)).slice(-cnt);
 	}
-}
+};
 
 ///
 /// \brief Method to convert integer to hex string. 
@@ -150,7 +150,7 @@ Number.prototype.toHex = function(cnt = 4, bigEndian = false)
         result = " " + hex.substr(index, 2) + result;
     }
     return result;
-}
+};
 
 ///
 /// \brief Method to convert 'this' Float to IEEE format hex string.
@@ -185,7 +185,7 @@ Number.prototype.toIEEE = function(bigEndian = false)
     
 	/// 2.6 - Convert the binary to hex and return
 	return parseInt(bin, 2).toHex(4, bigEndian);
-}
+};
 
 ///
 /// \brief Method to convert 'this' little endian hex string to equivalent integer
@@ -216,7 +216,7 @@ String.prototype.toInt = function(cnt = 4, signed = true)
         num -= max;
     
     return num;
-}
+};
 
 ///
 /// \brief Method to convert 'this' ascii string to equivalent hex string
@@ -241,7 +241,7 @@ String.prototype.toHex = function()
 	
 	/// 2 - Return the result
     return result;
-}
+};
 
 ///
 /// \brief Method to convert 'this' hex string to equivalent ascii string
@@ -265,7 +265,7 @@ String.prototype.toAscii = function()
 	
 	/// 2 - Return the result
     return str;
-}
+};
 
 ///
 /// \brief Method to convert 'this' Little Endian Hex string to Big Endian with no spaces
@@ -281,7 +281,7 @@ String.prototype.le2be = function()
     
 	/// 2 - Return the result
     return be;
-}
+};
 
   //=========//
  // Testers //
@@ -293,7 +293,7 @@ String.prototype.le2be = function()
 Array.prototype.isEmpty = function() 
 {
 	return this.length === 0;
-}
+};
 
 ///
 /// \brief Method to check if the array only has 1 register inside like [ECX]
@@ -301,7 +301,7 @@ Array.prototype.isEmpty = function()
 Array.prototype.isRegPtr = function()
 {
 	return this.length === 1 && IsReg(this[0]);
-}
+};
 
 ///
 /// \brief Method to check if the array only has 1 displacement inside like [90442]
@@ -309,7 +309,7 @@ Array.prototype.isRegPtr = function()
 Array.prototype.isDispPtr = function()
 {
 	return this.length === 1 && (IsNumOrStr(this[0]) || this[0].toString().isHex());
-}
+};
 
 ///
 /// \brief Method to check for empty string
@@ -317,7 +317,7 @@ Array.prototype.isDispPtr = function()
 String.prototype.isEmpty = function()
 {
 	return this.length === 0;
-}
+};
 
 ///
 /// \brief Method to check whether 'this' string only has hex characters, blank space & wildcard characters
@@ -325,7 +325,7 @@ String.prototype.isEmpty = function()
 String.prototype.isHex = function()
 {
 	return this.search(/[^ a-f0-9\?\.\[\]]/i) < 0;
-}
+};
 
   //========//
  // Addons //
@@ -337,7 +337,7 @@ String.prototype.isHex = function()
 String.prototype.remove = function(str)
 {
 	return this.replace(str, '');
-}
+};
 
 ///
 /// \brief Method to replace substring at specific index and return the modified string. Original is unaffected
@@ -354,7 +354,7 @@ String.prototype.replaceAt = function(index, newstr, len = -1)
     
 	/// 2 - Return the replaced string
     return (this.slice(0, index) + newstr + this.slice(index + len));
-}
+};
 
 ///
 /// \brief Method to insert substring at specific index and return the modified string. Original is unaffected
@@ -362,7 +362,7 @@ String.prototype.replaceAt = function(index, newstr, len = -1)
 String.prototype.insertAt = function(index, str)
 {
 	return this.slice(0, index) + str + this.slice(index);
-}
+};
 
 ///
 /// \brief Method to append the given hex string and return the modified string. Original is unaffected.
@@ -383,7 +383,7 @@ String.prototype.appendAsHex = function(data, bc, bigEndian)
 	
 	/// 2.3 - Return the original if neither
 	return this + '';
-}
+};
 
 ///
 /// \brief Method to get the last value easily
@@ -391,7 +391,7 @@ String.prototype.appendAsHex = function(data, bc, bigEndian)
 Array.prototype.last = function()
 {
 	return this[this.length - 1];
-}
+};
 
   //=============//
  // Calculators //
@@ -426,7 +426,7 @@ String.prototype.byteCount = function()
 		
 	/// 3 - Return the half of the length
     return Math.round(nibLen/2);
-}
+};
 
   //=================//
  // Identifications //

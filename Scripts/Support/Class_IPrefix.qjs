@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-10-30                                              *
-*   Last Modified: 2020-11-05                                            *
+*   Last Modified: 2020-11-07                                            *
 *                                                                          *
 \**************************************************************************/
 
@@ -56,7 +56,7 @@ if (typeof(IPrefix) === 'undefined')
 		{
 			return this.Value.toHex(1);
 		}
-	}
+	};
 	
 	///
 	/// \brief Segment Overrides

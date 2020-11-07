@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-10-30                                              *
-*   Last Modified: 2020-11-01                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -97,6 +97,7 @@ if (typeof(ModRM) === 'undefined') //avoid redefinition
 		{
 			return "Data = " + this.Data + " {Mode = " + this.Mode + ", RegOp = " + this.RgOp + ", RegM = " + this.RegM + "}";
 		}
-	}
+	};
+	
 	IdentifyClass(ModRM);
 }

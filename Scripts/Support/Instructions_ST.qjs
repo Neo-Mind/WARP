@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-11-01                                              *
-*   Last Modified: 2020-11-05                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
  
@@ -125,8 +125,7 @@ _st_arith_cmp = (oper, args) =>
 	}
 	
 	return (opCode === undefined) ? "" : Instr.FromParts(data, opCode, oper).toString();
-}
-
+};
 
   //===========================//
  // Float only - Load & Store //
@@ -188,7 +187,7 @@ _st_lod_sto = (oper, args) =>
 	}
 	
 	return (opCode === undefined) ? "" : Instr.FromParts(data, opCode, oper).toString();
-}
+};
 
   //=========================================//
  // Float with Integer operand (as mem ptr) //
@@ -247,7 +246,7 @@ _st_cmd_int = (ocD, ocW, oper, args) =>
 	{
 		return "";
 	}
-}
+};
 
   //================================//
  // Float only - Conditional Moves //
@@ -277,7 +276,7 @@ _st_cond_mov = (opCode, oper, args) =>
 	{
 		return "";
 	}
-}
+};
 
   //=====================================//
  // Float only - Arithmetic + Stack Pop //
@@ -306,7 +305,7 @@ _st_arith_pop = (oper, args) =>
 	}
 	
 	return "";
-}
+};
 
   //==============================================//
  // Remaining Float Operations with ST registers //
@@ -327,7 +326,8 @@ FFREEP = function()
 	{
 		return "";
 	}
-}
+};
+
 Identify("FFREEP");
 
 ///
@@ -347,15 +347,23 @@ FSTSW = function()
 				return " DF E0";
 	}
 	return "";
-}
+};
+
 Identify("FSTSW");
 
 ///
 /// \brief Compare floats, check ordered values & set EFLAGS
 ///
 
-FUCOMI  = function() { return _st_ord_cmp(5, arguments) };
-FUCOMIP = function() { return _st_ord_cmp(6, arguments) };
+FUCOMI = function() 
+{
+	return _st_ord_cmp(5, arguments) 
+};
+
+FUCOMIP = function() 
+{
+	return _st_ord_cmp(6, arguments)
+};
 
 Identify("FUCOMI");
 Identify("FUCOMIP");
@@ -374,4 +382,4 @@ _st_ord_cmp = (oper, args) =>
 	{
 		return "";
 	}
-}
+};

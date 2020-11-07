@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-10-30                                              *
-*   Last Modified: 2020-11-01                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -48,7 +48,7 @@ if (typeof(PtrSize) === 'undefined') //avoid redefinition
 		{
 			return this.Value.toString();
 		}
-	}
+	};
 
 	///
 	/// \brief Pointer Sizes

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-10-30                                              *
-*   Last Modified: 2020-11-05                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -83,7 +83,7 @@ if (typeof(Register) === 'undefined') //avoid redefinition
 		{
 			return (this.Name + " {" + this.Width.toString() + "bit Register, index = " + this.Index.toString() + "}");
 		}
-	}
+	};
 	
 	///
 	/// \brief Defining the 32 bit register representations
