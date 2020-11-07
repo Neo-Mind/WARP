@@ -2,7 +2,7 @@
 *                                                                          *
 *   Copyright (C) 2020 Neo Mind                                            *
 *                                                                          *
-*   This file is a part of WARP project                                    *
+*   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
 *   WARP is free software: you can redistribute it and/or modify           *
 *   it under the terms of the GNU General Public License as published by   *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-11-06                                              *
-*   Last Modified: 2020-11-06                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -367,7 +367,7 @@ if (typeof(LUAINT) === 'undefined') // avoid redefinition
 			/// 2.4 - If no address is specified then allocate space for it
 			if (tgt < 0)
 			{
-				tgt = Exe.FindSpace(csize + ssize);
+				tgt = Exe.FindSpace(csize + ssize, 0x10); //snapping to 0x10 since its going to be like a function
 				if (tgt < 0)
 					throw NOGAPMSG;
 			}
@@ -411,5 +411,6 @@ if (typeof(LUAINT) === 'undefined') // avoid redefinition
 			return tgt;
 		},
 	};
+	
 	IdentifyObj("LUAINT");
 }

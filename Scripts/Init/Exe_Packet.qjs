@@ -2,7 +2,7 @@
 *                                                                          *
 *   Copyright (C) 2020 Neo Mind                                            *
 *                                                                          *
-*   This file is a part of WARP project                                    *
+*   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
 *   WARP is free software: you can redistribute it and/or modify           *
 *   it under the terms of the GNU General Public License as published by   *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-11-06                                              *
-*   Last Modified: 2020-11-06                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -253,5 +253,6 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 			}
 		},
 	};
+	
 	IdentifyObj("PACKET");
 }
