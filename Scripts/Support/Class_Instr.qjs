@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-10-30                                              *
-*   Last Modified: 2020-11-01                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -358,12 +358,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 						rm = data.TgtReg;
 						break;
 					
-					// case OpTypes.I: //<imm>
-						// if (result.BC_Immd > 0)
-						// {
-							// ro = oper;
-						// }
-						// break;
+					//Nothing to do for OpTypes.I
 				}
 					
 				/// 2.2 - Check for ptr arguments on either target or source
@@ -474,6 +469,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 			/// 3.2 - Return the string
 			return result;
 		}
-	}
+	};
+	
 	IdentifyClass(Instr);
 }

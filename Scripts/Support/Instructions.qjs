@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-10-30                                              *
-*   Last Modified: 2020-11-01                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -65,19 +65,20 @@ const _define_with = function(name)
  // Stack Operations //
 //==================//
 
-function PUSH(arg)
+PUSH = function(arg)
 {
 	if (arg === undefined)
 		return " 68";
 	else
 		return _stack_op(0x50, 0xFF, [0x6A, 0x68], 6, arguments);
-}
-Identify("PUSH");
+};
 
-function POP()
+POP = function()
 {
 	return _stack_op(0x58, 0x8F, [], 0, arguments);
-}
+};
+
+Identify("PUSH");
 Identify("POP");
 
 ///
@@ -121,22 +122,23 @@ _stack_op = (ocReg, ocPtr, ocImm, oper, args) =>
  // Control Transfer //
 //==================//
 	
-function CALL(arg)
+CALL = function(arg)
 {
 	if (arg === undefined)
 		return " E8";
 	else
 		return _transfer_(0xE8, 2, arguments, true);
-}
-Identify("CALL");
+};
 
-function JMP(arg)
+JMP = function(arg)
 {
 	if (arg === undefined)
 		return " E9";
 	else
 		return _transfer_([0xEB, 0xE9], 4, arguments, false);
-}
+};
+
+Identify("CALL");
 Identify("JMP");
 
 ///
@@ -207,6 +209,7 @@ RETN = (arg) =>
 	else
 		return " C3";
 };
+
 Identify("RETN");
 
 ///
@@ -225,6 +228,7 @@ ENTER = (size, nestLevel) =>
 
 	return " C8" + size + nestLevel;
 };
+
 Identify("ENTER");
 
   //======================//
@@ -283,7 +287,7 @@ _cond_jump = (addon, args) =>
 ///
 ///	\brief Creates Hex for Load Effective Address
 ///
-function LEA(arg)
+LEA = function(arg)
 {
 	if (arg === undefined)
 		return " 8D";
@@ -299,13 +303,14 @@ function LEA(arg)
 	}
 	
 	return "";
-}
+};
+
 Identify("LEA");
 
 ///
 /// \brief Creates Hex for Simple Move
 ///
-function MOV()
+MOV = function()
 {
 	let data = new OpData(arguments, true);
 
@@ -349,23 +354,25 @@ function MOV()
 		opCode--;
 
 	return Instr.FromParts(data, opCode, 0).toString();
-}
+};
+
 Identify("MOV");
 
   //================//
  // Extended Moves //
 //================//
 
-function MOVSX()
+MOVSX = function()
 {
 	return _ext_move([0x0F, 0xBF], arguments);
-}
-Identify("MOVSX");
+};
 
-function MOVZX()
+MOVZX = function()
 {
 	return _ext_move([0x0F, 0xB7], arguments);
-}
+};
+
+Identify("MOVSX");
 Identify("MOVZX");
 
 ///
@@ -399,7 +406,7 @@ _ext_move = (opCode, args) =>
 	}
 
 	return Instr.FromParts(data, opCode).toString();
-}
+};
 
   //===================//
  // Conditional Moves //
@@ -490,16 +497,17 @@ _cond_set = (addon, args) =>
  // Increment & Decrement //
 //=======================//
 
-function INC()
+INC = function()
 {
 	return _add_sub_1(0x40, 0, arguments);
-}
-Identify("INC");
+};
 
-function DEC()
+DEC = function()
 {
 	return _add_sub_1(0x48, 1, arguments);
-}
+};
+
+Identify("INC");
 Identify("DEC");
 
 ///
@@ -540,22 +548,23 @@ _add_sub_1 = (ocReg, oper, args) =>
  // Multiplication & Division //
 //===========================//
 
-function MUL()
+MUL = function()
 {
 	return _mul_div(4, arguments);
-}
-Identify("MUL");
+};
 
-function DIV()
+DIV = function()
 {
 	return _mul_div(6, arguments);
-}
-Identify("DIV");
+};
 
-function IDIV()
+IDIV = function()
 {
 	return _mul_div(7, arguments);
-}
+};
+
+Identify("MUL");
+Identify("DIV");
 Identify("IDIV");
 
 ///
@@ -584,7 +593,7 @@ _mul_div = (oper, args) =>
 ///
 /// \brief Creates hex for Integer Multiplication
 ///
-function IMUL()
+IMUL = function()
 {
 	let data = new OpData(arguments);
 
@@ -634,7 +643,8 @@ function IMUL()
 			return "";
 	}
 	return Instr.FromParts(data, opCode, oper).toString();
-}
+};
+
 Identify("IMUL");
 
   //==================//
@@ -709,7 +719,7 @@ _define_with("_arith_logic",
 ///
 /// \brief Creates hex for Arithmetic, Logical & Comparison Operators 
 ///
-function _arith_logic(oper, args)
+_arith_logic = (oper, args) =>
 {
 	let data = new OpData(args);
 	let addon = oper * 8;
@@ -751,12 +761,12 @@ function _arith_logic(oper, args)
 		opCode--;
 
 	return Instr.FromParts(data, opCode, oper).toString();
-}
+};
 
 ///
 /// \brief Creates hex for Test operation
 ///
-function TEST()
+TEST = function()
 {
 	let data = new OpData(arguments, true);
 	
@@ -794,5 +804,6 @@ function TEST()
 		opCode--;
 	
 	return Instr.FromParts(data, opCode, 0).toString();
-}
+};
+
 Identify("TEST");

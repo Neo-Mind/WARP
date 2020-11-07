@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-10-29                                              *
-*   Last Modified: 2020-11-01                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -74,7 +74,7 @@ MakeFiller = (idx, bc = 4) =>
 ///
 /// \brief Swaps out the filler hex string with the actual data
 ///
-function SwapFiller(str, idx, data, cnt = 1, bc = 4)
+SwapFiller = function(str, idx, data, cnt = 1, bc = 4)
 {
 	/// 1.1 - Limit the byte count
 	bc = Math.min(bc, 4);
@@ -99,12 +99,12 @@ function SwapFiller(str, idx, data, cnt = 1, bc = 4)
 	
 	/// 2.4 - Return the updated string
 	return str;
-}
+};
 
 ///
 /// \brief Same as SwapFiller but with multiple substitutions at once.
 ///
-function SwapFillers(str, idxArr, dataArr, sc = 1, bc = 4)
+SwapFillers = function(str, idxArr, dataArr, sc = 1, bc = 4)
 {
 	/// 1.1 - Limit the byte count
 	bc = Math.min(bc, 4);
@@ -133,8 +133,7 @@ function SwapFillers(str, idxArr, dataArr, sc = 1, bc = 4)
 	
 	/// 2.4 - Return the updated string
     return str;
-}
-
+};
 
   //============//
  // Converters //
@@ -154,7 +153,7 @@ Wrap = v =>
 ///
 /// \brief Calculate the bit width of the argument which can be a number, string or register object
 ///
-function BitWidth(v)
+BitWidth = function(v)
 {
 	/// 1.1 - If the value provided is a register then simply return its width
 	if (IsReg(v))
@@ -183,7 +182,7 @@ function BitWidth(v)
 			return (8 * bc);
 	}
 	return -1;
-}
+};
 
 ///
 /// \brief Calculates the Distance between the given target and source (if not numbers then then target itself is returned)
@@ -199,7 +198,7 @@ Distance = (tgt, src) =>
 ///
 /// \brief Extract the switch jump address for the specified case
 ///
-function CaseAddr(num, movzxAddr, retnType, jmpDpAddr)
+CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 {
 	/// 1.1 - Extract the MOVZX instruction
 	let movzxIns = movzxAddr > 0 ? Instr.fromAddr(movzxAddr) : '';
@@ -236,10 +235,9 @@ function CaseAddr(num, movzxAddr, retnType, jmpDpAddr)
 	
 	/// 2.3 - Return the physical address if VIRTUAL is not explicity requested
 	return (retnType === VIRTUAL ? caseAddr : Exe.Vir2Phy(caseAddr));
-}
+};
 
 // GetImpTable implementation not added . Planning to make it in IExe class instead
-
 
   //===========//
  // Utilities //
@@ -251,7 +249,7 @@ function CaseAddr(num, movzxAddr, retnType, jmpDpAddr)
 /// \brief Parses the data provided into 4 part array (first 3 being either M,R,M or S,I,B)
 ///        Data could be number, string or array of 3 values
 ///
-function ParseData(data, scaled)
+ParseData = function(data, scaled)
 {
 	/// 1 - Initialize the parts
 	let parts = [];
@@ -388,7 +386,7 @@ function ParseData(data, scaled)
 	}
 	
 	return parts;
-}
+};
 
 ///
 /// \brief Simple wrapper
@@ -416,20 +414,20 @@ IdentifyObj = objName =>
 {
 	if (eval("typeof(" + objName + ")") !== undefined)
 		Identify(objName, Object.getOwnPropertyNames(eval(objName)) );
-}
+};
 	
 
 ///
 /// \brief Adds all provided objects to SyntaxAssistant
 ///        for identification in the Script Editor
 ///
-function IdentifyMany()
+IdentifyMany = function()
 {
 	for (let i = 0; i < arguments.length; i++)
 	{
 		IdentifyObj(arguments[i]);
 	}
-}
+};
 
   //=================//
  // Identifications //

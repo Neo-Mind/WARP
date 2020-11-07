@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-11-01                                              *
-*   Last Modified: 2020-11-05                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -299,9 +299,8 @@ _define_mux_with("OPCH",
 ///
 /// \brief Create Hex for regular SSE instructions
 ///
-function _xmm_cmd(ocRP, ocPR, ocRR, args, pre)
+_xmm_cmd = (ocRP, ocPR, ocRR, args, pre) =>
 {
-	console.info(pre);
 	let data = new OpData(args);
 	
 	let opCode;
@@ -342,12 +341,12 @@ function _xmm_cmd(ocRP, ocPR, ocRR, args, pre)
 	{
 		return "";
 	}
-}
+};
 
 ///
 /// \brief Create the hex for all the SSE instructions with OpSize check & Override
 ///
-function _xmm_cmd_OO(ocS, args)
+_xmm_cmd_OO = (ocS, args) =>
 {
 	let data = new OpData(args);
 	switch (data.OpType)
@@ -362,13 +361,13 @@ function _xmm_cmd_OO(ocS, args)
 	}
 	
 	return "";
-}
+};
 
 ///
 /// \brief Creates the hex for SSE instructions with multiple operations
 ///        using supplied immediate value
 /// 
-function _xmm_cmd_Mux(index, args, pre)
+_xmm_cmd_Mux = (index, args, pre) =>
 {
 	let data = new OpData(args);
 	
@@ -389,7 +388,7 @@ function _xmm_cmd_Mux(index, args, pre)
 	}
 			
 	return "";
-}
+};
 
   //========//
  // Movers //
@@ -398,7 +397,7 @@ function _xmm_cmd_Mux(index, args, pre)
 ///
 /// \brief Moving DWORD to float registers and back
 ///
-function MOVD()
+MOVD = function()
 {
 	let data = new OpData(arguments);
 	let opCode;
@@ -426,12 +425,12 @@ function MOVD()
 		data.Prefix.push(OPCH);
 	
 	return Instr.FromParts(data, opCode).toString();
-}
+};
 
 ///
 /// \brief Moving QWORD to float registers and back
 ///
-function MOVQ()
+MOVQ = function()
 {
 	let data = new OpData(arguments);
 	
@@ -470,4 +469,4 @@ function MOVQ()
 	}
 	
 	return Instr.FromParts(data, opCode).toString();
-}
+};

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-10-29                                              *
-*   Last Modified: 2020-11-01                                              *
+*   Last Modified: 2020-11-07                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -78,17 +78,18 @@ if (typeof(WC) === 'undefined') //avoid redefinition
 		///
 		/// \brief - Some common instructions
 		///
-		['PUSH_0'  , " 6A 00"],
-		['PUSH_1'  , " 6A 01"],
-		['PUSH_2'  , " 6A 02"],
-		['PUSH_R'  , " [01010...]"], //5? but with 4th bit 0
-		['PUSH_EAX', " 50"],
-		['POP_R'   , " [01011...]"], //5? but with 4th bit 1
-		['PUSHAD'  , " 60"],
-		['POPAD'   , " 61"],
-		['NOP'     , " 90"],
-		['CWDE'    , " 98"],
-		['LEAVE'   , " C9"],
+		['PUSH_0'     , " 6A 00"],
+		['PUSH_1'     , " 6A 01"],
+		['PUSH_2'     , " 6A 02"],
+		['PUSH_R'     , " [01010...]"], //5? but with 4th bit 0
+		['PUSH_EAX'   , " 50"],
+		['POP_R'      , " [01011...]"], //5? but with 4th bit 1
+		['PUSHAD'     , " 60"],
+		['POPAD'      , " 61"],
+		['NOP'        , " 90"],
+		['CWDE'       , " 98"],
+		['LEAVE'      , " C9"],
+		['MOV_ECX_ESI', " 8B CE"], 
 	].forEach( 
 		function(set)
 		{
