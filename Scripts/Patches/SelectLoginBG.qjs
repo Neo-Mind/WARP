@@ -1,0 +1,63 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Shinryo                                                 *
+*   Created Date : 2020-11-08                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change one of the Login Background format strings (str1) to the other (str2) //
+///
+SelectLoginBG = function(patchName)
+{
+    /// 1 - Prepare Strings to Find and Replace
+	let prefix = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\T";
+	let src, tgt;
+	if (patchName === "OnlyFirstBG")
+	{
+		src = "2_\xB9\xE8\xB0\xE6" + "%d-%d.bmp";
+		tgt = "_\xB9\xE8\xB0\xE6" + "%d-%d.bmp\x00";
+	}
+	else
+	{
+		src = "_\xB9\xE8\xB0\xE6" + "%d-%d.bmp\x00";
+		tgt = "2_\xB9\xE8\xB0\xE6" + "%d-%d.bmp";
+	}
+	
+    /// 2 - Find the src string
+    let addr = Exe.FindAscii(prefix + src, PHYSICAL, false);
+    if (addr < 0)
+        throw Error("Source string not found");
+
+    /// 3 - Modify the string after the dir prefix (16 bytes later) with the tgt string
+    Exe.SetAscii(addr + prefix.byteCount(), tgt);
+	
+    return true;
+};
+
+///
+/// \brief Wrappers for individual patches
+///
+OnlyFirstBG  = SelectLoginBG;
+OnlySecondBG = SelectLoginBG;

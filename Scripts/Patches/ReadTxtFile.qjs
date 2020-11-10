@@ -1,0 +1,115 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Shinryo                                                 *
+*   Created Date : 2020-11-10                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the conditional jump to JMP after Langtype comparison
+///        in InitMsgStrings function
+///
+MsgStrings = function()
+{
+    /// 1.1 - Check if Langtype is loaded
+    if (!LANGTYPE.Valid)
+        throw LANGTYPE.Error;
+    
+    /// 1.2 - Find the comparison which is at the start of the function
+	let code, addr, jnzPos;
+    if (Exe.Version >= 9.0)
+    {
+        code =
+            CMP([LANGTYPE], 0) //CMP DWORD PTR DS:[g_serviceType], 0
+        +   PUSH(ESI)          //PUSH ESI
+        +   JNZ(WCp)           //JNZ SHORT addr -> continue with msgStringTable.txt loading
+        ;
+		addr = Exe.FindHex(code);
+		jnzPos = 8;
+		
+		if (addr < 0)
+		{
+			code =
+				CMP([LANGTYPE], 0)    //CMP DWORD PTR DS:[g_serviceType], 0
+			+   JNZ(WCp)              //JNZ SHORT addr -> continue with msgStringTable.txt loading
+			+   PUSH(ESI)             //PUSH ESI
+			;
+			addr = Exe.FindHex(code);
+			jnzPos = 7;
+		}
+    }
+    else
+    {
+        code =
+            MOV(EAX, [LANGTYPE])  //MOV EAX, DWORD PTR DS:[g_serviceType]
+        +   PUSH(ESI)             //PUSH ESI
+        +   TEST(EAX, EAX)        //TEST EAX, EAX
+        +   JNZ(WCp)              //JNZ SHORT addr -> continue with msgStringTable.txt loading
+        ;
+		addr = Exe.FindHex(code);
+		jnzPos = 8;
+    }
+
+    if (addr < 0)
+        throw Error("Langtype comparison not found");
+
+    /// 2 - Change the conditional jump
+    Exe.SetJMP(addr + jnzPos);
+	
+    return true;
+};
+
+
+///
+/// \brief NOP out the conditional jump after Langtype Comparison 
+///        in ITEM_INFO::InitItemInfoTables function
+///
+QuestDisplay = function()
+{
+    /// 1 - Find where 'questID2display.txt' is used in a PUSH
+    let code = PUSH(QD_Addr); //PUSH OFFSET addr ; ASCII "questID2display.txt"
+	let addr = Exe.Version < 9.0 ?
+        Exe.FindHex(PUSH_0 + LEA(R32, [R32, WC]) + code) //LEA reg32, [LOCAL.x] in between PUSH 0 & PUSH addr
+    :
+        Exe.FindHex(PUSH_0 + code)
+	;
+	
+    if (addr < 0)
+        throw Error("'questID2display.txt' not PUSHed");
+    
+    /// 3 - NOP out the JNE just before PUSH 0
+	let csize = (Exe.GetInt8(addr - 1) === 0 ? 6 : 2); //0 for long JNE since the jump address will always be after the PUSHes
+    Exe.SetNOPs(addr - csize, csize);
+
+    return true;
+};
+
+///
+/// \brief Disable for clients without the text string
+///
+QuestDisplay.validate = function()
+{
+	QD_Addr = Exe.FindAscii("questID2display.txt");
+	return (QD_Addr > 0);
+};

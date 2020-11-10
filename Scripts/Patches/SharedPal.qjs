@@ -1,0 +1,97 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Authors      : Ai4rei/AN, Neo-Mind                                     *
+*   Created Date : 2020-11-08                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+
+/// \brief Change the format string used, to skip some arguments 
+///
+/// The format string is used in CSession::GetBodyPaletteName (for Body) or CSession::GetHeadPaletteName (for Head)
+///
+
+SharedPal = function(oldPrefix, newFormat)
+{
+	/// 1.1 - Find the original format string
+    let addr = -1;
+	if (Exe.Version <= 9.0)
+        addr = Exe.FindAscii(oldPrefix + "%s%s_%d.pal"); //Old style used for VC6 and some initial VC9 clients
+        
+    if (addr < 0)
+        addr = Exe.FindAscii(oldPrefix + "%s_%s_%d.pal"); //New style
+        
+    if (addr < 0)
+        throw Error("Format string not found");
+
+	/// 1.2 - Find where it is used in a PUSH
+	addr = Exe.FindHex( PUSH(addr) );
+	if (addr < 0)
+        throw Error("Format string not used");
+	
+	/// 2.1 - Allocate space for adding new string
+    var free = Exe.FindSpace(newFormat.length);
+    if (free < 0)
+        throw NOSPACE;
+
+    /// 2.2 - Add the string there
+    Exe.AddAscii(free, newFormat);
+
+    /// 2.3 - Update the PUSHed address
+    Exe.SetInt32(addr + 1, Exe.Phy2Vir(free, DIFF));
+	
+	return true;
+};
+
+///
+/// \brief Common function for Head Palette patches
+///        Changes "赣府\赣府%s_%s_%d.pal" => "赣府\head%.s_%s_%d.pal" or "赣府\head%.s%.s_%d.pal"
+///
+SharedHeadPal = patchName =>
+	SharedPal("\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE",
+		patchName === "HeadPalUnisex" ?
+			"\xB8\xD3\xB8\xAE\\head%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
+		:
+			"\xB8\xD3\xB8\xAE\\head%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
+	);
+
+///
+/// \brief Common function for Body Palette patches
+///        Changes "个\%s_%s_%d.pal" => "个\body%.s_%s_%d.pal" or "个\body%.s%.s_%d.pal"
+///
+SharedBodyPal = patchName =>
+	SharedPal("\xB8\xF6\\",
+		patchName === "BodyPalUnisex" ?
+			"\xB8\xF6\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
+		:
+			"\xB8\xF6\\body%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
+    );
+
+///
+/// \brief Wrappers for individual patches
+///
+HeadPalMF     = SharedHeadPal;
+HeadPalUnisex = SharedHeadPal;
+BodyPalMF     = SharedBodyPal;
+BodyPalUnisex = SharedBodyPal;

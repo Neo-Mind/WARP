@@ -1,0 +1,270 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Authors      : Neo-Mind, Jian                                          *
+*   Created Date : 2020-11-09                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Data to be used for the patches.
+///
+CP_Data = [
+	{
+		varName: '$newBGMPath', 
+		suffix: "Default BGM", 
+		name: "bgm\\01.mp3"
+	},
+	{
+		varName: '$newItemInfo', 
+		suffix: "ItemInfo Lua"
+	},
+	{
+		varName: '$newAchList', 
+		suffix: "Achievement List Lua", 
+		name: "system\\Achievement_list.lub"
+	},
+	{
+		varName: '$newMonSizeEfct', 
+		suffix: "Monster Size Effect Lua"
+	},
+	{
+		varName: '$newTownInfo',
+		suffix: "Town Info Lua",
+		name: "System/Towninfo.lub"
+	},
+	{
+		varName: '$newPetEvoCln', 
+		suffix: "Pet Evolution Lua"
+	},
+	{
+		varName: '$newTipBox', 
+		suffix: "Tip Box Lua", 
+		name: "System/tipbox.lub"
+	},
+	{
+		varName: '$newChkAtt', 
+		suffix: "Check Attendance Lua", 
+		name: "System/CheckAttendance.lub"
+	},
+	{
+		varName: '$newPrivPlane', 
+		suffix: "Private Airplane Lua"
+	},
+	{
+		varName: '$newOngQInfoList', 
+		suffix: "Ongoing QuestInfoList Lua"
+	},
+	{
+		varName: '$newRcmdQInfoList', 
+		suffix: "Recommended QuestInfoList Lua"
+	},
+];
+
+///
+/// \brief Common function to change specific file paths
+///
+CustomPath = function(index)
+{
+	/// 1.1 - Get the data for the index
+	let data = CP_Data[index];
+	
+	/// 1.2 - Find location where the string is used in a PUSH
+	let addr = Exe.FindHex( PUSH(data.addr) );
+	if (addr < 0)
+		throw Error("'" + data.name + "' not used");
+	
+	/// 1.2 - Get the new file name from user
+	let newFile = Exe.GetUserInput(
+		data.varName, D_Text, "File Path", 
+		"Enter the new '" + data.suffix + "' " + (index > 8 ? "prefix" : "path") + " (relative to RO folder)",
+		data.name, {minLen: 1, maxLen: 100}
+	);
+	
+	if (newFile === false)
+        throw "Cancelled - Path reverted to '" + suffix + "'";
+	
+	/// 2.1 - Allocate space to add the file name
+	let free = Exe.FindSpace(newFile.length);
+    if (free < 0)
+        throw NOSPACE;
+	
+	/// 2.2 - Add the name there
+    Exe.AddFromVar(free, varName);
+	
+	/// 2.3 - Update the PUSHed address
+    Exe.SetUint32(addr + 1, Exe.Phy2Vir(free, DIFF));
+	
+	return true;
+};
+
+///
+/// \brief Common functions to validate
+///
+CustomPath.validate = (index) =>
+{
+	let data = CP_Data[index];
+	data.addr = Exe.FindAscii(data.name);
+	return (data.addr > 0);
+};
+
+CustomPath.validateSak = (index, pref, sakSuf, truSuf, suf = '') =>
+{
+	let data = CP_Data[index];
+	
+	data.name = pref + "_" + (ROCL.IsRenewal ? sakSuf : truSuf);
+	data.addr = Exe.FindAscii(data.name);
+	
+	if (addr < 0 && !ROCL.IsRenewal)
+	{
+		data.name = pref + suf;
+		data.addr = Exe.FindAscii(data.name);
+	}
+	
+	return (data.addr > 0);
+};
+
+///
+/// Wrappers for Individual Patches
+///
+DefaultBGM = () => CustomPath(0);
+DefaultBGM.validate = () => CustomPath.validate(0);
+
+ItemInfoLub = () => CustomPath(1);
+ItemInfoLub.validate = () => CustomPath.validateSak(1, "System/iteminfo", "Sak.lub", "true.lub", ".lub");
+
+AchievementLub = () => CustomPath(2);
+AchievementLub.validate = () => CustomPath.validate(2);
+
+MonSizeEffLub = () => CustomPath(3);
+MonSizeEffLub.validate = () =>
+{
+	let suf = (ROCL.IsRenewal ? "_sak" : "");
+	let data = CP_Data[3];
+	
+	data.name = "System/monster_size_effect" + suf + "_new.lub";
+	data.addr = Exe.FindAscii(data.name);
+	if (addr < 0)
+	{
+		data.name = "System/monster_size_effect" + suf + ".lub";
+		data.addr = Exe.FindAscii(data.name);
+	}
+
+	return (data.addr > 0);
+}
+
+TownInfoLub = () => CustomPath(4);
+TownInfoLub.validate = () => CustomPath.validate(4);
+
+PetEvoClnLub = () => CustomPath(5);
+PetEvoClnLub.validate = () =>
+{
+	let data = CP_Data[5];
+	data.name = "system\\PetEvolutionCln_" + (ROCL.IsRenewal ? "sak" : "true") + ".lub";
+	data.addr = Exe.FindAscii(data.name);
+	
+	if (addr < 0)
+	{
+		data.name = "system\\PetEvolutionCln.lub";
+		data.addr = Exe.FindAscii(data.name);
+	}
+	
+	return (data.addr > 0);
+};
+
+TipboxLub = () => CustomPath(6);
+TipboxLub.validate = () => CustomPath.validate(6);
+
+CheckAttLub = () => CustomPath(7);
+CheckAttLub.validate = () => CustomPath.validate(7);
+
+PrivAirplaneLub = () => CustomPath(8);
+PrivAirplaneLub.validate = () => CustomPath.validate(8);
+
+OngQuestInfoLub = () => CustomPath(9);
+OngQuestInfoLub.validate = () => CustomPath.validateSak(9, "system\\OngoingQuestInfoList", "Sakray", "True");
+
+RcmdQuestInfoLub = () => CustomPath(10);
+RcmdQuestInfoLub.validate = () => CustomPath.validateSak(10, "system\\RecommendedQuestInfoList", "Sakray", "True");
+
+///
+/// \brief Change the "..\\licence.txt" & the EULA error string reference to user specified file 
+/// 
+Orig_LicTxt = "..\\licence.txt";
+LicenseTxt = function()
+{
+	/// 1.1 - Find the string '..\\licence.txt'
+    let addr = Exe.FindAscii(Orig_LicTxt);
+    if (addr < 0)
+        throw Error("'" + Orig_LicTxt + "' not found");
+
+    /// 1.2 - Find where it is assigned
+    addr = Exe.FindHex( MOV([POS3WC], addr) ); //MOV DWORD PTR DS:[g_licence], stringAddr
+    if (addr < 0)
+        throw Error("'" + Orig_LicTxt + "' not assigned");
+
+    /// 2.1 - Get new Filename from user
+    let txtFile = Exe.GetUserInput('$licenseTXT', D_Text, "License file", "Enter the name of the Txt file", Orig_LicTxt, {minLen: 1, maxLen: 20});
+    if (txtFile === false)
+        return "Cancelled - License file reverted to '" + Orig_LicTxt + "'";
+	
+    /// 2.2 - Allocate space to add new file name
+    let free = Exe.FindSpace(txtFile.length + 1);
+    if (free < 0)
+        throw NOSPACE;
+
+    /// 2.3 - Add the file name there
+    Exe.AddFromVar(free, '$licenseTXT', txtFile.length + 1);
+
+    /// 2.4 - Change the address in the assignment
+    Exe.SetInt32(addr + 6, Exe.Phy2Vir(free, DIFF));
+
+    /// 3.1 - Find EULA string
+    addr = Exe.FindAscii("No EULA text file. (licence.txt)");
+    if (addr < 0)
+        throw Error("EULA string not found");
+
+    /// 3.2 - Prepare the new EULA error string using the filename received
+    let eulaString = "No EULA text file. (" + txtFile.replace("..\\", "") + ")\x00";
+
+    /// 3.3 - Allocate space to add the EULA error string
+    free = Exe.FindSpace(eulaString.length);
+    if (free < 0)
+        throw Error("Not enough gap for EULA string");
+
+    let freeVir = Exe.Phy2Vir(free, DIFF);
+	
+    /// 3.4 - Add the EULA error string
+    Exe.AddText(free, eulaString);
+
+    /// 3.5 - Update all PUSHes & assigments using the original EULA error string
+    [PUSH(0x20) + PUSH(addr), MOV(ESI, addr), MOV(EDI, addr)].forEach( instr =>
+	{
+		let isize = instr.byteCount();
+        Exe.FindHexN(instr).forEach( 
+			addr => Exe.SetInt32(addr + isize - 4, freeVir)
+		);
+	});
+	
+    return true;
+}

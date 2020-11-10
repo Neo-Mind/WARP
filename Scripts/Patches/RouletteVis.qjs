@@ -1,0 +1,116 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Neo-Mind                                                *
+*   Created Date : 2020-11-08                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Need to fix for latest clients
+
+///
+/// \brief NOP out or Add the Roulette Icon UIWindow creation code (ID = 0x11D or 0x10C)
+///        and hook it to where it was supposed to be present
+///
+RouletteVis = function(patchName)
+{
+    /// 1.1 - Check if WinMgr was loaded
+    if (!WINMGR.Valid)
+        throw WINMGR.Error;
+	
+    /// 1.2 - Find the UIWindow creation before Roulette which is always present (uses ID = 0xB5)
+    let code =
+        JE(0x0F)        //JE SHORT addr
+    +   PUSH(0xB5)      //PUSH 0B5
+    +   WINMGR.MovECX   //MOV ECX, OFFSET g_windowMgr
+    +   CALL()          //CALL UIWindowMgr::MakeWindow
+    ;
+    let jmpAddr = Exe.FindHex(code);
+    if (jmpAddr < 0)
+        throw Error("B5 UIWindow creation not found");
+
+    /// 1.3 - Save location after the CALL
+    let retnAddr = jmpAddr + code.byteCount() + 4;
+
+    /// 1.4 - Get window ID based on client date.
+	let id = (Exe.BuildDate > 20150800) ? 0x10C : 0x11D;
+
+	if (patchName === "ShowRoulette")
+	{
+		/// 2.1 - Check if the instruction at retnAddr is PUSH 11D/10C for Roulette UIWindow creation
+		if (Exe.GetUint8(retnAddr) === 0x68 && Exe.GetInt32(retnAddr + 1) === id)
+			throw "Cancelled - Roulette Icon is already shown";
+	
+		/// 2.2 - Prepare our code to create the icon
+		code += MakeFiller(1);       //CALL UIWindowMgr::MakeWindow ; E8 opcode is already there
+		let pos1 = code.byteCount();
+		
+		code +=
+			PUSH(id)              //PUSH 11D or 10C
+		+   WINMGR.MovECX         //MOV ECX, OFFSET g_windowMgr
+		+   CALL(MakeFiller(2))   //CALL UIWindowMgr::MakeWindow
+		+   JMP(MakeFiller(3))    //JMP retnAddr; jump back to retnAddr
+		;
+		let pos2 = code.byteCount();
+	
+		/// 2.3 - Allocate space to add our code
+		let free = Exe.FindSpace(code.byteCount(), 0x10);
+		if (free < 0)
+			throw NOSPACE;
+	
+		let freeVir = Exe.Phy2Vir(free, DIFF);
+		
+		/// 2.4 - Fill in the Blanks
+		code = SwapFiller(code, 1, ROCL.MakeWin - (freeVir + pos1));
+		code = SwapFiller(code, 2, ROCL.MakeWin - (freeVir + pos2 - 5));
+		code = SwapFiller(code, 3, Exe.Phy2Vir(retnAddr, CODE) - (freeVir + pos2));
+		
+		/// 2.5 - Add the code at the gap
+		Exe.AddHex(free, code);
+		
+		/// 2.6 - Create a jump to it at jmpAddr
+		Exe.SetHex(jmpAddr, JMP(freeVir, Exe.Phy2Vir(jmpAddr, CODE)));
+	}
+	else
+	{
+		/// 3.1 - Ensure its not already hidden
+		if (Exe.GetUint8(retnAddr) !== 0x68 || Exe.GetInt32(retnAddr + 1) !== id)
+			throw "Cancelled - Roulette Icon is already hidden";
+		
+		/// 3.2 - NOP it out otherwise (5 for PUSH, 5 for MOV ECX, 5 for CALL similar to the steps for 0B5 above)
+		Exe.SetNOPs(retnAddr, 15);
+	}
+	
+	return true;
+};
+
+///
+/// \brief Only Enable for Clients that actually have the icon
+///
+RouletteVis.validate = () => ROCL.RouletteAddr > 0;
+
+///
+/// \brief Wrappers for individual patches
+///
+ShowRoulette = RouletteVis;
+HideRoulette = RouletteVis;

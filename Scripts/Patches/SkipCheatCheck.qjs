@@ -1,0 +1,77 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Ai4rei/AN                                               *
+*   Created Date : 2020-11-09                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the conditional jump to JMP after CSession::IsCheatName/IsGuildCheatName CALL
+///        The CALL comes inside UIWindowMgr::AddWhisperChatToWhisperWnd. 
+///        The enforced JMP ensures the result is ignored.
+///
+function SkipCheatCheck(patchName)
+{
+    /// 1 - Find the comparisons after CSession::IsCheatName CALL
+    let template =
+        TEST(EAX, EAX)          //TEST EAX, EAX
+    +   JZ(WCp)                 //JZ SHORT addr
+    +   PUSH_0                  //PUSH 0
+    +   PUSH_0                  //PUSH 0
+    +   PUSH(0xFFFF)            //PUSH 0FFFF
+    +   PUSH(MakeFiller(1))     //PUSH msgNum
+    ;
+    let code =
+        SwapFiller(template, 1, 0x395)  //msgNum = 0x395 , for Friend List
+    +   JMP(WCp)                        //JMP SHORT addr2
+    +   PUSH_R                          //PUSH reg32_B
+    +   MOV(ECX, POS4WC)                //MOV ECX, OFFSET g_session
+    +   CALL(POS3WC)                    //CALL CSession::IsGuildCheatName
+    +   SwapFiller(template, 1, 0x397)  //msgNum = 0x397, for Guild List
+    ;
+
+    let addr = Exe.FindHex(code);
+    if (addr < 0)
+    {
+        code = code.replace(/6A 00 6A 00/g, PUSH_R + PUSH_R); //Change all PUSH 0 to PUSH reg32
+        template = template.replace(/6A 00 6A 00/g, PUSH_R + PUSH_R); //Change all PUSH 0 to PUSH reg32 in template as well
+        addr = Exe.FindHex(code);
+    }
+    if (addr < 0)
+        throw Error("Comparisons not found");
+
+    /// 2 - Change the relevant JZ to JMP
+    if (patchName === "SkipInFriendList")
+        Exe.SetJMP(addr + 2); //first JZ
+    else
+        Exe.SetJMP(addr + code.byteCount() - template.byteCount() + 2); //second JZ
+        
+    return true;
+}
+
+///
+/// \brief Wrappers for individual patches
+///
+SkipInFriendList = SkipCheatCheck;
+SkipInGuildList  = SkipCheatCheck;

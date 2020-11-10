@@ -1,0 +1,69 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : MegaByte                                                *
+*   Created Date : 2020-11-08                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Find the walk delay addition and
+///        NoWalkDelay - NOP it out OR 
+///        CustomWalkDelay - Change it to user specified value
+///
+SetWalkDelay = function(patchName)
+{
+    /// 1.1 - Find the delay addition
+	let reg = (Exe.Version < 9.0 ? EDX : ECX);
+	let code =
+		ADD(reg, 0x258)   //ADD reg32,00000258 ; 600ms
+	+   CMP(EAX, reg)     //CMP EAX, reg32
+	;
+
+    let addr = Exe.FindHex(code);
+    if (addr < 0)
+        throw Error("Delay addition not found.");
+
+    if (patchName === "NoWalkDelay")
+    {
+		/// 1.2 - NOP out the addition if no walk delay is desired
+        Exe.SetNOPs(addr, 6);
+    }
+	else
+	{
+		/// 2.1 - Get the new delay value from user
+		if (Exe.GetUserInput('$walkDelay', D_Uint16, "Walk Delay", "Enter the new walk delay (snaps to closest valid value)", 600, {min: 0, max: 1000}) === false)
+			throw "Cancelled - Delay reverted to 600";
+		
+		/// 2.2 - Replace the value
+		Exe.SetFromVar(addr + 2, '$walkDelay');
+    }
+	
+    return true;
+};
+
+///
+/// \brief Wrappers for individual patches
+///
+NoWalkDelay     = SetWalkDelay;
+CustomWalkDelay = SetWalkDelay;

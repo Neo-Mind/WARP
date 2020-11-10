@@ -1,0 +1,184 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Authors      : Shinryo, 4144                                           *
+*   Created Date : 2020-11-10                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Modify ErrorMsg function to return without showing the MessageBox
+///
+IgnoreRsrcErr = function()
+{
+	/// 1.1 - Find the common error string
+	let addr = Exe.FindAscii("Failed to load Winsock library!");
+	if (addr < 0)
+		throw Error("Winsock error string missing");
+	
+	/// 1.2 - Find where its used in a PUSH
+	let code =
+		PUSH(addr)	//PUSH OFFSET ; ASCII "Failed to load Winsock library!"
+	+	CALL()		//CALL ErrorMsg
+	;
+	addr = Exe.FindHex(code);
+	
+	if (addr < 0)
+		throw Error("Winsock error string not used");
+	
+	/// 1.3 - Go inside the ErrorMsg function
+	addr = Exe.GetTgtAddr(addr + 6, PHYSICAL);
+	
+	/// 2.1 - Find the GDIFlip CALL at the beginning of the function
+	addr = Exe.FindHex( CALL(NEG3WC), addr, addr + 10);
+	if (addr < 0)
+		throw Error("GDIFlip CALL missing");
+	
+    /// 2.2 - Replace code after the CALL with XOR EAX, EAX followed by RETN .
+    ///       For Frame pointer types, POP EBP is also needed before RETN
+    code = 
+		XOR(EAX, EAX)
+    +  (ROCL.HasFP ? POP(EBP) : NOP)
+	+	RETN()
+	;   
+    Exe.SetHex(addr + 5, code);
+ 
+    return true;
+};
+
+///
+/// \brief Change the conditional jump to JMP for CFile::Open result status
+///        inside CPaletteRes::Load function
+///
+IgnorePalErr = function()
+{
+    /// 1.1 - Find the error message
+    let msgAddr = Exe.FindAscii("CPaletteRes :: Cannot find File : ");
+    if (msgAddr < 0)
+        throw Error("CPaletteRes string not found");
+
+    /// 1.2 - Find where its PUSHed/assigned
+    let code = PUSH(msgAddr);		//PUSH OFFSET addr; ASCII "CPaletteRes :: Cannot find File : "
+    
+	let addr = Exe.FindHex(code + LEA()); //LEA ECX, [LOCAL.x]
+	if (addr < 0)
+		addr = Exe.FindHex(code + MOV([])); //MOV DWORD PTR 
+	
+    if (addr < 0)
+    {
+        code = MOV(EDI, msgAddr);   //MOV EDI, OFFSET addr; ASCII "CPaletteRes :: Cannot find File : "
+        addr = Exe.FindHex(code);
+    }
+    if (addr < 0)
+        throw Error("CPaletteRes string not PUSHed/assigned");
+
+    /// 2.1 - Find the CALL to CFile::Open and its result comparison before the PUSH (within 0x100 bytes)
+    code =
+        CALL(ALLWC) 		//CALL CFile::Open
+    +   TEST(AL, AL)		//TEST AL, AL
+    +   JNZ(POS2WC) 		//JNZ addr
+    ;
+    addr = Exe.FindHex(code, addr - 0x100, addr);
+    if (addr < 0)
+        throw Error("CFile::Open CALL not found");
+
+    /// 2.2 - Change the conditional jump
+    Exe.SetJMP(addr + 7);
+
+    return true;
+};
+
+///
+/// \brief Modify LuaErrorMsg function to return without showing the MessageBox
+///
+IgnoreLuaErr = function() 
+{
+	/// 1.1 - Find "MessageBoxA" imported function
+	let func = Exe.FindFunc("MessageBoxA");
+	if (func < 0)
+		throw Error("MessageBoxA function missing");
+	
+    /// 1.2 - Find the LuaErrorMsg function code
+	let part1;
+	if (Exe.Version >= 9.0)
+	{
+		part1 =
+			CALL([POS3WC])		 //CALL DWORD PTR DS:[<&MSVCR110.vsprintf>] ; can also be different print function
+		+	ADD(ESP, WCp)		 //ADD ESP,0C or 1C
+		;                        
+	}                            
+	else //VC6                   
+	{                            
+		part1 =                  
+			CALL(ALLWC)			 //CALL sprintf equivalent
+		+	MOV(R32, [EBP, WCp]) //MOV reg32, DWORD PTR SS:[EBP+x]
+		+	ADD(ESP, WCp)		 //ADD ESP,0C or some other constant possibly
+		;
+	}
+	
+	let cmn = ROCL.HasFP ?
+		LEA(R32, [EBP, NEG2WC])	 //LEA reg32, [EBP-x] <- patch position
+	:
+		LEA(R32, [ESP, WCp])	 //LEA reg32, [ESP+x]
+	;
+	
+	let part2 =
+		cmn						//LEA EAX, [LOCAL.x]
+	+	PUSH_0					//PUSH 0
+	+	PUSH_R					//PUSH reg32_A
+	+	PUSH_R					//PUSH reg32_B
+	+	PUSH_0					//PUSH 0
+	+	CALL([func])			//CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
+	;
+
+    let addr = Exe.FindHex(part1 + part2);
+    if (addr < 0)
+	{
+		part2 =
+			PUSH_0					//PUSH 0
+		+	PUSH_R					//PUSH reg32_A
+		+	cmn						//LEA EAX, [LOCAL.x]
+		+	PUSH_R					//PUSH reg32_B
+		+	PUSH_0					//PUSH 0
+		+	CALL([func])			//CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
+		;
+		addr = Exe.FindHex(part1 + part2);
+	}
+	
+    if (addr < 0)
+        throw Error("LuaErrorMsg function missing");
+
+	/// 2.1 - Point addr to location of the 2nd part
+	addr += part1.byteCount();
+	
+    /// 2.2 - Overwrite with XOR EAX, EAX followed by NOPs.
+	Exe.SetHex(addr, XOR(EAX, EAX));
+	Exe.SetNOPs(addr + 2, part2.byteCount() - 2);
+
+    return true;
+};
+
+///
+/// \brief Disable for unsupported clients
+///
+IgnoreLuaErr.validate = () => Exe.BuildDate > 20100000;

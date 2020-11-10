@@ -1,0 +1,360 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Authors      : Shinryo, Neo-Mind                                       *
+*   Created Date : 2020-11-07                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Overrides data.grf loading with a custom function which loads the grf names 
+///        required in specified order
+///
+///        GRFsFromIni  - User specifies the INI file name and it is used for getting the GRF file names & their order during launch.
+///        GRFsEmbedded - User specifies an existing INI file which will be used for embedding the loading of the GRF files names in order.
+///
+MultiGRFs = function(patchName)
+{
+    /// 1.1 - Find the string 'data.grf'
+    let dgrfAddr = Exe.FindAscii("data.grf");
+    if (dgrfAddr < 0)
+        throw Error("'data.grf' not found");
+        
+    /// 1.2 - Find where its used in a PUSH & extract the g_FileMgr assignment before/after it
+	let addr, MovFMgr;
+	if (Exe.Version >= 14.0)
+	{
+		let code =
+			MOV(ECX, POS4WC)   	//MOV ECX, OFFSET g_fileMgr
+		+	TEST(EAX, EAX)		//TEST EAX, EAX
+		+	SETNE([POS4WC])		//SETNE BYTE PTR DS:[addr]
+		+	PUSH(dgrfAddr)		//PUSH OFFSET addr1; "data.grf"
+		;
+
+		addr = Exe.FindHex(code);
+		if (addr < 0)
+			throw Error("'data.grf' not PUSHed");
+		
+		MovFMgr = Exe.GetHex(addr, 5);
+		
+		addr += code.byteCount() - 5; //Set addr to location of PUSH
+	}
+	else
+	{
+		let code =
+			PUSH(dgrfAddr)		//PUSH OFFSET addr1; "data.grf"
+		+   MOV(ECX, POS4WC)	//MOV ECX, OFFSET g_fileMgr
+		;
+		
+		addr = Exe.FindHex(code);
+		if (addr < 0)
+			throw Error("'data.grf' not PUSHed");
+	
+		MovFMgr = Exe.GetHex(addr + 5, 5);
+	}
+
+    /// 2.1 - Find the AddPak CALL after the PUSH
+    let code = (Exe.Version >= 9.0 && Exe.Version < 14.0) //VC9 - VC11
+    ?
+            CALL(ALLWC)             //CALL CFileMgr::AddPak
+        +   MOV(R32, [POS3WC])      //MOV reg32, DWORD PTR DS:[addr1]
+        +   MOV(EAX, [POS3WC])      //MOV EAX, DWORD PTR DS:[addr2]
+		
+    : (Exe.Version < 9.0) //VC6
+    ?
+            CALL(ALLWC)             //CALL CFileMgr::AddPak
+        +   MOV(EDI, POS3WC)        //MOV EDI, OFFSET addr2
+		
+    : //VC14.16
+	
+            CALL(ALLWC)             //CALL CFileMgr::AddPak
+        +   MOV(EAX, [POS3WC])      //MOV EAX, DWORD PTR DS:[addr2]
+    ;
+    
+    let callAddr = Exe.FindHex(code, addr + 5, addr + 40);
+    if (callAddr < 0 && Exe.Version >= 9.0 && Exe.Version < 14.0)
+	{
+		code = code.replace(MOV(R32, [POS3WC]), "");
+		callAddr = Exe.FindHex(code, addr + 5, addr + 40);
+	}
+	
+    if (callAddr < 0)
+        throw Error("AddPak CALL not found");
+
+    /// 2.2 - Extract AddPak function address
+    let AddPak = Exe.Phy2Vir(callAddr + 5, CODE) + Exe.GetInt32(callAddr + 1);
+
+    /// 2.3 - Little trick to avoid changing 10 bytes (change the PUSH to MOV ECX, addr)
+    Exe.SetUint8(addr, 0xB9);
+	
+	/// 3.1 - Run one of the helper functions below based on the patch name. 
+	///       Helper functions were made for better readability. 
+	///       Only the uncommon activities are being done in the seperate functions
+	///
+	if (patchName === "GRFsFromIni")
+		_MG_INI(dgrfAddr, MovFMgr, callAddr, AddPak);
+    else
+        _MG_EMB(MovFMgr, callAddr, AddPak);
+    
+	/// 3.2 - Find the string 'rdata.grf' and zero it out if present
+    addr = Exe.FindAscii("rdata.grf", PHYSICAL);
+    if (addr > 0)
+        Exe.SetInt8(addr, 0);
+
+	return true;
+};
+
+///
+/// \brief Wrappers for individual patches
+///
+GRFsFromIni  = MultiGRFs;
+GRFsEmbedded = MultiGRFs;
+
+///
+/// \brief Adds the function to read INI and hacks AddPak CALL which loads data.grf to use it
+///
+_MG_INI = (dgrfAddr, MovFMgr, callAddr, AddPak) =>
+{
+	/// 1.1 - Get the essential addresses for our function
+    if (ROCL.GetModHandle < 0)
+        throw Error("GetModuleHandleA not found");
+        
+    if (ROCL.GetProcAddr < 0)
+        throw Error("GetProcAddress not found");
+    
+    if (ROCL.Kernel32 < 0)
+        throw Error("'KERNEL32.dll' not found");
+    
+	/// 1.2 - Create the function code
+    let code =
+        ENTER(0x80, 0)                   //ENTER 80, 0
+    +   PUSHAD                           //PUSHAD
+    +   PUSH(ROCL.Kernel32)              //PUSH addr1 ; ASCII "KERNEL32"
+    +   CALL([ROCL.GetModHandle])        //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
+    +   TEST(EAX, EAX)                   //TEST EAX, EAX
+    +   JZ(0x23)                         //JZ SHORT addr2
+    +   MOV(EDI, [ROCL.GetProcAddr])     //MOV EDI,DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
+    +   PUSH(MakeFiller(1))              //PUSH addr3 ; ASCII "GetPrivateProfileStringA"
+    +   MOV(EBX, EAX)                    //MOV EBX, EAX
+    +   PUSH_EAX                         //PUSH EAX ; hModule
+    +   CALL(EDI)                        //CALL EDI ; GetProcAddress()
+    +   TEST(EAX, EAX)                   //TEST EAX, EAX
+    +   JZ(0x0F)                         //JZ SHORT addr2
+    +   MOV([EBP, -0xA], EAX)            //MOV DWORD PTR SS:[EBP-0A], EAX
+    +   PUSH(MakeFiller(2))              //PUSH addr4 ; ASCII "WritePrivateProfileStringA"
+    +   MOV(EAX, EBX)                    //MOV EAX, EBX
+    +   PUSH_EAX                         //PUSH EAX ; hModule
+    +   CALL(EDI)                        //CALL EDI ; GetProcAddress()
+    +   TEST(EAX, EAX)                   //TEST EAX, EAX
+    +   JZ(0x6E)                         //JZ SHORT loc_735E71
+    +   MOV([EBP, -6], EAX)              //MOV DWORD PTR SS:[EBP-6], EAX
+    +   XOR(EDX, EDX)                    //XOR EDX, EDX
+    +   MOV(WORD_PTR, [EBP, -2], 0x39)   //MOV WORD PTR SS:[EBP-2], 39 ; char 9
+    +   PUSH(EDX)                        //PUSH EDX
+    +   PUSH(MakeFiller(4))              //PUSH addr5 ; INI filename
+    +   PUSH(0x74)                       //PUSH 74
+    +   LEA(EBX, [EBP, -0x7F])           //LEA EBX, [EBP-7F]
+    +   PUSH(EBX)                        //PUSH EBX
+    +   LEA(EAX, [EBP, -2])              //LEA EAX, [EBP-2]
+    +   PUSH_EAX                         //PUSH EAX
+    +   PUSH_EAX                         //PUSH EAX
+    +   PUSH(MakeFiller(3))              //PUSH addr6 ; ASCII "Data"
+    +   CALL([EBP, -0xA])                //CALL DWORD PTR SS:[EBP-0A]
+    +   LEA(ECX, [EBP, -2])              //LEA ECX, [EBP-2]
+    +   MOV(CX, [ECX])                   //MOV CX, WORD PTR DS:[ECX]
+    +   LEA(EBX, [EBP, -0x7F])           //LEA EBX, [EBP-7F]
+    +   CMP(CX, [EBX])                   //CMP CX, WORD PTR DS:[EBX]
+    +   POP(EDX)                         //POP EDX
+    +   JZ(0xE)                          //JZ SHORT addr7
+    +   PUSH(EDX)                        //PUSH EDX
+    +   PUSH(EBX)                        //PUSH EBX
+    +   MovFMgr                          //MOV ECX, g_fileMgr
+    +   CALL(MakeFiller(5))              //CALL CFileMgr::AddPak()
+    ;
+    let pakPos = code.byteCount();
+    
+    code +=
+        POP(EDX)                         //POP EDX
+    +   INC(EDX)                         //INC EDX
+    +   DEC(BYTE_PTR, [EBP, -2])         //DEC BYTE PTR SS:[EBP-2]
+    +   CMP(BYTE_PTR, [EBP, -2], 0x30)   //CMP BYTE PTR SS:[EBP-2], 30
+    +   JNB(-0x3F)                       //JNB SHORT addr8
+    +   TEST(EDX, EDX)                   //TEST EDX, EDX
+    +   JNZ(0x20)                        //JNZ SHORT addr9
+    +   PUSH(MakeFiller(4))              //PUSH addr5 ; INI filename
+    +   PUSH(dgrfAddr)                   //PUSH dgrfAddr ; "data.grf"
+    +   MOV(WORD_PTR, [EBP, -2], 0x32)   //MOV WORD PTR SS:[EBP-2], 32
+    +   LEA(EAX, [EBP, -2])              //LEA EAX, [EBP-2]
+    +   PUSH_EAX                         //PUSH EAX
+    +   PUSH(MakeFiller(3))              //PUSH addr6 ; ASCII "Data"
+    +   CALL([EBP, -6])                  //CALL DWORD PTR SS:[EBP-6]
+    +   TEST(EAX, EAX)                   //TEST EAX, EAX
+    +   JNZ(-0x69)                       //JNZ SHORT
+    +   POPAD                            //POPAD
+    +   LEAVE                            //LEAVE
+    +   RETN + " 00"                   //RETN and a gap before strings begin
+    ;
+	
+	/// 2.1 - Get the INI file name from user
+    let iniFile = Exe.GetUserInput('$dataINI', D_Text, "INI File path", "Enter the name of the INI file", "DATA.INI", {minLen: 1, maxLen: 20, saveDefault: true});
+    if (iniFile === false)
+		throw "Cancelled - No File specified";
+	
+	if (iniFile.isEmpty())
+        throw "Cancelled - Empty string received";
+
+    iniFile = ".\\" + iniFile;
+
+    /// 2.2 - Put all the strings in an array (we need their individual lengths later)
+    let strList = ["GetPrivateProfileStringA", "WritePrivateProfileStringA", "Data", iniFile];
+
+    /// 2.3 - Join the strings with NULL in between and convert to Hex
+    let strings = strList.join("\x00").toHex() + " 00";
+    
+    /// 2.4 - Allocate space to add our function
+    let fullSize = code.byteCount() + strings.byteCount();
+    let free = Exe.FindSpace(fullSize, 0x10);
+    if (free < 0)
+        throw NOSPACE;
+
+    let freeVir = Exe.Phy2Vir(free, DIFF);
+        
+    /// 2.5 - Fill in the blanks
+    let strPos = freeVir + code.byteCount();
+	strList.forEach( (str, idx) =>  //the strings
+    {
+        code = SwapFiller(code, idx + 1, strPos, 2);
+        strPos += str.length + 1;     //1 for null
+    });
+    code = SwapFiller(code, 5, AddPak - (freeVir + pakPos));//AddPak function
+
+    /// 3.1 - Add the function at the allocated space
+    Exe.AddHex(free, code + strings, fullSize);
+    
+    /// 3.2 - Change the AddPak CALL to use our function
+    Exe.SetTgtAddr(callAddr + 1, freeVir);
+};
+
+///
+/// \brief Prepares the function to load grf files, adds it to the client and hacks AddPak CALL which loads data.grf to use it
+///
+/// The grf file names are retrieved in order from user specified ini file
+///
+_MG_EMB = (MovFMgr, callAddr, AddPak) =>
+{
+    /// 1.1 - Get the INI file from user to read
+    let file = Exe.GetUserInput('$inpMultGRF', D_InFile, "File Input", "Enter your INI file", "Inputs/Sample_DATA.INI");
+	if (file === false)
+        throw "Cancelled - No input file received";
+	
+	if (file.isEmpty())
+		throw "Cancelled - Empty file name received";
+	
+	let handle = new TextFile(file, 'r');
+	if (!handle.Valid)
+		throw Error("INI file is not readable");
+	
+    /// 1.2 - Read the GRF filenames from the INI file into an array
+    let grfNames = [];
+    while (!handle.AtEnd())
+    {
+        let line = handle.ReadLine().trim();
+		console.info(line);
+        let matches = line.match(/^(\d)\s*=\s*(.*)/);
+        if (!matches)
+            continue;
+
+        let index = matches[1];
+        let value = matches[2].trim();
+        grfNames[index] = value;
+    }
+    handle.Close();
+
+    /// 1.3 - Account for empty input file (atleast data.grf should be there)
+    if (grfNames.isEmpty())
+        grfNames[0] = "data.grf";
+
+    /// 1.4 - Remove empty indices
+    grfNames = grfNames.filter( name => name !== undefined );
+	
+    /// 2.1 - Prepare template for load 1 GRF (same needs to be repeated for all GRF files)
+    let template =
+        PUSH(MakeFiller(1))  //PUSH OFFSET addr; GRF name
+    +   MovFMgr              //MOV ECX, OFFSET g_fileMgr
+    +   CALL(MakeFiller(2))  //CALL CFileMgr::AddPak()
+    ;
+    let tsize = template.byteCount();
+
+    /// 2.2 - Join the strings with NULL in between and convert to Hex
+    let strings = grfNames.join("\x00").toHex() + " 00";
+
+    /// 2.3 - Allocate space to add our function
+    let fullSize = grfNames.length * tsize + 2 + strings.byteCount(); //2 is for RETN & a null to leave a gap between the function and the strings
+    let free = Exe.FindSpace(fullSize, 0x10);
+    if (free < 0)
+        throw NOSPACE;
+
+    let freeVir = Exe.Phy2Vir(free, DIFF);
+
+    /// 2.4 - Prepare the full code using the template with proper values 
+    let strAddr = freeVir + grfNames.length * tsize + 2;    //Address of first string
+    let funAddr = AddPak - (strAddr - 2);                   //Difference value for Last AddPak CALL location (first string needs to be loaded last)
+
+    let code = "";
+	grfNames.forEach( name =>
+	{
+		code = SwapFillers(template, [1, 2], [strAddr, funAddr]) + code;
+        strAddr += name.length + 1;  //Extra 1 for NULL byte
+        funAddr += tsize;            //Increasing the difference => CALL location is closer/lesser
+    });
+    code += RETN() + " 00";//RETN and 1 extra NULL
+
+    /// 2.5 - Add the function at the gap
+    Exe.AddHex(free, code + strings, fullSize);
+    
+    /// 2.6 - Change the AddPak CALL to use our function
+    Exe.SetTgtAddr(callAddr + 1, freeVir);
+};
+
+/**
+NOTES
+If you enable this feature, you will need to create an INI file in the format below
+
+--------[ Example of INI file ]---------
+[data]
+0=bdata.grf
+1=adata.grf
+2=sdata.grf
+3=data.grf
+.
+.
+9=something.grf
+----------------------------------------
+
+For the first version (Ini), you can specify the name of the file and it is expected to be in your client folder.
+For the second version (Embed), you need to have made the file beforehand and specify its path to the patch to load it.
+
+You can only load up to 10 total grf files with this option (0-9).
+The read priority is 0 first to 9 last.
+If you only have say 3 GRF files then you only need to use the first 3 keys i.e. 0, 1, and 2
+**/

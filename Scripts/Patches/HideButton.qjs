@@ -1,0 +1,194 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Neo-Mind                                                *
+*   Created Date : 2020-11-10                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Data to be used in patches
+///
+HB_List = [
+	"HideNavBtn",
+	"HideBgBtn",
+	"HideBankBtn",
+	"HideBookBtn",
+	"HideRodexBtn",
+	"HideAchieveBtn",
+	"HideRecordBtn",
+	"HideMapBtn",
+	"HideQuestBtn"
+];
+
+HB_Data = [
+	{
+		strings: [
+			"navigation_interface\\btn_Navigation", 
+			"RO_menu_icon\\navigation"
+		],
+		zeroPrefix: false
+	},
+	{
+		strings: [
+			"basic_interface\\btn_battle_field", 
+			"RO_menu_icon\\battle"
+		],
+		zeroPrefix: false
+	},
+	{
+		strings: [
+			"basic_interface\\btn_bank",
+			"RO_menu_icon\\bank"
+		],
+		zeroPrefix: false
+	},
+	{
+		strings: [
+			"basic_interface\\booking",
+			"RO_menu_icon\\booking"
+		],
+		zeroPrefix: false
+	},
+	{
+		strings: ["RO_menu_icon\\mail"],
+		zeroPrefix: false
+	},
+	{
+		strings: ["RO_menu_icon\\achievement"],
+		zeroPrefix: false
+	},
+	{
+		strings: [
+			"replay_interface\\rec",
+			"RO_menu_icon\\rec"
+		],
+		zeroPrefix: false
+	},
+	{
+		strings: ["map"],
+		zeroPrefix: true
+	},
+	{
+		strings: ["quest"],
+		zeroPrefix: true
+	}
+];
+
+///
+/// \brief Take necessary action to hide the button specified by the image suffix argument
+///        For the first 7, Zero out the first match amongst the suffix arg specific
+///        For the remaining, Change the specified prefix assignment in the UIBasicWnd::OnCreate function to use the ending NULL instead
+///
+HideButton = function(patchName)
+{
+	/// 1.1 - Retrieve the index based on the patch name
+	let index = HB_List.indexOf(patchName);
+	
+	/// 1.2 - Retrieve the data for the index
+	let data = HB_Data[index];
+	
+    if (index < 7)
+    {
+        /// 2.1 - Zero it out
+        Exe.SetInt8(data.addr, 0);
+    }
+    else
+    {
+        /// 2.2 - Find the string 'skill' (needed since some prefixes are matching multiple areas)
+        let refAddr = Exe.FindAscii("skill");
+        if (refAddr < 0)
+            throw Error("'skill' not found");
+        
+        let refHex = refAddr.toHex();
+        
+        /// 2.2 - Find where 'skill' is assigned (inside UIBasicWnd::OnCreate)
+        let code = MOV([]); //MOV DWORD PTR
+        let addr = Exe.FindHex(refHex + code);
+
+        if (addr < 0)
+        {
+            code = LEA(); //LEA
+            addr = Exe.FindHex(refHex + code);
+        }
+        if (addr < 0)
+            throw Error("'skill' not assigned");
+		
+		/// 2.3 - Get the prefix string address
+        let preAddr = Exe.Phy2Vir(data.addr);
+
+		/// 2.4 - Find the prefix assignment after 'skill' assignment
+		let arg = data.strings[0];
+        addr = Exe.FindHex( preAddr.toHex() + code, addr + 5, addr + (Exe.BuildDate > 20140210 ? 0x200 : 0x50));
+		if (addr < 0)
+            throw Error("'" + arg + "' not assigned");
+        
+        /// 2.5 - Change the address to point to the ending NULL
+        Exe.SetInt32(addr, preAddr + arg.length);
+    }
+    return true;
+};
+
+///
+/// \brief Disable for Unsupported Clients - Check for Button bmp
+///
+HideButton.validate = function(patchName)
+{
+	/// 1.1 - Retrieve the index based on the patch name
+	let index = HB_List.indexOf(patchName);
+	
+	/// 1.2 - Retrieve the data for the index
+	let data = HB_Data[index];
+	    
+    /// 2.1 - Find the first match amongst the strings specified
+	data.strings.find( str =>
+	{
+		let addr = Exe.FindAscii(str, PHYSICAL, data.zeroPrefix);
+		if (addr > 0)
+		{
+			data.addr = addr;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	});
+    return (data.addr > 0);
+};
+
+///
+/// \brief Wrappers for individual patches
+///
+HideNavBtn     = HideButton;
+HideBgBtn      = HideButton;
+HideBankBtn    = HideButton;
+HideBookBtn    = HideButton;
+HideRodexBtn   = HideButton;
+HideAchieveBtn = HideButton;
+HideRecordBtn  = HideButton;
+HideMapBtn     = HideButton;
+
+HideQuestBtn = patchName => HideButton(patchName);
+HideQuestBtn.validate = patchName => 
+	Exe.BuildDate >= 20100000 && HideButton.validate(patchName);

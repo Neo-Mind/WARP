@@ -1,0 +1,106 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Authors      : Shinryo, Secret                                         *
+*   Created Date : 2020-11-10                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the conditional jump after the 1rag1 comparison to 
+///        JMP over the 1*1 checks
+///
+Disable1and1 = function()
+{
+    /// 1 - Find the string '1rag1'
+    let addr = Exe.FindAscii("1rag1");
+    if (addr < 0)
+        throw Error("'1rag1' not found");
+
+    /// 2 - Find where it is used in a PUSH
+    let code =
+        PUSH(addr)      //PUSH addr ; ASCII "1rag1"
+    +   PUSH_R          //PUSH reg32_A
+    +   CALL(R32)       //CALL reg32_B ; strstr function compares reg32_A with "1rag1". reg32_B is ESI in most clients
+    +   ADD(ESP, 8)     //ADD ESP, 8
+    +   TEST(EAX, EAX)  //TEST EAX, EAX
+    +   JNZ(WCp)        //JNZ SHORT addr2
+    ;
+	let delta = 2;
+    addr = Exe.FindHex(code);
+    if (addr < 0)
+    {
+        code = code.replace(CALL(R32), CALL(ALLWC)); //Direct CALL
+        addr = Exe.FindHex(code);
+    }
+	if (addr < 0)
+	{
+		code = code.replace(JNZ(WCp), JNZ(POS2WC)); //Change JNZ size
+        addr = Exe.FindHex(code);
+		delta = 6;
+	}
+    if (addr < 0)
+        throw Error("'1rag1' not used");
+    
+    /// 3 - Change the conditional jump
+    Exe.SetJMP(addr + code.byteCount() - delta);
+	
+    return true;
+};
+
+///
+/// \brief Change the JZ to JMP after '/account' argument check
+///        ignoring it's results
+///
+IgnoreAccParam = function() 
+{
+	/// 1.1 - Find the string '/account:';
+	let addr = Exe.FindAscii("/account:");
+	if (addr < 0)
+		throw Error("'/account:' not found");
+	
+	/// 1.2 - Find where '/account:' is used in a PUSH
+	addr = Exe.FindHex(PUSH(addr));
+	if (addr < 0)
+		throw Error("'/account:' not used");
+	
+	/// 2 - Find the comparison after strstr CALL
+	code =
+		ADD(ESP, 8)		//ADD ESP, 8
+	+	TEST(R32, R32)	//TEST reg32_A, reg32_A
+	+	JZ(WCp)			//JZ loadClientInfo
+	;
+	let addr2 = Exe.FindHex(code, addr + 5, addr + 0x50);
+	if (addr2 < 0)
+	{
+		code = code.replace(TEST(R32, R32), CMP(R32, R32));
+		addr2 = Exe.FindHex(code, addr + 5, addr + 0x50);
+	}
+	if (addr2 < 0)
+		throw Error("Comparison not found.");
+	
+	/// 2.2 - Replace JZ with JMP
+	Exe.SetJMP(addr2 + 5);
+	
+	return true;
+};

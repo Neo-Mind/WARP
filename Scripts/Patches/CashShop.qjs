@@ -1,0 +1,232 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Authors      : Neo-Mind, 4144, Jchcc                                   *
+*   Created Date : 2020-11-08                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Modify the coordinates send as argument to UIWindow::UIWindow for Cash Shop Icon to the user specified values
+///
+MoveShopIcon = function()
+{
+    /// 1.1 - Find the XCoord calculation pattern
+    let tgtReg = (Exe.Version < 11.0) ? EDX : EAX;
+    
+    let code =
+        SUB(tgtReg, 0xBB)      //SUB reg, 0BB
+    +   PUSH(tgtReg)           //PUSH reg
+    ;
+    
+    let addr = Exe.FindHex(code);
+    if (addr < 0 && Exe.Version >= 11.0)
+    {
+        code = code.replace(PUSH_EAX , PUSH(0x10) + PUSH_EAX );//PUSH 10 before PUSH EAX
+        addr = Exe.FindHex(code);
+
+        /// 1.2 - If this pattern matches then move up the PUSH 10 and increment addr by 2
+        if (addr > 0)
+        {
+            Exe.SetUint16(addr, 0x106A);// 6A 10
+            addr += 2;
+        }
+    }
+    if (addr < 0)
+        throw Error("Coordinate calculation not found");
+
+    /// 1.3 - For EDX there is an extra byte so NOP it
+    if (tgtReg.equals(EDX)) //EDX
+    {
+        Exe.SetNOPs(addr, 1);
+        addr++;
+    }
+
+    /// 2.1 - Find the pattern where the Screen Size is picked up (Width is at 0x24, Height is at 0x28) - We need the address of g_ScreenStats
+    code = MOV( Exe.Version >= 11.0 ? EAX : ECX, [POS3WC]);	//MOV EAX or ECX, DWORD PTR DS:[g_ScreenStats]
+	let addr2 = Exe.FindHex(code + " 8B", addr - 0x18, addr); //Some MOV follows after the g_ScreenStats MOV
+    if (addr2 < 0)
+        throw Error("Screen size retrieval not found");
+
+    /// 2.2 - Extract g_ScreenStats
+    let ScreenStats = Exe.GetHex(addr2 + code.byteCount() - 6, 4);
+
+    /// 3.1 - Get new Coordinates from user
+    let xCoord = Exe.GetUserInput('$cashShopX', D_Int16, "CashShop Position", "Enter new X coordinate:", -0xBB, {min: -1366, max: 1366});
+    let yCoord = Exe.GetUserInput('$cashShopY', D_Int16, "CashShop Position", "Enter new Y coordinate:", 0x10, {min: -768, max: 768});
+
+    if (xCoord === false && yCoord === false)
+        throw "Cancelled - Coordinates reverted to (-187,16)";
+	
+	if (xCoord === false)
+		xCoord = -0xBB;
+	
+	else if (yCoord === false)
+		yCoord = 0x10;
+	
+    /// 3.2 - Prepare code to add based on the sign of each coordinate (negative values are relative to width and height respectively)
+    code = "";
+
+    if (yCoord < 0)
+    {
+        code +=
+            MOV(ECX, [ScreenStats])  //MOV ECX, DWORD PTR DS:[g_ScreenStats]
+        +   MOV(ECX, [ECX, 0x28])    //MOV ECX, DWORD PTR DS:[ECX+28]
+        +   ADD(ECX, yCoord)         //ADD ECX, yCoord; yCoord is negative
+        ;
+    }
+    else
+    {
+        code += MOV(ECX, yCoord);    //MOV ECX, yCoord
+    }
+    code += MOV([ESP, 4], ECX);      //MOV DWORD PTR DS:[ESP+4], ECX
+
+    if (xCoord < 0)
+    {
+        code +=
+            MOV(ECX, [ScreenStats])  //MOV ECX, DWORD PTR DS:[g_ScreenStats]
+        +   MOV(ECX, [ECX, 0x24])    //MOV ECX, DWORD PTR DS:[ECX+24]
+        +   ADD(ECX, xCoord)         //ADD ECX, xCoord; xCoord is negative
+        ;
+    }
+    else
+    {
+        code += MOV(ECX, xCoord);    //MOV ECX, xCoord
+    }
+    code +=
+        MOV(tgtReg, ECX)             //MOV tgtReg, ECX
+    +   RETN()                       //RETN
+    ;
+    
+    let csize = code.byteCount();
+    
+    /// 3.3 - Allocate space to add our code
+    let free = Exe.FindSpace(csize, 0x10);
+    if (free < 0)
+        throw NOSPACE;
+
+    /// 3.4 - Add the code at the allocated space
+    Exe.AddHex(free, code, csize);
+
+    /// 3.5 - Create a CALL to our code at addr (originally will have the substraction)
+    Exe.SetUint8(addr, 0xE8);
+    Exe.SetTgtAddr(addr + 1, free, PHYSICAL);
+    
+    return true;
+};
+
+///
+/// \brief Disable for unsupported clients (need to have cash shop present)
+///
+MoveShopIcon.validate = HasCashShop;
+
+///
+/// \brief Change the PUSHed argument inside UICashShopWnd_virt68 to always draw 
+///        '0 C' instead of random number in cash shop
+///
+ZeroCinShop = function()
+{
+    /// 1 - Find where format string is  PUSHed
+    let part1 =
+        MOV_ECX_ESI         //MOV ECX, ESI
+	+	PUSH_EAX 	        //PUSH EAX
+	+	PUSH(0x1C2)	        //PUSH 1C2
+	+	PUSH(0x226)	        //PUSH 226
+	+	CALL(ALLWC)	        //CALL UICashShopWnd_sub
+	;
+	let part2 =
+		PUSH([ESI, POS2WC])	//PUSH DWORD PTR DS:[ESI + const]
+	+	LEA(EAX, [EBP, WC])	//LEA EAX, [EBP + string_ptr]
+	+	PUSH(ZC_Addr)		//PUSH OFFSET addr ; ASCII "%d C"
+	+	PUSH_EAX 			//PUSH EAX
+    +	CALL()				//CALL std::string::sprintf
+	;
+	
+    addr = Exe.FindHex(part1 + part2);
+    if (addr < 0)
+        throw Error("Format string reference missing");
+
+	/// 2.1 - Set addr to position of PUSH DWORD PTR
+	addr += part1.byteCount();
+	
+	/// 2.2 - Change it to a PUSH 0
+    part2 =
+        PUSH_0	//PUSH 0
+	+	NOP		//NOP
+	+	NOP		//NOP
+	+	NOP		//NOP
+	+	NOP		//NOP
+	;
+    Exe.SetHex(addr, part2);
+
+    return true;
+};
+
+///
+/// \brief Disable for unsupported client (need to have cash shop present & the format string as well)
+/// 
+ZeroCinShop.validate = () =>
+{
+	if (ROCL.CashShopAddr < 0)
+		return false;
+	
+	ZC_Addr = Exe.FindAscii("%d C");
+	return ZC_Addr > 0;
+};
+
+///
+/// \brief Replace arguments of ShellExecuteA in  order to open URL with default browser
+///
+DefShopBrowser = function() 
+{
+	/// 1 - Find locations where "iexplore.exe" is PUSHed
+	let addrs = Exe.FindHexN( PUSH(EAX) + PUSH(SB_Addr) );
+	if (addrs.isEmpty())
+		throw Error("String references missing");
+	
+	/// 2 - Prep code to change arguments of ShellExecuteA
+	code =
+	    PUSH_0		//PUSH 0
+	+	PUSH(EAX)	//PUSH EAX
+	+ 	NOP			//NOPs
+	+	NOP
+	+	NOP
+	;
+
+	/// 3 - Replace the arguments of ShellExecuteA
+	addrs.forEach( addr => Exe.SetHex(addr, code));
+	
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients (need to have cash shop & uses iexplore.exe)
+///
+DefShopBrowser.validate = () =>
+{
+	if (ROCL.CashShopAddr < 0)
+		return false;
+	
+	SB_Addr = Exe.FindAscii("iexplore.exe");
+	return SB_Addr > 0;
+};

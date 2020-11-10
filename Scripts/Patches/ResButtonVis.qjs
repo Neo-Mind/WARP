@@ -1,0 +1,106 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Authors      : Shinryo, Neo-Mind                                       *
+*   Created Date : 2020-11-08                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+
+// TODO : For ShowResButton,  When on PVP/GVG map the second time u die, the char gets instantly warped to save point anyways. //
+
+///
+/// \brief Modify the CGameMode::HaveSiegfriedItem function to skip showing the Resurrection Button
+///
+HideResButton = function()
+{
+    /// 1 - Find the "Token of Siegfried" id PUSH in CGameMode::HaveSiegfriedItem function.
+    let addr = Exe.FindHex( PUSH(0x1DC5) ); //PUSH 1DC5
+    if (addr < 0)
+        throw Error("Siegfried ID not PUSHed");
+
+    /// 2 - Change the id to 0xFFFF - Fastest & Easiest method
+    Exe.SetUint32(addr + 1, 0xFFFF);
+	
+    return true;
+};
+
+///
+/// \brief Modify the CGameMode::HaveSiegfriedItem function to ignore map type comparisons
+///
+ShowResButton = function()
+{
+    /// 1.1 - Find the "Token of Siegfried" id PUSH in CGameMode::HaveSiegfriedItem function.
+    let addr = Exe.FindHex( PUSH(0x1DC5) ); //PUSH 1DC5
+    if (addr < 0)
+        throw Error("Siegfried ID not PUSHed");
+
+    /// 1.2 - Set addr to location after the PUSH, MOV ECX and CALL . Any other statements in between can lety
+    addr += 15;
+
+    /// 2.1 - Find the triple comparisons after the PUSH (unknown param, PVP, GVG)
+	let code;
+    if (Exe.Version < 9.0)
+    {
+        code =
+            MOV(ECX, [EAX, WCp])  //MOV ECX, DWORD PTR DS:[EAX + const]
+        +   TEST(ECX, ECX)        //TEST ECX, ECX
+        +   JNE(WCp)              //JNE SHORT addr
+        ;
+    }
+    else if (Exe.Version >= 10.0 && Exe.Version < 11.0)
+    {
+        code =
+            CMP([EAX, WCp], R32)  //CMP DWORD PTR DS:[EAX + const], reg32
+        +   JNE(POS2WC)           //JNE addr
+        ;
+    }
+    else //VC9 & VC11
+    {
+        code =
+            CMP([EAX, WCp], 0)    //CMP DWORD PTR DS:[EAX + const], 0
+        +   JNE(WCp)              //JNE SHORT addr
+        ;
+    }
+    let cmpAddr = Exe.FindHex(code.repeat(3), addr, addr + 0x40);
+    if (cmpAddr < 0)
+	{
+		if (Exe.Version >= 10.0 && Exe.Version < 11.0) //VC10
+		{
+			code = code.replace( JNE(POS2WC), JNE(WCp) ); //change JNE to SHORT JNE
+			cmpAddr = Exe.FindHex(code.repeat(3), addr, addr + 0x40);
+		}
+		else if (Exe.Version > 9.0)
+		{
+			code = code.replace( JNE(WCp), JNE(POS2WC) ); //change JNE SHORT to JNE
+			cmpAddr = Exe.FindHex(code.repeat(3), addr, addr + 0x40);
+		}
+	}
+    if (cmpAddr < 0)
+        throw Error("Triple comparisons not found");
+
+    /// 2.2 - NOP out the comparisons (a short JMP will get automatically placed)
+    Exe.SetNOPs(cmpAddr, 3 * code.byteCount());
+    
+    return true;
+};

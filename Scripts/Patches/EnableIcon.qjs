@@ -1,0 +1,245 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Authors      : Shinryo, Neo-Mind                                       *
+*   Created Date : 2020-11-07                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Modify the resource table to use the 8bpp 32x32 icon chosen
+///
+///        RestoreIcon - Existing icon will be used 
+///        CustomIcon  - User provides an icon file having an 8bpp 32x32 icon inside
+///
+EnableIcon = function(patchName)
+{	
+	/// 1.1 - Get the Root Resource Directory address
+	let addr = Exe.GetDirAddr(D_Res);
+	
+	/// 1.2 - Load the Resource tree
+	if (ROCL.RsrcTree === undefined)
+		ROCL.RsrcTree = new RsrcEntry(0, addr, 0);
+	
+	/// 2.1 - Get the Resource entry for RT_GROUP_ICON (0xE) 
+	let entry = ROCL.RsrcTree.traverse(0xE)
+	if (entry === false)
+		throw Error("Unable to find icongrp");
+	
+	/// 2.2 - Get the subdir for 119 & 114
+	let subEntry1 = entry.traverse(119);
+	let subEntry2 = entry.traverse(114);
+	
+	if (subEntry1 === false || subEntry2 === false) 
+		throw Error("Unable to find icongrp subdirs (langs)");
+	
+	/// 2.3 - Overwrite the entry for 114 with data from 119
+	Exe.SetHex(subEntry2.Pos + 4, Exe.GetHex(subEntry1.Pos + 4, 8), 8);
+	
+	if (patchName === "CustomIcon")
+	{
+		//============================================//   
+		// Now that icon is enabled lets overwrite it //
+		//============================================//
+		
+		/// 3.1 - Find the entry for RT_GROUP_ICON/119/1042
+		subEntry2 = subEntry1.traverse([1042]);
+		if (subEntry2 === false)
+			throw Error("Unable to find icongrp/lang/bundle");
+	
+		if (!subEntry2.IsFile)
+			throw Error("Bundle entry is not a file");
+		
+		/// 3.2 - Extract the Data Address
+		addr = subEntry2.DataAddr;
+		
+		/// 3.3 - Load the new icon
+		let iconFile = Exe.GetUserInput('$inpIconFile', D_InFile, "Custom Icon", "Enter the icon file", "Inputs/Sample_32x32_8bpp.ico", {filters: "Icon files (*.ico)"});
+		if (iconFile === false)
+			return "Cancelled - No icon file selected";
+		
+		let iconObj = new Icon(iconFile);
+		
+		/// 3.4 - Find an image that meets the spec = 8bpp 32x32
+		let imgEntry = iconObj.Entries.find( e => 
+			(e.bHeight === 32 && e.bWidth === 32 && e.wBitCount === 8 && e.bColorCount === 0)
+		);
+		if (imgEntry === undefined)
+			throw Error("No images in the icon file satisfies the specifications");
+		
+		/// 3.5 - Find a valid RT_ICON with same spec.
+		let count = Exe.GetInt16(addr + 4);
+		addr += 6;
+		
+		let memEntry = false;
+		for (let i = 0; i < count; i++, addr += 14)
+		{
+			let bWidth      = Exe.GetUint8(addr);
+			let bHeight     = Exe.GetUint8(addr+1);
+			let bColorCount = Exe.GetUint8(addr+2);//followed by bReserved, wPlanes
+			let wBitCount   = Exe.GetInt16(addr+6);//followed by dwBytesInRes & nID
+			
+			if (bHeight === 32 &&
+			    bWidth === 32 &&
+			    wBitCount === 8 &&
+			    bColorCount === 0
+			)
+			{
+				memEntry = ROCL.RsrcTree.traverse([0x3, Exe.GetInt16(addr + 12), 0x412]);
+				if (memEntry !== false)
+				{
+					if (imgEntry.dwBytesInRes > Exe.GetInt32(addr+8))
+						throw Error("Image found will not fit in existing space");
+				
+					if (!memEntry.IsFile)
+						memEntry = false;
+					
+					break;
+				}
+			}
+		}
+		if (memEntry === false)
+			throw Error("No suitable icon found in exe");
+		
+		/// 3.6 - Modify the wPlanes and size in bytes from the icon
+		Exe.SetInt16(addr + 4, imgEntry.wPlanes);
+		Exe.SetInt16(addr + 8, imgEntry.dwBytesInRes);
+		
+		/// 3.7 - Finally update the image itself
+		Exe.SetInt16(memEntry.Addr + 4, imgEntry.dwBytesInRes);
+		Exe.SetHex(memEntry.DataAddr, imgEntry.iconImage);
+	}
+	
+	return true;
+}
+
+
+///
+/// \brief Wrappers for individual patches
+///
+RestoreIcon = EnableIcon;
+CustomIcon  = EnableIcon;
+
+if (typeof(Icon) === 'undefined') //avoid redefinition
+{
+	///
+	/// \brief Object representing an icon
+	///
+
+	Icon = class
+	{
+		constructor(name)
+		{
+			/// 1.1 - Open the icon file
+			let handle = new BinFile(name, 'r');
+			if (!handle.Valid)
+				throw Error("Unable to read ico file");
+			
+			/// 1.2 - Read the header entries
+			this.Reserved = handle.ReadUint16();
+			this.Type = handle.ReadUint16();
+			this.ImgCount = handle.ReadUint16();
+			this.Entries = [];
+			
+			/// 2.1 - Read all the image entry & data
+			for (var i = 0; i < this.ImgCount; i++)
+			{
+				this.Entries[i] = {
+					bWidth:       handle.ReadUint8(),
+					bHeight:      handle.ReadUint8(),
+					bColorCount:  handle.ReadUint8(),
+					bReserved:    handle.ReadUint8(),
+					wPlanes:      handle.ReadUint16(),
+					wBitCount:    handle.ReadUint16(),
+					dwBytesInRes: handle.ReadUint32(),
+					dwImgOffset:  handle.ReadUint32()
+				};
+				
+				this.Entries[i].iconImage = handle.ReadHex(
+					this.Entries[i].dwBytesInRes,
+					this.Entries[i].dwImgOffset
+				);
+			}
+			
+			/// 2.2 - Close the file
+			handle.Close();
+		}
+	};
+}
+
+if (typeof(RsrcEntry) === 'undefined') //avoid redefinition
+{
+	///
+	/// \brief Object representing an Resource Directory Entry
+	///
+	RsrcEntry = class
+	{
+		constructor(id, rootAddr, offset, isFile = false)
+		{
+			this.ID = id;
+			this.Addr = rootAddr + offset;
+			this.IsFile = (isFile === true);
+			
+			if (this.IsFile)
+			{
+				this.DataAddr = Exe.Rva2Phy(Exe.GetInt32(this.Addr));
+				this.DataSize = Exe.GetInt32(this.Addr + 4);
+			}
+			else
+			{
+				this.Entries = [];
+	
+				let count = Exe.GetInt16(this.Addr + 12) + Exe.GetInt16(this.Addr + 14);
+				let pos = this.Addr + 16;
+				for (let i = 0; i < count; i++, pos += 8)
+				{
+					id = Exe.GetInt32(pos);
+					offset = Exe.GetInt32(pos + 4);
+					this.Entries[i] = new RsrcEntry(id, rootAddr, offset & 0x7FFFFFFF, offset >= 0);
+					this.Entries[i].Pos = pos;
+				}
+			}
+		}
+		
+		traverse(hierarchy) 
+		{
+			if (Array.isArray(hierarchy) && hierarchy.isEmpty())
+			{
+				return this;
+			}
+			else if (!this.IsFile)
+			{
+				let id = Array.isArray(hierarchy) ? hierarchy[0] : hierarchy;
+				let entry = this.Entries.find(e => e.ID === id);
+				if (entry !== undefined)
+				{
+					if (Array.isArray(hierarchy))
+						return entry.traverse(hierarchy.slice(1));
+					else
+						return entry;
+				}
+			}
+			return false;
+		}
+	};
+}
