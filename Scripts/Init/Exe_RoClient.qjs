@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-11-06                                              *
-*   Last Modified: 2020-11-07                                              *
+*   Last Modified: 2020-11-08                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,9 +34,12 @@ if (typeof(ROCL) === 'undefined')
 	ROCL =
 	{	
 		/// Initialize the expected data members
-		IsRenewal    : false, //Indicates whether executable is RE client
-		IsZero       : false, //Indicates whether executable is the new Zero client
-        HasFP        : false, //Indicates whether executable has Frame Pointer
+		IsRenewal    : false, //Indicates whether executable is RE client.
+		IsZero       : false, //Indicates whether executable is the new Zero client.
+        HasFP        : false, //Indicates whether executable has Frame Pointer.
+		HasLWhidden  : false, //Indicates whether executable has a Hidden Login Window.
+		CashShopAddr : -1,    //The VIRTUAL address of 'NC_CashShop'. Only present if Cash Shop interface is present in client.
+		RouletteAddr : -1,    //The VIRTUAL address of Roulette bmp string. Only present if Roulette interface is present in client.
 		
         GetModHandle : -1,    //The VIRTUAL address of GetModuleHandleA function
         GetProcAddr  : -1,    //The VIRTUAL address of GetProcAddress function
@@ -57,13 +60,20 @@ if (typeof(ROCL) === 'undefined')
 			/// 1.2 - Zero clients will have the RenewSetup Zero string
 			this.IsZero = (Exe.FindAscii("Software\\Gravity Soft\\RenewSetup Zero", PHYSICAL, false) > 0);
 			
-			/// 2.1 - Clients with Frame Pointer will have the characteristic PUSH EBP & MOV EBP, ESP as the first statement and 
+			/// 1.3 - Clients with Frame Pointer will have the characteristic PUSH EBP & MOV EBP, ESP as the first statement and 
 			///       to avoid false match we will prefix sequence of INTs or NOPs (some clients have NOPs instead)
 			let addr = Exe.FindHex(" CC CC CC CC CC 55 8B EC", Exe.GetSectBegin(CODE), Exe.GetSectBegin(CODE) + 0x500);
 			if (addr < 0)
 				addr = Exe.FindHex(" 90 90 90 90 90 55 8B EC", Exe.GetSectBegin(CODE), Exe.GetSectBegin(CODE) + 0x500);
 			
 			this.HasFP = (addr > 0);
+			
+			/// 1.4 - Check the build date & Zero status for Hidden Login Window
+			this.HasLWhidden = Exe.BuildDate > 20100803 && (Exe.BuildDate <= 20171019 || (Exe.BuildDate < 20181114 && !ROCL.Zero));
+			
+			/// 1.5 - Get the address of 'NC_CashShop' & Roulette bmp string
+			this.CashShopAddr = Exe.FindAscii("NC_CashShop");
+			this.RouletteAddr = Exe.FindAscii("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\roullette\\RoulletteIcon.bmp");
 			
 			/// 2.2 - Get the addresses of the respective imported functions (used commonly in various patches)
 			this.GetModHandle = Exe.FindFunc("GetModuleHandleA", "KERNEL32.dll");
