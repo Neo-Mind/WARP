@@ -1,0 +1,195 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Authors      : Ai4rei/AN, Shinryo                                      *
+*   Created Date : 2020-11-10                                              *
+*   Last Modified: 2020-11-10                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Modify CView::SetQuakeInfo and CView::SetQuake functions to return without assigning any values
+///
+DisableEarthQuake = function()
+{
+    /// 1.1 - Find the string '.BMP'
+    let sufAddr = Exe.FindAscii(".BMP");
+    if (sufAddr < 0 && Exe.BuildDate > 20180000)
+	{
+		sufAddr = Exe.FindAscii(".BMP", VIRTUAL, false);
+	}
+    if (sufAddr < 0 && Exe.BuildDate > 20180000)
+	{
+		sufAddr = Exe.FindAscii(".png");
+	}
+
+    if (sufAddr < 0)
+        throw Error("Suffix not found");
+
+    /// 1.2 - Find where its PUSHed
+    let code =
+        PUSH(sufAddr)     //PUSH OFFSET addr; ASCII ".BMP" or ".png"
+    +   MOV(ECX, R32)     //MOV ECX, reg32_A
+    ;
+    addr = Exe.FindHex(code);
+    if (addr < 0)
+	{
+		code =
+			PUSH(sufAddr)    		//PUSH OFFSET addr; ASCII ".BMP"
+		+	LEA(ECX, [R32, POS2WC])	//LEA ECX, [reg32_A + const]
+		;
+		addr = Exe.FindHex(code);
+	}
+    if (addr < 0)
+        throw Error("'.BMP' not used");
+
+    /// 1.3 - Find the SetQuakeInfo call within 0x80 bytes before the PUSH
+    code = CALL(ALLWC); //CALL CView::SetQuakeInfo
+	let quakeAddr;
+    if (Exe.Version >= 9.0)
+    {
+        code +=
+            XOR(EAX, EAX)   //XOR EAX, EAX
+        +   JMP(POS2WC)     //JMP addr
+        ;
+        quakeAddr = Exe.FindHex(code, addr - 0x80, addr);   
+    }
+    else
+    {
+        code +=
+            POP_R           //POP reg32_A
+        +   POP_R           //POP reg32_B
+        +   XOR(EAX, EAX)   //XOR EAX, EAX
+        ;
+        quakeAddr = Exe.FindHex(code, addr - 0x100, addr);
+    }
+
+    if (quakeAddr < 0)
+        throw Error("SetQuakeInfo CALL not found");
+
+    /// 1.4 - Goto the location of SetQuakeInfo
+    quakeAddr = Exe.GetTgtAddr(quakeAddr + 1, PHYSICAL);
+
+    /// 1.5 - Change the first instruction to RETN 0C
+    Exe.SetUint32(quakeAddr, 0x0CC2);//C2 0C 00 00
+
+    /// 2.1 - Find the SetQuake call be within 0xA0 bytes before the PUSH
+    code =
+        PUSH_1             //PUSH 1
+    +   CALL(ALLWC)        //CALL CView::SetQuake
+    ;
+    if (Exe.Version >= 9.0)
+    {
+        code +=
+            XOR(EAX, EAX)  //XOR EAX, EAX
+        +   JMP(POS2WC)    //JMP addr
+        ;
+        quakeAddr = Exe.FindHex(code, addr - 0xA0, addr);
+    }
+    else
+    {
+        code +=
+            POP_R           //POP reg32_A
+        +   POP_R           //POP reg32_B
+        +   XOR(EAX, EAX)   //XOR EAX, EAX
+        ;
+        quakeAddr = Exe.FindHex(code, addr - 0x120, addr);
+    }
+    if (quakeAddr < 0)
+        throw Error("SetQuake CALL not found");
+
+    /// 2.2 - Goto the location of SetQuake
+    quakeAddr = Exe.GetTgtAddr(quakeAddr + 3, PHYSICAL);
+
+    /// 2.3 - Change the first instruction to RETN 14
+    Exe.SetUint32(quakeAddr, 0x14C2);//C2 14 00 00
+	
+    return true;
+};
+
+///
+/// \brief Change the conditional jump to JMP for the comparison of g_useEffect with 0 in the wavy effect creation function
+///
+DisableWavyScreen = function()
+{
+    /// 1.1 - Find the string 'xmas_fild01.rsw'
+    let addr = Exe.FindAscii("xmas_fild01.rsw");
+    if (addr < 0)
+        throw Error("'xmas_fild01.rsw' not found");
+        
+    /// 1.2 - Find all locations where it is assigned to EAX
+    let addrs = Exe.FindHexN( MOV(EAX, addr) ) ;//MOV EAX, OFFSET addr; ASCII "xmas_fild01.rsw"
+    if (addrs.isEmpty())
+        throw Error("'xmas_fild01.rsw' assignment not found");
+        
+    /// 1.3 - Filter out the location where g_useEffect is assigned before the EAX assignment
+    ///       amongst the matches. It will be inside CGameMode::Initialize 
+    let code = MOV([POS3WC], R32); //MOV DWORD PTR DS:[g_useEffect], reg32
+    let effectAddr = -1; 
+	
+	if (addrs.find( function(addr)
+	{
+		addr = Exe.FindHex(code, addr - 8, addr);
+        if (addr > 0)
+        {
+            effectAddr = addr + 2;
+            return true;
+        }
+		else
+		{
+			return false;
+		}
+    }) === undefined
+	)
+        throw Error("'g_useEffect' assignment not found");
+    
+    /// 1.4 - Extract g_useEffect
+    let UseEffect = Exe.GetHex(effectAddr, 4);
+    
+    /// 2.1 - Find the comparison of g_useEffect with 0
+    code =
+        MOV(ECX, R32)          //MOV ECX, reg32
+    +   CALL(ALLWC)            //CALL addr1
+    +   CMP([UseEffect], 0)    //CMP DWORD PTR DS:[g_useEffect], 0
+    +   JE()                   //JE addr2
+    ;
+	
+    addr = Exe.FindHex(code);
+    if (addr < 0)
+    {
+        /// 5.2 - In some clients it is MOV EAX, DWORD PTR DS:[g_useEffect] and TEST EAX, EAX instead of direct CMP
+        code = code.replace( CMP([UseEffect], 0), MOV(EAX, [UseEffect]) + TEST(EAX, EAX) );
+        addr = Exe.FindHex(code);
+    }
+    if (addr < 0)
+        throw Error("'g_useEffect' comparison not found");
+    
+    /// 2.2 - Change the conditional jump
+    Exe.SetJMP(addr + code.byteCount() - 2);
+	
+    return true;
+};
+
+///
+/// \brief Disable for New clients since they use inverted effect now
+///
+DisableWavyScreen.validate = () => Exe.BuildDate <= 20120516;

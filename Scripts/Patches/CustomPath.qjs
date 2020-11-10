@@ -102,7 +102,7 @@ CustomPath = function(index)
 	);
 	
 	if (newFile === false)
-        throw "Cancelled - Path reverted to '" + suffix + "'";
+        throw "Cancelled - Path reverted to '" + data.suffix + "'";
 	
 	/// 2.1 - Allocate space to add the file name
 	let free = Exe.FindSpace(newFile.length);

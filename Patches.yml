@@ -739,7 +739,7 @@ groups:
             - CustomFontHeight:
                 title: Custom Font height
                 recommend: no
-                author: Yommy, Neo-Mind
+                author: Yommy & Neo-Mind
                 desc: Resizes the height of the font used to the user specified value.
 
     - DisableEncr:
@@ -775,3 +775,37 @@ groups:
                 recommend: yes
                 author: Neo-Mind
                 desc: Makes the Cancel button in Character selection window return to login window instead of Quitting.
+    
+    - DisableEffect:
+        title: Disable Effect
+        mutex: false
+        
+        patches:
+            - DisableEarthQuake:
+                title: Disable Quake skill effect
+                recommend: no
+                author: Ai4rei/AN
+                desc:  Disables the Earthquake skill effect.
+            
+            - DisableWavyScreen:
+                title: Disable Hallucination Wavy Screen
+                recommend: yes
+                author: Shinryo
+                desc: Disables the Hallucination effect (screen becomes wavy and lags the client), used by baphomet, horongs, and such.
+    
+    - CustomAura:
+        title: AURA CUSTOMIZATION
+        mutex: false
+        
+        patches:
+            - CustomAuraSprites:
+                title: Custom Aura Sprites
+                recommend: no
+                author: Shinryo
+                desc: This option will make it so your warp portals will not be affected by your aura sprites. For this you will have to make aurafloat.tga and auraring.bmp and place them in your 'data\\texture\\effect' folder.
+            
+            - CustomAuraLimits:
+                title: Custom Aura Display Limits
+                recommend: no
+                author: Neo-Mind
+                desc: Allows the client to display standard auras within user specified limits for Classes and Levels.
