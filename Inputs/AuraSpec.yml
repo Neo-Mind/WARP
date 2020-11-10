@@ -1,0 +1,87 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) 2020 Neo Mind                                            #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2020-11-10                                             #
+#   Last Modified : 2020-11-10                                             #
+#                                                                          #
+############################################################################
+
+- IDs: #First set of Job IDs which uses the same index for all job levels from 99 to 255
+    - [0, 30]
+    - [4001,4052]
+    - [4114,4119]
+    - [4121,4126]
+    - 4128
+    - 4130
+    - 4131
+    - [4133,4139]
+    - 4141
+    - 4142
+    - [4144,4147]
+    - 4149
+    - 4150
+    - [4152,4172]
+    - 4181
+    - [4183,4196]
+    - 4199
+    - 4200
+    - 4203
+    - 4204
+    - 4207
+    - [4210,4217]
+    
+  Map:
+    - JobRange: [99, 255]
+      Index: 1
+
+- IDs: #Second set which uses 3 different indices for 3 seperate job level ranges
+    - [4053,4113]
+    - 4120
+    - 4127
+    - 4129
+    - 4132
+    - 4133
+    - 4140
+    - 4143
+    - 4148
+    - 4151
+    - [4173,4180]
+    - 4182
+    - 4197
+    - 4198
+    - 4201
+    - 4202
+    - 4205
+    - 4206
+    - 4208
+    - 4209
+
+  Map:
+    - JobRange: [ 99, 149]
+      Index: 1
+    
+    - JobRange: [150, 159]
+      Index: 2
+    
+    - JobRange: [160, 255]
+      Index: 3

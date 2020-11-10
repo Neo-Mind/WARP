@@ -375,7 +375,7 @@ CustomAuraLimits = function()
     }
 
     /// 6.1 - Get the Input file
-    let inFile = Exe.GetUserInput('$auraSpec', "Aura Limit Spec", "Enter the Aura Mapping file", "Inputs/AuraSpec.yml");
+    let inFile = Exe.GetUserInput('$auraSpec', D_InFile, "Aura Limit Spec", "Enter the Aura Mapping file", "Inputs/AuraSpec.yml");
     if (inFile === false)
         throw "Cancelled - No mapping file specified";
 
@@ -466,12 +466,13 @@ CustomAuraLimits = function()
     /// 7.3 - Fill in the blanks
     code = SwapFiller(code, 1, GetJobID - (freeVir + 15));
     code = SwapFiller(code, 2, freeVir + code.byteCount());
-
+	
     /// 7.4 - Construct the map data and table to insert
     let mapData = "";
     let tblData = "";
 	
 	addr = size - tblSize;
+
 	AuraSpec.forEach( hash =>
 	{
 		/// 7.4.1 - Add the addr to the map
@@ -487,7 +488,6 @@ CustomAuraLimits = function()
 			
 			addr += 4;
 		});
-		
 		/// 7.4.3 - Add the -1 to end the table
 		tblData += " FF FF";
 		addr += 2;
