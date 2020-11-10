@@ -39,8 +39,8 @@ CustomEncKeys = function(patchName)
     if (!PACKET.Valid)
         throw PACKET.Error;
     
-	/// 1.2 - Check if Packet Encryption is disabled already
-    if (Exe.IsSelected("NoPacketEncr"))
+	/// 1.2 - Check if Packet Encryption is disabled already (unless in test mode)
+    if (!Exe.TestMode && Exe.IsSelected("NoPacketEncr"))
         throw "Cancelled - Disable Packet Encryption is ON";
 	
 	/// 1.3 - Discern the Variable name and index based on patchName

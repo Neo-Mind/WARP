@@ -758,3 +758,20 @@ groups:
                 recommended: false
                 author: Ai4rei/AN
                 desc: Disable kRO Packet ID Encryption. Also known as Skip Packet Obfuscation.
+    
+    - ReturnToLogin:
+        title: RETURN TO LOGIN
+        mutex: false
+
+        patches:
+            - DisConnToLogin:
+                title: Disconnect to Login Window
+                recommend: no
+                author: Neo-Mind
+                desc: Make the client return to Login Window upon disconnection.
+            
+            - CancelToLogin:
+                title: Cancel to Login Window
+                recommend: yes
+                author: Neo-Mind
+                desc: Makes the Cancel button in Character selection window return to login window instead of Quitting.

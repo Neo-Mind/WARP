@@ -74,8 +74,8 @@ NoPacketEncr = function()
     if (!PACKET.Valid)
         throw PACKET.Error;
     
-    /// 1.2 - Check if one of the Packet Key patches are ON
-	if( PktKeyPatches.find( name => Exe.IsSelected(name) ) !== undefined)
+    /// 1.2 - Check if one of the Packet Key patches are ON (unless in test mode)
+	if (!Exe.TestMode && PktKeyPatches.find( name => Exe.IsSelected(name) ) !== undefined)
 		throw "Cancelled - One of the Encryption Key patches are ON";
 
     /// 2.1 - Find the Packet Encryption CALL (may or may not be PACKET.KeySetter)
