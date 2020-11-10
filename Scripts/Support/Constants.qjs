@@ -36,10 +36,10 @@ if (typeof(TAB) === 'undefined') //avoid redefinition
 	Identify("TAB");
 }
 
-if (typeof(NOGAPMSG) === 'undefined') //avoid redefinition
+if (typeof(NOSPACE) === 'undefined') //avoid redefinition
 {
-	NOGAPMSG = new Error("Not enough gap");
-	Identify("NOGAPMSG");
+	NOSPACE = new Error("Not enough space");
+	Identify("NOSPACE");
 }
 
 ///
