@@ -724,3 +724,37 @@ groups:
                 recommend: yes
                 author: Shinryo
                 desc: Changes the window title to user specified string.
+                
+    - CustomFont:
+        title: FONT CUSTOMIZATION
+        mutex: false
+        
+        patches:
+            - CustomFontName:
+                title: Custom Font Name
+                recommend: no
+                author: Ai4rei/AN
+                desc: Makes the client use the user specified font for all Langtypes. The Langtype specific charset is still being enforced, so if the selected font does not support it, the system falls back to a font that does.
+            
+            - CustomFontHeight:
+                title: Custom Font height
+                recommend: no
+                author: Yommy, Neo-Mind
+                desc: Resizes the height of the font used to the user specified value.
+
+    - DisableEncr:
+        title: DISABLE ENCRYPTION
+        mutex: false
+        
+        patches:
+            - NoLoginEncr:
+                title: Disable Login Encryption
+                recommend: true
+                author: Neo-Mind
+                desc: Disable Encryption in Login Packet 0x2b0
+            
+            - NoPacketEncr:
+                title: Disable Packet Encryption
+                recommended: false
+                author: Ai4rei/AN
+                desc: Disable kRO Packet ID Encryption. Also known as Skip Packet Obfuscation.
