@@ -1,0 +1,54 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Ai4rei/AN                                               *
+*   Created Date : 2020-11-11                                              *
+*   Last Modified: 2020-11-11                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief NOP out the conditional jump after comparison inside CSession::IsOnlyEnglish //
+///
+AlwaysAscii = function()
+{
+    /// 1 - Find the comparison
+    let addr = Exe.FindHex(
+        TEST(BYTE_PTR, [R32, R32], 0x80)   //TEST BYTE PTR DS:[reg32_A + reg32_B], 80
+    +   JNZ(WCp)                           //JNZ SHORT addr
+    );
+    if (addr < 0 && Exe.BuildDate > 20190000)
+	{
+		addr = Exe.FindHex(
+			CMP(BYTE_PTR, [R32, R32], 0)   //CMP BYTE PTR DS:[reg32_A + reg32_B], 0
+		+   JL(WCp)                        //JL SHORT addr
+		+	INC(R32)
+		);
+	}
+    if (addr < 0)
+        throw Error("IsOnlyEnglish not found");
+
+    /// 2 - NOP out the jump
+    Exe.SetNOPs(addr + 4, 2);
+	
+    return true;
+};

@@ -1,0 +1,45 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Shinryo                                                 *
+*   Created Date : 2020-11-11                                              *
+*   Last Modified: 2020-11-11                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the ¡º ¡» brackets to ( )
+///
+GuildBrackets = function()
+{
+    /// 1 - Find the format string used for displaying Guild names
+    let addr = Exe.FindAscii("%s\xA1\xBA%s\xA1\xBB", PHYSICAL);
+    if (addr < 0)
+        throw Error("Format string not found");
+
+    /// 2 - Change the brackets to regular parentheses + blanks
+    ///     (since we are converting from UNICODE to ASCII, one
+    ///     extra byte would be there for each korean character)
+    Exe.SetAscii(addr, "%s (%s) ");
+	
+    return true;
+};

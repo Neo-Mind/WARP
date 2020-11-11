@@ -845,3 +845,27 @@ groups:
                 author: Ai4rei/AN & Neo-Mind
                 desc: Translates some of the Hard-coded Korean phrases using a user specified mapping file (defaults to <b>Translations_EN.yml</b>). It also fixes the Korean Job name issue with Langtype.
             
+            - GuildBrackets:
+                title: Use Normal Guild Brackets
+                recommend: yes
+                author: Shinryo
+                desc: On Langtype 0, instead of square-brackets, japanese style brackets are used, this option reverts that behaviour to the normal square brackets i.e. '[ ]'.
+    
+            - AlwaysAscii:
+                title: Use Ascii on All
+                recommend: yes
+                author: Ai4rei/AN
+                desc: Makes the client Enable ASCII irrespective of Font or Langtypes.
+	
+            - OfficialPal:
+                title: Use Official Cloth Palettes
+                recommend: no
+                author: Neo-Mind
+                desc: Use Official Cloth Palette on all Langtypes. Cannot use this if you are using the 'Enable Custom Jobs' patch.
+	
+            - FixChatAt:
+                title: @ Bug Fix
+                recommend: yes
+                author: Shinryo
+                desc: Fixes the bug which prevents writing @ in chat window.
+	

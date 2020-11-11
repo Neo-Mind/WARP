@@ -83,7 +83,7 @@ TranslateClient = function()
 	/// 2.3 - Open the Failed Translations output file - for writing out unexpected translation fails
 	let fp = new TextFile(Warp.Path + "Outputs/FailedTranslations_" + ROCL.BaseName + ".txt", 'w');
 	if (!fp.Valid)
-		throw Error("Unable to create FailedTranslations.txt");
+		throw Error("Unable to create FailedTranslations Output file");
 	
 	/// 3.1 - Retrieve the Section end point addresses
 	let dbegin  = Exe.GetSectBegin(DATA);
