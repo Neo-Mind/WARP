@@ -809,7 +809,24 @@ groups:
                 recommend: no
                 author: Neo-Mind
                 desc: Allows the client to display standard auras within user specified limits for Classes and Levels.
-
+    
+    - CustomExpBars:
+        title: EXP BAR CUSTOMIZATION
+        mutex: false
+        
+        patches:
+            - CustomBarLimits:
+                title: Custom Experience Bar Limits
+                recommend: no
+                author: Neo-Mind
+                desc: Allows client to use custom limits for Base and Job experience bars as per user specified input file.
+            
+            - ShowExpNumbers:
+                title: Show Experience Numbers
+                recommend: no
+                author: Neo-Mind
+                desc: Show Base and Job Experience numbers on top of the respective exp bars in Basic Info Window.
+    
     - UI:
         title: "UI CUSTOMIZATION"
         mutex: false
@@ -856,16 +873,21 @@ groups:
                 recommend: yes
                 author: Ai4rei/AN
                 desc: Makes the client Enable ASCII irrespective of Font or Langtypes.
-	
+            
             - OfficialPal:
                 title: Use Official Cloth Palettes
                 recommend: no
                 author: Neo-Mind
-                desc: Use Official Cloth Palette on all Langtypes. Cannot use this if you are using the 'Enable Custom Jobs' patch.
-	
+                desc: Use Official Cloth Palette on all Langtypes. Cannot use this if you are using the <b>Enable Custom Jobs</b> patch.
+            
             - FixChatAt:
-                title: @ Bug Fix
+                title: '@ Bug Fix'
                 recommend: yes
                 author: Shinryo
                 desc: Fixes the bug which prevents writing @ in chat window.
-	
+            
+            - AlwaysOfficialBG:
+                title: Use Official Login Background
+                recommend: no
+                author: Shinryo
+                desc: Use Official Login Background for all Langtypes.
