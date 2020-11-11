@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author        : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-11-10                                             #
+#   Last Modified : 2020-11-11                                             #
 #                                                                          #
 ############################################################################
 
@@ -809,3 +809,39 @@ groups:
                 recommend: no
                 author: Neo-Mind
                 desc: Allows the client to display standard auras within user specified limits for Classes and Levels.
+
+    - UI:
+        title: "UI CUSTOMIZATION"
+        mutex: false
+        
+        patches:
+            - TildeForMatk:
+                title: Use Tilde for Matk
+                recommend: no
+                author: Neo-Mind
+                desc: Make the client use tilde <b>(~)</b> symbol for Matk in Stats Window instead of Plus <b>(+)</b>.
+            
+            - NoSwearFilter:
+                title: Disable Swear Filter
+                recommend: no
+                author: Shinryo
+                desc: Will allow people to chat using swear words ignoring the contents of <b>manner.txt</b>.
+            
+            - EnableEotFonts:
+                title: Enable Official Custom .eot Fonts
+                recommend: no
+                author: Shinryo
+                desc: This option enables use of Official Custom Fonts (EOT fonts in data folder) for all Langtypes.
+            
+            - SkipServiceSelect:
+                title: Skip Service Selection Screen
+                recommend: no
+                author: Shinryo
+                desc: Jumps directly to the login interface without asking to select a service.
+            
+            - TranslateClient:
+                title: Translate Client
+                recommend: yes
+                author: Ai4rei/AN & Neo-Mind
+                desc: Translates some of the Hard-coded Korean phrases using a user specified mapping file (defaults to <b>Translations_EN.yml</b>). It also fixes the Korean Job name issue with Langtype.
+            

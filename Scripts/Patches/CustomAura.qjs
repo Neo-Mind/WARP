@@ -22,7 +22,7 @@
 *                                                                          *
 *   Authors      : Shinryo, Neo-Mind                                       *
 *   Created Date : 2020-11-10                                              *
-*   Last Modified: 2020-11-10                                              *
+*   Last Modified: 2020-11-11                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -375,14 +375,14 @@ CustomAuraLimits = function()
     }
 
     /// 6.1 - Get the Input file
-    let inFile = Exe.GetUserInput('$auraSpec', D_InFile, "Aura Limit Spec", "Enter the Aura Mapping file", "Inputs/AuraSpec.yml");
+    let inFile = Exe.GetUserInput('$auraSpec', D_InFile, "Aura Limit Spec", "Enter the Aura Mapping file", "Inputs/AuraSpec.yml", {filters: "YAML files (*.yml;*.yaml)"});
     if (inFile === false)
         throw "Cancelled - No mapping file specified";
 
     /// 6.2 - Load the input file which creates the hash table mapping the id ranges to level limits & aura id
 	let AuraSpec = Warp.LoadYaml(inFile);
-	if (AuraSpec === false || !Array.isArray(AuraSpec))
-		throw "Cancelled - Invalid mapping";
+	if (!Array.isArray(AuraSpec))
+		throw "Cancelled - Invalid/non-existent mapping file";
 	
 	/// 6.3 - Calculate the total table size
     let tblSize = 0;
