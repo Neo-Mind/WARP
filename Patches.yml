@@ -999,6 +999,12 @@ groups:
                 author : Neo-Mind
                 desc : Increases the limit of digits displayed while attacking from 6 to 10.
     
+            - CustomFadeDelay:
+                title : Custom fade in/out delay
+                recommend : no
+                author : 4144
+                desc : Change fade in/out time in warps on same map.
+    
     - CustomData:
         title : DATA CUSTOMIZATION
         mutex : false
@@ -1105,7 +1111,7 @@ groups:
                 recommend : no
                 author : Functor & 4144
                 desc : Fix act delay for act files with big amount of frames.
-                
+            
     - CustomChar:
         title : CHARACTER CUSTOMIZATION
         mutex : false

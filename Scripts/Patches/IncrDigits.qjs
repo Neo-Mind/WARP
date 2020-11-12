@@ -121,7 +121,7 @@ IncrDigits = function()
         throw Error("Digit extraction not found");
     
     /// 4.2 - Find the first digit movement to stack location
-    let code = MOV([StkReg, WC], R32); //MOV DWORD PTR SS:[StkReg+x], reg32_C
+    code = MOV([StkReg, WC], R32); //MOV DWORD PTR SS:[StkReg+x], reg32_C
     
     let addr2 = Exe.FindHex(code + " 8B", addr + 0x5, addr + 0x28); //followed by another MOV
     if (addr2 < 0)
