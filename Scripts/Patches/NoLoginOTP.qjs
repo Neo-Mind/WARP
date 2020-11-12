@@ -44,12 +44,12 @@ NoLoginOTP = function()
 	;
 	let push1 = 15;
 	let push2 = 17;
-	let CMode_SendMsgOffset = [23, 1]
 
-	let addr = exe.findCode(code, PTYPE_HEX, true, "\xAB");
+	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Code inside SendMsg missing");
 
+	// let CMode_SendMsgOffset = [23, 1]
 	// logField("CMode_vtable::SendMsg", addr, CMode_SendMsgOffset)
 
 	/// 2 - Change parameter, make client send original login packet first

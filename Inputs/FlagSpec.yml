@@ -36,14 +36,14 @@
 8 : 66
 9 : 67
 
-// Flag Constants Reference ( check consts.txt in server for full list of emoticon constants ).
-// KOREA       13
-// INDONESIA   35
-// PHILIPPINES 48
-// MALAYSIA    49
-// SINGAPORE   50
-// BRAZIL      51
-// INDIA       64
-// RUSSIA      66
-// VIRGIN(Sp)  67
-// CHINESE     70
+# Flag Constants Reference ( check consts.txt in server for full list of emoticon constants ).
+# KOREA       13
+# INDONESIA   35
+# PHILIPPINES 48
+# MALAYSIA    49
+# SINGAPORE   50
+# BRAZIL      51
+# INDIA       64
+# RUSSIA      66
+# VIRGIN(Sp)  67
+# CHINESE     70

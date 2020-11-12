@@ -332,7 +332,7 @@ if (typeof(LUAINT) === 'undefined') // avoid redefinition
 		addLoaders: function(files, refName, tgt = -1)
 		{
 			/// 1.1 - Find the string inside refName
-			let refAddr = Exe.FindText(refName);
+			let refAddr = Exe.FindAscii(refName);
 			if (refAddr < 0)
 				return "Reference file missing";
 			

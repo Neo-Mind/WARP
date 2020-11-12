@@ -129,7 +129,7 @@ EnableProxy = function()
     let csize = code.byteCount();
     
     /// 3.2 - Allocate space for the function
-    let free = Exe.FindGap(0x4 + csize, 0x10); //First 4 bytes are g_saveIP
+    let free = Exe.FindSpace(0x4 + csize, 0x10); //First 4 bytes are g_saveIP
     if (free < 0)
         throw NOSPACE;
     

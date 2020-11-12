@@ -110,7 +110,7 @@ CustomPath = function(index)
         throw NOSPACE;
 	
 	/// 2.2 - Add the name there
-    Exe.AddFromVar(free, varName);
+    Exe.AddFromVar(free, data.varName);
 	
 	/// 2.3 - Update the PUSHed address
     Exe.SetUint32(addr + 1, Exe.Phy2Vir(free, DIFF));

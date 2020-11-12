@@ -183,7 +183,7 @@ IncrDigits = function()
     +   JNE(-0x1E)                   //JNE SHORT addr1
     +   SUB(ESI, FirstDigLoc)        //SUB ESI, FirstDigLoc; Now ESI has number of digits * 4 bits
     +   SAR(ESI, 2)                  //SAR ESI, 2
-    +   (IsRegister(DigCntLoc) 
+    +   (IsReg(DigCntLoc) 
 	?	
 		MOV(DigCntLoc, ESI)			 //MOV DigCntLoc, ESI  
 	:								 //or
