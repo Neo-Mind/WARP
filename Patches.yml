@@ -1099,7 +1099,13 @@ groups:
                 recommend : no
                 author : Jchcc
                 desc : Disable hardcoded status icons and read them only from stateiconimginfo.lub.
-    
+            
+            - FixActDelay:
+                title : Fix Act Delay
+                recommend : no
+                author : Functor & 4144
+                desc : Fix act delay for act files with big amount of frames.
+                
     - CustomChar:
         title : CHARACTER CUSTOMIZATION
         mutex : false

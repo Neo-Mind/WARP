@@ -1,0 +1,71 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Functor, 4144                                          *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2020-11-12                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Pattern missing for 2018+ clients 
+
+///
+/// \brief Fix delay for act files with big number of frames inside CRenderObject_virt28.
+///        Patch idea and source bytes by Functor
+///
+FixActDelay = function()
+{
+    /// 1 - Find the GetDelay CALL 
+    let part1 =
+		FSTP([EBP, WCp])		//FSTP DWORD PTR SS:[EBP+actIndex]      
+	+	MOVSS(XMM0, [EBP, WCp])	//MOVSS XMM0, DWORD PTR SS:[EBP+actIndex]
+	+	XORPS(XMM1, XMM1)		//XORPS XMM1, XMM1
+	+	COMISS(XMM1, XMM0)		//COMISS XMM1, XMM0
+	+	MOVSS([EBP, WCp], XMM0)	//MOVSS DWORD PTR SS:[EBP+actIndex], XMM0
+	;
+	let part2 =
+		JB(WCp)					//JB SHORT addr1
+	+	PUSH(EDI)				//PUSH EDI
+	+	MOV(ECX, EBX)			//MOV ECX, EBX
+	+	CALL()					//CALL CActRes::GetDelay
+	;
+
+    let addr = Exe.FindHex(part1 + part2);
+	if (addr < 0)
+		throw Error("GetDelay CALL missing");
+
+	let addr2 = addr + part1.byteCount();
+	
+	let index = Exe.GetUint8(addr + 2);
+	if (index != Exe.GetUint8(addr + 7) || index != Exe.GetUint8(addr2 - 1))
+		throw Error("False match with different indices");
+	
+	/// 2 - NOP out the conditional Jump
+    Exe.SetNOPs(addr2, 2);
+	
+    return true;
+};
+
+///
+/// \brief Disable for old clients - pattern doesnt seem to be there.
+///
+FixActDelay.validate = () => Exe.BuildDate > 20170000;
