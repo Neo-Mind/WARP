@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-11-01                                              *
-*   Last Modified: 2020-11-07                                              *
+*   Last Modified: 2020-11-12                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -426,6 +426,7 @@ MOVD = function()
 	
 	return Instr.FromParts(data, opCode).toString();
 };
+Identify("MOVQ");
 
 ///
 /// \brief Moving QWORD to float registers and back
@@ -470,3 +471,4 @@ MOVQ = function()
 	
 	return Instr.FromParts(data, opCode).toString();
 };
+Identify("MOVD");

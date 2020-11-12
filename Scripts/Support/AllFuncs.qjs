@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Neo-Mind                                                *
 *   Created Date : 2020-10-29                                              *
-*   Last Modified: 2020-11-07                                              *
+*   Last Modified: 2020-11-12                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -389,6 +389,29 @@ ParseData = function(data, scaled)
 };
 
 ///
+/// \brief Search for a particular instruction using a testing function provided
+///
+FindInstr = function(testFn, from, to)
+{
+	if (typeof(testFn) !== 'function' || typeof(from) !== 'number')
+		return false;
+	
+	if (to === undefined)
+		to = Exe.GetSectEnd(CODE);
+	
+	while (from < to)
+	{
+		let ins = Instr.FromAddr(from);
+		if (testFn(ins))
+			return ins;
+		
+		from = ins.NextAddr;
+	}
+	
+	return false;
+}
+
+///
 /// \brief Simple wrapper
 ///
 Identify = Warp.identify;
@@ -438,7 +461,7 @@ IdentifyMany(
 	"IsNumOrStr", "IsWord", "IsByte",
 	"MakeFiller", "SwapFiller", "Wrap",
 	"BitWidth", "Distance",
-	"CaseAddr", "ParseData",
+	"CaseAddr", "ParseData", "FindInstr",
 	"Identify", "IdentifyClass", 
 	"IdentifyObj", "IdentifyMany"
 );
