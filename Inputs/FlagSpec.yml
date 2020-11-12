@@ -6,82 +6,44 @@
 #                                                                          #
 #   WARP is free software: you can redistribute it and/or modify           #
 #   it under the terms of the GNU General Public License as published by   #
-#   the Free Software Foundation, either version 3 of the License, or      #
+#   the Free Software Foundation- either version 3 of the License- or      #
 #   (at your option) any later version.                                    #
 #                                                                          #
-#   This program is distributed in the hope that it will be useful,        #
+#   This program is distributed in the hope that it will be useful-        #
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
 #   GNU General Public License for more details.                           #
 #                                                                          #
 #   You should have received a copy of the GNU General Public License      #
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#   along with this program.  If not- see <http://www.gnu.org/licenses/>.  #
 #                                                                          #
 #                                                                          #
 ############################################################################
 #                                                                          #
 #   Author        : Neo-Mind                                               #
-#   Created Date  : 2020-11-10                                             #
+#   Created Date  : 2020-11-11                                             #
 #   Last Modified : 2020-11-11                                             #
 #                                                                          #
 ############################################################################
 
-- IDs: #First set of Job IDs which uses the same index for all job levels from 99 to 255
-    - [0, 30]
-    - [4001,4052]
-    - [4114,4119]
-    - [4121,4126]
-    - 4128
-    - 4130
-    - 4131
-    - [4133,4139]
-    - 4141
-    - 4142
-    - [4144,4147]
-    - 4149
-    - 4150
-    - [4152,4172]
-    - 4181
-    - [4183,4196]
-    - 4199
-    - 4200
-    - 4203
-    - 4204
-    - 4207
-    - [4210,4217]
-    
-  Map:
-    - JobRange: [99, 255]
-      Index: 1
+1 : 13
+2 : 35
+3 : 48
+4 : 49
+5 : 50
+6 : 51
+7 : 64
+8 : 66
+9 : 67
 
-- IDs: #Second set which uses 3 different indices for 3 seperate job level ranges
-    - [4053,4113]
-    - 4120
-    - 4127
-    - 4129
-    - 4132
-    - 4133
-    - 4140
-    - 4143
-    - 4148
-    - 4151
-    - [4173,4180]
-    - 4182
-    - 4197
-    - 4198
-    - 4201
-    - 4202
-    - 4205
-    - 4206
-    - 4208
-    - 4209
-
-  Map:
-    - JobRange: [ 99, 149]
-      Index: 1
-    
-    - JobRange: [150, 159]
-      Index: 2
-    
-    - JobRange: [160, 255]
-      Index: 3
+// Flag Constants Reference ( check consts.txt in server for full list of emoticon constants ).
+// KOREA       13
+// INDONESIA   35
+// PHILIPPINES 48
+// MALAYSIA    49
+// SINGAPORE   50
+// BRAZIL      51
+// INDIA       64
+// RUSSIA      66
+// VIRGIN(Sp)  67
+// CHINESE     70

@@ -20,9 +20,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Authors      : Ai4rei/AN, Neo                                          *
+*   Authors      : Ai4rei/AN, Neo-Mind                                     *
 *   Created Date : 2020-11-10                                              *
-*   Last Modified: 2020-11-10                                              *
+*   Last Modified: 2020-11-12                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -179,7 +179,7 @@ TranslateClient = function()
 	});
 	
 	/// 4 - If the fail count is same as the length of the Translations array then report it
-	if (failCount == Translations.length)
+	if (failCount === Translations.length)
 		throw Error("All translations had issues");
 	else
 		return true;

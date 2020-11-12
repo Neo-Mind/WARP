@@ -1,0 +1,65 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : 4144                                                    *
+*   Created Date : 2020-11-12                                              *
+*   Last Modified: 2020-11-12                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Override job id in creation dialog / packet
+///
+CustomCharCreateId = function()
+{
+    /// 1 - Find location where packet 0xA39 is being sent (// 2018-05-30)    
+    let prefix =
+		MOV(EAX, 0xA39)			//MOV EAX, 0A39h
+	+	MOV([EBP, POS4WC], AX)	//MOV WORD PTR SS:[EBP + a39.packet_id], AX
+	+	MOVZX(EAX, [POS4WC])	//MOVZX EAX, DWORD PTR DS:[clrAddr]
+	+	MOV([EBP, POS4WC], AX)	//MOV WORD PTR SS:[EBP + a39.hair_color], AX
+	+	MOVZX(EAX, [POS4WC])	//MOVZX EAX, DWORD PTR DS:[styleAddr]
+	+	MOV([EBP, POS4WC], AX)	//MOV WORD PTR SS:[EBP + a39.hair_style], AX
+	+	MOV(AL, [POS4WC])		//MOV AL, BYTE PTR DS:[slotAddr]
+	+	MOV([EBP, POS4WC], AL)	//MOV BYTE PTR SS:[EBP + a39.slot], AL
+	;
+	
+	let suffix = 
+		MOVSX(EAX, [POS4WC])	//MOVSX EAX, DWORD PTR DS:[jobIdAddr] <-- patch here
+	+	MOV([EBP, POS4WC], EAX)	//MOV DWORD PTR SS:[EBP + a39.starting_job_id], EAX
+    ;
+	
+	let addrs = Exe.FindHexN(prefix + suffix);
+	if (addrs.isEmpty())
+		throw Error("No Match found for Char create");
+	
+	if (addrs.length > 1)
+		throw Error("More than 1 match found, which is too many");
+	
+	/// 2.1 - Retrieve the new value from user
+	let newId = Exe.GetUserInput('$newJobVal', D_Uint32, "Job Id Input", "Enter the new job id", 1);
+	
+    /// 2.2 - Change the assignment of job id 
+	Exe.SetHex(addrs[0] + prefix.byteCount(), MOV(EAX, newId) + NOP + NOP);
+	
+	return true;
+};

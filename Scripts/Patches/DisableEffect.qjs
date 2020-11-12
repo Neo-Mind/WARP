@@ -29,7 +29,7 @@
 ///
 /// \brief Modify CView::SetQuakeInfo and CView::SetQuake functions to return without assigning any values
 ///
-DisableEarthQuake = function()
+NoEarthQuake = function()
 {
     /// 1.1 - Find the string '.BMP'
     let sufAddr = Exe.FindAscii(".BMP");
@@ -129,7 +129,7 @@ DisableEarthQuake = function()
 ///
 /// \brief Change the conditional jump to JMP for the comparison of g_useEffect with 0 in the wavy effect creation function
 ///
-DisableWavyScreen = function()
+NoWavyScreen = function()
 {
     /// 1.1 - Find the string 'xmas_fild01.rsw'
     let addr = Exe.FindAscii("xmas_fild01.rsw");
@@ -192,4 +192,4 @@ DisableWavyScreen = function()
 ///
 /// \brief Disable for New clients since they use inverted effect now
 ///
-DisableWavyScreen.validate = () => Exe.BuildDate <= 20120516;
+NoWavyScreen.validate = () => Exe.BuildDate <= 20120516;

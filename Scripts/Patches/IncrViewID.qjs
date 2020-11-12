@@ -1,0 +1,81 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Shinryo                                                 *
+*   Created Date : 2020-11-12                                              *
+*   Last Modified: 2020-11-12                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the Limit used for allocating and loading Headgear Prefix table 
+///        to user specified value
+///
+IncrViewID = function()
+{
+    /// 1.1 - Find where ReqAccName is PUSHed (only done once in the entire client)
+    addr = Exe.FindHex( PUSH(CVIDL_Addr) );
+    if (addr < 0)
+        throw Error("'ReqAccName' not used");
+
+    /// 1.2 - Calculate the current limit in the client based on date (need a better way than this)
+    let oldValue = (Exe.BuildDate > 20130000 ?  2000 : 1000);
+
+    /// 2.1 - Find all occurrences of the old limit
+	let codes = [
+		MOV(R32, oldValue),
+		MOV(EAX, oldValue),
+		CMP(R32, oldValue),
+		CMP(EAX, oldValue)
+	];
+	
+	let addrs = [];
+	codes.forEach( code =>
+	{
+		addrs = addrs.concat(Exe.FindAllHex(code, addr - 0xA0, addr + 0x50));
+	});
+	
+    if (addrs.isEmpty())
+        throw Error("Old limit not found");
+
+    if (addrs.length > 3)
+        throw Error("Extra matches found for Old limit");
+
+    /// 2.2 - Get the new limit from user
+	let newValue = Exe.GetUserInput('$viewIDLimit', D_Uint32, "View ID Limit", "Enter the new Max Headgear View ID", oldValue, {min: oldValue, max: 32000});
+    if (newValue === false)
+        throw "Cancelled - Limit reverted to " + oldValue;
+
+    /// 2.3 - Replace old with new for all
+	addrs.forEach( addr => Exe.SetFromVar(addr, '$viewIDLimit') );
+	
+    return true;
+};
+
+///
+/// \brief Disable for old clients which doesnt have ReqAccName
+///
+IncrViewID.validate = function()
+{
+	IVID_Addr = Exe.FindAscii("ReqAccName");
+    return (CVIDL_Addr > 0);
+};

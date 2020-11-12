@@ -20,51 +20,58 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author       : Shinryo                                                 *
-*   Created Date : 2020-11-09                                              *
-*   Last Modified: 2020-11-10                                              *
+*   Authors      : GreenBox, Neo-Mind                                      *
+*   Created Date : 2020-11-12                                              *
+*   Last Modified: 2020-11-12                                              *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Zero out all Gravity related Images specified
+/// \brief Change all Conditional jumps to JMP related to Langtype comparisons 
+///        inside CLoginMode::CheckExeHashFromAccServer function
 ///
-RemoveGrImages = function(imgList, startFrom)
+SendMD5Hash = function()
 {
-	imgList.forEach((suffix, i) =>
+    /// 1.1 - Check if Langtype is loaded
+    if (!LANGTYPE.Valid)
+        throw LANGTYPE.Error;
+    
+    /// 1.2 - Prep comparison patterns to look for
+    let patterns = [
+	
+            MOV(R32, [LANGTYPE])     //MOV reg32, DWORD PTR DS:[g_serviceType]
+        +   XOR(EAX, EAX)            //XOR EAX, EAX
+        +   CMP(R32, 6)              //CMP reg32, 6
+        +   JE(WCp)                  //JE SHORT addr -> (addr has MOV EAX, 1)
+        ,
+            TEST(EAX, EAX)           //TEST EAX, EAX ; EAX has [g_serviceType]
+        +   JNE(WCp)                 //JNE SHORT addr1
+        +   MOV(EAX, [POS4WC])       //MOV EAX, DWORD PTR DS:[addr2]
+        ,
+            CMP(EAX, 6)              //CMP EAX, 6  ; EAX has [g_serviceType]
+        +   JNE(WCp)                 //JNE SHORT addr3
+    ];
+    let delta = [2, 7, 2];
+    
+    /// 2.1 - Set the starting addr as the beginning of CODE section
+    let addr = Exe.GetSectBegin(CODE);
+    
+	patterns.forEach( (pat, index) =>
 	{
-		/// 1 - Find the Image suffix
-        let addr = Exe.FindAscii("\\T_" + suffix + ".tga", PHYSICAL, false);
+        /// 2.2 - Find the 'i'th Langtype comparison
+        addr = Exe.FindHex(pat, addr);
         if (addr < 0)
-            throw Error("Suffix No. " + (i + startFrom) + " not found");
-
-        /// 2 - Change the 'T' to NULL
-        Exe.SetUint8(addr + 1, 0);
+            throw Error("Comparison no." + index + " not found");
+        
+        /// 2.3 - Set addr to location after conditional jump
+        addr += pat.byteCount() - delta[index];
+        
+        /// 2.4 - Change the conditional jump
+        Exe.SetJMP(addr);
+        
+        /// 2.5 - Set addr to jumped location so that we can skip over unnecessary bytes in next FindHex call
+        addr = Exe.GetTgtAddr(addr + 1, PHYSICAL, true);
     });
 	
     return true;
 };
-
-///
-/// \brief Wrappers for individual patches
-///
-RemoveAds = () =>
-{
-    let state = RemoveGrImages([
-		"\xC1\xDF\xB7\xC2\xBC\xBA\xC0\xCE", //중력성인
-		"\xC5\xD7\xC0\xD4%d"                //테입%d
-	], 1);
-	
-	if (state && Exe.BuildDate > 20100000)
-	{
-		state = RemoveGrImages([
-			"GameGrade",
-		], 3);
-	}
-	return state;
-};
-
-RemoveLogo = () => 
-	RemoveGrImages([
-		"R%d"
-	], 1);

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Authors      : Shinryo, Secret                                         *
 *   Created Date : 2020-11-10                                              *
-*   Last Modified: 2020-11-10                                              *
+*   Last Modified: 2020-11-12                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -30,7 +30,7 @@
 /// \brief Change the conditional jump after the 1rag1 comparison to 
 ///        JMP over the 1*1 checks
 ///
-Disable1and1 = function()
+No1and1Arg = function()
 {
     /// 1 - Find the string '1rag1'
     let addr = Exe.FindAscii("1rag1");
@@ -72,7 +72,7 @@ Disable1and1 = function()
 /// \brief Change the JZ to JMP after '/account' argument check
 ///        ignoring it's results
 ///
-IgnoreAccParam = function() 
+IgnoreAccArg = function() 
 {
 	/// 1.1 - Find the string '/account:';
 	let addr = Exe.FindAscii("/account:");

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author       : Shinryo                                                 *
 *   Created Date : 2020-11-09                                              *
-*   Last Modified: 2020-11-10                                              *
+*   Last Modified: 2020-11-12                                              *
 *                                                                          *
 \**************************************************************************/
 
@@ -30,7 +30,7 @@
 /// \brief Find the minimum length comparisons of Username/Password/Charname with 4 & change it to 0 
 ///        Any non-empty string is valid now
 ///
-Remove4LetterLimit = function(patchName)
+No4LetterLimit = function(patchName)
 {
 	/// 1.1 - Find all the size comparisons against 4
 	let prefix =
@@ -116,6 +116,6 @@ Remove4LetterLimit = function(patchName)
 ///
 /// \brief Wrappers for individual patches
 ///
-RemoveCharnameLimit = Remove4LetterLimit;
-RemoveUsernameLimit = Remove4LetterLimit;
-RemovePasswordLimit = Remove4LetterLimit;
+NoCharnameLimit = No4LetterLimit;
+NoUsernameLimit = No4LetterLimit;
+NoPasswordLimit = No4LetterLimit;

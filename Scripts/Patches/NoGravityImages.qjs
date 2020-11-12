@@ -1,0 +1,70 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Shinryo                                                 *
+*   Created Date : 2020-11-09                                              *
+*   Last Modified: 2020-11-12                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Zero out all Gravity related Images specified
+///
+NoGravityImages = function(imgList, startFrom)
+{
+	imgList.forEach((suffix, i) =>
+	{
+		/// 1 - Find the Image suffix
+        let addr = Exe.FindAscii("\\T_" + suffix + ".tga", PHYSICAL, false);
+        if (addr < 0)
+            throw Error("Suffix No. " + (i + startFrom) + " not found");
+
+        /// 2 - Change the 'T' to NULL
+        Exe.SetUint8(addr + 1, 0);
+    });
+	
+    return true;
+};
+
+///
+/// \brief Wrappers for individual patches
+///
+NoGravityAds = () =>
+{
+    let state = NoGravityImages([
+		"\xC1\xDF\xB7\xC2\xBC\xBA\xC0\xCE", //중력성인
+		"\xC5\xD7\xC0\xD4%d"                //테입%d
+	], 1);
+	
+	if (state && Exe.BuildDate > 20100000)
+	{
+		state = NoGravityImages([
+			"GameGrade",
+		], 3);
+	}
+	return state;
+};
+
+NoGravityLogo = () => 
+	NoGravityImages([
+		"R%d"
+	], 1);

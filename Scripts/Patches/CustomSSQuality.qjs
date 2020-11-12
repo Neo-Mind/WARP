@@ -1,0 +1,86 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Ai4rei/AN                                               *
+*   Created Date : 2020-11-11                                              *
+*   Last Modified: 2020-11-11                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Modify the JPEG_CORE_PROPERTIES structure assignment inside CRenderer::SaveJPG function to set jquality member to user specified value
+///
+CustomSSQuality = function()
+{
+    /// 1.1 - Find the JPEG_CORE_PROPERTIES member assignments (DIBChannels & DIBColor)
+    let tgt = ROCL.HasFP ? [EBP, NEG2WC] : [ESP, WCp] ; //template for DWORD PTR SS:[EBP-x] or DWORD PTR SS:[ESP+x] as per frame pointer presence
+    
+    let code =
+        MOV(tgt, 3) //MOV tgt, 3; DIBChannels
+    +   MOV(tgt, 2) //MOV tgt, 2; DIBColor
+    ;
+    let addr = Exe.FindHex(code);
+    if (addr < 0) //x > 0x7F for ESP or x < 0x7F for EBP
+    {
+		tgt = ROCL.HasFP ? [EBP, WCn] : [ESP, POS2WC];
+
+        code =
+            MOV(tgt, 3) //MOV tgt, 3; DIBChannels
+        +   MOV(tgt, 2) //MOV tgt, 2; DIBColor
+        ;
+        addr = Exe.FindHex(code);
+    }
+    if (addr < 0)
+        throw Error("JPEG_CORE_PROPERTIES assignment not found");
+
+    let halfSize = code.byteCount() / 2; //Length of 1 assignment
+
+    /// 1.2 - Get new quality value from user
+    let newValue = Exe.GetUserInput('$ssQuality', D_Int8, "Screenshot Quality", "Enter the new quality factor", 50, {min:0, max:100});
+    if (newValue === false)
+        throw "Cancelled - Quality factor reverted to 50";
+
+    /// 2.1 - Get the jquality addr = DIBChannels displacement + 60
+    let jqAddr = Instr.FromAddr(addr).Disp + 60;
+    
+    /// 2.2 - Prepare code to change DIBChannels member assignment to jquality member assignment.
+    ///     By default DIBChannels is 3 and DIBColor is 2 already, so overwriting their assignments doesnt matter
+	
+	code = MOV( [(ROCL.HasFP ? EBP : ESP), jqAddr], newValue); //MOV DWORD PTR SS:[EBP + jqAddr], newValue ;jqAddr is negative or
+						                                       //MOV DWORD PTR SS:[ESP + jqAddr], newValue ;jqAddr is positive
+    
+    /// 2.3 - Write the code to client
+    Exe.SetHex(addr, code);
+    
+    /// 2.4 - NOP out all excess bytes after the code based on the size
+    let codeSize = code.byteCount();
+    if (codeSize < halfSize)
+    {
+        Exe.SetNOPs(addr + codeSize, halfSize - codeSize);
+    }
+    else if (code.byteCount() > halfSize)
+    {        
+        Exe.SetNOPs(addr + codeSize, halfSize * 2 - codeSize);
+    }
+    
+    return true;
+};

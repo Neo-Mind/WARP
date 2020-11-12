@@ -1,0 +1,76 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Jchcc                                                   *
+*   Created Date : 2020-11-11                                              *
+*   Last Modified: 2020-11-11                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Find the max item count display for inventory & replace with user specified value
+///
+CustomInventoryLimit = function()
+{
+	/// 1 - Find the count
+	let code =
+		PUSH(0x64)			// PUSH 64
+	+	LEA(EAX, [EBP, WC])	// LEA EAX, [EBP+Z]
+	+	PUSH(POS3WC)		// PUSH OFFSET addr; ASCII "/%d"
+	;
+
+    let addrs = Exe.FindHexN(code);
+	if (addrs.isEmpty()) //new clients
+	{
+		code =
+			ADD(ECX, 0x64)	// ADD ECX, 64
+		+	PUSH(ECX)		// PUSH ECX
+		+	PUSH(POS3WC)	// PUSH OFFSET addr; ASCII "/%d"
+		;
+		addrs = Exe.FindHexN(code);
+	}
+	if (addrs.isEmpty())
+        throw Error("Item count function missing");
+
+	/// 2.1 - Retrieve the new value from user
+	let val = Exe.GetUserInput('$MaxItemCount', D_Text, "Limit Input", "Enter the max item count", 100, {min: 0, max: 999, saveDefault: true});
+	if (val === true)
+		throw "Cancelled - No max count specified";
+	
+	/// 2.2 - Prep the new string
+	let newStr = "/" + val + "\x00";
+	
+	/// 2.3 - Allocate space for it
+	let free = Exe.FindSpace(newStr.length);
+	if (free < 0)
+		throw NOSPACE;
+	
+	/// 2.4 - Add the string there
+	Exe.AddAscii(free, newStr, newStr.length);
+	
+	/// 3 - Replace all the references
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+	let offset = code.byteCount() - 4;
+	addrs.forEach( matchAddr => Exe.SetTgtAddr(matchAddr + offset, freeVir) );
+	
+	return true;
+};

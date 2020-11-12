@@ -1,0 +1,127 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Shinryo                                                 *
+*   Created Date : 2020-11-12                                              *
+*   Last Modified: 2020-11-12                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change all JZ/JNZ/CMOVNZ after g_readFolderFirst comparison to NOP/JMP/MOV.
+///        Also sets g_readFolderFirst to 1 in the process as failsafe.
+///
+DataFolderFirst = function()
+{
+    /// 1.1 - Find the string 'loading'
+    let addr = Exe.FindAscii("loading");
+    if (addr < 0)
+        throw Error("'loading' not found");
+
+    /// 1.2 - Find where it is PUSHed (g_readFolderFirst is assigned just above it)
+	let rloc = 0;
+	let code, repl, gloc;
+    if (Exe.Version > 11.0) // VC14.16
+	{
+		code =
+			PUSH(addr)         //PUSH addr ; ASCII "loading"
+        +   CMOVNE(R32, R32)   //CMOVNE reg32_A, reg32_B
+        +   MOV([POS4WC], R8)  //MOV BYTE PTR DS:[g_readFolderFirst], reg8_A
+        ;
+        repl = 0x8B90;  //change CMOVNZ to NOP + MOV
+        gloc = code.byteCount() - 4;
+		rloc = 5;
+	}
+	else if (Exe.Version == 11.0) // VC11
+    {
+        code =
+            CMOVNE(R32, R32)   //CMOVNE reg32_A, reg32_B
+        +   MOV([POS4WC], R8)  //MOV BYTE PTR DS:[g_readFolderFirst], reg8_A
+        +   PUSH(addr)         //PUSH addr ; ASCII "loading"
+        ;
+        repl = 0x8B90;  //change CMOVNE to NOP + MOV
+        gloc = 5;
+    }
+    else //VC6-VC10
+    {
+        code =
+            JZ(0x07)                    //JZ SHORT addr - skip the MOV below
+        +   MOV(BYTE_PTR, [POS4WC], 1)  //MOV BYTE PTR DS:[g_readFolderFirst], 1
+        +   PUSH(addr)                  //PUSH addr ; ASCII "loading"
+        ;
+        repl = 0x9090;//Change JZ SHORT to NOPs
+        gloc = 4;
+    }
+    let addr2 = Exe.FindHex(code);
+    if (addr2 < 0)
+        throw Error("'loading' not PUSHed");
+
+    /// 1.2 - Change the conditional instruction appropriately (this is a failsafe)
+    Exe.SetUint16(addr2 + rloc, repl);
+
+    ///===================================================================///
+    /// Client also compares g_readFolderFirst even before it is assigned ///
+    /// sometimes hence we also fix up the comparisons.                   ///
+    ///===================================================================///
+
+    /// 2.1 - Extract g_readFolderFirst
+    let ReadFolderFirst = Exe.GetHex(addr2 + gloc, 4);
+
+    if (Exe.Version >= 9.0)
+    {
+        /// 2.2 - Find the Comparison for VC9+ Clients
+        let addrs = Exe.FindHexN( CMP(BYTE_PTR, [ReadFolderFirst], 0) ); //CMP BYTE PTR DS:[g_readFolderFirst], 0
+        if (addrs.isEmpty())
+            throw Error("Comparisons not found (VC9+)");
+        
+		addrs.forEach( (memAddr, index) =>
+        {
+            /// 2.3 - Find the conditional jump after each comparison
+            addr = Exe.FindHex( JZ(WCp) + CALL(), memAddr + 0x7, memAddr + 0x20);//JZ SHORT addr followed by a CALL
+            if (addr < 0)
+                throw Error("No jump found for comparison No." + index + " (VC9+)");
+
+            /// 2.4 - NOP out the jump
+            Exe.SetNOPs(addr, 2);
+        });
+    }
+    else
+    {
+        /// 3.1 - Find the Comparison for VC6 Clients
+        let addrs = Exe.FindHexN( MOV(AL, [ReadFolderFirst]) ); //MOV AL, BYTE PTR DS:[g_readFolderFirst]
+        if (addrs.isEmpty())
+            throw Error("Comparisons not found (VC6)");
+        
+        addrs.forEach( (memAddr, index) =>
+        {
+            /// 3.2 - Find the conditional jump after each comparison
+            addr = Exe.FindHex( JE(POS2WC), memAddr + 0x5, memAddr + 0x20);//JE addr
+            if (addr < 0)
+                throw Error("No jump found for comparison No." + index + " (VC6)");
+                
+            /// 3.3 - NOP out the jump
+            Exe.SetNOPs(addr, 6);
+        });
+    }
+	
+    return true;
+};

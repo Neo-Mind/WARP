@@ -1,0 +1,75 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Authors      : Shinryo, Neo-Mind                                       *
+*   Created Date : 2020-11-11                                              *
+*   Last Modified: 2020-11-11                                              *
+*                                                                          *
+\**************************************************************************/
+
+
+///
+/// \brief Change the conditional jump to JMP inside WinMain to skip showing the "Invalid Exe" message.
+///        The jump can also be inside a seperate function which WinMain calls.
+///
+NoFilenameCheck = function()
+{
+	/// 1.1 - Find the error string PUSH
+	let addr = Exe.FindHex( PUSH_0 + PUSH_0 + PUSH(NFC_Addr) );
+	if (addr < 0)
+	{
+		addr = Exe.FindHex( PUSH_R + PUSH_R + PUSH(NFC_Addr) );
+	}
+	if (addr < 0)
+		throw Error("Reference PUSH missing");
+
+	/// 1.2 - Find the comparison before it
+	let code =
+		CALL(NEG2WC)    //CALL SearchProcessIn9X
+    +   JMP(5)          //JMP SHORT addr2
+    +   CALL(NEG2WC)    //CALL SearchProcessInNT <= addr1
+    +   TEST(AL, AL)    //TEST AL, AL <= addr2
+    +   JNZ(WCp)        //JNZ SHORT addr3
+    ;
+
+    addr = Exe.FindHex(code, addr - 0x40, addr + 1);
+    if (addr < 0)
+		throw Error("Comparison not found");
+    
+    /// 2 - Change the conditional jump
+    Exe.SetJMP(addr + code.byteCount() - 2);
+	
+    return true;
+};
+
+///
+/// \brief Disable for clients without the korean message string
+///
+NoFilenameCheck.validate = function()
+{
+	NFC_Addr = Exe.FindAscii(
+		"\xC1\xA4\xBB\xF3\xC0\xFB\xC0\xCE\x20\xB6\xF3\xB1\xD7\xB3\xAA\xB7\xCE\xC5\xA9\x20" + 
+		"\xC5\xAC\xB6\xF3\xC0\xCC\xBE\xF0\xC6\xAE\xB8\xA6\x20\xBD\xC7\xC7\xE0\xBD\xC3\xC4\xD1\x20" + 
+		"\xC1\xD6\xBD\xC3\xB1\xE2\x20\xB9\xD9\xB6\xF8\xB4\xCF\xB4\xD9\x2E"
+	);
+	return (NFC_Addr > 0);
+};

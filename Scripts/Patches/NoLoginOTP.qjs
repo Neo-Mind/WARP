@@ -1,0 +1,60 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Jchcc                                                 *
+*   Created Date : 2020-11-12                                              *
+*   Last Modified: 2020-11-12                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Replace the arguments being used for sending OTP
+///
+NoLoginOTP = function()
+{
+	/// 1.1 - Find the code inside UILoginWnd::SendMsg
+	let code =
+		MOV(ECX, [POS4WC])	// 0 mov ecx,[g_modeMgr]
+	+	PUSH_0				// 6 push 0
+	+	PUSH_0				// 8 push 0
+	+	PUSH_0				//10 push 0
+	+	MOV(EAX, [ECX])		//12 mov eax,[ecx]
+	+	PUSH(0x26)			//14 push 26
+	+	PUSH(0x2735)		//16 push 2735
+	+	CALL([EAX, 0x18])	//21 call dword ptr [eax+18h]
+	;
+	let push1 = 15;
+	let push2 = 17;
+	let CMode_SendMsgOffset = [23, 1]
+
+	let addr = exe.findCode(code, PTYPE_HEX, true, "\xAB");
+	if (addr < 0)
+		throw Error("Code inside SendMsg missing");
+
+	// logField("CMode_vtable::SendMsg", addr, CMode_SendMsgOffset)
+
+	/// 2 - Change parameter, make client send original login packet first
+	Exe.SetUint8(addr + push1, 0);       //replace 26 with 0
+	Exe.SetUint32(addr + push2, 0x2710); //replace 2735 with 2710
+
+	return true;
+};

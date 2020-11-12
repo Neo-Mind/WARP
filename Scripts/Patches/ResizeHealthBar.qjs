@@ -1,0 +1,234 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Jchcc, Neo-Mind                                         *
+*   Created Date : 2020-11-12                                              *
+*   Last Modified: 2020-11-12                                              *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Changes the dimensions being PUSHed for creating Player's HP/SP Bar
+///
+ResizePlayerBar = function()
+{
+	/// 1.1 - Find the original size PUSHes
+	let part1 =
+		MOV(ECX, [R32, POS2WC])	//MOV ECX, DWORD PTR DS:[reg32_A+x]
+	+	PUSH(POS4WC)			//PUSH const1
+	+	PUSH(POS4WC)			//PUSH const2
+	+	CALL(ALLWC)				//CALL func
+	+	MOV(ECX, [R32, POS2WC])	//MOV ECX, DWORD PTR DS:[reg32_A+x]
+	;
+	let part2 =
+		PUSH(9)					//PUSH 09
+	+	PUSH(0x3C)				//PUSH 3C
+	;
+
+	let addr = Exe.FindHex(part1 + part2);
+	if (addr < 0 && Exe.Version < 9.0)
+	{
+		part1 =
+			MOV([R32, POS1WC], R32)	//MOV DWORD PTR DS:[reg32_B+y], reg32_C
+		+	MOV(ECX, [R32, POS2WC])	//MOV ECX, DWORD PTR DS:[reg32_A+x]
+		;
+		addr = Exe.FindHex(part1 + part2);
+	}
+	if (addr < 0)
+		throw Error("Size PUSHes missing");
+	
+	let sizeAddr = addr + part1.byteCount();
+
+	/// 1.2 - Find the reference assignment before the half width subtraction
+	let addrs = Exe.FindHexN( MOV([EAX, WCp], 0x32FF32) );    //MOV DWORD PTR DS:[EAX+const], 32FF32
+	if (addrs.isEmpty())
+	{
+		addrs = Exe.FindHexN( MOV([EAX, POS2WC], 0x32FF32) ); //MOV DWORD PTR DS:[EAX+const], 32FF32
+	}
+	if (addrs.length !== 2)
+		throw Error("Invalid no of matches found");
+	
+	/// 1.3 - Now find the subtraction after it. 
+	///       The pattern changes a lot between 2008 - 2019 so this is the only foolproof way
+	
+	let halfAddr = -1;
+	part1 = MOV(EAX, 0x88888889);
+	if (addrs.find( addr =>
+	{
+		let addr2 = Exe.FindHex(part1, addr + 10, addr + 0x80);
+		if (addr2 > 0)
+		{
+			let result = FindInstr(_RPB_SubTest, addr, addr + 0x80);
+			if (result !== false)
+			{
+				halfAddr = result.Addr;
+				return true;
+			}
+		}
+		return false;
+	}) === undefined
+	)
+		throw Error("Half Width subtraction missing");
+	
+	/// 2.1 - Get the new dimensions from user
+	let wid = Exe.GetUserInput('$hpWidth', D_Uint8, "HP Bar Dimensions", "Enter new HP bar width in pixels", 60, {min:1, max:127});
+	let hgt = Exe.GetUserInput('$hpHeight', D_Uint8, "HP Bar Dimensions", "Enter new HP bar height in pixels", 9, {min:1, max:127});
+
+	if (wid === false && hgt === false)
+		throw "Cancelled - Size reverted to default (60x9)";
+	
+	/// 2.2 - Replace at all the locations
+	if (wid !== false)
+	{
+		Exe.SetFromVar(sizeAddr + 3, '$hpWidth');
+		Exe.SetUint8(halfAddr + 2, wid >> 1);
+	}
+	
+	if (hgt !== false)
+	{
+		Exe.SetFromVar(sizeAddr + 1, '$hpHeight');
+	}
+	
+	return true;
+};
+
+///
+/// \brief Testing function for finding the SUB reg32, 1E instruction
+///
+_RPB_SubTest = (ins) => ins.Codes[0] === 0x83 && ins.Immd === 0x1E && ins.MRM.RgOp === 5;
+
+
+// TODO - No matching code found for clients before 2012-04-10RE
+
+///
+/// \brief Adds a function to test for Boss Monsters & change the HP Bar dimensions being PUSHed
+///
+ResizeBossBar = function() 
+{
+	let parts, type, tgtAddr;
+	if (Exe.BuildDate < 20160000)
+	{
+		/// 1,1 - Find the weird calculation used for older clients with the size values
+		parts = [
+			LEA(R32, [2, R32, R32])											//LEA reg32_A, [2*reg32_B + reg32_B]
+		,
+			LEA(R32, Exe.Version < 11.0 ? [R32, R32, 5] : [2, R32, 5])		//LEA reg32_A, [2*reg32_A + 5] or LEA reg32_A, [reg32_A + reg32_A +5]
+		+	PUSH_R															//PUSH reg32_A
+		+	LEA(R32, [4, R32, R32])											//LEA reg32_A, [4*reg32_B + reg32_B]
+		+	(Exe.Version >= 11.0 ? MOV(ECX, R32) : "")						//MOV ECX, reg32_C (in old clients)
+		,
+			LEA(R32, [8, R32, 0x3C])										//LEA reg32_A, [8*reg32_A + 3C]
+		+	PUSH_R															//PUSH reg32_A
+		]
+		;
+		type = 1;
+		
+		tgtAddr = Exe.FindHex(parts.join(''));
+		if (tgtAddr < 0)
+			throw Error("Size assignment missing - Older style");
+	}
+	else
+	{
+		/// 1.2 - Find the size PUSHes (multiple matches will be there)
+		parts = [
+			PUSH(0x5)							//PUSH 5
+		+	PUSH(0x3C)							//PUSH 3C
+		,
+		 	MOV(ECX, EAX)						//MOV ECX, EAX
+		,
+			MOV([R32, POS2WC], EAX)				//MOV DWORD PTR DS:[reg32_C + const], EAX
+		+	CALL(NEG3WC)						//CALL func
+		]
+		;
+		type = 2;
+		
+		let code = parts.join('');
+		
+		let addrs = Exe.FindHexN(code);
+		if (addrs.isEmpty())
+		{
+			code = parts[1] + parts[0] + parts[2];
+			type = 3;
+			addrs = Exe.FindHexN(code);
+		}
+		if (addrs.isEmpty())
+			throw Error("PUSH pattern missing");
+		
+		/// 1.3 - Filter out the correct PUSH based on code before it
+		tgtAddr = addrs.find(memAddr =>
+		{
+			let code2 = 
+				CMP(EBX, -1)			//CMP EBX, -1
+			+	JE(POS2WC)				//JE addr1
+			+	MOV(ESI, [EBP, WCp])	//MOV ESI, DWORD PTR SS:[EBP+x]
+			+	CMP(ESI, -1)			//CMP ESI, -1
+			;
+			let addr = Exe.FindHex(code2, memAddr - 0xA0, memAddr);
+			if (addr < 0)
+			{
+				code2 = code2.replace(
+					JE(POS2WC),				//change JE addr1 to
+					JNE(WCp)				//JNE SHORT addr2
+				+	CMP([EBP, NEG2WC], EBX)	//CMP DWORD PTR SS:[EBP-x], EBX
+				+	JE(WCp)					//JE SHORT addr3
+				);
+
+				addr = Exe.FindHex(code2, memAddr - 0xF0, memAddr);
+			}
+			return (addr > 0);
+		});
+		if (tgtAddr === undefined)
+			throw Error("No proper size PUSHes found");
+	}
+	
+	/// 2.1 - Get the new dimensions from user
+	let wid = Exe.GetUserInput('$mvpHpWidth', D_Uint8, "HP Bar Dimensions", "Enter new HP bar width in pixels", 60, {min:1, max:127});
+	let hgt = Exe.GetUserInput('$mvpHpHeight', D_Uint8, "HP Bar Dimensions", "Enter new HP bar height in pixels", 5, {min:1, max:127});
+
+	if (wid === false && hgt === false)
+		throw "Cancelled - Size reverted to default (60x9)";
+	
+	/// 2.2 - Based on type replace the values
+	if (type === 1)
+	{
+		tgtAddr += parts[0].byteCount();
+		if (hgt !== false)
+			Exe.SetFromVar(tgtAddr + 3, '$mvpHpHeight');
+		
+		tgtAddr += parts[1].byteCount();
+		if (wid !== false)
+			Exe.SetFromVar(tgtAddr + 3, '$mvpHpWidth');
+	}
+	else
+	{
+		if (type === 3)
+			tgtAddr += 2;
+		
+		if (hgt !== false)
+			Exe.SetFromVar(tgtAddr + 1, '$mvpHpHeight');
+	
+		if (wid !== false)
+			Exe.SetFromVar(tgtAddr + 3, '$mvpHpWidth');
+	}
+	
+	return true;		
+};
