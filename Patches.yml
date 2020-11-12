@@ -20,7 +20,7 @@
 #                                                                          #
 ############################################################################
 #                                                                          #
-#   Author        : Neo-Mind                                               #
+#   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
 #   Last Modified : 2020-11-11                                             #
 #                                                                          #
@@ -1134,6 +1134,12 @@ groups:
                 recommend : no
                 author : Secret, A.K.M. & Neo-Mind
                 desc : Always see black silhouette of hidden objects as if the player has intravision status.
+            
+            - CustomQSdelay:
+                title : Custom Quick Switch Delay
+                recommend : no
+                author : mrjnumber1
+                desc : Change quick item switch delay ticks with user specfied value.
     
     - CustomEquipWin:
         title : EQUIP WINDOW CUSTOMIZATION

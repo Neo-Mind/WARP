@@ -20,14 +20,14 @@
 #                                                                          #
 ############################################################################
 #                                                                          #
-#   Author        : Neo-Mind                                               #
+#   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-11                                             #
 #   Last Modified : 2020-11-11                                             #
 #                                                                          #
 ############################################################################
 
-# The array should contain the set of MsgString Line numbers corresponding to Job Names
-# that needs to be skipped while loading the Party Booking Window.
+# The array should contain the set of MsgString Line numbers corresponding to 
+# Job Names that needs to be skipped while loading the Party Booking Window.
 # Msg String Line Numbers 1630-1688 are the Job Names.
 # As an example we have skipped over the entire Archer branch
 
