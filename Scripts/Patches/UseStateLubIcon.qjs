@@ -20,50 +20,44 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author       : Shinryo                                                 *
-*   Created Date : 2020-11-11                                              *
+*   Authors      : Jchcc                                                   *
+*   Created Date : 2020-11-12                                              *
 *   Last Modified: 2020-11-12                                              *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Modify the Serial No. Display function to skip showing it
+/// \brief Change the JA to JMP after the lub file reference
 ///
-NoSerialDisplay = function()
+UseStateLubIcon = function()
 {
-    /// 1 - Find the comparison in the function
-    let code =
-        ADD(EAX, WCp)        //ADD EAX, const1
-    +   CMP(EAX, [ECX, WCp]) //CMP EAX, DWORD PTR DS:[ECX+const2]
-    +   JL(POS1WC)           //JL addr
-    +   PUSH(ESI)            //PUSH ESI
-    ;
-	let cmpOff = 3;
-    let addr = Exe.FindHex(code);
-	if (addr < 0 && Exe.BuildDate > 20180000)
-	{
-		code = code.replace(ADD(EAX, WCp), ADD(EAX, WCp) + SUB(ESP, WCp));
-		cmpOff = 6;
-		addr = Exe.FindHex(code);
-	}
+	/// 1 - Find where 'GetEFSTImgFileName' is PUSHed
+    let addr = Exe.FindHex( PUSH(USLI_Addr) );
     if (addr < 0)
-        throw Error("Comparison not found");
+        throw Error("Reference string not PUSHed");
 
-    /// 2 - Overwrite ADD and CMP statements with code for setting EAX = 0.
-    ///     Since EAX is 0, the JL will always Jump
-	Exe.SetHex(addr,
-        NOP            		    //NOP
-    +   XOR(EAX, EAX)  		    //XOR EAX, EAX
-	);                          
-							    
-	Exe.SetHex(addr + cmpOff,
-		CMP(EAX, 1)    		    //CMP EAX, 1
-    );
-	
+    /// 2 - Find the comparison followed by switch-case
+	let limit = (Exe.Version > 9.0 ? 4 : 3)
+    let code =
+        CMP(R32, limit)			//CMP reg32, 4 or 3
+	+	JA(POS2WC)				//JA addr1
+	+	JMP([4, R32, POS3WC])	//JMP DWORD PTR DS:[reg32*4 + addr2]
+	;
+    addr = Exe.FindHex(code, addr, addr + 0x100);
+    if (addr < 0)
+        throw Error("Comparison missing");
+
+	/// 3 - Change JA to JMP
+    Exe.SetJMP(addr + 3);
+
     return true;
 };
 
 ///
-/// \brief Disable for old clients
+/// \brief Disable for clients without the lub file
 ///
-NoSerialDisplay.validate = () => Exe.BuildDate > 20101116;
+UseStateLubIcon.validate = function()
+{
+	USLI_Addr = Exe.FindAscii("GetEFSTImgFileName");
+	return (USLI_Addr > 0);
+};

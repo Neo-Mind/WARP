@@ -1,0 +1,109 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author       : Curiosity                                               *
+*   Created Date : 2020-11-12                                              *
+*   Last Modified: 2020-11-12                                              *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Newest 2019 clients doesnt follow same function signature and the usual CALL is using pointers now
+
+///
+/// \brief Make models in front of player turn transparent
+///
+RestoreModelCulling = function()
+{
+	/// 1.1 - Find C3dActor::CullByOBB
+	let reg = (ROCL.HasFP ? EBP : ESP);
+    let code = JE(WCp);					//JE SHORT addr
+	
+	if (Exe.BuildDate < 20150000)
+		code += MOV(ECX, [reg, 8]);		//MOV ECX, DWORD PTR SS:[reg+8]
+	
+	code +=
+        LEA(EAX, [ESI, 0x130])   		//LEA EAX, [ESI+130h] (eax = &m_oBoundingBox)
+    +   PUSH_EAX                 		//PUSH EAX
+	;
+	
+	if (Exe.BuildDate < 20150000)
+		code += PUSH(ECX);             	//PUSH ECX
+	else
+		code += PUSH([EBP, 8]);			//PUSH DWORD PTR SS:[EBP+8]
+	
+    let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("CullByOBB not found");
+
+    /// 1.2 - NOP out the conditional jump
+    Exe.SetNOPs(addr, 2);
+    
+	/// 2.1 - Find location of C3dNode::SetToAlpha CALL
+    if (Exe.Version < 9.0)
+        addr = Exe.FindHex( MOV(ECX, [ESI, 8]) + CALL(), addr + 7, addr + 0x40); //MOV ECX, DWORD PTR DS:[ESI+8] and CALL C3dNode::SetToAlpha
+    else
+        addr = Exe.FindHex( MOV(ECX, [ESI]) + CALL(), addr + 7, addr + 0x20); //MOV ECX, DWORD PTR DS:[ESI] and CALL C3dNode::SetToAlpha
+    
+	if (addr < 0)
+		throw Error("SetToAlpha CALL not found");
+    
+	/// 2.2 - Change the CALL to m_isHalfAlpha assignment.
+    code = MOV(BYTE_PTR, [ESI, 0x1EC], 1); // MOV BYTE PTR DS:[ESI+1ECh], 1h ; (m_isHalfAlpha = 1)
+    if (Exe.Version < 9.0)
+        code = NOP + code; //extra byte is there so prefix a NOP
+
+    Exe.SetHex(addr, code);
+	
+	return true;
+};
+
+/** NOTES - Curiosity
+ * This seems to be yet another features that never got completed.
+ *
+ * Source:
+ *
+ * void C3dActor::CullByOBB(lineSegment3d *ray)
+ * {
+ *     if (this->m_isHideCheck)
+ *     {
+ *         if (CheckLineSegmentOBBIntersect(ray, &this->m_oBoundingBox))
+ *             this->m_node->SetAlpha();
+ *     }
+ * }
+ *
+ * C3dActor instances are always initialized with m_isHideCheck = false.
+ * C3dNode::SetAlpha sets C3dNode::m_isAlphaForPlayer, but this letiable
+ * only affects lighting and not opacity. We can instead use
+ * C3dActor::m_isHalfAlpha, which affects C3dActor::m_fadeAlphaCnt.
+ *
+ * Our desired result:
+ *
+ * void C3dActor::CullByOBB(lineSegment3d *ray)
+ * {
+ *     if (1)
+ *     {
+ *         if (CheckLineSegmentOBBIntersect(ray, &this->m_oBoundingBox))
+ *             this->m_isHalfAlpha = 1;
+ *     }
+ * }
+ *
+ */

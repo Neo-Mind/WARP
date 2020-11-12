@@ -834,21 +834,21 @@ groups:
                 desc : Show Base and Job Experience numbers on top of the respective exp bars in Basic Info Window.
     
     - ResizeHealthBar:
-        title: Resize HP Bar
-        mutex: false
+        title : Resize HP Bar
+        mutex : false
         
         patches:
             - ResizePlayerBar:
-                title: Resize Player HP/SP Bar
-                recommend: no
-                author: Jchcc & Neo-Mind
-                desc: Resize the HP/SP bar drawn under playing character as per user specified value.
+                title : Resize Player HP/SP Bar
+                recommend : no
+                author : Jchcc & Neo-Mind
+                desc : Resize the HP/SP bar drawn under playing character as per user specified value.
             
             - ResizeBossBar:
-                title: Resize Boss Monster HP Bar
-                recommend: no
-                author: Jchcc & Neo-Mind
-                desc: Resize the HP bar drawed under Boss monsters as per user specified value.
+                title : Resize Boss Monster HP Bar
+                recommend : no
+                author : Jchcc & Neo-Mind
+                desc : Resize the HP bar drawed under Boss monsters as per user specified value.
     
     - CustomUI:
         title : UI CUSTOMIZATION
@@ -951,6 +951,54 @@ groups:
                 author : Jchcc
                 desc : Make the search in storage UI, case-insensitive.
             
+            - DeleteCharWithEmail:
+                title : Always use email for Char Deletion
+                recommend : no
+                author : Neo-Mind
+                desc : Makes the Client use email as deletion password for all Langtypes.
+            
+            - CustomVendingLimit:
+                title : Custom Vending Limit
+                recommend : no
+                author : Neo-Mind
+                desc : Change the Vending Limit of 1 Billion zeny to user specified value.
+            
+            - NoHelpMsg:
+                title : No Help Message on Login
+                recommend : yes
+                author : Neo-Mind
+                desc : Prevents the Help Message being shown on Login for all Langtypes.
+            
+            - HideWorldView:
+                title : Hide World View Interface
+                recommend: no
+                author : Neo-Mind
+                desc : Hide the World View (Full Map) Interface that is usually shown at the top right.
+            
+            - CloseCutinOnEsc:
+                title : Close cutin on Esc key
+                recommend : no
+                author : 4144 & Neo-Mind
+                desc : Allow closing of cutin window by pressing ESC key.
+                
+            - EnableMailAccess:
+                title : Enable Mail Box access for All Langtypes
+                recommend : no
+                author : Neo-Mind
+                desc : Enables the full use of Mail Boxes and @mail commands (write is disabled for few Langtypes by default in 2013 Clients).
+                
+            - MoveUpItemCount:
+                title : Move Item Count Upwards
+                recommend : no
+                author : Neo-Mind
+                desc : Move Item Count upwards in Shortcut Window so as to align with Skill Level display.
+            
+            - IncrDigits:
+                title : Increase Digit Display
+                recommend : no
+                author : Neo-Mind
+                desc : Increases the limit of digits displayed while attacking from 6 to 10.
+    
     - CustomData:
         title : DATA CUSTOMIZATION
         mutex : false
@@ -1005,22 +1053,52 @@ groups:
                 desc : Enforces client to treat txt file contents as ASCII, not encoded.
             
             - LoadKrExtSettings:
-                title: Always load Korea ExternalSettings lua file
-                recommend: no
-                author: Secret & 4144
-                desc: Makes the client load Korea server's ExternalSettings file for all langtypes.
+                title : Always load Korea ExternalSettings lua file
+                recommend : no
+                author : Secret & 4144
+                desc : Makes the client load Korea server's ExternalSettings file for all langtypes.
             
             - IncrViewID:
-                title: Increase Headgear ViewID Limit
-                recommend: no
-                author: Shinryo
-                desc: Changes the limit for the headgear ViewIDs from default (1000-2000 depending on client) to User Defined value (max 32000).
+                title : Increase Headgear ViewID Limit
+                recommend : no
+                author : Shinryo
+                desc : Changes the limit for the headgear ViewIDs from default (1000-2000 depending on client) to User Defined value (max 32000).
             
             - No3DBoneLimit:
-                title: Remove 3D Bones Limit
-                recommend: no
-                author: Ai4rei/AN & Neo-Mind
-                desc: Enables the use of custom 3D monsters (Granny) by removing the Hard-coded ID limit.
+                title : Remove 3D Bones Limit
+                recommend : no
+                author : Ai4rei/AN & Neo-Mind
+                desc : Enables the use of custom 3D monsters (Granny) by removing the Hard-coded ID limit.
+    
+            - CustomQuestLua:
+                title : Load Custom Quest Lua/Lub files
+                recommend : no
+                author : Neo-Mind
+                desc : Enables loading of custom lua files used for quests. You need to specify the list of files via a YAML file. All the files need to be inside 'lua files\\quest' folder.
+            
+            - IncrMapQuality:
+                title : Increase Map Quality
+                recommend : no
+                author : Curiosity
+                desc : Makes client use 32 bit color maps for Map Textures.
+            
+            - EnableEffectTool:
+                title : Enable Effect for all Maps
+                recommend : no
+                author : Neo-Mind
+                desc : Make the client load the corresponding file in EffectTool folder for all maps.
+            
+            - ItemInfoPerServer:
+                title : Load iteminfo based on char server
+                recommend : no
+                author : Neo-Mind
+                desc : Load ItemInfo file and call main function with selected char server name as argument.
+            
+            - UseStateLubIcon:
+                title : Use Icons from stateiconimginfo.lub
+                recommend : no
+                author : Jchcc
+                desc : Disable hardcoded status icons and read them only from stateiconimginfo.lub.
     
     - CustomChar:
         title : CHARACTER CUSTOMIZATION
@@ -1045,6 +1123,18 @@ groups:
                 author : Neo-Mind
                 desc : Makes the client show the Emblem on top of the character for Battleground mode as well along with GvG.
             
+            - RestoreModelCulling:
+                title : Restore Model Culling
+                recommend: no
+                author : Curiosity
+                desc : Culls models in front of player by turning them transparent.
+            
+            - Intravision:
+                title : Always see hidden/cloaked objects
+                recommend : no
+                author : Secret, A.K.M. & Neo-Mind
+                desc : Always see black silhouette of hidden objects as if the player has intravision status.
+    
     - CustomEquipWin:
         title : EQUIP WINDOW CUSTOMIZATION
         mutex : false
@@ -1078,6 +1168,12 @@ groups:
                 recommend : no
                 author : Shinryo
                 desc : This makes the client use HK_CURRENT_USER registry entries instead of HK_LOCAL_MACHINE. Necessary for users who have no admin privileges on their computer.
+                
+            - CustomMinResolution:
+                title : Custom minimum screen resolution
+                recommend : no
+                author : 4144
+                desc : Change minimum client resolution (width & height) to user specified values from default of 1024x768.
     
     - CustomNW:
         title : NETWORK CUSTOMIZATION

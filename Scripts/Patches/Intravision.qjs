@@ -20,50 +20,59 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author       : Shinryo                                                 *
-*   Created Date : 2020-11-11                                              *
+*   Authors      : Secret, A.K.M., Neo-Mind                                *
+*   Created Date : 2020-11-12                                              *
 *   Last Modified: 2020-11-12                                              *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Modify the Serial No. Display function to skip showing it
+/// \brief Infinite intravision patch
 ///
-NoSerialDisplay = function()
+Intravision = function() 
 {
-    /// 1 - Find the comparison in the function
-    let code =
-        ADD(EAX, WCp)        //ADD EAX, const1
-    +   CMP(EAX, [ECX, WCp]) //CMP EAX, DWORD PTR DS:[ECX+const2]
-    +   JL(POS1WC)           //JL addr
-    +   PUSH(ESI)            //PUSH ESI
-    ;
-	let cmpOff = 3;
-    let addr = Exe.FindHex(code);
-	if (addr < 0 && Exe.BuildDate > 20180000)
+	/// 1 - Find the comparison loop
+	let code;
+	if (Exe.BuildDate < 20100000)
 	{
-		code = code.replace(ADD(EAX, WCp), ADD(EAX, WCp) + SUB(ESP, WCp));
-		cmpOff = 6;
-		addr = Exe.FindHex(code);
+		code = 
+			JNE(2)						//JNE SHORT addr1
+		+	MOV(BL, 1)					//MOV BL, 1
+		+	INC(ECX)					//INC ECX ; addr1
+		+	JMP(WCn)					//JMP SHORT loop_start 
+		+	CMP(BL, 1)					//CMP BL, 1
+		;
 	}
-    if (addr < 0)
-        throw Error("Comparison not found");
-
-    /// 2 - Overwrite ADD and CMP statements with code for setting EAX = 0.
-    ///     Since EAX is 0, the JL will always Jump
-	Exe.SetHex(addr,
-        NOP            		    //NOP
-    +   XOR(EAX, EAX)  		    //XOR EAX, EAX
-	);                          
-							    
-	Exe.SetHex(addr + cmpOff,
-		CMP(EAX, 1)    		    //CMP EAX, 1
-    );
+	else
+	{
+		code =
+			JZ(ALLWC)					//JZ addr
+		+	ADD(EAX, WCp)				//ADD EAX, const  ; Varies 14 in 2017 clients
+		+	CMP(EAX, ECX)				//CMP EAX, ECX
+		+	JNZ(WCn)					//JNZ SHORT loop_start
+		;
+	}
+    let addrs = Exe.FindHexN(code);
+    if (addrs.isEmpty())
+        throw Error("Comparison missing");
 	
-    return true;
+	/// 2 - Change the JZ/JNE SHORT to JMP for the right match
+	code =
+		PUSH_2							//PUSH 2
+	+	MOV(ECX, ESI)					//MOV ECX, ESI
+	+	CALL()							//CALL func
+	;
+	let found = false;
+	addrs.forEach( addr =>
+	{
+		if (Exe.FindHex(code, addr - 0x30, addr) > 0)
+		{
+			found = true;
+			Exe.SetJMP(addr);
+		}
+	});
+	if (!found)
+		throw Error("Only false matches found");
+	
+	return true;
 };
-
-///
-/// \brief Disable for old clients
-///
-NoSerialDisplay.validate = () => Exe.BuildDate > 20101116;

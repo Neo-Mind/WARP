@@ -20,50 +20,42 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author       : Shinryo                                                 *
-*   Created Date : 2020-11-11                                              *
+*   Author       : Curiosity                                               *
+*   Created Date : 2020-11-12                                              *
 *   Last Modified: 2020-11-12                                              *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Modify the Serial No. Display function to skip showing it
+/// \brief Change the pf argument of CTexMgr::CreateTexture to 32 bit for increasing the color depth used while rendering map
 ///
-NoSerialDisplay = function()
+IncrMapQuality = function()
 {
-    /// 1 - Find the comparison in the function
-    let code =
-        ADD(EAX, WCp)        //ADD EAX, const1
-    +   CMP(EAX, [ECX, WCp]) //CMP EAX, DWORD PTR DS:[ECX+const2]
-    +   JL(POS1WC)           //JL addr
-    +   PUSH(ESI)            //PUSH ESI
+    /// 1 - Find CTexMgr::CreateTexture CALL
+	let reg = (Exe.Version < 10.0 ? ECX : EAX);
+    let part1 =
+        PUSH(reg)          //PUSH ECX/EAX ; imgData
+    +   PUSH(0x100)        //PUSH 100 ; h = 256
+    +   PUSH(0x100)        //PUSH 100 ; w = 256
+	;
+	let part2 = 
+		MOV(ECX, POS3WC);  //MOV ECX, OFFSET g_texMgr
+    
+	let addr = Exe.Version < 14.0 ?
+		Exe.FindHex(part1 + part2 + CALL()) //CALL CTexMgr::CreateTexture
+	:
+		Exe.FindHex(part2 + part1 + CALL()) //CALL CTexMgr::CreateTexture
     ;
-	let cmpOff = 3;
-    let addr = Exe.FindHex(code);
-	if (addr < 0 && Exe.BuildDate > 20180000)
-	{
-		code = code.replace(ADD(EAX, WCp), ADD(EAX, WCp) + SUB(ESP, WCp));
-		cmpOff = 6;
-		addr = Exe.FindHex(code);
-	}
     if (addr < 0)
-        throw Error("Comparison not found");
+        throw Error("CreateTexture CALL not found");
 
-    /// 2 - Overwrite ADD and CMP statements with code for setting EAX = 0.
-    ///     Since EAX is 0, the JL will always Jump
-	Exe.SetHex(addr,
-        NOP            		    //NOP
-    +   XOR(EAX, EAX)  		    //XOR EAX, EAX
-	);                          
-							    
-	Exe.SetHex(addr + cmpOff,
-		CMP(EAX, 1)    		    //CMP EAX, 1
-    );
+    /// 2 - Find the pf argument PUSH before it.
+    addr = Exe.FindHex(PUSH_1, addr - 10, addr);//PUSH 1
+    if (addr < 0)
+        throw Error("pf PUSH not found");
+
+    /// 3 - Change PUSH 1 to PUSH 4
+    Exe.SetInt8(addr + 1, 4);
 	
     return true;
 };
-
-///
-/// \brief Disable for old clients
-///
-NoSerialDisplay.validate = () => Exe.BuildDate > 20101116;
