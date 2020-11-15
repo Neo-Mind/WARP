@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Secret, 4144                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -69,6 +69,11 @@ LoadKrExtSettings = function()
 ///
 LoadKrExtSettings.validate = function()
 {
-	LKES_Addr = Exe.FindAscii("Lua Files\\service_korea\\ExternalSettings_kr");
+	LKES_Addr = Exe.FindAscii(
+		ROCL.IsZero ?
+			"Lua Files\\service_korea\\zero_server\\ExternalSettings_kr"
+		:
+			"Lua Files\\service_korea\\ExternalSettings_kr"
+	);
     return (LKES_Addr > 0);
 };

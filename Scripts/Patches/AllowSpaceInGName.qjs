@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shakto                                                 *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -59,7 +59,7 @@ AllowSpaceInGName = function()
 	{
 		Exe.SetJMP(addr); //Change JE to JMP
 	}
-	else if (ins.OpCodes[0] === 0x75 || ins.OpCodes[1] === 0x85)
+	else if (ins.Codes[0] === 0x75 || ins.Codes[1] === 0x85)
 	{
 		Exe.SetNOPs(addr, ins.Size); //NOP out the JNE
 	}
