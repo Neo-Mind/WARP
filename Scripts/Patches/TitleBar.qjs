@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -40,7 +40,12 @@ CustomWinTitle = function()
     /// 1.2 - Find the string 'Ragnarok' or 'Ragnarok : Zero'
 	let oldTitle = "Ragnarok" + (ROC.IsZero ? " : Zero" : "");
     let addr = Exe.FindAscii(oldTitle);
-    if (addr < 0)
+    if (addr < 0 && ROC.IsZero)
+	{
+		oldTitle = "Ragnarok";
+		addr = Exe.FindAscii(oldTitle);
+	}
+	if (addr < 0)
         throw Error("'" + oldTitle + "' not found");
     
     /// 1.3 - Find where it is assigned as the title

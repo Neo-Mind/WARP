@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, 4144, Jchcc                                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -42,13 +42,13 @@ MoveShopIcon = function()
     let addr = Exe.FindHex(code);
     if (addr < 0 && Exe.Version >= 11.0)
     {
-        code = code.replace(PUSH_EAX , PUSH(0x10) + PUSH_EAX );//PUSH 10 before PUSH EAX
+        code = code.replace(PUSH_EAX , PUSH(WCp) + PUSH_EAX );//PUSH const before PUSH EAX
         addr = Exe.FindHex(code);
 
-        /// 1.2 - If this pattern matches then move up the PUSH 10 and increment addr by 2
+        /// 1.2 - If this pattern matches then move up the PUSH and increment addr by 2
         if (addr > 0)
         {
-            Exe.SetUint16(addr, 0x106A);// 6A 10
+            Exe.SetHex(addr, Exe.GetHex(addr + code.byteCount() - 3, 2));
             addr += 2;
         }
     }

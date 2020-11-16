@@ -240,7 +240,7 @@ groups:
                 desc : Restores the Cash Shop Icon in clients that can have them. (Primarily RE clients hide them).
     
     - CashShop:
-        title : CASH SHOP
+        title : CASH SHOP CUSTOMIZATION
         mutex : false
         
         patches:
