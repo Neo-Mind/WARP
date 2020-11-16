@@ -37,7 +37,7 @@ ChatRepeat = function(patchName)
 	/// 1.1 - Ensure the LANGTYPE is loaded
 	if (!LANGTYPE.load())
 		throw LANGTYPE.Error;
-	
+		
 	/// 1.2 - Find the Langtype comparison to identify ::IsSameSentence
 	let part1 = CMP([LANGTYPE], 0xA); //CMP DWORD PTR DS:[g_serviceType], 0A
 	let part2 = JE(WC);               //JE SHORT addr
@@ -53,9 +53,7 @@ ChatRepeat = function(patchName)
 		part2 = JE(POS1WC); //change JE SHORT to JE
 		part4 = JL(POS1WC); //change JL SHORT to JL
 		addr = Exe.FindHex(part1 + part2 + part3 + part4);
-	console.log(part1 + part2 + part3 + part4);
 	}
-	
 	if (addr < 0)
 		throw Error("Langtype comparison missing");
 	
@@ -72,7 +70,7 @@ ChatRepeat = function(patchName)
 		/// 2.3 - Otherwise, get the new limit from the user
 		let limit = Exe.GetUserInput('$chatFloodLimit', D_Uint8, "Chat Limit", "Enter the new limit", 2, {max: 127});
 		if (limit === false)
-			return "Cancelled - Chat Limit reverted to 2";
+			throw "Cancelled - Chat Limit reverted to 2";
 		
 		/// 2.4 - Change the limit in the Exe
 		Exe.SetFromVar(addr - 1, '$chatFloodLimit');
@@ -85,4 +83,4 @@ ChatRepeat = function(patchName)
 /// \brief Wrappers for individual patches
 ///
 UnlimitedChatRepeat = ChatRepeat;
-LimitedChatRepeat = ChatRepeat;
+LimitedChatRepeat   = ChatRepeat;

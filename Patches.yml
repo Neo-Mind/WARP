@@ -313,8 +313,8 @@ groups:
                 author : Neo-Mind
                 desc : Make the client always show Resurrection button with Token of Ziegfried in inventory irrespective of map type.
     
-    - SetWalkDelay:
-        title : WALK DELAY SETUP
+    - WalkDelay:
+        title : WALK DELAY
         mutex : true
         
         patches:

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : MegaByte                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,7 @@
 ///        NoWalkDelay - NOP it out OR 
 ///        CustomWalkDelay - Change it to user specified value
 ///
-SetWalkDelay = function(patchName)
+WalkDelay = function(patchName)
 {
     /// 1.1 - Find the delay addition
 	let reg = (Exe.Version < 9.0 ? EDX : ECX);
@@ -65,5 +65,5 @@ SetWalkDelay = function(patchName)
 ///
 /// \brief Wrappers for individual patches
 ///
-NoWalkDelay     = SetWalkDelay;
-CustomWalkDelay = SetWalkDelay;
+NoWalkDelay     = WalkDelay;
+CustomWalkDelay = WalkDelay;
