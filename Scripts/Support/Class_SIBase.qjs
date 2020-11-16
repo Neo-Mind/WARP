@@ -20,12 +20,11 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author       : Neo-Mind                                                *
-*   Created Date : 2020-10-30                                              *
-*   Last Modified: 2020-11-07                                              *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-10-30                                             *
+*   Last Modified : 2020-11-07                                             *
 *                                                                          *
 \**************************************************************************/
-
 
 ///
 /// \brief Convenience class for representing a SIB byte
