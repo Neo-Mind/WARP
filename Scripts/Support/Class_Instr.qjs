@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-11-07                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -130,7 +130,6 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 		///
 		calcImmSize()
 		{
-	
 			/// 1 - Check the 1 byte imm lists
 			if (OpCodeList.WithImm8.includes(this.Codes[0]) || 
 				(this.Codes[1] !== undefined && OpCodeList.SecWithImm8.includes(this.Codes[1])) || 
@@ -237,20 +236,20 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 			
 			/// 3.4 - Calculate the size (byte count) of Immediate value expected if any
 			result.calcImmSize();
-		
+
 			/// 3.5 - Based on the byte count, extract the immediate value
 			switch (result.BC_Immd)
 			{
 				case 1: 
-					result.Imm = Exe.GetInt8(addr); 
+					result.Immd = Exe.GetInt8(addr);
 					break;
 					
 				case 2: 
-					result.Imm = Exe.GetInt16(addr); 
+					result.Immd = Exe.GetInt16(addr);
 					break;
 					
 				case 4:
-					result.Imm = Exe.GetInt32(addr);
+					result.Immd = Exe.GetInt32(addr);
 					break;
 			}
 			addr += result.BC_Immd;
