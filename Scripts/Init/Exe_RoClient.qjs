@@ -32,41 +32,27 @@ if (typeof(ROC) === 'undefined')
 	/// \brief Hash that stores miscellaneous info about the Ragnarok client
 	///
 	ROC =
-	{	
-		/// Initialize the expected data members
-		RGrfPhy      : -1,    //The PHYSICAL address of 'rdata.grf'.
-		IsRenewal    : false, //Indicates whether executable is RE client.
-		IsZero       : false, //Indicates whether executable is the new Zero client.
-        HasFP        : false, //Indicates whether executable has Frame Pointer.
-		HasLWhidden  : false, //Indicates whether executable has a Hidden Login Window.
-		CashShopAddr : -1,    //The VIRTUAL address of 'NC_CashShop'. Only present if Cash Shop interface is present in client.
-		RouletteAddr : -1,    //The VIRTUAL address of Roulette bmp string. Only present if Roulette interface is present in client.
-		
-        GetModHandle : -1,    //The VIRTUAL address of GetModuleHandleA function
-        GetProcAddr  : -1,    //The VIRTUAL address of GetProcAddress function
-        Kernel32     : -1,    //The VIRTUAL address of "KERNEL32.dll" (becomes lower case for recent clients)
-		BaseName     : "",    //BaseName of current loaded executable
-							  
-		// ImpInfo            //Data used by Custom DLL & HShield patches
-		// RsrcTree	          //Data used by Custom Icon patch
-		
+	{
 		///
-		/// \brief Extracts the new data from a loaded exe.
+		/// \brief Initialize the data members from loaded exe (no seperate load method required)
 		///
 		init : function()
 		{
-			/// 1.1 - Renewal clients will have rdata.grf so set based on its existence
+			/// 1.1 - Get the PHYSICAL address of 'rdata.grf' & if present its a renewal client.
 			this.RGrfPhy = Exe.FindAscii("rdata.grf", PHYSICAL);
 			this.IsRenewal = (this.RGrfPhy > 0);
 			
 			/// 1.2 - Zero clients will have the RenewSetup Zero string
 			this.IsZero = (Exe.FindAscii("Software\\Gravity Soft\\RenewSetup Zero", PHYSICAL, false) > 0);
+		
+			/// 1.3 - Check for Frame Pointer by searching for the characteristic PUSH EBP & MOV EBP, ESP as the first statement of a function 
+			///       To avoid false match we will prefix sequence of INTs (some clients have NOPs instead)
+			let fromAddr = Exe.GetSectBegin(CODE);
+			let toAddr = fromAddr + 0x500;
 			
-			/// 1.3 - Clients with Frame Pointer will have the characteristic PUSH EBP & MOV EBP, ESP as the first statement and 
-			///       to avoid false match we will prefix sequence of INTs or NOPs (some clients have NOPs instead)
-			let addr = Exe.FindHex(" CC CC CC CC CC 55 8B EC", Exe.GetSectBegin(CODE), Exe.GetSectBegin(CODE) + 0x500);
+			let addr = Exe.FindHex(" CC CC CC CC CC 55 8B EC", fromAddr, toAddr);
 			if (addr < 0)
-				addr = Exe.FindHex(" 90 90 90 90 90 55 8B EC", Exe.GetSectBegin(CODE), Exe.GetSectBegin(CODE) + 0x500);
+				addr = Exe.FindHex(" 90 90 90 90 90 55 8B EC", fromAddr, toAddr);
 			
 			this.HasFP = (addr > 0);
 			
@@ -80,7 +66,7 @@ if (typeof(ROC) === 'undefined')
 			/// 2.1 - Get the addresses of the respective imported functions (used commonly in various patches)
 			this.GetModHandle = Exe.FindFunc("GetModuleHandleA", "KERNEL32.dll");
 			this.GetProcAddr  = Exe.FindFunc("GetProcAddress", "KERNEL32.dll");
-	
+
 			/// 2.2 - Also Get the address of "KERNEL32.dll"
 			this.Kernel32 = Exe.FindAscii("KERNEL32.dll");
 			if (this.Kernel32 < 0)
@@ -89,13 +75,16 @@ if (typeof(ROC) === 'undefined')
 			/// 2.3 - Set the base name
 			this.BaseName = Exe.FilePath.split(/[\\/]/).last().remove(/.exe$/);
 			
-			/// 3.1 - Unset ImpInfo member (will be used & loaded only by Custom DLL & HShield patches)
-			this.ImpInfo = undefined;
-			
-			/// 3.2 - Unset RsrcTree member (will be used & loaded only by Custom Icon patch)
-			this.RsrcTree = undefined;
+			/// 2.4 - Keep other members undefined 
+			this.ImpInfo = undefined; //will be used & loaded only by Custom DLL & HShield patches
+			this.RsrcTree = undefined; //will be used & loaded only by Custom Icon patches
 		},
 	};
 	
 	IdentifyObj("ROC");
 }
+
+///
+/// \brief Initialize when Exe is loaded (only load the object in relevant patches)
+///
+ROC.init();
