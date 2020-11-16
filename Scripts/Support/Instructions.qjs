@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-11-07                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -544,33 +544,45 @@ _add_sub_1 = (ocReg, oper, args) =>
 	return Instr.FromParts(data, opCode, oper).toString();
 };
 
-  //===========================//
- // Multiplication & Division //
-//===========================//
+  //========================================//
+ // Complements, Multiplication & Division //
+//========================================//
+
+NOT = function() //1s complement
+{
+	return _cmpl_mul_div(2, arguments);
+};
+
+NEG = function() //2s complement
+{
+	return _cmpl_mul_div(3, arguments);
+};
 
 MUL = function()
 {
-	return _mul_div(4, arguments);
+	return _cmpl_mul_div(4, arguments);
 };
 
 DIV = function()
 {
-	return _mul_div(6, arguments);
+	return _cmpl_mul_div(6, arguments);
 };
 
 IDIV = function()
 {
-	return _mul_div(7, arguments);
+	return _cmpl_mul_div(7, arguments);
 };
 
+Identify("NOT");
+Identify("NEG");
 Identify("MUL");
 Identify("DIV");
 Identify("IDIV");
 
 ///
-/// \brief Creates hex for Multiplication & Division (i.e. MUL, DIV & IDIV)
+/// \brief Creates hex for Complements (NOT & NEG), Multiplication & Division (i.e. MUL, DIV & IDIV)
 ///
-_mul_div = (oper, args) =>
+_cmpl_mul_div = (oper, args) =>
 {
 	let data = new OpData(args);
 	
