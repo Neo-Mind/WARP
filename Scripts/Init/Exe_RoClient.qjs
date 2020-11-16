@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,6 +34,7 @@ if (typeof(ROC) === 'undefined')
 	ROC =
 	{	
 		/// Initialize the expected data members
+		RGrfPhy      : -1,    //The PHYSICAL address of 'rdata.grf'.
 		IsRenewal    : false, //Indicates whether executable is RE client.
 		IsZero       : false, //Indicates whether executable is the new Zero client.
         HasFP        : false, //Indicates whether executable has Frame Pointer.
@@ -55,7 +56,8 @@ if (typeof(ROC) === 'undefined')
 		init : function()
 		{
 			/// 1.1 - Renewal clients will have rdata.grf so set based on its existence
-			this.IsRenewal = (Exe.FindAscii("rdata.grf", PHYSICAL) > 0);
+			this.RGrfPhy = Exe.FindAscii("rdata.grf", PHYSICAL);
+			this.IsRenewal = (this.RGrfPhy > 0);
 			
 			/// 1.2 - Zero clients will have the RenewSetup Zero string
 			this.IsZero = (Exe.FindAscii("Software\\Gravity Soft\\RenewSetup Zero", PHYSICAL, false) > 0);
@@ -82,7 +84,7 @@ if (typeof(ROC) === 'undefined')
 			/// 2.2 - Also Get the address of "KERNEL32.dll"
 			this.Kernel32 = Exe.FindAscii("KERNEL32.dll");
 			if (this.Kernel32 < 0)
-				this.Kernel32 = Exe.FindAscii("kernel32.dll"); // new clients have it in small letters
+				this.Kernel32 = Exe.FindAscii("kernel32.dll", VIRTUAL, false); // new clients have it in small letters
 			
 			/// 2.3 - Set the base name
 			this.BaseName = Exe.FilePath.split(/[\\/]/).last().remove(/.exe$/);

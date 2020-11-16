@@ -35,44 +35,14 @@
 ///
 MultiGRFs = function(patchName)
 {
-    /// 1.1 - Find the string 'data.grf'
-    let dgrfAddr = Exe.FindAscii("data.grf");
-    if (dgrfAddr < 0)
-        throw Error("'data.grf' not found");
-        
-    /// 1.2 - Find where its used in a PUSH & extract the g_FileMgr assignment before/after it
-	let addr, MovFMgr;
-	if (Exe.Version >= 14.0)
-	{
-		let code =
-			MOV(ECX, POS4WC)   	//MOV ECX, OFFSET g_fileMgr
-		+	TEST(EAX, EAX)		//TEST EAX, EAX
-		+	SETNE([POS4WC])		//SETNE BYTE PTR DS:[addr]
-		+	PUSH(dgrfAddr)		//PUSH OFFSET addr1; "data.grf"
-		;
+	/// 1.1 - Load the DGRF object
+	DGRF.load();
+	if (!DGRF.Valid)
+		throw DGRF.Error;
 
-		addr = Exe.FindHex(code);
-		if (addr < 0)
-			throw Error("'data.grf' not PUSHed");
-		
-		MovFMgr = Exe.GetHex(addr, 5);
-		
-		addr += code.byteCount() - 5; //Set addr to location of PUSH
-	}
-	else
-	{
-		let code =
-			PUSH(dgrfAddr)		//PUSH OFFSET addr1; "data.grf"
-		+   MOV(ECX, POS4WC)	//MOV ECX, OFFSET g_fileMgr
-		;
-		
-		addr = Exe.FindHex(code);
-		if (addr < 0)
-			throw Error("'data.grf' not PUSHed");
+	/// 1.2 - Retrieve the refAddr (PUSH location)
+	let addr = DGRF.RefAddr;
 	
-		MovFMgr = Exe.GetHex(addr + 5, 5);
-	}
-
     /// 2.1 - Find the AddPak CALL after the PUSH
     let code = (Exe.Version >= 9.0 && Exe.Version < 14.0) //VC9 - VC11
     ?
@@ -92,12 +62,22 @@ MultiGRFs = function(patchName)
     ;
     
     let callAddr = Exe.FindHex(code, addr + 5, addr + 40);
-    if (callAddr < 0 && Exe.Version >= 9.0 && Exe.Version < 14.0)
+    if (callAddr < 0)
 	{
-		code = code.replace(MOV(R32, [POS3WC]), "");
-		callAddr = Exe.FindHex(code, addr + 5, addr + 40);
+		if (Exe.Version > 14.0)
+		{
+			code =
+				CALL(ALLWC)         //CALL CFileMgr::AddPak
+			+	PUSH(POS3WC)		//PUSH OFFSET addr; ASCII "rdata.grf"
+			;
+			callAddr = Exe.FindHex(code, addr + 5, addr + 40);
+		}
+		else if (Exe.Version >= 9.0 && Exe.Version < 14.0)
+		{
+			code = code.replace(MOV(R32, [POS3WC]), "");
+			callAddr = Exe.FindHex(code, addr + 5, addr + 40);
+		}
 	}
-	
     if (callAddr < 0)
         throw Error("AddPak CALL not found");
 
@@ -112,16 +92,15 @@ MultiGRFs = function(patchName)
 	///       Only the uncommon activities are being done in the seperate functions
 	///
 	if (patchName === "GRFsFromIni")
-		_MG_INI(dgrfAddr, MovFMgr, callAddr, AddPak);
+		_MG_INI(callAddr, AddPak);
     else
-        _MG_EMB(MovFMgr, callAddr, AddPak);
+        _MG_EMB(callAddr, AddPak);
     
 	/// 3.2 - Find the string 'rdata.grf' and zero it out if present
-    addr = Exe.FindAscii("rdata.grf", PHYSICAL);
-    if (addr > 0)
-        Exe.SetInt8(addr, 0);
-
-	return true;
+	if (ROC.IsRenewal)
+		Exe.SetInt8(ROC.RGrfPhy, 0);
+	
+    return true;
 };
 
 ///
@@ -133,27 +112,27 @@ GRFsEmbedded = MultiGRFs;
 ///
 /// \brief Adds the function to read INI and hacks AddPak CALL which loads data.grf to use it
 ///
-_MG_INI = (dgrfAddr, MovFMgr, callAddr, AddPak) =>
+_MG_INI = (callAddr, AddPak) =>
 {
 	/// 1.1 - Get the essential addresses for our function
-    if (ROCL.GetModHandle < 0)
+    if (ROC.GetModHandle < 0)
         throw Error("GetModuleHandleA not found");
         
-    if (ROCL.GetProcAddr < 0)
+    if (ROC.GetProcAddr < 0)
         throw Error("GetProcAddress not found");
     
-    if (ROCL.Kernel32 < 0)
+    if (ROC.Kernel32 < 0)
         throw Error("'KERNEL32.dll' not found");
     
 	/// 1.2 - Create the function code
     let code =
         ENTER(0x80, 0)                   //ENTER 80, 0
     +   PUSHAD                           //PUSHAD
-    +   PUSH(ROCL.Kernel32)              //PUSH addr1 ; ASCII "KERNEL32"
-    +   CALL([ROCL.GetModHandle])        //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
+    +   PUSH(ROC.Kernel32)               //PUSH addr1 ; ASCII "KERNEL32"
+    +   CALL([ROC.GetModHandle])         //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
     +   TEST(EAX, EAX)                   //TEST EAX, EAX
     +   JZ(0x23)                         //JZ SHORT addr2
-    +   MOV(EDI, [ROCL.GetProcAddr])     //MOV EDI,DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
+    +   MOV(EDI, [ROC.GetProcAddr])      //MOV EDI,DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
     +   PUSH(MakeFiller(1))              //PUSH addr3 ; ASCII "GetPrivateProfileStringA"
     +   MOV(EBX, EAX)                    //MOV EBX, EAX
     +   PUSH_EAX                         //PUSH EAX ; hModule
@@ -188,7 +167,7 @@ _MG_INI = (dgrfAddr, MovFMgr, callAddr, AddPak) =>
     +   JZ(0xE)                          //JZ SHORT addr7
     +   PUSH(EDX)                        //PUSH EDX
     +   PUSH(EBX)                        //PUSH EBX
-    +   MovFMgr                          //MOV ECX, g_fileMgr
+    +   DGRF.MovFMgr                     //MOV ECX, g_fileMgr
     +   CALL(MakeFiller(5))              //CALL CFileMgr::AddPak()
     ;
     let pakPos = code.byteCount();
@@ -202,7 +181,7 @@ _MG_INI = (dgrfAddr, MovFMgr, callAddr, AddPak) =>
     +   TEST(EDX, EDX)                   //TEST EDX, EDX
     +   JNZ(0x20)                        //JNZ SHORT addr9
     +   PUSH(MakeFiller(4))              //PUSH addr5 ; INI filename
-    +   PUSH(dgrfAddr)                   //PUSH dgrfAddr ; "data.grf"
+    +   PUSH(DGRF.Addr)                   //PUSH OFFSET addr ; "data.grf"
     +   MOV(WORD_PTR, [EBP, -2], 0x32)   //MOV WORD PTR SS:[EBP-2], 32
     +   LEA(EAX, [EBP, -2])              //LEA EAX, [EBP-2]
     +   PUSH_EAX                         //PUSH EAX
@@ -212,7 +191,7 @@ _MG_INI = (dgrfAddr, MovFMgr, callAddr, AddPak) =>
     +   JNZ(-0x69)                       //JNZ SHORT
     +   POPAD                            //POPAD
     +   LEAVE                            //LEAVE
-    +   RETN + " 00"                   //RETN and a gap before strings begin
+    +   RETN() + " 00"                   //RETN and a gap before strings begin
     ;
 	
 	/// 2.1 - Get the INI file name from user
@@ -260,7 +239,7 @@ _MG_INI = (dgrfAddr, MovFMgr, callAddr, AddPak) =>
 ///
 /// The grf file names are retrieved in order from user specified ini file
 ///
-_MG_EMB = (MovFMgr, callAddr, AddPak) =>
+_MG_EMB = (callAddr, AddPak) =>
 {
     /// 1.1 - Get the INI file from user to read
     let file = Exe.GetUserInput('$inpMultGRF', D_InFile, "File Input", "Enter your INI file", "Inputs/Sample_DATA.INI");
@@ -279,7 +258,6 @@ _MG_EMB = (MovFMgr, callAddr, AddPak) =>
     while (!handle.AtEnd())
     {
         let line = handle.ReadLine().trim();
-		console.info(line);
         let matches = line.match(/^(\d)\s*=\s*(.*)/);
         if (!matches)
             continue;
@@ -300,7 +278,7 @@ _MG_EMB = (MovFMgr, callAddr, AddPak) =>
     /// 2.1 - Prepare template for load 1 GRF (same needs to be repeated for all GRF files)
     let template =
         PUSH(MakeFiller(1))  //PUSH OFFSET addr; GRF name
-    +   MovFMgr              //MOV ECX, OFFSET g_fileMgr
+    +   DGRF.MovFMgr         //MOV ECX, OFFSET g_fileMgr
     +   CALL(MakeFiller(2))  //CALL CFileMgr::AddPak()
     ;
     let tsize = template.byteCount();

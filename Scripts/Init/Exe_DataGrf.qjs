@@ -1,0 +1,115 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-11-16                                             *
+*   Last Modified : 2020-11-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+if (typeof(DGRF) === 'undefined')
+{
+	///
+	/// \brief Hash that stores info about Data.grf
+	///
+	DGRF =
+	{	
+		///
+		/// \brief Initializes the expected data members
+		///
+		init : function()
+		{
+			this.Addr = -1;    //VIRTUAL address of 'data.grf'
+			this.RefAddr = -1; //The address where it is referenced
+			this.MovFMgr = ''; //The MOV ECX, g_FileMgr code
+		
+			this.Ready = false;
+			this.Valid = false;
+			this.Error = '';
+		},
+		
+		///
+		/// \brief Loads the info from the current executable
+		///
+		load: function()
+		{
+			if (this.Ready)
+				return;
+			
+			/// 0 - Indicate that the object is ready & set the validity to false by default
+			this.Ready = true;
+			this.Valid = false;
+				
+			/// 1 - Find 'data.grf'
+			this.Addr = Exe.FindAscii("data.grf");
+			if (this.Addr < 0)
+			{
+				this.Error = new Error("'data.grf' not found");
+				return;
+			}
+			
+			/// 1.2 - Find where its used in a PUSH. Save the address & 
+			///		  extract the g_FileMgr assignment before/after it
+			let addr;
+			if (Exe.Version >= 14.0)
+			{
+				let code =
+					MOV(ECX, POS4WC)   	//MOV ECX, OFFSET g_fileMgr
+				+	TEST(EAX, EAX)		//TEST EAX, EAX
+				+	SETNE([POS4WC])		//SETNE BYTE PTR DS:[addr]
+				+	PUSH(this.Addr)		//PUSH OFFSET addr1; "data.grf"
+				;
+
+				addr = Exe.FindHex(code);
+				if (addr > 0)
+				{
+					this.RefAddr = addr + code.byteCount() - 5;
+					this.MovFMgr = MovFMgr = Exe.GetHex(addr, 5);
+				}
+			}
+			if (addr === undefined || addr < 0)
+			{
+				let code =
+					PUSH(this.Addr)		//PUSH OFFSET addr1; "data.grf"
+				+   MOV(ECX, POS4WC)	//MOV ECX, OFFSET g_fileMgr
+				;
+		
+				addr = Exe.FindHex(code);
+				if (addr < 0)
+				{
+					this.Error = new Error("'data.grf' not used");
+					return;
+				}
+				
+				this.RefAddr = addr;
+				this.MovFMgr = Exe.GetHex(addr + 5, 5);
+			}
+			
+			this.Valid = true;
+			this.Error = '';
+		},		
+	};
+	
+	IdentifyObj("DGRF");
+}
+
+DGRF.init();
