@@ -22,9 +22,11 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
+
+// TODO - Not working for clients before 2017
 
 ///
 /// \brief Find the max party value inside UIMessengerGroupWnd_virt68
@@ -43,7 +45,7 @@ CustomPartyLimit = function()
 	+	CALL()				// CALL CSession_GetNumParty
 	;
 	
-    addr = Exe.FindHex(code, addr, addr + 0x60);
+    addr = Exe.FindHex(code, addr, addr + 0x70);
     if (addr < 0)
         throw Error("GetNumParty CALL missing");
 

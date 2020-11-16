@@ -936,7 +936,7 @@ groups:
             - CustomInventoryLimit:
                 title : Custom Inventory Limit
                 recommend : no
-                author : Jchcc
+                author : Jchcc & Neo-Mind
                 desc : Change the Maximum no of items in inventory to user specified value.
             
             - CustomPartyLimit:

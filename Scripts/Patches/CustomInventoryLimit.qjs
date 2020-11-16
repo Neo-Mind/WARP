@@ -20,11 +20,13 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Jchcc                                                  *
+*   Author(s)     : Jchcc, Neo-Mind                                        *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
+
+// TODO - Not working for clients before 2017
 
 ///
 /// \brief Find the max item count display for inventory & replace with user specified value
@@ -34,25 +36,38 @@ CustomInventoryLimit = function()
 	/// 1 - Find the count
 	let code =
 		PUSH(0x64)			// PUSH 64
-	+	LEA(EAX, [EBP, WC])	// LEA EAX, [EBP+Z]
+	+	LEA(EAX, [EBP, WC])	// LEA EAX, [EBP+const]
 	+	PUSH(POS3WC)		// PUSH OFFSET addr; ASCII "/%d"
 	;
 
     let addrs = Exe.FindHexN(code);
-	if (addrs.isEmpty()) //new clients
+	if (addrs.isEmpty()) //newer clients
 	{
-		code =
-			ADD(ECX, 0x64)	// ADD ECX, 64
-		+	PUSH(ECX)		// PUSH ECX
-		+	PUSH(POS3WC)	// PUSH OFFSET addr; ASCII "/%d"
-		;
+		if (Exe.Version > 11.0)
+		{
+			code =
+				LEA(EAX, [EBP, WC])	// LEA EAX, [EBP+const]
+			+	ADD(R32, 0x64)	    // ADD reg32_A, 64 ;reg32_A can be EAX or ECX
+			+	PUSH_R   		    // PUSH reg32_A
+			+	PUSH(POS3WC)	    // PUSH OFFSET addr; ASCII "/%d"
+			;
+		}
+		else
+		{
+			code =
+				ADD(R32, 0x64)	    // ADD reg32_A, 64 ;reg32_A can be EAX or ECX
+			+	PUSH_R   		    // PUSH reg32_A
+			+	LEA(EAX, [EBP, WC])	// LEA EAX, [EBP+const]
+			+	PUSH(POS3WC)	    // PUSH OFFSET addr; ASCII "/%d"
+			;
+		}
 		addrs = Exe.FindHexN(code);
 	}
 	if (addrs.isEmpty())
         throw Error("Item count function missing");
 
 	/// 2.1 - Retrieve the new value from user
-	let val = Exe.GetUserInput('$MaxItemCount', D_Text, "Limit Input", "Enter the max item count", 100, {min: 0, max: 999, saveDefault: true});
+	let val = Exe.GetUserInput('$MaxItemCount', D_Uint32, "Limit Input", "Enter the max item count", 100, {max: 999, saveDefault: true});
 	if (val === true)
 		throw "Cancelled - No max count specified";
 	
