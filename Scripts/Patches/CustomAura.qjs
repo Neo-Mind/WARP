@@ -22,11 +22,10 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
-// TODO - Pre-2010 clients need fixing
 // TODO - AuraSprites is having issue finding the 2nd set of PUSHes in 2019 onwards
 
 ///
@@ -107,7 +106,7 @@ CustomAuraSprites = function()
     /// we are still going to keep it as failsafe ///
     ///===========================================///
 
-    if (Exe.BuildDate >= 20110700)
+    if (Exe.BuildDate >= 20110700 && Exe.Version < 14)
     {
         /// 4.1 - Find the second pattern
         let code =
@@ -349,7 +348,7 @@ CustomAuraLimits = function()
             throw Error("Zero assignment not found");
 
         /// 5.7 - Save it (only needed for new types)
-        AssignZero = Instr.fromAddr(addr).toString();
+        AssignZero = Instr.FromAddr(addr).toString();
 
         /// 5.8 - Setup the Aura constants
         AuraConsts = [" 7D", " 93", " 92"];

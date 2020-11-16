@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -43,7 +43,7 @@ CustomBarLimits = function()
 
     let refAddr = Exe.FindHex(code);
     if (refAddr < 0)
-        throw Error("Base coord PUSHes not found");
+        throw Error("Base coord PUSHes missing");
 
     /// 1.2 - Find the Job ID fetcher CALL before the first reference
     code =
@@ -89,7 +89,7 @@ CustomBarLimits = function()
 
     addr = Exe.FindHex(code, afterBB, afterBB + 0x100);
     if (addr < 0)
-        throw Error("Base level address not found");
+        throw Error("Base level address missing");
     
     /// 2.2 - Extract the address 
     let BaseLevel = Instr.FromAddr(addr).Disp; //this is easier and will remain accurate even if some changes happen in later versions
@@ -101,7 +101,7 @@ CustomBarLimits = function()
 		addr = Exe.FindHex( MOV(EDX, [ESI, POS1WC]), afterBB, refAddr);//MOV EDX, DWORD PTR DS:[ESI+const]
 	
     if (addr < 0)
-        throw Error("First ESI addr not found");
+        throw Error("First ESI ptr missing");
     
     /// 2.4 - Extract the const (which is HideBase) 
     let HideBase = Instr.FromAddr(addr).Disp;
@@ -134,7 +134,7 @@ CustomBarLimits = function()
 		addr2 = Exe.FindHex( code, addr, refAddr + 0x60);
     }
     if (addr2 < 0)
-        throw Error("End of Base not found");
+        throw Error("End of Base missing");
     
     /// 3.2 - Save the location of MOV ECX
     let baseEnd = addr2 + code.byteCount() - 5;
@@ -171,7 +171,7 @@ CustomBarLimits = function()
 		}
 	}
     if (addr < 0)
-        throw Error("Job level comparison not found");
+        throw Error("Job level comparison missing");
     
     /// 3.4 - Extract the Address
     let JobLevel = Instr.FromAddr(addr + delta).Disp;
@@ -195,7 +195,7 @@ CustomBarLimits = function()
 		addr2 = Exe.FindHex(code, addr + 7, addr + 0x60);
 	}
     if (addr2 < 0)
-        throw Error("Job coord PUSHes not found");
+        throw Error("Job coord PUSHes missing");
     
     /// 3.6 - Save location after the CALL as jobEnd
     let jobEnd = addr2 + code.byteCount();
@@ -356,47 +356,63 @@ ShowExpNumbers = function()
 
     /// 2.1 - Find the double PUSH pattern after the above PUSH (addresses of Total and Current Exp values are being sent as args to be filled)
     code =
-        MOV(ECX, [R32, POS1WC])   //MOV ECX, DWORD PTR DS:[reg32_B + const]
-    +   PUSH(POS3WC)              //PUSH totExp
-    +   PUSH(POS3WC)              //PUSH curExp
-    +   CALL()                    //CALL loaderFunc
+        MOV(ECX, [R32, POS1WC])     //MOV ECX, DWORD PTR DS:[reg32_B + const]
+    +   PUSH(POS3WC)                //PUSH totExp
+    +   PUSH(POS3WC)                //PUSH curExp
+    +   CALL()                      //CALL loaderFunc
     ;
-
+	let totOffset = 7; //6 from MOV and 1 for PUSH opcode
+	
     let pushAddr = Exe.FindHex(code, addr, addr + 0x300);
+	if (pushAddr < 0)
+	{
+		code =
+			MOV(ECX, [R32, POS1WC]) //MOV ECX, DWORD PTR DS:[reg32_B + const]
+		+   PUSH([POS4WC])          //PUSH DWORD PTR DS:[totExp]
+		+   PUSH([POS4WC])          //PUSH DWORD PTR DS:[curExp.sign bit]
+		+   PUSH([POS4WC])          //PUSH DWORD PTR DS:[curExp]
+		+   CALL()                  //CALL loaderFunc
+		;
+		
+		totOffset = 8; //6 from MOV and 2 for PUSH DWORD PTR opcode
+		pushAddr = Exe.FindHex(code, addr, addr + 0x300);
+	}
     if (pushAddr < 0)
         throw Error("Base Exp addrs not PUSHed");
 
-    /// 2.2 - Extract the PUSHed values (addresses of Total & Current Base Exp values)
-    let TotExpBase = Exe.GetInt32(pushAddr + 7);
-    let CurExpBase = Exe.GetInt32(pushAddr + 12);
-    
+	/// 2.2 - Extract the Total Exp address
+    let TotExpBase = Exe.GetInt32(pushAddr + totOffset);
+	
     /// 2.3 - Set pushAddr to location after the CALL
     pushAddr += code.byteCount() + 4;
-
-    /// 2.4 - Find the double PUSH pattern again after the first one (this time it is for Job Exp values)
+	
+    /// 2.4 - Extract the Current Exp address
+    let CurExpBase = Exe.GetInt32(pushAddr - 9);
+    
+    /// 2.5 - Find the double PUSH pattern again after the first one (this time it is for Job Exp values)
     pushAddr = Exe.FindHex(code, pushAddr, addr + 0x300);
     if (pushAddr < 0)
         throw Error("Job Exp addrs not PUSHed");
 
-    /// 2.5 - Extract the PUSHed values (addresses of Total & Current Job Exp values)
-    let TotExpJob = Exe.GetInt32(pushAddr + 7);
-    let CurExpJob = Exe.GetInt32(pushAddr + 12);
+    /// 2.6 - Extract the Total Exp & Current Exp addresses
+    let TotExpJob = Exe.GetInt32(pushAddr + totOffset);
+    let CurExpJob = Exe.GetInt32(pushAddr + code.byteCount() - 5);
     
     /// 3.1 - Find the string 'SP'
-    addr = Exe.FindAscii("SP");
-    if (addr < 0)
-        throw Error("'SP' not found");
-
-    /// 3.2 - Find where it is PUSHed inside OnDraw function (we need to inject after this location)
-    code =
-        PUSH(addr)    //PUSH addr; ASCII "SP"
-    +   PUSH(0x41)    //PUSH 41
-    +   PUSH(0x11)    //PUSH 11
-    ;
-
-    addr = Exe.FindHex(code);
-    if (addr < 0)
-        throw Error("Args not found");
+    let addrs = Exe.FindAsciiN("SP");
+	if (addrs.find(matchAddr =>
+	{
+		/// 3.2 - Find where it is PUSHed inside OnDraw function (we need to inject after this location)
+		code =
+			PUSH(matchAddr) //PUSH addr; ASCII "SP"
+		+   PUSH(0x41)      //PUSH 41
+		+   PUSH(0x11)      //PUSH 11
+		;
+		addr = Exe.FindHex(code);
+		return (addr > 0);
+	}) === undefined
+	)
+        throw Error("PUSH 'SP' missing");
 
     /// 3.3 - Set addr to location after PUSH 11
     addr += code.byteCount();
