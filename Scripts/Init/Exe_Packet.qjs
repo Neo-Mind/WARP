@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-14                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 	KeyMode = {
 		Push: 0,    //Keys pushed as argument
 		Move: 1,    //Direct assignment inside Function
-		Shared: 2,  //Extension of the above but with a shared key 
+		Shared: 2,  //Extension of the above but with a shared key
 		Virtual: 3, //Virtualized function (need to use an explicit mapping instead)
 		Unknown: 4  //Self Explanatory
 	};
@@ -44,41 +44,48 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 	///
 	PACKET = 
 	{
-		/// Initialize the data members
-		KeySetter : -1,      //The VIRTUAL address of the function which sets the keys and/or does the obfuscation
-        KS_Mode   : KeyMode.Unknown, //The mode of the function above 
-		
-        MovECX    : "",      //The code for MOV ECX, DWORD PTR DS:[KeyAddr]
-        Keys      : [0,0,0], //The set of Packet Keys that were extracted/mapped out
-		
-        Assigner  : -1,      //Location where the keys are assigned inside ObfuscateOrInit function
-        PatchData : [],      //Data saved by packet key patches
-		
-		Valid: false,        //Will be true if the address was extracted succesfully
-		Error: '',           //Error Object containing a message about the issue
-		                     //encountered during extraction if any
-		
 		///
-		/// \brief Extracts the new data from a loaded exe.
+		/// \brief Initialize the data members
 		///
 		init: function()
 		{
-			/// 1.1 - Initialize Valid to false & reset the PatchData	
-			this.Valid = false;
-			this.PatchData = [];
+			this.KeySetter = -1;              //The VIRTUAL address of the function which sets the keys and/or does the obfuscation
+			this.KS_Mode   = KeyMode.Unknown; //The mode of the function above
+
+			this.MovECX    = "";              //The code for MOV ECX, DWORD PTR DS:[KeyAddr]
+			this.Keys      = [0,0,0];         //The set of Packet Keys that were extracted/mapped out
+
+			this.Assigner  = -1;              //Location where the keys are assigned inside ObfuscateOrInit function
+			this.PatchData = [];              //Data saved by packet key patches
+
+			this.Valid     = undefined;       //True or False indicating extraction status
+			this.Error     = '';	          //Error Object containing a message about the issue
+								              //encountered during extraction if any
+		},
+
+		///
+		/// \brief Extracts the new data from a loaded exe.
+		///
+		load: function()
+		{
+			/// 1.1 - Check if load was already called
+			if (this.Valid !== undefined)
+				return;
 			
-			/// 1.2 - Ensure the Build date is within valid values
+			/// 1.2 - Initialize 'Valid' to false
+			this.Valid = false;
+			
+			/// 1.3 - Ensure the Build date is within valid values
 			if (Exe.BuildDate < 20110817 || Exe.BuildDate > 20180306)
 			{
 				this.Error = new Error("PKT - Unsupported build date");
 				return;
 			}
 			
-			/// 1.3 - Find the string 'PACKET_CZ_ENTER'
+			/// 1.4 - Find where the string 'PACKET_CZ_ENTER' is PUSHed
 			let addr = Exe.FindAscii("PACKET_CZ_ENTER");
 			if (addr > 0)
 			{
-				/// 1.4 - Find where its used in a 'PUSH'
 				addr = Exe.FindHex( PUSH(addr) );
 			}
 			
@@ -256,3 +263,8 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 	
 	IdentifyObj("PACKET");
 }
+
+///
+/// \brief Initialize when Exe is loaded (only load the object in relevant patches)
+///
+PACKET.init();

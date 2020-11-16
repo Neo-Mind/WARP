@@ -70,13 +70,14 @@ NoLoginEncr = function()
 ///
 NoPacketEncr = function()
 {
-    /// 1.1 - Check if the PACKET object has been loaded
-    if (!PACKET.Valid)
-        throw PACKET.Error;
-    
-    /// 1.2 - Check if one of the Packet Key patches are ON (unless in test mode)
+	/// 1.1 - Check if one of the Packet Key patches are ON (unless in test mode)
 	if (!Exe.TestMode && PktKeyPatches.find( name => Exe.IsSelected(name) ) !== undefined)
 		throw "Cancelled - One of the Encryption Key patches are ON";
+	
+	/// 1.2 - Ensure the PACKET object has been loaded with valid data
+	PACKET.load();
+	if (!PACKET.Valid)
+		throw PACKET.Error;
 
     /// 2.1 - Find the Packet Encryption CALL (may or may not be PACKET.KeySetter)
     let code = PACKET.MovECX;    //MOV ECX, DWORD PTR DS:[KeyAddr]
