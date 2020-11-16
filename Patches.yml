@@ -834,7 +834,7 @@ groups:
                 desc : Show Base and Job Experience numbers on top of the respective exp bars in Basic Info Window.
     
     - ResizeHealthBar:
-        title : Resize HP Bar
+        title : RESIZE HP BAR
         mutex : false
         
         patches:
