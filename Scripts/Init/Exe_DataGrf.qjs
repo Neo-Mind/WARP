@@ -43,7 +43,7 @@ if (typeof(DGRF) === 'undefined')
 			this.MovFMgr = '';        //The MOV ECX, g_FileMgr code
 									  
 			this.Valid   = undefined; //True or False indicating extraction status
-			this.Error   = '';        //Error Object containing a message about the issue
+			this.Error   = undefined; //Error Object containing a message about the issue
 									  //encountered during extraction if any 
 		},
 		
@@ -64,7 +64,7 @@ if (typeof(DGRF) === 'undefined')
 			if (this.Addr < 0)
 			{
 				this.Error = new Error("DG - 'data.grf' not found");
-				return;
+				return false;
 			}
 			
 			/// 1.4 - Find where its used in a PUSH. Save the address & 
@@ -97,16 +97,16 @@ if (typeof(DGRF) === 'undefined')
 				if (addr < 0)
 				{
 					this.Error = new Error("DG - 'data.grf' not used");
-					return;
+					return false;
 				}
 				
 				this.RefAddr = addr;
 				this.MovFMgr = Exe.GetHex(addr + 5, 5);
 			}
 			
-			/// 6 - Set Empty message & validity to true.
-			this.Error = '';
+			/// 6 - Set validity to true
 			this.Valid = true;
+			return true;
 		},		
 	};
 	

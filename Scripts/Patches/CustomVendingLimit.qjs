@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,10 @@
 CustomVendingLimit = function()
 {
     /// 1.1 - Find where 1,000,000,000 is PUSHed
-    let addr = Exe.FindHex( PUSH(Exe.Phy2Vir(CVL_Addr)) );
+	if (CVL_Vir === undefined)
+		CVL_Vir = Exe.Phy2Vir(CVL_Phy);
+	
+    let addr = Exe.FindHex( PUSH(CVL_Vir) );
     if (addr < 0)
         throw Error("'1,000,000,000' not PUSHed");
 
@@ -104,14 +107,14 @@ CustomVendingLimit = function()
 
     /// 2.1 - Get the new limit value from user
     let newLimit = Exe.GetUserInput('$vendingLimit', D_Int32, "Vending Limit", "Enter the new limit", 1000000000, {min: 0});
-    if (newLimit === 1000000000)
+    if (newLimit === false)
         throw "Cancelled - Vending Limit reverted to 1000000000";
 
     /// 2.2 - Prepare string with commas for the newLimit similar to the original 1B string
     let str = newLimit.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '\0'; //Adding Commas every 3 digits like the original
 	
 	/// 2.3 - Change the 1B string
-    Exe.SetText(CVL_Addr, str);
+    Exe.SetAscii(CVL_Phy, str);
 
     /// 2.4 - For the old style increment the replaced value (original was also 1B+1)
     if (!newStyle)
@@ -129,6 +132,8 @@ CustomVendingLimit = function()
 ///
 CustomVendingLimit.validate = function()
 {
-	CVL_Addr = Exe.FindAscii("1,000,000,000", PHYSICAL);
-    return (CVL_Addr > 0);
+	CVL_Phy = Exe.FindAscii("1,000,000,000", PHYSICAL);
+	CVL_Vir = undefined;
+	
+    return (CVL_Phy > 0);
 };

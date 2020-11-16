@@ -59,7 +59,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 			this.PatchData = [];              //Data saved by packet key patches
 
 			this.Valid     = undefined;       //True or False indicating extraction status
-			this.Error     = '';	          //Error Object containing a message about the issue
+			this.Error     = undefined;	      //Error Object containing a message about the issue
 								              //encountered during extraction if any
 		},
 
@@ -79,7 +79,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 			if (Exe.BuildDate < 20110817 || Exe.BuildDate > 20180306)
 			{
 				this.Error = new Error("PKT - Unsupported build date");
-				return;
+				return false;
 			}
 			
 			/// 1.4 - Find where the string 'PACKET_CZ_ENTER' is PUSHed
@@ -112,7 +112,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("PKT - reference location not found");
-				return;
+				return false;
 			}
 			
 			/// 2.1 - Look for 3 PUSHes followed by a CALL (keys are PUSHed to function)
@@ -137,10 +137,9 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 				this.Keys[1] = Exe.GetInt32(callAddr - 10);
 				this.Keys[2] = Exe.GetInt32(callAddr - 15);
 				
-				/// 2.4 - Set Empty message & validity to true.
-				this.Error = '';
+				/// 2.4 - Set validity to true
 				this.Valid = true;
-				return;
+				return true;
 			}
 			
 			/// 3.1 - Look for PUSH 1, CALL pattern next (keys get assigned inside the function)
@@ -153,7 +152,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 			if (callAddr < 0)
 			{
 				this.Error = new Error("PKT - ObfuscateOrInit CALL not found");
-				return;
+				return false;
 			}
 			
 			/// 3.2 - Extract the MOV statement
@@ -196,10 +195,9 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 					addr = ins.NextAddr;
 				}
 				
-				/// 4.4 - Set Empty message & validity to true.
-				this.Error = '';
+				/// 4.4 - Set validity to true.
 				this.Valid = true;
-				return;
+				return true;
 			}
 			
 			/// 5.1 - Next look for the shared key pattern
@@ -229,10 +227,9 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 					this.Keys[ins.Disp/4 - 1] = (i < 2) ? sharedKey : ins.Immd;
 				}
 				
-				/// 5.5 - Set Empty message & validity to true.
-				this.Error = '';
+				/// 5.5 - Set validity to true.
 				this.Valid = true;
-				return;
+				return true;
 			}
 			
 			/// 6.1 - Since neither pattern matched we need to use explicit mapping
@@ -251,12 +248,13 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 			if (this.Valid)
 			{
 				this.Keys = arr;
-				this.Error = '';
+				return true;
 			}
 			else
 			{
 				this.KS_Mode = KeyMode.Unknown;
 				this.Error = new Error("PKT - No patterns or mappings matched");
+				return false;
 			}
 		},
 	};

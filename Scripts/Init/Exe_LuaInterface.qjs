@@ -69,7 +69,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			                        //Used before CALLs to FileLoader
 
 			this.Valid = undefined; //True or False indicating extraction status
-			this.Error = '';	    //Error Object containing a message about the issue
+			this.Error = undefined;	//Error Object containing a message about the issue
 								    //encountered during extraction if any
 		},
 		
@@ -90,7 +90,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'd>s' not found");
-				return;
+				return false;
 			}
 			
 			/// 1.4 - Save the PUSH 'd>s' instruction
@@ -101,7 +101,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'd>d' not found");
-				return;
+				return false;
 			}
 			
 			/// 1.6 - Save the PUSH 'd>d' instruction
@@ -112,7 +112,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'ReqJobName' not found");
-				return;
+				return false;
 			}
 			
 			/// 1.8 - Save the address as well as PUSH 'ReqJobName' instruction
@@ -125,7 +125,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'ReqJobName' not used");
-				return;
+				return false;
 			}
 			
 			/// 2.2 - Find the ESP allocation before the PUSH
@@ -137,7 +137,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			if (movAddr < 0)
 			{
 				this.Error = new Error("LUA - ESP allocation not found");
-				return;
+				return false;
 			}
 			
 			/// 2.3 - Save the constant used in SUB ESP
@@ -162,7 +162,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 					if (ins.MRM.RgOp !== 2) //ensuring its a CALL DWORD PTR 
 					{
 						this.Error = new Error("LUA - 0xFF seen after PUSH 'ReqJobName', but not a CALL");
-						return;
+						return false;
 					}
 					
 					this.Allocator = ins.Disp;
@@ -176,7 +176,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 					if (ins.Codes[0] !== 0xE8) // Ensure the next instruction is a direct CALL
 					{
 						this.Error = new Error("LUA - No direct call found after Zero Init");
-						return;
+						return false;
 					}
 					this.Allocator = Exe.GetTgtAddr(ins.NextAddr - 4);
 					this.Al_Mode = FnMode.ZInit;
@@ -184,7 +184,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 				
 				default:
 					this.Error = new Error("LUA - Unexpected instruction after PUSH 'ReqJobName'");
-					return;
+					return false;
 			}
 			
 			/// 3.4 - Get the next instruction's address
@@ -199,7 +199,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - global state assignment missing");
-				return;
+				return false;
 			}
 			
 			/// 4.2 - Extract the GlobLuaState address & save it as a PUSH DWORD PTR
@@ -214,7 +214,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - function invoker missing");
-				return;
+				return false;
 			}
 			
 			/// 4.5 - Save the function address.
@@ -225,7 +225,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - jobName string missing");
-				return;
+				return false;
 			}
 			
 			/// 5.2 - Find where it is used in a PUSH. Should be followed by a CALL
@@ -233,7 +233,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - jobName not used");
-				return;
+				return false;
 			}
 			
 			/// 5.3 - Find the GlobLuaState movement to ECX before the PUSH
@@ -244,7 +244,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			if (movAddr < 0)
 			{
 				this.Error = new Error("LUA - global state movement missing for FileLoader");
-				return;
+				return false;
 			}
 			
 			/// 5.4 - Extract the function address
@@ -253,9 +253,9 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			/// 5.5 - Extract the MOV ECX
 			this.FL_movECX = Instr.FromAddr(movAddr).toString();
 			
-			/// 6 - Set Empty message & validity to true.
-			this.Error = '';
+			/// 6 - Set validity to true
 			this.Valid = true;
+			return true;
 		},
 		
 		///

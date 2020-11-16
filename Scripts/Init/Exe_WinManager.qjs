@@ -44,7 +44,7 @@ if (typeof(WINMGR) === 'undefined') // avoid redefinition
 			this.MakeWin = -1;        //The VIRTUAL address of UIWindowMgr::MakeWindow
 									  
 			this.Valid   = undefined; //True or False indicating extraction status
-			this.Error   = '';	      //Error Object containing a message about the issue
+			this.Error   = undefined; //Error Object containing a message about the issue
 								      //encountered during extraction if any
 		},
 		
@@ -65,7 +65,7 @@ if (typeof(WINMGR) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("WM - 'NUMACCOUNT' not found");
-				return;
+				return false;
 			}
 			
 			/// 1.4 - Find where its used in a 'PUSH'
@@ -86,7 +86,7 @@ if (typeof(WINMGR) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("WM - 'NUMACCOUNT' not used");
-				return;
+				return false;
 			}
 			
 			/// 2.1 - Extract the g_windowMgr address, compute MOV instruction & CALL function address
@@ -95,9 +95,9 @@ if (typeof(WINMGR) === 'undefined') // avoid redefinition
 			this.MovECX = " B9" + this.Hex;
 			this.MakeWin = Exe.GetTgtAddr(addr + 6);
 			
-			/// 2.2 - Set Empty message & validity to true.
-			this.Error = '';
+			/// 2.2 - Set validity to true
 			this.Valid = true;
+			return true;
 		},
 		
 		///

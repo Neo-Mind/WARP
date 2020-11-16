@@ -42,7 +42,7 @@ if (typeof(LANGTYPE) === 'undefined') // avoid redefinition
 			this.Hex   = '';        //It's hex in Little Endian form
 		
 			this.Valid = undefined; //True or False indicating extraction status
-			this.Error = '';	    //Error Object containing a message about the issue
+			this.Error = undefined;	//Error Object containing a message about the issue
 								    //encountered during extraction if any
 		},
 		
@@ -63,7 +63,7 @@ if (typeof(LANGTYPE) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("LT - 'america' not found");
-				return;
+				return false;
 			}
 			
 			/// 1.4 - Find where its used in a 'PUSH'
@@ -71,7 +71,7 @@ if (typeof(LANGTYPE) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("LT - 'america' not used");
-				return;
+				return false;
 			}
 			
 			/// 1.5 - Find an assignment to g_serviceType after it
@@ -79,16 +79,16 @@ if (typeof(LANGTYPE) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("LT - g_serviceType not assigned");
-				return;
+				return false;
 			}
 			
 			/// 2.1 - Extract the address to 'Value' & save its hex
 			this.Value = Exe.GetUint32(addr + 2);
 			this.Hex = this.Value.toHex(4);
 			
-			/// 2.2 - Set Empty message & validity to true.
-			this.Error = '';
+			/// 2.2 - Set validity to true
 			this.Valid = true;
+			return true;
 		},
 		
 		///
