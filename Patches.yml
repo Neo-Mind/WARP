@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-11-14                                             #
+#   Last Modified : 2020-11-16                                             #
 #                                                                          #
 ############################################################################
 
@@ -1002,7 +1002,7 @@ groups:
             - CustomFadeDelay:
                 title : Custom fade in/out delay
                 recommend : no
-                author : 4144
+                author : 4144 & Neo-Mind
                 desc : Change fade in/out time in warps on same map.
     
     - CustomData:
