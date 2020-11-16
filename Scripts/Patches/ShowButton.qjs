@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -57,8 +57,16 @@ ShowRegisterBtn = function()
     +   JNE(WCp)             //JNE SHORT addr
     ;
     let jnePos = -2; //indicates position of the JNE opcode
-
     let cmpAddr = Exe.FindHex(prefix + suffix, addr - 0x30, addr);
+	if (cmpAddr < 0)
+	{
+		prefix =
+			CMP([LANGTYPE], 0)	//CMP DWORD PTR DS:[g_serviceType], 0
+		+	JNE(POS2WC)       	//JNE addr
+		;
+		jnePos = -6;
+		cmpAddr = Exe.FindHex(prefix + suffix, addr - 0x30, addr);
+	}
     if (cmpAddr < 0) //Indirect Langtype comparison using EAX & JNE is long
     {
         prefix =
@@ -111,14 +119,14 @@ ShowRegisterBtn = function()
         throw Error("'btn_request_b' not found");
 
     /// 4.2 - Find where it is assigned
-    addr = Exe.FindHex( ROCL.HasFP ?
+    addr = Exe.FindHex( ROC.HasFP ?
 		MOV([EBP, NEG2WC], btnAddr)
     :
 		MOV([ESP, WCn], btnAddr) 
 	);
     if (addr < 0)
     {
-        addr = Exe.FindHex( ROCL.HasFP ?
+        addr = Exe.FindHex( ROC.HasFP ?
             MOV([EBP, WCp], btnAddr)
         :
             MOV([ESP, POS2WC], btnAddr) 
@@ -147,7 +155,7 @@ ShowRegisterBtn = function()
 ///
 /// \brief Disable for unsupported clients (Only needed if login window creation is inside)
 ///
-ShowRegisterBtn.validate = () => ROCL.HasLWhidden || Exe.BuildDate <= 20100803;
+ShowRegisterBtn.validate = () => ROC.HasLWhidden || Exe.BuildDate <= 20100803;
 
 ///
 /// \brief Modify the coordinates of Login and Cancel buttons to show both in Login Screen
@@ -160,12 +168,12 @@ ShowCancelBtn = function()
         throw Error("'btn_intro_b' not found");
 
     /// 1.2 - Find where it is assigned (inside UILoginWnd::OnCreate)
-    let code = MOV( ROCL.HasFP ? [EBP, NEG2WC] : [ESP, WCn], btnAddr);
+    let code = MOV( ROC.HasFP ? [EBP, NEG2WC] : [ESP, WCn], btnAddr);
     addr = Exe.FindHex(code);
     
     if (addr < 0)
     {
-        code = MOV( ROCL.HasFP ? [EBP, WCp] : [ESP, POS2WC], btnAddr);
+        code = MOV( ROC.HasFP ? [EBP, WCp] : [ESP, POS2WC], btnAddr);
         addr = Exe.FindHex(code);
     }
     if (addr < 0)
@@ -175,13 +183,13 @@ ShowCancelBtn = function()
     addr += code.byteCount();
 
     /// 2.1 - Find the X-coord assignment of login button (btn_connect)
-	let reg = ROCL.HasFP ? EBP : ESP;
+	let reg = ROC.HasFP ? EBP : ESP;
 	code = MOV([reg, WC], 0xBD); //MOV DWORD PTR SS:[EBP-x], 0BD or //MOV DWORD PTR SS:[ESP+x], 0BD
 
     let addr2 = Exe.FindHex(code, addr, addr + 0x40);
     if (addr2 < 0) //x > 0x7F
     {
-		code = MOV([reg, ROCL.HasFP ? NEG1WC : POS1WC], 0xBD); //MOV DWORD PTR SS:[EBP-x], 0BD or //MOV DWORD PTR SS:[ESP+x], 0BD
+		code = MOV([reg, ROC.HasFP ? NEG1WC : POS1WC], 0xBD); //MOV DWORD PTR SS:[EBP-x], 0BD or //MOV DWORD PTR SS:[ESP+x], 0BD
         addr2 = Exe.FindHex(code, addr, addr + 0x40);
     }
     if (addr2 < 0)
@@ -264,28 +272,26 @@ ShowReplayBtn = function()
     let retnAddr = addr + code.byteCount();
         
     /// 3.3 - Find the Replay Mode Enable bit setting
-    code =
-        MOV(BYTE_PTR, [EAX, WCp], 1)  //MOV BYTE PTR DS:[EAX + const], 1
-    +   MOV([R32, 0xC], 0x1B)         //MOV DWORD PTR DS:[reg32_A + 0C], 1B
-    ;
-    let addr2 = Exe.FindHex(code);
+	let parts = [
+        MOV(BYTE_PTR, [EAX, WCp], 1)	//MOV BYTE PTR DS:[EAX + const], 1
+	,
+		MOV(BYTE_PTR, [EAX, POS1WC], 1)	//MOV BYTE PTR DS:[EAX + const], 1
+	,
+		XOR(R32, R32)					//XOR reg32_A, reg32_B
+	,
+		MOV([R32, 0xC], 0x1B)			//MOV DWORD PTR DS:[reg32_A + 0C], 1B
+	];
+    
+    let addr2 = Exe.FindHex(parts[0] + parts[3]);
     if (addr2 < 0)
-	{
-		code =
-		    MOV(BYTE_PTR, [EAX, POS1WC], 1)  //MOV BYTE PTR DS:[EAX + const], 1
-		+   MOV([R32, 0xC], 0x1B)            //MOV DWORD PTR DS:[reg32_A + 0C], 1B
-		;
-		addr2 = Exe.FindHex(code);
-	}
-	if (addr2 < 0)
-	{
-		code =
-		    MOV(BYTE_PTR, [EAX, POS1WC], 1)  //MOV BYTE PTR DS:[EAX + const], 1
-		+	XOR(R32, R32)					 //XOR reg32_A, reg32_B
-		+   MOV([R32, 0xC], 0x1B)            //MOV DWORD PTR DS:[reg32_A + 0C], 1B
-		;
-		addr2 = Exe.FindHex(code);
-	}		
+		addr2 = Exe.FindHex(parts[0] + parts[2] + parts[3]);
+	
+    if (addr2 < 0)
+		addr2 = Exe.FindHex(parts[1] + parts[3]);
+	
+    if (addr2 < 0)
+		addr2 = Exe.FindHex(parts[1] + parts[2] + parts[3]);
+	
 	if (addr2 < 0)
         throw Error("Replay mode setter not found");
 
@@ -356,7 +362,7 @@ _SRB_FixupBtnCoords = (btnImg, msgPrefix, suffix, suffix2) =>
         throw Error(msgPrefix + "Second Button assignment not found");
 
     /// 2.3 - Find the coordinate assignment for the button we need
-    let reg = (ROCL.HasFP ? EBP : ESP);
+    let reg = (ROC.HasFP ? EBP : ESP);
 	let code, type;
     if (Exe.Version >= 11.0)//reg will be EBP since client has not done FPO since VC11
     {
@@ -374,7 +380,7 @@ _SRB_FixupBtnCoords = (btnImg, msgPrefix, suffix, suffix2) =>
         +   MOV([reg, WC], R32)      //MOV DWORD PTR SS:[reg + y], reg32_A ; y-coord
         +   suffix
         ;
-		type = (ROCL.HasFP ? 2 : 3) ; //2 for VC10 and 3 for VC9
+		type = (ROC.HasFP ? 2 : 3) ; //2 for VC10 and 3 for VC9
     }
     
     let jmpAddr = Exe.FindHex(code, addr, addr + 0x50);
