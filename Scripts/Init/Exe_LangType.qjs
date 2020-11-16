@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-07                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,18 +33,23 @@ if (typeof(LANGTYPE) === 'undefined') // avoid redefinition
 	///
 	LANGTYPE = 
 	{
-		/// Initialize the data members
-		Value: -1,    //The g_serviceType VIRTUAL Address
-		Hex: '',      //It's hex in Little Endian form
+		///
+		/// \brief Initialize the data members
+		///
+		init : function()
+		{
+			this.Value = -1;        //The g_serviceType VIRTUAL Address
+			this.Hex   = '';        //It's hex in Little Endian form
 		
-		Error: '',    //Error Object containing a message about the issue 
-		Valid: false, //Will be true if the address was extracted succesfully
-		              //encountered during extraction if any
+			this.Valid = undefined; //True or False indicating extraction status
+			this.Error = '';	    //Error Object containing a message about the issue
+								    //encountered during extraction if any
+		},
 		
 		///
 		/// \brief Extracts the new data from a loaded exe.
 		///
-		init: function()
+		load : function()
 		{
 			/// 1.1 - Initialize Valid to false
 			this.Valid = false;
@@ -93,3 +98,8 @@ if (typeof(LANGTYPE) === 'undefined') // avoid redefinition
 	
 	IdentifyObj("LANGTYPE");
 }
+
+///
+/// \brief Initialize when Exe is loaded (only load the object in relevant patches)
+///
+LANGTYPE.init();

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Secret, 4144                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,8 +31,8 @@
 ///
 LoadKrExtSettings = function()
 {
-	/// 1.1 - Ensure LANGTYPE is found
-	if (!LANGTYPE.Valid)
+	/// 1.1 - Ensure the LANGTYPE is loaded
+	if (!LANGTYPE.load())
 		throw LANGTYPE.Error;
 	
     /// 1.2 - Find where the string is PUSHed

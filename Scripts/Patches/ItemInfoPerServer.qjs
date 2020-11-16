@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,9 +32,9 @@
 ///
 function ItemInfoPerServer()
 {
-	/// 1.1 - Ensure LUAINTINT is present
-	if (!LUAINT.Valid)
-		throw LUAINT.Error;
+	/// 1.1 - Ensure LUA is present
+	if (!LUA.load())
+		throw LUA.Error;
 	
 	/// 1.2 - Find the pattern before Server Name is pushed to StringAllocator Function
 	let code =
@@ -159,7 +159,7 @@ function ItemInfoPerServer()
 	let iiCopierFunc = Exe.GetTgtAddr(addr + 6);
  
 	/// 5.1 - Find the 's' input Push Function call inside the LuaFn Caller
-	addr2 = Exe.Vir2Phy(LUAINT.FnInvoker, CODE);
+	addr2 = Exe.Vir2Phy(LUA.FnInvoker, CODE);
 	let prefix =
 		MOV(R32, [R32])	//MOV reg32_A, DWORD PTR DS:[reg32_B]
 	+	MOV(R32, [R32])	//MOV reg32_C, DWORD PTR DS:[reg32_D]

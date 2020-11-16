@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,8 +32,8 @@
 ///
 EnableFlagEmotes = function()
 {
-    /// 1.1 - Check if Langtype is loaded
-    if (!LANGTYPE.Valid)
+    /// 1.1 - Ensure the LANGTYPE is loaded
+    if (!LANGTYPE.load())
         throw LANGTYPE.Error;
     
     /// 1.2 - Find the switch case selector for all the flag Emote callers

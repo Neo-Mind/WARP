@@ -22,11 +22,11 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-07                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
-if (typeof(LUAINT) === 'undefined') // avoid redefinition
+if (typeof(LUA) === 'undefined') // avoid redefinition
 {
 	///
 	/// \brief Values denoting how to call the Allocator function
@@ -41,44 +41,51 @@ if (typeof(LUAINT) === 'undefined') // avoid redefinition
 	///
 	/// \brief Asset describing the Lua Interface details
 	///
-	LUAINT = 
+	LUA =
 	{
-		/// Initialize the data members
-		PushD2S: '',     //The code for PUSH OFFSET addr; ASCII "d>s"
-		PushD2D: '',     //The code for PUSH OFFSET addr; ASCII "d>d"
-		ReqJN: -1,       //The VIRTUAL address of "ReqJobName"
-		PushRJN: '',     //The code for PUSH OFFSET addr; ASCII "ReqJobName"
-		PushState: '',   //The code for PUSH DWORD PTR DS:[GlobLuaState]
-		StkConst: 0,     //The constant value used in SUB ESP, const 
-		                 //which gets executed before Lua Function name is PUSHed
-					     
-		Allocator: -1,   //The VIRTUAL address of the function which allocates
-		                 //space to store the Lua function name
-		
-		Al_Mode: FnMode.Unknown, //The mode of the allocator function above
-						
-		FnInvoker: -1,   //The VIRTUAL address of the function which invokes 
-		                 //the "Lua function" already PUSHed as argument
+		///
+		/// \brief Initialize the data members
+		///
+		init : function()
+		{
+			this.PushD2S   = '';    //The code for PUSH OFFSET addr; ASCII "d>s"
+			this.PushD2D   = '';    //The code for PUSH OFFSET addr; ASCII "d>d"
+			this.ReqJN     = -1;    //The VIRTUAL address of "ReqJobName"
+			this.PushRJN   = '';    //The code for PUSH OFFSET addr; ASCII "ReqJobName"
+			this.PushState = '';    //The code for PUSH DWORD PTR DS:[GlobLuaState]
+			this.StkConst  = 0;     //The constant value used in SUB ESP, const
+							        //which gets executed before Lua Function name is PUSHed
 
-		FileLoader: -1,  //The VIRTUAL address of the function which loads
-					     //the Lua file already PUSHed as argument
-					   
-		FL_movECX: '',   //The code for MOV ECX, DWORD PTR DS:[addr] ; where addr evaluates to GlobLuaState
-		                 //Used before CALLs to FileLoader
-		
-		Valid: false,    //Will be true if the address was extracted succesfully
-		Error: '',       //Error Object containing a message about the issue
-		                 //encountered during extraction if any
+			this.Allocator = -1;    //The VIRTUAL address of the function which allocates
+			                        //space to store the Lua function name
+
+			this.Al_Mode = FnMode.Unknown; //The mode of the allocator function above
+
+			this.FnInvoker  = -1;   //The VIRTUAL address of the function which invokes
+			                        //the "Lua function" already PUSHed as argument
+
+			this.FileLoader = -1;   //The VIRTUAL address of the function which loads the Lua file already PUSHed as argument
+			this.FL_movECX  = '';   //The code for MOV ECX, DWORD PTR DS:[addr] ; where addr evaluates to GlobLuaState
+			                        //Used before CALLs to FileLoader
+
+			this.Valid = undefined; //True or False indicating extraction status
+			this.Error = '';	    //Error Object containing a message about the issue
+								    //encountered during extraction if any
+		},
 		
 		///
 		/// \brief Extracts the new data from a loaded exe.
 		///
-		init: function()
+		load = function()
 		{
-			/// 1.1 - Initialize Valid to false
+			/// 1.1 - Check if load was already called
+			if (this.Valid !== undefined)
+				return this.Valid;
+			
+			/// 1.2 - Initialize 'Valid' to false
 			this.Valid = false;
 			
-			/// 1.2 - Find the string 'd>s'
+			/// 1.3 - Find the string 'd>s'
 			let addr = Exe.FindAscii("d>s");
 			if (addr < 0)
 			{
@@ -86,10 +93,10 @@ if (typeof(LUAINT) === 'undefined') // avoid redefinition
 				return;
 			}
 			
-			/// 1.3 - Save the PUSH 'd>s' instruction
+			/// 1.4 - Save the PUSH 'd>s' instruction
 			this.PushD2S = PUSH(addr);
 			
-			/// 1.4 - Find the string 'd>d'
+			/// 1.5 - Find the string 'd>d'
 			addr = Exe.FindAscii("d>d");
 			if (addr < 0)
 			{
@@ -97,10 +104,10 @@ if (typeof(LUAINT) === 'undefined') // avoid redefinition
 				return;
 			}
 			
-			/// 1.5 - Save the PUSH 'd>d' instruction
+			/// 1.6 - Save the PUSH 'd>d' instruction
 			this.PushD2D = PUSH(addr);
 			
-			/// 1.6 - Find the string 'ReqJobName'
+			/// 1.7 - Find the string 'ReqJobName'
 			addr = Exe.FindAscii("ReqJobName");
 			if (addr < 0)
 			{
@@ -108,7 +115,7 @@ if (typeof(LUAINT) === 'undefined') // avoid redefinition
 				return;
 			}
 			
-			/// 1.7 - Save the address as well as PUSH 'ReqJobName' instruction
+			/// 1.8 - Save the address as well as PUSH 'ReqJobName' instruction
 			this.ReqJN = addr;
 			this.PushRJN = PUSH(addr);
 			
@@ -412,5 +419,10 @@ if (typeof(LUAINT) === 'undefined') // avoid redefinition
 		},
 	};
 	
-	IdentifyObj("LUAINT");
+	IdentifyObj("LUA");
 }
+
+///
+/// \brief Initialize when Exe is loaded (only load the object in relevant patches)
+///
+LUA.init();

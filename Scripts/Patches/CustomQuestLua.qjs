@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,8 +33,8 @@ CQL_Prefix = "lua files\\quest\\";
 CustomQuestLua = function() 
 {
 	/// 1.1 - Ensure LUA object is loaded
-	if (!LUAINT.Valid)
-		throw LUAINT.Error;
+	if (!LUA.load())
+		throw LUA.Error;
 	
 	/// 1.2 - Get the list file with the quest file names
 	let inFile = Exe.GetUserInput('$inpQuest', D_InFile, "Quest Lua List", "Enter the listing file", "Inputs/QuestLuaList.yml", {filters: "YAML files (*.yml;*.yaml)"});
@@ -52,9 +52,9 @@ CustomQuestLua = function()
 	
 	
 	/// 2.2 - Inject the loading procedure for all the files specified
-	let result = LUAINT.addLoaders(LuaFiles, CQL_Prefix + "Quest_function");
+	let result = LUA.addLoaders(LuaFiles, CQL_Prefix + "Quest_function");
 	if (IsStr(result))
-		throw Error("LUAINT addLoaders : " + result);
+		throw Error("LUA addLoaders : " + result);
 		
 	return true;
 };

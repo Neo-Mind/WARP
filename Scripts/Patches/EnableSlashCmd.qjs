@@ -22,17 +22,18 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Change the conditional jump for Langtype comparison inside CGameMode::SendMsg function for /w & /who command as well as inside CGameMode::Zc_User_Count
+/// \brief Change the conditional jump for Langtype comparison inside CGameMode::SendMsg function 
+///        for /w & /who command as well as inside CGameMode::Zc_User_Count
 ///
 EnableWho = function()
 {
-    /// 1.1 - Check if Langtype is loaded
-    if (!LANGTYPE.Valid)
+    /// 1.1 - Ensure the LANGTYPE is loaded
+    if (!LANGTYPE.load())
         throw LANGTYPE.Error;
     
     /// 1.2 - Find Langtype comparison

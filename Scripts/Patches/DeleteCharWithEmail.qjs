@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,8 +31,8 @@
 ///
 DeleteCharWithEmail = function()
 {
-    /// 1.1 - Check if Langtype is loaded
-    if (!LANGTYPE.Valid)
+    /// 1.1 - Ensure the LANGTYPE is loaded
+    if (!LANGTYPE.load())
         throw LANGTYPE.Error;
     
     /// 1.2 - Find the Langtype comparison in Char Delete function (name not known right now)
