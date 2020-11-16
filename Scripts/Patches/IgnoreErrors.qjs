@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, 4144                                          *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -58,7 +58,7 @@ IgnoreRsrcErr = function()
     ///       For Frame pointer types, POP EBP is also needed before RETN
     code = 
 		XOR(EAX, EAX)
-    +  (ROCL.HasFP ? POP(EBP) : NOP)
+    +  (ROC.HasFP ? POP(EBP) : NOP)
 	+	RETN()
 	;   
     Exe.SetHex(addr + 5, code);
@@ -136,7 +136,7 @@ IgnoreLuaErr = function()
 		;
 	}
 	
-	let cmn = ROCL.HasFP ?
+	let cmn = ROC.HasFP ?
 		LEA(R32, [EBP, NEG2WC])	 //LEA reg32, [EBP-x] <- patch position
 	:
 		LEA(R32, [ESP, WCp])	 //LEA reg32, [ESP+x]

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-07                                             *
+*   Last Modified : 2020-11-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -212,13 +212,13 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 				this.KS_Mode = KeyMode.Shared;
 				
 				/// 5.3 - Extract the shared key first
-				let ins = Instr.fromAddr(this.Assigner);
+				let ins = Instr.FromAddr(this.Assigner);
 				let sharedKey = ins.Immd;
 
 				/// 5.4 - Extract all the keys (little more tricky since there is a MOV EAX)
 				for (let i = 0; i < 3; i++)
 				{
-					ins = Instr.fromAddr(ins.NextAddr);
+					ins = Instr.FromAddr(ins.NextAddr);
 					this.Keys[ins.Disp/4 - 1] = (i < 2) ? sharedKey : ins.Immd;
 				}
 				

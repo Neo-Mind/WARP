@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -45,7 +45,7 @@ TranslateClient = function()
 		/// 1.2 - Find where it is assigned for being used as job name
 		let assgn = Exe.Version < 11.0 ? [R32, 0x3F38] 
 		:
-			(ROCL.IsRenewal && Exe.BuildDate < 20190800) || (!ROCL.IsRenewal && Exe.BuildDate < 20190810) ? R32
+			(ROC.IsRenewal && Exe.BuildDate < 20190800) || (!ROC.IsRenewal && Exe.BuildDate < 20190810) ? R32
 		:
 			[EBP, WCn]
 		;
@@ -81,7 +81,7 @@ TranslateClient = function()
 		throw "Cancelled - Invalid/Non-existent translation file";
 	
 	/// 2.3 - Open the Failed Translations output file - for writing out unexpected translation fails
-	let fp = new TextFile(Warp.Path + "Outputs/FailedTranslations_" + ROCL.BaseName + ".txt", 'w');
+	let fp = new TextFile(Warp.Path + "Outputs/FailedTranslations_" + ROC.BaseName + ".txt", 'w');
 	if (!fp.Valid)
 		throw Error("Unable to create FailedTranslations Output file");
 	

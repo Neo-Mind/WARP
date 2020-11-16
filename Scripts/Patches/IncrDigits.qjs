@@ -22,11 +22,11 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
-// TODO - Fixup everything
+// TODO - Fixup everything for newer clients
 
 ///
 /// \brief Modify the stack allocation and code to account for 10 digits 
@@ -77,7 +77,7 @@ IncrDigits = function()
     _ID_UpdateStack(addr - 1 , 1);
     
     /// 2.2 - Find the location of digit counter
-	let StkReg = ROCL.HasFP ? EBP :ESP;
+	let StkReg = ROC.HasFP ? EBP : ESP;
     
     code = MOV([StkReg, WC], 1); //MOV DWORD PTR SS:[StkReg+x], 1; x is negative for StkReg == EBP
     addr = Exe.FindHex(code, refAddr + 0x10, refAddr + 0x28);
@@ -151,7 +151,7 @@ IncrDigits = function()
         throw Error("GetGameMode CALL not found");
     
     /// 5.1 - Adjust the extracted stack offsets for the 4 extra nibbles (DigCntLoc & FirstDigLoc)
-    if (ROCL.HasFP)
+    if (ROC.HasFP)
     {
         if (IsNum(DigCntLoc) && DigCntLoc < FirstDigLoc)
             DigCntLoc -= 16;
@@ -176,7 +176,7 @@ IncrDigits = function()
     +   SHL(EAX, 1)                  //SHL EAX,1
     +   SUB(ECX, EAX)                //SUB ECX, EAX
     +   MOV([ESI, StkReg], ECX)      //MOV DWORD PTR SS:[ESI + StkReg], ECX
-    +   (ROCL.HasFP ? NOP : '')      //NOP to fill gap when StkReg is EBP
+    +   (ROC.HasFP ? NOP : '')      //NOP to fill gap when StkReg is EBP
     +   ADD(ESI, 4)                  //ADD ESI, 4
     +   MOV(ECX, EDX)                //MOV ECX, EDX
     +   TEST(ECX, ECX)               //TEST ECX, ECX
@@ -200,7 +200,7 @@ IncrDigits = function()
     Exe.SetHex(refAddr, code);
     
     /// 5.5 - Find the end of the function
-    if (ROCL.HasFP)
+    if (ROC.HasFP)
         code = MOV(ESP, EBP) + POP(EBP);    //MOV ESP, EBP followed by POP EBP
     else
         code = ADD(ESP, WC);                //ADD ESP, const
@@ -212,7 +212,7 @@ IncrDigits = function()
         throw Error("Function end not found");
     
     /// 5.6 - Prepare stack addr value
-    let stackOff = ROCL.HasFP ? 16 :  24; //4 bit * 6 digits
+    let stackOff = ROC.HasFP ? 16 :  24; //4 bit * 6 digits
     
     /// 6 - Update all relevant stack offsets to incorporate the extra 4 digits between the ggmAddr and end of the function
     addr = ggmAddr + 5;
@@ -232,7 +232,7 @@ IncrDigits = function()
             case 0xFF:
             case 0x83:
             {
-                if (ins.Codes[0] === 0xFF && !ROCL.HasFP && ins.MRM.RgOp === 2) //CALL reg or CALL DWORD PTR DS:[reg+x]
+                if (ins.Codes[0] === 0xFF && !ROC.HasFP && ins.MRM.RgOp === 2) //CALL reg or CALL DWORD PTR DS:[reg+x]
                     stackOff = 24; //resetting back to 24
                 
                 ins.StackLimit = FirstDigLoc + stackOff;
@@ -244,7 +244,7 @@ IncrDigits = function()
             case 0x6B:
             case 0x6A:
             {
-                if (!ROCL.HasFP)
+                if (!ROC.HasFP)
                     stackOff += 4;
                 
                 break;
@@ -252,7 +252,7 @@ IncrDigits = function()
             
             case 0xE8:
             {
-                if (!ROCL.HasFP)
+                if (!ROC.HasFP)
                     stackOff = 24;
                 
                 break;
@@ -264,7 +264,7 @@ IncrDigits = function()
     }
     
     /// 7 - Extra steps for some clients
-    if (ROCL.HasFP)
+    if (ROC.HasFP)
     {
         if (IsNum(DigCntLoc)) //VC10+ only has this combo
         {
@@ -315,7 +315,7 @@ IncrDigits = function()
 _ID_UpdateStack = (arg, sign) =>
 {
     let stackOff = IsNum(sign)? sign * 16
-                 : ROCL.HasFP ? -16 
+                 : ROC.HasFP ? -16 
 				 : 16
 	;
 

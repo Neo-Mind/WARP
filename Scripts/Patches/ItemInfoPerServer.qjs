@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -218,8 +218,7 @@ function ItemInfoPerServer()
 	code = SwapFiller(code, 4, Exe.Phy2Vir(mainInject + 5) - servAddr);
   
 	/// 6.4 - Change the LuaFnNamePusher call to a JMP to our code
-	Exe.SetUint8(mainInject, 0xE9);
-	Exe.SetTgtAddr(mainInject + 1, freeVir);
+	Exe.SetJMP(mainInject, freeVir);
   
 	/// 6.5 - Inject to allocated space
 	Exe.AddHex(free, code);
@@ -270,8 +269,7 @@ function ItemInfoPerServer()
 	code = SwapFiller(code, 4, addr);
   
 	/// 7.4 - Change the function call to a JMP to our custom code
-	Exe.SetUint8(allocInject, 0xE9);
-	Exe.SetTgtAddr(allocInject + 1, freeVir);
+	Exe.SetJMP(allocInject, freeVir);
 	
 	if (!directCALL)
 		Exe.SetNOPs(allocInject + 5, 1);

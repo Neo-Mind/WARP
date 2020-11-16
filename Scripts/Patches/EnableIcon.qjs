@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,11 +38,11 @@ EnableIcon = function(patchName)
 	let addr = Exe.GetDirAddr(D_Res);
 	
 	/// 1.2 - Load the Resource tree
-	if (ROCL.RsrcTree === undefined)
-		ROCL.RsrcTree = new RsrcEntry(0, addr, 0);
+	if (ROC.RsrcTree === undefined)
+		ROC.RsrcTree = new RsrcEntry(0, addr, 0);
 	
 	/// 2.1 - Get the Resource entry for RT_GROUP_ICON (0xE) 
-	let entry = ROCL.RsrcTree.traverse(0xE)
+	let entry = ROC.RsrcTree.traverse(0xE)
 	if (entry === false)
 		throw Error("Unable to find icongrp");
 	
@@ -105,7 +105,7 @@ EnableIcon = function(patchName)
 			    bColorCount === 0
 			)
 			{
-				memEntry = ROCL.RsrcTree.traverse([0x3, Exe.GetInt16(addr + 12), 0x412]);
+				memEntry = ROC.RsrcTree.traverse([0x3, Exe.GetInt16(addr + 12), 0x412]);
 				if (memEntry !== false)
 				{
 					if (imgEntry.dwBytesInRes > Exe.GetInt32(addr+8))

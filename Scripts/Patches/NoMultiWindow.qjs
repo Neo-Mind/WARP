@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -74,17 +74,17 @@ NoMultiWindow = function()
 	}
 	
 	/// 2.1 - Get the essential addresses for our function
-    if (ROCL.GetModHandle < 0)
+    if (ROC.GetModHandle < 0)
         throw Error("GetModuleHandleA not found");
         
-    if (ROCL.GetProcAddr < 0)
+    if (ROC.GetProcAddr < 0)
         throw Error("GetProcAddress not found");
     
     let WaitSingle = Exe.FindFunc("WaitForSingleObject", "KERNEL32.dll");
     if (WaitSingle < 0)
         throw Error("WaitForSingleObject not found");
     
-    if (ROCL.Kernel32 < 0)
+    if (ROC.Kernel32 < 0)
         throw Error("'KERNEL32.dll' not found");
 
 
@@ -93,12 +93,12 @@ NoMultiWindow = function()
         CALL([CoInit])					//CALL DWORD PTR DS:[&ole32.CoInitialize>] ; args are already pushed
     +   PUSH(ESI)                     	//PUSH ESI
     +   XOR(ESI, ESI)                 	//XOR ESI, ESI
-    +   PUSH(ROCL.Kernel32)           	//PUSH addr ; "KERNEL32.dll"
-    +   CALL([ROCL.GetModHandle])     	//CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
+    +   PUSH(ROC.Kernel32)           	//PUSH addr ; "KERNEL32.dll"
+    +   CALL([ROC.GetModHandle])     	//CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
     +   CALL(0x0D)                    	//PUSH &JMP
     +   "CreateMutexA\x00".toHex()    	//DB "CreateMutexA", 0
     +   PUSH_EAX                      	//PUSH EAX
-    +   CALL([ROCL.GetProcAddr])      	//CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
+    +   CALL([ROC.GetProcAddr])      	//CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
     +   CALL(0x0F)                    	//PUSH &JMP
     +   "Global\\Surface\x00".toHex() 	//DB "Global\Surface",0
     +   PUSH(ESI)                     	//PUSH ESI
@@ -111,12 +111,12 @@ NoMultiWindow = function()
     +   CALL([WaitSingle])            	//CALL DWORD PTR DS:[<&KERNEL32.WaitForSingleObject>]
     +   CMP(EAX, 258)                 	//CMP EAX, 258 (0x102)   ; WAIT_TIMEOUT
     +   JNZ(0x26)                     	//JNZ SHORT addr2 -> POP ESI below
-    +   PUSH(ROCL.Kernel32)           	//PUSH addr ; "KERNEL32.dll"
-    +   CALL([ROCL.GetModHandle])     	//CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
+    +   PUSH(ROC.Kernel32)           	//PUSH addr ; "KERNEL32.dll"
+    +   CALL([ROC.GetModHandle])     	//CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
     +   CALL(0x0C)                    	//PUSH &JMP
     +   "ExitProcess\x00".toHex()     	//DB "ExitProcess", 0
     +   PUSH_EAX                      	//PUSH EAX
-    +   CALL([ROCL.GetProcAddr])      	//CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
+    +   CALL([ROC.GetProcAddr])      	//CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
     +   PUSH(ESI)                     	//PUSH ESI
     +   CALL(EAX)                     	//CALL EAX
     +   POP(ESI)                      	//POP ESI ; addr2
@@ -127,7 +127,7 @@ NoMultiWindow = function()
     /// 2.3 - Allocate space to add our function
     let free = Exe.FindSpace(csize, 0x10);
     if (free < 0)
-        throw NOGAPMSG;
+        throw NOSPACE;
 
     let freeVir = Exe.Phy2Vir(free, DIFF);
 	
@@ -137,9 +137,8 @@ NoMultiWindow = function()
 	/// 2.5 - Add function at the allocated space
 	Exe.AddHex(free, code);
 	
-	/// 2.6 - Create JMP to the function at jmpAddr
-	Exe.SetUint16(jmpAddr, 0xE990);
-    Exe.SetTgtAddr(jmpAddr + 2, freeVir);
+	/// 2.6 - Create JMP+NOP to the function at jmpAddr
+	Exe.SetJMP(jmpAddr, freeVir, VIRTUAL, true);
 	
     return true;
 };

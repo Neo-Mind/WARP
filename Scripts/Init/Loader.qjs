@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-06                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,4 +31,4 @@ SRVRTYPE.init();
 WINMGR.init();
 LUAINT.init();
 PACKET.init();
-ROCL.init();
+ROC.init();

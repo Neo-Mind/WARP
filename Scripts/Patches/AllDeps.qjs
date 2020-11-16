@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -30,10 +30,10 @@
 /// \brief Common Validation function for Cash Shop related patches
 ///
 HasCashShop = () =>
-	ROCL.CashShopAddr > 0;
+	ROC.CashShopAddr > 0;
 
 ///
 /// \brief Common Validation function for Login Window related patches
 ///
 HasHiddenLogWin = () =>
-	ROCL.HasLWhidden;
+	ROC.HasLWhidden;

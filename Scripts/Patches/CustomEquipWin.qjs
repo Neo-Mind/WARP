@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Jchcc, X-EcutiOnner                           *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -136,4 +136,4 @@ NoEquipTitleUI = function()
 ///
 /// \brief Disable for Older Clients - Check for Reference
 ///
-NoEquipTitleUI.validate = () => (Exe.BuildDate >= 20141126 && ROCL.IsSakray()) || Exe.BuildDate >= 20150225;
+NoEquipTitleUI.validate = () => (ROC.IsRenewal && Exe.BuildDate >= 20141126) || Exe.BuildDate >= 20150225;

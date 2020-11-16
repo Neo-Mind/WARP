@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -41,7 +41,7 @@ ChatRepeat = function(patchName)
 	/// 1.2 - Find the Langtype comparison to identify ::IsSameSentence
 	let part1 = CMP([LANGTYPE], 0xA); //CMP DWORD PTR DS:[g_serviceType], 0A
 	let part2 = JE(WC);               //JE SHORT addr
-	let part3 = CMP(ROCL.HasFP ?
+	let part3 = CMP(ROC.HasFP ?
 		[EBP, 8]                      //CMP DWORD PTR SS:[EBP+8], 02
 	:	                              // or
 		[ESP, 4]                      //CMP DWORD PTR SS:[ESP+4], 02

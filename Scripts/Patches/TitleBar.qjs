@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ CustomWinTitle = function()
         throw Error("URL not found");
     
     /// 1.2 - Find the string 'Ragnarok' or 'Ragnarok : Zero'
-	let oldTitle = "Ragnarok" + (ROCL.IsZero ? " : Zero" : "");
+	let oldTitle = "Ragnarok" + (ROC.IsZero ? " : Zero" : "");
     let addr = Exe.FindAscii(oldTitle);
     if (addr < 0)
         throw Error("'" + oldTitle + "' not found");

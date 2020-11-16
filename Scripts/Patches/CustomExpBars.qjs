@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -290,7 +290,7 @@ CustomBarLimits = function()
     /// 5.4 - Allocate space to add the id values
     let free = Exe.FindSpace(identSize);
     if (free < 0)
-        throw NOGAPMSG;
+        throw NOSPACE;
     
     let freeVir = Exe.Phy2Vir(free, DIFF);
     
@@ -504,8 +504,7 @@ ShowExpNumbers = function()
     Exe.AddHex(free, code, csize);
 
     /// 4.7 - Hijack the CALL at injectAddr (change it to a JMP to our code)
-    Exe.SetUint8(injectAddr, 0xE9);
-    Exe.SetTgtAddr(injectAddr + 1, freeVir);
+    Exe.SetJMP(injectAddr, freeVir);
     
     return true;
 };

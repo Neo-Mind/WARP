@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 NoHourly = function() //PlayTime comparison is not there in Pre-2010 clients
 {
     /// 1.1 - Find the comparison for Game Grade
-    let src = [(ROCL.HasFP ? EBP : ESP), WC] //DWORD PTR SS:[EBP-y] or DWORD PTR SS:[ESP+x]
+    let src = [(ROC.HasFP ? EBP : ESP), WC] //DWORD PTR SS:[EBP-y] or DWORD PTR SS:[ESP+x]
 
 	let reg = Exe.Version < 9.0 ? EAX
 	: Exe.BuildDate <= 20171018 ? AX

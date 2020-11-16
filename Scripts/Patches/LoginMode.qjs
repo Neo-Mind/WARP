@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Neo-Mind, 4144                     *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -155,8 +155,7 @@ UseOldLogin = function()
 ///
 /// \brief Disable for Unneeded Clients - Only Latest clients dont have the login window
 ///
-UseOldLogin.validate = () => Exe.BuildDate > 20100803 && !ROCL.HasLWhidden;
-
+UseOldLogin.validate = () => Exe.BuildDate > 20100803 && !ROC.HasLWhidden;
 
 ///
 /// \brief Restore the original code that created the Login Window inside CLoginMode::OnChangeState function.

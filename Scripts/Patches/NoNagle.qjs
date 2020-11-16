@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,10 +37,10 @@ NoNagle = function()
 		throw Error("'ws2_32.dll' not found");
     
 	/// 1.2 - Get the essential addresses for our function
-    if (ROCL.GetModHandle < 0)
+    if (ROC.GetModHandle < 0)
         throw Error("GetModuleHandleA not found");
         
-    if (ROCL.GetProcAddr < 0)
+    if (ROC.GetProcAddr < 0)
         throw Error("GetProcAddress not found");
     
     // socket function address
@@ -70,9 +70,9 @@ NoNagle = function()
     +   CALL(0xB)                 //JMP &PUSH ; A little trick to PUSH the following string to stack directly
     +   "setsockopt\x00".toHex()  //DB "setsockopt\x00"
     +   PUSH(WS2_32)              //PUSH OFFSET addr2; ASCII "ws2_32.dll"
-    +   CALL([ROCL.GetModHandle]) //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
+    +   CALL([ROC.GetModHandle])  //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
     +   PUSH_EAX                  //PUSH EAX
-    +   CALL([ROCL.GetProcAddr])  //CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
+    +   CALL([ROC.GetProcAddr])   //CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
     +   MOV([EBP, -0xC], EAX)     //MOV DWORD PTR SS:[EBP-0C],EAX
     +   CMP([EBP, -0xC], 0)       //CMP DWORD PTR SS:[EBP-0C],0
     +   JE(0x11)                  //JE SHORT addr1

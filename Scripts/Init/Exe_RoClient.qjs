@@ -22,16 +22,16 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-08                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
-if (typeof(ROCL) === 'undefined')
+if (typeof(ROC) === 'undefined')
 {
 	///
 	/// \brief Hash that stores miscellaneous info about the Ragnarok client
 	///
-	ROCL =
+	ROC =
 	{	
 		/// Initialize the expected data members
 		IsRenewal    : false, //Indicates whether executable is RE client.
@@ -69,22 +69,22 @@ if (typeof(ROCL) === 'undefined')
 			this.HasFP = (addr > 0);
 			
 			/// 1.4 - Check the build date & Zero status for Hidden Login Window
-			this.HasLWhidden = Exe.BuildDate > 20100803 && (Exe.BuildDate <= 20171019 || (Exe.BuildDate < 20181114 && !ROCL.Zero));
+			this.HasLWhidden = Exe.BuildDate > 20100803 && (Exe.BuildDate <= 20171019 || (Exe.BuildDate < 20181114 && !ROC.IsZero));
 			
 			/// 1.5 - Get the address of 'NC_CashShop' & Roulette bmp string
 			this.CashShopAddr = Exe.FindAscii("NC_CashShop");
 			this.RouletteAddr = Exe.FindAscii("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\roullette\\RoulletteIcon.bmp");
 			
-			/// 2.2 - Get the addresses of the respective imported functions (used commonly in various patches)
+			/// 2.1 - Get the addresses of the respective imported functions (used commonly in various patches)
 			this.GetModHandle = Exe.FindFunc("GetModuleHandleA", "KERNEL32.dll");
 			this.GetProcAddr  = Exe.FindFunc("GetProcAddress", "KERNEL32.dll");
 	
-			/// 2.3 - Also Get the address of "KERNEL32.dll" 
+			/// 2.2 - Also Get the address of "KERNEL32.dll"
 			this.Kernel32 = Exe.FindAscii("KERNEL32.dll");
 			if (this.Kernel32 < 0)
 				this.Kernel32 = Exe.FindAscii("kernel32.dll"); // new clients have it in small letters
 			
-			/// 2.4 - Set the base name
+			/// 2.3 - Set the base name
 			this.BaseName = Exe.FilePath.split(/[\\/]/).last().remove(/.exe$/);
 			
 			/// 3.1 - Unset ImpInfo member (will be used & loaded only by Custom DLL & HShield patches)
@@ -95,5 +95,5 @@ if (typeof(ROCL) === 'undefined')
 		},
 	};
 	
-	IdentifyObj("ROCL");
+	IdentifyObj("ROC");
 }

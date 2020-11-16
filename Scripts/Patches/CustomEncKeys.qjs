@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -154,7 +154,7 @@ function _CEK_SetupObfuscate(index)
     
     /// 1.1 - Prepare suffix with Stack restore & RETN
     let suffix = 
-		(ROCL.HasFP ? POP(EBP) : NOP)	//POP EBP or NOP
+		(ROC.HasFP ? POP(EBP) : NOP)	//POP EBP or NOP
     +	RETN(4)              			//RETN 4
     ;
         
@@ -162,7 +162,7 @@ function _CEK_SetupObfuscate(index)
     ///       since we need to replicate the entire function
     if (PACKET.KS_Mode === KeyMode.Virtual)
     {
-        code += (ROCL.HasFP ?
+        code += (ROC.HasFP ?
             MOV(EAX, [EBP, 8])			//MOV EAX, DWORD PTR SS:[EBP+8]
         :
 			MOV(EAX, [ESP, 4])			//MOV EAX, DWORD PTR SS:[ESP+4]

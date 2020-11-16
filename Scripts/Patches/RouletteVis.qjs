@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -81,8 +81,8 @@ RouletteVis = function(patchName)
 		let freeVir = Exe.Phy2Vir(free, DIFF);
 		
 		/// 2.4 - Fill in the Blanks
-		code = SwapFiller(code, 1, ROCL.MakeWin - (freeVir + pos1));
-		code = SwapFiller(code, 2, ROCL.MakeWin - (freeVir + pos2 - 5));
+		code = SwapFiller(code, 1, ROC.MakeWin - (freeVir + pos1));
+		code = SwapFiller(code, 2, ROC.MakeWin - (freeVir + pos2 - 5));
 		code = SwapFiller(code, 3, Exe.Phy2Vir(retnAddr, CODE) - (freeVir + pos2));
 		
 		/// 2.5 - Add the code at the gap
@@ -107,7 +107,7 @@ RouletteVis = function(patchName)
 ///
 /// \brief Only Enable for Clients that actually have the icon
 ///
-RouletteVis.validate = () => ROCL.RouletteAddr > 0;
+RouletteVis.validate = () => ROC.RouletteAddr > 0;
 
 ///
 /// \brief Wrappers for individual patches

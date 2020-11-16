@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,10 +32,10 @@
 InsensitiveStorageSearch = function()
 {
 	/// 1.1 - Ensure the required functions are available
-	if (ROCL.GetModHandle < 0)
+	if (ROC.GetModHandle < 0)
 		throw Error("GetModuleHandleA not found");
 	
-	if (ROCL.GetProcAddr < 0)
+	if (ROC.GetProcAddr < 0)
 		throw Error("GetProcAddress not found");
 	
 	/// 1.2 - Find string search for storage
@@ -73,10 +73,10 @@ InsensitiveStorageSearch = function()
 		CMP([MakeFiller(1)], 0)		//CMP DWORD PTR DS:[StrStrIA], 0
 	+	JNE(0x2F)					//JNE SHORT addr2
 	+	PUSH(MakeFiller(2))			//PUSH OFFSET ; ASCII "Shlwapi.dll"
-	+	CALL([GetModHandle])		//CALL DWORD PTR DS:[GetModuleHandleA]
+	+	CALL([ROC.GetModHandle])	//CALL DWORD PTR DS:[GetModuleHandleA]
 	+ 	PUSH(MakeFiller(3))			//PUSH OFFSET ; ASCII "StrStrIA"
 	+ 	PUSH_EAX					//PUSH EAX
-	+ 	CALL([GetProcAddr])			//CALL DWORD PTR DS:[GetProcAddress]
+	+ 	CALL([ROC.GetProcAddr])	//CALL DWORD PTR DS:[GetProcAddress]
 	+ 	TEST(EAX, EAX)				//TEST EAX, EAX
 	+ 	JNE(0xF)					//JNE SHORT addr2
 	+	callNrestore				//CALL DWORD PTR DS:[_mbsstr]
@@ -124,8 +124,7 @@ InsensitiveStorageSearch = function()
 	Exe.AddHex(free, code + strings);
 	
 	/// 3.4 - Create a JMP to our code
-	Exe.SetUint8(addr + callOffset, 0xE9);
-	Exe.SetTgtAddr(addr + callOffset + 1, freeVir);
+	Exe.SetJMP(addr + callOffset, freeVir);
 	
 	return true;
 };

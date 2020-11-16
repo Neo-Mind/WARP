@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Yommy, Neo-Mind                             *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -109,7 +109,7 @@ CustomFontName = function()
         /// 2.3 - Allocate space to add the font since its not already present
         free = Exe.FindSpace(newFont.length + 1);
         if (free < 0)
-            throw NOGAPMSG;
+            throw NOSPACE;
 
         /// 2.4 - Add the Font name there
         Exe.AddFromVar(free, '$newFont', newFont.length + 1);

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -142,7 +142,7 @@ ResizeNpcBox = function()
     let stackSub = Exe.GetInt32(subAddr + 2);
 
     /// 2.1 - Find the End of the Function.
-    if (ROCL.HasFP)
+    if (ROC.HasFP)
     {
         code =
             MOV(ESP, EBP)      //MOV ESP, EBP
@@ -168,10 +168,10 @@ ResizeNpcBox = function()
 
     /// 2.3 - Change the Stack Allocation with new values
     Exe.SetInt32(subAddr + 2, value + stackSub - 0x804);//Change x in SUB ESP, x
-    if (!ROCL.HasFP)
+    if (!ROC.HasFP)
         Exe.SetInt32(addr2 + 2, value + stackSub - 0x804);//Change x in ADD ESP, x
 
-    if (ROCL.HasFP)
+    if (ROC.HasFP)
     {
         /// 3.1 - Update all EBP-x+i Stack references, for now we are limiting i to (0 - 3)
         for (let i = 0; i <= 3; i++)

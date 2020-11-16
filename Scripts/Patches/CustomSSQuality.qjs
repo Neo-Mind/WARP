@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 CustomSSQuality = function()
 {
     /// 1.1 - Find the JPEG_CORE_PROPERTIES member assignments (DIBChannels & DIBColor)
-    let tgt = ROCL.HasFP ? [EBP, NEG2WC] : [ESP, WCp] ; //template for DWORD PTR SS:[EBP-x] or DWORD PTR SS:[ESP+x] as per frame pointer presence
+    let tgt = ROC.HasFP ? [EBP, NEG2WC] : [ESP, WCp] ; //template for DWORD PTR SS:[EBP-x] or DWORD PTR SS:[ESP+x] as per frame pointer presence
     
     let code =
         MOV(tgt, 3) //MOV tgt, 3; DIBChannels
@@ -41,7 +41,7 @@ CustomSSQuality = function()
     let addr = Exe.FindHex(code);
     if (addr < 0) //x > 0x7F for ESP or x < 0x7F for EBP
     {
-		tgt = ROCL.HasFP ? [EBP, WCn] : [ESP, POS2WC];
+		tgt = ROC.HasFP ? [EBP, WCn] : [ESP, POS2WC];
 
         code =
             MOV(tgt, 3) //MOV tgt, 3; DIBChannels
@@ -65,7 +65,7 @@ CustomSSQuality = function()
     /// 2.2 - Prepare code to change DIBChannels member assignment to jquality member assignment.
     ///     By default DIBChannels is 3 and DIBColor is 2 already, so overwriting their assignments doesnt matter
 	
-	code = MOV( [(ROCL.HasFP ? EBP : ESP), jqAddr], newValue); //MOV DWORD PTR SS:[EBP + jqAddr], newValue ;jqAddr is negative or
+	code = MOV( [(ROC.HasFP ? EBP : ESP), jqAddr], newValue);  //MOV DWORD PTR SS:[EBP + jqAddr], newValue ;jqAddr is negative or
 						                                       //MOV DWORD PTR SS:[ESP + jqAddr], newValue ;jqAddr is positive
     
     /// 2.3 - Write the code to client
