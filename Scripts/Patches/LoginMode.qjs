@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Neo-Mind, 4144                     *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -167,9 +167,9 @@ RestoreLoginWindow = function()
     if (!LANGTYPE.Valid)
         throw LANGTYPE.Error;
     
-	/// 1.2 - Check if WinMgr was loaded
-    if (!WINMGR.Valid)
-        throw WINMGR.Error;
+	/// 1.2 - Ensure the WINMGR object has been loaded with valid data
+	if (!WINMGR.load())
+		throw WINMGR.Error;
 
 	/// 2.1 - Find the location where we need to make client call the login window
 	let code =
@@ -199,10 +199,10 @@ RestoreLoginWindow = function()
 	
 	/// 2.4 - Prepare code to overwrite with (originally present in old clients)
 	code =
-		PUSH(3)                         //PUSH 3
-	+	WINMGR.MovECX                   //MOV ECX, OFFSET g_windowMgr
-	+	CALL(WINMGR.MakeWin, fromAddr)  //CALL UIWindowMgr::MakeWindow
-	+   JMP(9)                          //JMP SHORT addr ; skip over to the MOV DWORD PTR DS:[EBX+0C], 4
+		PUSH(3)                        //PUSH 3
+	+	WINMGR.MovECX                  //MOV ECX, OFFSET g_windowMgr
+	+	CALL(WINMGR.MakeWin, fromAddr) //CALL UIWindowMgr::MakeWindow
+	+	JMP(9)                         //JMP SHORT addr ; skip over to the MOV DWORD PTR DS:[EBX+0C], 4
 	;
 	
 	/// 2.5 - Overwrite at codeAddr

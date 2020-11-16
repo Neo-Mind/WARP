@@ -275,8 +275,7 @@ CustomLicenseTxt = function()
 CustomClientInfo = function()
 {
 	/// 1.1 - Load the DGRF object
-	DGRF.load();
-	if (!DGRF.Valid)
+	if (!DGRF.load())
 		throw DGRF.Error;
 	
 	/// 1.2 - Retrieve the refAddr (PUSH location) & calculate the end address

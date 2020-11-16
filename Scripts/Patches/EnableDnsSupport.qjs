@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,8 +32,8 @@
 ///
 EnableDnsSupport = function()
 {
-	/// 1.1 - Ensure WINMGR is loaded
-	if (!WINMGR.Valid)
+	/// 1.1 - Ensure the WINMGR object has been loaded with valid data
+	if (!WINMGR.load())
 		throw WINMGR.Error;
 	
     /// 1.2 - Find the common IP address across all clients

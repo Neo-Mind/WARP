@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,9 +31,9 @@
 ///
 HideWorldView = function()
 {
-    /// 1.1 - Check if WinMgr was loaded
-    if (!WINMGR.Valid)
-        throw WINMGR.Error;
+    /// 1.1 - Ensure the WINMGR object has been loaded with valid data
+	if (!WINMGR.load())
+		throw WINMGR.Error;
 
     /// 1.2 - Find 1st pattern of window creation (There should be exactly 2 matches for map button & shortcut)
     let id = (Exe.BuildDate < 20100616) ? 0x93 : 0x8C;

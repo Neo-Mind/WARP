@@ -34,40 +34,40 @@ if (typeof(DGRF) === 'undefined')
 	DGRF =
 	{	
 		///
-		/// \brief Initializes the expected data members
+		/// \brief Initializes the data members
 		///
 		init : function()
 		{
-			this.Addr = -1;    //VIRTUAL address of 'data.grf'
-			this.RefAddr = -1; //The address where it is referenced
-			this.MovFMgr = ''; //The MOV ECX, g_FileMgr code
-		
-			this.Ready = false;
-			this.Valid = false;
-			this.Error = '';
+			this.Addr    = -1;        //The VIRTUAL address of 'data.grf'
+			this.RefAddr = -1;        //The address where it is referenced
+			this.MovFMgr = '';        //The MOV ECX, g_FileMgr code
+									  
+			this.Valid   = undefined; //True or False indicating extraction status
+			this.Error   = '';        //Error Object containing a message about the issue
+									  //encountered during extraction if any 
 		},
 		
 		///
-		/// \brief Loads the info from the current executable
+		/// \brief Extracts the new data from a loaded exe.
 		///
-		load: function()
+		load : function()
 		{
-			if (this.Ready)
-				return;
+			/// 1.1 - Check if load was already called
+			if (this.Valid !== undefined)
+				return this.Valid;
 			
-			/// 0 - Indicate that the object is ready & set the validity to false by default
-			this.Ready = true;
+			/// 1.2 - Initialize 'Valid' to false
 			this.Valid = false;
 				
-			/// 1 - Find 'data.grf'
+			/// 1.3 - Find 'data.grf'
 			this.Addr = Exe.FindAscii("data.grf");
 			if (this.Addr < 0)
 			{
-				this.Error = new Error("'data.grf' not found");
+				this.Error = new Error("DG - 'data.grf' not found");
 				return;
 			}
 			
-			/// 1.2 - Find where its used in a PUSH. Save the address & 
+			/// 1.4 - Find where its used in a PUSH. Save the address & 
 			///		  extract the g_FileMgr assignment before/after it
 			let addr;
 			if (Exe.Version >= 14.0)
@@ -86,7 +86,7 @@ if (typeof(DGRF) === 'undefined')
 					this.MovFMgr = MovFMgr = Exe.GetHex(addr, 5);
 				}
 			}
-			if (addr === undefined || addr < 0)
+			if (addr === undefined || addr < 0) //for VC6-VC11 or when the above match failed
 			{
 				let code =
 					PUSH(this.Addr)		//PUSH OFFSET addr1; "data.grf"
@@ -96,7 +96,7 @@ if (typeof(DGRF) === 'undefined')
 				addr = Exe.FindHex(code);
 				if (addr < 0)
 				{
-					this.Error = new Error("'data.grf' not used");
+					this.Error = new Error("DG - 'data.grf' not used");
 					return;
 				}
 				
@@ -104,12 +104,16 @@ if (typeof(DGRF) === 'undefined')
 				this.MovFMgr = Exe.GetHex(addr + 5, 5);
 			}
 			
-			this.Valid = true;
+			/// 6 - Set Empty message & validity to true.
 			this.Error = '';
+			this.Valid = true;
 		},		
 	};
 	
 	IdentifyObj("DGRF");
 }
 
+///
+/// \brief Initialize when Exe is loaded (only load the object in relevant patches)
+///
 DGRF.init();

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,9 +34,9 @@
 ///
 RouletteVis = function(patchName)
 {
-    /// 1.1 - Check if WinMgr was loaded
-    if (!WINMGR.Valid)
-        throw WINMGR.Error;
+    /// 1.1 - Ensure the WINMGR object has been loaded with valid data
+	if (!WINMGR.load())
+		throw WINMGR.Error;
 	
     /// 1.2 - Find the UIWindow creation before Roulette which is always present (uses ID = 0xB5)
     let code =

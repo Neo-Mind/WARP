@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,8 +36,7 @@
 MultiGRFs = function(patchName)
 {
 	/// 1.1 - Load the DGRF object
-	DGRF.load();
-	if (!DGRF.Valid)
+	if (!DGRF.load())
 		throw DGRF.Error;
 
 	/// 1.2 - Retrieve the refAddr (PUSH location)

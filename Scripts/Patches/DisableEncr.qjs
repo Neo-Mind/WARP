@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -75,8 +75,7 @@ NoPacketEncr = function()
 		throw "Cancelled - One of the Encryption Key patches are ON";
 	
 	/// 1.2 - Ensure the PACKET object has been loaded with valid data
-	PACKET.load();
-	if (!PACKET.Valid)
+	if (!PACKET.load())
 		throw PACKET.Error;
 
     /// 2.1 - Find the Packet Encryption CALL (may or may not be PACKET.KeySetter)

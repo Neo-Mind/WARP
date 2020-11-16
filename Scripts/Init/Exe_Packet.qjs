@@ -47,7 +47,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 		///
 		/// \brief Initialize the data members
 		///
-		init: function()
+		init : function()
 		{
 			this.KeySetter = -1;              //The VIRTUAL address of the function which sets the keys and/or does the obfuscation
 			this.KS_Mode   = KeyMode.Unknown; //The mode of the function above
@@ -66,11 +66,11 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 		///
 		/// \brief Extracts the new data from a loaded exe.
 		///
-		load: function()
+		load : function()
 		{
 			/// 1.1 - Check if load was already called
 			if (this.Valid !== undefined)
-				return;
+				return this.Valid;
 			
 			/// 1.2 - Initialize 'Valid' to false
 			this.Valid = false;
