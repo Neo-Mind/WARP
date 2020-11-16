@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2020-11-07                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
  
@@ -172,7 +172,7 @@ _st_lod_sto = (oper, args) =>
 				}
 				else 
 				{
-					opCode = (data.OpSize === 0x32) ? 0xD9 : 0xDD;
+					opCode = (data.OpSize === 32) ? 0xD9 : 0xDD;
 				}
 			}
 			

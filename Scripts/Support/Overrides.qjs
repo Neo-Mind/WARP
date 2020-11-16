@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-11-07                                             *
+*   Last Modified : 2020-11-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -51,15 +51,26 @@ console.dump = function(obj)
 ///
 /// \brief Shows the physical and virtual counterparts of an address
 /// 
-console.showAddr = function(phy)
+console.showAddr = function(addr, type = PHYSICAL)
 {
-	if (!IsNum(phy))
+	if (!IsNum(addr))
 		return;
+	
+	let phy, vir;
+	if (type === PHYSICAL)
+	{
+		phy = addr;
+		vir = Exe.Phy2Vir(addr);
+	}
+	else
+	{
+		phy = Exe.Vir2Phy(addr);
+		vir = addr;
+	}
 	
 	if (phy >= 0)
 		phy = "0x" + phy.toString(16);
 	
-	let vir = Exe.Phy2Vir(phy);
 	if (vir >= 0)
 		vir = "0x" + vir.toString(16);
 	
