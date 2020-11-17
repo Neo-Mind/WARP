@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 IncrViewID = function()
 {
     /// 1.1 - Find where ReqAccName is PUSHed (only done once in the entire client)
-    addr = Exe.FindHex( PUSH(CVIDL_Addr) );
+    let addr = Exe.FindHex( PUSH(IVID_Addr) );
     if (addr < 0)
         throw Error("'ReqAccName' not used");
 
@@ -41,19 +41,18 @@ IncrViewID = function()
     let oldValue = (Exe.BuildDate > 20130000 ?  2000 : 1000);
 
     /// 2.1 - Find all occurrences of the old limit
-	let codes = [
+	let addrs = [];
+	
+	[
 		MOV(R32, oldValue),
 		MOV(EAX, oldValue),
 		CMP(R32, oldValue),
 		CMP(EAX, oldValue)
-	];
-	
-	let addrs = [];
-	codes.forEach( code =>
+	].forEach( code =>
 	{
-		addrs = addrs.concat(Exe.FindAllHex(code, addr - 0xA0, addr + 0x50));
+		addrs = addrs.concat(Exe.FindHexN(code, -1, addr - 0xA0, addr + 0x60));
 	});
-	
+	console.showAddrs(addrs);
     if (addrs.isEmpty())
         throw Error("Old limit not found");
 
@@ -77,5 +76,5 @@ IncrViewID = function()
 IncrViewID.validate = function()
 {
 	IVID_Addr = Exe.FindAscii("ReqAccName");
-    return (CVIDL_Addr > 0);
+    return (IVID_Addr > 0);
 };

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,8 +36,8 @@ EnableMailAccess = function()
         throw LANGTYPE.Error;
     
     /// 1.2 - Prepare codes for finding short jumps
-	let tc = " [.0....01] [11...000]"; //Common match for TEST EAX, EAX & CMP EAX, r32
-	
+	let tc = " [.0.....1] [11000...]"; //Common match for TEST EAX, EAX & CMP EAX, r32
+
     let code =
 		tc							//TEST or CMP
     +   JE(WCp)    					//JE SHORT addr1

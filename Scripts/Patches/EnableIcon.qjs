@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,7 +35,7 @@
 EnableIcon = function(patchName)
 {	
 	/// 1.1 - Get the Root Resource Directory address
-	let addr = Exe.GetDirAddr(D_Res);
+	let addr = Exe.GetDirAddr(D_Res, PHYSICAL);
 	
 	/// 1.2 - Load the Resource tree
 	if (ROC.RsrcTree === undefined)

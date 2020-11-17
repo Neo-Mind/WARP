@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,9 +39,9 @@ EnableHttpEmblem = function()
     +	POP(EBP)		//6 POP EBP
     +	JMP()	        //7 JMP addr
     ;
-	
+
 	let addr = Exe.FindHex(code);
-	if (addr === -1)
+	if (addr < 0)
 		throw Error("Pattern not found")
 	
 	/// 2 - Change buffer addr
@@ -61,5 +61,5 @@ EnableHttpEmblem = function()
 ///
 /// \brief Disable for unsupported clients
 EnableHttpEmblem.validate = () => 
-	Exe.FindAscii(".?AVCEmblemDataDownloadAsyncWork@@", PHYSICAL, false) > 0 ||
+	Exe.FindAscii(".?AVCEmblemDataDownloadAsyncWork@@", PHYSICAL, false) > 0 &&
 	Exe.FindAscii("CDClient.dll", PHYSICAL, false) > 0;

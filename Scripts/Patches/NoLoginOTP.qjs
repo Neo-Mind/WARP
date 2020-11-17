@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,18 +33,11 @@ NoLoginOTP = function()
 {
 	/// 1.1 - Find the code inside UILoginWnd::SendMsg
 	let code =
-		MOV(ECX, [POS4WC])	// 0 mov ecx,[g_modeMgr]
-	+	PUSH_0				// 6 push 0
-	+	PUSH_0				// 8 push 0
-	+	PUSH_0				//10 push 0
-	+	MOV(EAX, [ECX])		//12 mov eax,[ecx]
-	+	PUSH(0x26)			//14 push 26
+		PUSH(0x26)			//14 push 26
 	+	PUSH(0x2735)		//16 push 2735
 	+	CALL([EAX, 0x18])	//21 call dword ptr [eax+18h]
 	;
-	let push1 = 15;
-	let push2 = 17;
-
+	
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Code inside SendMsg missing");
@@ -53,8 +46,8 @@ NoLoginOTP = function()
 	// logField("CMode_vtable::SendMsg", addr, CMode_SendMsgOffset)
 
 	/// 2 - Change parameter, make client send original login packet first
-	Exe.SetUint8(addr + push1, 0);       //replace 26 with 0
-	Exe.SetUint32(addr + push2, 0x2710); //replace 2735 with 2710
+	Exe.SetUint8(addr + 1, 0);       //replace 26 with 0
+	Exe.SetUint32(addr + 3, 0x2710); //replace 2735 with 2710
 
 	return true;
 };

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -90,7 +90,7 @@ IncrDigits = function()
         +   MOV(R32, 6)  //MOV reg32_B, 6
         +   JMP(WC)      //JMP SHORT addr
         ;
-        addr = Exe.FindHex(code, refAddr + 0x10, refAddr + 0x28);
+        addr = Exe.FindHex(code, refAddr + 0x10, refAddr + 0x30);
         stackAssign = false;
     }
     if (addr < 0)
@@ -110,11 +110,11 @@ IncrDigits = function()
         /// 3.2 - Find reg32_B getting assigned to stack location (if present)
         let addr2 = Exe.FindHex( MOV([StkReg, WC], DigCntLoc), addr, addr + 0x80); //MOV DWORD PTR SS:[StkReg+x], reg32_B ; x is negative for EBP (instruction will be followed by LEA)
         
-        /// 3.3 - If found then save the stack addr instead
+        /// 3.3 - If found then save the stack displacement instead
         if (addr2 > 0)
             DigCntLoc = Instr.FromAddr(addr2).Disp;
     }
-    
+	
     /// 4.1 - Find the location of digit extraction
     addr = Exe.FindHex( MOV(EAX, 0x66666667), addr, addr + 0x200); //MOV EAX, 66666667 ; magic number for divide by 10
     if (addr < 0)
@@ -123,11 +123,12 @@ IncrDigits = function()
     /// 4.2 - Find the first digit movement to stack location
     code = MOV([StkReg, WC], R32); //MOV DWORD PTR SS:[StkReg+x], reg32_C
     
-    let addr2 = Exe.FindHex(code + " 8B", addr + 0x5, addr + 0x28); //followed by another MOV
+    let addr2 = Exe.FindHex(code + " 8B", addr + 0x5, addr + 0x38); //followed by another MOV
     if (addr2 < 0)
 	{
-        addr2 = Exe.FindHex(code + " F7", addr + 0x5, addr + 0x28); //followed by an IMUL
+        addr2 = Exe.FindHex(code + " F7", addr + 0x5, addr + 0x38); //followed by an IMUL
 	}
+
     if (addr2 < 0)
         throw Error("Digit movement not found");
     
@@ -323,7 +324,7 @@ _ID_UpdateStack = (arg, sign) =>
     {
         Exe.SetInt8(arg, Exe.GetInt8(arg) + stackOff);
     }
-    else if (IsDefined(arg.MRM) && arg.MRM.Mode === 1) //Instr object
+    else if (arg.MRM !== undefined && arg.MRM.Mode === 1) //Instr object with ModRM
     {
         if  (
                 ( (arg.MRM.RegM === 5 || 

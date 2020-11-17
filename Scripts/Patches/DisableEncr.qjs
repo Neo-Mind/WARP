@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -62,8 +62,6 @@ NoLoginEncr = function()
     Exe.SetHex(addr, code);
     return true;
 };
-
-// TODO - Some 2011 clients dont have the packet encryption function //
 
 ///
 /// \brief Find call to the encryption function and substitute it with XOR EAX, EAX

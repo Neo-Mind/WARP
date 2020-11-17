@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -106,7 +106,7 @@ function ItemInfoPerServer()
 	/// 3.1 - Find 'main'
 	addr2 = Exe.FindAscii("main");
 	if (addr2 < 0)
-		throw Error("'main' missing");
+		throw Error("'main' not found");
 	
 	/// 3.2 - Find the "main" PUSH to Lua stack inside iteminfoLoader
 	code =
@@ -121,7 +121,7 @@ function ItemInfoPerServer()
 	addr2 += code.byteCount();
 	
 	/// 3.4 - Find the CALL to Lua caller after it
-	let ins = FindInstr(i => {i.Codes[0] === 0xE8}, addr2, addr2 + 10);
+	let ins = FindInstr(i => i.Codes[0] === 0xE8, addr2, addr2 + 10);
 	if (ins === false)
 		throw Error("CALL missing after 'main' PUSH");
 	

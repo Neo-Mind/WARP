@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Neo-Mind, 4144                     *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -164,7 +164,7 @@ UseOldLogin.validate = () => Exe.BuildDate > 20100803 && !ROC.HasLWhidden;
 RestoreLoginWindow = function()
 {
 	/// 1.1 - Check if Langtype is loaded
-    if (!LANGTYPE.Valid)
+    if (!LANGTYPE.load())
         throw LANGTYPE.Error;
     
 	/// 1.2 - Ensure the WINMGR object has been loaded with valid data

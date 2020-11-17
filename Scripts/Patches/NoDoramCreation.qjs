@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Secret                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,10 +34,10 @@ NoDoramCreation = function()
 {
 	/// 1.1 - Find the first pattern
 	let code =
-		PUSH([EDI, WC]) // PUSH DWORD PTR DS:[EDI + byte]
-	+	MOV(ECX, EDI)	// MOV ECX, EDI
-	+	PUSH([EDI, WC]) // PUSH DWORD PTR DS:[EDI + byte]
-	+	CALL()			// CALL func
+		PUSH([EDI, WCp]) // PUSH DWORD PTR DS:[EDI + byte]
+	+	MOV(ECX, EDI)	 // MOV ECX, EDI
+	+	PUSH([EDI, WCp]) // PUSH DWORD PTR DS:[EDI + byte]
+	+	CALL()           // CALL func
 	;
 	let addr = Exe.FindHex(code);
 
@@ -45,7 +45,7 @@ NoDoramCreation = function()
 		throw Error("First Pattern missing");
 
 	/// 1.2 - Swap the first PUSH with PUSH 0
-	Exe.SetHex(addr, NOP + PUSH_0, PTYPE_HEX);
+	Exe.SetHex(addr, NOP + PUSH_0);
 
 	/// 2.1 - Find the second pattern (with the MOV)
 	code =
@@ -98,4 +98,4 @@ NoDoramCreation = function()
 ///
 /// \brief Disable for older & more recent clients (since they didnt have Doram race or have different interface)
 ///
-NoDoramCreation = () => Exe.BuildDate <= 20170614;
+NoDoramCreation.validate = () => Exe.BuildDate <= 20170614;

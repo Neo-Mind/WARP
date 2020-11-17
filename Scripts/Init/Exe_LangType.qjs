@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
 if (typeof(LANGTYPE) === 'undefined') // avoid redefinition
 {
 	///
-	/// \brief Asset describing the LangType details (only address as of now)
+	/// \brief Hash describing the LangType details (only address as of now)
 	///
 	LANGTYPE = 
 	{

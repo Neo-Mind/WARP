@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Neo-Mind                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -51,12 +51,12 @@ NoAutoFollow = function()
     if (Exe.Version < 9.0)
 	{
 		prefix += MOV(R32, [R32, POS2WC]);	//MOV R32, DWORD PTR DS:[reg32_C+const]
-        suffix = MOV([POS3WC], R32); 	//MOV DWORD PTR DS:[CGameMode::m_lastLockOnPcGid], reg32_D
+        suffix = MOV([POS3WC], R32); 	    //MOV DWORD PTR DS:[CGameMode::m_lastLockOnPcGid], reg32_D
 	}
 	else
 	{
 		prefix += MOV(EAX, [R32, POS2WC]);	//MOV EAX, DWORD PTR DS:[reg32_C+const]
-		suffix = MOV([POS4WC], EAX); 	//MOV DWORD PTR DS:[CGameMode::m_lastLockOnPcGid], EAX
+		suffix = MOV([POS4WC], EAX); 	    //MOV DWORD PTR DS:[CGameMode::m_lastLockOnPcGid], EAX
 	}
 	
     let addr = Exe.FindHex(prefix + suffix);

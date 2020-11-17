@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : 4144                                                   *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,18 +34,17 @@ CustomCharCreateId = function()
     /// 1 - Find location where packet 0xA39 is being sent (// 2018-05-30)    
     let prefix =
 		MOV(EAX, 0xA39)			//MOV EAX, 0A39h
-	+	MOV([EBP, POS4WC], AX)	//MOV WORD PTR SS:[EBP + a39.packet_id], AX
+	+	MOV([EBP, NEG3WC], AX)	//MOV WORD PTR SS:[EBP + a39.packet_id], AX
 	+	MOVZX(EAX, [POS4WC])	//MOVZX EAX, DWORD PTR DS:[clrAddr]
-	+	MOV([EBP, POS4WC], AX)	//MOV WORD PTR SS:[EBP + a39.hair_color], AX
+	+	MOV([EBP, NEG3WC], AX)	//MOV WORD PTR SS:[EBP + a39.hair_color], AX
 	+	MOVZX(EAX, [POS4WC])	//MOVZX EAX, DWORD PTR DS:[styleAddr]
-	+	MOV([EBP, POS4WC], AX)	//MOV WORD PTR SS:[EBP + a39.hair_style], AX
+	+	MOV([EBP, NEG3WC], AX)	//MOV WORD PTR SS:[EBP + a39.hair_style], AX
 	+	MOV(AL, [POS4WC])		//MOV AL, BYTE PTR DS:[slotAddr]
-	+	MOV([EBP, POS4WC], AL)	//MOV BYTE PTR SS:[EBP + a39.slot], AL
+	+	MOV([EBP, NEG3WC], AL)	//MOV BYTE PTR SS:[EBP + a39.slot], AL
 	;
-	
 	let suffix = 
 		MOVSX(EAX, [POS4WC])	//MOVSX EAX, DWORD PTR DS:[jobIdAddr] <-- patch here
-	+	MOV([EBP, POS4WC], EAX)	//MOV DWORD PTR SS:[EBP + a39.starting_job_id], EAX
+	+	MOV([EBP, NEG3WC], EAX)	//MOV DWORD PTR SS:[EBP + a39.starting_job_id], EAX
     ;
 	
 	let addrs = Exe.FindHexN(prefix + suffix);
@@ -56,7 +55,7 @@ CustomCharCreateId = function()
 		throw Error("More than 1 match found, which is too many");
 	
 	/// 2.1 - Retrieve the new value from user
-	let newId = Exe.GetUserInput('$newJobVal', D_Uint32, "Job Id Input", "Enter the new job id", 1);
+	let newId = Exe.GetUserInput('$newJobVal', D_Uint16, "Job Id Input", "Enter the new job id", 1);
 	
     /// 2.2 - Change the assignment of job id 
 	Exe.SetHex(addrs[0] + prefix.byteCount(), MOV(EAX, newId) + NOP + NOP);

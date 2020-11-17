@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -55,3 +55,8 @@ NoHardCodedIP = function()
 
 	return true;
 };
+
+///
+/// \brief Disable for unsupported clients
+///
+NoHardCodedIP.validate = () => Exe.BuildDate >= 20170000;

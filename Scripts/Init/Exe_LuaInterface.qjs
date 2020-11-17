@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,7 +39,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 	};
 	
 	///
-	/// \brief Asset describing the Lua Interface details
+	/// \brief Hash describing the Lua Interface details
 	///
 	LUA =
 	{
@@ -97,7 +97,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			this.PushD2S = PUSH(addr);
 			
 			/// 1.5 - Find the string 'd>d'
-			addr = Exe.FindAscii("d>d");
+			addr = Exe.FindAscii("d>d", VIRTUAL, false);
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'd>d' not found");
@@ -193,7 +193,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			/// 4.1 - Find the GlobLuaState assignment (different code for different linker)
 			code = 	Exe.BuildDate < 20100817 ? MOV(EAX, [POS3WC]) :
 					Exe.Version < 11.0 ? MOV(R32, [POS3WC]) :
-										 PUSH([POS3WC]) ;
+										 PUSH([POS4WC]) ;
 
 			addr = Exe.FindHex(code, addr, addr + 0x10);
 			if (addr < 0)
@@ -347,9 +347,12 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			let addr = Exe.FindHex( PUSH(refAddr) + CALL() );
 			if (addr < 0)
 				return "Reference file not used";
-			
+
 			/// 1.3 - Find the ECX movement right before it.
 			let hookAddr = Exe.FindHex(this.FL_movECX, addr - 10, addr);
+			if (hookAddr < 0)
+				hookAddr = Exe.FindHex(MOV(ECX, [POS4WC]), addr - 10, addr);
+			
 			if (hookAddr < 0)
 				return "ECX assignment missing";
 			

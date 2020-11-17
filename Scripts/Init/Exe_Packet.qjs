@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -144,7 +144,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 			
 			/// 3.1 - Look for PUSH 1, CALL pattern next (keys get assigned inside the function)
 			code =
-				MOV(ECX, [POS3WC]) //MOV ECX, DWORD PTR DS:[KeyAddr]
+				MOV(ECX, [POS4WC]) //MOV ECX, DWORD PTR DS:[KeyAddr]
 			+   PUSH_1             //PUSH 1
 			+   CALL()             //CALL CRagConnection::ObfuscateOrInit
 			;
