@@ -22,19 +22,28 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-11-07                                             *
+*   Last Modified : 2020-11-19                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Common message strings
+/// \brief Common strings
 ///
+if (typeof(YMLFILTER) === 'undefined')
+{
+	YMLFILTER = "YAML Files (*.yml;*.yaml)";
+	Identify(YMLFILTER);
+}
+
 if (typeof(TAB) === 'undefined') //avoid redefinition
 {
 	TAB = "&nbsp;".repeat(4);
 	Identify("TAB");
 }
 
+///
+/// \brief Common error messages
+///
 if (typeof(NOSPACE) === 'undefined') //avoid redefinition
 {
 	NOSPACE = new Error("Not enough space");
