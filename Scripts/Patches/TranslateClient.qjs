@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-19                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -97,25 +97,25 @@ TranslateClient = function()
 	Translations.forEach( (hash, idx) =>
 	{
 		/// 3.3 - Retrieve the 3 parts 
-		let fromStr = hash.find;
-		let toStr = hash.replace;
+		let findPat = hash.find;
+		let replStr = hash.replace;
 		let desc = hash.desc;
 		
 		/// 3.4 - Ensure description is a valid string/number, defaults to the replacement string
 		if (desc === undefined)
-			desc = toStr;
+			desc = replStr;
 		
 		if (!IsNumOrStr(desc))
 			desc = "Translation #" + idx;
 		
 		/// 3.5 - Ensure we have valid patterns for search & replace
-		if (!IsStr(fromStr))
+		if (!IsStr(findPat))
 		{
 			fp.WriteLine(desc + " => Invalid/Non-existent search pattern");
 			failCount++;
 			return;
 		}
-		if (!IsStr(toStr))
+		if (!IsStr(replStr))
 		{
 			fp.WriteLine(desc + " => Invalid/Non-existent replacement pattern");
 			failCount++;
@@ -124,12 +124,12 @@ TranslateClient = function()
 		
 		/// 3.6 - Check if the search pattern is hex or text string 
 		let hexMode = true;
-		let parts = fromStr.match(/^\s*'(.*)'\s*$/);
+		let parts = findPat.match(/^\s*'(.*)'\s*$/);
 		if (parts !== null)
 		{
-			fromStr = parts[1];
-			if (fromStr.includes('\x00')) //if null is present then search pattern need to be hex
-				fromStr = fromStr.toHex();
+			findPat = parts[1];
+			if (findPat.includes('\x00')) //if null is present then search pattern need to be hex
+				findPat = findPat.toHex();
 			else
 				hexMode = false;
 		}
@@ -138,13 +138,13 @@ TranslateClient = function()
 		let addr;
 		if (hexMode)
 		{
-			addr = Exe.FindHex(" 00" + fromStr + " 00", dbegin, dend);
+			addr = Exe.FindHex(" 00" + findPat + " 00", dbegin, dend);
 			if (addr < 0 && d2begin > 0)
-				addr = Exe.FindHex(" 00" + fromStr + " 00", d2begin, d2end);
+				addr = Exe.FindHex(" 00" + findPat + " 00", d2begin, d2end);
 		}
 		else
 		{
-			addr = Exe.FindAscii(fromStr, PHYSICAL);
+			addr = Exe.FindAscii(findPat, PHYSICAL);
 		}
 		
 		/// 3.8 - If not found write to FailedTranslations.txt
@@ -161,21 +161,21 @@ TranslateClient = function()
 		
 		/// 3.10 - Repeat 3.6 for replacement string
 		hexMode = true;
-		parts = toStr.match(/^\s*'(.*)'\s*$/);
+		parts = replStr.match(/^\s*'(.*)'\s*$/);
 		if (parts !== null)
 		{
-			toStr = parts[1];
-			if (toStr.includes('\x00'))
-				toStr = toStr.toHex();
+			replStr = parts[1];
+			if (replStr.includes('\x00'))
+				replStr = replStr.toHex();
 			else
 				hexMode = false;
 		}
 		
 		/// 3.11 - Replace based on hexMode
 		if (hexMode)
-			Exe.SetHex(addr, toStr);
+			Exe.SetHex(addr, replStr);
 		else
-			Exe.SetAscii(addr, toStr);
+			Exe.SetAscii(addr, replStr);
 	});
 	
 	/// 4 - If the fail count is same as the length of the Translations array then report it
