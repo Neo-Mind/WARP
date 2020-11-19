@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-11-16                                             #
+#   Last Modified : 2020-11-19                                             #
 #                                                                          #
 ############################################################################
 
@@ -764,6 +764,29 @@ groups:
                 recommended : false
                 author : Ai4rei/AN
                 desc : Disable kRO Packet ID Encryption. Also known as Skip Packet Obfuscation.
+                
+    - DisableProtect:
+        title: DISABLE PROTECTION
+        mutex: false
+        
+        patches:
+            - NoHShield:
+                title : Disable HShield
+                recommend : yes
+                author : Ai4rei/AN & Neo-Mind
+                desc : Disables HackShield from clients that use it.
+            
+            - NoGGuard:
+                title : Disable Game Guard
+                recommend : yes
+                author : Neo-Mind
+                desc : Disables Game Guard from clients that use it (Renewal clients have them).
+            
+            - NoCDefender:
+                title : Disable Cheat Defender Game Guard
+                recommend : yes
+                author : 4144
+                desc : Disables Cheat Defender Game Guard from new clients.
     
     - ReturnToLogin:
         title : RETURN TO LOGIN
@@ -1004,7 +1027,7 @@ groups:
                 recommend : no
                 author : 4144 & Neo-Mind
                 desc : Change fade in/out time in warps on same map.
-    
+                
     - CustomData:
         title : DATA CUSTOMIZATION
         mutex : false
