@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-11-19                                             #
+#   Last Modified : 2020-11-20                                             #
 #                                                                          #
 ############################################################################
 
@@ -1134,6 +1134,12 @@ groups:
                 recommend : no
                 author : Functor & 4144
                 desc : Fix act delay for act files with big amount of frames.
+            
+            - CustomDLL:
+                title: Add Custom DLLs
+                recommend: no
+                author: Neo-Mind
+                desc: Makes the hexed client load the specified DLL and functions.
             
     - CustomChar:
         title : CHARACTER CUSTOMIZATION

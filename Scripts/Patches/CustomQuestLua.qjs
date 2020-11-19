@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-20                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,7 +37,7 @@ CustomQuestLua = function()
 		throw LUA.Error;
 	
 	/// 1.2 - Get the list file with the quest file names
-	let inFile = Exe.GetUserInput('$inpQuest', D_InFile, "Quest Lua List", "Enter the listing file", "Inputs/QuestLuaList.yml", {filters: "YAML files (*.yml;*.yaml)"});
+	let inFile = Exe.GetUserInput('$inpQuest', D_InFile, "Quest Lua List", "Enter the listing file", "Inputs/QuestLuaList.yml", {filters: YMLFILTER});
 	if (inFile === false)
 		throw "Cancelled - No listing file specified";
 	

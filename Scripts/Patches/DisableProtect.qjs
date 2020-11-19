@@ -192,7 +192,7 @@ NoHShield = function()
         let aosEntry = ALL00 + ALL00 + Exe.Phy2Rva(NHS_Addr).toHex();
 
         /// 4.3 - Remove the aossdk import entry from the table and save it to newTblData
-        let tblData = ROC.ImpInfo.tblData;
+        let tblData = ROC.ImpInfo.TblData;
         let newTblData = "";
 
         for (let i = 0; i < tblData.length; i += 20*3) //20*3 because each byte in hex takes up 3 chars and each table entry is 20 bytes long
@@ -215,26 +215,13 @@ NoHShield = function()
     }
     else
     {
-        /// 5.1 - If Custom DLL is not present then extract the import table while skipping over aossdk.dll entry
-        let dirEntries = '';
+        /// 5.1 - If Custom DLL is not present then extract the import table 
+		///       while skipping over aossdk.dll entry
 		let impAddr = Exe.GetDirAddr(D_Import, PHYSICAL);
-		let lastEntry = ' 00'.repeat(20);
-		
-		for (let curEntry, addr = impAddr; (curEntry = Exe.GetHex(addr, 20)) !== lastEntry; addr += 20)
-		{
-			/// 5.1.1 - Skip over aossdk.dll
-			let nameAddr = Exe.Rva2Phy( curEntry.substr(12*3, 4*3).toInt() ); //4 bytes from 12th position
-			if (nameAddr <= 0)
-				break;
-			
-			if (Exe.GetAscii(nameAddr) === "aossdk.dll")
-				continue;
-				
-			dirEntries += curEntry;
-		}
+        let dirEntries = GetImpTable("aossdk.dll", impAddr);
 
         /// 5.2 - Overwrite import table with the one we got
-        Exe.SetHex(Exe.GetDirAddr(D_Import), dirEntries + ALL00.repeat(5)); //table ends with 20 NULL bytes
+        Exe.SetHex(impAddr, dirEntries + ALL00.repeat(5)); //table ends with 20 NULL bytes
     }
 	
     return true;

@@ -22,13 +22,13 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-11                                             #
-#   Last Modified : 2020-11-11                                             #
+#   Last Modified : 2020-11-20                                             #
 #                                                                          #
 ############################################################################
 
 -
   Name: Splash.dll
   Funcs: # List of either strings or ordinal numbers
-    - "_DllMain@12"
-    - 41
+    - Name: "_DllMain@12"
+    - Ordinal: 41
  

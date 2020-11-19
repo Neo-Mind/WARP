@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-20                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -374,7 +374,7 @@ CustomAuraLimits = function()
     }
 
     /// 6.1 - Get the Input file
-    let inFile = Exe.GetUserInput('$auraSpec', D_InFile, "Aura Limit Spec", "Enter the Aura Mapping file", "Inputs/AuraSpec.yml", {filters: "YAML files (*.yml;*.yaml)"});
+    let inFile = Exe.GetUserInput('$auraSpec', D_InFile, "Aura Limit Spec", "Enter the Aura Mapping file", "Inputs/AuraSpec.yml", {filters: YMLFILTER});
     if (inFile === false)
         throw "Cancelled - No mapping file specified";
 

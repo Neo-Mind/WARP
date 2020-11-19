@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-20                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -56,7 +56,7 @@ EnableFlagEmotes = function()
     let refAddr = Exe.Vir2Phy(Exe.GetInt32(addr + code.byteCount() - 4));
 
     /// 2.1 - Get Input file containing the list of Flag Emotes per key
-    let inFile = Exe.GetUserInput('$inpFlag', D_InFile, "Flag Emote Mapping", "Enter the Flag Emoticon mapping file", "Inputs/FlagSpec.yml", {filters: "YAML files (*.yml;*.yaml)"});
+    let inFile = Exe.GetUserInput('$inpFlag', D_InFile, "Flag Emote Mapping", "Enter the Flag Emoticon mapping file", "Inputs/FlagSpec.yml", {filters: YMLFILTER});
     if (inFile === false)
         throw "Cancelled - No mapping file specified";
 

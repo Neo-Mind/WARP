@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-20                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,3 +37,30 @@ HasCashShop = () =>
 ///
 HasHiddenLogWin = () =>
 	ROC.HasLWhidden;
+
+///
+/// \brief Extract the import table from the exe as a hex string.
+///        Can also skip over specific DLL as required
+///
+GetImpTable = (skipDLL, impAddr = -1) =>
+{
+	if (impAddr < 0)
+		impAddr = Exe.GetDirAddr(D_Import, PHYSICAL);
+
+	let lastEntry = ' 00'.repeat(20);	
+	let dirEntries = '';
+	for (let curEntry, addr = impAddr; (curEntry = Exe.GetHex(addr, 20)) !== lastEntry; addr += 20)
+	{
+		// Ensure valid name
+		let nameAddr = Exe.Rva2Phy( curEntry.substr(12*3, 4*3).toInt() ); //4 bytes from 12th position
+		if (nameAddr <= 0)
+			break;
+			
+		// Skip over specified DLL
+		if (Exe.GetAscii(nameAddr) === skipDLL)
+			continue;
+
+		dirEntries += curEntry;
+	}
+	return dirEntries;
+};

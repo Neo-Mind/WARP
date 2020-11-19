@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-20                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -201,7 +201,7 @@ CustomBarLimits = function()
     let jobEnd = addr2 + code.byteCount();
     
     /// 4.1 - Get the input file from user
-	let inFile = Exe.GetUserInput('$expBarSpec', D_InFile, "Exp Bar Spec", "Enter the Exp Bar Mapping file", "Inputs/ExpSpec.yml", {filters: "YAML files (*.yml;*.yaml)"});
+	let inFile = Exe.GetUserInput('$expBarSpec', D_InFile, "Exp Bar Spec", "Enter the Exp Bar Mapping file", "Inputs/ExpSpec.yml", {filters: YMLFILTER});
     if (inFile === false)
         throw "Cancelled - No mapping file specified";
 

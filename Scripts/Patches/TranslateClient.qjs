@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-19                                             *
+*   Last Modified : 2020-11-20                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -71,7 +71,7 @@ TranslateClient = function()
 	});
 	
 	/// 2.1 - Get the translation map file from user
-	let inFile = Exe.GetUserInput('$translationFile', D_InFile, "Translation Mapping", "Enter the translation file", "Inputs/Translations_EN.yml", {filters: "YAML files (*.yml;*.yaml)"});
+	let inFile = Exe.GetUserInput('$translationFile', D_InFile, "Translation Mapping", "Enter the translation file", "Inputs/Translations_EN.yml", {filters: YMLFILTER});
     if (inFile === false)
         throw "Cancelled - No translation file specified";
 	
