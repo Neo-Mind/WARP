@@ -1,0 +1,109 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-11-19                                             *
+*   Last Modified : 2020-11-19                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Dump the entire Import Table Hierarchy by iterating through all the
+///        IMAGE_IMPORT_DESCRIPTOR & IMAGE_THUNK_DATA fields in the loaded client
+///
+DumpImportTable = function()
+{
+	/// 1.1 - Get the Import Data Directory PHYSICAL address
+	let addr = Exe.GetDirAddr(D_Import, PHYSICAL);
+
+	/// 1.2 - Open text file for writing
+	let fp = new TextFile("Outputs/importTable_Dump_" + Exe.BuildDate + ".txt", 'w');
+	if (!fp.Valid)
+		throw Error("Unable to create text file in Output folder");
+
+	/// 2.1 - First write the import address to file
+	fp.WriteLine("Import Table = 0x" + Exe.Phy2Vir(addr).toHex(true) + " (0x" + addr.toHex(true) + ")\n");
+
+	for ( ;true; addr += 20)
+	{
+		/// 2.2 - Iterate through each IMAGE_IMPORT_DESCRIPTOR
+		let iltRva = Exe.GetUint32(addr);      //Lookup Table address (RVA)
+		let ts     = Exe.GetUint32(addr + 4);  //TimeStamp
+		let fchain = Exe.GetUint32(addr + 8);  //Forwarder Chain
+		let dllRva = Exe.GetUint32(addr + 12); //DLL Name address (RVA)
+		let iatRva = Exe.GetUint32(addr + 16); //Import Address Table (RVA) <- points to the First Thunk
+
+		/// 2.3 - Ensure we havent reached the end - DLL name addr would be zero
+		if (dllRva <= 0)
+			break;
+
+		/// 2.4 - Get the DLL name from Exe & IAT's  PHYSICAL & VIRTUAL addresses
+		let dllPhy = Exe.Rva2Phy(dllRva);
+		let dllName = Exe.GetAscii(dllPhy); //need the PHYSICAL address of the string
+		let iatPhy = Exe.Rva2Phy(iatRva);
+		let iatVir = iatRva + Exe.ImageBase;
+		
+		/// 2.5 - Write the Descriptor Info to file
+		fp.Write("\tLookup Table Address = 0x" + (iltRva + Exe.ImageBase).toHex(true) + " (0x" + Exe.Rva2Phy(iltRva).toHex(true) + ")");
+		fp.Write(", TimeStamp = " + ts + ", Forwarder = " + fchain);
+		fp.Write(", Name = " + dllName + " (0x" +  dllPhy + ")");
+		fp.WriteLine(", Import Address Table = 0x" + iatVir.toHex(true) + " (0x" + iatPhy.toHex(true) + ")");
+
+		// Now we move on to the functions starting from the first thunk
+		for (let offset = 0; true; offset += 4)
+		{
+			/// 2.6 - Get each IMAGE_THUNK_DATA
+			let thunkData = Exe.GetInt32(iatPhy + offset);//Ordinal Number or Offset of Function Name
+
+			/// 2.7 - Check based on value & write out accordingly
+			///       0 => end of the list
+			///       +ve => Address to Hint + Function Name (IMAGE_IMPORT_BY_NAME struct)
+			///       -ve => Last 2 bytes are Ordinal Number
+			if (thunkData === 0)
+			{
+				fp.WriteLine(""); //blank line
+				break;
+			}
+			else 
+			{
+				fp.Write("\t\tThunk Address = 0x" + (iatVir + offset).toHex(true) + " (0x" + (iatPhy + offset).toHex(true) + ")");				
+				if (thunkData > 0) //By Name
+				{
+					let funcPhy = Exe.Rva2Phy(thunkData);
+					fp.Write(", Function Hint = 0x" + Exe.GetHex(funcPhy, 2).replace(/ /g, ""));
+					fp.WriteLine( ", Function Name = " + Exe.GetAscii(funcPhy + 2));
+				}
+				else //By Ordinal
+				{
+					let ordinal = thunkData & 0xFFFF;
+					fp.WriteLine(", Function Ordinal = " + ordinal);
+				}
+			}
+		}
+    }
+	
+	/// 3.1 - Close the file
+	fp.Close();
+	
+	/// 3.2 - Return the success message
+	return "Import Table has been dumped to Output folder";
+};

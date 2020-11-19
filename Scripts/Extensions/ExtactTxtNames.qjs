@@ -1,0 +1,58 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : -                                                      *
+*   Created Date  : 2020-11-18                                             *
+*   Last Modified : 2020-11-19                                             *
+*                                                                          *
+\**************************************************************************/
+
+ExtractTxtNames = function()
+{
+	let fp = new TextFile("Outputs/loaded_Txt_files_" + Exe.BuildDate + ".txt", 'w');
+	if (!fp.Valid)
+		throw Error("Unable to generate output file");
+	
+	fp.WriteLine("Extracted with WARP")
+	fp.WriteLine("===================")
+	fp.WriteLine("Client: " + Exe.FilePath);
+	fp.WriteLine("");
+	fp.WriteLine("Txt Files:");
+	let addrs = Exe.FindAsciiN(".txt", -1, PHYSICAL, false);
+	console.showAddrs(addrs);
+	addrs.forEach( addr =>
+	{
+		let str = ".txt";
+		for (addr--; addr > 0; addr--)
+		{
+			let chr = Exe.GetAscii(addr, 1);
+			if (chr === '\0' || chr === '@')
+				break;
+			
+			str = chr + str;
+		}
+		if (str.length > 4)
+			fp.WriteLine(" => " + str);
+	});
+	
+	return "Txt File list has been extracted to Output folder";
+};

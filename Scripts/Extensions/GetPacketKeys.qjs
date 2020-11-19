@@ -1,0 +1,52 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-11-18                                             *
+*   Last Modified : 2020-11-18                                             *
+*                                                                          *
+\**************************************************************************/
+
+GetPacketKeys = function()
+{
+	if (!PACKET.load())
+		throw PACKET.Error;
+	
+	let fp = new TextFile("Outputs/PacketKeys_" + Exe.BuildDate + ".txt", 'w');
+	if (fp.Valid)
+	{
+		let keys = [];
+		PACKET.Keys.forEach( (val, idx) => 
+		{
+			keys[idx] = "0x" + val.toHex(true)
+		});
+		fp.WriteLine("Client: " + Exe.FilePath);
+		fp.WriteLine("Packet Keys : (" + keys.join(",") + ")");
+		fp.Close();
+		
+		return "Packet Keys have been written to Output folder";
+	}
+	else
+	{
+		throw Error("Unable to write output file");
+	}
+};
