@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, 4144                                         *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -130,8 +130,8 @@ DisConnToLogin = function()
     /// 4.3 - Add the code there
     Exe.AddHex(free, code);
 
-    /// 4.4 - Change the MOV instruction to a JMP+NOP to our code
-	Exe.SetJMP(jmpAddr, free, PHYSICAL, true);
+    /// 4.4 - Change the MOV instruction to a JMP + 1 NOP to our code
+	Exe.SetJMP(jmpAddr, free, PHYSICAL, 1);
 
     /******* Next we will work on Disconnection from Map server during Gameplay *******/
 

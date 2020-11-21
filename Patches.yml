@@ -873,6 +873,23 @@ groups:
                 author : Jchcc & Neo-Mind
                 desc : Resize the HP bar drawed under Boss monsters as per user specified value.
     
+    - CustomAutoFollow:
+        title: AUTO FOLLOW CUSTOMIZATION
+        mutex: true
+        
+        patches:
+            - NoAutoFollow:
+                title : Disable Auto Follow
+                recommend : no
+                author : Functor & Neo-Mind
+                desc : Disables player auto-follow on Shift + Right click.
+            
+            - DecrAFDelay:
+                title : Decrease Auto Follow delay
+                recommend : no
+                author : Jchcc
+                desc : Decrease the auto follow delay to user specified value.
+
     - CustomUI:
         title : UI CUSTOMIZATION
         mutex : false
@@ -944,12 +961,6 @@ groups:
                 author : Shakto
                 desc : Allow player to create a guild with space in the name (<b>/guild "Spaced Name"</b>).
     
-            - NoAutoFollow:
-                title : Disable Auto follow
-                recommend : no
-                author : Functor & Neo-Mind
-                desc : Disables player auto-follow on Shift + Right click.
-            
             - NoDoramCreation:
                 title : Disable Doram Character Creation UI [Experimental]
                 recommend : no
@@ -1033,6 +1044,12 @@ groups:
                 recommend : no
                 author : Neo-Mind
                 desc : Removes user specified set of Job Names from Party Booking Window.
+                
+            - RelativeDelay4CharDel:
+                title : Change Deletion time to relative 
+                recommend : no
+                author : Functor
+                desc :  Change character display deletion time from actual date & time to remaining time.
     
     - CustomData:
         title : DATA CUSTOMIZATION
@@ -1233,6 +1250,12 @@ groups:
                 recommend : no
                 author : 4144
                 desc : Change minimum client resolution (width & height) to user specified values from default of 1024x768.
+    
+            - UseDefaultBrowser:
+                title: Use Default Browser for <URL>
+                recommend : no
+                author : Jchcc
+                desc : Use default web browser to open <URL> instead of built-in ROWebBrowser.
     
     - CustomNW:
         title : NETWORK CUSTOMIZATION

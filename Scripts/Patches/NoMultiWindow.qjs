@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -137,8 +137,8 @@ NoMultiWindow = function()
 	/// 2.5 - Add function at the allocated space
 	Exe.AddHex(free, code);
 	
-	/// 2.6 - Create JMP+NOP to the function at jmpAddr
-	Exe.SetJMP(jmpAddr, freeVir, VIRTUAL, true);
+	/// 2.6 - Create JMP + 1 NOP to the function at jmpAddr
+	Exe.SetJMP(jmpAddr, freeVir, VIRTUAL, 1);
 	
     return true;
 };
