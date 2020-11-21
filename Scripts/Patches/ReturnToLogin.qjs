@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, 4144                                         *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-21                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -139,7 +139,7 @@ DisConnToLogin = function()
     ///       If its there go to the address
     if (Exe.GetUint8(mapAddr) === 0xEB)
     {
-        addr = Exe.GetTgtAddr(mapAddr + 1, PHYSICAL, true);
+        addr = Exe.GetTgtAddr(mapAddr + 1, PHYSICAL, 1);
     }
     else
     {
@@ -149,7 +149,7 @@ DisConnToLogin = function()
             throw Error("JMP to Mode changer CALL location not found");
 
         /// 5.3 - Goto the JMP address
-        addr = Exe.GetTgtAddr(addr + 1, PHYSICAL, false);
+        addr = Exe.GetTgtAddr(addr + 1, PHYSICAL, 4);
     }
 
     /// 5.4 - Find the CALL to ErrorMsg function 

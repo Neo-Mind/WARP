@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-11-21                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -121,7 +121,7 @@ UseDefaultBrowser = function()
 		throw Error("ROWebBrowser test missing");
 	
 	/// 3.3 - Get the JE target location
-	let tgtAddr = Exe.GetTgtAddr(addr + code.byteCount() - 1, VIRTUAL, true);
+	let tgtAddr = Exe.GetTgtAddr(addr + code.byteCount() - 1, VIRTUAL, 1);
 	
 	/// 3.4 - Create a JMP from rAddr to the target
 	Exe.SetJMP(rAddr, tgtAddr);

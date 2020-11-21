@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -56,7 +56,7 @@ SharedPal = function(oldPrefix, newFormat)
         throw NOSPACE;
 
     /// 2.2 - Add the string there
-    Exe.AddAscii(free, newFormat);
+    Exe.AddText(free, newFormat);
 
     /// 2.3 - Update the PUSHed address
     Exe.SetInt32(addr + 1, Exe.Phy2Vir(free, DIFF));

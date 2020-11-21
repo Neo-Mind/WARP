@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc, Neo-Mind                                        *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -80,7 +80,7 @@ CustomInventoryLimit = function()
 		throw NOSPACE;
 	
 	/// 2.4 - Add the string there
-	Exe.AddAscii(free, newStr, newStr.length);
+	Exe.AddText(free, newStr, newStr.length);
 	
 	/// 3 - Replace all the references
 	let freeVir = Exe.Phy2Vir(free, DIFF);

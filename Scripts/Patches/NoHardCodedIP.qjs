@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-17                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -47,7 +47,7 @@ NoHardCodedIP = function()
 			return;
 		
 		found = true;
-		addrs.forEach(addr => Exe.SetAscii(addr, "http://0.0.0.0/\x00"));
+		addrs.forEach(addr => Exe.SetText(addr, "http://0.0.0.0/\x00"));
 	});
 	
 	if (!found)

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -114,7 +114,7 @@ CustomVendingLimit = function()
     let str = newLimit.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '\0'; //Adding Commas every 3 digits like the original
 	
 	/// 2.3 - Change the 1B string
-    Exe.SetAscii(CVL_Phy, str);
+    Exe.SetText(CVL_Phy, str);
 
     /// 2.4 - For the old style increment the replaced value (original was also 1B+1)
     if (!newStyle)

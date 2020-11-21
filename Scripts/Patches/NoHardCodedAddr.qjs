@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : 4144                                                   *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-11-21                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -212,7 +212,7 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr)
 				throw NOSPACE;
 				
 			/// 3.7 - Add the string there
-			Exe.AddAscii(free, "%s:%s");
+			Exe.AddText(free, "%s:%s");
 			
 			/// 3.8 - Save its VIRTUAL address
 			s_s = Exe.Phy2Vir(free, DIFF);

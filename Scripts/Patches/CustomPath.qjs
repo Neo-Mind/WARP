@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian                                         *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -255,7 +255,7 @@ CustomLicenseTxt = function()
     let freeVir = Exe.Phy2Vir(free, DIFF);
 	
     /// 3.4 - Add the EULA error string
-    Exe.AddAscii(free, eulaString);
+    Exe.AddText(free, eulaString);
 
     /// 3.5 - Update all PUSHes & assigments using the original EULA error string
     [PUSH(0x20) + PUSH(addr), MOV(ESI, addr), MOV(EDI, addr)].forEach( instr =>

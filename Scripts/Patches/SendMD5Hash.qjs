@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : GreenBox, Neo-Mind                                     *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -70,7 +70,7 @@ SendMD5Hash = function()
         Exe.SetJMP(addr);
         
         /// 2.5 - Set addr to jumped location so that we can skip over unnecessary bytes in next FindHex call
-        addr = Exe.GetTgtAddr(addr + 1, PHYSICAL, true);
+        addr = Exe.GetTgtAddr(addr + 1, PHYSICAL, 1);
     });
 	
     return true;

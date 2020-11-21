@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -88,9 +88,9 @@ ShowRegisterBtn = function()
     
     /// 3.1 - Goto the jumped address
     let jmpedAddr = (jnePos === -2) ?
-        Exe.GetTgtAddr(cmpAddr - 1, PHYSICAL, true)
+        Exe.GetTgtAddr(cmpAddr - 1, PHYSICAL, 1)
     :
-		Exe.GetTgtAddr(cmpAddr - 4, PHYSICAL, false)
+		Exe.GetTgtAddr(cmpAddr - 4, PHYSICAL, 4)
 	;
     
     /// 3.2 - Prep new function code to use as replacement for CModeMgr::Quit (original one will get overwritten by RestoreLoginWindow)

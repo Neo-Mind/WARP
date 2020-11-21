@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -51,7 +51,7 @@ SelectLoginBG = function(patchName)
         throw Error("Source string not found");
 
     /// 3 - Modify the string after the dir prefix (16 bytes later) with the tgt string
-    Exe.SetAscii(addr + prefix.byteCount(), tgt);
+    Exe.SetText(addr + prefix.byteCount(), tgt);
 	
     return true;
 };

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,7 +39,7 @@ GuildBrackets = function()
     /// 2 - Change the brackets to regular parentheses + blanks
     ///     (since we are converting from UNICODE to ASCII, one
     ///     extra byte would be there for each korean character)
-    Exe.SetAscii(addr, "%s (%s) ");
+    Exe.SetText(addr, "%s (%s) ");
 	
     return true;
 };

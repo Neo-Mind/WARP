@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-20                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -102,9 +102,9 @@ EnableFlagEmotes = function()
 		{
 			/// 3.6 - Set addr to jumped address
 			if (Exe.GetInt8(addr) === 0x0F)
-				addr = Exe.GetTgtAddr(addr + 2, PHYSICAL, false);
+				addr = Exe.GetTgtAddr(addr + 2, PHYSICAL, 4);
 			else
-				addr = Exe.GetTgtAddr(addr + 1, PHYSICAL, true);
+				addr = Exe.GetTgtAddr(addr + 1, PHYSICAL, 1);
         
             /// 4.1 - Find the second code
             addr = Exe.FindHex(code2, addr);

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-20                                             *
+*   Last Modified : 2020-11-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -57,7 +57,7 @@ GetImpTable = (skipDLL, impAddr = -1) =>
 			break;
 			
 		// Skip over specified DLL
-		if (Exe.GetAscii(nameAddr) === skipDLL)
+		if (Exe.GetText(nameAddr) === skipDLL)
 			continue;
 
 		dirEntries += curEntry;
