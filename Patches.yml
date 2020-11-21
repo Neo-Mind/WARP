@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-11-20                                             #
+#   Last Modified : 2020-11-21                                             #
 #                                                                          #
 ############################################################################
 
@@ -1027,7 +1027,13 @@ groups:
                 recommend : no
                 author : 4144 & Neo-Mind
                 desc : Change fade in/out time in warps on same map.
-                
+            
+            - RemoveBookingJobs:
+                title : Remove Jobs from Booking Window
+                recommend : no
+                author : Neo-Mind
+                desc : Removes user specified set of Job Names from Party Booking Window.
+    
     - CustomData:
         title : DATA CUSTOMIZATION
         mutex : false
@@ -1181,6 +1187,12 @@ groups:
                 recommend : no
                 author : mrjnumber1
                 desc : Change quick item switch delay ticks with user specfied value.
+            
+            - AllowPL2Leave:
+                title : Allow Party Leader to leave
+                recommend : no
+                author : 4144
+                desc : Allow leader to leave the party if no members are on map.
     
     - CustomEquipWin:
         title : EQUIP WINDOW CUSTOMIZATION
@@ -1262,6 +1274,12 @@ groups:
                 recommend : no
                 author : Jchcc
                 desc : Remove hardcoded HTTP service ip address to prevent client from sending HTTP request to official server.
+                
+            - NoHardCodedAddr:
+                title : Remove hardcoded address/port
+                recommend : yes
+                author :  4144
+                desc : Remove hardcoded connection addresses and ports.
             
             - EnableHttpEmblem:
                 title : Enable HTTP Emblem in Client

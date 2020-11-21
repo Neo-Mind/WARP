@@ -1,0 +1,244 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : 4144                                                   *
+*   Created Date  : 2020-11-21                                             *
+*   Last Modified : 2020-11-21                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change hardcoded otp / login addreses and ports from 
+///        localhost to ClientInfo ones
+///
+NoHardCodedAddr = function()
+{
+	/// 1.1 - Find the code where we will remove call (Older style)
+    let code =
+        CMP(BYTE_PTR, [POS3WC], 0)	//CMP BYTE_PTR DS:[addr1], 0
+	+	JNZ(WCp)					//JNZ SHORT addr2
+	+	CALL(POS3WC)				//CALL override_address_port
+	+	JMP(POS2WC)					//JMP addr3
+	;
+    let addr = Exe.FindHex(code);
+    if (addr > 0)
+	{
+    	/// 1.2 - Extract CALLed function address
+		let ovrdAddr = Exe.GetTgtAddr(addr + 10, PHYSICAL);
+		
+		/// 1.3 - Change the function code
+		return _NHCA_SwapWithCI(ovrdAddr);
+	}
+	
+	/// 2.1 - Ensure the ServerType is loaded
+	if (!SRVRTYPE.load())
+		throw SRVRTYPE.Error;
+			
+	/// 2.2 - Find the string '6900'
+	let PortStr = Exe.FindAscii("6900");
+	if (PortStr < 0)
+		throw Error("'6900' not found");
+	
+	/// 2.3 - Find its reference
+	let prefix =
+		CMP(BYTE_PTR, [POS3WC], 0)	//CMP BYTE PTR DS:[addr], 0
+	+	JNZ(POS3WC)					//JNZ addr2
+	;
+	let suffix =
+		MOV(EDX, [SRVRTYPE])		//MOV EDX, DWORD PTR DS:[g_serverType]
+    +	MOV(EAX, POS3WC)			//MOV EAX, offset1
+    +	MOV(ECX, POS3WC)			//MOV ECX, offset2
+    +	MOV([POS3WC], PortStr)		//MOV DWORD PTR DS:[addr3], PortStr
+	;
+		
+	addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+		throw Error("'6900' not used");
+
+	/// 2.5 - Save the JNZ target location and location of MOV EDX
+	let ovrdAddr = addr + prefix.byteCount();
+	let jnzAddr = Exe.GetTgtAddr(ovrdAddr - 4);
+	
+	/// 2.6 - Change the code
+	return _NHCA_SwapWithCI(ovrdAddr, jnzAddr);
+};
+
+///
+/// \brief Disable for unsupported clients 
+///        (Only there in more recent clients starting from first zero client version)
+///
+NoHardCodedAddr.validate = () => (ROC.IsZero && Exe.BuildDate > 20171019) || Exe.BuildDate >= 20181113;
+
+///
+/// \brief Helper function to overwrite the specified address with code to use ClientInfo port
+///        Also changes localhost reference to use ClientInfo address
+///
+_NHCA_SwapWithCI = function(ovrdAddr, jnzAddr)
+{
+	/// 1.1 - Check if its older style or newer style (older as in 2017)
+	let isOld = (jnzAddr === undefined);
+		
+	/// 1.2 - Find the string '127.0.0.1'
+	let addr = Exe.FindAscii("127.0.0.1", VIRTUAL, false);
+	if (addr < 0)
+		throw Error("localhost string missing");
+	
+	/// 1.3 - Find the table entry used for OTP & Login
+	let code =
+		(addr).toHex()
+	+	(6950).toHex()
+	;
+	addr = Exe.FindHex(code, Exe.GetSectBegin(DATA), Exe.FileSize);
+	if (addr < 0)
+		throw Error("Table entry missing");
+	
+	/// 1.4 - Save the needed details
+	let otpAddr = Exe.Phy2Vir(addr);
+	let otpPort = otpAddr + 4;
+	let cinfoAddr = otpPort + 4;
+	let cinfoPort = cinfoAddr + 4;
+	
+	if (Exe.BuildDate < 20200630)
+	{
+		/// 1.5 - Find address of atoi function
+		let AtoI = Exe.FindFunc("atoi");
+		if (AtoI < 0)
+			throw Error("'atoi' function missing");
+	
+		/// 2.1 - Change the code at ovrdAddr
+		code =
+			PUSH([cinfoPort])	//PUSH DWORD PTR DS:[cinfoPort]
+		+	CALL([AtoI])		//CALL DWORD PTR DS:[atoi]
+		+	MOV([otpPort], EAX)	//MOV DWORD PTR DS:[otpPort], EAX
+		+	ADD(ESP, 4)			//ADD ESP, 4
+		+ 	(isOld 
+		? 	PUSH(jnzAddr)		//PUSH jnzAddr (equivalent to JMP when combined with the RETN below)
+		:	'')
+		+	RETN()				//RETN
+		;
+		Exe.SetHex(ovrdAddr, code);
+
+		/// 2.2 - Find otp_addr usage
+		code =	PUSH([otpAddr]);				//PUSH DWORD PTR DS:[otp_addr]
+	
+		if (isOld)
+			code +=	MOV(R32, [POS3WC]);			//MOV reg32_A, DWORD PTR DS:[addr] ; reg32_A is usually ESI & addr is _snprintf_s
+		else
+			code += LEA(R32, [R32, NEG3WC]);	//LEA reg32_B, [reg32_C + buf]; reg32_B is usually EAX and reg32_C is EBP
+	
+		code +=
+			PUSH(POS3WC)						//PUSH OFFSET addr ; ASCII "%s"
+		+	PUSH(-1)							//PUSH 0FFFFFFFF (-1)
+		;
+	
+		if (isOld)
+			code += LEA(R32, [R32, NEG2WC]);	//LEA reg32_B, [reg32_C + buf]; reg32_B is usually EAX and reg32_C is EBP
+		
+		code +=	PUSH(0x10);						//PUSH 10
+		
+		if (!isOld)
+			code +=	PUSH_EAX ;					//PUSH EAX
+		
+		addr = Exe.FindHex(code);
+		if (addr < 0)
+			throw Error("otp_addr reference missing");
+	
+		/// 2.3 - Change the otp_addr reference to use cinfoAddr (ClientInfo address)
+		Exe.SetInt32(addr + 2, cinfoAddr);
+	}
+	else  //for most recent ones we use different approach
+	{
+		/// 3.1 - Find the kro-agency string
+		let host = Exe.FindAscii("kro-agency.ragnarok.co.kr");
+		if (host < 0)
+			throw Error("Kro agency string missing");
+		
+		/// 3.2 - Find the format string '%s:%d'
+		let s_d = Exe.FindAscii("%s:%d");
+		if (s_d < 0)
+			throw Error("Format string missing");
+		
+		/// 3.3 - Find the location where both are used.
+		let code =
+			PUSH(EDX)		//PUSH EDX
+		+	PUSH(host)		//PUSH OFFSET addr; ASCII "kro-agency.ragnarok.co.kr"
+		+	PUSH(s_d)		//PUSH OFFSET addr2; ASCII "%s:%d"
+		+	PUSH(-1)		//PUSH -1
+		+	PUSH(0x81)		//PUSH 81
+		+	PUSH(POS4WC)	//PUSH OFFSET g_auth_host
+		;
+		
+		let offsetAuth = code.byteCount() - 4;
+		let offsetSNP = offsetAuth + 5;
+		
+		code +=
+			CALL(ALLWC)		//CALL snprintf
+		+	ADD(ESP, 0x18)	//ADD ESP, 18
+		;
+		let addr = Exe.FindHex(code);
+		if (addr < 0)
+			throw Error("snprintf_s CALL missing");
+			
+		/// 3.4 - Extract the function address & g_auth_host
+		let snprintf = Exe.GetTgtAddr(addr + offsetSNP);
+		let gAuthHost = Exe.GetInt32(addr + offsetAuth);
+		
+		/// 3.5 - Find the format string '%s:%s'
+		let s_s = Exe.FindAscii("%s:%s", VIRTUAL, false);
+		if (s_s < 0)
+		{
+			/// 3.6 - If not found then allocate space for adding it
+			let free = Exe.FindSpace(6);
+			if (free < 0)
+				throw NOSPACE;
+				
+			/// 3.7 - Add the string there
+			Exe.AddAscii(free, "%s:%s");
+			
+			/// 3.8 - Save its VIRTUAL address
+			s_s = Exe.Phy2Vir(free, DIFF);
+		}
+		
+		/// 3.6 - Create the replacement code
+		code =
+			PUSH([cinfoPort])	//PUSH DWORD PTR DS:[clientinfo_port]
+		+	PUSH([cinfoAddr])	//PUSH DWORD PTR DS:[clientinfo_addr]
+		+	PUSH(s_s)		 	//PUSH OFFSET addr; ASCII "%s:%s"
+		+	PUSH(-1)			//PUSH -1
+		+	PUSH(0x81)		 	//PUSH 81
+		+	PUSH(gAuthHost)		//PUSH OFFSET g_auth_host
+		+	CALL(MakeFiller(1))	//CALL snprintf
+		;
+		offsetSNP = code.byteCount();
+		
+		code +=
+			ADD(ESP, 0x18)		//ADD ESP, 18
+		+	JMP(MakeFiller(2))	//JMP jnzAddr
+		;
+		let csize = code.byteCount();
+		
+		let ovrdVir = Exe.Phy2Vir(ovrdAddr);
+		code = SwapFiller(code, 1, snprintf - (ovrdVir + offsetSNP));
+		code = SwapFiller(code, 2, jnzAddr - (ovrdVir + csize));
+	}
+	return true;
+};

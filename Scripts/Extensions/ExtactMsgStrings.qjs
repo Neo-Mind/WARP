@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2020-11-19                                             *
+*   Last Modified : 2020-11-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -87,10 +87,8 @@ ExtractMsgStrings = function()
 	/// 2.1 - Get the mapping file from user
 	let inFile = Exe.GetUserInput('$msgTranslations', D_InFile, "MsgString Translations", "Enter translation mapping file (Optional)", "Inputs/MsgStrMap_EN.yml");
 	
-	/// 2.2 - Load the mapping if valid file provided
-	let trMap;
-	if (inFile !== false)
-		trMap = _EMS_load(inFile);
+	/// 2.2 - Load the translation mapping if valid file provided
+	let trMap = (inFile === false ? undefined : _EMS_LoadTr(inFile));
 	
 	/// 3.1 - Open output file for writing
 	let fp = new TextFile("Outputs/msgStringTable_" + ROC.BaseName + ".txt", 'w');
@@ -131,7 +129,7 @@ ExtractMsgStrings = function()
 ///
 /// \brief Helper function for loading translation YAML into 1 to 1 mapping
 ///
-_EMS_load = function(inFile)
+_EMS_LoadTr = function(inFile)
 {
 	let arr = Warp.LoadYaml(inFile);
 	if (!Array.isArray(arr))
