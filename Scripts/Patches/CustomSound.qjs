@@ -1,0 +1,318 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : jchcc                                                  *
+*   Created Date  : 2020-11-22                                             *
+*   Last Modified : 2020-11-23                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Swap the sampling frequency from 22050 to 44100
+///
+Enable44KHzAudio = function()
+{
+    /// 1 - Find the code assigning the sampling frequency
+    let code =
+		MOV([ESI, POS2WC], 8000)	//MOV DWORD PTR DS:[ESI+CSoundMgr.digitalrate], 1F40
+	+	JMP(0x16)					//JMP SHORT loc_4656C2
+	+	MOV([ESI, POS2WC], 11025)	//MOV DWORD PTR DS:[ESI+CSoundMgr.digitalrate], 2B11
+	+	JMP(0x0A)					//JMP SHORT loc_4656C2
+	+	MOV([ESI, POS2WC], 22050)	//MOV DWORD PTR DS:[ESI+CSoundMgr.digitalrate], 5622
+	;
+    let addr = Exe.FindHex(code);
+    if (addr < 0)
+        throw Error("Frequency assignment missing");
+
+	/*
+    let digitalRateOffsets = [[2, 4], [14, 4], [26, 4]];
+    for (let i = 0; i < digitalRateOffsets.length; i++)
+    {
+        logField("CSoundMgr::digitalrate", addr, digitalRateOffsets[i]);
+    }
+	*/
+
+    /// 2 - Change 22050 to 44100
+	Exe.SetInt32(addr + code.byteCount() - 4, 44100);
+
+    return true;
+};
+
+///
+/// \brief Insert custom code to auto mute audio when game window is inactive
+///
+AutoMute = function()
+{
+	/// 1.1 - Find the reference code to retrieve Audio specific functions & global values.
+	let prefix =
+		PUSH(POS3WC)		//PUSH OFFSET addr; ASCII "Bgm_Volume"
+	;
+	
+	let suffix =
+		CALL(ALLWC)			//CALL CSession::GetOptionValue
+	+	PUSH_EAX			//PUSH EAX
+	+	MOV(ECX, ESI)		//MOV ECX, ESI
+	;
+	
+	let offsetSSV = suffix.byteCount() + 1;
+	
+	suffix +=
+	 	CALL(ALLWC)			//CALL CSession::SetStreamVol
+	+	MOV(ESI, [POS3WC])	//MOV ESI, DWORD PTR DS:[g_soundMgr]
+	+	MOV(ECX, ESI)		//MOV ECX, ESI
+	+	CALL(ALLWC)			//CALL CSoundMgr::GetStreamVolume
+	+	PUSH_EAX			//PUSH EAX
+	+	MOV(ECX, ESI)		//MOV ECX, ESI
+	+	CALL(ALLWC)			//CALL CSoundMgr::SetStreamVol2
+	+	MOV(ECX, [POS3WC])	//MOV ECX, DWORD PTR DS:[g_soundMgr]
+	+	PUSH(EDI)			//PUSH EDI
+	;
+	
+	let offsetS2D = suffix.byteCount() + 1;
+	let offsetGSM = offsetS2D + 4;
+	
+	suffix +=
+		CALL(ALLWC)			//CALL CSoundMgr::Set2DEffectVolume
+	+	MOV(ECX, [POS3WC])	//MOV ECX, DWORD PTR DS:[g_soundMgr]
+	+	PUSH(EDI)			//PUSH EDI
+	;
+	
+	let offsetS3D = suffix.byteCount() + 1;
+	
+	suffix +=
+		CALL(ALLWC)			//CALL CSoundMgr::Set3DEffectVolume
+	;
+	
+	/*
+	let GetOptionValueOffset = 6;
+	let SetStreamVolOffset = 14;
+	let GetStreamVolumeOffset = 27;
+	let SetStreamVol2Offset = 35;
+	let Set2DEffectVolumeOffset = 47;
+	let Set3DEffectVolumeOffset = 59;
+	let soundMgrOffsets = [20, 41, 53];
+	*/
+	
+	let addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+	{
+		prefix +=
+			MOV(ECX, EBX)	//MOV ECX, EBX
+		+   MOV(EDI, EAX)	//MOV EDI, EAX
+		;
+		
+		/*
+        GetOptionValueOffset = 10;
+        SetStreamVolOffset = 18;
+        GetStreamVolumeOffset = 31;
+        SetStreamVol2Offset = 39;
+        Set2DEffectVolumeOffset = 51;
+        Set3DEffectVolumeOffset = 63;
+        soundMgrOffsets = [24, 45, 57];
+		*/
+
+		addr = Exe.FindHex(prefix + suffix);
+	}
+	if (addr < 0)
+	    throw Error("Reference pattern missing");
+
+	/*
+	logRawFunc("CSession::GetOptionValue", addr, GetOptionValueOffset);
+	logRawFunc("CSoundMgr::SetStreamVolume", addr, SetStreamVolumeOffset);
+	logRawFunc("CSoundMgr::GetStreamVolume", addr, GetStreamVolumeOffset);
+	logRawFunc("CSoundMgr::SetStreamVol2", addr, SetStreamVol2Offset);
+	logRawFunc("CSoundMgr::Set2DEffectVolume", addr, Set2DEffectVolumeOffset);
+	logRawFunc("CSoundMgr::Set3DEffectVolume", addr, Set3DEffectVolumeOffset);
+	
+	for (let i = 0; i < soundMgrOffsets.length; i++)
+	{
+		logVaVar("g_soundMgr", addr, soundMgrOffsets[i]);
+	}
+	*/
+
+	// 1.2 - Extract all required values
+	addr += prefix.byteCount();
+	
+	let MovMgr = Exe.GetHex(addr + offsetGSM, 6);
+	let SetStreamVol = Exe.GetTgtAddr(addr + offsetSSV);
+	let Set2DEffectVol = Exe.GetTgtAddr(addr + offsetS2D);
+	let Set3DEffectVol = Exe.GetTgtAddr(addr + offsetS3D);
+
+	/// 2.1 - Find the CGameMode::OnUpdate function
+    let parts = [
+		TEST(EAX, EAX)			//TEST EAX, EAX
+	+	JNZ(0x1A)				//JNZ SHORT loc_9DBA59
+	+	MOV(ECX, [POS3WC])		//MOV ECX, DWORD PTR DS:[g_WindowMgr.m_UIReplayControlWnd]
+	+	PUSH_0					//PUSH 0
+	,
+		PUSH_0					//PUSH 0
+	+	PUSH_0					//PUSH 0
+	,
+		MOV(EAX, [ECX])			//MOV EAX, DWORD PTR DS:[ECX]
+	,
+	+	PUSH_0					//PUSH 0
+	+	PUSH(0x23)				//PUSH 23
+	+	PUSH_0					//PUSH 0
+	+	CALL([EAX, POS2WC])		//CALL DWORD PTR DS:[EAX+UIReplayControlWnd_vtable.UIReplayControlWnd_SendMsg]
+	];
+	addr = Exe.FindHex(parts.join(''));
+	
+	/*
+    let UIReplayControlWndOffset = [6, 4];
+    let SendMsgOffset = [26, 4];
+	*/
+	
+	if (addr < 0) //try shifting the MOV EAX instruction upwards.
+	{
+		[parts[1], parts[2]] = [parts[2], parts[1]];
+		addr = Exe.FindHex(parts.join(''));
+	}
+	if (addr < 0)
+		throw Error("OnUpdate function missing");
+
+	/*
+	logFieldAbs("UIWindowMgr::m_UIReplayControlWnd", addr, UIReplayControlWndOffset);
+	logField("UIReplayControlWnd_vtable::SendMsg", addr, SendMsgOffset)
+	*/
+
+	/// 2.2 - Find the g_Weather assignment after it
+    let code =
+		CALL(ALLWC)			//CALL UIWindowMgr::InvalidateAll
+	+	MOV(ECX, POS4WC)	//MOV ECX, OFFSET g_Weather <--Need to issue CALL from here to our code
+	+	CALL(ALLWC)			//CALL CWeather::Process
+	+	CMP([POS4WC], 0)	//CMP DWORD PTR DS:[g_isAppActive], 0
+	+	JNZ(0xD)			//JNZ SHORT loc_9DBE78
+	+	CMP([POS4WC], 0)	//CMP DWORD PTR DS:[g_3dDevice.m_bIsFullscreen], 0
+	+	JNZ()				//JNZ loc_9DC24D
+	;
+	addr = Exe.FindHex(code, addr, addr + 0x500);
+	
+	/*
+	let jmpOffset = 5;
+	let UIWindowMgr_InvalidateAllOffset = 1;
+	let g_WeatherOffset = 6;
+	let CWeather_Process = 11;
+	let g_isAppActiveOffset = 17;
+	let m_bIsFullscreenOffset = [26, 4];
+	*/
+
+	if (addr < 0)
+		throw Error("g_Weather not assigned");
+		
+	/*
+	logRawFunc("UIWindowMgr::InvalidateAll", addr, UIWindowMgr_InvalidateAllOffset);
+	logVaVar("g_Weather", addr, g_WeatherOffset);
+	logRawFunc("CWeather_Process", addr, CWeather_Process);
+	logVaVar("g_isAppActive", addr, g_isAppActiveOffset);
+	logFieldAbs("C3dDevice::m_bIsFullscreen", addr, m_bIsFullscreenOffset);
+	*/
+
+	/// 2.3 - Save the location of the MOV ECX
+	let hookAddr = addr + 5;
+	
+	/// 3.1 - Find the GetActiveWindow function
+	let GetActiveWindow = Exe.FindFunc("GetActiveWindow", "User32.dll");
+	if (GetActiveWindow < 0)
+		throw Error("GetActiveWindow not found");
+
+	/// 3.2 - Prepare our function code
+	code =
+		CALL(EDI)					//CALL EDI (timeGetTime)
+	+	CMP(EAX, [MakeFiller(1)])   //CMP EAX, DWORD PTR DS:[lastCheck]
+	+	JL(0x9A)                    //JL addr1
+	+	ADD(EAX, 500)               //ADD EAX, 1F4 (500)
+	+	MOV([MakeFiller(1)], EAX)   //MOV DWORD PTR DS:[lastCheck], EAX
+	+	CMP([MakeFiller(2)], 1)     //CMP DWORD PTR DS:[isMuted], 01
+	+	JE(0x1C)                    //JE SHORT addr2
+	+	MovMgr                      //MOV ECX, DWORD PTR DS:[g_soundMgr]
+	+	MOV(EAX, [ECX, 0xEC])       //MOV EAX, DWORD PTR DS:[ECX + EC]
+	+	MOV([MakeFiller(3)], EAX)   //MOV DWORD PTR DS:[bgmVol], EAX
+	+	MOV(EAX, [ECX, 0xF0])       //MOV EAX, DWORD PTR DS:[ECX + F0]
+	+	MOV([MakeFiller(4)], EAX)   //MOV DWORD PTR DS:[effVol], EAX
+	+	CALL([GetActiveWindow])     //CALL DWORD PTR DS:[GetActiveWindow]
+	+	MovMgr                      //MOV ECX, DWORD PTR DS:[g_soundMgr]
+	+	TEST(EAX, EAX)              //TEST EAX,EAX
+	+	JE(0x33)                    //JE SHORT addr3
+	+	CMP([MakeFiller(2)], 0)     //CMP DWORD PTR DS:[isMuted], 0
+	+	JE(0x52)                    //JE SHORT addr4
+	+	XOR(EAX, EAX)               //XOR EAX, EAX
+	+	MOV([MakeFiller(2)], EAX)   //MOV DWORD PTR DS:[isMuted], EAX
+	+	PUSH([MakeFiller(4)])       //PUSH DWORD PTR DS:[effVol]
+	+	CALL(MakeFiller(5))         //CALL CSoundMgr::Set2DEffectVolume (pos = 99)
+	+	PUSH([MakeFiller(4)])       //PUSH DWORD PTR DS:[effVol]
+	+	CALL(MakeFiller(6))         //CALL CSoundMgr::Set3DEffectVolume (pos = 110)
+	+	PUSH([MakeFiller(3)])       //push [bgmVol]
+	+	CALL(MakeFiller(7))         //CALL CSoundMgr::SetStreamVol (pos = 121)
+	+ 	JMP(0x28)                   //JMP SHORT addr5
+	+	CMP([MakeFiller(2)], 1)     //CMP DWORD PTR DS:[isMuted], 1
+	+	JE(0x1F)                    //JE SHORT addr6
+	+	MOV(EAX, 1)                 //MOV EAX, 1
+	+	MOV([MakeFiller(2)], EAX)   //MOV DWORD PTR DS:[isMuted], EAX
+	+	PUSH_0                      //PUSH 0
+	+	CALL(MakeFiller(15))        //CALL CSoundMgr::Set2DEffectVolume (pos = 149)
+	+	PUSH_0                      //PUSH 0
+	+	CALL(MakeFiller(16))        //CALL CSoundMgr::Set3DEffectVolume (pos = 156)
+	+	PUSH_0                      //PUSH 0
+	+	CALL(MakeFiller(17))        //CALL CSoundMgr::SetStreamVol (pos = 163)
+	+	Exe.GetHex(hookAddr, 6)     //MOV ECX, OFFSET g_Weather
+	+	RETN()                      //RETN
+	;
+	
+	/// 3.2 - Prepare the initial values for the extra addresses we are using in the code
+	let buffer =
+		" 00 00 00 00" //lastCheck
+    +	" 00 00 00 00" //isMuted
+    +	" 64 00 00 00" //bgmVol
+    +	" 64 00 00 00" //effVol
+    ;
+
+	/// 3.3 - Allocate space to add them both
+	let size = buffer.byteCount() + code.byteCount() + 4;
+	let free = Exe.FindSpace(size, 0x10);
+	if (free < 0)
+		throw NOSPACE;
+
+	/// 3.4 - Fill in the blanks
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+	
+	//First all the extra addresses
+	code = SwapFillers(code,
+		[1, 2, 3, 4],
+		[freeVir, freeVir+4, freeVir+8, freeVir+12]
+	);
+	
+	//Now all the CALLs
+	code = SwapFiller(code,  5, Set2DEffectVol - (freeVir + 16 +  99 + 5));
+	code = SwapFiller(code, 15, Set2DEffectVol - (freeVir + 16 + 149 + 5));
+	code = SwapFiller(code,  6, Set3DEffectVol - (freeVir + 16 + 110 + 5));
+	code = SwapFiller(code, 16, Set3DEffectVol - (freeVir + 16 + 156 + 5));
+	code = SwapFiller(code,  7, SetStreamVol - (freeVir + 16 + 121 + 5));
+	code = SwapFiller(code, 17, SetStreamVol - (freeVir + 16 + 163 + 5));
+	
+	/// 3.5 - Add the code at allocated space 
+	Exe.AddHex(free, buffer + code, size);
+	
+	/// 3.6 - Create the CALL at hookAddr
+	Exe.SetCALL(hookAddr, freeVir + 16);
+	
+	return true;
+};

@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-11-22                                             #
+#   Last Modified : 2020-11-23                                             #
 #                                                                          #
 ############################################################################
 
@@ -1346,3 +1346,20 @@ groups:
                 recommend : no
                 author : mrjnumber1
                 desc : Disable <b>ro.gnjoy.com</b> launching after in-game settings change.
+    
+    - CustomSound:
+        title : SOUND CUSTOMIZATION
+        mutex : false
+        
+        patches:
+            - Enable44KHzAudio:
+                title : Enable 44.1 kHz Audio Sampling Frequency
+                recommend : no
+                author : jchcc
+                desc : Boosts the audio sampling frequency to 44.1 kHz, improving the audio quality in the game.
+            
+            - AutoMute:
+                title : Auto Mute Audio [Experimental]
+                recommend : no
+                author : jchcc
+                desc : Auto mute audio when game window is not active.

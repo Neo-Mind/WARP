@@ -50,7 +50,7 @@ AllowSkillSpam = function()
 		throw Error("False match found (key code isnt correct)");
 	
 	if ((Exe.GetUint32(addr + 1) + 4) !== Exe.GetUint32(endAddr - 9))
-		throw Error("False match found (2nd offset mismatch)";
+		throw Error("False match found (2nd offset mismatch)");
 	
 	/// 2.1 - Prepare replacement code - CMP is for triggering Zero Flag.
 	code = 
