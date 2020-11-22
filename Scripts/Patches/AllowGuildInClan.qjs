@@ -1,0 +1,78 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Functor, 4144                                          *
+*   Created Date  : 2020-11-22                                             *
+*   Last Modified : 2020-11-22                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Skips the check that requires the player to not be in a clan
+///
+AllowGuildInClan = function() 
+{
+    /// 1.1 - Find Message ID #2605 reference
+    let code =
+        JNE(WCp)			//JNE SHORT addr1
+	+	PUSH(0xA2D)			//PUSH 0A2D
+	+	CALL(NEG3WC)		//CALL MsgStr
+	+	PUSH_EAX 			//PUSH EAX
+    ;
+    let addr = Exe.FindHex(code);
+	
+    if (addr < 0)
+    {
+        code =
+			JNE(WCp)		//JNE SHORT addr1
+        +   PUSH(0xA2D)		//PUSH 0x0A2D
+		+	JMP(NEG3WC)		//JMP addr2
+		+	MOV(EAX, ALLWC)	//MOV EAX, const
+        ;
+        addr = Exe.FindHex(code);
+    }
+	if (addr < 0)
+		throw Error("MsgStr ID 2605 missing");
+
+    /// 1.2 - Enforce the jump
+    Exe.SetJMP(addr);
+
+    /// 2.1 - Look for JNE followed by EAX assignment to 0x168 after the above
+    code = 
+        JNZ(NEG3WC)		// JNZ addr
+    +	MOV(EAX, 0x168)	// MOV EAX, 168
+    ;
+
+    addr = Exe.FindHex(code, addr, addr + 0x200);
+    if (addr < 0)
+        throw Error("magic jump not found");
+
+    /// 2.2 - NOP out the JNZ
+    Exe.SetNOPs(addr, 6);
+
+    return true;
+};
+
+///
+/// \brief Disable for clients without the /clanchat command
+///
+AllowGuildInClan.validate = () => Exe.FindAscii("/clanchat") > 0;

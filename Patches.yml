@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-11-21                                             #
+#   Last Modified : 2020-11-22                                             #
 #                                                                          #
 ############################################################################
 
@@ -261,6 +261,7 @@ groups:
                 recommend : no
                 author : Jchcc
                 desc : Open URL in the cashshop window with default web browser instead of IExplore.
+    
     
     - RouletteVis:
         title : ROULETTE VISIBILITY
@@ -1050,7 +1051,25 @@ groups:
                 recommend : no
                 author : Functor
                 desc :  Change character display deletion time from actual date & time to remaining time.
+            
+            - RestoreChatFocus:
+                title : Restore chat focus
+                recommend : no
+                author : 4144
+                desc : Restore input focus from left mouse click. 
     
+            - FixItemDescBug:
+                title : Fix item description bug
+                recommend : no
+                author : Jchcc
+                desc : Fix item description '[' bug
+    
+            - CustomGuildExpLimit:
+                title : Change guild exp limit
+                recommend : no
+                author : 4144
+                desc : Change guild exp limit percent. Default value is 50%.
+            
     - CustomData:
         title : DATA CUSTOMIZATION
         mutex : false
@@ -1210,7 +1229,19 @@ groups:
                 recommend : no
                 author : 4144
                 desc : Allow leader to leave the party if no members are on map.
-    
+            
+            - AllowSkillSpam:
+                title : Allow spam skills by hotkey
+                recommend : no
+                author : Functor & 4144
+                desc : Allow spamming of skills by continuous press of hotkey.
+            
+            - AllowGuildInClan:
+                title : Allow guild activities in clan
+                recommend : no
+                author : Functor & Secret
+                desc : Remove restriction of guild functionality while being a member of a clan.
+            
     - CustomEquipWin:
         title : EQUIP WINDOW CUSTOMIZATION
         mutex : false
