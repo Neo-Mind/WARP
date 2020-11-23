@@ -131,20 +131,6 @@ _st_arith_cmp = (oper, args) =>
  // Float only - Load & Store //
 //===========================//
 
-[
-	["FLD1",	" D9 E8"],
-	["FLDL2T",	" D9 E9"],
-	["FLDL2E",	" D9 EA"],
-	["FLDPI",	" D9 EB"],
-	["FLDLG2",	" D9 EC"],
-	["FLDLN2",	" D9 ED"],
-	["FLDZ",	" D9 EE"],
-].forEach( pair =>
-{
-	eval(pair[0] +  " = '" +  pair[1] + "'");
-	Identify(pair[0])
-});
-
 _define_with("_st_lod_sto",
 	"FLD", "", "FST", "FSTP", "FLDENV", 
 	"FLDCW", "FSTENV", "FSTCW"
@@ -396,3 +382,50 @@ _st_ord_cmp = (oper, args) =>
 		return "";
 	}
 };
+
+///
+/// \brief Instructions without operands (works standalone or uses ST0 & ST1 implcitly)
+///
+[
+	["FNOP",	" D9 D0"],
+	["FCHS",	" D9 E0"],
+	["FABS",	" D9 E1"],
+	["FTST",	" D9 E4"],
+	["FXAM",	" D9 E5"],
+	["FLD1",	" D9 E8"],
+	["FLDL2T",	" D9 E9"],
+	["FLDL2E",	" D9 EA"],
+	["FLDPI",	" D9 EB"],
+	["FLDLG2",	" D9 EC"],
+	["FLDLN2",	" D9 ED"],
+	["FLDZ",	" D9 EE"],
+	["F2XM1",	" D9 F0"],
+	["FYL2X",	" D9 F1"],
+	["FPTAN",	" D9 F2"],
+	["FPATAN",	" D9 F3"],
+	["FXTRACT",	" D9 F4"],
+	["FPREM1",	" D9 F5"],
+	["FDECSTP",	" D9 F6"],
+	["FINCSTP",	" D9 F7"],
+	["FPREM", 	" D9 F8"],
+	["FYL2XP1",	" D9 F9"],	
+	["FSQRT",	" D9 FA"],
+	["FSINCOS",	" D9 FB"],
+	["FRNDINT",	" D9 FC"],
+	["FSCALE",	" D9 FD"],
+	["FSIN",	" D9 FE"],
+	["FCOS",	" D9 FF"],
+	["FUCOMPP",	" DA E9"],
+	["FNENI",	" DB E0"],
+	["FNDISI",	" DB E1"],
+	["FNCLEX",	" DB E2"],
+	["FNINIT",	" DB E3"],
+	["FCLEX",	" 9B DB E2"],
+	["FINIT",	" 9B DB E3"],
+	["FNSETPM",	" DB E4"],
+	["FCOMPP",	" DE D9"],
+].forEach( pair =>
+{
+	eval(pair[0] +  " = '" +  pair[1] + "'");
+	Identify(pair[0])
+});
