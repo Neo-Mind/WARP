@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -272,7 +272,7 @@ ParseData = function(data, scaled)
 			if (p1 < 0 || p2 < 0) //when either is negative we need to use wildcards
 			{
 				parts[3] = 
-					'['
+					' ['
 				+	p0.toBits(2)
 				+	(p1 < 0 ? '...' : p1.toBits(3))
 				+	(p2 < 0 ? '...' : p2.toBits(3))
