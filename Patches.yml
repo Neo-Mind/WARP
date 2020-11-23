@@ -822,6 +822,12 @@ groups:
                 recommend : yes
                 author : Shinryo
                 desc : Disables the Hallucination effect (screen becomes wavy and lags the client), used by baphomet, horongs, and such.
+            
+            - NoBlindness:
+                title : Disable Blind skills effect
+                recommend : no
+                author : X-EcutiOnner
+                desc : Disables the Blind skill effect (screen becomes dark).
     
     - CustomAura:
         title : AURA CUSTOMIZATION
