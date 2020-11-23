@@ -131,13 +131,19 @@ _st_arith_cmp = (oper, args) =>
  // Float only - Load & Store //
 //===========================//
 
-FLD1	= " D9 E8";
-FLDL2T	= " D9 E9";
-FLDL2E	= " D9 EA";
-FLDPI	= " D9 EB";
-FLDLG2	= " D9 EC";
-FLDLN2	= " D9 ED";
-FLDZ	= " D9 EE";
+[
+	["FLD1",	" D9 E8"],
+	["FLDL2T",	" D9 E9"],
+	["FLDL2E",	" D9 EA"],
+	["FLDPI",	" D9 EB"],
+	["FLDLG2",	" D9 EC"],
+	["FLDLN2",	" D9 ED"],
+	["FLDZ",	" D9 EE"],
+].forEach( pair =>
+{
+	eval(pair[0] +  " = '" +  pair[1] + "'");
+	Identify(pair[0])
+});
 
 _define_with("_st_lod_sto",
 	"FLD", "", "FST", "FSTP", "FLDENV", 
