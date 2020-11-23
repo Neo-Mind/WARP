@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -76,8 +76,8 @@ const _define_mux_with = function(prefix)
 _define_with("",
 	["MOVUPS",	  0x10, 0x11, 0x10],	//DQWORD PTR
 	["MOVLPS",	  0x12, 0x13      ],	//QWORD PTR	
-	["UNPCKLPS",  0x14            ],	//DQWORD PTR
-	["UNPCKHPS",  0x15            ],	//DQWORD PTR
+	["UNPCKLPS",  0x14,     , 0x14],	//DQWORD PTR
+	["UNPCKHPS",  0x15,     , 0x15],	//DQWORD PTR
 	["MOVHPS",	  0x16, 0x17      ],	//QWORD PTR
 	["MOVAPS",	  0x28, 0x29, 0x28],	//DQWORD PTR
 	["CVTPI2PS",  0x2A,     , 0x2A],	//QWORD PTR

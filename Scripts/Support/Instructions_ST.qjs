@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-23                                             *
 *                                                                          *
 \**************************************************************************/
  
@@ -131,6 +131,14 @@ _st_arith_cmp = (oper, args) =>
  // Float only - Load & Store //
 //===========================//
 
+FLD1	= " D9 E8";
+FLDL2T	= " D9 E9";
+FLDL2E	= " D9 EA";
+FLDPI	= " D9 EB";
+FLDLG2	= " D9 EC";
+FLDLN2	= " D9 ED";
+FLDZ	= " D9 EE";
+
 _define_with("_st_lod_sto",
 	"FLD", "", "FST", "FSTP", "FLDENV", 
 	"FLDCW", "FSTENV", "FSTCW"
@@ -192,7 +200,6 @@ _st_lod_sto = (oper, args) =>
   //=========================================//
  // Float with Integer operand (as mem ptr) //
 //=========================================//
-
 
 ///
 /// \brief Arithmetic & Comparison
