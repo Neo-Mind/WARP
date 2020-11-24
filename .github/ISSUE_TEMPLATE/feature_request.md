@@ -1,8 +1,8 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Suggest an addition to this project
 title: "[FEATURE]"
-labels: ''
+labels: 'enhancement'
 assignees: ''
 
 ---
@@ -14,4 +14,5 @@ A clear and concise description of what the problem is. Ex. I'm always frustrate
 A clear and concise description of what you want to happen.
 
 **Additional context**
-Add any other context or screenshots about the feature request here (including any existing solutions which you want to generalize for more apps)
+Add any other context or screenshots about the feature request here 
+Also reference any existing solutions which you simply want to extent for other apps.
