@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://github.com/Neo-Mind/WARP/blob/base/Docs/logo.png?raw=true" alt="Warp logo">
+    <img src="Docs/logo.png?raw=true" alt="Warp logo">
 </p>
 
 <h1 align="center">
@@ -123,9 +123,9 @@ WARP/
 ```
 
 ## Documentation Links
-- [Usage Guide](https://github.com/Neo-Mind/WARP/blob/base/Docs/Usage_Guide.md)
-- [Guide for Writing Patches](https://github.com/Neo-Mind/WARP/blob/base/Docs/Patch_Writing.md)
-- [Guide for Writing Extensions](https://github.com/Neo-Mind/WARP/blob/base/Docs/Extension_Writing.md)
-- [API Documentation](https://github.com/Neo-Mind/WARP/blob/base/Docs/API_Documentation.md)
-- [Guide for Writing Language file](https://github.com/Neo-Mind/WARP/blob/base/Docs/Language_Writing.md)
-- [Guide for Writing Style file](https://github.com/Neo-Mind/WARP/blob/base/Docs/Style_Writing.md)
+- [Usage Guide](Docs/Usage_Guide.md)
+- [Guide for Writing Patches](Docs/Patch_Writing.md)
+- [Guide for Writing Extensions](Docs/Extension_Writing.md)
+- [API Documentation](Docs/API_Documentation.md)
+- [Guide for Writing Language file](Docs/Language_Writing.md)
+- [Guide for Writing Style file](Docs/Style_Writing.md)
