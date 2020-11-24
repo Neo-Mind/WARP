@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2020-11-21                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@
 ExtractMsgStrings = function()
 {
 	/// 1.1 - Find the string 'msgStringTable.txt'
-	let addr = Exe.FindAscii("msgStringTable.txt");
+	let addr = Exe.FindText("msgStringTable.txt");
 	if (addr < 0)
 		throw Error("'msgStringTable.txt' not found");
 	
@@ -103,7 +103,7 @@ ExtractMsgStrings = function()
 		let strAddr = Exe.Vir2Phy(Exe.GetUint32(addr + 4));
 		
 		/// 3.4 - Extract the string
-		let msgStr = Exe.GetAscii(strAddr);
+		let msgStr = Exe.GetText(strAddr);
 		
 		/// 3.5 - Translate the string if mapping available
 		if (trMap !== undefined && trMap[msgStr] !== undefined)
@@ -162,5 +162,4 @@ _EMS_LoadTr = function(inFile)
 	});
 	
 	return trMap;
-	
 };

@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : jchcc                                                  *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2020-11-23                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Swap the sampling frequency from 22050 to 44100
 ///
-Enable44KHzAudio = function()
+Enable44kHzAudio = function()
 {
     /// 1 - Find the code assigning the sampling frequency
     let code =

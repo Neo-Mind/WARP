@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : 4144                                                   *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -110,6 +110,6 @@ CustomMinResolution = function()
 ///
 CustomMinResolution.validate = function()
 {
-	CMR_Addr = Exe.FindAscii("OLD_HEIGHT");
+	CMR_Addr = Exe.FindText("OLD_HEIGHT");
 	return (CMR_Addr > 0);
 };

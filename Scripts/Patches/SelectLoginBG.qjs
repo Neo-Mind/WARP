@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -46,7 +46,7 @@ SelectLoginBG = function(patchName)
 	}
 	
     /// 2 - Find the src string
-    let addr = Exe.FindAscii(prefix + src, PHYSICAL, false);
+    let addr = Exe.FindText(prefix + src, PHYSICAL, false);
     if (addr < 0)
         throw Error("Source string not found");
 

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, 4144                                          *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -46,7 +46,7 @@ IncrZoom = function(newDist)
     Exe.SetHex(addr + 4, newDist);
 
 	/// 2.1 - Find the string '/zoom'
-	if (Exe.FindAscii("/zoom") > 0)
+	if (Exe.FindText("/zoom") > 0)
 	{
 		// If present, then we need some additional patching done - 4144
 		

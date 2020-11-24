@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -68,7 +68,7 @@ UseDefaultBrowser = function()
 		throw Error("ShellExecuteA not found");
 	
 	/// 2.2 - Find string 'open' to use for lpOperation
-	let OpenStr = Exe.FindAscii("open");
+	let OpenStr = Exe.FindText("open");
 	if (OpenStr < 0)
 		throw Error("'open' not found");
 	

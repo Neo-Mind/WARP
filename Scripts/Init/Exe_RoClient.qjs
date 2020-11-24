@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,11 +39,11 @@ if (typeof(ROC) === 'undefined')
 		init : function()
 		{
 			/// 1.1 - Get the PHYSICAL address of 'rdata.grf' & if present its a renewal client.
-			this.RGrfPhy = Exe.FindAscii("rdata.grf", PHYSICAL);
+			this.RGrfPhy = Exe.FindText("rdata.grf", PHYSICAL);
 			this.IsRenewal = (this.RGrfPhy > 0);
 			
 			/// 1.2 - Zero clients will have the RenewSetup Zero string
-			this.IsZero = (Exe.FindAscii("Software\\Gravity Soft\\RenewSetup Zero", PHYSICAL, false) > 0);
+			this.IsZero = (Exe.FindText("Software\\Gravity Soft\\RenewSetup Zero", PHYSICAL, false) > 0);
 		
 			/// 1.3 - Check for Frame Pointer by searching for the characteristic PUSH EBP & MOV EBP, ESP as the first statement of a function 
 			///       To avoid false match we will prefix sequence of INTs (some clients have NOPs instead)
@@ -60,17 +60,17 @@ if (typeof(ROC) === 'undefined')
 			this.HasLWhidden = Exe.BuildDate > 20100803 && (Exe.BuildDate <= 20171019 || (Exe.BuildDate < 20181114 && !ROC.IsZero));
 			
 			/// 1.5 - Get the address of 'NC_CashShop' & Roulette bmp string
-			this.CashShopAddr = Exe.FindAscii("NC_CashShop");
-			this.RouletteAddr = Exe.FindAscii("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\roullette\\RoulletteIcon.bmp");
+			this.CashShopAddr = Exe.FindText("NC_CashShop");
+			this.RouletteAddr = Exe.FindText("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\roullette\\RoulletteIcon.bmp");
 			
 			/// 2.1 - Get the addresses of the respective imported functions (used commonly in various patches)
 			this.GetModHandle = Exe.FindFunc("GetModuleHandleA", "KERNEL32.dll");
 			this.GetProcAddr  = Exe.FindFunc("GetProcAddress", "KERNEL32.dll");
 
 			/// 2.2 - Also Get the address of "KERNEL32.dll"
-			this.Kernel32 = Exe.FindAscii("KERNEL32.dll");
+			this.Kernel32 = Exe.FindText("KERNEL32.dll");
 			if (this.Kernel32 < 0)
-				this.Kernel32 = Exe.FindAscii("kernel32.dll", VIRTUAL, false); // new clients have it in small letters
+				this.Kernel32 = Exe.FindText("kernel32.dll", VIRTUAL, false); // new clients have it in small letters
 			
 			/// 2.3 - Set the base name
 			this.BaseName = Exe.FilePath.split(/[\\/]/).last().remove(/.exe$/);

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@ NoGravityImages = function(imgList, startFrom)
 	imgList.forEach((suffix, i) =>
 	{
 		/// 1 - Find the Image suffix
-        let addr = Exe.FindAscii("\\T_" + suffix + ".tga", PHYSICAL, false);
+        let addr = Exe.FindText("\\T_" + suffix + ".tga", PHYSICAL, false);
         if (addr < 0)
             throw Error("Suffix No. " + (i + startFrom) + " not found");
 

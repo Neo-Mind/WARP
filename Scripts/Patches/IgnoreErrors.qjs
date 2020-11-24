@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, 4144                                          *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 IgnoreRsrcErr = function()
 {
 	/// 1.1 - Find the common error string
-	let addr = Exe.FindAscii("Failed to load Winsock library!");
+	let addr = Exe.FindText("Failed to load Winsock library!");
 	if (addr < 0)
 		throw Error("Winsock error string missing");
 	
@@ -73,7 +73,7 @@ IgnoreRsrcErr = function()
 IgnorePalErr = function()
 {
     /// 1.1 - Find the error message
-    let msgAddr = Exe.FindAscii("CPaletteRes :: Cannot find File : ");
+    let msgAddr = Exe.FindText("CPaletteRes :: Cannot find File : ");
     if (msgAddr < 0)
         throw Error("CPaletteRes string not found");
 

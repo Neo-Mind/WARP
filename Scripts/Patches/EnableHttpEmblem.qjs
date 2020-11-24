@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-17                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -61,5 +61,5 @@ EnableHttpEmblem = function()
 ///
 /// \brief Disable for unsupported clients
 EnableHttpEmblem.validate = () => 
-	Exe.FindAscii(".?AVCEmblemDataDownloadAsyncWork@@", PHYSICAL, false) > 0 &&
-	Exe.FindAscii("CDClient.dll", PHYSICAL, false) > 0;
+	Exe.FindText(".?AVCEmblemDataDownloadAsyncWork@@", PHYSICAL, false) > 0 &&
+	Exe.FindText("CDClient.dll", PHYSICAL, false) > 0;

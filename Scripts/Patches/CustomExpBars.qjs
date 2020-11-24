@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-20                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -337,7 +337,7 @@ CustomBarLimits = function()
 ShowExpNumbers = function()
 {
     /// 1.1 - Find the string 'Alt+V, Ctrl+V'
-    let addr = Exe.FindAscii("Alt+V, Ctrl+V", VIRTUAL, false);
+    let addr = Exe.FindText("Alt+V, Ctrl+V", VIRTUAL, false);
     if (addr < 0)
         throw Error("Reference string not found");
 
@@ -399,7 +399,7 @@ ShowExpNumbers = function()
     let CurExpJob = Exe.GetInt32(pushAddr + code.byteCount() - 5);
     
     /// 3.1 - Find the string 'SP'
-    let addrs = Exe.FindAsciiN("SP");
+    let addrs = Exe.FindTextN("SP");
 	if (addrs.find(matchAddr =>
 	{
 		/// 3.2 - Find where it is PUSHed inside OnDraw function (we need to inject after this location)
@@ -453,7 +453,7 @@ ShowExpNumbers = function()
         throw Error("No print functions found");
 
     // '%d / %d'
-    let ddAddr = Exe.FindAscii("%d / %d", VIRTUAL, false);
+    let ddAddr = Exe.FindText("%d / %d", VIRTUAL, false);
     if (ddAddr < 0)
         throw Error("Format string for exp not found");
     

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 GuildBrackets = function()
 {
     /// 1 - Find the format string used for displaying Guild names
-    let addr = Exe.FindAscii("%s\xA1\xBA%s\xA1\xBB", PHYSICAL);
+    let addr = Exe.FindText("%s\xA1\xBA%s\xA1\xBB", PHYSICAL);
     if (addr < 0)
         throw Error("Format string not found");
 

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 EnableProxy = function()
 {
     /// 1.1 - Find the string 'Failed to setup select mode'
-    let addr = Exe.FindAscii("Failed to setup select mode");
+    let addr = Exe.FindText("Failed to setup select mode");
     if (addr > 0)
 	{
 		/// 1.2 - Find where it is PUSHed

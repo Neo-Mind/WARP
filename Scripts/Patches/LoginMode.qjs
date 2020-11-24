@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Neo-Mind, 4144                     *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-17                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -327,7 +327,7 @@ RestoreLoginWindow = function()
 	if (Exe.BuildDate >= 20130320 && Exe.BuildDate <= 20140226) 
 	{
 		/// 6.1 - Find the string 'ID'
-		addr = Exe.FindAscii("ID");
+		addr = Exe.FindText("ID");
 		if (addr < 0)
 			throw Error("'ID' not found");
     

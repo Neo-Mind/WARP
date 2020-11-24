@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -118,7 +118,7 @@ ResizePMBox       = ResizeBox;
 ResizeNpcBox = function()
 {
     /// 1.1 - Find the string '|%02x'
-    let addr = Exe.FindAscii("|%02x");
+    let addr = Exe.FindText("|%02x");
     if (addr < 0)
         throw Error("Format string not found");
 

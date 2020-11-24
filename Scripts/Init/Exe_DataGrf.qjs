@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-16                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -60,7 +60,7 @@ if (typeof(DGRF) === 'undefined')
 			this.Valid = false;
 				
 			/// 1.3 - Find 'data.grf'
-			this.Addr = Exe.FindAscii("data.grf");
+			this.Addr = Exe.FindText("data.grf");
 			if (this.Addr < 0)
 			{
 				this.Error = new Error("DG - 'data.grf' not found");

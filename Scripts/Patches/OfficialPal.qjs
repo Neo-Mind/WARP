@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,7 +39,7 @@ OfficialPal = function()
     /// 1.2 - Find the location of 'Å©·ç' 
 	///       (Palette prefix for Knight - Same string is used for job path as well as imf)
 	///
-    let knightAddr = Exe.FindAscii("\xC5\xA9\xB7\xE7");
+    let knightAddr = Exe.FindText("\xC5\xA9\xB7\xE7");
     if (knightAddr < 0)
         throw Error("Palette prefix not found");
 

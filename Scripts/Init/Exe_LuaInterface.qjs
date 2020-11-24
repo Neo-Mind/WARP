@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-17                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -86,7 +86,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			this.Valid = false;
 			
 			/// 1.3 - Find the string 'd>s'
-			let addr = Exe.FindAscii("d>s");
+			let addr = Exe.FindText("d>s");
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'd>s' not found");
@@ -97,7 +97,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			this.PushD2S = PUSH(addr);
 			
 			/// 1.5 - Find the string 'd>d'
-			addr = Exe.FindAscii("d>d", VIRTUAL, false);
+			addr = Exe.FindText("d>d", VIRTUAL, false);
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'd>d' not found");
@@ -108,7 +108,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			this.PushD2D = PUSH(addr);
 			
 			/// 1.7 - Find the string 'ReqJobName'
-			addr = Exe.FindAscii("ReqJobName");
+			addr = Exe.FindText("ReqJobName");
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'ReqJobName' not found");
@@ -221,7 +221,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			this.FnInvoker = Exe.GetTgtAddr(addr + 1);
 			
 			/// 5.1 - Find the string 'Lua Files\\DataInfo\\jobName'
-			addr = Exe.FindAscii("Lua Files\\DataInfo\\jobName");
+			addr = Exe.FindText("Lua Files\\DataInfo\\jobName");
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - jobName string missing");
@@ -339,7 +339,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 		addLoaders: function(files, refName, tgt = -1)
 		{
 			/// 1.1 - Find the string inside refName
-			let refAddr = Exe.FindAscii(refName);
+			let refAddr = Exe.FindText(refName);
 			if (refAddr < 0)
 				return "Reference file missing";
 			

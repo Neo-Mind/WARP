@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2020-11-19                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -57,8 +57,8 @@ DumpImportTable = function()
 			break;
 
 		/// 2.4 - Get the DLL name from Exe & IAT's  PHYSICAL & VIRTUAL addresses
-		let dllPhy = Exe.Rva2Phy(dllRva);
-		let dllName = Exe.GetAscii(dllPhy); //need the PHYSICAL address of the string
+		let dllPhy = Exe.Rva2Phy(dllRva); //need the PHYSICAL address of the string
+		let dllName = Exe.GetText(dllPhy);
 		let iatPhy = Exe.Rva2Phy(iatRva);
 		let iatVir = iatRva + Exe.ImageBase;
 		
@@ -90,7 +90,7 @@ DumpImportTable = function()
 				{
 					let funcPhy = Exe.Rva2Phy(thunkData);
 					fp.Write(", Function Hint = 0x" + Exe.GetHex(funcPhy, 2).replace(/ /g, ""));
-					fp.WriteLine( ", Function Name = " + Exe.GetAscii(funcPhy + 2));
+					fp.WriteLine( ", Function Name = " + Exe.GetText(funcPhy + 2));
 				}
 				else //By Ordinal
 				{

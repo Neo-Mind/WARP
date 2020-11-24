@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,7 +37,7 @@ EnableDnsSupport = function()
 		throw WINMGR.Error;
 	
     /// 1.2 - Find the common IP address across all clients
-    let addr = Exe.FindAscii("211.172.247.115");
+    let addr = Exe.FindText("211.172.247.115");
     if (addr < 0)
         throw Error("Common IP not found");
 
@@ -89,7 +89,7 @@ EnableDnsSupport = function()
         throw Error("wsprintfA not found");
 
     // IP address format
-    let IPformat = Exe.FindAscii("%d.%d.%d.%d");
+    let IPformat = Exe.FindText("%d.%d.%d.%d");
     if (IPformat < 0)
         throw Error("IP format not found");
     

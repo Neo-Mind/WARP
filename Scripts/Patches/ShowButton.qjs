@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ ShowRegisterBtn = function()
         throw LANGTYPE.Error;
     
     /// 1.2 - Find the registration URL
-    let addr = Exe.FindAscii("http://ro.hangame.com/login/loginstep.asp?prevURL=/NHNCommon/NHN/Memberjoin.asp");
+    let addr = Exe.FindText("http://ro.hangame.com/login/loginstep.asp?prevURL=/NHNCommon/NHN/Memberjoin.asp");
     if (addr < 0)
         throw Error("Registration URL not found");
 
@@ -114,7 +114,7 @@ ShowRegisterBtn = function()
     Exe.SetTgtAddr(jmpedAddr + 6, free, PHYSICAL); //5 for the MOV ECX, g_modeMgr & 1 for opcode of CALL CModeMgr::Quit
     
     /// 4.1 - Find location of 'btn_request_b' (the prefix string for the button in pressed state)
-    let btnAddr = Exe.FindAscii("btn_request_b");
+    let btnAddr = Exe.FindText("btn_request_b");
     if (btnAddr < 0)
         throw Error("'btn_request_b' not found");
 
@@ -163,7 +163,7 @@ ShowRegisterBtn.validate = () => ROC.HasLWhidden || Exe.BuildDate <= 20100803;
 ShowCancelBtn = function()
 {
     /// 1.1 - Find location of 'btn_intro_b'
-    let btnAddr = Exe.FindAscii("btn_intro_b");
+    let btnAddr = Exe.FindText("btn_intro_b");
     if (btnAddr < 0)
         throw Error("'btn_intro_b' not found");
 
@@ -336,7 +336,7 @@ ShowReplayBtn = function()
 ///
 /// \brief Disable for Unsupported Clients (Should have the btn prefix string)
 ///
-ShowReplayBtn.validate = () => Exe.FindAscii("replay_interface\\btn_replay_b", PHYSICAL, false) > 0;
+ShowReplayBtn.validate = () => Exe.FindText("replay_interface\\btn_replay_b", PHYSICAL, false) > 0;
 
 ///
 /// \brief Helper Function for Fixing the coordinates of the specified button as part of ShowReplayBtn patch
@@ -344,7 +344,7 @@ ShowReplayBtn.validate = () => Exe.FindAscii("replay_interface\\btn_replay_b", P
 _SRB_FixupBtnCoords = (btnImg, msgPrefix, suffix, suffix2) =>
 {
     /// 1.1 - Find the Button Image path
-    let addr = Exe.FindAscii(btnImg, VIRTUAL, false);
+    let addr = Exe.FindText(btnImg, VIRTUAL, false);
     if (addr < 0)
         throw Error(msgPrefix + "Button String not found");
 

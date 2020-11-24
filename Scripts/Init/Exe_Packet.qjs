@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-17                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -83,7 +83,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 			}
 			
 			/// 1.4 - Find where the string 'PACKET_CZ_ENTER' is PUSHed
-			let addr = Exe.FindAscii("PACKET_CZ_ENTER");
+			let addr = Exe.FindText("PACKET_CZ_ENTER");
 			if (addr > 0)
 			{
 				addr = Exe.FindHex( PUSH(addr) );

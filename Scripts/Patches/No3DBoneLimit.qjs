@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 No3DBoneLimit = function()
 {
     /// 1.1 - Find the format string (used in sprintf for 3d mob bones)
-    let addr = Exe.FindAscii("model\\3dmob_bone\\%d_%s.gr2");
+    let addr = Exe.FindText("model\\3dmob_bone\\%d_%s.gr2");
     if (addr < 0)
         throw Error("Format string not found");
 
@@ -97,7 +97,7 @@ No3DBoneLimit = function()
     Exe.SetJMP(indexAddr + 2);
 
     /// 3.1 - Find the annoying warning message
-    addr = Exe.FindAscii("too many vertex granny model!");
+    addr = Exe.FindText("too many vertex granny model!");
 
     /// 3.2 - Find where its PUSHed & the CALL after it
     if (addr > 0)

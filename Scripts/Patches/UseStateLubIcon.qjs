@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -58,6 +58,6 @@ UseStateLubIcon = function()
 ///
 UseStateLubIcon.validate = function()
 {
-	USLI_Addr = Exe.FindAscii("GetEFSTImgFileName");
+	USLI_Addr = Exe.FindText("GetEFSTImgFileName");
 	return (USLI_Addr > 0);
 };

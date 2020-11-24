@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : mrjnumber1                                             *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ NoGNJoyLaunch = function()
 	Exe.SetInt8(NGNJL_Addr, 0);
 	
 	/// 2 - Look for the 2nd one and zero it out as well
-	let addr = Exe.FindAscii("ro.gnjoy.com/", PHYSICAL, false);
+	let addr = Exe.FindText("ro.gnjoy.com/", PHYSICAL, false);
 	if (addr > 0)
 		Exe.SetInt8(addr, 0);
 
@@ -50,6 +50,6 @@ NoGNJoyLaunch = function()
 ///
 NoGNJoyLaunch.validate = function()
 {
-	NGNJL_Addr = Exe.FindAscii("ro.gnjoy.com", PHYSICAL, false);
+	NGNJL_Addr = Exe.FindText("ro.gnjoy.com", PHYSICAL, false);
 	return (NGNJL_Addr > 0);
 };

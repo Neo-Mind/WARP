@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-17                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -104,7 +104,7 @@ function ItemInfoPerServer()
 	let iiLoaderFunc = Exe.Phy2Vir(addr);
 	
 	/// 3.1 - Find 'main'
-	addr2 = Exe.FindAscii("main");
+	addr2 = Exe.FindText("main");
 	if (addr2 < 0)
 		throw Error("'main' not found");
 	
@@ -285,6 +285,6 @@ function ItemInfoPerServer()
 ///
 ItemInfoPerServer.validate = function()
 {
-	IIPS_Addr = Exe.FindAscii("ItemInfo file Init");
+	IIPS_Addr = Exe.FindText("ItemInfo file Init");
     return (IIPS_Addr > 0);
 };

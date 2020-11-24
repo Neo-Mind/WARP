@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian                                         *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -124,7 +124,7 @@ CustomPath = function(index)
 CustomPath.validate = (index) =>
 {
 	let data = CP_Data[index];
-	data.addr = Exe.FindAscii(data.name);
+	data.addr = Exe.FindText(data.name);
 	return (data.addr > 0);
 };
 
@@ -133,12 +133,12 @@ CustomPath.validateSak = (index, pref, sakSuf, truSuf, suf = '') =>
 	let data = CP_Data[index];
 	
 	data.name = pref + "_" + (ROCL.IsRenewal ? sakSuf : truSuf);
-	data.addr = Exe.FindAscii(data.name);
+	data.addr = Exe.FindText(data.name);
 	
 	if (addr < 0 && !ROCL.IsRenewal)
 	{
 		data.name = pref + suf;
-		data.addr = Exe.FindAscii(data.name);
+		data.addr = Exe.FindText(data.name);
 	}
 	
 	return (data.addr > 0);
@@ -163,11 +163,11 @@ CustomMonSizeEffLub.validate = () =>
 	let data = CP_Data[3];
 	
 	data.name = "System/monster_size_effect" + suf + "_new.lub";
-	data.addr = Exe.FindAscii(data.name);
+	data.addr = Exe.FindText(data.name);
 	if (addr < 0)
 	{
 		data.name = "System/monster_size_effect" + suf + ".lub";
-		data.addr = Exe.FindAscii(data.name);
+		data.addr = Exe.FindText(data.name);
 	}
 
 	return (data.addr > 0);
@@ -181,12 +181,12 @@ CustomPetEvoClnLub.validate = () =>
 {
 	let data = CP_Data[5];
 	data.name = "system\\PetEvolutionCln_" + (ROCL.IsRenewal ? "sak" : "true") + ".lub";
-	data.addr = Exe.FindAscii(data.name);
+	data.addr = Exe.FindText(data.name);
 	
 	if (addr < 0)
 	{
 		data.name = "system\\PetEvolutionCln.lub";
-		data.addr = Exe.FindAscii(data.name);
+		data.addr = Exe.FindText(data.name);
 	}
 	
 	return (data.addr > 0);
@@ -214,7 +214,7 @@ Orig_LicTxt = "..\\licence.txt";
 CustomLicenseTxt = function()
 {
 	/// 1.1 - Find the string '..\\licence.txt'
-    let addr = Exe.FindAscii(Orig_LicTxt);
+    let addr = Exe.FindText(Orig_LicTxt);
     if (addr < 0)
         throw Error("'" + Orig_LicTxt + "' not found");
 
@@ -240,7 +240,7 @@ CustomLicenseTxt = function()
     Exe.SetInt32(addr + 6, Exe.Phy2Vir(free, DIFF));
 
     /// 3.1 - Find EULA string
-    addr = Exe.FindAscii("No EULA text file. (licence.txt)");
+    addr = Exe.FindText("No EULA text file. (licence.txt)");
     if (addr < 0)
         throw Error("EULA string not found");
 
@@ -402,12 +402,12 @@ CustomClientInfo.validate = function()
 {
 	/// 1.1 - Check if the client is Sakray (clientinfo file name is "sclientinfo.xml" for some Sakray clients)
 	CCI_Name = "sclientinfo.xml";
-    CCI_Addr = Exe.FindAscii(CCI_Name);
+    CCI_Addr = Exe.FindText(CCI_Name);
 
     if (CCI_Addr < 0) // if sclientinfo.xml does not exist then it is a main server exe
     {
 		CCI_Name = "clientinfo.xml";
-        CCI_Addr = Exe.FindAscii(CCI_Name);
+        CCI_Addr = Exe.FindText(CCI_Name);
     }
 	
     return (CCI_Addr > 0);

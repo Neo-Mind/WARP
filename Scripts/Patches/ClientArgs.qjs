@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Secret                                        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 No1and1Arg = function()
 {
     /// 1 - Find the string '1rag1'
-    let addr = Exe.FindAscii("1rag1");
+    let addr = Exe.FindText("1rag1");
     if (addr < 0)
         throw Error("'1rag1' not found");
 
@@ -75,7 +75,7 @@ No1and1Arg = function()
 IgnoreAccArg = function() 
 {
 	/// 1.1 - Find the string '/account:';
-	let addr = Exe.FindAscii("/account:");
+	let addr = Exe.FindText("/account:");
 	if (addr < 0)
 		throw Error("'/account:' not found");
 	

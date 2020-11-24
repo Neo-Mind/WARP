@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -42,7 +42,7 @@ NoHardCodedIP = function()
 	let found = false;
 	ipAddrs.forEach( ip =>
 	{
-		let addrs = Exe.FindAsciiN(ip, -1, PHYSICAL, true, false);
+		let addrs = Exe.FindTextN(ip, -1, PHYSICAL, true, false);
 		if (addrs.isEmpty())
 			return;
 		

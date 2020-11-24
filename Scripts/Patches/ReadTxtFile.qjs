@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -110,6 +110,6 @@ QuestDisplay = function()
 ///
 QuestDisplay.validate = function()
 {
-	QD_Addr = Exe.FindAscii("questID2display.txt");
+	QD_Addr = Exe.FindText("questID2display.txt");
 	return (QD_Addr > 0);
 };

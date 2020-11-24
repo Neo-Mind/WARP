@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,17 +33,17 @@
 CustomWinTitle = function()
 {
     /// 1.1 - Find the physical location of the unused URL string
-    let free = Exe.FindAscii("http://ro.hangame.com/login/loginstep.asp?prevURL=/NHNCommon/NHN/Memberjoin.asp", PHYSICAL);
+    let free = Exe.FindText("http://ro.hangame.com/login/loginstep.asp?prevURL=/NHNCommon/NHN/Memberjoin.asp", PHYSICAL);
     if (free < 0)
         throw Error("URL not found");
     
     /// 1.2 - Find the string 'Ragnarok' or 'Ragnarok : Zero'
 	let oldTitle = "Ragnarok" + (ROC.IsZero ? " : Zero" : "");
-    let addr = Exe.FindAscii(oldTitle);
+    let addr = Exe.FindText(oldTitle);
     if (addr < 0 && ROC.IsZero)
 	{
 		oldTitle = "Ragnarok";
-		addr = Exe.FindAscii(oldTitle);
+		addr = Exe.FindText(oldTitle);
 	}
 	if (addr < 0)
         throw Error("'" + oldTitle + "' not found");

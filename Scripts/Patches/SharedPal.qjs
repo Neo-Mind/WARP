@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,10 +37,10 @@ SharedPal = function(oldPrefix, newFormat)
 	/// 1.1 - Find the original format string
     let addr = -1;
 	if (Exe.Version <= 9.0)
-        addr = Exe.FindAscii(oldPrefix + "%s%s_%d.pal"); //Old style used for VC6 and some initial VC9 clients
+        addr = Exe.FindText(oldPrefix + "%s%s_%d.pal"); //Old style used for VC6 and some initial VC9 clients
         
     if (addr < 0)
-        addr = Exe.FindAscii(oldPrefix + "%s_%s_%d.pal"); //New style
+        addr = Exe.FindText(oldPrefix + "%s_%s_%d.pal"); //New style
         
     if (addr < 0)
         throw Error("Format string not found");

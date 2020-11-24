@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : 4144                                                   *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -54,7 +54,7 @@ NoHardCodedAddr = function()
 		throw SRVRTYPE.Error;
 			
 	/// 2.2 - Find the string '6900'
-	let PortStr = Exe.FindAscii("6900");
+	let PortStr = Exe.FindText("6900");
 	if (PortStr < 0)
 		throw Error("'6900' not found");
 	
@@ -98,7 +98,7 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr)
 	let isOld = (jnzAddr === undefined);
 		
 	/// 1.2 - Find the string '127.0.0.1'
-	let addr = Exe.FindAscii("127.0.0.1", VIRTUAL, false);
+	let addr = Exe.FindText("127.0.0.1", VIRTUAL, false);
 	if (addr < 0)
 		throw Error("localhost string missing");
 	
@@ -168,12 +168,12 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr)
 	else  //for most recent ones we use different approach
 	{
 		/// 3.1 - Find the kro-agency string
-		let host = Exe.FindAscii("kro-agency.ragnarok.co.kr");
+		let host = Exe.FindText("kro-agency.ragnarok.co.kr");
 		if (host < 0)
 			throw Error("Kro agency string missing");
 		
 		/// 3.2 - Find the format string '%s:%d'
-		let s_d = Exe.FindAscii("%s:%d");
+		let s_d = Exe.FindText("%s:%d");
 		if (s_d < 0)
 			throw Error("Format string missing");
 		
@@ -203,7 +203,7 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr)
 		let gAuthHost = Exe.GetInt32(addr + offsetAuth);
 		
 		/// 3.5 - Find the format string '%s:%s'
-		let s_s = Exe.FindAscii("%s:%s", VIRTUAL, false);
+		let s_s = Exe.FindText("%s:%s", VIRTUAL, false);
 		if (s_s < 0)
 		{
 			/// 3.6 - If not found then allocate space for adding it

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2020-11-18                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -40,7 +40,7 @@ GetPacketKeys = function()
 			keys[idx] = "0x" + val.toHex(true)
 		});
 		fp.WriteLine("Client: " + Exe.FilePath);
-		fp.WriteLine("Packet Keys : (" + keys.join(",") + ")");
+		fp.WriteLine("Packet Keys : (" + keys.join(',') + ")");
 		fp.Close();
 		
 		return "Packet Keys have been written to Output folder";

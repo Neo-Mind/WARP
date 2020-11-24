@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, 4144                                         *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -53,7 +53,7 @@ DisConnToLogin = function()
     /******* First we will work on Disconnection from Login/Char Server ********/
     
     /// 2.1 - Find the format string used for error message
-    let addr = Exe.FindAscii("%s(%d)");
+    let addr = Exe.FindText("%s(%d)");
     if (addr < 0)
         throw Error("Format string not found");
 
@@ -285,7 +285,7 @@ CancelToLogin = function()
     let DConn = Exe.GetTgtAddr(addr + 11, PHYSICAL);
 
     /// 2.1 - Find 메시지 => Korean version of "Message"
-    addr = Exe.FindAscii("\xB8\xDE\xBD\xC3\xC1\xF6");
+    addr = Exe.FindText("\xB8\xDE\xBD\xC3\xC1\xF6");
     if (addr < 0)
         throw Error("'Message' not found");
 

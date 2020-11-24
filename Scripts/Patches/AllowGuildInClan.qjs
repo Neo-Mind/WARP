@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Functor, 4144                                          *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -75,4 +75,4 @@ AllowGuildInClan = function()
 ///
 /// \brief Disable for clients without the /clanchat command
 ///
-AllowGuildInClan.validate = () => Exe.FindAscii("/clanchat") > 0;
+AllowGuildInClan.validate = () => Exe.FindText("/clanchat") > 0;

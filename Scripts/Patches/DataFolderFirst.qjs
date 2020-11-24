@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 DataFolderFirst = function()
 {
     /// 1.1 - Find the string 'loading'
-    let addr = Exe.FindAscii("loading");
+    let addr = Exe.FindText("loading");
     if (addr < 0)
         throw Error("'loading' not found");
 

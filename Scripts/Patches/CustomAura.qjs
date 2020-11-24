@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-20                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,14 +36,14 @@
 CustomAuraSprites = function()
 {
     /// 1.1 - Find the string 'effect\ring_blue.tga'
-    let addr = Exe.FindAscii("effect\\ring_blue.tga", VIRTUAL, false);//false for not prefixing zero.
+    let addr = Exe.FindText("effect\\ring_blue.tga", VIRTUAL, false);//false for not prefixing zero.
     if (addr < 0)
         throw Error("'effect\\ring_blue.tga' not found");
 
     let rblue = addr.toHex();
 
     /// 1.2 - Find the string 'effect\pikapika2.bmp'
-    addr = Exe.FindAscii("effect\\pikapika2.bmp", VIRTUAL, false);//false for not prefixing zero.
+    addr = Exe.FindText("effect\\pikapika2.bmp", VIRTUAL, false);//false for not prefixing zero.
     if (addr < 0)
         throw Error("'effect\\pikapika2.bmp' not found");
 

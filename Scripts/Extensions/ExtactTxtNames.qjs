@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : -                                                      *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2020-11-19                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,14 +37,14 @@ ExtractTxtNames = function()
 	fp.WriteLine("Client: " + Exe.FilePath);
 	fp.WriteLine("");
 	fp.WriteLine("Txt Files:");
-	let addrs = Exe.FindAsciiN(".txt", -1, PHYSICAL, false);
-	console.showAddrs(addrs);
+
+	let addrs = Exe.FindTextN(".txt", -1, PHYSICAL, false);
 	addrs.forEach( addr =>
 	{
 		let str = ".txt";
 		for (addr--; addr > 0; addr--)
 		{
-			let chr = Exe.GetAscii(addr, 1);
+			let chr = Exe.GetText(addr, 1);
 			if (chr === '\0' || chr === '@')
 				break;
 			

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 SkipServiceSelect = function()
 {
     /// 1 - Find the string 'passwordencrypt'
-    let addr = Exe.FindAscii("passwordencrypt");
+    let addr = Exe.FindText("passwordencrypt");
     if (addr < 0)
         throw Error("'passwordencrypt' not found");
     

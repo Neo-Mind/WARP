@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 NoSwearFilter = function()
 {
     /// 1 - Find the location of 'manner.txt'
-    let addr = Exe.FindAscii("manner.txt", PHYSICAL);
+    let addr = Exe.FindText("manner.txt", PHYSICAL);
     if (addr < 0)
         throw Error("'manner.txt' not found");
     

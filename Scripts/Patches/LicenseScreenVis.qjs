@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, MS, Neo-Mind                                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ShowLicense = function()
 {
     /// 1.1 - Find the location of the Guildflag string
-    let addr = Exe.FindAscii("model\\3dmob\\guildflag90_1.gr2");
+    let addr = Exe.FindText("model\\3dmob\\guildflag90_1.gr2");
     if (addr < 0)
         throw Error("Guildflag string not found");
 
@@ -75,7 +75,7 @@ ShowLicense = function()
 HideLicense = function()
 {
     /// 1.1 - Find location of 'btn_disagree'
-    let addr = Exe.FindAscii("btn_disagree");
+    let addr = Exe.FindText("btn_disagree");
     if (addr < 0)
         throw Error("'btn_disagree' not found");
 

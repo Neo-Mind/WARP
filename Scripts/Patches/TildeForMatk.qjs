@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 TildeForMatk = function()
 {
     /// 1.1 - Find the string '%d + %d'
-    let addr = Exe.FindAscii("%d + %d");
+    let addr = Exe.FindText("%d + %d");
     if (addr < 0)
         throw Error("Format string not found");
     
@@ -42,7 +42,7 @@ TildeForMatk = function()
         throw Error("Incorrect no. of matches found");
     
     /// 2.1 - Find the string '%d ~ %d'
-    addr = Exe.FindAscii("%d ~ %d");
+    addr = Exe.FindText("%d ~ %d");
     if (addr < 0)
     {
         /// 2.2 - If not present, allocate space for adding the string

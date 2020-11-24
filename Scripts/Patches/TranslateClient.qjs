@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ TranslateClient = function()
 	].forEach( arr =>
 	{
 		/// 1.1 - Find the korean string.
-		let nameAddr = Exe.FindAscii(arr[0]);
+		let nameAddr = Exe.FindText(arr[0]);
 		if (nameAddr < 0)
 			throw Error("Korean name missing for " + arr[1]);
 		
@@ -59,7 +59,7 @@ TranslateClient = function()
 			throw Error("Korean name reference missing for " + arr[1]);
 		
 		/// 1.3 - Find the replacement english string
-		let tgtAddr = Exe.FindAscii(arr[1]);
+		let tgtAddr = Exe.FindText(arr[1]);
 		if (tgtAddr < 0)
 			throw Error("'" + arr[1] + "' not found");
 		
@@ -144,7 +144,7 @@ TranslateClient = function()
 		}
 		else
 		{
-			addr = Exe.FindAscii(findPat, PHYSICAL);
+			addr = Exe.FindText(findPat, PHYSICAL);
 		}
 		
 		/// 3.8 - If not found write to FailedTranslations.txt

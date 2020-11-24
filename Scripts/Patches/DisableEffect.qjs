@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, X-EcutiOnner                       *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-23                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,14 +32,14 @@
 NoEarthQuake = function()
 {
     /// 1.1 - Find the string '.BMP'
-    let sufAddr = Exe.FindAscii(".BMP");
+    let sufAddr = Exe.FindText(".BMP");
     if (sufAddr < 0 && Exe.BuildDate > 20180000)
 	{
-		sufAddr = Exe.FindAscii(".BMP", VIRTUAL, false);
+		sufAddr = Exe.FindText(".BMP", VIRTUAL, false);
 	}
     if (sufAddr < 0 && Exe.BuildDate > 20180000)
 	{
-		sufAddr = Exe.FindAscii(".png");
+		sufAddr = Exe.FindText(".png");
 	}
 
     if (sufAddr < 0)
@@ -132,7 +132,7 @@ NoEarthQuake = function()
 NoWavyScreen = function()
 {
     /// 1.1 - Find the string 'xmas_fild01.rsw'
-    let addr = Exe.FindAscii("xmas_fild01.rsw");
+    let addr = Exe.FindText("xmas_fild01.rsw");
     if (addr < 0)
         throw Error("'xmas_fild01.rsw' not found");
         

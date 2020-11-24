@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                                *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,7 +36,7 @@ NoSkillChatter = function(patchName)
 	let suffix = patchName === "NoDancerScream" ? "DC_scream.txt" : "BA_frostjoke.txt";
 	
     /// 1.2 - Find the physical location of first text file name
-    let addr = Exe.FindAscii("english\\" + suffix, PHYSICAL);
+    let addr = Exe.FindText("english\\" + suffix, PHYSICAL);
     if (addr < 0)
         throw Error("First filename not found");
 
@@ -44,7 +44,7 @@ NoSkillChatter = function(patchName)
     Exe.SetInt8(addr, 0);
 
     /// 2.1 - Find the physical location of second text file name
-    addr = Exe.FindAscii(suffix, PHYSICAL);
+    addr = Exe.FindText(suffix, PHYSICAL);
     if (addr < 0)
         throw Error("Second filename not found");
 

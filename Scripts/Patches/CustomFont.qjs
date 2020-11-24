@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Yommy, Neo-Mind                             *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-15                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -87,7 +87,7 @@ CustomFontHeight = function()
 CustomFontName = function()
 {
     /// 1.1 - Find location of 'Gulim' (Korean language font which serves as the first entry of the array)
-    let gulAddr = Exe.FindAscii("Gulim", VIRTUAL, false);
+    let gulAddr = Exe.FindText("Gulim", VIRTUAL, false);
     if (gulAddr < 0)
         throw Error("'Gulim' not found");
 
@@ -103,7 +103,7 @@ CustomFontName = function()
         throw "Cancelled - Font reverted to Arial";
 
     /// 2.2 - Find the Font name (could be already existing one)
-    let free = Exe.FindAscii(newFont, PHYSICAL);
+    let free = Exe.FindText(newFont, PHYSICAL);
     if (free < 0)
     {
         /// 2.3 - Allocate space to add the font since its not already present

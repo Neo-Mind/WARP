@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind, 4144                              *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2020-11-19                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 NoHShield = function()
 {
     /// 1.1 - Find the string 'webclinic.ahnlab.com'
-    let addr = Exe.FindAscii("webclinic.ahnlab.com");
+    let addr = Exe.FindText("webclinic.ahnlab.com");
     if (addr < 0)
         throw Error("'webclinic.ahnlab.com' not found");
 
@@ -91,7 +91,7 @@ NoHShield = function()
     }
 	
     /// 2.1 - Find the Failure message (was only there in more recent clients)
-    addr = Exe.FindAscii("CHackShieldMgr::Monitoring() failed");
+    addr = Exe.FindText("CHackShieldMgr::Monitoring() failed");
     if (addr > 0)
     {
         /// 2.2 - Find where its used in a PUSH
@@ -128,7 +128,7 @@ NoHShield = function()
     ///===================================================================///
 
     /// 3.1 - Find the string 'ERROR'
-    addr = Exe.FindAscii("ERROR");
+    addr = Exe.FindText("ERROR");
     if (addr < 0)
         throw Error("'ERROR' not found");
 
@@ -290,7 +290,7 @@ NoGGuard = function()
 	Exe.SetHex(addr, RETN());
 	
     /// 3.1 - Find the string 'nProtect GameGuard'
-    addr = Exe.FindAscii("nProtect GameGuard");
+    addr = Exe.FindText("nProtect GameGuard");
     if (addr < 0)
         throw Error("'nProtect GameGuard' not found");
 
@@ -351,7 +351,7 @@ NoGGuard = function()
 ///
 NoGGuard.validate = function()
 {
-	NGG_Addr = Exe.FindAscii("GameGuard Error: %lu");
+	NGG_Addr = Exe.FindText("GameGuard Error: %lu");
 	return (NGG_Addr > 0);
 };
 
@@ -418,4 +418,4 @@ NoCDefender = function()
 ///
 /// \brief Disable for unsupported clients (Need to have the DLL)
 ///
-NoCDefender.validate = () => Exe.FindAscii("CDClient.dll", PHYSICAL) > 0;
+NoCDefender.validate = () => Exe.FindText("CDClient.dll", PHYSICAL) > 0;

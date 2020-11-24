@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-20                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -62,4 +62,4 @@ CustomQuestLua = function()
 ///
 /// \brief Disable for Unsupported clients
 ///
-CustomQuestLua.validate = () => Exe.FindAscii(CQL_Prefix + "Quest_function", PHYSICAL) > 0;
+CustomQuestLua.validate = () => Exe.FindText(CQL_Prefix + "Quest_function", PHYSICAL) > 0;

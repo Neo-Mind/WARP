@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -132,7 +132,7 @@ CustomVendingLimit = function()
 ///
 CustomVendingLimit.validate = function()
 {
-	CVL_Phy = Exe.FindAscii("1,000,000,000", PHYSICAL);
+	CVL_Phy = Exe.FindText("1,000,000,000", PHYSICAL);
 	CVL_Vir = undefined;
 	
     return (CVL_Phy > 0);

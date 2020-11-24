@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-17                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -75,6 +75,6 @@ IncrViewID = function()
 ///
 IncrViewID.validate = function()
 {
-	IVID_Addr = Exe.FindAscii("ReqAccName");
+	IVID_Addr = Exe.FindText("ReqAccName");
     return (IVID_Addr > 0);
 };

@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-11-23                                             #
+#   Last Modified : 2020-11-24                                             #
 #                                                                          #
 ############################################################################
 
@@ -225,6 +225,7 @@ groups:
     - CashShopVis:
         title : CASH SHOP VISIBILITY
         mutex : true
+        color : darkorange
         
         patches:
             - HideCashShop:
@@ -266,6 +267,7 @@ groups:
     - RouletteVis:
         title : ROULETTE VISIBILITY
         mutex : true
+        color : darkorange
         
         patches:
             - HideRoulette:
@@ -283,6 +285,7 @@ groups:
     - LicenseScreenVis:
         title : LICENSE SCREEN VISIBILITY
         mutex : true
+        color : darkorange
         
         patches:
             - HideLicense:
@@ -300,6 +303,7 @@ groups:
     - ResButtonVis:
         title : RESURRECT BUTTON VISIBILITY
         mutex : true
+        color : darkorange
         
         patches:
             - HideResButton:
@@ -516,10 +520,10 @@ groups:
                 title : Skip Guild Member Cheat Check
                 recommend : no
                 author : Ai4rei/AN
-                desc : Prevents warnings during PM's when the sender has similar name to one of your guild members.
+                desc : Prevents warnings during PMs when the sender has similar name to one of your guild members.
 
     - CustomChatColor:
-        title : CHAT COLOR CUSTOMIZATION
+        title : <font color="#9F00EF">CHA</font><font color="#5F00FF">T CO</font><font color="blue">LOR </font><font color="green">CUS</font><font color="yellow">TOM</font><font color="orange">IZA</font><font color="red">TION</font>
         mutex : false
         
         patches:
@@ -562,6 +566,7 @@ groups:
     - ShowButton:
         title : SHOW BUTTON
         mutex : false
+        color : darkorange
         
         patches:
             - ShowReplayBtn:
@@ -585,6 +590,7 @@ groups:
     - HideButton:
         title : HIDE BUTTON
         mutex : false
+        color : darkorange
         
         patches:
             - HideNavBtn:
@@ -767,8 +773,8 @@ groups:
                 desc : Disable kRO Packet ID Encryption. Also known as Skip Packet Obfuscation.
                 
     - DisableProtect:
-        title: DISABLE PROTECTION
-        mutex: false
+        title : DISABLE PROTECTION
+        mutex : false
         
         patches:
             - NoHShield:
@@ -881,8 +887,8 @@ groups:
                 desc : Resize the HP bar drawed under Boss monsters as per user specified value.
     
     - CustomAutoFollow:
-        title: AUTO FOLLOW CUSTOMIZATION
-        mutex: true
+        title : AUTO FOLLOW CUSTOMIZATION
+        mutex : true
         
         patches:
             - NoAutoFollow:
@@ -900,6 +906,7 @@ groups:
     - CustomUI:
         title : UI CUSTOMIZATION
         mutex : false
+        color : orangered
         
         patches:
             - TildeForMatk:
@@ -1079,6 +1086,7 @@ groups:
     - CustomData:
         title : DATA CUSTOMIZATION
         mutex : false
+        color : deepskyblue
         
         patches:
             - EnableEotFonts:
@@ -1184,7 +1192,7 @@ groups:
                 desc : Fix act delay for act files with big amount of frames.
             
             - CustomDLL:
-                title: Add Custom DLLs
+                title : Add Custom DLLs
                 recommend: no
                 author: Neo-Mind
                 desc: Makes the hexed client load the specified DLL and functions.
@@ -1192,6 +1200,7 @@ groups:
     - CustomChar:
         title : CHARACTER CUSTOMIZATION
         mutex : false
+        color : darkorchid
         
         patches:
             - OfficialPal:
@@ -1289,7 +1298,7 @@ groups:
                 desc : Change minimum client resolution (width & height) to user specified values from default of 1024x768.
     
             - UseDefaultBrowser:
-                title: Use Default Browser for <URL>
+                title : Use Default Browser for <URL>
                 recommend : no
                 author : Jchcc
                 desc : Use default web browser to open <URL> instead of built-in ROWebBrowser.
@@ -1297,6 +1306,7 @@ groups:
     - CustomNW:
         title : NETWORK CUSTOMIZATION
         mutex : false
+        color : peru	
         
         patches:
             - SendMD5Hash:
@@ -1358,7 +1368,7 @@ groups:
         mutex : false
         
         patches:
-            - Enable44KHzAudio:
+            - Enable44kHzAudio:
                 title : Enable 44.1 kHz Audio Sampling Frequency
                 recommend : no
                 author : jchcc
@@ -1369,3 +1379,8 @@ groups:
                 recommend : no
                 author : jchcc
                 desc : Auto mute audio when game window is not active.
+    
+    # - CustomSpecials:
+        # title : SPECIAL CUSTOMIZATIONS
+        # mutex : false
+        # color : deeppink

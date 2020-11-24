@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -116,7 +116,7 @@ HideButton = function(patchName)
     else
     {
         /// 2.2 - Find the string 'skill' (needed since some prefixes are matching multiple areas)
-        let refAddr = Exe.FindAscii("skill");
+        let refAddr = Exe.FindText("skill");
         if (refAddr < 0)
             throw Error("'skill' not found");
         
@@ -163,7 +163,7 @@ HideButton.validate = function(patchName)
     /// 2.1 - Find the first match amongst the strings specified
 	data.strings.find( str =>
 	{
-		let addr = Exe.FindAscii(str, PHYSICAL, data.zeroPrefix);
+		let addr = Exe.FindText(str, PHYSICAL, data.zeroPrefix);
 		if (addr > 0)
 		{
 			data.addr = addr;
