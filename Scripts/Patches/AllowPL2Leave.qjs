@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : 4144                                                   *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-11-21                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,22 +34,22 @@ AllowPL2Leave = function()
 {
 	/// 1 - Find the pattern where the check occurs
 	let code =
-		TEST(AL, AL)					//TEST AL, AL
-	+	JZ(0x34)						//JZ addr1
-    +	MOV([EBP, WC], -1)				//MOV DWORD PTR SS:[EBP + constA], -1
-    +	LEA(ECX, [EBP, POS3WC])			//LEA ECX, [EBP + fInfo]
-    +	CALL(ALLWC)						//CALL FRIEND_INFO_destructor
-    +	INC(ESI)						//INC ESI
-    +	CMP(ESI, EBX)					//CMP ESI, EBX
-    +	JL(WC)							//JL addr2
-    +	MOV(AL, BYTE_PTR, [EBP, ALLWC])	//MOV AL, BYTE PTR [EBP+B]
-    +	TEST(AL, AL)					//TEST AL, AL
-	+	JZ(WC)							//JZ addr3	<-- patch here
-    +	PUSH_0							//PUSH 0
-    +	PUSH_0							//PUSH 0
-    +	PUSH(0xFF)						//PUSH 0FFh
-    +	PUSH(0XCC9)						//PUSH 0CC9h
-    +	JMP()							//JMP addr3
+		TEST(AL, AL)			//TEST AL, AL
+	+	JZ(0x34)				//JZ addr1	<-- patch here
+    +	MOV([EBP, WC], -1)		//MOV DWORD PTR SS:[EBP + constA], -1
+    +	LEA(ECX, [EBP, ALLWC])	//LEA ECX, [EBP + fInfo]
+    +	CALL(ALLWC)				//CALL FRIEND_INFO_destructor
+    +	INC(ESI)				//INC ESI
+    +	CMP(ESI, EBX)			//CMP ESI, EBX
+    +	JL(WC)					//JL addr2
+    +	MOV(AL, [EBP, ALLWC])	//MOV AL, BYTE PTR [EBP+B]
+    +	TEST(AL, AL)			//TEST AL, AL
+	+	JZ(WC)					//JZ addr3
+    +	PUSH_0					//PUSH 0
+    +	PUSH_0					//PUSH 0
+    +	PUSH(0xFF)				//PUSH 0FFh
+    +	PUSH(0XCC9)				//PUSH 0CC9h
+    +	JMP()					//JMP addr3
 	;
 	let addr = Exe.FindHex(code);
 	if (addr < 0)

@@ -149,7 +149,7 @@ AutoMute = function()
 	}
 	*/
 
-	// 1.2 - Extract all required values
+	/// 1.2 - Extract all required values
 	addr += prefix.byteCount();
 	
 	let MovMgr = Exe.GetHex(addr + offsetGSM, 6);
@@ -169,10 +169,10 @@ AutoMute = function()
 	,
 		MOV(EAX, [ECX])			//MOV EAX, DWORD PTR DS:[ECX]
 	,
-	+	PUSH_0					//PUSH 0
+		PUSH_0					//PUSH 0
 	+	PUSH(0x23)				//PUSH 23
 	+	PUSH_0					//PUSH 0
-	+	CALL([EAX, POS2WC])		//CALL DWORD PTR DS:[EAX+UIReplayControlWnd_vtable.UIReplayControlWnd_SendMsg]
+	+	CALL([EAX, POS2WC])		//CALL DWORD PTR DS:[EAX + UIReplayControlWnd_vtable.UIReplayControlWnd_SendMsg]
 	];
 	addr = Exe.FindHex(parts.join(''));
 	

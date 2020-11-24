@@ -1298,10 +1298,10 @@ groups:
                 desc : Change minimum client resolution (width & height) to user specified values from default of 1024x768.
     
             - UseDefaultBrowser:
-                title : Use Default Browser for <URL>
+                title : Use Default Browser for &lt;URL&gt;
                 recommend : no
                 author : Jchcc
-                desc : Use default web browser to open <URL> instead of built-in ROWebBrowser.
+                desc : Use default web browser to open &lt;URL&gt; instead of built-in ROWebBrowser.
     
     - CustomNW:
         title : NETWORK CUSTOMIZATION

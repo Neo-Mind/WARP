@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Jchcc, Neo-Mind                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-21                                             *
+*   Last Modified : 2020-11-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -78,7 +78,7 @@ DecrAFDelay = function()
 	/// 1 - Find the delay comparison
 	let code =
 		CALL(EDI)			//CALL EDI                     ; timeGetTime
-	+	SUB(EAX, [POS3WC])	//SUB EAX, DWORD PTR DS:[addr] ; lastFollowTime
+	+	SUB(EAX, [POS4WC])	//SUB EAX, DWORD PTR DS:[addr] ; lastFollowTime
 	+	CMP(EAX, 0x3E8)		//CMP EAX, 3E8                 ; 1000ms
 	;
 	
@@ -93,4 +93,6 @@ DecrAFDelay = function()
 	
 	/// 3 - Replace the old value
 	Exe.SetFromVar(addr + code.byteCount() - 4, '$followDelay');
+	
+	return true;
 };

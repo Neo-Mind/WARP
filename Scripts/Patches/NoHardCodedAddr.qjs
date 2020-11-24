@@ -34,12 +34,13 @@ NoHardCodedAddr = function()
 {
 	/// 1.1 - Find the code where we will remove call (Older style)
     let code =
-        CMP(BYTE_PTR, [POS3WC], 0)	//CMP BYTE_PTR DS:[addr1], 0
-	+	JNZ(WCp)					//JNZ SHORT addr2
+        CMP(BYTE_PTR, [POS4WC], 0)	//CMP BYTE_PTR DS:[addr1], 0
+	+	JNZ(WC)						//JNZ SHORT addr2
 	+	CALL(POS3WC)				//CALL override_address_port
 	+	JMP(POS2WC)					//JMP addr3
 	;
     let addr = Exe.FindHex(code);
+
     if (addr > 0)
 	{
     	/// 1.2 - Extract CALLed function address
@@ -60,16 +61,15 @@ NoHardCodedAddr = function()
 	
 	/// 2.3 - Find its reference
 	let prefix =
-		CMP(BYTE_PTR, [POS3WC], 0)	//CMP BYTE PTR DS:[addr], 0
+		CMP(BYTE_PTR, [POS4WC], 0)	//CMP BYTE PTR DS:[addr], 0
 	+	JNZ(POS3WC)					//JNZ addr2
 	;
 	let suffix =
 		MOV(EDX, [SRVRTYPE])		//MOV EDX, DWORD PTR DS:[g_serverType]
-    +	MOV(EAX, POS3WC)			//MOV EAX, offset1
-    +	MOV(ECX, POS3WC)			//MOV ECX, offset2
-    +	MOV([POS3WC], PortStr)		//MOV DWORD PTR DS:[addr3], PortStr
+    +	MOV(EAX, [POS4WC])			//MOV EAX, DWORD PTR DS:[offset1]
+    +	MOV(ECX, [POS4WC])			//MOV ECX, DWORD PTR DS:[offset2]
+    +	MOV([POS4WC], PortStr)		//MOV DWORD PTR DS:[addr3], PortStr
 	;
-		
 	addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("'6900' not used");
