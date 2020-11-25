@@ -17,6 +17,7 @@
 <br>
 
 ## What's included
+
 - In this repository you will find the following directories and files, grouped based on the purpose of all the resources.
 - Also provided are different branches depending on the OS & the client application.
 
@@ -123,9 +124,11 @@ WARP/
 ```
 
 ## Documentation Links
+
 - [Usage Guide](Docs/Usage_Guide.md)
-- [Guide for Writing Patches](Docs/Patch_Writing.md)
-- [Guide for Writing Extensions](Docs/Extension_Writing.md)
+- [Patch & Extension Guide](Docs/PatExt_Guide.md)
+- [Writing Scripts](Docs/Script_Writing.md)
 - [API Documentation](Docs/API_Documentation.md)
-- [Guide for Writing Language file](Docs/Language_Writing.md)
-- [Guide for Writing Style file](Docs/Style_Writing.md)
+- [Settings & Session files](Docs/Setting_Session.md)
+- [Writing Language files](Docs/Language_Writing.md)
+- [Writing Style files](Docs/Style_Writing.md)
