@@ -51,4 +51,4 @@ inputs:
 [Main GUI]: Usage_Guide.md#main-gui
 [Tester GUI]: Usage_Guide.md#tester-gui
 [Console]: Usage_Guide.md#console
-[Patches & Extension Guide]: PatExt_Guide.md
+[Patch & Extension Guide]: PatExt_Guide.md
