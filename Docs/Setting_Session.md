@@ -1,7 +1,7 @@
 
 # Settings file
 
-Tool Settings are saved under the name **'Settings.yml'** which has the following format. This file is auto-generated the first time you run any of the 3 tools.
+Tool Settings are saved under the name **'Settings.yml'** which has the following format. 
 
 ```yaml
 Language: <custom language name or Default (ENG)>
@@ -12,17 +12,12 @@ LastApplied:
 LastTestDir: <Only used by 'Tester GUI'. Last directory used for loading test applications>
 ```
 
+- This file is auto-generated the first time you run any of the 3 tools.
 - All the keys are optional.
 - The **SrcExe** & **TgtExe** values are used for filling the **'Source'** and **'Target'** fields automatically upon launch.
 - Similarly **LastTestDir** automatically fills the **'Test Dir'** field in [Tester GUI].
 - **Language** and **Style** fields are used for setting up the initial language & style for both [Main GUI] & [Tester GUI].
 - [Console] also uses the Language unless overridden with **-language** argument.
-
-
-[Main GUI]: Usage_Guide.md#main-gui
-[Tester GUI]: Usage_Guide.md#tester-gui
-[Tester GUI]: Usage_Guide.md#console
-
 
 # Session file
 
@@ -51,3 +46,9 @@ inputs:
 
 - All the main keys are optional apart from **patches**.
 - Names specified in **patches** need to match up with the name (not the title) defined in **'Patches.yml'**. See [Patch & Extension Guide] for details.
+
+
+[Main GUI]: Usage_Guide.md#main-gui
+[Tester GUI]: Usage_Guide.md#tester-gui
+[Console]: Usage_Guide.md#console
+[Patches & Extension Guide]: PatExt_Guide.md
