@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="Docs/logo.png?raw=true" alt="Warp logo">
+    <img src="Docs/logo.png?raw=true" alt="Warp logo" width=128 height=128>
 </p>
 
 <h1 align="center">
@@ -7,7 +7,7 @@
 </h1>
 
 <p align="center">
-	Handy set of tools for Querying and Revamping a 32 bit Application
+	Handy set of tools for Querying and Revamping a 32 bit Windows Application
 	<br>
 	<a href="https://github.com/Neo-Mind/WARP/issues/new?template=bug_report.md"><strong>Report bug</strong></a>
 	·
