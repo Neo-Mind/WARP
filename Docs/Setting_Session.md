@@ -47,6 +47,14 @@ inputs:
 - All the main keys are optional apart from **patches**.
 - Names specified in **patches** need to match up with the name (not the title) defined in **'Patches.yml'**. See [Patch & Extension Guide] for details.
 
+## Other Links
+
+- [Usage Guide](Usage_Guide.md)
+- [Patch & Extension Guide](PatExt_Guide.md)
+- [Writing Scripts](Script_Writing.md)
+- [API Documentation](API_Documentation.md)
+- [Writing Language files](Language_Writing.md)
+- [Writing Style files](Style_Writing.md)
 
 [Main GUI]: Usage_Guide.md#main-gui
 [Tester GUI]: Usage_Guide.md#tester-gui
