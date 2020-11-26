@@ -13,8 +13,8 @@ patches/extensions and how to define new ones.
 - [Other Links](#other-links)
 
 ## About Exe Object
-- In QJS, we get 2 additional global objects (going to be 3 soon) along with various classes & functions.
-- Most important global object for both Patches & Extensions is [Exe].
+- In QJS, we get additional global objects, classes & functions either inbuilt or from Support scripts.
+- For Patches & Extensions, the most important amongst them is the [Exe] object.
 - [Exe] object always refers to the currently loaded app and provides a heap of functions for accessing its contents.
 - Most common functions used are :
 	- **Exe.FindHex, Exe.GetHex, Exe.SetHex, Exe.AddHex**
