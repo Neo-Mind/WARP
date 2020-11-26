@@ -161,11 +161,11 @@ There are 2 sections (similar to the Results tab in Tester) seperated by a split
 ## Tester GUI
 
 ### General Workflow
-	- Click **Get Exes** to get the list of test apps and select the ones you want.
-	- Either click **Get Patches** or **Get Extensions** or both as you need.
-	- Select the ones you want.
-	- Click **Run Test**. Based on your selections, it could finish immediately or take couple of minutes.
-	- During the run, any of the Patches/Extensions could ask for inputs just like in [Main GUI]. One key difference is that the same input gets used across all the test apps.
+- Click **Get Exes** to get the list of test apps and select the ones you want.
+- Either click **Get Patches** or **Get Extensions** or both as you need.
+- Select the ones you want.
+- Click **Run Test**. Based on your selections, it could finish immediately or take couple of minutes.
+- During the run, any of the Patches/Extensions could ask for inputs just like in [Main GUI]. One key difference is that the same input gets used across all the test apps.
 
 ### Interface Details
 The [Main GUI] & [Console] serves the major use case of most end-users. However when you are creating new Patches & Extensions intended to be used for multiple apps, it becomes difficult.<br>
