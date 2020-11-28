@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Yommy, Neo-Mind                             *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -53,7 +53,7 @@ CustomFontHeight = function()
     /// 2.2 - Allocate space for our function
     let free = Exe.FindSpace(csize);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     let freeVir = Exe.Phy2Vir(free, DIFF);
 
@@ -109,7 +109,7 @@ CustomFontName = function()
         /// 2.3 - Allocate space to add the font since its not already present
         free = Exe.FindSpace(newFont.length + 1);
         if (free < 0)
-            throw NOSPACE;
+            throw NO_ALLOC;
 
         /// 2.4 - Add the Font name there
         Exe.AddFromVar(free, '$newFont', newFont.length + 1);

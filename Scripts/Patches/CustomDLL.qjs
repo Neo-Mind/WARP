@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2020-11-20                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -98,7 +98,7 @@ CustomDLL = function()
 	/// 5.1 - Allocate space to add the new table
     let free = Exe.FindSpace(strSize + dirSize);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 	
     /// 5.2 - Construct the new Import table using the dllNames & fnNames hash objects
 	let strRVA = Exe.Phy2Rva(free, DIFF);

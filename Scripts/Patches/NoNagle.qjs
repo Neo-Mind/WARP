@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -94,7 +94,7 @@ NoNagle = function()
     /// 2.2 - Allocate space for adding the function
     let free = Exe.FindSpace(csize, 0x10);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     let freeVir = Exe.Phy2Vir(free, DIFF);
 

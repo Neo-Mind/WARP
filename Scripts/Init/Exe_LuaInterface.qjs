@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -379,7 +379,7 @@ if (typeof(LUA) === 'undefined') // avoid redefinition
 			{
 				tgt = Exe.FindSpace(csize + ssize, 0x10); //snapping to 0x10 since its going to be like a function
 				if (tgt < 0)
-					throw NOGAPMSG;
+					throw NO_ALLOC;
 			}
 			
 			/// 2.5 - Save the target's VIRTUAL address

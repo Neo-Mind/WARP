@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -131,7 +131,7 @@ EnableProxy = function()
     /// 3.2 - Allocate space for the function
     let free = Exe.FindSpace(0x4 + csize, 0x10); //First 4 bytes are g_saveIP
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
     
     let freeVir = Exe.Phy2Vir(free, DIFF);
     

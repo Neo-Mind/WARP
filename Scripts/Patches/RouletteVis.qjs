@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -76,7 +76,7 @@ RouletteVis = function(patchName)
 		/// 2.3 - Allocate space to add our code
 		let free = Exe.FindSpace(code.byteCount(), 0x10);
 		if (free < 0)
-			throw NOSPACE;
+			throw NO_ALLOC;
 	
 		let freeVir = Exe.Phy2Vir(free, DIFF);
 		

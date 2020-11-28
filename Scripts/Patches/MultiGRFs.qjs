@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -213,7 +213,7 @@ _MG_INI = (callAddr, AddPak) =>
     let fullSize = code.byteCount() + strings.byteCount();
     let free = Exe.FindSpace(fullSize, 0x10);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     let freeVir = Exe.Phy2Vir(free, DIFF);
         
@@ -289,7 +289,7 @@ _MG_EMB = (callAddr, AddPak) =>
     let fullSize = grfNames.length * tsize + 2 + strings.byteCount(); //2 is for RETN & a null to leave a gap between the function and the strings
     let free = Exe.FindSpace(fullSize, 0x10);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     let freeVir = Exe.Phy2Vir(free, DIFF);
 

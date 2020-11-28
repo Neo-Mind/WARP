@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -211,7 +211,7 @@ function _CEK_SetupObfuscate(index)
     {
         let free = Exe.FindSpace(csize, 0x10);
         if (free < 0)
-            throw NOSPACE;
+            throw NO_ALLOC;
         
         PACKET.PatchData[3] = free;
     }

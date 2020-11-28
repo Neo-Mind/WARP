@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -91,7 +91,7 @@ UseDefaultBrowser = function()
 	/// 2.4 - Allocate space to add our code
 	let free = Exe.FindSpace(code.byteCount(), 0x10);
 	if (free < 0)
-		throw NOSPACE;
+		throw NO_ALLOC;
 
 	/// 2.5 - Prep CALL instruction and insert everything
 	Exe.AddHex(free, code);

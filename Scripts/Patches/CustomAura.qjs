@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -57,7 +57,7 @@ CustomAuraSprites = function()
     /// 2.2 - Allocate space to add the strings
     let free = Exe.FindSpace(size);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     /// 2.3 - Add the strings there (since there are null characters in between we will convert to hex and add)
     Exe.AddHex(free, (strAF + strAR).toHex(), size);
@@ -458,7 +458,7 @@ CustomAuraLimits = function()
     let size = code.byteCount() + 8 * AuraSpec.length + 4 + tblSize;
     let free = Exe.FindSpace(size);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     let freeVir = Exe.Phy2Vir(free, DIFF);
 

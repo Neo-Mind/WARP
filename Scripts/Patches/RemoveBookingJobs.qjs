@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-11-21                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -210,7 +210,7 @@ RemoveBookingJobs = function()
     let size = csize + 2 + idList.length * 2; //each ID is 2 bytes long
     let free = Exe.FindSpace(size, 0x10);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     /// 4.3 - Fill in the blanks
     let fnVir = Exe.Phy2Vir(free, DIFF);

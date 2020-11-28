@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, 4144                                         *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -125,7 +125,7 @@ DisConnToLogin = function()
     /// 4.2 - Allocate space to add our code
     let free = Exe.FindSpace(code.byteCount(), 0x10);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     /// 4.3 - Add the code there
     Exe.AddHex(free, code);
