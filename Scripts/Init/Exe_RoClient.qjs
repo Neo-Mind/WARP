@@ -73,7 +73,7 @@ if (typeof(ROC) === 'undefined')
 				this.Kernel32 = Exe.FindText("kernel32.dll", VIRTUAL, false); // new clients have it in small letters
 			
 			/// 2.3 - Set the base name
-			this.BaseName = Exe.FilePath.split(/[\\/]/).last().remove(/.exe$/);
+			this.BaseName = System.BaseName(Exe.FilePath);
 			
 			/// 2.4 - Keep other members undefined 
 			this.ImpInfo = undefined; //will be used & loaded only by Custom DLL & HShield patches
