@@ -22,52 +22,52 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-11-19                                             *
+*   Last Modified : 2020-11-28                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Common strings
 ///
-if (typeof(YMLFILTER) === 'undefined')
+if (typeof TAB === 'undefined')  //avoid redefinition
 {
-	YMLFILTER = "YAML Files (*.yml;*.yaml)";
-	Identify(YMLFILTER);
-}
-
-if (typeof(TAB) === 'undefined') //avoid redefinition
-{
-	TAB = "&nbsp;".repeat(4);
-	Identify("TAB");
+	//4 blank spaces to use in 'console' & perhaps other places too
+	AssignStr('TAB', "&nbsp;".repeat(4));
+	
+	//filter to use with D_InFile for YAML input files
+	AssignStr('YMLFILTER', "YAML Files (*.yml;*.yaml)");
 }
 
 ///
 /// \brief Common error messages
 ///
-if (typeof(NOSPACE) === 'undefined') //avoid redefinition
+if (typeof NO_ALLOC === 'undefined') //avoid redefinition
 {
-	NOSPACE = new Error("Not enough space");
-	Identify("NOSPACE");
+	Assign('NO_ALLOC', 'new Error("Space Allocation failed")'); //used as error message for Exe.FindSpace
+	
+	Assign('NO_EXE', 'new Error("No Valid Exe loaded")'); //used as error message after Exe.FileSize===0 in extensions
+	
+	Assign('NO_OUTPUT', 'new Error("Unable to generate output file")'); //used as error message for TextFile.Open & BinFile.Open failures in extensions
 }
 
 ///
 /// \brief Common hex codes
 ///
 
-if (typeof(WC) === 'undefined') //avoid redefinition
+if (typeof WC === 'undefined') //avoid redefinition
 {
 	[	
 		///
 		/// \brief The Basic wild cards
 		///
-		['WC' , " ??"],
-		['WCp', " [0.......]"], //WildCard with +ve Sign bit
-		['WCn', " [1.......]"], //WildCard with -ve Sign bit
+		['WC' , " ??"], //Wild Card byte
+		['WCp', " [0.......]"], //Wild Card byte with +ve sign bit
+		['WCn', " [1.......]"], //Wild Card byte with -ve sign bit
 	
 		///
-		/// \brief Some common patterns for a DWORD (32 bit)
+		/// \brief Some common patterns for a DWORD (32 bit) 
 		///
-		['ALLWC' , " ?? ?? ?? ??"], //WC = Wild Card i.e. ??
+		['ALLWC' , " ?? ?? ?? ??"],
 		['ALLWCp', " ?? ?? ?? [0.......]"], //Only +ve sign bit is known
 		['ALLWCn', " ?? ?? ?? [1.......]"], //Only -ve sign bit is known
 	
@@ -77,7 +77,7 @@ if (typeof(WC) === 'undefined') //avoid redefinition
 		['POS3WC', " ?? ?? ?? 00"],
 		['POS4WC', " ?? ?? ?? 0?"],
 		
-		['ALLFF',  " FF FF FF FF"], //-1 in 4 bytes
+		['ALLFF' , " FF FF FF FF"], //-1 in 4 bytes
 		['NEG1WC', " ?? FF FF FF"],
 		['NEG2WC', " ?? ?? FF FF"],
 		['NEG3WC', " ?? ?? ?? FF"],
@@ -86,31 +86,19 @@ if (typeof(WC) === 'undefined') //avoid redefinition
 		///
 		/// \brief - Some common instructions
 		///
-		['PUSH_0'     , " 6A 00"],
-		['PUSH_1'     , " 6A 01"],
-		['PUSH_2'     , " 6A 02"],
-		['PUSH_R'     , " [01010...]"], //5? but with 4th bit 0
-		['PUSH_EAX'   , " 50"],
-		['POP_R'      , " [01011...]"], //5? but with 4th bit 1
-		['PUSHAD'     , " 60"],
-		['POPAD'      , " 61"],
-		['NOP'        , " 90"],
-		['CWDE'       , " 98"],
-		['LEAVE'      , " C9"],
-		['MOV_ECX_ESI', " 8B CE"], 
-	].forEach( 
-		function(set)
-		{
-			eval(set[0] + " = '" + set[1] + "'");
-			Identify(set[0]);
-		}
-	);
+		['PUSH_0'   , " 6A 00"],
+		['PUSH_1'   , " 6A 01"],
+		['PUSH_2'   , " 6A 02"],
+		['PUSH_R'   , " [01010...]"], //5? but with 4th bit 0
+		['PUSH_EAX' , " 50"],
+		['POP_R'    , " [01011...]"], //5? but with 4th bit 1
+	].forEach( pair => AssignStr(...pair) );
 }
 
 ///
 /// \brief OpCode mappings
 ///
-if (typeof(OpCodeList) === 'undefined') //avoid redefinition
+if (typeof OpCodeList === 'undefined') //avoid redefinition
 {
 	OpCodeList = 
 	{
@@ -237,5 +225,5 @@ if (typeof(OpCodeList) === 'undefined') //avoid redefinition
 			0xE7,
 		],
 	};	
-	IdentifyObj("OpCodeList");
+	IdentifyObj('OpCodeList');
 }

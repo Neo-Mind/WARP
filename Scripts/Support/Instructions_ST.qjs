@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2020-11-23                                             *
+*   Last Modified : 2020-11-28                                             *
 *                                                                          *
 \**************************************************************************/
  
@@ -41,11 +41,10 @@ const _define_with = function(name)
 		if (opName.length === 0)
 			continue;
 		
-		eval(
-			opName + " = function() { return " + name + "(" + 
-			(idx-1) + ", arguments) }"
+		Assign(
+			opName,
+			"function() { return " + name + "(" + (idx-1) + ", arguments) }"
 		);
-		Identify(opName);
 	}
 };
 
@@ -60,12 +59,10 @@ const _define_with_oc = function(name, oc)
 		if (opName.length === 0)
 			continue;
 		
-		eval(
-			opName + " = function() { return " + name + "(" + 
-			oc + ", " + 
-			(idx-2) + ", arguments) }"
+		Assign(
+			opName,
+			"function() { return " + name + "(" + oc + ", " + (idx-2) + ", arguments) }"
 		);
-		Identify(opName);
 	}
 };
 
@@ -73,9 +70,9 @@ const _define_with_oc = function(name, oc)
  // Float only - Arithmetic & Comparison //
 //======================================//
 
-_define_with("_st_arith_cmp",
-	"FADD", "FMUL", "FCOM", "FCOMP",
-	"FSUB", "FSUBR", "FDIV", "FDIVR"
+_define_with('_st_arith_cmp',
+	'FADD', 'FMUL', 'FCOM', 'FCOMP',
+	'FSUB', 'FSUBR', 'FDIV', 'FDIVR'
 );
 
 ///
@@ -131,9 +128,9 @@ _st_arith_cmp = (oper, args) =>
  // Float only - Load & Store //
 //===========================//
 
-_define_with("_st_lod_sto",
-	"FLD", "", "FST", "FSTP", "FLDENV", 
-	"FLDCW", "FSTENV", "FSTCW"
+_define_with('_st_lod_sto',
+	'FLD', '', 'FST', 'FSTP', 'FLDENV',
+	'FLDCW', 'FSTENV', 'FSTCW'
 );
 
 ///
@@ -196,16 +193,16 @@ _st_lod_sto = (oper, args) =>
 ///
 /// \brief Arithmetic & Comparison
 /// 
-_define_with_oc("_st_cmd_int", [0xDA, 0xDE],
-	"FIADD", "FIMUL", "FICOM", "FICOMP",
-	"FISUB", "FISUBR", "FIDIV", "FIDIVR"
+_define_with_oc('_st_cmd_int', [0xDA, 0xDE],
+	'FIADD', 'FIMUL', 'FICOM', 'FICOMP',
+	'FISUB', 'FISUBR', 'FIDIV', 'FIDIVR'
 );
 
 ///
 /// \brief Load & Store
 ///
-_define_with_oc("_st_cmd_int", [0xDB, 0xDF],
-	"FILD", "FISTTP", "FIST", "FISTP"
+_define_with_oc('_st_cmd_int', [0xDB, 0xDF],
+	'FILD', 'FISTTP', 'FIST', 'FISTP'
 );
 
 ///
@@ -251,12 +248,12 @@ _st_cmd_int = (ocD, ocW, oper, args) =>
  // Float only - Conditional Moves //
 //================================//
 
-_define_with_oc("_st_cond_mov", 0xDA,
-	"FCMOVB", "FCMOVE", "FCMOVBE", "FCMOVU"
+_define_with_oc('_st_cond_mov', 0xDA,
+	'FCMOVB', 'FCMOVE', 'FCMOVBE', 'FCMOVU'
 );
 
-_define_with_oc("_st_cond_mov", 0xDB,
-	"FCMOVNB", "FCMOVNE", "FCMOVNBE", "FCMOVNU"
+_define_with_oc('_st_cond_mov', 0xDB,
+	'FCMOVNB', 'FCMOVNE', 'FCMOVNBE', 'FCMOVNU'
 );
 
 ///
@@ -281,9 +278,9 @@ _st_cond_mov = (opCode, oper, args) =>
  // Float only - Arithmetic + Stack Pop //
 //=====================================//
 
-_define_with("_st_arith_pop",
-	"FADDP", "FMULP", "", "",
-	"FSUBRP", "FSUBP", "FDIVRP", "FDIVP"
+_define_with('_st_arith_pop',
+	'FADDP', 'FMULP', '', '',
+	'FSUBRP', 'FSUBP', 'FDIVRP', 'FDIVP'
 );
 
 ///
@@ -327,7 +324,7 @@ FFREEP = function()
 	}
 };
 
-Identify("FFREEP");
+IdentifyObj('FFREEP');
 
 ///
 /// \brief Stores status word
@@ -348,7 +345,7 @@ FSTSW = function()
 	return "";
 };
 
-Identify("FSTSW");
+IdentifyObj('FSTSW');
 
 ///
 /// \brief Compare floats, check ordered values & set EFLAGS
@@ -364,8 +361,8 @@ FUCOMIP = function()
 	return _st_ord_cmp(6, arguments)
 };
 
-Identify("FUCOMI");
-Identify("FUCOMIP");
+IdentifyObj('FUCOMI');
+IdentifyObj('FUCOMIP');
 
 _st_ord_cmp = (oper, args) =>
 {
@@ -387,45 +384,41 @@ _st_ord_cmp = (oper, args) =>
 /// \brief Instructions without operands (works standalone or uses ST0 & ST1 implcitly)
 ///
 [
-	["FNOP",	" D9 D0"],
-	["FCHS",	" D9 E0"],
-	["FABS",	" D9 E1"],
-	["FTST",	" D9 E4"],
-	["FXAM",	" D9 E5"],
-	["FLD1",	" D9 E8"],
-	["FLDL2T",	" D9 E9"],
-	["FLDL2E",	" D9 EA"],
-	["FLDPI",	" D9 EB"],
-	["FLDLG2",	" D9 EC"],
-	["FLDLN2",	" D9 ED"],
-	["FLDZ",	" D9 EE"],
-	["F2XM1",	" D9 F0"],
-	["FYL2X",	" D9 F1"],
-	["FPTAN",	" D9 F2"],
-	["FPATAN",	" D9 F3"],
-	["FXTRACT",	" D9 F4"],
-	["FPREM1",	" D9 F5"],
-	["FDECSTP",	" D9 F6"],
-	["FINCSTP",	" D9 F7"],
-	["FPREM", 	" D9 F8"],
-	["FYL2XP1",	" D9 F9"],	
-	["FSQRT",	" D9 FA"],
-	["FSINCOS",	" D9 FB"],
-	["FRNDINT",	" D9 FC"],
-	["FSCALE",	" D9 FD"],
-	["FSIN",	" D9 FE"],
-	["FCOS",	" D9 FF"],
-	["FUCOMPP",	" DA E9"],
-	["FNENI",	" DB E0"],
-	["FNDISI",	" DB E1"],
-	["FNCLEX",	" DB E2"],
-	["FNINIT",	" DB E3"],
-	["FCLEX",	" 9B DB E2"],
-	["FINIT",	" 9B DB E3"],
-	["FNSETPM",	" DB E4"],
-	["FCOMPP",	" DE D9"],
-].forEach( pair =>
-{
-	eval(pair[0] +  " = '" +  pair[1] + "'");
-	Identify(pair[0])
-});
+	['FNOP'    , " D9 D0"],
+	['FCHS'    , " D9 E0"],
+	['FABS'    , " D9 E1"],
+	['FTST'    , " D9 E4"],
+	['FXAM'    , " D9 E5"],
+	['FLD1'    , " D9 E8"],
+	['FLDL2T'  , " D9 E9"],
+	['FLDL2E'  , " D9 EA"],
+	['FLDPI'   , " D9 EB"],
+	['FLDLG2'  , " D9 EC"],
+	['FLDLN2'  , " D9 ED"],
+	['FLDZ'    , " D9 EE"],
+	['F2XM1'   , " D9 F0"],
+	['FYL2X'   , " D9 F1"],
+	['FPTAN'   , " D9 F2"],
+	['FPATAN'  , " D9 F3"],
+	['FXTRACT' , " D9 F4"],
+	['FPREM1'  , " D9 F5"],
+	['FDECSTP' , " D9 F6"],
+	['FINCSTP' , " D9 F7"],
+	['FPREM'   , " D9 F8"],
+	['FYL2XP1' , " D9 F9"],
+	['FSQRT'   , " D9 FA"],
+	['FSINCOS' , " D9 FB"],
+	['FRNDINT' , " D9 FC"],
+	['FSCALE'  , " D9 FD"],
+	['FSIN'    , " D9 FE"],
+	['FCOS'    , " D9 FF"],
+	['FUCOMPP' , " DA E9"],
+	['FNENI'   , " DB E0"],
+	['FNDISI'  , " DB E1"],
+	['FNCLEX'  , " DB E2"],
+	['FNINIT'  , " DB E3"],
+	['FCLEX'   , " 9B DB E2"],
+	['FINIT'   , " 9B DB E3"],
+	['FNSETPM' , " DB E4"],
+	['FCOMPP'  , " DE D9"],
+].forEach( pair => AssignStr(...pair) );
