@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-28                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,10 +36,7 @@
 ///
 const _equate_ = (name, idx, set) => {
 	if (idx > 0)
-	{
-		eval(set[idx] + " = " + set[0]);
-		Identify(set[idx]);
-	}
+		Assign(set[idx], set[0]);
 };
 
 ///
@@ -50,11 +47,10 @@ const _define_with = function(name)
 	for (let idx = 1; idx < arguments.length; idx++)
 	{
 		let set = Wrap(arguments[idx]);
-		eval(
-			set[0] + " = function() { return " + name + "(" + 
-			(idx-1) + ", arguments) }"
+		Assign(
+			set[0],
+			"function() { return " + name + "(" + (idx-1) + ", arguments) }"
 		);
-		Identify(set[0]);
 		
 		if (set.length > 1)
 			set.forEach(_equate_);
@@ -78,8 +74,8 @@ POP = function()
 	return _stack_op(0x58, 0x8F, [], 0, arguments);
 };
 
-Identify("PUSH");
-Identify("POP");
+IdentifyObj('PUSH');
+IdentifyObj('POP');
 
 ///
 /// \brief Creates hex for Stack operations
@@ -138,8 +134,8 @@ JMP = function(arg)
 		return _transfer_([0xEB, 0xE9], 4, arguments, false);
 };
 
-Identify("CALL");
-Identify("JMP");
+IdentifyObj('CALL');
+IdentifyObj('JMP');
 
 ///
 /// \brief Creates hex for Control Transfer operations (i.e. CALL and JMP)
@@ -210,7 +206,7 @@ RETN = (arg) =>
 		return " C3";
 };
 
-Identify("RETN");
+IdentifyObj('RETN');
 
 ///
 /// \brief Creates Hex for Entering into a nest level
@@ -229,29 +225,29 @@ ENTER = (size, nestLevel) =>
 	return " C8" + size + nestLevel;
 };
 
-Identify("ENTER");
+IdentifyObj('ENTER');
 
   //======================//
  // Conditional Transfer //
 //======================//
 
-_define_with("_cond_jump",
-	["JO"],
-	["JNO"],
-	["JB", "JC", "JNAE"],
-	["JNB", "JNC", "JAE"],
-	["JE", "JZ"],
-	["JNE", "JNZ"],
-	["JBE", "JNA"],
-	["JNBE", "JA"],
-	["JS"],
-	["JNS"],
-	["JP", "JPE"],
-	["JNP", "JPO"],
-	["JL", "JNGE"],
-	["JNL", "JGE"],
-	["JLE", "JNG"],
-	["JNLE", "JG"]
+_define_with('_cond_jump',
+	['JO'],
+	['JNO'],
+	['JB', 'JC', 'JNAE'],
+	['JNB', 'JNC', 'JAE'],
+	['JE', 'JZ'],
+	['JNE', 'JNZ'],
+	['JBE', 'JNA'],
+	['JNBE', 'JA'],
+	['JS'],
+	['JNS'],
+	['JP', 'JPE'],
+	['JNP', 'JPO'],
+	['JL', 'JNGE'],
+	['JNL', 'JGE'],
+	['JLE', 'JNG'],
+	['JNLE', 'JG']
 );
 
 ///
@@ -305,7 +301,7 @@ LEA = function(arg)
 	return "";
 };
 
-Identify("LEA");
+IdentifyObj('LEA');
 
 ///
 /// \brief Creates Hex for Simple Move
@@ -356,7 +352,7 @@ MOV = function()
 	return Instr.FromParts(data, opCode, 0).toString();
 };
 
-Identify("MOV");
+IdentifyObj('MOV');
 
   //================//
  // Extended Moves //
@@ -372,8 +368,8 @@ MOVZX = function()
 	return _ext_move([0x0F, 0xB7], arguments);
 };
 
-Identify("MOVSX");
-Identify("MOVZX");
+IdentifyObj('MOVSX');
+IdentifyObj('MOVZX');
 
 ///
 /// \brief Creates Hex for Sign & Zero Extended moves
@@ -412,23 +408,23 @@ _ext_move = (opCode, args) =>
  // Conditional Moves //
 //===================//
 
-_define_with("_cond_move",
-	["CMOVO"],
-	["CMOVNO"],
-	["CMOVB", "CMOVC", "CMOVNAE"],
-	["CMOVNB", "CMOVNC", "CMOVAE"],
-	["CMOVE", "CMOVZ"],
-	["CMOVNE", "CMOVNZ"],
-	["CMOVBE", "CMOVNA"],
-	["CMOVNBE", "CMOVA"],
-	["CMOVS"],
-	["CMOVNS"],
-	["CMOVP", "CMOVPE"],
-	["CMOVNP", "CMOVPO"],
-	["CMOVL", "CMOVNGE"],
-	["CMOVNL", "CMOVGE"],
-	["CMOVLE", "CMOVNG"],
-	["CMOVNLE", "CMOVG"],
+_define_with('_cond_move',
+	['CMOVO'],
+	['CMOVNO'],
+	['CMOVB', 'CMOVC', 'CMOVNAE'],
+	['CMOVNB', 'CMOVNC', 'CMOVAE'],
+	['CMOVE', 'CMOVZ'],
+	['CMOVNE', 'CMOVNZ'],
+	['CMOVBE', 'CMOVNA'],
+	['CMOVNBE', 'CMOVA'],
+	['CMOVS'],
+	['CMOVNS'],
+	['CMOVP', 'CMOVPE'],
+	['CMOVNP', 'CMOVPO'],
+	['CMOVL', 'CMOVNGE'],
+	['CMOVNL', 'CMOVGE'],
+	['CMOVLE', 'CMOVNG'],
+	['CMOVNLE', 'CMOVG'],
 );
 
 ///
@@ -454,23 +450,23 @@ _cond_move = (addon, args) =>
  // Conditional Setters //
 //=====================//
 
-_define_with("_cond_set",
-	["SETO"],
-	["SETNO"],
-	["SETB", "SETC", "SETNAE"],
-	["SETNB", "SETNC", "SETAE"],
-	["SETE", "SETZ"],
-	["SETNE", "SETNZ"],
-	["SETBE", "SETNA"],
-	["SETNBE", "SETA"],
-	["SETS"],
-	["SETNS"],
-	["SETP", "SETPE"],
-	["SETNP", "SETPO"],
-	["SETL", "SETNGE"],
-	["SETNL", "SETGE"],
-	["SETLE", "SETNG"],
-	["SETNLE", "SETG"],
+_define_with('_cond_set',
+	['SETO'],
+	['SETNO'],
+	['SETB', 'SETC', 'SETNAE'],
+	['SETNB', 'SETNC', 'SETAE'],
+	['SETE', 'SETZ'],
+	['SETNE', 'SETNZ'],
+	['SETBE', 'SETNA'],
+	['SETNBE', 'SETA'],
+	['SETS'],
+	['SETNS'],
+	['SETP', 'SETPE'],
+	['SETNP', 'SETPO'],
+	['SETL', 'SETNGE'],
+	['SETNL', 'SETGE'],
+	['SETLE', 'SETNG'],
+	['SETNLE', 'SETG'],
 );
 
 ///
@@ -507,8 +503,8 @@ DEC = function()
 	return _add_sub_1(0x48, 1, arguments);
 };
 
-Identify("INC");
-Identify("DEC");
+IdentifyObj('INC');
+IdentifyObj('DEC');
 
 ///
 /// \brief Creates hex for Adding and Subtracting by 1 (i.e. INC and DEC)
@@ -573,11 +569,11 @@ IDIV = function()
 	return _cmpl_mul_div(7, arguments);
 };
 
-Identify("NOT");
-Identify("NEG");
-Identify("MUL");
-Identify("DIV");
-Identify("IDIV");
+IdentifyObj('NOT');
+IdentifyObj('NEG');
+IdentifyObj('MUL');
+IdentifyObj('DIV');
+IdentifyObj('IDIV');
 
 ///
 /// \brief Creates hex for Complements (NOT & NEG), Multiplication & Division (i.e. MUL, DIV & IDIV)
@@ -657,15 +653,15 @@ IMUL = function()
 	return Instr.FromParts(data, opCode, oper).toString();
 };
 
-Identify("IMUL");
+IdentifyObj('IMUL');
 
   //==================//
  // Bitwise movement //
 //==================//
 
-_define_with("_bit_move",
-	"ROL", "ROR", "RCL", "RCR",
-	"SHL", "SHR", "SAL", "SAR"
+_define_with('_bit_move',
+	'ROL', 'ROR', 'RCL', 'RCR',
+	'SHL', 'SHR', 'SAL', 'SAR'
 );
 
 ///
@@ -723,9 +719,9 @@ _bit_move = (oper, args) =>
  // Other Arithmetic & Logical Operations //
 //=======================================//
 
-_define_with("_arith_logic",
-	"ADD", "OR", "ADC", "SBB",
-	"AND", "SUB", "XOR", "CMP"
+_define_with('_arith_logic',
+	'ADD', 'OR', 'ADC', 'SBB',
+	'AND', 'SUB', 'XOR', 'CMP'
 );
 
 ///
@@ -818,4 +814,16 @@ TEST = function()
 	return Instr.FromParts(data, opCode, 0).toString();
 };
 
-Identify("TEST");
+IdentifyObj('TEST');
+
+  //===============================//
+ // Instructions without operands //
+//===============================//
+
+[
+	['PUSHAD' , " 60"],
+	['POPAD'  , " 61"],
+	['NOP'    , " 90"],
+	['CWDE'   , " 98"],
+	['LEAVE'  , " C9"],
+].forEach( pair => AssignStr(...pair) );
