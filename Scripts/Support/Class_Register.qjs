@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-11-07                                             *
+*   Last Modified : 2020-11-28                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -85,78 +85,68 @@ if (typeof(Register) === 'undefined') //avoid redefinition
 		}
 	};
 	
+	IdentifyClass(Register);
+	
+	///
+	/// \brief Temporary function to create register object & identify it. Returns the created object
+	///
+	function __create(name, bitsize, index)
+	{
+		Assign(
+			name,
+			"new Register('" + name + "', " + bitsize + ", " + index + ")"
+		);
+		return eval(name);
+	}
+	
 	///
 	/// \brief Defining the 32 bit register representations
 	///
-	R32List = [];
-	[
+	
+	__create('R32', 32); //Generic Placeholder
+	
+	R32.List = [
 		'EAX', 'ECX', 'EDX', 'EBX',
 		'ESP', 'EBP', 'ESI', 'EDI',
-	].forEach((name, index) =>
-	{
-		eval(name + ' = new Register("' + name + '", 32, ' + index + ')');
-		R32List.push(eval(name));
-		IdentifyObj(name);
-	});
-	R32 = new Register("R32", 32); //Generic Placeholder
+	].map((name, index) => __create(name, 32, index));
+	
 	
 	///
 	/// \brief Defining the 16 bit register representations
 	///
-	R16List = [];
-	[
+	
+	__create('R16', 16); //Generic Placeholder
+	
+	R16.List = [
 		'AX', 'CX', 'DX', 'BX',
 		'SP', 'BP', 'SI', 'DI',
-	].forEach((name, index) =>
-	{
-		eval(name + ' = new Register("' + name + '", 16, ' + index + ')');
-		R16List.push(eval(name));
-		IdentifyObj(name);
-	});
-	R16 = new Register("R16", 16); //Generic Placeholder
+	].map((name, index) => __create(name, 16, index));
+	
 	
 	///
 	/// \brief Defining the 8 bit register representations
 	///
-	R8List = [];
-	[
-		'AL', 'CL', 'DL', 'BL',
-		'AH', 'CH', 'DH', 'BH', ///since ESP, EBP, ESI & EDI dont have 8bit counterparts these indices 
-								///are used for the higher 8bit parts of the above.
-	].forEach((name, index) =>
-	{
-		eval(name + ' = new Register("' + name + '", 8, ' + index + ')');
-		R8List.push(eval(name));
-		IdentifyObj(name);
-	});
-	R8 = new Register("R8", 8); //Generic Placeholder
+	
+	__create('R8', 8); //Generic Placeholder
+	
+	R8.List = [
+		'AL', 'CL', 'DL', 'BL', //since ESP, EBP, ESI & EDI dont have 8bit counterparts
+		'AH', 'CH', 'DH', 'BH', //these indices are used for the higher 8bit parts of the above.
+	].map((name, index) => __create(name, 8, index));
+	
 	
 	///
 	/// \brief Defining the FPU Register Stack & SSE Registers
 	///
-	ST_List = [];
-	XMM_List = [];
-	MM_List = [];
-	for (var i = 0; i < 8; i++)
-	{
-		var name = 'ST' + i;
-		eval(name + ' = new Register("' + name + '", 80, ' + i + ')');
-		ST_List.push(eval(name));
-		IdentifyObj(name);
-		
-		name = 'MM' + i;
-		eval(name + ' = new Register("' + name + '", 64, ' + i + ')');
-		MM_List.push(eval(name));
-		IdentifyObj(name);
-		
-		name = 'XMM' + i;
-		eval(name + ' = new Register("' + name + '", 128, ' + i + ')');
-		XMM_List.push(eval(name));
-		IdentifyObj(name);
-	}
-	ST$ = new Register("ST$", 80); //Generic Placeholder
-	MM$ = new Register("MM$", 64); //Generic Placeholder
-	XMM$ = new Register("XMM$", 128); //Generic Placeholder
+	let indices = [0, 1, 2, 3, 4, 6, 7];
+	
+	__create("ST$" ,  80); //Generic Placeholder
+	__create("MM$" ,  64); //Generic Placeholder
+	__create("XMM$", 128); //Generic Placeholder
+	
+	ST$.List  = indices.map( index => __create( 'ST' + index,  80, index) );
+	XMM$.List = indices.map( index => __create('XMM' + index,  64, index) );
+	MM$.List  = indices.map( index => __create( 'MM' + index, 128, index) );
 	
 	ST = i =>
 		i >= 0 && i <= 7 ? eval("ST" + i) : undefined;
@@ -167,14 +157,5 @@ if (typeof(Register) === 'undefined') //avoid redefinition
 	IsReg = v =>
 		v instanceof Register;
 	
-	  //=================//
- 	 // Identifications //
-	//=================//
-	
-	IdentifyClass(Register);
-	IdentifyMany(
-		"R8", "R16", "R32", 
-		"ST$", "MM$", "XMM$",
-		"ST", "IsReg"
-	);
+	IdentifyObj('IsReg');
 }

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-11-07                                             *
+*   Last Modified : 2020-11-28                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -58,52 +58,38 @@ if (typeof(IPrefix) === 'undefined')
 		}
 	};
 	
-	///
-	/// \brief Segment Overrides
-	///
-	CS = new IPrefix(0x2E);
-	DS = new IPrefix(0x3E);
-	ES = new IPrefix(0x26);
-	FS = new IPrefix(0x64);
-	GS = new IPrefix(0x65);
-	SS = new IPrefix(0x36);
+	IdentifyClass(IPrefix);
 	
 	///
-	/// \brief Operand Size Change/Override - 32 bit to 16 bit, 64 bit to 128 bit etc..
-	///
-	OPCH = new IPrefix(0x66);
-	
-	///
-	/// \brief Address Override to 16 bit
-	///
-	AD16 = new IPrefix(0x67);
-	
-	///
-	/// \brief Repeat/Lock to grant exclusive use of all shared memory
-	///
-	LOCK = new IPrefix(0xF0);
-	
-	///
-	/// \brief String Manipulation
-	///
-	REPE = new IPrefix(0xF2);
-	REPN = new IPrefix(0xF3);
-	
-	///
-	/// \brief List of all Instruction Prefix bytes
+	/// \brief Define all the prefixes
 	///
 	IPrefix.List = [
-		CS.Value, DS.Value, ES.Value, FS.Value, GS.Value, SS.Value, 
-		OPCH.Value, AD16.Value, LOCK.Value, REPE.Value, REPN.Value,
-	];
+		// Segment Overrides
+		['CS'   , 0x2E],
+		['DS'   , 0x3E],
+		['ES'   , 0x26],
+		['FS'   , 0x64],
+		['GS'   , 0x65],
+		['SS'   , 0x36],
 	
-	  //=================//
- 	 // Identifications //
-	//=================//
-	
-	IdentifyClass(IPrefix);
-	IdentifyMany(
-		"CS", "DS", "ES", "FS", "GS", "SS",
-		"OPCH", "AD16", "LOCK", "REPE", "REPN"
-	);
+		// Operand Size Change/Override - 32 bit to 16 bit, 64 bit to 128 bit etc..
+		['OPCH' , 0x66],
+		
+		// Address Override to 16 bit
+		['AD16' , 0x67],
+		
+		// Repeat/Lock to grant exclusive use of all shared memory
+		['LOCK' , 0xF0],
+		
+		// String Manipulation
+		['REPE' , 0xF2],
+		['REPN' , 0xF3],
+	].map( pair =>
+	{
+		Assign(
+			pair[0],
+			"new IPrefix(" + pair[1] + ")"
+		);
+		return pair[1];
+	});
 }

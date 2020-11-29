@@ -1,0 +1,51 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) 2020 Neo Mind                                            #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2020-11-29                                             #
+#   Last Modified : 2020-11-29                                             #
+#                                                                          #
+############################################################################
+
+groups: #this should be an array of maps like shown below
+
+#    - GroupName1:
+#        title : Group 1
+#        mutex : true
+#        color : red
+        
+#        patches:
+#            - PatchName1:
+#                title : Patch No. 1
+#                recommend : yes
+#                author : Neo-Mind
+#                desc : Just a template to show how to define patches. Still need the function defined though. In this case it is 'PatchName1'
+            
+#            - PatchName2:
+#                desc : Alright you get the gist. In this one PatchName2 will become the title, it will not be 'recommend'ed and author is 'Unknown'
+
+#    - GroupName2 #In this one, group's title will be GroupName2, mutex will be true and color will be the default set as per Style.
+
+#        patches:
+#            -PatchName3: Now even the description becomes empty
+#
+# ... and so forth

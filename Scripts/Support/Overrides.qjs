@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-11-28                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -382,7 +382,7 @@ String.prototype.insertAt = function(index, str)
 String.prototype.appendAsHex = function(data, bc, bigEndian)
 {
 	/// 1 - Get the type of the data provided
-	let type = typeof(data);
+	let type = typeof data;
 	
 	/// 2.1 - If it is a number append the data converted to hex and return it
 	if (type === 'number')
@@ -443,20 +443,20 @@ String.prototype.byteCount = function()
  // Identifications //
 //=================//
 
-Identify("console", [
-	"debug", "dump", "showAddr", "showAddrs"
+Identify('console', [
+	'debug', 'dump', 'showAddr', 'showAddrs'
 ]);
 
-Identify("Array", [], [
-	"isEmpty", "isRegPtr", "isDispPtr", "last"
+Identify('Array', [], [
+	'isEmpty', 'isRegPtr', 'isDispPtr', 'last'
 ]);
 
-Identify("Number", [], [
-	"toBits", "toHex", "toIEEE"
+Identify('Number', [], [
+	'toBits', 'toHex', 'toIEEE'
 ]);
 
-Identify("String", [], [
-	"appendAsHex", "byteCount", "insertAt", "isEmpty", 
-	"isHex", "le2be", "remove", "replaceAt", "toAscii",
-	"toHex", "toInt"
+Identify('String', [], [
+	'appendAsHex', 'byteCount', 'insertAt', 'isEmpty',
+	'isHex', 'le2be', 'remove', 'replaceAt', 'toAscii',
+	'toHex', 'toInt'
 ]);

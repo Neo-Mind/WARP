@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-11-23                                             *
+*   Last Modified : 2020-11-28                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,33 +33,54 @@
 ///
 /// \brief Tests for primitive types
 ///
-IsNum  = v => typeof(v) === 'number';
-IsStr  = v => typeof(v) === 'string';
-IsBool = v => typeof(v) === 'boolean';
+IsNum  = v => typeof v === 'number';
+IsStr  = v => typeof v === 'string';
+IsBool = v => typeof v === 'boolean';
 
-IsNumOrStr = v => 
-	typeof(v) === 'number' || typeof(v) === 'string';
+IsNumOrStr = v =>
+	typeof v === 'number' || typeof v === 'string';
 
 ///
 /// \brief Tests whether given variable contains a word either as number or hex string
 ///        (for hex string it will be 2 bytes inside)
 ///
-IsWord = (v, signed = true) => 
-	(typeof(v) === 'number' && (
-		signed ? (v >= -0x8000 && v < -0x80) || (v > 0x7F && v <= 0x7FFF) : (v >= 0 && v <= 0xFFFF)
-	)) ||
-	(typeof(v) === 'string' && v.byteCount() === 2);
+IsWord = function(v, signed = true)
+{
+	switch (typeof v)
+	{
+		case 'number':
+			return signed ?
+				(v >= -0x8000 && v < -0x80) || (v > 0x7F && v <= 0x7FFF) :
+				(v >= 0 && v <= 0xFFFF)
+			;
+		
+		case 'string':
+			return v.byteCount() === 2;
+	}
+	
+	return false;
+};
 
 ///
 /// \brief Tests whether given variable contains a byte either as number of hex string
 ///        (for hex string it will be 1 byte inside)
 ///
-IsByte = (v, signed = true) => 
-	(typeof(v) === 'number' && (
-		signed ? (v >= -0x80 && v <= 0x7F) : (v >= 0 && v <= 0xFF)
-	)) ||
-	(typeof(v) === 'string' && v.byteCount() === 1);
-
+IsByte = function(v, signed = true)
+{
+	switch (typeof v)
+	{
+		case 'number':
+			return signed ?
+				(v >= -0x80 && v <= 0x7F) :
+				(v >= 0 && v <= 0xFF)
+			;
+		
+		case 'string':
+			return v.byteCount() === 1;
+	}
+	
+	return false;
+};
 
   //==================//
  // Filler functions //
@@ -80,7 +101,7 @@ SwapFiller = function(str, idx, data, cnt = 1, bc = 4)
 	bc = Math.min(bc, 4);
 	
 	/// 1.2 - Ensure data is hex string
-	if (typeof(data) === 'number')
+	if (typeof data === 'number')
 		data = data.toHex(bc);
 	
 	/// 2.1 - Get the filler string to be replaced
@@ -113,7 +134,7 @@ SwapFillers = function(str, idxArr, dataArr, sc = 1, bc = 4)
 	{
 		/// 1.2 - Ensure data is hex string
 		let data = dataArr[i];
-		if (typeof(data) === 'number')
+		if (typeof data === 'number')
 			data = data.toHex(bc);
 		
 		/// 2.1 - Get the filler string to be replaced
@@ -155,32 +176,29 @@ Wrap = v =>
 ///
 BitWidth = function(v)
 {
-	/// 1.1 - If the value provided is a register then simply return its width
+	/// 1 - If the value provided is a register then simply return its width
 	if (IsReg(v))
 		return v.Width;
-	
-	/// 1.2 - Get the type
-	let type = typeof(v);
-	
-	if (type === 'number') //imm or disp
-	{
-		/// 2.1 - For numbers, check within specific limits for each size
-		if (v >= -0x80 && v <= 0x7F)
-			return 8;
 		
-		else if (v >= -0x8000 && v <= 0x7FFF)
-			return 16;
-		
-		else
-			return 32;
-	}
-	else if (type === 'string') //hex string
+	switch (typeof v)
 	{
-		/// 2.2 - For hex string return the byte count * 8
-		let bc = v.byteCount();
-		if (bc >= 0)
-			return (8 * bc);
+		/// 2 - For numbers, check within specific limits for each size
+		case 'number':
+			return (
+				v >= -0x80 && v <= 0x7F ? 8 :
+				v >= -0x8000 && v <= 0x7FFF ? 16 :
+				32
+			);
+
+		/// 3 - For hex string return the byte count * 8
+		case 'string':
+			let bc = v.byteCount();
+			if (bc >= 0)
+				return (8 * bc);
+		
 	}
+	
+	/// 4 - Return -1 for invalid cases
 	return -1;
 };
 
@@ -188,7 +206,7 @@ BitWidth = function(v)
 /// \brief Calculates the Distance between the given target and source (if not numbers then then target itself is returned)
 ///
 Distance = (tgt, src) => 
-	typeof(tgt) == 'number' && typeof(src) === 'number' ? tgt - src : tgt;
+	typeof tgt == 'number' && typeof src === 'number' ? tgt - src : tgt;
 
 
   //============//
@@ -237,13 +255,9 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 	return (retnType === VIRTUAL ? caseAddr : Exe.Vir2Phy(caseAddr));
 };
 
-// GetImpTable implementation not added . Planning to make it in IExe class instead
-
   //===========//
  // Utilities //
 //===========//
-
-// GetInputFile implementation may not be needed
 
 ///
 /// \brief Parses the data provided into 4 part array (first 3 being either M,R,M or S,I,B)
@@ -258,7 +272,7 @@ ParseData = function(data, scaled)
 	if (Array.isArray(data))
 	{
 		/// 2.1 - Ensure it has 3 values and first one is a number
-		if (data.length === 3 && typeof(data[0]) === 'number') 
+		if (data.length === 3 && typeof data[0] === 'number')
 		{
 			/// 2.2 - First copy the array as is
 			parts = data.slice(); 
@@ -290,7 +304,7 @@ ParseData = function(data, scaled)
 	}
 	
 	/// 3 - Process string type 
-	if (typeof(data) === 'string')
+	if (typeof data === 'string')
 	{
 		/// 3.1 - First remove any square brackets
 		data = data.replace(/[\[ \]]+/g, '');
@@ -377,7 +391,7 @@ ParseData = function(data, scaled)
 	}
 	
 	/// 4 - Process Number type (Integer to be more precise)
-	if (typeof(data) === 'number')
+	if (typeof data === 'number')
 	{
 		parts[0] = (data >> 6) & 0b11; 	//First 2 bits
 		parts[1] = (data >> 3) & 0b111;	//Middle 3 bits
@@ -393,7 +407,7 @@ ParseData = function(data, scaled)
 ///
 FindInstr = function(testFn, from, to)
 {
-	if (typeof(testFn) !== 'function' || typeof(from) !== 'number')
+	if (typeof testFn !== 'function' || typeof from !== 'number')
 		return false;
 	
 	if (to === undefined)
@@ -411,6 +425,10 @@ FindInstr = function(testFn, from, to)
 	return false;
 }
 
+  //====================//
+ // Syntax Identifiers //
+//====================//
+
 ///
 /// \brief Simple wrapper
 ///
@@ -421,7 +439,7 @@ Identify = Warp.identify;
 ///        for identification in the Script Editor
 ///
 IdentifyClass = type => 
-	Identify(
+	Warp.identify(
 		type.name, 
 		Object.getOwnPropertyNames(type), 
 		Object.keys(new type()).concat(
@@ -435,10 +453,9 @@ IdentifyClass = type =>
 ///
 IdentifyObj = objName => 
 {
-	if (eval("typeof(" + objName + ")") !== undefined)
-		Identify(objName, Object.getOwnPropertyNames(eval(objName)) );
+	if (eval("typeof " + objName) !== undefined)
+		Warp.identify(objName, Object.getOwnPropertyNames(eval(objName)) );
 };
-	
 
 ///
 /// \brief Adds all provided objects to SyntaxAssistant
@@ -452,16 +469,32 @@ IdentifyMany = function()
 	}
 };
 
+///
+/// \brief Assigns the value to the name and identifies it to the Script Editor.
+///
+Assign = (name, value) =>
+{
+	eval(name + " = " + value);
+	IdentifyObj(name);
+};
+
+AssignStr = (name, value) =>
+{
+	eval(name + " = '" + value + "'");
+	IdentifyObj(name);
+};
+
   //=================//
  // Identifications //
 //=================//
 
 IdentifyMany(
-	"IsNum", "IsStr", "IsBool", 
-	"IsNumOrStr", "IsWord", "IsByte",
-	"MakeFiller", "SwapFiller", "Wrap",
-	"BitWidth", "Distance",
-	"CaseAddr", "ParseData", "FindInstr",
-	"Identify", "IdentifyClass", 
-	"IdentifyObj", "IdentifyMany"
+	'IsNum', 'IsStr', 'IsBool',
+	'IsNumOrStr', 'IsWord', 'IsByte',
+	'MakeFiller', 'SwapFiller', 'Wrap',
+	'BitWidth', 'Distance',
+	'CaseAddr', 'ParseData', 'FindInstr',
+	'Identify', 'IdentifyClass',
+	'IdentifyObj', 'IdentifyMany',
+	'Assign', 'AssignStr'
 );
