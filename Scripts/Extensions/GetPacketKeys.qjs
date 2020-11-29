@@ -22,31 +22,53 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-28                                             *
 *                                                                          *
 \**************************************************************************/
 
+///
+/// \brief Extract Packet Keys to an output file
+///
 GetPacketKeys = function()
 {
+	/// 1.1 - Need a valid Exe loaded.
+	if (Exe.FileSize == 0)
+		throw NO_EXE;
+
+	/// 1.2 - Ensure PACKET Object is loaded
 	if (!PACKET.load())
 		throw PACKET.Error;
 	
-	let fp = new TextFile("Outputs/PacketKeys_" + Exe.BuildDate + ".txt", 'w');
-	if (fp.Valid)
+	/// 2.1 - Open the output file for writing.
+	let fp = new TextFile(OUTDIR + "PacketKeys_" + ROC.BaseName + ".txt", 'w');
+	if (!fp.Valid)
+		throw NO_OUTPUT;//Error("Unable to generate output file");
+	
+	/// 2.2 - Retrieve the packet keys found and convert to hex
+	let keys = [];
+	PACKET.Keys.forEach( (val, idx) =>
 	{
-		let keys = [];
-		PACKET.Keys.forEach( (val, idx) => 
-		{
-			keys[idx] = "0x" + val.toHex(true)
-		});
-		fp.WriteLine("Client: " + Exe.FilePath);
-		fp.WriteLine("Packet Keys : (" + keys.join(',') + ")");
-		fp.Close();
-		
+		keys[idx] = "0x" + val.toHex(true)
+	});
+	
+	/// 2.3 - Write the essentials & the keys in hex to the file.
+	fp.WriteLine("Extracted with WARP")
+	fp.WriteLine("===================")
+	fp.WriteLine("Client: " + Exe.FilePath);
+	fp.WriteLine("BuildDate: " + Exe.BuildDate);
+	fp.WriteLine("Packet Keys : (" + keys.join(', ') + ")");
+	
+	/// 2.4 - Close the file
+	fp.Close();
+	
+	/// 3 - Show the success message for test mode or display the file otherwise
+	if (Exe.TestMode)
+	{
 		return "Packet Keys have been written to Output folder";
 	}
 	else
 	{
-		throw Error("Unable to write output file");
+		Warp.Show(fp.Path);
+		return true;
 	}
 };

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -102,7 +102,7 @@ FixChatAt = function()
         /// 3.2 - Allocate space for adding our function
         let free = Exe.FindSpace(csize);
         if (free < 0)
-            throw NOSPACE;
+            throw NO_ALLOC;
 
         /// 3.3 - Add our function there
         Exe.AddHex(free, code, csize);

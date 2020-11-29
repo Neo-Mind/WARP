@@ -22,25 +22,37 @@
 *                                                                          *
 *   Author(s)     : -                                                      *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-28                                             *
 *                                                                          *
 \**************************************************************************/
 
+///
+/// \brief Extract all strings ending in .txt to an output file
+///
 ExtractTxtNames = function()
 {
-	let fp = new TextFile("Outputs/loaded_Txt_files_" + Exe.BuildDate + ".txt", 'w');
+	/// 1.1 - Need a valid Exe loaded.
+	if (Exe.FileSize == 0)
+		throw NO_EXE;
+
+	/// 1.2 - Open output file for writing (Need ASCII encoding).
+	let fp = new TextFile(OUTDIR + "loaded_Txt_files_" + ROC.BaseName + ".txt", ASCII, 'w');
 	if (!fp.Valid)
-		throw Error("Unable to generate output file");
-	
+		throw NO_OUTPUT;//Error("Unable to generate output file");
+
+	/// 2.1 - First write the essentials to file.
 	fp.WriteLine("Extracted with WARP")
 	fp.WriteLine("===================")
 	fp.WriteLine("Client: " + Exe.FilePath);
-	fp.WriteLine("");
+	fp.WriteLine("BuildDate: " + Exe.BuildDate);
+	fp.WriteLine('');
 	fp.WriteLine("Txt Files:");
-
+	
+	/// 2.2 - Find all locations of .txt
 	let addrs = Exe.FindTextN(".txt", -1, PHYSICAL, false);
 	addrs.forEach( addr =>
 	{
+		/// 2.3 - Retrieve the starting location of each string (prepending each character along the way)
 		let str = ".txt";
 		for (addr--; addr > 0; addr--)
 		{
@@ -50,9 +62,23 @@ ExtractTxtNames = function()
 			
 			str = chr + str;
 		}
+		
+		/// 2.4 - Write each of them to the file (other than '.txt' itself)
 		if (str.length > 4)
 			fp.WriteLine(" => " + str);
 	});
 	
-	return "Txt File list has been extracted to Output folder";
+	/// 2.5 - Close the file
+	fp.Close();
+	
+	/// 3 - Show the success message for test mode or display the file otherwise
+	if (Exe.TestMode)
+	{
+		return "Txt File list has been extracted to Output folder";
+	}
+	else
+	{
+		Warp.Show(fp.Path);
+		return true;
+	}
 };

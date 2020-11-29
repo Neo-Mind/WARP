@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, 4144, Jchcc                                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -123,7 +123,7 @@ MoveShopIcon = function()
     /// 3.3 - Allocate space to add our code
     let free = Exe.FindSpace(csize, 0x10);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     /// 3.4 - Add the code at the allocated space
     Exe.AddHex(free, code, csize);

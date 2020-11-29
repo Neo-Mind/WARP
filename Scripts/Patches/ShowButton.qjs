@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -105,7 +105,7 @@ ShowRegisterBtn = function()
     /// 3.3 - Allocate space to add the function
     let free = Exe.FindSpace(csize, 0x10);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     /// 3.4 - Add the function there
     Exe.AddHex(free, code, csize);
@@ -316,7 +316,7 @@ ShowReplayBtn = function()
     /// 4.2 - Allocate space to add the code
     let free = Exe.FindSpace(csize, 0x10);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     let freeVir = Exe.Phy2Vir(free, DIFF);
 
@@ -447,7 +447,7 @@ _SRB_FixupBtnCoords = (btnImg, msgPrefix, suffix, suffix2) =>
         /// 3.3 - For the others, allocate space to add the code
         let free = Exe.FindSpace(csize, 0x10);
         if (free < 0)
-            throw NOSPACE;
+            throw NO_ALLOC;
 
         let freeVir = Exe.Phy2Vir(free, DIFF);
         

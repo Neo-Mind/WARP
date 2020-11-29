@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-28                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,15 +32,23 @@
 ///
 DumpImportTable = function()
 {
-	/// 1.1 - Get the Import Data Directory PHYSICAL address
+	/// 1.1 - Need a valid Exe loaded.
+	if (Exe.FileSize == 0)
+		throw NO_EXE;
+
+	/// 1.2 - Get the Import Data Directory PHYSICAL address
 	let addr = Exe.GetDirAddr(D_Import, PHYSICAL);
 
-	/// 1.2 - Open text file for writing
-	let fp = new TextFile("Outputs/importTable_Dump_" + Exe.BuildDate + ".txt", 'w');
+	/// 1.3 - Open output file for writing
+	let fp = new TextFile(OUTDIR + "importTable_Dump_" + ROC.BaseName + ".txt", 'w');
 	if (!fp.Valid)
-		throw Error("Unable to create text file in Output folder");
+		throw NO_OUTPUT;//Error("Unable to generate output file");
 
-	/// 2.1 - First write the import address to file
+	/// 2.1 - First write the essentials along with import address to file
+	fp.WriteLine("Extracted with WARP")
+	fp.WriteLine("===================")
+	fp.WriteLine("Client: " + Exe.FilePath);
+	fp.WriteLine("BuildDate: " + Exe.BuildDate);
 	fp.WriteLine("Import Table = 0x" + Exe.Phy2Vir(addr).toHex(true) + " (0x" + addr.toHex(true) + ")\n");
 
 	for ( ;true; addr += 20)
@@ -80,10 +88,10 @@ DumpImportTable = function()
 			///       -ve => Last 2 bytes are Ordinal Number
 			if (thunkData === 0)
 			{
-				fp.WriteLine(""); //blank line
+				fp.WriteLine(''); //blank line
 				break;
 			}
-			else 
+			else
 			{
 				fp.Write("\t\tThunk Address = 0x" + (iatVir + offset).toHex(true) + " (0x" + (iatPhy + offset).toHex(true) + ")");				
 				if (thunkData > 0) //By Name
@@ -101,9 +109,17 @@ DumpImportTable = function()
 		}
     }
 	
-	/// 3.1 - Close the file
+	/// 2.8 - Close the file
 	fp.Close();
 	
-	/// 3.2 - Return the success message
-	return "Import Table has been dumped to Output folder";
+	/// 3 - Show the success message for test mode or display the file otherwise
+	if (Exe.TestMode)
+	{
+		return "Import Table has been dumped to Output folder";
+	}
+	else
+	{
+		Warp.Show(fp.Path);
+		return true;
+	}
 };

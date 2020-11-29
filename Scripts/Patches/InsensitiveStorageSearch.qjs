@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Jchcc                                                  *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-14                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -104,7 +104,7 @@ InsensitiveStorageSearch = function()
 	/// 3.1 - Allocate space to add our code
 	let free = Exe.FindSpace(csize + ssize, 0x10);
 	if (free < 0)
-		throw NOSPACE;
+		throw NO_ALLOC;
 
 	let freeVir = Exe.Phy2Vir(free);
 

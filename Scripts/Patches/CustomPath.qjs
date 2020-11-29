@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian                                         *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -107,7 +107,7 @@ CustomPath = function(index)
 	/// 2.1 - Allocate space to add the file name
 	let free = Exe.FindSpace(newFile.length);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 	
 	/// 2.2 - Add the name there
     Exe.AddFromVar(free, data.varName);
@@ -231,7 +231,7 @@ CustomLicenseTxt = function()
     /// 2.2 - Allocate space to add new file name
     let free = Exe.FindSpace(txtFile.length + 1);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     /// 2.3 - Add the file name there
     Exe.AddFromVar(free, '$licenseTXT', txtFile.length + 1);
@@ -383,7 +383,7 @@ CustomClientInfo = function()
     /// 2.2 - Allocate space for the new name
     let free = Exe.FindSpace(newFile.length + 1);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     /// 2.3 - Add the name there 
 	Exe.AddFromVar(free, '$newclientinfo', newFile.length + 1);

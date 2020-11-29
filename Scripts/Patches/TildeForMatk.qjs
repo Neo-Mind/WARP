@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -48,7 +48,7 @@ TildeForMatk = function()
         /// 2.2 - If not present, allocate space for adding the string
         addr = Exe.FindSpace(8);
         if (addr < 0)
-            throw NOSPACE;
+            throw NO_ALLOC;
         
         /// 2.3 - Add the string there
         Exe.AddText(addr, "%d ~ %d", 8);

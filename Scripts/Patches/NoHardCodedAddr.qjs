@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : 4144                                                   *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -209,7 +209,7 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr)
 			/// 3.6 - If not found then allocate space for adding it
 			let free = Exe.FindSpace(6);
 			if (free < 0)
-				throw NOSPACE;
+				throw NO_ALLOC;
 				
 			/// 3.7 - Add the string there
 			Exe.AddText(free, "%s:%s");

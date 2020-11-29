@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -85,7 +85,7 @@ IncrCamAngle = function(newAngle)
         /// 3.1 - Allocate space for adding new angle
         let free = Exe.FindSpace(4);
         if (free < 0)
-            throw NOSPACE;
+            throw NO_ALLOC;
         
         /// 3.2 - Put the new angle there
         Exe.AddHex(free, newAngle.toIEEE(), 4);

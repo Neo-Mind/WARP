@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-11-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -53,7 +53,7 @@ SharedPal = function(oldPrefix, newFormat)
 	/// 2.1 - Allocate space for adding new string
     var free = Exe.FindSpace(newFormat.length);
     if (free < 0)
-        throw NOSPACE;
+        throw NO_ALLOC;
 
     /// 2.2 - Add the string there
     Exe.AddText(free, newFormat);
