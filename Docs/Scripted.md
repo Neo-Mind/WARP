@@ -44,34 +44,34 @@ This document provides a comprehensive view of all the available values, classes
 
 - **Strings & Error Messages**
 
-	| Name | Description |
-	|---|---|
-	| **YMLFILTER** | Filter string for YAML files. Used with user inputs of **D_InFile** [DataType] |
-	| **TAB** | 4 blank spaces used in **console** object methods |
-	| **NO_ALLOC** | Error message to use when **Exe.FindSpace** returns -1 |
-	| **NO_EXE** | Error message to use in extensions after testing **Exe.FileSize** == 0 |
-	| **NO_OUTPUT** | Error message to use when [TextFile].**Open** & [BinFile].**Open** fails |
+| Name | Description |
+|---|---|
+| **YMLFILTER** | Filter string for YAML files. Used with user inputs of **D_InFile** [DataType] |
+| **TAB** | 4 blank spaces used in **console** object methods |
+| **NO_ALLOC** | Error message to use when **Exe.FindSpace** returns -1 |
+| **NO_EXE** | Error message to use in extensions after testing **Exe.FileSize** == 0 |
+| **NO_OUTPUT** | Error message to use when [TextFile].**Open** & [BinFile].**Open** fails |
 
 - **Hex Codes**
 
-	| Name | Description |
-	|---|---|
-	| **WC** | Wild Card byte ('??') |
-	| **WCp** | Positive Wild Card byte |
-	| **WCn** | Negative Wild Card byte |
-	| **ALLWC** | DWORD with all Wild Cards |
-	| **ALLWCp** | DWORD with all Wild Cards having +ve sign bit |
-	| **ALLWCn** | DWORD with all Wild Cards having -ve sign bit |
-	| **ALL00** | DWORD with all zeroes |
-	| **POS1WC** | Positive DWORD with 1 Lower Wild Card bytes |
-	| **POS2WC** | Positive DWORD with 2 Lower Wild Card bytes |
-	| **POS3WC** | Positive DWORD with 3 Lower Wild Card bytes |
-	| **POS4WC** | Positive DWORD with 3 Lower Wild Card bytes & partial Wild Card MSB |
-	| **ALLFF** | DWORD for -1 |
-	| **NEG1WC** | Negative DWORD with 1 Lower Wild Card bytes |
-	| **NEG2WC** | Negative DWORD with 2 Lower Wild Card bytes |
-	| **NEG3WC** | Negative DWORD with 3 Lower Wild Card bytes |
-	| **NEG4WC** | Negative DWORD with 3 Lower Wild Card bytes & partial Wild Card MSB |
+| Name | Description |
+|---|---|
+| **WC** | Wild Card byte ('??') |
+| **WCp** | Positive Wild Card byte |
+| **WCn** | Negative Wild Card byte |
+| **ALLWC** | DWORD with all Wild Cards |
+| **ALLWCp** | DWORD with all Wild Cards having +ve sign bit |
+| **ALLWCn** | DWORD with all Wild Cards having -ve sign bit |
+| **ALL00** | DWORD with all zeroes |
+| **POS1WC** | Positive DWORD with 1 Lower Wild Card bytes |
+| **POS2WC** | Positive DWORD with 2 Lower Wild Card bytes |
+| **POS3WC** | Positive DWORD with 3 Lower Wild Card bytes |
+| **POS4WC** | Positive DWORD with 3 Lower Wild Card bytes & partial Wild Card MSB |
+| **ALLFF** | DWORD for -1 |
+| **NEG1WC** | Negative DWORD with 1 Lower Wild Card bytes |
+| **NEG2WC** | Negative DWORD with 2 Lower Wild Card bytes |
+| **NEG3WC** | Negative DWORD with 3 Lower Wild Card bytes |
+| **NEG4WC** | Negative DWORD with 3 Lower Wild Card bytes & partial Wild Card MSB |
 	
 - **Common instructions**
 	- **PUSH_0**
@@ -85,17 +85,17 @@ This document provides a comprehensive view of all the available values, classes
 
 - **OpTypes** - Map of Operand types. It has the following keys.
   
-	| Key | Description
-	|---|---|
-	| **OpTypes.ERR** | Illegal operation |
-	| **OpTypes.A** | Acc \<, Imm\> |
-	| **OpTypes.R** | Reg \<, Imm\> |
-	| **OpTypes.I** | \<Imm\> |
-	| **OpTypes.R_R** | Reg, Reg \<, Imm\> |
-	| **OpTypes.D_A** | Ptr \[Disp\], Acc \<, Imm\> |
-	| **OpTypes.P_R** | Ptr \[\*\], Reg \<, Imm\> |
-	| **OpTypes.A_D** | Acc, Ptr \[Disp\] \<, Imm\> |
-	| **OpTypes.R_P** | Reg, Ptr \[\*\] <, Imm\> |
+| Key | Description
+|---|---|
+| **OpTypes.ERR** | Illegal operation |
+| **OpTypes.A** | Acc \<, Imm\> |
+| **OpTypes.R** | Reg \<, Imm\> |
+| **OpTypes.I** | \<Imm\> |
+| **OpTypes.R_R** | Reg, Reg \<, Imm\> |
+| **OpTypes.D_A** | Ptr \[Disp\], Acc \<, Imm\> |
+| **OpTypes.P_R** | Ptr \[\*\], Reg \<, Imm\> |
+| **OpTypes.A_D** | Acc, Ptr \[Disp\] \<, Imm\> |
+| **OpTypes.R_P** | Reg, Ptr \[\*\] <, Imm\> |
 	
   **Imm**ediate values are all optional and depends on the instruction whether they will be present or not.<br>
   **Acc** can refer to any primary Reg not just Accumulator.
@@ -109,15 +109,15 @@ Following classes are provided. Only [Instr] is generally used for creating new 
 Class representing various CPU registers. Not usually created in code.<br>
 Instead we have the following objects created using this class for use in code.
 
-	| Names | Description |
-	|---|---|
-	| **AL, CL, DL, BL, AH, CH, DH, BH** | 8 bit reg |
-	| **AX, CX, DX, BX, SP, BP, SI, DI** | 16 bit reg |
-	| **EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI** | 32 bit reg |
-	| **ST0 - ST7** | 80 bit reg |
-	| **MM0 - MM7** | 64 bit reg |
-	| **XMM0 - XMM7** | 128 bit reg |
-	| **R8, R16, R32, ST$, MM$, XMM$** | Generic Placeholders |
+| Names | Description |
+|---|---|
+| **AL, CL, DL, BL, AH, CH, DH, BH** | 8 bit reg |
+| **AX, CX, DX, BX, SP, BP, SI, DI** | 16 bit reg |
+| **EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI** | 32 bit reg |
+| **ST0 - ST7** | 80 bit reg |
+| **MM0 - MM7** | 64 bit reg |
+| **XMM0 - XMM7** | 128 bit reg |
+| **R8, R16, R32, ST$, MM$, XMM$** | Generic Placeholders |
 
 Each placeholder have a **List** member containing all valid types of it's size.<br>
 For e.g. **R8.List** contains all the items in the first row.
@@ -134,14 +134,14 @@ Additionally, there is a **ST** function which takes the index and retrieves cor
 Class representing data size for Memory Pointers & Immediate values. Not usually created in code.<br>
 Instead we have the following objects created using this class for use in code.
 
-	| Name | Size in bits |
-	|---|---|
-	| **BYTE_PTR** | 8 |
-	| **WORD_PTR** | 16 |
-	| **DWORD_PTR** | 32 |
-	| **QWORD_PTR** | 64 |
-	| **TBYTE_PTR** | 80 |
-	| **DQWORD_PTR** | 128 |
+| Name | Size in bits |
+|---|---|
+| **BYTE_PTR** | 8 |
+| **WORD_PTR** | 16 |
+| **DWORD_PTR** | 32 |
+| **QWORD_PTR** | 64 |
+| **TBYTE_PTR** | 80 |
+| **DQWORD_PTR** | 128 |
 
 Normally [OpData] picks up the required bitsize even without explicitly specifying one of these.
 However, in some cases we need to override the size determined.
@@ -153,19 +153,19 @@ All the objects have 1 Data Member - it's bitsize **Value** and 1 method - **toS
 Class representing Instruction prefixes. Not usually created in code.<br>
 Instead we have the following objects created using this class for use in code.
 
-	| Name | Description |
-	|---|---|
-	| **CS** | Segment override to Code Segment |
-	| **DS** | Segment override to Data Segment |
-	| **ES** | Segment override to Extra Segment |
-	| **FS** | Segment override to General Segment 1 |
-	| **GS** | Segment override to General Segment 2 |
-	| **SS** | Segment override to Stack Segment |
-	| **OPCH** | OPerand size CHange - 32bit to 16, 64bit to 128 etc. |
-	| **AD16** | ADdress override to 16bit. Also used in float instructions for converting to lower size |
-	| **LOCK** | Repeat/LOCK to grant exclusive use of all shared memory |
-	| **REPE** | String manipulation - Repeat string operation |
-	| **REPN** | String manipulation - Repeat string operation |
+| Name | Description |
+|---|---|
+| **CS** | Segment override to Code Segment |
+| **DS** | Segment override to Data Segment |
+| **ES** | Segment override to Extra Segment |
+| **FS** | Segment override to General Segment 1 |
+| **GS** | Segment override to General Segment 2 |
+| **SS** | Segment override to Stack Segment |
+| **OPCH** | OPerand size CHange - 32bit to 16, 64bit to 128 etc. |
+| **AD16** | ADdress override to 16bit. Also used in float instructions for converting to lower size |
+| **LOCK** | Repeat/LOCK to grant exclusive use of all shared memory |
+| **REPE** | String manipulation - Repeat string operation |
+| **REPN** | String manipulation - Repeat string operation |
 
 All of them have 1 data member - its underlying **Value**.<br>
 They also have the following 2 methods.
@@ -182,10 +182,10 @@ It's objects have 3 data members:
 
 - **Mode** - valid values are 
 
-	| 0 | Ptr with no displacement |
-	| 1 | Ptr with byte displacement |
-	| 2 | Ptr with dword/word displacement |
-	| 3 | Reg only |
+| 0 | Ptr with no displacement |
+| 1 | Ptr with byte displacement |
+| 2 | Ptr with dword/word displacement |
+| 3 | Reg only |
 
 - **RgOp** - Either [Register], its 'index' or operational code
 

@@ -36,15 +36,15 @@ These values serve to indicate a particular type based on the context. They are 
 
 Valid values are
 
-	| Value | Notes |
-	|---|---|
-	| **CODE**   | Usually .text |
-	| **DATA**   | Usually .rdata or .data |
-	| **DATA2**  | Sometimes .data is present in addition to .rdata, hence DATA2 is needed |
-	| **IMPORT** | usually .rsrc |
-	| **RSRC**   | Resource section. usually .rsrc |
-	| **DIFF**   | The .xdiff section |
-	| **MIXED**  | Only valid for unpacked clients. Essentially a merger of CODE & DATA |
+| Value | Notes |
+|---|---|
+| **CODE**   | Usually .text |
+| **DATA**   | Usually .rdata or .data |
+| **DATA2**  | Sometimes .data is present in addition to .rdata, hence DATA2 is needed |
+| **IMPORT** | usually .rsrc |
+| **RSRC**   | Resource section. usually .rsrc |
+| **DIFF**   | The .xdiff section |
+| **MIXED**  | Only valid for unpacked clients. Essentially a merger of CODE & DATA |
 
 ### AddrType
 
@@ -56,46 +56,46 @@ In addition to these, you might occasionally need to deal with a Relative Virtua
 These are the types used by **Exe.GetUserInput** function, to determine what kind of input is required from user and accordingly show the appropriate UI.<br>
 Valid values are
 
-	| Value | Description |
-	|---|---|
-	| **D_Int8**     | Signed Integer  8 bit. Ranges from -128 to 127 |
-	| **D_Int16**    | Signed Integer 16 bit. Ranges from -32768 to 32767 |
-	| **D_Int32**    | Signed Integer 32 bit. Ranges from -2147483648 to 2147483647 |
-	| **D_Uint8**    | Unsigned Integer 8 bit. Ranges from 0 to 255 |
-	| **D_Uint16**   | Unsigned Integer 16 bit. Ranges from 0 to 65535 |
-	| **D_Uint32**   | Unsigned Integer 32 bit. Ranges from 0 to 2147483647 |
-	| **D_Bool**     | Boolean (can occupy 8, 16 or 32 bit based on context) |
-	| **D_Text**     | Text String |
-	| **D_List**     | List of Text Strings |
-	| **D_Hex**      | Hex String (spaced out between bytes) |
-	| **D_FontName** | Font name (to be picked from font dialog) |
-	| **D_FontSize** | Font size (to be picked from font size dialog). Ranges from 0 to 127 |
-	| **D_InFile**   | Name of file which serves as input (to be picked from text field or open file dialog) |
-	| **D_OutFile**  | Name of file which serves as output (to be picked from text field or save file dialog) |
-	| **D_Color**    | Color (RGB hex format from color picker dialog) |
+| Value | Description |
+|---|---|
+| **D_Int8**     | Signed Integer  8 bit. Ranges from -128 to 127 |
+| **D_Int16**    | Signed Integer 16 bit. Ranges from -32768 to 32767 |
+| **D_Int32**    | Signed Integer 32 bit. Ranges from -2147483648 to 2147483647 |
+| **D_Uint8**    | Unsigned Integer 8 bit. Ranges from 0 to 255 |
+| **D_Uint16**   | Unsigned Integer 16 bit. Ranges from 0 to 65535 |
+| **D_Uint32**   | Unsigned Integer 32 bit. Ranges from 0 to 2147483647 |
+| **D_Bool**     | Boolean (can occupy 8, 16 or 32 bit based on context) |
+| **D_Text**     | Text String |
+| **D_List**     | List of Text Strings |
+| **D_Hex**      | Hex String (spaced out between bytes) |
+| **D_FontName** | Font name (to be picked from font dialog) |
+| **D_FontSize** | Font size (to be picked from font size dialog). Ranges from 0 to 127 |
+| **D_InFile**   | Name of file which serves as input (to be picked from text field or open file dialog) |
+| **D_OutFile**  | Name of file which serves as output (to be picked from text field or save file dialog) |
+| **D_Color**    | Color (RGB hex format from color picker dialog) |
 
 ### DirType
 
 These represent the type of Directories available in an application.<br>
 Valid values are
 
-	| Value | Description |
-	|---|---|
-	| **D_Export**  | Export Directory |
-	| **D_Import**  | Import Directory |
-	| **D_Res**     | Resource Directory |
-	| **D_Except**  | Exception Directory |
-	| **D_Secure**  | Security Directory |
-	| **D_Reloc**   | Base Relocation Table |
-	| **D_Debug**   | Debug Directory |
-	| **D_Arch**    | Architecture Specific Data |
-	| **D_GlobPtr** | RVA of Global Pointer |
-	| **D_TLS**     | TLS Directory |
-	| **D_LoadCfg** | Load Configuration Directory |
-	| **D_BoundI**  | Bound Import Directory in headers |
-	| **D_IAT**     | Import Address Table (Unsure of its use but Import Directory should be used for finding imports) |
-	| **D_DelayI**  | Delay Load Import Descriptors |
-	| **D_ComDesc** | COM Runtime descriptor |
+| Value | Description |
+|---|---|
+| **D_Export**  | Export Directory |
+| **D_Import**  | Import Directory |
+| **D_Res**     | Resource Directory |
+| **D_Except**  | Exception Directory |
+| **D_Secure**  | Security Directory |
+| **D_Reloc**   | Base Relocation Table |
+| **D_Debug**   | Debug Directory |
+| **D_Arch**    | Architecture Specific Data |
+| **D_GlobPtr** | RVA of Global Pointer |
+| **D_TLS**     | TLS Directory |
+| **D_LoadCfg** | Load Configuration Directory |
+| **D_BoundI**  | Bound Import Directory in headers |
+| **D_IAT**     | Import Address Table (Unsure of its use but Import Directory should be used for finding imports) |
+| **D_DelayI**  | Delay Load Import Descriptors |
+| **D_ComDesc** | COM Runtime descriptor |
 
 ### Encoding
 
@@ -121,16 +121,16 @@ Currently there are 3 Global Objects being provided inbuilt - Exe, System & Warp
 
 Properties :
 
-	| Name | Description |
-	|---|---|
-	| **PEoffset**  | The **PHYSICAL** address of the PE header |
-	| **ImageBase** | Self explanatory |
-	| **BuildDate** | The application's build date in the form "yyyymmdd" |
-	| **Version**   | The linker version used for building this app in the form "major.minor" |
-	| **Unpacked**  | Self explanatory |
-	| **FileSize**  | Self explanatory |
-	| **FilePath**  | Self explanatory |
-	| **TestMode**  | Set to true when you are loading the app in the [Tester GUI](#Usage_Guide.md#tester-gui) |
+| Name | Description |
+|---|---|
+| **PEoffset**  | The **PHYSICAL** address of the PE header |
+| **ImageBase** | Self explanatory |
+| **BuildDate** | The application's build date in the form "yyyymmdd" |
+| **Version**   | The linker version used for building this app in the form "major.minor" |
+| **Unpacked**  | Self explanatory |
+| **FileSize**  | Self explanatory |
+| **FilePath**  | Self explanatory |
+| **TestMode**  | Set to true when you are loading the app in the [Tester GUI](#Usage_Guide.md#tester-gui) |
 
 Functions :
 
@@ -418,10 +418,10 @@ Functions :
 
 Properties:
 
-	| Name | Description |
-	|---|---|
-	| LocalTime | Date object pointing to current time in local timezone |
-	| UtcTime | Date object pointing to current time in UTC |
+| Name | Description |
+|---|---|
+| LocalTime | Date object pointing to current time in local timezone |
+| UtcTime | Date object pointing to current time in UTC |
 
 Functions:
 
@@ -553,12 +553,12 @@ The main 2 classes provided are **TextFile & BinFile**. Both of them have some c
 
 - Properties
   
-	| Name | Description |
-	|---|---|
-	| Path | The opened file's path |
-	| Size | Size of currently open file |
-	| Pos | Current file position offset |
-	| Valid | Boolean indicating there is a valid file currently open |
+| Name | Description |
+|---|---|
+| Path | The opened file's path |
+| Size | Size of currently open file |
+| Pos | Current file position offset |
+| Valid | Boolean indicating there is a valid file currently open |
   
 - Basic Functions
 	- **\<obj\>.Open(path, mode)**<br>

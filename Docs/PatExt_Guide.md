@@ -84,19 +84,19 @@ The **title & color** of a group are utilized while displaying its consitutent p
 The **mutex** part is used internally to deselect other patches in same group when its true.<br>
 All the keys in a group as well as a patch are optional.
 
-	| Group Member | Default value |
-	|---|---|
-	| **title** | group name itself |
-	| **mutex** | true |
-	| **color** | transparent |
+| Group Member | Default value |
+|---|---|
+| **title** | group name itself |
+| **mutex** | true |
+| **color** | transparent |
 
 
-	| Patch Member | Default value |
-	|---|---|
-	| **title** | patch name itself |
-	| **author** | 'Unknown' |
-	| **recommend** | no |
-	| **desc** | will be empty |
+| Patch Member | Default value |
+|---|---|
+| **title** | patch name itself |
+| **author** | 'Unknown' |
+| **recommend** | no |
+| **desc** | will be empty |
 
 ## Patch Function
 
@@ -205,12 +205,12 @@ Extensions are defined in **'Extensions.yml'** file which has the following form
 ```
 All the keys are optional.
 
-	| Patch Member | Default value |
-	|---|---|
-	| **title** | extension name itself |
-	| **author** | 'Unknown' |
-	| **tooltip** | will be empty |
-	| **icon** | will be empty |
+| Patch Member | Default value |
+|---|---|
+| **title** | extension name itself |
+| **author** | 'Unknown' |
+| **tooltip** | will be empty |
+| **icon** | will be empty |
 
 ## Extension Function
 
