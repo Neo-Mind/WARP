@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-11-28                                             *
+*   Last Modified : 2020-11-30                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -95,7 +95,7 @@ MakeFiller = (idx, bc = 4) =>
 ///
 /// \brief Swaps out the filler hex string with the actual data
 ///
-SwapFiller = function(str, idx, data, cnt = 1, bc = 4)
+SwapFiller = function(str, idx, data, cnt = -1, bc = 4)
 {
 	/// 1.1 - Limit the byte count
 	bc = Math.min(bc, 4);
@@ -107,7 +107,7 @@ SwapFiller = function(str, idx, data, cnt = 1, bc = 4)
 	/// 2.1 - Get the filler string to be replaced
 	let filler = MakeFiller(idx, bc);
 	
-	for (;cnt > 0; cnt--)
+	for (; cnt != 0; cnt--)
 	{
 		/// 2.2 - Get each position of the filler
 		let pos = str.indexOf(filler);
@@ -125,22 +125,26 @@ SwapFiller = function(str, idx, data, cnt = 1, bc = 4)
 ///
 /// \brief Same as SwapFiller but with multiple substitutions at once.
 ///
-SwapFillers = function(str, idxArr, dataArr, sc = 1, bc = 4)
+SwapFillers = function(str, idMap, sc = -1, bc = 4)
 {
 	/// 1.1 - Limit the byte count
 	bc = Math.min(bc, 4);
 	
-	idxArr.forEach((idx, i) => 
+	for (idx in idMap)
 	{
-		/// 1.2 - Ensure data is hex string
-		let data = dataArr[i];
+		/// 1.1 - Ensure id is a number
+		if (typeof(idx) !== 'number')
+			continue;
+
+		/// 1.2 - Get the data and ensure it's a  hex string
+		let data = idMap[idx];
 		if (typeof data === 'number')
 			data = data.toHex(bc);
-		
+
 		/// 2.1 - Get the filler string to be replaced
 		let filler = MakeFiller(idx, bc);
 		
-		for (let cnt = sc; cnt > 0; cnt--)
+		for (let cnt = sc; cnt != 0; cnt--)
 		{
 			/// 2.2 - Get each position of the filler
 			let pos = str.indexOf(filler);
@@ -150,7 +154,7 @@ SwapFillers = function(str, idxArr, dataArr, sc = 1, bc = 4)
 			/// 2.3 - Replace with 'data' at each position
 			str = str.replaceAt(pos, data, filler.length);
 		}
-	});
+	}
 	
 	/// 2.4 - Return the updated string
     return str;
@@ -219,7 +223,7 @@ Distance = (tgt, src) =>
 CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 {
 	/// 1.1 - Extract the MOVZX instruction
-	let movzxIns = movzxAddr > 0 ? Instr.fromAddr(movzxAddr) : '';
+	let movzxIns = movzxAddr > 0 ? Instr.FromAddr(movzxAddr) : '';
 	
 	/// 1.2 - Ensure the address for JMP DWORD PTR is valid
 	if (jmpDpAddr !== undefined)
@@ -470,14 +474,17 @@ IdentifyMany = function()
 };
 
 ///
-/// \brief Assigns the value to the name and identifies it to the Script Editor.
+/// \brief Assigns the code's result to the name and identifies it to the Script Editor.
 ///
-Assign = (name, value) =>
+Assign = (name, code) =>
 {
-	eval(name + " = " + value);
+	eval(name + " = " + code);
 	IdentifyObj(name);
 };
 
+///
+/// \brief Assigns the string value to the name and identifies it to the Script Editor.
+///
 AssignStr = (name, value) =>
 {
 	eval(name + " = '" + value + "'");
