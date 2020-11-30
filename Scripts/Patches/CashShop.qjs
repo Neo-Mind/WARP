@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, 4144, Jchcc                                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-11-30                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -147,7 +147,7 @@ ZeroCinShop = function()
 {
     /// 1 - Find where format string is  PUSHed
     let part1 =
-        MOV_ECX_ESI         //MOV ECX, ESI
+        MOV(ECX, ESI)       //MOV ECX, ESI
 	+	PUSH_EAX 	        //PUSH EAX
 	+	PUSH(0x1C2)	        //PUSH 1C2
 	+	PUSH(0x226)	        //PUSH 226
@@ -170,7 +170,7 @@ ZeroCinShop = function()
 	
 	/// 2.2 - Change it to a PUSH 0
     part2 =
-        PUSH_0	//PUSH 0
+		PUSH_0	//PUSH 0
 	+	NOP		//NOP
 	+	NOP		//NOP
 	+	NOP		//NOP
