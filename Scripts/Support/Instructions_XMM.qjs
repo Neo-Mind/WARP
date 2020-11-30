@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-11-30                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -196,7 +196,7 @@ _define_with('REPN',
 	['MOVSHDUP'    , 0x16,     , 0x16],	//DQWORD PTR
 
 	['CVTSI2SS'    , 0x2A,     , 0x2A],	//DWORD PTR
-	['MOVNTSS'     ,	       , 0x2B],	//DWORD PTR
+	['MOVNTSS'     ,     , 0x2B      ],	//DWORD PTR
 	['CVTTSS2SI'   , 0x2C,     , 0x2C],	//DWORD PTR
 	['CVTSS2SI'    , 0x2D,     , 0x2D],	//DWORD PTR
 
@@ -242,7 +242,7 @@ _define_with('OPCH',
 	['MOVHPD'      , 0x16, 0x17      ],	//QWORD PTR
 	['MOVAPD'      , 0x28, 0x29, 0x28],	//DQWORD PTR
 	['CVTPI2PD'    , 0x2A,     , 0x2A],	//QWORD PTR
-	['MOVNTPD'     ,		    , 0x2B      ],	//DQWORD PTR
+	['MOVNTPD'     ,     , 0x2B      ],	//DQWORD PTR
 	['CVTTPD2PI'   , 0x2C,     , 0x2C],	//DQWORD PTR
 	['CVTPD2PI'    , 0x2D,     , 0x2D],	//DQWORD PTR
 	['UCOMISD'     , 0x2E,     , 0x2E],	//QWORD PTR
