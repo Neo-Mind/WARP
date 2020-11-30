@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -300,10 +300,16 @@ _MG_EMB = (callAddr, AddPak) =>
     let code = "";
 	grfNames.forEach( name =>
 	{
-		code = SwapFillers(template, [1, 2], [strAddr, funAddr]) + code;
+		code = SwapFillers(template, {
+			1: strAddr,
+			2: funAddr
+		})
+		+ code;
+
         strAddr += name.length + 1;  //Extra 1 for NULL byte
         funAddr += tsize;            //Increasing the difference => CALL location is closer/lesser
     });
+
     code += RETN() + " 00";//RETN and 1 extra NULL
 
     /// 2.5 - Add the function at the gap

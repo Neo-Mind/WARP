@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Yommy, Neo-Mind                             *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -63,7 +63,10 @@ CustomFontHeight = function()
         throw "Cancelled - Font height reverted to 10";
 
     /// 2.4 - Fill in the Blanks
-    code = SwapFillers(code, [1, 2], [freeVir + 4, -newHeight]);
+    code = SwapFillers(code, {
+		1: freeVir + 4,
+		2: -newHeight
+	});
 
     /// 2.5 - Add the function at the allocated space
     Exe.AddHex(free, code);
