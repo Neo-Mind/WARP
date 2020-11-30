@@ -308,17 +308,17 @@ The first three tabs are more or less similar in appearance, since we need to se
 	
 ## Shortcuts
 
-| Sequence | Purpose |
-|---|---|
-| Alt+W | Open [Script Window] |
-| Alt+S | Load scripts from 'Support' |
-| Alt+P | Load scripts from 'Patches' |
-| Alt+E | Load scripts from 'Extensions' |
-| Alt+A | Load all of the 3 above |
-| Ctrl+R | Only for [Script Window] & [Tester GUI]<br> Evaluate text written in Script Editor<br> Tester automatically switches tab to **'Results'** when invoked |
-| Ctrl+T | Only for [Tester GUI]<br> Run test using selected patches/extensions & tester apps |
-| Ctrl+Tab | Only for [Tester GUI]<br> Switch to the next tab on the right cyclically |
-| Ctrl+Shift+Tab | Only for [Tester GUI]<br> Switch to the next tab on the left cyclically |
+| Sequence           | Purpose                         |
+| :----------------- | :------------------------------ |
+| **Alt+W**          | Open [Script Window]            |
+| **Alt+S**          | Load scripts from 'Support'     |
+| **Alt+P**          | Load scripts from 'Patches'     |
+| **Alt+E**          | Load scripts from 'Extensions'  |
+| **Alt+A**          | Load all of the 3 above         |
+| **Ctrl+R**         | Only for [Script Window] & [Tester GUI]<br> Evaluate text written in Script Editor<br> Tester automatically switches tab to **'Results'** when invoked |
+| **Ctrl+T**         | Only for [Tester GUI]<br> Run test using selected patches/extensions & tester apps |
+| **Ctrl+Tab**       | Only for [Tester GUI]<br> Switch to the next tab on the right cyclically |
+| **Ctrl+Shift+Tab** | Only for [Tester GUI]<br> Switch to the next tab on the left cyclically |
 
 ## Other links
 
