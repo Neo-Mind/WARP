@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : jchcc                                                  *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -294,19 +294,21 @@ AutoMute = function()
 	/// 3.4 - Fill in the blanks
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 	
-	//First all the extra addresses
-	code = SwapFillers(code,
-		[1, 2, 3, 4],
-		[freeVir, freeVir+4, freeVir+8, freeVir+12]
-	);
+	code = SwapFillers(code, {
+		//All the extra addresses
+		 1: freeVir,
+		 2: freeVir + 4,
+		 3: freeVir + 8,
+		 4: freeVir + 0xC,
 	
-	//Now all the CALLs
-	code = SwapFiller(code,  5, Set2DEffectVol - (freeVir + 16 +  99 + 5));
-	code = SwapFiller(code, 15, Set2DEffectVol - (freeVir + 16 + 149 + 5));
-	code = SwapFiller(code,  6, Set3DEffectVol - (freeVir + 16 + 110 + 5));
-	code = SwapFiller(code, 16, Set3DEffectVol - (freeVir + 16 + 156 + 5));
-	code = SwapFiller(code,  7, SetStreamVol - (freeVir + 16 + 121 + 5));
-	code = SwapFiller(code, 17, SetStreamVol - (freeVir + 16 + 163 + 5));
+		//Now all the CALLs
+		 5: Set2DEffectVol - (freeVir + 16 +  99 + 5),
+		15: Set2DEffectVol - (freeVir + 16 + 149 + 5),
+		 6: Set3DEffectVol - (freeVir + 16 + 110 + 5),
+		16: Set3DEffectVol - (freeVir + 16 + 156 + 5),
+		 7: SetStreamVol - (freeVir + 16 + 121 + 5),
+		17: SetStreamVol - (freeVir + 16 + 163 + 5),
+	});
 	
 	/// 3.5 - Add the code at allocated space 
 	Exe.AddHex(free, buffer + code, size);

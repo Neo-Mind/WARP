@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -487,14 +487,14 @@ ShowExpNumbers = function()
      
     /// 4.3 - Prepare the full code from the template
     code = 
-        CALL(MakeFiller(10))                                        //CALL UIWindow::TextOutA
-    +   PUSH_EAX                                                    //PUSH EAX
-    +   SUB(ESP, 0x20)                                              //SUB ESP, 20
-    +   SwapFillers(template, [1, 2], [TotExpBase, CurExpBase], 2)  //for Base Exp
-    +   SwapFillers(template, [1, 2], [TotExpJob,  CurExpJob],  2)  //for Job Exp
-    +   ADD(ESP, 0x20)                                              //ADD ESP, 20
-    +   POP(EAX)                                                    //POP EAX
-    +   JMP(MakeFiller(11))                                         //JMP retAddr = injectAddr + 5
+        CALL(MakeFiller(10))                                   //CALL UIWindow::TextOutA
+    +   PUSH_EAX                                               //PUSH EAX
+    +   SUB(ESP, 0x20)                                         //SUB ESP, 20
+    +   SwapFillers(template, {1: TotExpBase, 2: CurExpBase})  //for Base Exp
+    +   SwapFillers(template, {1: TotExpJob , 2: CurExpJob})   //for Job Exp
+    +   ADD(ESP, 0x20)                                         //ADD ESP, 20
+    +   POP(EAX)                                               //POP EAX
+    +   JMP(MakeFiller(11))                                    //JMP retAddr = injectAddr + 5
     ;
     let csize = code.byteCount();
     

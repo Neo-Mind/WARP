@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-11-30                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -49,11 +49,11 @@ IncrCamAngle = function(newAngle)
         
         /// 1.2 - Find the function call within 0x80 bytes before the pattern
         code =
-            MOV_ECX_ESI	//MOV ECX, ESI
-        +   CALL(ALLWC)	//CALL addr1 <- this is the one we want
-        +   PUSH_R		//PUSH reg32_A
-        +   MOV_ECX_ESI	//MOV ECX, ESI
-        +   CALL(ALLWC)	//CALL addr2
+            MOV(ECX, ESI)	//MOV ECX, ESI
+        +   CALL(ALLWC)		//CALL addr1 <- this is the one we want
+        +   PUSH_R			//PUSH reg32_A
+        +   MOV(ECX, ESI)	//MOV ECX, ESI
+        +   CALL(ALLWC)		//CALL addr2
         ;
         addr = Exe.FindHex(code, addr - 0x80, addr);
         if (addr < 0)
