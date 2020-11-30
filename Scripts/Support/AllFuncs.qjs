@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-11-30                                             *
+*   Last Modified : 2020-12-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -130,13 +130,14 @@ SwapFillers = function(str, idMap, sc = -1, bc = 4)
 	/// 1.1 - Limit the byte count
 	bc = Math.min(bc, 4);
 	
-	for (idx in idMap)
+	for (key in idMap)
 	{
-		/// 1.1 - Ensure id is a number
-		if (typeof(idx) !== 'number')
+		/// 1.1 - Get the idx and ensure it is a proper integer
+		let idx = parseInt(key);
+		if (Object.is(idx, NaN))
 			continue;
 
-		/// 1.2 - Get the data and ensure it's a  hex string
+		/// 1.2 - Get the data and ensure it's a hex string
 		let data = idMap[idx];
 		if (typeof data === 'number')
 			data = data.toHex(bc);
@@ -498,8 +499,8 @@ AssignStr = (name, value) =>
 IdentifyMany(
 	'IsNum', 'IsStr', 'IsBool',
 	'IsNumOrStr', 'IsWord', 'IsByte',
-	'MakeFiller', 'SwapFiller', 'Wrap',
-	'BitWidth', 'Distance',
+	'MakeFiller', 'SwapFiller', 'SwapFillers',
+	'Wrap', 'BitWidth', 'Distance',
 	'CaseAddr', 'ParseData', 'FindInstr',
 	'Identify', 'IdentifyClass',
 	'IdentifyObj', 'IdentifyMany',
