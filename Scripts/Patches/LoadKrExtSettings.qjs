@@ -1,6 +1,8 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2017 Secret                                              *
+*   Copyright (C) 2017-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2020 X-EcutiOnner (xex.ecutionner@gmail.com)             *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +22,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Secret, 4144                                           *
+*   Author(s)     : Secret, Andrei (4144), X-EcutiOnner                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,34 +36,34 @@ LoadKrExtSettings = function()
 	/// 1.1 - Ensure the LANGTYPE is loaded
 	if (!LANGTYPE.load())
 		throw LANGTYPE.Error;
-	
-    /// 1.2 - Find where the string is PUSHed
-    let refAddr = Exe.FindHex( PUSH(LKES_Addr) );
-    if (refAddr < 0)
-        throw Error("'ExternalSettings_kr' reference missing");
+
+	/// 1.2 - Find where the string is PUSHed
+	let refAddr = Exe.FindHex( PUSH(LKES_Addr) );
+	if (refAddr < 0)
+		throw Error("'ExternalSettings_kr' reference missing");
 
 	/// 2.1 - Find the LANGTYPE comparison (for old clients)
-    let code =
-        MOV(EDI, ECX)			//MOV EDI, ECX
-    +	MOV(EAX, [LANGTYPE])	//MOV EAX, DWORD PTR DS:[g_serviceType]
-    +   CMP(EAX, 0x12)			//CMP EAX, 12
-	+	JA()					//JA addr
-    ;
+	let code =
+		MOV(EDI, ECX)         //MOV EDI, ECX
+	+	MOV(EAX, [LANGTYPE])  //MOV EAX, DWORD PTR DS:[g_serviceType]
+	+	CMP(EAX, 0x12)        //CMP EAX, 12
+	+	JA()                  //JA addr
+	;
 
-    let addr = Exe.FindHex(code, refAddr - 0x80, refAddr);
+	let addr = Exe.FindHex(code, refAddr - 0x80, refAddr);
 	if (addr < 0)
 		throw Error("Langtype Comparison not found");
-	
+
 	/// 2.2 - Change the EAX assignment to zero by XORing
 	code =
-		XOR(EAX, EAX)	//XOR EAX, EAX
-	+	NOP				//NOP
-	+	NOP				//NOP
-	+	NOP				//NOP
+		XOR(EAX, EAX)  //XOR EAX, EAX
+	+	NOP            //NOP
+	+	NOP            //NOP
+	+	NOP            //NOP
 	;
 	Exe.SetHex(addr + 2, code);
-	
-    return true;
+
+	return true;
 }
 
 ///
@@ -75,5 +77,5 @@ LoadKrExtSettings.validate = function()
 		:
 			"Lua Files\\service_korea\\ExternalSettings_kr"
 	);
-    return (LKES_Addr > 0);
+	return (LKES_Addr > 0);
 };

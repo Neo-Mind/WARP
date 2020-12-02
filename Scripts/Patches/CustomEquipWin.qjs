@@ -1,6 +1,9 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 Functor                                             *
+*   Copyright (C) 2020 CH.C (jchcc)                                        *
+*   Copyright (C) 2020 Andrei Karas (4144)                                 *
+*   Copyright (C) 2020 X-EcutiOnner (xex.ecutionner@gmail.com)             *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +23,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Functor, Jchcc, X-EcutiOnner                           *
+*   Author(s)     : Functor, CH.C (jchcc), Andrei (4144), X-EcutiOnner     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-17                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,50 +35,50 @@
 ///
 NoEquipSwap = function()
 {
-    /// 1.1 - Find the location where equipment function is called
-    let parts = [
-        CALL(NEG3WC)			// CALL sub_59E810
-	+	MOV(EAX, [EDI, 0x18])	// MOV EAX, DWORD PTR DS:[EDI+18]
-    +   MOV(ECX, [EDI, POS2WC])	// MOV ECX, DWORD PTR DS:[EDI+const]
+	/// 1.1 - Find the location where equipment function is called
+	let parts = [
+		CALL(NEG3WC)            // CALL sub_59E810
+	+	MOV(EAX, [EDI, 0x18])   // MOV EAX, DWORD PTR DS:[EDI+18]
+	+	MOV(ECX, [EDI, POS2WC]) // MOV ECX, DWORD PTR DS:[EDI+const]
 	,
-		SUB(EAX, 0x14)			// SUB EAX, 14
+		SUB(EAX, 0x14)          // SUB EAX, 14
 	,
-		MOV(EDX, [ECX])			// MOV EDX, DWORD PTR DS:[ECX]
+		MOV(EDX, [ECX])         // MOV EDX, DWORD PTR DS:[ECX]
 	,
 		PUSH_EAX                // PUSH EAX
 	];
-	
-    let addr = Exe.FindHex(parts.join(''));
-    if (addr < 0)
-    {
+
+	let addr = Exe.FindHex(parts.join(''));
+	if (addr < 0)
+	{
 		parts[2] = ''; //remove the MOV EDX, DWORD PTR DS:[ECX]
-        addr = Exe.FindHex(parts.join(''));
-    }
-    if (addr < 0)
-        throw Error("Equip Function CALL missing");
+		addr = Exe.FindHex(parts.join(''));
+	}
+	if (addr < 0)
+		throw Error("Equip Function CALL missing");
 
 	/// 1.2 - Change the SUB to ADD
 	Exe.SetHex(addr + parts[0].byteCount(), ADD(EAX, 0x14));
-	
-    /// 2.1 - Find the location where costume function is called
-    let code =
-        MOV(ECX, [ESI, POS2WC]) // MOV ECX, DWORD PTR DS:[ESI + const]
-    +   TEST(ECX, ECX)			// TEST ECX, ECX
-    +   JZ(0x6F)				// JZ SHORT addr
-	+	MOV(EAX, [ESI, POS1WC])	// MOV EAX, DWORD PTR DS:[ESI + const2]; const2 < const
-    +	MOV(EDX, [ECX])			// MOV EDX, DWORD PTR DS:[ECX]
-	+	ADD(EAX, 0x93)			// ADD EAX, 93
-	+	PUSH_EAX				// PUSH EAX
-	;
-    addr = Exe.FindHex(code);
 
-    if (addr < 0)
-        throw Error("Costume function CALL missing");
+	/// 2.1 - Find the location where costume function is called
+	let code =
+		MOV(ECX, [ESI, POS2WC]) // MOV ECX, DWORD PTR DS:[ESI + const]
+	+	TEST(ECX, ECX)          // TEST ECX, ECX
+	+	JZ(0x6F)                // JZ SHORT addr
+	+	MOV(EAX, [ESI, POS1WC]) // MOV EAX, DWORD PTR DS:[ESI + const2]; const2 < const
+	+	MOV(EDX, [ECX])         // MOV EDX, DWORD PTR DS:[ECX]
+	+	ADD(EAX, 0x93)          // ADD EAX, 93
+	+	PUSH_EAX                // PUSH EAX
+	;
+	addr = Exe.FindHex(code);
+
+	if (addr < 0)
+		throw Error("Costume function CALL missing");
 
 	/// 2.2 - Change 93 to FF
-    Exe.SetUint8(addr + code.byteCount() - 6, 0xFF);
+	Exe.SetUint8(addr + code.byteCount() - 6, 0xFF);
 
-    return true;
+	return true;
 };
 
 ///
@@ -89,8 +92,8 @@ NoEquipSwap.validate = () => Exe.BuildDate >= 20170208;
 ///
 NoEquipTitleUI = function()
 {
-    /// 1 - Find the location where equipment function is called
-    let part1 =
+	/// 1 - Find the location where equipment function is called
+	let part1 =
 		CALL(NEG3WC)              //  0 CALL UITabControl_AddTab
 	+	CMP([EDI, POS2WC], 0)     //  5 CMP DWORD PTR DS:[EDI + UIEquipWnd.m_typeWnd], 0
 	;
@@ -103,34 +106,34 @@ NoEquipTitleUI = function()
 	+	PUSH_EAX                  // 33 PUSH EAX
 	+	CALL()                    // 34 CALL UITabControl_AddTab
 	;
-	
-    let repLoc = 12;
-	
+
+	let repLoc = 12;
+
 	/* - Used for debugging
-    let addTabOffsets = [1, 35];
-    let typeWndOffset = [7, 4];
-    let msgStrOffset = 20;
-    let tabControlOffset = [26, 4];
+	let addTabOffsets = [1, 35];
+	let typeWndOffset = [7, 4];
+	let msgStrOffset = 20;
+	let tabControlOffset = [26, 4];
 	*/
-	
-    let addr = Exe.FindHex(part1 + part2);
-    if (addr < 0)
-        throw Error("Pattern not found");
+
+	let addr = Exe.FindHex(part1 + part2);
+	if (addr < 0)
+		throw Error("Pattern not found");
 
 	/*
-    for (let i = 0; i < addTabOffsets.length; i++)
-    {
-        logRawFunc("UITabControl_AddTab", addr, addTabOffsets[i]);
-    }
-    logField("UIEquipWnd::m_typeWnd", addr, typeWndOffset);
-    logRawFunc("MsgStr", addr, msgStrOffset);
-    logField("UIEquipWnd::m_UITabControl", addr, tabControlOffset);
+	for (let i = 0; i < addTabOffsets.length; i++)
+	{
+		logRawFunc("UITabControl_AddTab", addr, addTabOffsets[i]);
+	}
+	logField("UIEquipWnd::m_typeWnd", addr, typeWndOffset);
+	logRawFunc("MsgStr", addr, msgStrOffset);
+	logField("UIEquipWnd::m_UITabControl", addr, tabControlOffset);
 	*/
 
 	/// 2 - Change JNZ to JMP
-    Exe.SetJMP(addr + part1.byteCount());
+	Exe.SetJMP(addr + part1.byteCount());
 
-    return true;
+	return true;
 }
 
 ///

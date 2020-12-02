@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +20,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : 4144                                                   *
+*   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,29 +34,29 @@ AllowPL2Leave = function()
 {
 	/// 1 - Find the pattern where the check occurs
 	let code =
-		TEST(AL, AL)			//TEST AL, AL
-	+	JZ(0x34)				//JZ addr1	<-- patch here
-    +	MOV([EBP, WC], -1)		//MOV DWORD PTR SS:[EBP + constA], -1
-    +	LEA(ECX, [EBP, ALLWC])	//LEA ECX, [EBP + fInfo]
-    +	CALL(ALLWC)				//CALL FRIEND_INFO_destructor
-    +	INC(ESI)				//INC ESI
-    +	CMP(ESI, EBX)			//CMP ESI, EBX
-    +	JL(WC)					//JL addr2
-    +	MOV(AL, [EBP, ALLWC])	//MOV AL, BYTE PTR [EBP+B]
-    +	TEST(AL, AL)			//TEST AL, AL
-	+	JZ(WC)					//JZ addr3
-    +	PUSH_0					//PUSH 0
-    +	PUSH_0					//PUSH 0
-    +	PUSH(0xFF)				//PUSH 0FFh
-    +	PUSH(0XCC9)				//PUSH 0CC9h
-    +	JMP()					//JMP addr3
+		TEST(AL, AL)            //TEST AL, AL
+	+	JZ(0x34)                //JZ addr1	<-- patch here
+	+	MOV([EBP, WC], -1)      //MOV DWORD PTR SS:[EBP + constA], -1
+	+	LEA(ECX, [EBP, ALLWC])  //LEA ECX, [EBP + fInfo]
+	+	CALL(ALLWC)             //CALL FRIEND_INFO_destructor
+	+	INC(ESI)                //INC ESI
+	+	CMP(ESI, EBX)           //CMP ESI, EBX
+	+	JL(WC)                  //JL addr2
+	+	MOV(AL, [EBP, ALLWC])   //MOV AL, BYTE PTR [EBP+B]
+	+	TEST(AL, AL)            //TEST AL, AL
+	+	JZ(WC)                  //JZ addr3
+	+	PUSH_0                  //PUSH 0
+	+	PUSH_0                  //PUSH 0
+	+	PUSH(0xFF)              //PUSH 0FFh
+	+	PUSH(0XCC9)             //PUSH 0CC9h
+	+	JMP()                   //JMP addr3
 	;
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Pattern not found");
-	
+
 	/// 2 - Enforce the Jump
 	Exe.SetJMP(addr + 2);
-	
+
 	return true;
 };
