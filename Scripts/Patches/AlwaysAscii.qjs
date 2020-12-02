@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2020 Ai4rei/AN                                         *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-11                                             *
+*   Last Modified : 2020-12-02	                                           *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,24 +31,30 @@
 ///
 AlwaysAscii = function()
 {
-    /// 1 - Find the comparison
-    let addr = Exe.FindHex(
-        TEST(BYTE_PTR, [R32, R32], 0x80)   //TEST BYTE PTR DS:[reg32_A + reg32_B], 80
-    +   JNZ(WCp)                           //JNZ SHORT addr
-    );
-    if (addr < 0 && Exe.BuildDate > 20190000)
+	/// 1 - Find the comparison
+	let code;
+	if (Exe.Version < 14.0) //VC6 - VC11
 	{
-		addr = Exe.FindHex(
-			CMP(BYTE_PTR, [R32, R32], 0)   //CMP BYTE PTR DS:[reg32_A + reg32_B], 0
-		+   JL(WCp)                        //JL SHORT addr
-		+	INC(R32)
-		);
+		code =
+			TEST(BYTE_PTR, [R32, R32], 0x80)  //TEST BYTE PTR DS:[reg32_A + reg32_B], 80
+		+	JNZ(WCp)                          //JNZ SHORT addr
+		;
 	}
-    if (addr < 0)
-        throw Error("IsOnlyEnglish not found");
+	else
+	{
+		code =
+			CMP(BYTE_PTR, [R32, R32], 0)      //CMP BYTE PTR DS:[reg32_A + reg32_B], 0
+		+	JL(WCp)                           //JL SHORT addr
+		+	INC(R32)                          //INC reg32_C
+		;
+	}
 
-    /// 2 - NOP out the jump
-    Exe.SetNOPs(addr + 4, 2);
-	
-    return true;
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("IsOnlyEnglish not found");
+
+	/// 2 - NOP out the jump
+	Exe.SetNOPs(addr + 4, 2);
+
+	return true;
 };

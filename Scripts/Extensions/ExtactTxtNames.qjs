@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2020 <Unknown>                                         *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +21,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : -                                                      *
+*   Author(s)     : -, Neo-Mind                                            *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2020-11-28                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +39,7 @@ ExtractTxtNames = function()
 	/// 1.2 - Open output file for writing (Need ASCII encoding).
 	let fp = new TextFile(OUTDIR + "loaded_Txt_files_" + ROC.BaseName + ".txt", ASCII, 'w');
 	if (!fp.Valid)
-		throw NO_OUTPUT;//Error("Unable to generate output file");
+		throw NO_OUTPUT;
 
 	/// 2.1 - First write the essentials to file.
 	fp.WriteLine("Extracted with WARP")
@@ -47,7 +48,7 @@ ExtractTxtNames = function()
 	fp.WriteLine("BuildDate: " + Exe.BuildDate);
 	fp.WriteLine('');
 	fp.WriteLine("Txt Files:");
-	
+
 	/// 2.2 - Find all locations of .txt
 	let addrs = Exe.FindTextN(".txt", -1, PHYSICAL, false);
 	addrs.forEach( addr =>
@@ -59,18 +60,18 @@ ExtractTxtNames = function()
 			let chr = Exe.GetText(addr, 1);
 			if (chr === '\0' || chr === '@')
 				break;
-			
+
 			str = chr + str;
 		}
-		
+
 		/// 2.4 - Write each of them to the file (other than '.txt' itself)
 		if (str.length > 4)
 			fp.WriteLine(" => " + str);
 	});
-	
+
 	/// 2.5 - Close the file
 	fp.Close();
-	
+
 	/// 3 - Show the success message for test mode or display the file otherwise
 	if (Exe.TestMode)
 	{

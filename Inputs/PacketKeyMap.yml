@@ -1,6 +1,6 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) 2020 Neo Mind                                            #
+#   Copyright (C) 2014-2020 Neo Mind                                       #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-11-11                                             #
+#   Last Modified : 2020-12-02                                             #
 #                                                                          #
 ############################################################################
 
@@ -51,6 +51,7 @@
 20170929 : [0x15E1716C, 0x4E765B63, 0x357D2370]
 20171010 : [0x4F121B3E, 0x12670E17, 0x19896C11]
 20171016 : [0x2CAA109C, 0x158C1EC2, 0x7A5E58F3]
+20171018 : [0x00000000, 0x00000000, 0x00000000] #its not virtualized but there's no packet keys assigned either so using 0
 20171024 : [0x165C565C, 0x565C565C, 0x565C565C]
 20171031 : [0x7056317F, 0x7EEE0589, 0x02672373]
 20171108 : [0x03695685, 0x7FAC12CE, 0x182F7A7B]

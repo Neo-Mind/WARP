@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2013-2020 Neo Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,52 +32,57 @@
 ///
 PlainTextDesc = function()
 {
-    /// 1 - Ensure the LANGTYPE is loaded
-    if (!LANGTYPE.load())
-        throw LANGTYPE.Error;
-    
-    /// 2 - Find the Langtype comparison in DataTxtDecode function
-	let code, repLoc;
-    if (Exe.Version < 9.0) //VC6
-    {
-        code =
-            MOV(EAX, [LANGTYPE])  //MOV EAX, DWORD PTR DS:[g_serviceType]
-        +   PUSH(ESI)             //PUSH ESI
-        +   TEST(EAX, EAX)        //TEST EAX, EAX
-        +   PUSH(EDI)             //PUSH EDI
-        +   JNZ(WCp)              //JNZ SHORT addr
-        ;
-        repLoc = 9;//Position of JNZ relative to addr
-    }
-    else if (Exe.Version < 14.0) //VC9 - VC11
-    {
-        code =
-            CMP([LANGTYPE], 0)    //CMP DWORD PTR DS:[g_serviceType], 0
-        +   JNZ(WCp)              //JNZ SHORT addr
-        +   (Exe.Version < 11.0 ? 
-			PUSH(ESI) : 		  //PUSH ESI
-			"")             
-        +   PUSH(EDI)             //PUSH EDI
-        ;
-        repLoc = 7;//Position of JNZ relative to addr
-    }
-	else //VC14.16
-	{
-		code =
-            CMP([LANGTYPE], 0)    //CMP DWORD PTR DS:[g_serviceType], 0
-        +   JNZ(WCp)              //JNZ SHORT addr
-		+	MOV(R32, [EBP, 8])	  //MOV reg32_A, DWORD PTR SS:[EBP+8]
-		+	PUSH(ESI)			  //PUSH ESI
-		;
-        repLoc = 7;//Position of JNZ relative to addr
-	}
-    
-    let addr = Exe.FindHex(code);
-    if (addr < 0)
-        throw Error("Langtype comparison missing");
+	/// 1 - Ensure the LANGTYPE is loaded
+	if (!LANGTYPE.load())
+		throw LANGTYPE.Error;
 
-    /// 3 - Change the conditional jump
-    Exe.SetJMP(addr + repLoc);
-	
-    return true;
+	/// 2 - Find the Langtype comparison in DataTxtDecode function
+	let prefix, suffix = '';
+	if (Exe.Version < 9.0) //VC6
+	{
+		prefix =
+			MOV(EAX, [LANGTYPE])  	//MOV EAX, DWORD PTR DS:[g_serviceType]
+		+	PUSH(ESI)             	//PUSH ESI
+		+	TEST(EAX, EAX)        	//TEST EAX, EAX
+		+	PUSH(EDI)             	//PUSH EDI
+		+	JNZ(WCp)              	//JNZ SHORT addr
+		;
+	}
+	else 
+	{
+		prefix =
+			CMP([LANGTYPE], 0)		//CMP DWORD PTR DS:[g_serviceType], 0
+		+	JNZ(WCp)          		//JNZ SHORT addr
+		;
+
+		if (Exe.Version < 11.0) //VC9 - VC10
+		{
+			suffix =
+				PUSH(ESI)			//PUSH ESI
+			+	PUSH(EDI)			//PUSH EDI
+			;
+		}
+		else if (Exe.Version < 14.0) //VC11
+		{
+			suffix =
+				PUSH(EDI)			//PUSH EDI
+			;
+		}
+		else //VC14.16
+		{
+			suffix =
+				MOV(R32, [EBP, 8])	//MOV reg32_A, DWORD PTR SS:[EBP+8]
+			+	PUSH(ESI)			//PUSH ESI
+			;
+		}
+	}
+
+	let addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+		throw Error("Langtype comparison missing");
+
+	/// 3 - Change the conditional jump
+	Exe.SetJMP(addr + prefix.byteCount() - 2);
+
+	return true;
 };

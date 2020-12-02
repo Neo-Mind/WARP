@@ -1,0 +1,5 @@
+Trial = function()
+{
+	console.log("TESTING");
+	return Exe.GetUserInput('$trial', D_Uint32, "Title", "Prompt", 13100100);
+};
