@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2020 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,27 +22,24 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Zero out all Gravity related Images specified
+/// \brief Zero out the Gravity related Image specified
 ///
-NoGravityImages = function(imgList, startFrom)
-{
-	imgList.forEach((suffix, i) =>
-	{
-		/// 1 - Find the Image suffix
-        let addr = Exe.FindText("\\T_" + suffix + ".tga", PHYSICAL, false);
-        if (addr < 0)
-            throw Error("Suffix No. " + (i + startFrom) + " not found");
-
-        /// 2 - Change the 'T' to NULL
-        Exe.SetUint8(addr + 1, 0);
-    });
+NoGravityImages = function(suffix, idx, throwErr = true)
+{	
+	/// 1 - Find the Image suffix
+	let addr = Exe.FindText("\\T_" + suffix + ".tga", PHYSICAL, false);
+	if (addr < 0 && throwErr)
+		throw Error("Suffix No." + idx + " not found");
 	
-    return true;
+	/// 2 - Change the 'T' to NULL
+	Exe.SetUint8(addr + 1, 0);
+	
+	return true;
 };
 
 ///
@@ -50,21 +47,13 @@ NoGravityImages = function(imgList, startFrom)
 ///
 NoGravityAds = () =>
 {
-    let state = NoGravityImages([
-		"\xC1\xDF\xB7\xC2\xBC\xBA\xC0\xCE", //중력성인
-		"\xC5\xD7\xC0\xD4%d"                //테입%d
-	], 1);
+	NoGravityImages("\xC1\xDF\xB7\xC2\xBC\xBA\xC0\xCE", 1, !ROC.IsZero); //\T_중력성인.tga
+	NoGravityImages("\xC5\xD7\xC0\xD4%d", 2);		               		 //\T_테입%d.tga
+	if (Exe.BuildDate > 20100000)
+		NoGravityImages("GameGrade", 3); 								 //\T_GameGrade.tga
 	
-	if (state && Exe.BuildDate > 20100000)
-	{
-		state = NoGravityImages([
-			"GameGrade",
-		], 3);
-	}
-	return state;
+	return true;
 };
 
-NoGravityLogo = () => 
-	NoGravityImages([
-		"R%d"
-	], 1);
+NoGravityLogo = () =>
+	NoGravityImages("R%d", 1);

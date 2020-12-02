@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2019 Functor                                             *
+*   Copyright (C) 2019-2020 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +21,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Functor, 4144                                          *
+*   Author(s)     : Functor, Andrei (4144)                                 *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,36 +34,36 @@ AllowSkillSpam = function()
 {
 	/// 1.1 - Find the comparison
 	let code =
-		MOV(EAX, [POS3WC])		//MOV EAX, DWORD PTR DS:[g_session.virtual_key_code]
-    +	CMP(EBX, 0x7F4)			//CMP EBX, 7F4
-    +	CMOVZ(EAX, [POS3WC])	//CMOVZ EAX, DWORD PTR DS:[g_session.field_5ADC]
-    +	MOV([POS3WC], EAX)		//MOV DWORD PTR DS:[g_session.virtual_key_code], EAX
+		MOV(EAX, [POS3WC])    //MOV EAX, DWORD PTR DS:[g_session.virtual_key_code]
+	+	CMP(EBX, 0x7F4)       //CMP EBX, 7F4
+	+	CMOVZ(EAX, [POS3WC])  //CMOVZ EAX, DWORD PTR DS:[g_session.field_5ADC]
+	+	MOV([POS3WC], EAX)    //MOV DWORD PTR DS:[g_session.virtual_key_code], EAX
 	;
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Pattern not found");
-	
+
 	/// 1.2 - Save the location after the pattern
 	let endAddr = addr + code.byteCount();
-	
+
 	/// 1.3 - Ensure the pattern is not a false match
 	if (Exe.GetUint32(addr + 1) !== Exe.GetUint32(endAddr - 4))
 		throw Error("False match found (key code isnt correct)");
-	
+
 	if ((Exe.GetUint32(addr + 1) + 4) !== Exe.GetUint32(endAddr - 9))
 		throw Error("False match found (2nd offset mismatch)");
-	
+
 	/// 2.1 - Prepare replacement code - CMP is for triggering Zero Flag.
 	code = 
-        CMP(EBX, EBX)	//CMP EBX, EBX
-	+	NOP				//NOP
-    +   NOP				//NOP
-    +   NOP				//NOP
-    +   NOP				//NOP
+		CMP(EBX, EBX)  //CMP EBX, EBX
+	+	NOP            //NOP
+	+	NOP            //NOP
+	+	NOP            //NOP
+	+	NOP            //NOP
 	;
-	
+
 	/// 2.2 - Overwrite the original CMP
-    Exe.SetHex(addr + 5, code);
-	
-    return true;
+	Exe.SetHex(addr + 5, code);
+
+	return true;
 };

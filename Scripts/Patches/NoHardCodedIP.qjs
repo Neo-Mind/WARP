@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C)  2020 CH.C (jchcc)                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +20,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Jchcc                                                  *
+*   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -45,11 +45,11 @@ NoHardCodedIP = function()
 		let addrs = Exe.FindTextN(ip, -1, PHYSICAL, true, false);
 		if (addrs.isEmpty())
 			return;
-		
+
 		found = true;
 		addrs.forEach(addr => Exe.SetText(addr, "http://0.0.0.0/\x00"));
 	});
-	
+
 	if (!found)
 		throw Error("Found nothing to patch");
 

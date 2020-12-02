@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2018-2020 CH.C (jchcc)                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +20,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Jchcc                                                  *
+*   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,10 +34,10 @@ UseDefaultBrowser = function()
 {
 	/// 1.1 - Find the location where client is parsing the <URL>
 	let code = 
-	    PUSH_EAX 		//PUSH EAX
-	+	CALL(ESI)		//CALL ESI (atoi)
-	+ 	ADD(ESP, 4)		//ADD ESP,04
-	+	MOV(EBX, EAX)	//MOV EBX, EAX
+		PUSH_EAX         //PUSH EAX
+	+	CALL(ESI)        //CALL ESI (atoi)
+	+ 	ADD(ESP, 4)        //ADD ESP,04
+	+	MOV(EBX, EAX)    //MOV EBX, EAX
 	;	
 	let parseAddr = Exe.FindHex(code);
 	if (parseAddr < 0)
@@ -45,12 +45,12 @@ UseDefaultBrowser = function()
 	
 	/// 1.2 - Find location where client start parsing first argument of <URL>
 	code = 
-	    PUSH_0					//PUSH 0
-	+ 	LEA(EAX, [EBP, WCp])	//LEA EAX, [EBP-z]
-	+ 	PUSH_EAX 				//PUSH EAX
-	+ 	MOV(ECX, EDI)			//MOV ECX,EDI
-	+ 	CALL(ALLWC)				//CALL func
-	+	MOV([R32, WC], ALLWC)	//MOV DWORD PTR SS:[EBP-z], y ; could be different register too
+		PUSH_0                 //PUSH 0
+	+ 	LEA(EAX, [EBP, WCp])   //LEA EAX, [EBP-z]
+	+ 	PUSH_EAX               //PUSH EAX
+	+ 	MOV(ECX, EDI)          //MOV ECX,EDI
+	+ 	CALL(ALLWC)            //CALL func
+	+	MOV([R32, WC], ALLWC)  //MOV DWORD PTR SS:[EBP-z], y ; could be different register too
 	;
 	let addr = Exe.FindHex(code, parseAddr - 0x80, parseAddr);
 	if (addr < 0)
@@ -74,25 +74,25 @@ UseDefaultBrowser = function()
 	
 	/// 2.3 - Prep the code for CALL ShellExecuteA
 	code =
-		PUSH_EAX 			//PUSH EAX
-	+	MOV(EAX, [EAX])		//MOV EAX, DWORD PTR DS:[EAX]
-	+ 	PUSH(0xA)			//PUSH 0A		; nShowCmd
-	+	PUSH_0				//PUSH 0		; lpDirectory
-	+	PUSH_0				//PUSH 0		; lpParameters
-	+	PUSH_EAX 			//PUSH EAX 		; lpFile -> URL
-	+	PUSH(OpenStr)		//PUSH offset	; lpOperation -> 'open'
-	+	PUSH_0				//PUSH 0		; hwnd
-	+ 	CALL([ShExec])		//CALL ShellExecuteA
-	+ 	POP(EAX)			//POP EAX
-	+ 	saveIns				//MOV DWORD PTR SS:[EBP-z], y 
-	+ 	RETN()				//RETN
+		PUSH_EAX         //PUSH EAX
+	+	MOV(EAX, [EAX])  //MOV EAX, DWORD PTR DS:[EAX]
+	+ 	PUSH(0xA)        //PUSH 0A		; nShowCmd
+	+	PUSH_0           //PUSH 0		; lpDirectory
+	+	PUSH_0           //PUSH 0		; lpParameters
+	+	PUSH_EAX         //PUSH EAX 		; lpFile -> URL
+	+	PUSH(OpenStr)    //PUSH offset	; lpOperation -> 'open'
+	+	PUSH_0           //PUSH 0		; hwnd
+	+ 	CALL([ShExec])   //CALL ShellExecuteA
+	+ 	POP(EAX)         //POP EAX
+	+ 	saveIns          //MOV DWORD PTR SS:[EBP-z], y 
+	+ 	RETN()           //RETN
 	;
 	
 	/// 2.4 - Allocate space to add our code
 	let free = Exe.FindSpace(code.byteCount(), 0x10);
 	if (free < 0)
 		throw NO_ALLOC;
-
+	
 	/// 2.5 - Prep CALL instruction and insert everything
 	Exe.AddHex(free, code);
 	
@@ -101,21 +101,21 @@ UseDefaultBrowser = function()
 	
 	/// 3.1 - Find offset where ROWebBrowser is CALLed
 	code =
-	    PUSH(EBX)				//PUSH EBX
-	+	PUSH([EBP, NEG2WC])		//PUSH DWORD PTR SS:[EBP-x]
+		PUSH(EBX)            //PUSH EBX
+	+	PUSH([EBP, NEG2WC])  //PUSH DWORD PTR SS:[EBP-x]
 	;
-	  
+	
 	let rAddr = Exe.FindHex(code, parseAddr, parseAddr + 0x50);
 	if (rAddr < 0)
 		throw Error("ROWebBrowser pattern missing");
 	
 	/// 3.2 - Find the destination when create ROWebBrowser failed after rAddr
 	code = 
-	    MOV(ESI, EAX)	//MOV ESI, EAX
-	+ 	TEST(ESI, ESI)	//TEST ESI,ESI
-	+	JE(WCp)			//JE SHORT addr
+		MOV(ESI, EAX)  //MOV ESI, EAX
+	+ 	TEST(ESI, ESI) //TEST ESI,ESI
+	+	JE(WCp)        //JE SHORT addr
 	;
-	  
+	
 	addr = Exe.FindHex(code, rAddr, rAddr + 0x20);
 	if (addr < 0)
 		throw Error("ROWebBrowser test missing");
@@ -125,6 +125,6 @@ UseDefaultBrowser = function()
 	
 	/// 3.4 - Create a JMP from rAddr to the target
 	Exe.SetJMP(rAddr, tgtAddr);
-
+	
 	return true;
 };

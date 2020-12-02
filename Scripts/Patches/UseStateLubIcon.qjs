@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2019-2020 CH.C (jchcc)                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +20,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Jchcc                                                  *
+*   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,25 +32,25 @@
 UseStateLubIcon = function()
 {
 	/// 1 - Find where 'GetEFSTImgFileName' is PUSHed
-    let addr = Exe.FindHex( PUSH(USLI_Addr) );
-    if (addr < 0)
-        throw Error("Reference string not PUSHed");
+	let addr = Exe.FindHex( PUSH(USLI_Addr) );
+	if (addr < 0)
+		throw Error("Reference string not PUSHed");
 
-    /// 2 - Find the comparison followed by switch-case
+	/// 2 - Find the comparison followed by switch-case
 	let limit = (Exe.Version > 9.0 ? 4 : 3)
-    let code =
-        CMP(R32, limit)			//CMP reg32, 4 or 3
-	+	JA(POS2WC)				//JA addr1
-	+	JMP([4, R32, POS3WC])	//JMP DWORD PTR DS:[reg32*4 + addr2]
+	let code =
+		CMP(R32, limit)        //CMP reg32, 4 or 3
+	+	JA(POS2WC)             //JA addr1
+	+	JMP([4, R32, POS3WC])  //JMP DWORD PTR DS:[reg32*4 + addr2]
 	;
-    addr = Exe.FindHex(code, addr, addr + 0x100);
-    if (addr < 0)
-        throw Error("Comparison missing");
+	addr = Exe.FindHex(code, addr, addr + 0x100);
+	if (addr < 0)
+		throw Error("Comparison missing");
 
 	/// 3 - Change JA to JMP
-    Exe.SetJMP(addr + 3);
+	Exe.SetJMP(addr + 3);
 
-    return true;
+	return true;
 };
 
 ///

@@ -1,6 +1,9 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2013-2020 Neo Mind                                       *
+*   Copyright (C) 2018-2020 Jian                                           *
+*   Copyright (C) 2017 Secret                                              *
+*   Copyright (C) 2017-2020 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +23,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Neo-Mind, Jian                                         *
+*   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144)                  *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -88,33 +91,33 @@ CustomPath = function(index)
 {
 	/// 1.1 - Get the data for the index
 	let data = CP_Data[index];
-	
+
 	/// 1.2 - Find location where the string is used in a PUSH
 	let addr = Exe.FindHex( PUSH(data.addr) );
 	if (addr < 0)
 		throw Error("'" + data.name + "' not used");
-	
+
 	/// 1.2 - Get the new file name from user
 	let newFile = Exe.GetUserInput(
 		data.varName, D_Text, "File Path", 
 		"Enter the new '" + data.suffix + "' " + (index > 8 ? "prefix" : "path") + " (relative to RO folder)",
 		data.name, {minLen: 1, maxLen: 100}
 	);
-	
+
 	if (newFile === false)
-        throw "Cancelled - Path reverted to '" + data.suffix + "'";
-	
+		throw "Cancelled - Path reverted to '" + data.suffix + "'";
+
 	/// 2.1 - Allocate space to add the file name
 	let free = Exe.FindSpace(newFile.length);
-    if (free < 0)
-        throw NO_ALLOC;
-	
+	if (free < 0)
+		throw NO_ALLOC;
+
 	/// 2.2 - Add the name there
-    Exe.AddFromVar(free, data.varName);
-	
+	Exe.AddFromVar(free, data.varName);
+
 	/// 2.3 - Update the PUSHed address
-    Exe.SetUint32(addr + 1, Exe.Phy2Vir(free, DIFF));
-	
+	Exe.SetUint32(addr + 1, Exe.Phy2Vir(free, DIFF));
+
 	return true;
 };
 
@@ -131,16 +134,16 @@ CustomPath.validate = (index) =>
 CustomPath.validateSak = (index, pref, sakSuf, truSuf, suf = '') =>
 {
 	let data = CP_Data[index];
-	
+
 	data.name = pref + "_" + (ROCL.IsRenewal ? sakSuf : truSuf);
 	data.addr = Exe.FindText(data.name);
-	
+
 	if (addr < 0 && !ROCL.IsRenewal)
 	{
 		data.name = pref + suf;
 		data.addr = Exe.FindText(data.name);
 	}
-	
+
 	return (data.addr > 0);
 };
 
@@ -161,7 +164,7 @@ CustomMonSizeEffLub.validate = () =>
 {
 	let suf = (ROCL.IsRenewal ? "_sak" : "");
 	let data = CP_Data[3];
-	
+
 	data.name = "System/monster_size_effect" + suf + "_new.lub";
 	data.addr = Exe.FindText(data.name);
 	if (addr < 0)
@@ -182,13 +185,13 @@ CustomPetEvoClnLub.validate = () =>
 	let data = CP_Data[5];
 	data.name = "system\\PetEvolutionCln_" + (ROCL.IsRenewal ? "sak" : "true") + ".lub";
 	data.addr = Exe.FindText(data.name);
-	
+
 	if (addr < 0)
 	{
 		data.name = "system\\PetEvolutionCln.lub";
 		data.addr = Exe.FindText(data.name);
 	}
-	
+
 	return (data.addr > 0);
 };
 
@@ -214,59 +217,59 @@ Orig_LicTxt = "..\\licence.txt";
 CustomLicenseTxt = function()
 {
 	/// 1.1 - Find the string '..\\licence.txt'
-    let addr = Exe.FindText(Orig_LicTxt);
-    if (addr < 0)
-        throw Error("'" + Orig_LicTxt + "' not found");
+	let addr = Exe.FindText(Orig_LicTxt);
+	if (addr < 0)
+		throw Error("'" + Orig_LicTxt + "' not found");
 
-    /// 1.2 - Find where it is assigned
-    addr = Exe.FindHex( MOV([POS3WC], addr) ); //MOV DWORD PTR DS:[g_licence], stringAddr
-    if (addr < 0)
-        throw Error("'" + Orig_LicTxt + "' not assigned");
+	/// 1.2 - Find where it is assigned
+	addr = Exe.FindHex( MOV([POS3WC], addr) ); //MOV DWORD PTR DS:[g_licence], stringAddr
+	if (addr < 0)
+		throw Error("'" + Orig_LicTxt + "' not assigned");
 
-    /// 2.1 - Get new Filename from user
-    let txtFile = Exe.GetUserInput('$licenseTXT', D_Text, "License file", "Enter the name of the Txt file", Orig_LicTxt, {minLen: 1, maxLen: 20});
-    if (txtFile === false)
-        return "Cancelled - License file reverted to '" + Orig_LicTxt + "'";
-	
-    /// 2.2 - Allocate space to add new file name
-    let free = Exe.FindSpace(txtFile.length + 1);
-    if (free < 0)
-        throw NO_ALLOC;
+	/// 2.1 - Get new Filename from user
+	let txtFile = Exe.GetUserInput('$licenseTXT', D_Text, "License file", "Enter the name of the Txt file", Orig_LicTxt, {minLen: 1, maxLen: 20});
+	if (txtFile === false)
+		return "Cancelled - License file reverted to '" + Orig_LicTxt + "'";
 
-    /// 2.3 - Add the file name there
-    Exe.AddFromVar(free, '$licenseTXT', txtFile.length + 1);
+	/// 2.2 - Allocate space to add new file name
+	let free = Exe.FindSpace(txtFile.length + 1);
+	if (free < 0)
+		throw NO_ALLOC;
 
-    /// 2.4 - Change the address in the assignment
-    Exe.SetInt32(addr + 6, Exe.Phy2Vir(free, DIFF));
+	/// 2.3 - Add the file name there
+	Exe.AddFromVar(free, '$licenseTXT', txtFile.length + 1);
 
-    /// 3.1 - Find EULA string
-    addr = Exe.FindText("No EULA text file. (licence.txt)");
-    if (addr < 0)
-        throw Error("EULA string not found");
+	/// 2.4 - Change the address in the assignment
+	Exe.SetInt32(addr + 6, Exe.Phy2Vir(free, DIFF));
 
-    /// 3.2 - Prepare the new EULA error string using the filename received
-    let eulaString = "No EULA text file. (" + txtFile.replace("..\\", "") + ")\x00";
+	/// 3.1 - Find EULA string
+	addr = Exe.FindText("No EULA text file. (licence.txt)");
+	if (addr < 0)
+		throw Error("EULA string not found");
 
-    /// 3.3 - Allocate space to add the EULA error string
-    free = Exe.FindSpace(eulaString.length);
-    if (free < 0)
-        throw Error("Not enough gap for EULA string");
+	/// 3.2 - Prepare the new EULA error string using the filename received
+	let eulaString = "No EULA text file. (" + txtFile.replace("..\\", "") + ")\x00";
 
-    let freeVir = Exe.Phy2Vir(free, DIFF);
-	
-    /// 3.4 - Add the EULA error string
-    Exe.AddText(free, eulaString);
+	/// 3.3 - Allocate space to add the EULA error string
+	free = Exe.FindSpace(eulaString.length);
+	if (free < 0)
+		throw Error("Not enough gap for EULA string");
 
-    /// 3.5 - Update all PUSHes & assigments using the original EULA error string
-    [PUSH(0x20) + PUSH(addr), MOV(ESI, addr), MOV(EDI, addr)].forEach( instr =>
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+
+	/// 3.4 - Add the EULA error string
+	Exe.AddText(free, eulaString);
+
+	/// 3.5 - Update all PUSHes & assigments using the original EULA error string
+	[PUSH(0x20) + PUSH(addr), MOV(ESI, addr), MOV(EDI, addr)].forEach( instr =>
 	{
 		let isize = instr.byteCount();
-        Exe.FindHexN(instr).forEach( 
+		Exe.FindHexN(instr).forEach( 
 			addr => Exe.SetInt32(addr + isize - 4, freeVir)
 		);
 	});
-	
-    return true;
+
+	return true;
 };
 
 ///
@@ -277,12 +280,12 @@ CustomClientInfo = function()
 	/// 1.1 - Load the DGRF object
 	if (!DGRF.load())
 		throw DGRF.Error;
-	
+
 	/// 1.2 - Retrieve the refAddr (PUSH location) & calculate the end address
 	let fromAddr = DGRF.RefAddr;
 	let toAddr = fromAddr + 0x100; //may not need this much
-	
-    /// 1.3 - Find where the XML is referenced 
+
+	/// 1.3 - Find where the XML is referenced 
 	let addr, offset;
 	let hasMore = true;
 	if (Exe.Version > 10.0)
@@ -312,10 +315,10 @@ CustomClientInfo = function()
 	}
 	if (addr < 0)
 		throw Error("clientinfo not used");
-	
+
 	/// 1.4 - Add the displacement offset to repLocs
 	let repLocs = [[addr + offset], 0]; //both cases it will be after F3 0F ?? ?? so we can do this way
-	
+
 	/// 1.3 - Find the additional references & save the locations where replacement need to be made
 	if (hasMore)
 	{
@@ -326,7 +329,7 @@ CustomClientInfo = function()
 				addr = Exe.FindHex(MOVSS(XMM$, [CCI_Addr + 8]), fromAddr, toAddr);
 				if (addr < 0)
 					throw Error("2nd reference missing");
-				
+
 				repLocs.push([addr + 4, 8]);
 			}
 			else
@@ -334,13 +337,13 @@ CustomClientInfo = function()
 				addr = Exe.FindHex(MOV(EAX, [CCI_Addr + 8]), fromAddr, toAddr);
 				if (addr < 0)
 					throw Error("2nd reference missing");
-				
+
 				repLocs.push([addr + 1, 8]);
-				
+
 				addr = Exe.FindHex(MOV(AX, [CCI_Addr + 0xC]), fromAddr, toAddr);
 				if (addr < 0)
 					throw Error("3rd reference missing");
-	
+
 				repLocs.push([addr + 2, 0xC]);
 			}
 		}
@@ -357,11 +360,11 @@ CustomClientInfo = function()
 				}
 				if (addr < 0)
 					throw Error("Reference no." + (idx + 2) + " missing");
-				
+
 				repLocs.push([addr + offset], addon);
 			});
 		}
-		
+
 		addr = Exe.FindHex(MOV(AL, [CCI_Addr + 0xE]), fromAddr, toAddr);
 		offset = 1;
 		if (addr < 0)
@@ -371,28 +374,28 @@ CustomClientInfo = function()
 		}
 		if (addr < 0)
 			throw Error("4th reference missing");
-				
+
 		repLocs.push([addr + offset, 0xE]);
 	}
-	
+
 	/// 2.1 - Get the new name from the user
 	let newFile = Exe.GetUserInput('$newclientinfo', D_Text, "Client Info XML", "Enter the new clientinfo path", CCI_Name, {minLen: 9, maxLen: 20});
-    if (newFile === false)
-        throw "Cancelled - Filename reverted to " + CCI_Name;
-	
-    /// 2.2 - Allocate space for the new name
-    let free = Exe.FindSpace(newFile.length + 1);
-    if (free < 0)
-        throw NO_ALLOC;
+	if (newFile === false)
+		throw "Cancelled - Filename reverted to " + CCI_Name;
 
-    /// 2.3 - Add the name there 
+	/// 2.2 - Allocate space for the new name
+	let free = Exe.FindSpace(newFile.length + 1);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	/// 2.3 - Add the name there 
 	Exe.AddFromVar(free, '$newclientinfo', newFile.length + 1);
-	
+
 	/// 2.4 - Adjust the references
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 	repLocs.forEach( pair => Exe.SetUint32(pair[0], freeVir + pair[1]) );
-	
-    return true;
+
+	return true;
 };
 
 ///
@@ -402,13 +405,13 @@ CustomClientInfo.validate = function()
 {
 	/// 1.1 - Check if the client is Sakray (clientinfo file name is "sclientinfo.xml" for some Sakray clients)
 	CCI_Name = "sclientinfo.xml";
-    CCI_Addr = Exe.FindText(CCI_Name);
+	CCI_Addr = Exe.FindText(CCI_Name);
 
-    if (CCI_Addr < 0) // if sclientinfo.xml does not exist then it is a main server exe
-    {
+	if (CCI_Addr < 0) // if sclientinfo.xml does not exist then it is a main server exe
+	{
 		CCI_Name = "clientinfo.xml";
-        CCI_Addr = Exe.FindText(CCI_Name);
-    }
-	
-    return (CCI_Addr > 0);
+		CCI_Addr = Exe.FindText(CCI_Name);
+	}
+
+	return (CCI_Addr > 0);
 };

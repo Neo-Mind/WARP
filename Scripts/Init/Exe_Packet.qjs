@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,10 +35,12 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 		Push: 0,    //Keys pushed as argument
 		Move: 1,    //Direct assignment inside Function
 		Shared: 2,  //Extension of the above but with a shared key
-		Virtual: 3, //Virtualized function (need to use an explicit mapping instead)
+		Virtual: 3, //Virtualized function (need to use an explicit mapping instead) OR 
+		            //The function is only assigning 0s now
 		Unknown: 4  //Self Explanatory
 	};
-	
+	IdentifyObj("KeyMode");
+
 	///
 	/// \brief Hash describing the Packet Encryption details
 	///
@@ -60,7 +62,9 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 
 			this.Valid     = undefined;       //True or False indicating extraction status
 			this.Error     = undefined;	      //Error Object containing a message about the issue
-								              //encountered during extraction if any
+											//encountered during extraction if any
+
+			IdentifyObj("PACKET");
 		},
 
 		///
@@ -71,24 +75,27 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 			/// 1.1 - Check if load was already called
 			if (this.Valid !== undefined)
 				return this.Valid;
-			
-			/// 1.2 - Initialize 'Valid' to false
+
+			Identify("PACKET", ["Valid", "Error"]);
+
+			/// 1.2 - Initialize 'Valid' to false && the 'KS_Mode' to KeyMode.Unknown
 			this.Valid = false;
-			
+			this.KS_Mode = KeyMode.Unknown;
+
 			/// 1.3 - Ensure the Build date is within valid values
-			if (Exe.BuildDate < 20110817 || Exe.BuildDate > 20180306)
+			if (!ROC.HasPktKeys)
 			{
 				this.Error = new Error("PKT - Unsupported build date");
 				return false;
 			}
-			
+
 			/// 1.4 - Find where the string 'PACKET_CZ_ENTER' is PUSHed
 			let addr = Exe.FindText("PACKET_CZ_ENTER");
 			if (addr > 0)
 			{
 				addr = Exe.FindHex( PUSH(addr) );
 			}
-			
+
 			if (addr < 0)
 			{
 				/// 1.5 - If not found then look for the CALL, MOV, CALL pattern
@@ -97,7 +104,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 				+	MOV(ECX, EAX) //MOV ECX, EAX
 				+	CALL(ALLWC)   //CALL func2
 				;
-				
+
 				let code = 
 					inb4
 				+	PUSH_EAX      //PUSH EAX
@@ -106,7 +113,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 				+	inb4
 				+	PUSH(6)       //PUSH 6
 				;
-				
+
 				addr = Exe.FindHex(code);
 			}			
 			if (addr < 0)
@@ -114,7 +121,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 				this.Error = new Error("PKT - reference location not found");
 				return false;
 			}
-			
+
 			/// 2.1 - Look for 3 PUSHes followed by a CALL (keys are PUSHed to function)
 			let code =
 				MOV(ECX, [POS3WC]) //MOV ECX, DWORD PTR DS:[KeyAddr]
@@ -129,24 +136,24 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 				/// 2.2 - If found then set the KS_Mode and extract the MOV statement
 				this.KS_Mode = KeyMode.Push;
 				this.MovECX = Exe.GetHex(callAddr, 6);
-				
+
 				/// 2.3 - Extract the KeySetter address and the keys themselves
-				callAddr += code.byteCount() - 4;
+				callAddr += code.byteCount();
 				this.KeySetter = Exe.GetTgtAddr(callAddr);
 				this.Keys[0] = Exe.GetInt32(callAddr -  5);
 				this.Keys[1] = Exe.GetInt32(callAddr - 10);
 				this.Keys[2] = Exe.GetInt32(callAddr - 15);
-				
+
 				/// 2.4 - Set validity to true
 				this.Valid = true;
 				return true;
 			}
-			
+
 			/// 3.1 - Look for PUSH 1, CALL pattern next (keys get assigned inside the function)
 			code =
 				MOV(ECX, [POS4WC]) //MOV ECX, DWORD PTR DS:[KeyAddr]
-			+   PUSH_1             //PUSH 1
-			+   CALL()             //CALL CRagConnection::ObfuscateOrInit
+			+	PUSH_1             //PUSH 1
+			+	CALL()             //CALL CRagConnection::ObfuscateOrInit
 			;
 			callAddr = Exe.FindHex(code, addr - 0x100, addr);
 			if (callAddr < 0)
@@ -154,38 +161,38 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 				this.Error = new Error("PKT - ObfuscateOrInit CALL not found");
 				return false;
 			}
-			
+
 			/// 3.2 - Extract the MOV statement
 			this.MovECX = Exe.GetHex(callAddr, 6);
-			
+
 			/// 3.3 - Extract the CALLed function address which is the KeySetter
 			callAddr += code.byteCount();
 			this.KeySetter = Exe.GetTgtAddr(callAddr);
-			
+
 			/// 3.4 - Go inside the function
 			let fnAddr = Exe.Vir2Phy(this.KeySetter);
-			
+
 			/// 3.5 - Prep the common prefix for searching
-			let prefix = 
+			let prefix =
 				CMP(EAX, 1) //CMP EAX, 1
-			+	JNE(WC)     //JNE SHORT addr
+			+	JNE(WCp)    //JNE SHORT addr
 			;
-			
+
 			/// 4.1 - First look for the individual key assignment pattern
 			code =
 				prefix
-			+   MOV([ECX, WCp], ALLWC)   //MOV DWORD PTR DS:[ECX+x], <Key A> ;the keys could be assigned in any order
-			+   MOV([ECX, WCp], ALLWC)   //MOV DWORD PTR DS:[ECX+y], <Key B>
-			+   MOV([ECX, WCp], ALLWC)   //MOV DWORD PTR DS:[ECX+z], <Key C>
+			+	MOV([ECX, WCp], ALLWC)   //MOV DWORD PTR DS:[ECX+x], <Key A> ;the keys could be assigned in any order
+			+	MOV([ECX, WCp], ALLWC)   //MOV DWORD PTR DS:[ECX+y], <Key B>
+			+	MOV([ECX, WCp], ALLWC)   //MOV DWORD PTR DS:[ECX+z], <Key C>
 			;
-			
-			addr = Exe.FindHex(code, fnAddr, fnAddr + 0x50);
+
+			addr = Exe.FindHex(code, fnAddr, fnAddr + 0x60);
 			if (addr > 0)
 			{
 				/// 4.2 - If found then set the mode to 'Move' and save the location of the first MOV as the Assigner
 				this.Assigner = addr + prefix.byteCount();
 				this.KS_Mode = KeyMode.Move;
-				
+
 				/// 4.3 - Extract the keys being assigned
 				addr = this.Assigner;
 				for (let i = 0; i < 3; i++)
@@ -194,28 +201,28 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 					this.Keys[ins.Disp/4 - 1] = ins.Immd; //order can be any so this mechanism is needed
 					addr = ins.NextAddr;
 				}
-				
+
 				/// 4.4 - Set validity to true.
 				this.Valid = true;
 				return true;
 			}
-			
+
 			/// 5.1 - Next look for the shared key pattern
 			code =
 				prefix
-			+   MOV(EAX, ALLWC)        //MOV EAX, <Key A> ; shared key
-			+   MOV([ECX, WCp], EAX)   //MOV DWORD PTR DS:[ECX+x], EAX
-			+   MOV([ECX, WCp], EAX)   //MOV DWORD PTR DS:[ECX+y], EAX
-			+   MOV([ECX, WCp], ALLWC) //MOV DWORD PTR DS:[ECX+z], <Key B>
+			+	MOV(EAX, ALLWC)        //MOV EAX, <Key A> ; shared key
+			+	MOV([ECX, WCp], EAX)   //MOV DWORD PTR DS:[ECX+x], EAX
+			+	MOV([ECX, WCp], EAX)   //MOV DWORD PTR DS:[ECX+y], EAX
+			+	MOV([ECX, WCp], ALLWC) //MOV DWORD PTR DS:[ECX+z], <Key B>
 			;
-			
-			addr = Exe.FindHex(code, fnAddr, fnAddr + 0x50);
+
+			addr = Exe.FindHex(code, fnAddr, fnAddr + 0x60);
 			if (addr > 0)
 			{
 				/// 5.2 - If found then set the mode to 'Shared' and save the location of the first MOV as the Assigner
 				this.Assigner = addr + prefix.byteCount();
 				this.KS_Mode = KeyMode.Shared;
-				
+
 				/// 5.3 - Extract the shared key first
 				let ins = Instr.FromAddr(this.Assigner);
 				let sharedKey = ins.Immd;
@@ -226,40 +233,45 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 					ins = Instr.FromAddr(ins.NextAddr);
 					this.Keys[ins.Disp/4 - 1] = (i < 2) ? sharedKey : ins.Immd;
 				}
-				
+
 				/// 5.5 - Set validity to true.
 				this.Valid = true;
 				return true;
 			}
-			
+
 			/// 6.1 - Since neither pattern matched we need to use explicit mapping
 			this.KS_Mode = KeyMode.Virtual;
-			
-			/// 6.2 - Retrieve the mapping from the file
-			if (typeof(PktKeyMap) === 'undefined' || PktKeyMap === false)
+
+			/// 6.2 - For older clients we will try to look in the PktKeyMap
+			if (Exe.BuildDate <= 20180308)
 			{
-				PktKeyMap = Warp.LoadYaml("Inputs/PacketKeyMap.yml");
+				if (typeof(PktKeyMap) === 'undefined' || PktKeyMap === false) //avoid redefinition
+				{
+					PktKeyMap = Warp.LoadYaml("Inputs/PacketKeyMap.yml");
+				}
+
+				/// 6.3 - Retrieve the keys based on the date
+				let arr = PktKeyMap[Exe.BuildDate];
+
+				/// 6.4 - Ensure we have a valid array
+				this.Valid = Array.isArray(arr) && arr.length === 3;			
+				if (this.Valid)
+				{
+					this.Keys = arr;
+					return true;
+				}
+				else
+				{
+					this.Error = new Error("PKT - No patterns or mappings matched");
+					return false;
+				}
 			}
-			
-			/// 6.3 - Retrieve the keys based on the date
-			let arr = PktKeyMap[Exe.BuildDate];
-			
-			this.Valid = Array.isArray(arr);
-			if (this.Valid)
-			{
-				this.Keys = arr;
-				return true;
-			}
-			else
-			{
-				this.KS_Mode = KeyMode.Unknown;
-				this.Error = new Error("PKT - No patterns or mappings matched");
-				return false;
-			}
+
+			/// 6.5 - For newer clients, the keys are 0 by default.
+			this.Valid = true;
+			return true;
 		},
 	};
-	
-	IdentifyObj("PACKET");
 }
 
 ///

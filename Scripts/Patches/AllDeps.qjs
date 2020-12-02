@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-22                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,6 +37,12 @@ HasCashShop = () =>
 ///
 HasHiddenLogWin = () =>
 	ROC.HasLWhidden;
+
+///
+/// \brief Common Validation function for Packet Encryption related patches
+///
+HasPktKeys = () =>
+	ROC.HasPktKeys;
 
 ///
 /// \brief Extract the import table from the exe as a hex string.
@@ -55,7 +61,7 @@ GetImpTable = (skipDLL, impAddr = -1) =>
 		let nameAddr = Exe.Rva2Phy( curEntry.substr(12*3, 4*3).toInt() ); //4 bytes from 12th position
 		if (nameAddr <= 0)
 			break;
-			
+
 		// Skip over specified DLL
 		if (Exe.GetText(nameAddr) === skipDLL)
 			continue;

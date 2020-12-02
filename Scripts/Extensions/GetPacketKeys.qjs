@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2013-2020 Neo Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2020-11-28                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@ GetPacketKeys = function()
 	/// 1.1 - Need a valid Exe loaded.
 	if (Exe.FileSize == 0)
 		throw NO_EXE;
-
+	
 	/// 1.2 - Ensure PACKET Object is loaded
 	if (!PACKET.load())
 		throw PACKET.Error;
@@ -42,7 +42,7 @@ GetPacketKeys = function()
 	/// 2.1 - Open the output file for writing.
 	let fp = new TextFile(OUTDIR + "PacketKeys_" + ROC.BaseName + ".txt", 'w');
 	if (!fp.Valid)
-		throw NO_OUTPUT;//Error("Unable to generate output file");
+		throw NO_OUTPUT;
 	
 	/// 2.2 - Retrieve the packet keys found and convert to hex
 	let keys = [];

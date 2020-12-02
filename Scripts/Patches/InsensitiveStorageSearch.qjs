@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2019-2020 CH.C (jchcc)                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,13 +20,13 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Jchcc                                                  *
+*   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
-//
+///
 /// \brief Use api StrStrIA instead of _mbsstr to enable case-insensitive search in storage
 ///
 InsensitiveStorageSearch = function()
@@ -34,22 +34,22 @@ InsensitiveStorageSearch = function()
 	/// 1.1 - Ensure the required functions are available
 	if (ROC.GetModHandle < 0)
 		throw Error("GetModuleHandleA not found");
-	
+
 	if (ROC.GetProcAddr < 0)
 		throw Error("GetProcAddress not found");
-	
+
 	/// 1.2 - Find string search for storage
 	let prefix =
-		PUSH(ECX)		// 0 PUSH ECX
-	+	PUSH_EAX		// 1 PUSH EAX
+		PUSH(ECX)        //PUSH ECX
+	+	PUSH_EAX         //PUSH EAX
 	;
 	let suffix =
-	 	CALL([POS4WC])	// 2 CALL DWORD PTR DS:[_mbsstr]
-	+	ADD(ESP, 8)		// 8 ADD ESP,8
-	+ 	TEST(EAX, EAX)	//11 TEST EAX,EAX
-	+ 	JE(4)			//13 JE SHORT addr1
-	+	MOV(ESI, [ESI])	//15 MOV ESI, DWORD PTR DS:[ESI]
-	+	JMP(WCp)		//17 JMP SHORT addr2
+		CALL([POS4WC])   //CALL DWORD PTR DS:[_mbsstr]
+	+	ADD(ESP, 8)      //ADD ESP,8
+	+ 	TEST(EAX, EAX)   //TEST EAX,EAX
+	+ 	JE(4)            //JE SHORT addr1
+	+	MOV(ESI, [ESI])  //MOV ESI, DWORD PTR DS:[ESI]
+	+	JMP(WCp)         //JMP SHORT addr2
 	;
 
 	let addr = Exe.FindHex(prefix + suffix);
@@ -64,30 +64,30 @@ InsensitiveStorageSearch = function()
 	/// 1.3 - Extract the CALL & Stack restore afterwards i.e. ADD ESP,8
 	let callOffset = prefix.byteCount();
 	let callNrestore = Exe.GetHex(addr + callOffset, 9);
-	
+
 	/// 1.4 - Save the VIRTUAL address after the stack restore
 	let retnAddr = Exe.Phy2Vir(addr + callOffset + 9);
-	
+
 	/// 2.1 - Prepare our code
 	let code =
-		CMP([MakeFiller(1)], 0)		//CMP DWORD PTR DS:[StrStrIA], 0
-	+	JNE(0x2F)					//JNE SHORT addr2
-	+	PUSH(MakeFiller(2))			//PUSH OFFSET ; ASCII "Shlwapi.dll"
-	+	CALL([ROC.GetModHandle])	//CALL DWORD PTR DS:[GetModuleHandleA]
-	+ 	PUSH(MakeFiller(3))			//PUSH OFFSET ; ASCII "StrStrIA"
-	+ 	PUSH_EAX					//PUSH EAX
-	+ 	CALL([ROC.GetProcAddr])	//CALL DWORD PTR DS:[GetProcAddress]
-	+ 	TEST(EAX, EAX)				//TEST EAX, EAX
-	+ 	JNE(0xF)					//JNE SHORT addr2
-	+	callNrestore				//CALL DWORD PTR DS:[_mbsstr]
-                                    //ADD ESP, 8
-	+	PUSH(retnAddr)				//PUSH retnAddr
-	+	RETN()						//RETN
-	+	MOV([MakeFiller(1)], EAX)	//MOV DWORD PTR DS:[StrStrIA], EAX ; addr2
-	+	CALL([MakeFiller(1)])		//CALL DWORD PTR DS:[StrStrIA]
-	+ 	PUSH(retnAddr)				//PUSH retnAddr
-	+ 	RETN()                      //RETN
-	+   ALL00						//will be used to store [StrStrIA]
+		CMP([MakeFiller(1)], 0)   //CMP DWORD PTR DS:[StrStrIA], 0
+	+	JNE(0x2F)                 //JNE SHORT addr2
+	+	PUSH(MakeFiller(2))       //PUSH OFFSET ; ASCII "Shlwapi.dll"
+	+	CALL([ROC.GetModHandle])  //CALL DWORD PTR DS:[GetModuleHandleA]
+	+ 	PUSH(MakeFiller(3))       //PUSH OFFSET ; ASCII "StrStrIA"
+	+ 	PUSH_EAX                  //PUSH EAX
+	+ 	CALL([ROC.GetProcAddr])   //CALL DWORD PTR DS:[GetProcAddress]
+	+ 	TEST(EAX, EAX)            //TEST EAX, EAX
+	+ 	JNE(0xF)                  //JNE SHORT addr2
+	+	callNrestore              //CALL DWORD PTR DS:[_mbsstr]
+		                          //ADD ESP, 8
+	+	PUSH(retnAddr)            //PUSH retnAddr
+	+	RETN()                    //RETN
+	+	MOV([MakeFiller(1)], EAX) //MOV DWORD PTR DS:[StrStrIA], EAX ; addr2
+	+	CALL([MakeFiller(1)])     //CALL DWORD PTR DS:[StrStrIA]
+	+ 	PUSH(retnAddr)            //PUSH retnAddr
+	+ 	RETN()                    //RETN
+	+   ALL00                     //will be used to store [StrStrIA]
 	;
 	let csize = code.byteCount();
 
@@ -100,7 +100,7 @@ InsensitiveStorageSearch = function()
 		ssize += str.length + 1;
 		strings += str.toHex() + " 00";
 	});
-	
+
 	/// 3.1 - Allocate space to add our code
 	let free = Exe.FindSpace(csize + ssize, 0x10);
 	if (free < 0)
@@ -109,22 +109,22 @@ InsensitiveStorageSearch = function()
 	let freeVir = Exe.Phy2Vir(free);
 
 	/// 3.2 - Fill in the blanks
-	
+
 	// [StrStrIA]
 	code = SwapFiller(code, 1, freeVir + csize - 4);
-	
+
 	// String addrs
 	let strAddr = freeVir + csize;
 	code = SwapFiller(code, 2, strAddr);
-	
+
 	strAddr += strList[0].length + 1;
 	code = SwapFiller(code, 3, strAddr);
 
 	/// 3.3 - Add the code & strings at the allocated space
 	Exe.AddHex(free, code + strings);
-	
+
 	/// 3.4 - Create a JMP to our code
 	Exe.SetJMP(addr + callOffset, freeVir);
-	
+
 	return true;
 };

@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2020 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,52 +32,53 @@
 ///
 MsgStrings = function()
 {
-    /// 1.1 - Ensure the LANGTYPE is loaded
-    if (!LANGTYPE.load())
-        throw LANGTYPE.Error;
-    
-    /// 1.2 - Find the comparison which is at the start of the function
+	/// 1.1 - Ensure the LANGTYPE is loaded
+	if (!LANGTYPE.load())
+		throw LANGTYPE.Error;
+
+	/// 1.2 - Find the comparison which is at the start of the function
 	let code, addr, jnzPos;
-    if (Exe.Version >= 9.0)
-    {
-        code =
-            CMP([LANGTYPE], 0) //CMP DWORD PTR DS:[g_serviceType], 0
-        +   PUSH(ESI)          //PUSH ESI
-        +   JNZ(WCp)           //JNZ SHORT addr -> continue with msgStringTable.txt loading
-        ;
-		addr = Exe.FindHex(code);
-		jnzPos = 8;
-		
-		if (addr < 0)
+	if (Exe.Version >= 9.0)
+	{
+		if (Exe.BuildDate < 20170000)
+		{
+			code =
+				CMP([LANGTYPE], 0) //CMP DWORD PTR DS:[g_serviceType], 0
+			+	PUSH(ESI)          //PUSH ESI
+			+	JNZ(WCp)           //JNZ SHORT addr -> continue with msgStringTable.txt loading
+			;
+			jnzPos = 8;
+		}
+		else
 		{
 			code =
 				CMP([LANGTYPE], 0)    //CMP DWORD PTR DS:[g_serviceType], 0
-			+   JNZ(WCp)              //JNZ SHORT addr -> continue with msgStringTable.txt loading
-			+   PUSH(ESI)             //PUSH ESI
+			+	JNZ(WCp)              //JNZ SHORT addr -> continue with msgStringTable.txt loading
+			+	PUSH(ESI)             //PUSH ESI
 			;
-			addr = Exe.FindHex(code);
 			jnzPos = 7;
 		}
-    }
-    else
-    {
-        code =
-            MOV(EAX, [LANGTYPE])  //MOV EAX, DWORD PTR DS:[g_serviceType]
-        +   PUSH(ESI)             //PUSH ESI
-        +   TEST(EAX, EAX)        //TEST EAX, EAX
-        +   JNZ(WCp)              //JNZ SHORT addr -> continue with msgStringTable.txt loading
-        ;
+		addr = Exe.FindHex(code);
+	}
+	else
+	{
+		code =
+			MOV(EAX, [LANGTYPE])  //MOV EAX, DWORD PTR DS:[g_serviceType]
+		+	PUSH(ESI)             //PUSH ESI
+		+	TEST(EAX, EAX)        //TEST EAX, EAX
+		+	JNZ(WCp)              //JNZ SHORT addr -> continue with msgStringTable.txt loading
+		;
 		addr = Exe.FindHex(code);
 		jnzPos = 8;
-    }
+	}
 
-    if (addr < 0)
-        throw Error("Langtype comparison not found");
+	if (addr < 0)
+		throw Error("Langtype comparison not found");
 
-    /// 2 - Change the conditional jump
-    Exe.SetJMP(addr + jnzPos);
-	
-    return true;
+	/// 2 - Change the conditional jump
+	Exe.SetJMP(addr + jnzPos);
+
+	return true;
 };
 
 
@@ -87,22 +88,27 @@ MsgStrings = function()
 ///
 QuestDisplay = function()
 {
-    /// 1 - Find where 'questID2display.txt' is used in a PUSH
-    let code = PUSH(QD_Addr); //PUSH OFFSET addr ; ASCII "questID2display.txt"
-	let addr = Exe.Version < 9.0 ?
-        Exe.FindHex(PUSH_0 + LEA(R32, [R32, WC]) + code) //LEA reg32, [LOCAL.x] in between PUSH 0 & PUSH addr
-    :
-        Exe.FindHex(PUSH_0 + code)
+	/// 1 - Find where 'questID2display.txt' is used in a PUSH
+	let prefix = JNE(Exe.Version < 10.0 ? POS3WC : WC);
+	let suffix = 
+		PUSH_0				//PUSH 0
+	+	(Exe.Version < 9.0 
+	?
+		LEA(R32, [R32, WC])	//LEA reg32_A, [reg32_B + const]
+	:
+		''
+	)
+	+	PUSH(QD_Addr)		//PUSH OFFSET addr ; ASCII "questID2display.txt"
 	;
-	
-    if (addr < 0)
-        throw Error("'questID2display.txt' not PUSHed");
-    
-    /// 3 - NOP out the JNE just before PUSH 0
-	let csize = (Exe.GetInt8(addr - 1) === 0 ? 6 : 2); //0 for long JNE since the jump address will always be after the PUSHes
-    Exe.SetNOPs(addr - csize, csize);
 
-    return true;
+	let addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+		throw Error("'questID2display.txt' not used");
+
+	/// 2 - NOP out the JNE
+	Exe.SetNOPs(addr, prefix.byteCount());
+
+	return true;
 };
 
 ///
@@ -110,6 +116,9 @@ QuestDisplay = function()
 ///
 QuestDisplay.validate = function()
 {
+	if (ROC.IsZero)
+		return false;
+
 	QD_Addr = Exe.FindText("questID2display.txt");
 	return (QD_Addr > 0);
 };

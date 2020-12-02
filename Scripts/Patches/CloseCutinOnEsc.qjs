@@ -1,5 +1,6 @@
 /**************************************************************************\
 *                                                                          *
+*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
 *   Copyright (C) 2020 Neo Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
@@ -20,9 +21,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Neo-Mind                                               *
+*   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,149 +35,149 @@ CloseCutinOnEsc = function()
 {
 	/// 1.1 - Find the test for case 6 inside UIIllustWnd::SendMsg
 	let code =
-		JE(POS2WC)		//JE addr ; this is for CMP EAX, 6
-	+ 	CMP(EAX, 0x22) 	//CMP EAX, 22
-	+ 	JE(POS2WC) 		//JE addr2
-	+ 	CMP(EAX, 0x4E)	//CMP EAX, 4E
+		JE(POS2WC)      //JE addr ; this is for CMP EAX, 6
+	+ 	CMP(EAX, 0x22)  //CMP EAX, 22
+	+ 	JE(POS2WC)      //JE addr2
+	+ 	CMP(EAX, 0x4E)  //CMP EAX, 4E
 	;
-	
+
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Case 6 test missing");
-	
+
 	/// 1.2 - Set addr to first JE location
 	addr = Exe.GetTgtAddr(addr + 2, PHYSICAL);
-	
+
 	/// 1.3 - Look for the GetGameMode CALL inside UIIllustWnd::SendMsg
 	let prefix = 
-		MOV(ECX, POS3WC)			//MOV ECX, OFFSET g_modeMgr
-	+	CALL(ALLWC)					//CALL CModeMgr::GetGameMode
+		MOV(ECX, POS3WC)            //MOV ECX, OFFSET g_modeMgr
+	+	CALL(ALLWC)                 //CALL CModeMgr::GetGameMode
 	;
 	code = "";
-	
+
 	if (Exe.Version < 14.0)
-		code += MOV(EDX, [EAX]);	//MOV EDX, DWORD PTR DS:[EAX] ; for VC6 - VC11
-	
-	code +=	PUSH_0;					//PUSH 0
-	
+		code += MOV(EDX, [EAX]);    //MOV EDX, DWORD PTR DS:[EAX] ; for VC6 - VC11
+
+	code +=	PUSH_0;                 //PUSH 0
+
 	if (Exe.BuildDate > 20110217)
-		code += PUSH(' 0?');		//PUSH 0 or 1
-	
-	code +=	PUSH(-1);				//PUSH -1
-	
+		code += PUSH(' 0?');        //PUSH 0 or 1
+
+	code +=	PUSH(-1);               //PUSH -1
+
 	if (Exe.Version > 14.0)
 	{
 		code += 
-			MOV(EDX, [EAX])			//MOV EDX, DWORD PTR DS:[EAX]
-		+	MOV(ECX, EAX)			//MOV ECX, EAX
+			MOV(EDX, [EAX])         //MOV EDX, DWORD PTR DS:[EAX]
+		+	MOV(ECX, EAX)           //MOV ECX, EAX
 		;
 	}
-	
-	code += PUSH(POS3WC);			//PUSH OFFSET EmptyStr ; zeros at the location
-	
+
+	code += PUSH(POS3WC);           //PUSH OFFSET EmptyStr ; zeros at the location
+
 	if (Exe.Version > 6.0 && Exe.BuildDate < 20150000)
 	{
 		code +=
-			MOV(ECX, EAX)			//MOV ECX, EAX
-		+	MOV(EAX, [EDX, ' 1?'])	//MOV EAX, DWORD PTR DS:[EDX + const] ; const is either 14 or 18
+			MOV(ECX, EAX)           //MOV ECX, EAX
+		+	MOV(EAX, [EDX, ' 1?'])  //MOV EAX, DWORD PTR DS:[EDX + const] ; const is either 14 or 18
 		;
 	}
-	
-	code += PUSH(' [011.0.0.]');	//PUSH 64 or 71
-	
+
+	code += PUSH(' [011.0.0.]');    //PUSH 64 or 71
+
 	if (Exe.Version < 9.0 || Exe.BuildDate > 20150000)
 	{
 		if (Exe.Version < 14.0)
-			code += MOV(ECX, EAX);	//MOV ECX, EAX
-		
-		code += CALL([EDX, ' 1?']);	//CALL DWORD PTR DS:[EDX + const] ; const is either 14 or 18
+			code += MOV(ECX, EAX);  //MOV ECX, EAX
+
+		code += CALL([EDX, ' 1?']); //CALL DWORD PTR DS:[EDX + const] ; const is either 14 or 18
 	}
 	else
 	{
-		code += CALL(EAX);			//CALL EAX
+		code += CALL(EAX);          //CALL EAX
 	}
-	
+
 	let addr2 = Exe.FindHex(prefix + code, addr, addr + 0x50);
 	if (addr2 < 0)
 		throw Error("GetGameMode CALL missing");
-	
+
 	/// 1.4 - Extract the necessary data
 	let gModeMgr = Exe.GetUint32(addr2 + 1);
 	let GetGameMode = Exe.GetTgtAddr(addr2 + 6);
-	
+
 	let suffix = Exe.GetHex(addr2 + prefix.byteCount(), code.byteCount());
-	
+
 	/// 2.1 - Construct the common code for new & old clients.
-	let part2 = CMP(R32, -1);		//CMP reg32_A, -1
-		
+	let part2 = CMP(R32, -1);      //CMP reg32_A, -1
+
 	if (Exe.BuildDate > 20101116 && Exe.BuildDate < 20141020)
-		part2 += JE(POS1WC);		//JE addr1 or
+		part2 += JE(POS1WC);       //JE addr1 or
 	else
-		part2 += JZ(WCp);			//JZ SHORT addr1
-	
+		part2 += JZ(WCp);          //JZ SHORT addr1
+
 	part2 +=
-		PUSH(R32)					//PUSH reg32_A
-	+	MOV(ECX, R32)				//MOV ECX, reg32_B
-	+	CALL(ALLWC)					//CALL UIWindowMgr::DeleteWindow
+		PUSH(R32)                  //PUSH reg32_A
+	+	MOV(ECX, R32)              //MOV ECX, reg32_B
+	+	CALL(ALLWC)                //CALL UIWindowMgr::DeleteWindow
 	;
-	
+
 	let dwinOffset = part2.byteCount() - 4;
-	
+
 	part2 += Exe.BuildDate <= 20120222 ?
-		TEST(AL, AL)			 	//TEST AL, AL  or
+		TEST(AL, AL)               //TEST AL, AL  or
 	:
-		CMP(AL, 1)					//CMP AL, 1
+		CMP(AL, 1)                 //CMP AL, 1
 	;
-	
+
 	/// 2.2 - Search for the Esc Key check inside UIWindowMgr::ProcessPushButton
 	let part1, funcOffset;
 	if (Exe.Version > 11.0) //VC14.16
 	{
 		part1 =
-			PUSH(R32)				//PUSH reg32_A
-		+	MOV(ECX, POS4WC)		//MOV ECX, OFFSET addr
-		+	CALL(ALLWC)				//CALL unknownFunc <-- patch here
+			PUSH(R32)              //PUSH reg32_A
+		+	MOV(ECX, POS4WC)       //MOV ECX, OFFSET addr
+		+	CALL(ALLWC)            //CALL unknownFunc <-- patch here
 		;
 		funcOffset = part1.byteCount() - 4;
-		
+
 		part1 +=
-			MOV(ECX, EAX)			//MOV ECX, EAX
-		+	TEST(ECX, ECX)			//TEST ECX, ECX
-		+	JE(WCp)					//JE SHORT addr
+			MOV(ECX, EAX)          //MOV ECX, EAX
+		+	TEST(ECX, ECX)         //TEST ECX, ECX
+		+	JE(WCp)                //JE SHORT addr
 		;
 		addr = Exe.FindHex(part1);
 	}
 	else
 	{
 		part1 =
-			PUSH(R32)				//PUSH reg32_A
-		+	MOV(ECX, R32)			//MOV ECX, reg32_B
-		+	CALL(ALLWC)				//CALL UIWindowMgr::check_close <-- patch here
+			PUSH(R32)              //PUSH reg32_A
+		+	MOV(ECX, R32)          //MOV ECX, reg32_B
+		+	CALL(ALLWC)            //CALL UIWindowMgr::check_close <-- patch here
 		;
 		funcOffset = part1.byteCount() - 4;
-		
+
 		if (Exe.Version > 6.0)
 		{
 			part1 +=
-				TEST(AL, AL)		//TEST AL, AL
-			+	JNZ(POS2WC)			//JNZ addr2
+				TEST(AL, AL)       //TEST AL, AL
+			+	JNZ(POS2WC)        //JNZ addr2
 			;
 		}
-		
+
 		addr = Exe.FindHex(part1 + part2); //need both for unique identification
 	}
 	if (addr < 0)
 		throw Error("Esc key check not found");
-	
+
 	/// 2.3 - Extract the necessary stuff
 	let FirstFunc = Exe.GetTgtAddr(addr + funcOffset); //VIRTUAL address of the first function (check_close or unknownFunc)
 	let MovECX    = Instr.FromAddr(addr + 1).toString(); //MOV ECX, *
 	let hookLoc   = addr + funcOffset - 1; //CALL location
 	let retnVir   = Exe.Phy2Vir(addr + funcOffset + 4); //VIRTUAL address of location after the CALL
-	
+
 	/// 2.4 - Position addr after part1
 	addr += part1.byteCount();
-	
+
 	let jmpVir;
 	if (Exe.Version > 11.0)
 	{
@@ -184,7 +185,7 @@ CloseCutinOnEsc = function()
 		addr = Exe.FindHex(part2, addr, addr + 0x100);
 		if (addr < 0)
 			throw Error("DeleteWindow CALL missing");
-		
+
 		/// 2.6 - Save the address as Jump address
 		jmpVir = Exe.Phy2Vir(addr, CODE);
 	}
@@ -193,71 +194,73 @@ CloseCutinOnEsc = function()
 		/// 2.7 - For VC11 and older retnVir is jmpVir
 		jmpVir = retnVir;
 	}
-	
+
 	/// 2.8 - Extract the necessary stuff
 	let DeleteWindow = Exe.GetTgtAddr(addr + dwinOffset); //VIRTUAL address of DeleteWindow
 	let MovECX_dw = Exe.GetHex(addr + dwinOffset - 3, 2); //The MOV ECX statement before the CALL
-	
+
 	/// 3.1 - Prepare our code
 	code =
-		PUSH(78)				//PUSH 78 ; window id
-	+	MovECX_dw				//MOV ECX, reg32_B
-	+	CALL(MakeFiller(1))		//CALL UIWindowMgr::DeleteWindow
+		PUSH(78)             //PUSH 78 ; window id
+	+	MovECX_dw            //MOV ECX, reg32_B
+	+	CALL(MakeFiller(1))  //CALL UIWindowMgr::DeleteWindow
 	;
 	let offsetDW = code.byteCount();
-	
+
 	code +=
-		CMP(AL, 0)				//CMP AL, 0
-	+	JNZ(0xC)				//JNZ SHORT addr1
-	+	MovECX					//MOV ECX, reg32_A or MOV ECX, OFFSET addr
-	+	PUSH(retnVir)			//PUSH retnVir
-	+	JMP(MakeFiller(2))		//JMP UIWindowMgr::check_close or unknownFunc; equivalent to CALL intended for return to retnVir
+		CMP(AL, 0)           //CMP AL, 0
+	+	JNZ(0xC)             //JNZ SHORT addr1
+	+	MovECX               //MOV ECX, reg32_A or MOV ECX, OFFSET addr
+	+	PUSH(retnVir)        //PUSH retnVir
+	+	JMP(MakeFiller(2))   //JMP UIWindowMgr::check_close or unknownFunc; equivalent to CALL intended for return to retnVir
 	;
 	let offsetFF = code.byteCount();
-	
+
 	code +=
-	 	PUSH(EDX)				//PUSH EDX
-	+	MOV(ECX, gModeMgr)		//MOV ECX, OFFSET g_modeMgr
-	+	CALL(MakeFiller(3))		//CALL CModeMgr::GetGameMode
+		PUSH(EDX)            //PUSH EDX
+	+	MOV(ECX, gModeMgr)   //MOV ECX, OFFSET g_modeMgr
+	+	CALL(MakeFiller(3))  //CALL CModeMgr::GetGameMode
 	;
 	let offsetGGM = code.byteCount();
-	
+
 	code +=
-		MOV(EDX, [EAX])			//MOV EDX, DWORD PTR DS:[EAX]
-	+	suffix					//combinations of 
-								//PUSH 0
-								//PUSH 0 or 1 (for newer clients)
-								//PUSH -1
-								//PUSH OFFSET EmptyStr
-								//PUSH 64 or 71
-								//MOV ECX, EAX
-								//CALL DWORD PTR DS:[EDX + const] or MOV reg32_A, DWORD PTR DS:[EDX + const] ; const is either 14 or 18
-								//CALL reg32_A
-	+	POP(EDX)				//POP EDX
-	+	POP(ECX)				//POP ECX
-	+	POP(EAX)				//POP EAX
-	+	JMP(MakeFiller(4))		//JMP jmpVir
+		MOV(EDX, [EAX])      //MOV EDX, DWORD PTR DS:[EAX]
+	+	suffix               //combinations of 
+		                     //PUSH 0
+		                     //PUSH 0 or 1 (for newer clients)
+		                     //PUSH -1
+		                     //PUSH OFFSET EmptyStr
+		                     //PUSH 64 or 71
+		                     //MOV ECX, EAX
+		                     //CALL DWORD PTR DS:[EDX + const] or MOV reg32_A, DWORD PTR DS:[EDX + const] ; const is either 14 or 18
+		                     //CALL reg32_A
+	+	POP(EDX)             //POP EDX
+	+	POP(ECX)             //POP ECX
+	+	POP(EAX)             //POP EAX
+	+	JMP(MakeFiller(4))   //JMP jmpVir
 	;
 	let csize = code.byteCount();
-	
+
 	/// 3.2 - Allocate space for the code
 	let free = Exe.FindSpace(csize, 0x10);
 	if (free < 0)
 		throw NO_ALLOC;
-	
+
 	/// 3.3 - Fill in the blanks
 	let freeVir = Exe.Phy2Vir(free, DIFF);
-	
-	code = SwapFiller(code, 1, DeleteWindow - (freeVir + offsetDW));
-	code = SwapFiller(code, 2, FirstFunc - (freeVir + offsetFF));
-	code = SwapFiller(code, 3, GetGameMode - (freeVir + offsetGGM));
-	code = SwapFiller(code, 4, jmpVir - (freeVir + csize));
-	
+
+	code = SwapFillers(code, {
+		1: DeleteWindow - (freeVir + offsetDW),
+		2: FirstFunc - (freeVir + offsetFF),
+		3: GetGameMode - (freeVir + offsetGGM),
+		4: jmpVir - (freeVir + csize)
+	);
+
 	/// 3.4 - Add the code at the allocated space
 	Exe.AddHex(free, code);
-	
+
 	/// 3.5 - Change the check_close CALL into JMP to the code above
 	Exe.SetJMP(hookLoc, freeVir);
-	
+
 	return true;
 };

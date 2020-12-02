@@ -1,6 +1,6 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) 2020 Neo Mind                                            #
+#   Copyright (C) ?-2020 *Various authors*                                 #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-11-24                                             #
+#   Last Modified : 2020-12-02                                             #
 #                                                                          #
 ############################################################################
 
@@ -75,19 +75,19 @@ groups:
             - Zoom150Percent:
                 title : Increase Zoom Out (150%)
                 recommend : no
-                author : Shinryo & 4144
+                author : Shinryo & Andrei Karas (4144)
                 desc : Increases the zoom-out range by 50 percent.
             
             - Zoom175Percent:
                 title : Increase Zoom Out (175%)
                 recommend : no
-                author : Shinryo & 4144
+                author : Shinryo & Andrei Karas (4144)
                 desc : Increases the zoom-out range by 75 percent.
             
             - ZoomMax:
                 title : Increase Zoom Out (Maximum)
                 recommend : no
-                author : Shinryo & 4144
+                author : Shinryo & Andrei Karas (4144)
                 desc : Maximizes the zoom-out range.
     
     - EnableIcon:
@@ -219,7 +219,7 @@ groups:
             - UseOldLogin:
                 title : Use Old Login Packet
                 recommend : no
-                author : Ai4rei/AN & 4144
+                author : Ai4rei/AN & Andrei Karas (4144)
                 desc : Enable the old login packet (0x64) used for Login Window. Intended for new clients which cannot restore the login window anymore.
     
     - CashShopVis:
@@ -254,13 +254,13 @@ groups:
             - ZeroCinShop:
                 title : Enforce 0 C in Cash Shop
                 recommend : no
-                author : 4144
+                author : Andrei Karas (4144)
                 desc : Enforce the <b>C</b> field to use 0 instead of random values in cash shop.
             
             - DefShopBrowser:
                 title : Use Default Web Browser In Cash Shop
                 recommend : no
-                author : Jchcc
+                author : CH.C (jchcc)
                 desc : Open URL in the cashshop window with default web browser instead of IExplore.
     
     
@@ -672,7 +672,7 @@ groups:
             - IgnoreRsrcErr:
                 title : Ignore Missing Resource Errors
                 recommend : no
-                author : Shinryo & 4144
+                author : Shinryo & Andrei Karas (4144)
                 desc : Prevents the client from displaying a variety of Error messages (but not all of them) including missing files. This does not guarantee the client will work in-spite of missing files.
             
             - IgnorePalErr:
@@ -684,7 +684,7 @@ groups:
             - IgnoreLuaErr:
                 title : Ignore Missing Lua Errors
                 recommend : no
-                author : 4144
+                author : Andrei Karas (4144) & X-EcutiOnner
                 desc : Prevents the client from displaying a error messages from lua code like 'attempt to call nil value'.
     
     - ClientArgs:
@@ -792,7 +792,7 @@ groups:
             - NoCDefender:
                 title : Disable Cheat Defender Game Guard
                 recommend : yes
-                author : 4144
+                author : Andrei Karas (4144) & X-EcutiOnner
                 desc : Disables Cheat Defender Game Guard from new clients.
     
     - ReturnToLogin:
@@ -803,13 +803,13 @@ groups:
             - DisConnToLogin:
                 title : Disconnect to Login Window
                 recommend : no
-                author : Neo-Mind & 4144
+                author : Neo-Mind & Andrei Karas (4144)
                 desc : Make the client return to Login Window upon disconnection.
             
             - CancelToLogin:
                 title : Cancel to Login Window
                 recommend : yes
-                author : Neo-Mind & 4144
+                author : Neo-Mind & Andrei Karas (4144)
                 desc : Makes the Cancel button in Character selection window return to login window instead of Quitting.
     
     - DisableEffect:
@@ -877,13 +877,13 @@ groups:
             - ResizePlayerBar:
                 title : Resize Player HP/SP Bar
                 recommend : no
-                author : Jchcc & Neo-Mind
+                author : CH.C (jchcc) & Neo-Mind
                 desc : Resize the HP/SP bar drawn under playing character as per user specified value.
             
             - ResizeBossBar:
                 title : Resize Boss Monster HP Bar
                 recommend : no
-                author : Jchcc & Neo-Mind
+                author : CH.C (jchcc) & Neo-Mind
                 desc : Resize the HP bar drawed under Boss monsters as per user specified value.
     
     - CustomAutoFollow:
@@ -900,7 +900,7 @@ groups:
             - DecrAFDelay:
                 title : Decrease Auto Follow delay
                 recommend : no
-                author : Jchcc
+                author : CH.C (jchcc)
                 desc : Decrease the auto follow delay to user specified value.
 
     - CustomUI:
@@ -984,19 +984,19 @@ groups:
             - CustomInventoryLimit:
                 title : Custom Inventory Limit
                 recommend : no
-                author : Jchcc & Neo-Mind
+                author : CH.C (jchcc) & Neo-Mind
                 desc : Change the Maximum no of items in inventory to user specified value.
             
             - CustomPartyLimit:
                 title : Custom Party Limit
                 recommend : no
-                author : Jchcc
+                author : CH.C (jchcc)
                 desc : Change the Maximum party value displayed on Alt+Z to user specified value.
             
             - InsensitiveStorageSearch:
                 title : Case-Insensitive Storage Search
                 recommend : no
-                author : Jchcc
+                author : CH.C (jchcc)
                 desc : Make the search in storage UI, case-insensitive.
             
             - DeleteCharWithEmail:
@@ -1026,7 +1026,7 @@ groups:
             - CloseCutinOnEsc:
                 title : Close cutin on Esc key
                 recommend : no
-                author : 4144 & Neo-Mind
+                author : Andrei Karas (4144) & Neo-Mind
                 desc : Allow closing of cutin window by pressing ESC key.
                 
             - EnableMailAccess:
@@ -1050,7 +1050,7 @@ groups:
             - CustomFadeDelay:
                 title : Custom fade in/out delay
                 recommend : no
-                author : 4144 & Neo-Mind
+                author : Andrei Karas (4144) & Neo-Mind
                 desc : Change fade in/out time in warps on same map.
             
             - RemoveBookingJobs:
@@ -1068,19 +1068,19 @@ groups:
             - RestoreChatFocus:
                 title : Restore chat focus
                 recommend : no
-                author : 4144
+                author : Andrei Karas (4144)
                 desc : Restore input focus from left mouse click. 
     
             - FixItemDescBug:
                 title : Fix item description bug
                 recommend : no
-                author : Jchcc
+                author : CH.C (jchcc)
                 desc : Fix item description '[' bug
     
             - CustomGuildExpLimit:
                 title : Change guild exp limit
                 recommend : no
-                author : 4144
+                author : Andrei Karas (4144)
                 desc : Change guild exp limit percent. Default value is 50%.
             
     - CustomData:
@@ -1122,7 +1122,7 @@ groups:
             - CallKoreaClientInfo:
                 title : Always Call SelectKoreaClientInfo()
                 recommend : yes
-                author : Shinryo
+                author : Shinryo & Secret
                 desc : Ensures SelectKoreaClientInfo() is called along with SelectClientInfo() allowing you to use features that would be only visible on Korean Service Type.
             
             - DataFolderFirst:
@@ -1140,7 +1140,7 @@ groups:
             - LoadKrExtSettings:
                 title : Always load Korea ExternalSettings lua file
                 recommend : no
-                author : Secret & 4144
+                author : Secret, Andrei Karas (4144) & X-EcutiOnner
                 desc : Makes the client load Korea server's ExternalSettings file for all langtypes.
             
             - IncrViewID:
@@ -1182,13 +1182,13 @@ groups:
             - UseStateLubIcon:
                 title : Use Icons from stateiconimginfo.lub
                 recommend : no
-                author : Jchcc
+                author : CH.C (jchcc)
                 desc : Disable hardcoded status icons and read them only from stateiconimginfo.lub.
             
             - FixActDelay:
                 title : Fix Act Delay
                 recommend : no
-                author : Functor & 4144
+                author : Functor & Andrei Karas (4144)
                 desc : Fix act delay for act files with big amount of frames.
             
             - CustomDLL:
@@ -1242,13 +1242,13 @@ groups:
             - AllowPL2Leave:
                 title : Allow Party Leader to leave
                 recommend : no
-                author : 4144
+                author : Andrei Karas (4144)
                 desc : Allow leader to leave the party if no members are on map.
             
             - AllowSkillSpam:
                 title : Allow spam skills by hotkey
                 recommend : no
-                author : Functor & 4144
+                author : Functor & Andrei Karas (4144)
                 desc : Allow spamming of skills by continuous press of hotkey.
             
             - AllowGuildInClan:
@@ -1265,13 +1265,13 @@ groups:
             - NoEquipSwap:
                 title : Remove Equipment Swap Button
                 recommend : no
-                author : Functor & X-EcutiOnner
+                author : Functor, Andrei Karas (4144) & X-EcutiOnner
                 desc : Remove equipment swap button on the equipment window.
             
             - NoEquipTitleUI:
                 title : Remove Equipment Title UI
                 recommend : no
-                author : Jchcc & X-EcutiOnner
+                author : CH.C (jchcc), Andrei Karas (4144) & X-EcutiOnner
                 desc : Remove equipment title ui on the equipment window.
     
     - CustomEnv:
@@ -1294,13 +1294,13 @@ groups:
             - CustomMinResolution:
                 title : Custom minimum screen resolution
                 recommend : no
-                author : 4144
+                author : Andrei Karas (4144)
                 desc : Change minimum client resolution (width & height) to user specified values from default of 1024x768.
     
             - UseDefaultBrowser:
                 title : Use Default Browser for &lt;URL&gt;
                 recommend : no
-                author : Jchcc
+                author : CH.C (jchcc)
                 desc : Use default web browser to open &lt;URL&gt; instead of built-in ROWebBrowser.
     
     - CustomNW:
@@ -1324,7 +1324,7 @@ groups:
             - NoLoginOTP:
                 title : Disable OTP Login Packet
                 recommend : no
-                author : Jchcc
+                author : CH.C (jchcc)
                 desc : Disable OTP Login Packet, which causes connection issue after disconnect.
                 
             - EnableProxy:
@@ -1336,25 +1336,25 @@ groups:
             - CustomCharCreateId:
                 title : Custom job id in char create dialog
                 recommend : no
-                author : 4144
+                author : Andrei Karas (4144)
                 desc : Override selected job id in char creation packet with user specified value.
             
             - NoHardCodedIP:
                 title : Remove Hardcoded HTTP IP
                 recommend : no
-                author : Jchcc
+                author : CH.C (jchcc)
                 desc : Remove hardcoded HTTP service ip address to prevent client from sending HTTP request to official server.
                 
             - NoHardCodedAddr:
                 title : Remove hardcoded address/port
                 recommend : yes
-                author :  4144
+                author :  Andrei Karas (4144)
                 desc : Remove hardcoded connection addresses and ports.
             
             - EnableHttpEmblem:
                 title : Enable HTTP Emblem in Client
                 recommend : no
-                author : Jchcc
+                author : CH.C (jchcc)
                 desc : Enable HTTP Emblem on RO client, HTTP service is required.
                 
             - NoGNJoyLaunch:

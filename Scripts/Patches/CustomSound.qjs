@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 CH.C (jchcc)                                        *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +20,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : jchcc                                                  *
+*   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2020-12-01                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,30 +31,30 @@
 ///
 Enable44kHzAudio = function()
 {
-    /// 1 - Find the code assigning the sampling frequency
-    let code =
-		MOV([ESI, POS2WC], 8000)	//MOV DWORD PTR DS:[ESI+CSoundMgr.digitalrate], 1F40
-	+	JMP(0x16)					//JMP SHORT loc_4656C2
-	+	MOV([ESI, POS2WC], 11025)	//MOV DWORD PTR DS:[ESI+CSoundMgr.digitalrate], 2B11
-	+	JMP(0x0A)					//JMP SHORT loc_4656C2
-	+	MOV([ESI, POS2WC], 22050)	//MOV DWORD PTR DS:[ESI+CSoundMgr.digitalrate], 5622
+	/// 1 - Find the code assigning the sampling frequency
+	let code =
+		MOV([ESI, POS2WC], 8000)  //MOV DWORD PTR DS:[ESI+CSoundMgr.digitalrate], 1F40
+	+	JMP(0x16)                 //JMP SHORT loc_4656C2
+	+	MOV([ESI, POS2WC], 11025) //MOV DWORD PTR DS:[ESI+CSoundMgr.digitalrate], 2B11
+	+	JMP(0x0A)                 //JMP SHORT loc_4656C2
+	+	MOV([ESI, POS2WC], 22050) //MOV DWORD PTR DS:[ESI+CSoundMgr.digitalrate], 5622
 	;
-    let addr = Exe.FindHex(code);
-    if (addr < 0)
-        throw Error("Frequency assignment missing");
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("Frequency assignment missing");
 
 	/*
-    let digitalRateOffsets = [[2, 4], [14, 4], [26, 4]];
-    for (let i = 0; i < digitalRateOffsets.length; i++)
-    {
-        logField("CSoundMgr::digitalrate", addr, digitalRateOffsets[i]);
-    }
+	let digitalRateOffsets = [[2, 4], [14, 4], [26, 4]];
+	for (let i = 0; i < digitalRateOffsets.length; i++)
+	{
+		logField("CSoundMgr::digitalrate", addr, digitalRateOffsets[i]);
+	}
 	*/
 
-    /// 2 - Change 22050 to 44100
+	/// 2 - Change 22050 to 44100
 	Exe.SetInt32(addr + code.byteCount() - 4, 44100);
 
-    return true;
+	return true;
 };
 
 ///
@@ -64,44 +64,44 @@ AutoMute = function()
 {
 	/// 1.1 - Find the reference code to retrieve Audio specific functions & global values.
 	let prefix =
-		PUSH(POS3WC)		//PUSH OFFSET addr; ASCII "Bgm_Volume"
+		PUSH(POS3WC)        //PUSH OFFSET addr; ASCII "Bgm_Volume"
 	;
-	
+
 	let suffix =
-		CALL(ALLWC)			//CALL CSession::GetOptionValue
-	+	PUSH_EAX			//PUSH EAX
-	+	MOV(ECX, ESI)		//MOV ECX, ESI
+		CALL(ALLWC)         //CALL CSession::GetOptionValue
+	+	PUSH_EAX            //PUSH EAX
+	+	MOV(ECX, ESI)       //MOV ECX, ESI
 	;
-	
+
 	let offsetSSV = suffix.byteCount() + 1;
-	
+
 	suffix +=
-	 	CALL(ALLWC)			//CALL CSession::SetStreamVol
-	+	MOV(ESI, [POS3WC])	//MOV ESI, DWORD PTR DS:[g_soundMgr]
-	+	MOV(ECX, ESI)		//MOV ECX, ESI
-	+	CALL(ALLWC)			//CALL CSoundMgr::GetStreamVolume
-	+	PUSH_EAX			//PUSH EAX
-	+	MOV(ECX, ESI)		//MOV ECX, ESI
-	+	CALL(ALLWC)			//CALL CSoundMgr::SetStreamVol2
-	+	MOV(ECX, [POS3WC])	//MOV ECX, DWORD PTR DS:[g_soundMgr]
-	+	PUSH(EDI)			//PUSH EDI
+	 	CALL(ALLWC)         //CALL CSession::SetStreamVol
+	+	MOV(ESI, [POS3WC])  //MOV ESI, DWORD PTR DS:[g_soundMgr]
+	+	MOV(ECX, ESI)       //MOV ECX, ESI
+	+	CALL(ALLWC)         //CALL CSoundMgr::GetStreamVolume
+	+	PUSH_EAX            //PUSH EAX
+	+	MOV(ECX, ESI)       //MOV ECX, ESI
+	+	CALL(ALLWC)         //CALL CSoundMgr::SetStreamVol2
+	+	MOV(ECX, [POS3WC])  //MOV ECX, DWORD PTR DS:[g_soundMgr]
+	+	PUSH(EDI)           //PUSH EDI
 	;
-	
+
 	let offsetS2D = suffix.byteCount() + 1;
 	let offsetGSM = offsetS2D + 4;
-	
+
 	suffix +=
-		CALL(ALLWC)			//CALL CSoundMgr::Set2DEffectVolume
-	+	MOV(ECX, [POS3WC])	//MOV ECX, DWORD PTR DS:[g_soundMgr]
-	+	PUSH(EDI)			//PUSH EDI
+		CALL(ALLWC)         //CALL CSoundMgr::Set2DEffectVolume
+	+	MOV(ECX, [POS3WC])  //MOV ECX, DWORD PTR DS:[g_soundMgr]
+	+	PUSH(EDI)           //PUSH EDI
 	;
-	
+
 	let offsetS3D = suffix.byteCount() + 1;
-	
+
 	suffix +=
-		CALL(ALLWC)			//CALL CSoundMgr::Set3DEffectVolume
+		CALL(ALLWC)         //CALL CSoundMgr::Set3DEffectVolume
 	;
-	
+
 	/*
 	let GetOptionValueOffset = 6;
 	let SetStreamVolOffset = 14;
@@ -111,15 +111,15 @@ AutoMute = function()
 	let Set3DEffectVolumeOffset = 59;
 	let soundMgrOffsets = [20, 41, 53];
 	*/
-	
+
 	let addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 	{
 		prefix +=
-			MOV(ECX, EBX)	//MOV ECX, EBX
-		+   MOV(EDI, EAX)	//MOV EDI, EAX
+			MOV(ECX, EBX)   //MOV ECX, EBX
+		+	MOV(EDI, EAX)   //MOV EDI, EAX
 		;
-		
+
 		/*
         GetOptionValueOffset = 10;
         SetStreamVolOffset = 18;
@@ -142,7 +142,7 @@ AutoMute = function()
 	logRawFunc("CSoundMgr::SetStreamVol2", addr, SetStreamVol2Offset);
 	logRawFunc("CSoundMgr::Set2DEffectVolume", addr, Set2DEffectVolumeOffset);
 	logRawFunc("CSoundMgr::Set3DEffectVolume", addr, Set3DEffectVolumeOffset);
-	
+
 	for (let i = 0; i < soundMgrOffsets.length; i++)
 	{
 		logVaVar("g_soundMgr", addr, soundMgrOffsets[i]);
@@ -151,7 +151,7 @@ AutoMute = function()
 
 	/// 1.2 - Extract all required values
 	addr += prefix.byteCount();
-	
+
 	let MovMgr = Exe.GetHex(addr + offsetGSM, 6);
 	let SetStreamVol = Exe.GetTgtAddr(addr + offsetSSV);
 	let Set2DEffectVol = Exe.GetTgtAddr(addr + offsetS2D);
@@ -159,28 +159,28 @@ AutoMute = function()
 
 	/// 2.1 - Find the CGameMode::OnUpdate function
     let parts = [
-		TEST(EAX, EAX)			//TEST EAX, EAX
-	+	JNZ(0x1A)				//JNZ SHORT loc_9DBA59
-	+	MOV(ECX, [POS3WC])		//MOV ECX, DWORD PTR DS:[g_WindowMgr.m_UIReplayControlWnd]
-	+	PUSH_0					//PUSH 0
+		TEST(EAX, EAX)       //TEST EAX, EAX
+	+	JNZ(0x1A)            //JNZ SHORT loc_9DBA59
+	+	MOV(ECX, [POS3WC])   //MOV ECX, DWORD PTR DS:[g_WindowMgr.m_UIReplayControlWnd]
+	+	PUSH_0               //PUSH 0
 	,
-		PUSH_0					//PUSH 0
-	+	PUSH_0					//PUSH 0
+		PUSH_0               //PUSH 0
+	+	PUSH_0               //PUSH 0
 	,
-		MOV(EAX, [ECX])			//MOV EAX, DWORD PTR DS:[ECX]
+		MOV(EAX, [ECX])      //MOV EAX, DWORD PTR DS:[ECX]
 	,
-		PUSH_0					//PUSH 0
-	+	PUSH(0x23)				//PUSH 23
-	+	PUSH_0					//PUSH 0
-	+	CALL([EAX, POS2WC])		//CALL DWORD PTR DS:[EAX + UIReplayControlWnd_vtable.UIReplayControlWnd_SendMsg]
+		PUSH_0               //PUSH 0
+	+	PUSH(0x23)           //PUSH 23
+	+	PUSH_0               //PUSH 0
+	+	CALL([EAX, POS2WC])  //CALL DWORD PTR DS:[EAX + UIReplayControlWnd_vtable.UIReplayControlWnd_SendMsg]
 	];
 	addr = Exe.FindHex(parts.join(''));
-	
+
 	/*
     let UIReplayControlWndOffset = [6, 4];
     let SendMsgOffset = [26, 4];
 	*/
-	
+
 	if (addr < 0) //try shifting the MOV EAX instruction upwards.
 	{
 		[parts[1], parts[2]] = [parts[2], parts[1]];
@@ -196,16 +196,16 @@ AutoMute = function()
 
 	/// 2.2 - Find the g_Weather assignment after it
     let code =
-		CALL(ALLWC)			//CALL UIWindowMgr::InvalidateAll
-	+	MOV(ECX, POS4WC)	//MOV ECX, OFFSET g_Weather <--Need to issue CALL from here to our code
-	+	CALL(ALLWC)			//CALL CWeather::Process
-	+	CMP([POS4WC], 0)	//CMP DWORD PTR DS:[g_isAppActive], 0
-	+	JNZ(0xD)			//JNZ SHORT loc_9DBE78
-	+	CMP([POS4WC], 0)	//CMP DWORD PTR DS:[g_3dDevice.m_bIsFullscreen], 0
-	+	JNZ()				//JNZ loc_9DC24D
+		CALL(ALLWC)      //CALL UIWindowMgr::InvalidateAll
+	+	MOV(ECX, POS4WC) //MOV ECX, OFFSET g_Weather <--Need to issue CALL from here to our code
+	+	CALL(ALLWC)      //CALL CWeather::Process
+	+	CMP([POS4WC], 0) //CMP DWORD PTR DS:[g_isAppActive], 0
+	+	JNZ(0xD)         //JNZ SHORT loc_9DBE78
+	+	CMP([POS4WC], 0) //CMP DWORD PTR DS:[g_3dDevice.m_bIsFullscreen], 0
+	+	JNZ()            //JNZ loc_9DC24D
 	;
 	addr = Exe.FindHex(code, addr, addr + 0x500);
-	
+
 	/*
 	let jmpOffset = 5;
 	let UIWindowMgr_InvalidateAllOffset = 1;
@@ -217,7 +217,7 @@ AutoMute = function()
 
 	if (addr < 0)
 		throw Error("g_Weather not assigned");
-		
+
 	/*
 	logRawFunc("UIWindowMgr::InvalidateAll", addr, UIWindowMgr_InvalidateAllOffset);
 	logVaVar("g_Weather", addr, g_WeatherOffset);
@@ -228,7 +228,7 @@ AutoMute = function()
 
 	/// 2.3 - Save the location of the MOV ECX
 	let hookAddr = addr + 5;
-	
+
 	/// 3.1 - Find the GetActiveWindow function
 	let GetActiveWindow = Exe.FindFunc("GetActiveWindow", "User32.dll");
 	if (GetActiveWindow < 0)
@@ -236,7 +236,7 @@ AutoMute = function()
 
 	/// 3.2 - Prepare our function code
 	code =
-		CALL(EDI)					//CALL EDI (timeGetTime)
+		CALL(EDI)                   //CALL EDI (timeGetTime)
 	+	CMP(EAX, [MakeFiller(1)])   //CMP EAX, DWORD PTR DS:[lastCheck]
 	+	JL(0x9A)                    //JL addr1
 	+	ADD(EAX, 500)               //ADD EAX, 1F4 (500)
@@ -276,7 +276,7 @@ AutoMute = function()
 	+	Exe.GetHex(hookAddr, 6)     //MOV ECX, OFFSET g_Weather
 	+	RETN()                      //RETN
 	;
-	
+
 	/// 3.2 - Prepare the initial values for the extra addresses we are using in the code
 	let buffer =
 		" 00 00 00 00" //lastCheck
@@ -293,14 +293,14 @@ AutoMute = function()
 
 	/// 3.4 - Fill in the blanks
 	let freeVir = Exe.Phy2Vir(free, DIFF);
-	
+
 	code = SwapFillers(code, {
 		//All the extra addresses
 		 1: freeVir,
 		 2: freeVir + 4,
 		 3: freeVir + 8,
 		 4: freeVir + 0xC,
-	
+
 		//Now all the CALLs
 		 5: Set2DEffectVol - (freeVir + 16 +  99 + 5),
 		15: Set2DEffectVol - (freeVir + 16 + 149 + 5),
@@ -309,12 +309,12 @@ AutoMute = function()
 		 7: SetStreamVol - (freeVir + 16 + 121 + 5),
 		17: SetStreamVol - (freeVir + 16 + 163 + 5),
 	});
-	
+
 	/// 3.5 - Add the code at allocated space 
 	Exe.AddHex(free, buffer + code, size);
-	
+
 	/// 3.6 - Create the CALL at hookAddr
 	Exe.SetCALL(hookAddr, freeVir + 16);
-	
+
 	return true;
 };
