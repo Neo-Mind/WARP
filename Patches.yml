@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-12-02                                             #
+#   Last Modified : 2020-12-04                                             #
 #                                                                          #
 ############################################################################
 
@@ -34,7 +34,7 @@ groups:
         patches:     
             - UnlimitedChatRepeat:
                 title : Allow unlimited chat repeat
-                recommend : yes
+                recommend : no
                 author : Neo-Mind
                 desc : Remove the clientside limitation for maximum repeated lines.
             
@@ -426,7 +426,7 @@ groups:
         patches:
             - NoCharnameLimit:
                 title : Remove 4 Letter Character Name Limit
-                recommend : yes
+                recommend : no
                 author : Shinryo
                 desc : Will allow people to use character names shorter than 4 letters.
             
@@ -1317,7 +1317,7 @@ groups:
             
             - NoNagle:
                 title : Disable Nagle Algorithm
-                recommend : no
+                recommend : yes
                 author : Shinryo
                 desc : Disables the Nagle Algorithm which queues packets before they are sent in order to minimize protocol overhead. Disabling the algorithm will slightly increase network traffic, but it will decrease latency as well.
             
