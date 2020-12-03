@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) ?-2020 Shinryo                                           *
+*   Copyright (C) ?-2015 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -35,10 +35,10 @@ NoGravityImages = function(suffix, idx, throwErr = true)
 	let addr = Exe.FindText("\\T_" + suffix + ".tga", PHYSICAL, false);
 	if (addr < 0 && throwErr)
 		throw Error("Suffix No." + idx + " not found");
-	
+
 	/// 2 - Change the 'T' to NULL
 	Exe.SetUint8(addr + 1, 0);
-	
+
 	return true;
 };
 
@@ -50,8 +50,8 @@ NoGravityAds = () =>
 	NoGravityImages("\xC1\xDF\xB7\xC2\xBC\xBA\xC0\xCE", 1, !ROC.IsZero); //\T_중력성인.tga
 	NoGravityImages("\xC5\xD7\xC0\xD4%d", 2);		               		 //\T_테입%d.tga
 	if (Exe.BuildDate > 20100000)
-		NoGravityImages("GameGrade", 3); 								 //\T_GameGrade.tga
-	
+		NoGravityImages("GameGrade", 3);         						 //\T_GameGrade.tga
+
 	return true;
 };
 

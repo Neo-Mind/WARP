@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2015 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,85 +32,84 @@
 ///
 FixChatAt = function()
 {
-    if (Exe.Version >= 9.0)
-    {
-        /// 1.1 - Find the JZ after '@' check
-        let code =
-            JZ(4)                         //JZ SHORT POS2WC -> POP EDI below
-        +   MOV(BYTE_PTR, [R32, WC], 0)   //MOV BYTE PTR DS:[reg32_A+const], 0 ; <- this is the return value we need to change
-        +   POP(EDI)                      //POP EDI
-        +   POP(ESI)                      //POP ESI
-        ;
-        let addr = Exe.FindHex(code);
-        if (addr < 0)
-            throw Error("'@' check not found");
-        
-        /**==============================================
-           Note: The above will be followed by MOV AL,1 
-                 and POP EBP/EBX statements
-        ==============================================**/
-        
-        /// 1.2 - Change 0 to 1 in MOV BYTE PTR
-        Exe.SetUint8(addr + 5, 1);
-    }
-    else
-    {
-        /// 2.1 - Find the CALL inside UIWindowMgr::ProcessPushButton
-        let code =
-            MOV(ECX, ESI)            //MOV ECX, ESI
-        +   CALL(POS2WC)             //CALL func <- this is what we need to hijack
-        +   TEST(AL, AL)             //TEST AL, AL
-        +   JZ(WCp)                  //JZ SHORT POS2WC
-        +   MOV(R32, [ESI, POS2WC])  //MOV reg32_A, DWORD PTR DS:[ESI+const]
-        ;
-        let addr = Exe.FindHex(code);
-        if (addr < 0)
-            throw Error("Function CALL not found");
+	if (Exe.Version >= 9.0)
+	{
+		/// 1.1 - Find the JZ after '@' check
+		let code =
+			JZ(4)                        //JZ SHORT POS2WC -> POP EDI below
+		+	MOV(BYTE_PTR, [R32, WC], 0)  //MOV BYTE PTR DS:[reg32_A+const], 0 ; <- this is the return value we need to change
+		+	POP(EDI)                     //POP EDI
+		+	POP(ESI)                     //POP ESI
+		;
+		let addr = Exe.FindHex(code);
+		if (addr < 0)
+			throw Error("'@' check not found");
 
-        /// 2.2 - Extract the called address (VIRTUAL).
-        let func = Exe.GetTgtAddr(addr + 3);
+		/**==============================================
+		Note: The above will be followed by MOV AL,1 
+				and POP EBP/EBX statements
+		==============================================**/
 
-        /// 2.3 - Get essential addresses for our function
-        let GetAKS = Exe.FindFunc("GetAsyncKeyState", "USER32.dll");
-        if (GetAKS < 0)
-            throw Error("GetAsyncKeyState not found");
-        
-        /// 3.1 - Construct our new function
-        code =
-            PUSHAD                                //PUSHAD
-        +   MOVZX(EAX, BYTE_PTR, [ECX, 0x2C])     //MOVZX EAX, BYTE PTR DS:[ECX+2C]
-        +   TEST(EAX, EAX)                        //TEST EAX, EAX
-        +   JE(0x1C)                              //JE SHORT addr1
-        +   MOV(ESI, [GetAKS])                    //MOV ESI, DWORD PTR DS:[<&USER32.GetAsyncKeyState>]
-        +   PUSH(0x12)                            //PUSH 12 ;       VirtualKey = VK_ALT
-        +   CALL(ESI)                             //CALL ESI ;     [<&USER32.GetAsyncKeyState>]
-        +   TEST(EAX, EAX)                        //TEST EAX, EAX
-        +   JE(0x0E)                              //JE SHORT addr1
-        +   PUSH(0x11)                            //PUSH 11 ;       VirtualKey = VK_CONTROL
-        +   CALL(ESI)                             //CALL ESI ;     [<&USER32.GetAsyncKeyState>]
-        +   TEST(EAX, EAX)                        //TEST EAX, EAX
-        +   JE(6)                                 //JE SHORT addr1
-        +   POPAD                                 //POPAD
-        +   XOR(EAX, EAX)                         //XOR EAX,EAX
-        +   RETN(4)                               //RETN 4
-        +   POPAD                                 //POPAD <- addr1
-        +   PUSH(func)                            //PUSH func
-        +   RETN()                                //RETN; Alternative to "JMP func" with no relative addr calculation needed
-        ;
-        let csize = code.byteCount();
+		/// 1.2 - Change 0 to 1 in MOV BYTE PTR
+		Exe.SetUint8(addr + 5, 1);
+	}
+	else
+	{
+		/// 2.1 - Find the CALL inside UIWindowMgr::ProcessPushButton
+		let code =
+			MOV(ECX, ESI)            //MOV ECX, ESI
+		+	CALL(POS2WC)             //CALL func <- this is what we need to hijack
+		+	TEST(AL, AL)             //TEST AL, AL
+		+	JZ(WCp)                  //JZ SHORT POS2WC
+		+	MOV(R32, [ESI, POS2WC])  //MOV reg32_A, DWORD PTR DS:[ESI+const]
+		;
+		let addr = Exe.FindHex(code);
+		if (addr < 0)
+			throw Error("Function CALL not found");
 
-        /// 3.2 - Allocate space for adding our function
-        let free = Exe.FindSpace(csize);
-        if (free < 0)
-            throw NO_ALLOC;
+		/// 2.2 - Extract the called address (VIRTUAL).
+		let func = Exe.GetTgtAddr(addr + 3);
 
-        /// 3.3 - Add our function there
-        Exe.AddHex(free, code, csize);
-        
-        /// 3.4 - Change the CALLed address from func to our function.
-        Exe.SetTgtAddr(addr + 3, free, PHYSICAL);
-    }
-    return true;
+		/// 2.3 - Get essential addresses for our function
+		let GetAKS = Exe.FindFunc("GetAsyncKeyState", "USER32.dll");
+		if (GetAKS < 0)
+			throw Error("GetAsyncKeyState not found");
+
+		/// 3.1 - Construct our new function
+		code =
+			PUSHAD                             //PUSHAD
+		+	MOVZX(EAX, BYTE_PTR, [ECX, 0x2C])  //MOVZX EAX, BYTE PTR DS:[ECX+2C]
+		+	TEST(EAX, EAX)                     //TEST EAX, EAX
+		+	JE(0x1C)                           //JE SHORT addr1
+		+	MOV(ESI, [GetAKS])                 //MOV ESI, DWORD PTR DS:[<&USER32.GetAsyncKeyState>]
+		+	PUSH(0x12)                         //PUSH 12 ;       VirtualKey = VK_ALT
+		+	CALL(ESI)                          //CALL ESI ;     [<&USER32.GetAsyncKeyState>]
+		+	TEST(EAX, EAX)                     //TEST EAX, EAX
+		+	JE(0x0E)                           //JE SHORT addr1
+		+	PUSH(0x11)                         //PUSH 11 ;       VirtualKey = VK_CONTROL
+		+	CALL(ESI)                          //CALL ESI ;     [<&USER32.GetAsyncKeyState>]
+		+	TEST(EAX, EAX)                     //TEST EAX, EAX
+		+	JE(6)                              //JE SHORT addr1
+		+	POPAD                              //POPAD
+		+	XOR(EAX, EAX)                      //XOR EAX,EAX
+		+	RETN(4)                            //RETN 4
+		+	POPAD                              //POPAD <- addr1
+		+	PUSH(func)                         //PUSH func
+		+	RETN()                             //RETN; Alternative to "JMP func" with no relative addr calculation needed
+		;
+
+		/// 3.2 - Allocate space for adding our function
+		let free = Exe.FindSpace(code.byteCount());
+		if (free < 0)
+			throw NO_ALLOC;
+
+		/// 3.3 - Add our function there
+		Exe.AddHex(free, code);
+
+		/// 3.4 - Change the CALLed address from func to our function.
+		Exe.SetTgtAddr(addr + 3, free, PHYSICAL);
+	}
+	return true;
 };
 
 ///

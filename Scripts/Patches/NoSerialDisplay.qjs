@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2015 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-12-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,19 +32,23 @@
 NoSerialDisplay = function()
 {
     /// 1 - Find the comparison in the function
-    let code =
+    let prefix =
         ADD(EAX, WCp)        //ADD EAX, const1
-    +   CMP(EAX, [ECX, WCp]) //CMP EAX, DWORD PTR DS:[ECX+const2]
-    +   JL(POS1WC)           //JL addr
-    +   PUSH(ESI)            //PUSH ESI
+	;
+	let suffix =
+		CMP(EAX, [ECX, WCp]) //CMP EAX, DWORD PTR DS:[ECX+const2]
+    +	JL(POS1WC)           //JL addr
+    +	PUSH(ESI)            //PUSH ESI
     ;
-	let cmpOff = 3;
-    let addr = Exe.FindHex(code);
+
+    let addr = Exe.FindHex(prefix + suffix);
+
 	if (addr < 0 && Exe.BuildDate > 20180000)
 	{
-		code = code.replace(ADD(EAX, WCp), ADD(EAX, WCp) + SUB(ESP, WCp));
-		cmpOff = 6;
-		addr = Exe.FindHex(code);
+		prefix +=
+			SUB(ESP, WCp)    //SUB ESP, const2
+		;
+		addr = Exe.FindHex(prefix + suffix);
 	}
     if (addr < 0)
         throw Error("Comparison not found");
@@ -52,14 +56,14 @@ NoSerialDisplay = function()
     /// 2 - Overwrite ADD and CMP statements with code for setting EAX = 0.
     ///     Since EAX is 0, the JL will always Jump
 	Exe.SetHex(addr,
-        NOP            		    //NOP
-    +   XOR(EAX, EAX)  		    //XOR EAX, EAX
+        NOP                  //NOP
+    +   XOR(EAX, EAX)        //XOR EAX, EAX
 	);                          
 							    
-	Exe.SetHex(addr + cmpOff,
-		CMP(EAX, 1)    		    //CMP EAX, 1
+	Exe.SetHex(addr + prefix.byteCount(),
+		CMP(EAX, 1)          //CMP EAX, 1
     );
-	
+
     return true;
 };
 

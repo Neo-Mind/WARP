@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2015 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,15 +31,15 @@
 ///
 GuildBrackets = function()
 {
-    /// 1 - Find the format string used for displaying Guild names
-    let addr = Exe.FindText("%s\xA1\xBA%s\xA1\xBB", PHYSICAL);
-    if (addr < 0)
-        throw Error("Format string not found");
+	/// 1 - Find the format string used for displaying Guild names
+	let addr = Exe.FindText("%s\xA1\xBA%s\xA1\xBB", PHYSICAL);
+	if (addr < 0)
+		throw Error("Format string not found");
 
-    /// 2 - Change the brackets to regular parentheses + blanks
-    ///     (since we are converting from UNICODE to ASCII, one
-    ///     extra byte would be there for each korean character)
-    Exe.SetText(addr, "%s (%s) ");
-	
-    return true;
+	/// 2 - Change the brackets to regular parentheses + blanks
+	///     (since we are converting from UNICODE to ASCII, one
+	///     extra byte would be there for each korean character)
+	Exe.SetText(addr, "%s (%s) ");
+
+	return true;
 };

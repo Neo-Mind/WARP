@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -74,7 +74,7 @@ if (typeof(WINMGR) === 'undefined') // avoid redefinition
 
 			/// 1.4 - Find where its used in a 'PUSH'
 			let code =
-				MOV(ECX, POS3WC) //MOV ECX, g_windowMgr
+				MOV(ECX, POS4WC) //MOV ECX, g_windowMgr
 			+	CALL(NEG3WC)     //CALL UIWindowMgr::MakeWindow
 			+	PUSH_0           //PUSH 0
 			+	PUSH_0           //PUSH 0
