@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Neo-Mind, Andrei (4144)            *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-01                                             *
+*   Last Modified : 2020-12-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -121,10 +121,10 @@ UseOldLogin = function()
 	+	MOV(Exe.Version > 10 ? 
 			R32 : EAX, [LANGTYPE]  //MOV reg32_A, DWORD PTR DS:[g_serviceType] ; reg32_A will be EAX for older clients
 		)
-	+	WC + WC                    //Can be either TEST EAX, EAX or CMP EAX, EBP
 	;
 	let suffix =
-		JZ(POS2WC)                 //JZ addr2 -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
+		WC + WC                    //Can be either TEST EAX, EAX or CMP EAX, EBP
+	+	JZ(POS2WC)                 //JZ addr2 -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
 	+	CMP(R32, 0x12)             //CMP reg32_A, 12 ; ideally should be EAX but some clients have different register
 	+	JZ(POS2WC)                 //JZ addr2 -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
 	;
@@ -134,14 +134,14 @@ UseOldLogin = function()
 		throw Error("Langtype comparison missing");
 
 	/// 1.3 - Set addr to location of the TEST/CMP
-	addr += prefix.byteCount() - 2;
+	addr += prefix.byteCount();
 
 	/// 2.1 - Set the amount of bytes to skip over
-	let nopCount = suffix.byteCount() + 2;
+	let nopCount = suffix.byteCount();
 
 	/// 2.2 - Ensure the instruction after the code is not another comparison. If so update the nopCount
 	let ins = Instr.FromAddr(addr + nopCount);
-	if (ins.Codes[0] === 0x83 && ins.MRM.RgOp === 6)
+	if (ins.Codes[0] === 0x83 && ins.MRM.RgOp === 7)
 		nopCount += 9; //3 for CMP, 6 for JZ
 
 	/// 2.3 - Now NOP it (technically it will just become a JMP inside)
@@ -170,7 +170,7 @@ RestoreLoginWindow = function()
 		throw WINMGR.Error;
 
 	/// 2.1 - Find the location where we need to make client call the login window
-	let code =
+	let parts = [
 		PUSH_EAX                    //PUSH EAX
 	+ 	CALL(NEG3WC)                //CALL g_ResMgr
 	+ 	MOV(ECX, EAX)               //MOV ECX, EAX
@@ -178,29 +178,31 @@ RestoreLoginWindow = function()
 	+ 	PUSH_EAX                    //PUSH EAX
 	+ 	WINMGR.MovECX               //MOV ECX, OFFSET g_windowMgr
 	+ 	CALL(NEG3WC)                //CALL UIWindowMgr::SetWallpaper
-	+ 	CMP(BYTE_PTR, [POS4WC], 0)  //CMP BYTE PTR DS:[g_Tparam], 0 <- The parameter push + call to UIWindowManager::MakeWindow originally here 
+	,
+		CMP(BYTE_PTR, [POS4WC], 0)  //CMP BYTE PTR DS:[g_Tparam], 0 <- The parameter push + call to UIWindowManager::MakeWindow originally here
 	+ 	JZ(0x13)                    //JZ SHORT addr1 - after the JMP
 	+ 	MOV(BYTE_PTR, [POS4WC], 0)  //MOV BYTE PTR DS:[g_Tparam], 0
-	+ 	MOV([R32, 0xC], 4)          //MOV DWORD PTR DS:[reg32_B + 0C], 4 <- till here we need to overwrite. reg32_B can be EBX or EDI
-	+ 	JMP()                       //JMP addr2
-	;
+	+	MOV([R32, 0xC], 4)          //MOV DWORD PTR DS:[reg32_B + 0C], 4 <- till here we need to overwrite. reg32_B can be EBX or EDI
+	,
+		JMP()                       //JMP addr2
+	];
 
-	let codeAddr = Exe.FindHex(code);
+	let codeAddr = Exe.FindHex(parts.join(''));
 	if (codeAddr < 0)
 		throw Error("g_Tparam comparison missing");
 
 	/// 2.2 - Set codeAddr to location where we will overwrite
-	codeAddr += 24;
+	codeAddr += parts[0].byteCount();
 
-	/// 2.3 - Calculate address from which the call will take place
-	let fromAddr = Exe.Phy2Vir(codeAddr + 2 + 5 + 5, CODE);
+	/// 2.3 - Get the VIRTUAL address of the location
+	let codeVir = Exe.Phy2Vir(codeAddr, CODE);
 
 	/// 2.4 - Prepare code to overwrite with (originally present in old clients)
 	code =
-		PUSH(3)                        //PUSH 3
-	+	WINMGR.MovECX                  //MOV ECX, OFFSET g_windowMgr
-	+	CALL(WINMGR.MakeWin, fromAddr) //CALL UIWindowMgr::MakeWindow
-	+	JMP(9)                         //JMP SHORT addr ; skip over to the MOV DWORD PTR DS:[EBX+0C], 4
+		PUSH(3)                           //PUSH 3
+	+	WINMGR.MovECX                     //MOV ECX, OFFSET g_windowMgr
+	+	CALL(WINMGR.MakeWin, codeVir + 7) //CALL UIWindowMgr::MakeWindow ; 2 + 5 bytes from previous 2 instructions
+	+	JMP(parts[1].byteCount(), 12)     //JMP SHORT addr ; skip over to the MOV DWORD PTR DS:[EBX+0C], 4
 	;
 
 	/// 2.5 - Overwrite at codeAddr
@@ -255,7 +257,7 @@ RestoreLoginWindow = function()
 
 	/// 5.1 - Extract the reference and construct the code for getting g_modeMgr to ECX + C & mode setter to EDX (same as shown initially)
 	let infix = 
-		Exe.GetHex(addr - 2, 6)  //MOV ECX, DWORD PTR DS:[Reference]
+		Exe.GetHex(addr - 1, 6)  //MOV ECX, DWORD PTR DS:[Reference]
 	+ 	MOV(EAX, [ECX])          //MOV EAX, DWORD PTR DS:[ECX]
 	+ 	MOV(EDX, [EAX, 0x18])    //MOV EDX, DWORD PTR DS:[EAX+18]
 	;
@@ -315,7 +317,7 @@ RestoreLoginWindow = function()
 	+	POP(EAX)                     //POP EAX
 	+	POP(EDX)                     //POP EDX
 	;
-	replace += JMP(code.byteCount(), replace.byteCount() + 2); //Skip to the POP ESI
+	replace += JMP(code.byteCount(), replace.byteCount()); //Skip to the POP ESI
 
 	/// 5.5 - Overwrite the SendMsg function.
 	Exe.SetHex(addr, replace);

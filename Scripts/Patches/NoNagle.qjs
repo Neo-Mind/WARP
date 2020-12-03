@@ -35,21 +35,21 @@ NoNagle = function()
 	let WS2_32 = Exe.FindText("ws2_32.dll");
 	if (WS2_32 < 0)
 		throw Error("'ws2_32.dll' not found");
-	
+
 	/// 1.2 - Get the essential addresses for our function
 	if (ROC.GetModHandle < 0)
 		throw Error("GetModuleHandleA not found");
-		
+
 	if (ROC.GetProcAddr < 0)
 		throw Error("GetProcAddress not found");
-	
+
 	// socket function address
 	let WS2_socket = Exe.FindFunc("socket", "ws2_32.dll", 23);
 	if (WS2_socket < 0)
 		throw Error("'socket' function not found");
-	
+
 	let WS2_socHex = WS2_socket.toHex();
-	
+
 	/// 2.1 - Prepare the function to override with
 	let code =
 		MakeFiller(1)             //Address to be used in CALL DWORD PTR and JMP DWORD PTR replacements
@@ -90,28 +90,28 @@ NoNagle = function()
 	+	RETN(0xC)                 //RETN 0C
 	;
 	let csize = code.byteCount();
-	
+
 	/// 2.2 - Allocate space for adding the function
 	let free = Exe.FindSpace(csize, 0x10);
 	if (free < 0)
 		throw NO_ALLOC;
-	
+
 	let freeVir = Exe.Phy2Vir(free, DIFF);
-	
+
 	/// 2.3 - Fill in the blank
 	code = SwapFiller(code, 1, freeVir + 4, 1); //Actual Function address
-	
+
 	/// 2.4 - Add the function in the allocated space
 	Exe.AddHex(free, code);
-	
+
 	/// 3.1 - Find all JMP DWORD PTR & CALL DWORD PTR to ws2_32.socket function
 	let addrs = 
 		Exe.FindHexN( JMP([WS2_socHex]) ).concat(
 		Exe.FindHexN( CALL([WS2_socHex]) )
 	);
-	
+
 	/// 3.2 - Change the called address with our function.
 	addrs.forEach( addr => Exe.SetInt32(addr + 2, freeVir) );
-	
+
 	return true;
 };
