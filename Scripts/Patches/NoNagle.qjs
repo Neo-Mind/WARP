@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2015 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,87 +31,87 @@
 ///
 NoNagle = function()
 {
-    /// 1.1 - Find the string 'ws2_32.dll'
-    let WS2_32 = Exe.FindText("ws2_32.dll");
+	/// 1.1 - Find the string 'ws2_32.dll'
+	let WS2_32 = Exe.FindText("ws2_32.dll");
 	if (WS2_32 < 0)
 		throw Error("'ws2_32.dll' not found");
-    
+	
 	/// 1.2 - Get the essential addresses for our function
-    if (ROC.GetModHandle < 0)
-        throw Error("GetModuleHandleA not found");
-        
-    if (ROC.GetProcAddr < 0)
-        throw Error("GetProcAddress not found");
-    
-    // socket function address
-    let WS2_socket = Exe.FindFunc("socket", "ws2_32.dll", 23);
-    if (WS2_socket < 0)
-        throw Error("'socket' function not found");
-
-    let WS2_socHex = WS2_socket.toHex();
-    
-    /// 2.1 - Prepare the function to override with
-    let code =
-        MakeFiller(1)             //Address to be used in CALL DWORD PTR and JMP DWORD PTR replacements
-    +   PUSH(EBP)                 //PUSH EBP <- Actual start of function
-    +   MOV(EBP, ESP)             //MOV EBP,ESP
-    +   SUB(ESP, 0xC)             //SUB ESP,0C
-    +   MOV([EBP, -8], 1)         //MOV DWORD PTR SS:[EBP-8], 1
-    +   MOV(EAX, [EBP, 0x10])     //MOV EAX,DWORD PTR SS:[EBP+10]
-    +   PUSH_EAX                  //PUSH EAX
-    +   MOV(ECX, [EBP, 0xC])      //MOV ECX,DWORD PTR SS:[EBP+0C]
-    +   PUSH(ECX)                 //PUSH ECX
-    +   MOV(EDX, [EBP, 8])        //MOV EDX,DWORD PTR SS:[EBP+8]
-    +   PUSH(EDX)                 //PUSH EDX
-    +   CALL([WS2_socHex])        //CALL DWORD PTR DS:[<&WS2_32.#23>] ; WS2_32.socket()
-    +   MOV([EBP, -4], EAX)       //MOV DWORD PTR SS:[EBP-4],EAX
-    +   CMP([EBP, -4], -1)        //CMP DWORD PTR SS:[EBP-4],-1
-    +   JE(0x3C)                  //JE SHORT addr1
-    +   CALL(0xB)                 //JMP &PUSH ; A little trick to PUSH the following string to stack directly
-    +   "setsockopt\x00".toHex()  //DB "setsockopt\x00"
-    +   PUSH(WS2_32)              //PUSH OFFSET addr2; ASCII "ws2_32.dll"
-    +   CALL([ROC.GetModHandle])  //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
-    +   PUSH_EAX                  //PUSH EAX
-    +   CALL([ROC.GetProcAddr])   //CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
-    +   MOV([EBP, -0xC], EAX)     //MOV DWORD PTR SS:[EBP-0C],EAX
-    +   CMP([EBP, -0xC], 0)       //CMP DWORD PTR SS:[EBP-0C],0
-    +   JE(0x11)                  //JE SHORT addr1
-    +   PUSH(0x04)                //PUSH 4
-    +   LEA(EAX, [EBP, -8])       //LEA EAX,[EBP-8]
-    +   PUSH_EAX                  //PUSH EAX
-    +   PUSH_1                    //PUSH 1
-    +   PUSH(6)                   //PUSH 6
-    +   MOV(ECX, [EBP, -4])       //MOV ECX,DWORD PTR SS:[EBP-4]
-    +   PUSH(ECX)                 //PUSH ECX
-    +   CALL([EBP, -0xC])         //CALL DWORD PTR SS:[EBP-0C]
-    +   MOV(EAX, [EBP, -4])       //MOV EAX,DWORD PTR SS:[EBP-4]; addr1
-    +   MOV(ESP, EBP)             //MOV ESP,EBP
-    +   POP(EBP)                  //POP EBP
-    +   RETN(0xC)                 //RETN 0C
-    ;
-    let csize = code.byteCount();
-
-    /// 2.2 - Allocate space for adding the function
-    let free = Exe.FindSpace(csize, 0x10);
-    if (free < 0)
-        throw NO_ALLOC;
-
-    let freeVir = Exe.Phy2Vir(free, DIFF);
-
-    /// 2.3 - Fill in the blank
-    code = SwapFiller(code, 1, freeVir + 4);//Actual Function address
-    
-    /// 2.4 - Add the function in the allocated space
-    Exe.AddHex(free, code);
-
-    /// 3.1 - Find all JMP DWORD PTR & CALL DWORD PTR to ws2_32.socket function
-    let addrs = 
-        Exe.FindHexN( JMP([WS2_socHex]) ).concat(
-        Exe.FindHexN( CALL([WS2_socHex]) )
-    );
-
-    /// 3.2 - Change the called address with our function.
+	if (ROC.GetModHandle < 0)
+		throw Error("GetModuleHandleA not found");
+		
+	if (ROC.GetProcAddr < 0)
+		throw Error("GetProcAddress not found");
+	
+	// socket function address
+	let WS2_socket = Exe.FindFunc("socket", "ws2_32.dll", 23);
+	if (WS2_socket < 0)
+		throw Error("'socket' function not found");
+	
+	let WS2_socHex = WS2_socket.toHex();
+	
+	/// 2.1 - Prepare the function to override with
+	let code =
+		MakeFiller(1)             //Address to be used in CALL DWORD PTR and JMP DWORD PTR replacements
+	+	PUSH(EBP)                 //PUSH EBP <- Actual start of function
+	+	MOV(EBP, ESP)             //MOV EBP,ESP
+	+	SUB(ESP, 0xC)             //SUB ESP,0C
+	+	MOV([EBP, -8], 1)         //MOV DWORD PTR SS:[EBP-8], 1
+	+	MOV(EAX, [EBP, 0x10])     //MOV EAX,DWORD PTR SS:[EBP+10]
+	+	PUSH_EAX                  //PUSH EAX
+	+	MOV(ECX, [EBP, 0xC])      //MOV ECX,DWORD PTR SS:[EBP+0C]
+	+	PUSH(ECX)                 //PUSH ECX
+	+	MOV(EDX, [EBP, 8])        //MOV EDX,DWORD PTR SS:[EBP+8]
+	+	PUSH(EDX)                 //PUSH EDX
+	+	CALL([WS2_socHex])        //CALL DWORD PTR DS:[<&WS2_32.#23>] ; WS2_32.socket()
+	+	MOV([EBP, -4], EAX)       //MOV DWORD PTR SS:[EBP-4],EAX
+	+	CMP([EBP, -4], -1)        //CMP DWORD PTR SS:[EBP-4],-1
+	+	JE(0x3C)                  //JE SHORT addr1
+	+	CALL(0xB)                 //JMP &PUSH ; A little trick to PUSH the following string to stack directly
+	+	"setsockopt\x00".toHex()  //DB "setsockopt\x00"
+	+	PUSH(WS2_32)              //PUSH OFFSET addr2; ASCII "ws2_32.dll"
+	+	CALL([ROC.GetModHandle])  //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
+	+	PUSH_EAX                  //PUSH EAX
+	+	CALL([ROC.GetProcAddr])   //CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
+	+	MOV([EBP, -0xC], EAX)     //MOV DWORD PTR SS:[EBP-0C],EAX
+	+	CMP([EBP, -0xC], 0)       //CMP DWORD PTR SS:[EBP-0C],0
+	+	JE(0x11)                  //JE SHORT addr1
+	+	PUSH(0x04)                //PUSH 4
+	+	LEA(EAX, [EBP, -8])       //LEA EAX,[EBP-8]
+	+	PUSH_EAX                  //PUSH EAX
+	+	PUSH_1                    //PUSH 1
+	+	PUSH(6)                   //PUSH 6
+	+	MOV(ECX, [EBP, -4])       //MOV ECX,DWORD PTR SS:[EBP-4]
+	+	PUSH(ECX)                 //PUSH ECX
+	+	CALL([EBP, -0xC])         //CALL DWORD PTR SS:[EBP-0C]
+	+	MOV(EAX, [EBP, -4])       //MOV EAX,DWORD PTR SS:[EBP-4]; addr1
+	+	MOV(ESP, EBP)             //MOV ESP,EBP
+	+	POP(EBP)                  //POP EBP
+	+	RETN(0xC)                 //RETN 0C
+	;
+	let csize = code.byteCount();
+	
+	/// 2.2 - Allocate space for adding the function
+	let free = Exe.FindSpace(csize, 0x10);
+	if (free < 0)
+		throw NO_ALLOC;
+	
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+	
+	/// 2.3 - Fill in the blank
+	code = SwapFiller(code, 1, freeVir + 4, 1); //Actual Function address
+	
+	/// 2.4 - Add the function in the allocated space
+	Exe.AddHex(free, code);
+	
+	/// 3.1 - Find all JMP DWORD PTR & CALL DWORD PTR to ws2_32.socket function
+	let addrs = 
+		Exe.FindHexN( JMP([WS2_socHex]) ).concat(
+		Exe.FindHexN( CALL([WS2_socHex]) )
+	);
+	
+	/// 3.2 - Change the called address with our function.
 	addrs.forEach( addr => Exe.SetInt32(addr + 2, freeVir) );
 	
-    return true;
+	return true;
 };

@@ -166,7 +166,7 @@ IncrDigits = function()
 	}
 
 	/// 5.2 - Prepare our digit splitter + counter code to put at refAddr
-	let refReg = R32List[Instr.FromAddr(refAddr).MRM.RegM];
+	let refReg = R32.List[Instr.FromAddr(refAddr).MRM.RegM];
 	code =
 		MOV(ECX, refReg)             //MOV ECX, refReg
 	+	MOV(ESI, FirstDigLoc)        //MOV ESI, FirstDigLoc
@@ -191,16 +191,16 @@ IncrDigits = function()
 		MOV([StkReg, DigCntLoc], ESI)//MOV DWORD PTR SS:[StkReg+DigCntLoc], ESI
 	)
 	+	MovModeMgr                   //MOV ECX, g_modeMgr
-	+	JMP(MakeFiller(1))           //JMP ggmAddr
 	;
 
-	/// 5.3  - Fill in the blanks
-	code = SwapFiller(code, 1, ggmAddr - (refAddr + code.byteCount()));
+	code +=
+		JMP(ggmAddr, refAddr + code.byteCount()) //JMP ggmAddr
+	;
 
-	/// 5.4 - Put the code at refAddr
+	/// 5.3 - Put the code at refAddr
 	Exe.SetHex(refAddr, code);
 
-	/// 5.5 - Find the end of the function
+	/// 5.4 - Find the end of the function
 	if (ROC.HasFP)
 		code = MOV(ESP, EBP) + POP(EBP);    //MOV ESP, EBP followed by POP EBP
 	else
@@ -212,7 +212,7 @@ IncrDigits = function()
 	if (endAddr < 0)
 		throw Error("Function end not found");
 
-	/// 5.6 - Prepare stack addr value
+	/// 5.5 - Prepare stack addr value
 	let stackOff = ROC.HasFP ? 16 :  24; //4 bit * 6 digits
 
 	/// 6 - Update all relevant stack offsets to incorporate the extra 4 digits between the ggmAddr and end of the function

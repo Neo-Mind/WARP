@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei Karas (4144)                                    *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -219,6 +219,8 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr)
 		}
 
 		/// 3.6 - Create the replacement code
+		let ovrdVir = Exe.Phy2Vir(ovrdAddr);
+
 		code =
 			PUSH([cinfoPort])   //PUSH DWORD PTR DS:[clientinfo_port]
 		+	PUSH([cinfoAddr])   //PUSH DWORD PTR DS:[clientinfo_addr]
@@ -226,19 +228,19 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr)
 		+	PUSH(-1)            //PUSH -1
 		+	PUSH(0x81)          //PUSH 81
 		+	PUSH(gAuthHost)     //PUSH OFFSET g_auth_host
-		+	CALL(MakeFiller(1)) //CALL snprintf
 		;
-		offsetSNP = code.byteCount();
 
 		code +=
-			ADD(ESP, 0x18)      //ADD ESP, 18
-		+	JMP(MakeFiller(2))  //JMP jnzAddr
+			CALL(snprintf, ovrdVir + code.byteCount()) //CALL snprintf
+		+	ADD(ESP, 0x18)      //ADD ESP, 18
 		;
-		let csize = code.byteCount();
 
-		let ovrdVir = Exe.Phy2Vir(ovrdAddr);
-		code = SwapFiller(code, 1, snprintf - (ovrdVir + offsetSNP));
-		code = SwapFiller(code, 2, jnzAddr - (ovrdVir + csize));
+		code +=
+			JMP(jnzAddr, ovrdVir + code.byteCount())   //JMP jnzAddr
+		;
+
+		/// 3.7 - Replace at ovrdAddr
+		Exe.SetHex(ovrdAddr, code);
 	}
 	return true;
 };

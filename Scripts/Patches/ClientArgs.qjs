@@ -89,11 +89,12 @@ IgnoreAccArg = function()
 
 	/// 2 - Find the comparison after strstr CALL
 	code =
-		ADD(ESP, 8)		//ADD ESP, 8
-	+	TEST(R32, R32)	//TEST reg32_A, reg32_A
-	+	JZ(WCp)			//JZ loadClientInfo
+		ADD(ESP, 8)     //ADD ESP, 8
+	+	TEST(R32, R32)  //TEST reg32_A, reg32_A
+	+	JZ(WCp)         //JZ loadClientInfo
 	;
 	let addr2 = Exe.FindHex(code, addr + 5, addr + 0x50);
+	
 	if (addr2 < 0)
 	{
 		code = code.replace(TEST(R32, R32), CMP(R32, R32));

@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) ?-2020 Shinryo                                           *
+*   Copyright (C) ?-2015 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -39,9 +39,9 @@ IncrCamAngle = function(newAngle)
 	{
 		/// 1.1 - Find the pattern to identify the function which assigns the angle
 		let code = 
-			PUSH_1		//PUSH 1
-		+	PUSH(0x5D)	//PUSH 5D
-		+	JMP(WCp)	//JMP SHORT addr
+			PUSH_1        //PUSH 1
+		+	PUSH(0x5D)    //PUSH 5D
+		+	JMP(WCp)      //JMP SHORT addr
 		;
 		let addr = Exe.FindHex(code);
 		if (addr < 0)
@@ -49,11 +49,11 @@ IncrCamAngle = function(newAngle)
 
 		/// 1.2 - Find the function call within 0x80 bytes before the pattern
 		code =
-			MOV(ECX, ESI)	//MOV ECX, ESI
-		+	CALL(ALLWC)		//CALL addr1 <- this is the one we want
-		+	PUSH_R			//PUSH reg32_A
-		+	MOV(ECX, ESI)	//MOV ECX, ESI
-		+	CALL()			//CALL addr2
+			MOV(ECX, ESI) //MOV ECX, ESI
+		+	CALL(ALLWC)   //CALL addr1 <- this is the one we want
+		+	PUSH_R        //PUSH reg32_A
+		+	MOV(ECX, ESI) //MOV ECX, ESI
+		+	CALL()        //CALL addr2
 		;
 		addr = Exe.FindHex(code, addr - 0xB0, addr);
 		if (addr < 0)
@@ -64,8 +64,8 @@ IncrCamAngle = function(newAngle)
 
 		/// 2.1 - Find the angle value assignment inside
 		code = 
-			JZ(WCp)         //JZ SHORT addr
-		+	FLD([POS3WC])   //FLD DWORD PTR DS:[angleAddr]
+			JZ(WCp)       //JZ SHORT addr
+		+	FLD([POS3WC]) //FLD DWORD PTR DS:[angleAddr]
 		;
 		let angleAddr = Exe.FindHex(code, addr, addr + 0x800);
 		if (angleAddr < 0)
@@ -119,8 +119,8 @@ IncrCamAngle = function(newAngle)
 
 		/// 5.2 - Change to -1.0 and -89.0 respectively
 		code =
-			( -1.0).toIEEE()    //0xBF800000 = DD FLOAT -1.00000
-		+	(-89.0).toIEEE()    //0xC2B20000 = DD FLOAT -89.00000
+			( -1.0).toIEEE() //0xBF800000 = DD FLOAT -1.00000
+		+	(-89.0).toIEEE() //0xC2B20000 = DD FLOAT -89.00000
 		;
 		Exe.SetHex(addr, code);
 	}

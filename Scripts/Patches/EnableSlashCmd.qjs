@@ -100,7 +100,7 @@ EnableWho = function()
 		/// 3.1 - Find the last Langtype comparison (started from some VC9 clients onwards)
 		code =
 			CMP(EAX, 0xF) //CMP EAX, 0F
-		+	JE(5          //JE SHORT addr
+		+	JE(5)         //JE SHORT addr
 		+	CMP(EAX, 4)   //CMP EAX, 4
 		+	JNE(WCp)      //JNE SHORT addr2
 		;

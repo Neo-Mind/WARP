@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2015 Ai4rei/AN                                         *
+*   Copyright (C) 2013-2020 Neo Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -72,8 +73,8 @@ TranslateClient = function()
 	
 	/// 2.1 - Get the translation map file from user
 	let inFile = Exe.GetUserInput('$translationFile', D_InFile, "Translation Mapping", "Enter the translation file", "Inputs/Translations_EN.yml", {filters: YMLFILTER});
-    if (inFile === false)
-        throw "Cancelled - No translation file specified";
+	if (inFile === false)
+		throw "Cancelled - No translation file specified";
 	
 	/// 2.2 - Load the mapping
 	let Translations = Warp.LoadYaml(inFile);

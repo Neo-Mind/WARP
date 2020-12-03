@@ -47,8 +47,8 @@ NoHShield = function()
 
 	/// 1.3 - Find the JZ before the RETN that points to the PUSH
 	let code =
-		JZ(WCp)         //JZ addr2 -> PUSH OFFSET addr; ASCII "webclinic.ahnlab.com"
-	+	XOR(EAX, EAX)   //XOR EAX, EAX
+		JZ(WCp)        //JZ addr2 -> PUSH OFFSET addr; ASCII "webclinic.ahnlab.com"
+	+	XOR(EAX, EAX)  //XOR EAX, EAX
 	;
 
 	addr = Exe.FindHex(code, addr - 0x10, addr);
@@ -62,25 +62,25 @@ NoHShield = function()
 	{
 		/// 1.5 - Find the second pattern to fix
 		let prefix =
-			MOV(EAX, 1)		//MOV EAX, 1
-		+	POP(EBX)		//POP EBX
-		+	MOV(ESP, EBP)	//MOV ESP, EBP
-		+	POP(EBP)		//POP EBP
-		+	RETN(0x10)		//RETN 10
+			MOV(EAX, 1)        //MOV EAX, 1
+		+	POP(EBX)           //POP EBX
+		+	MOV(ESP, EBP)      //MOV ESP, EBP
+		+	POP(EBP)           //POP EBP
+		+	RETN(0x10)         //RETN 10
 		;
 
 		let suffix =
-			CALL(ALLWC)		//CALL addr
-		+	TEST(EAX, EAX)	//TEST EAX, EAX
-		+	JNZ(WCp)		//JNZ SHORT addr2
+			CALL(ALLWC)        //CALL addr
+		+	TEST(EAX, EAX)     //TEST EAX, EAX
+		+	JNZ(WCp)           //JNZ SHORT addr2
 		;
 		addr = Exe.FindHex(prefix + suffix);
 
 		if (addr < 0)
 		{
 			prefix =
-				MOV(EAX, 1)	//MOV EAX, 1
-			+	JMP(POS2WC)	//JMP addr
+				MOV(EAX, 1)    //MOV EAX, 1
+			+	JMP(POS2WC)    //JMP addr
 			;
 			suffix = suffix.replace(JNZ(WCp) + JZ(WC)); //JNZ SHORT to JZ SHORT
 			addr = Exe.FindHex(prefix + suffix);
@@ -103,11 +103,11 @@ NoHShield = function()
 		if (addr > 0)
 		{
 			code =
-				CALL(ALLWC)     //CALL func1
-			+	TEST(AL, AL)    //TEST AL, AL
-			+	JZ(0x16)        //JZ SHORT addr1
-			+	MOV(ECX, R32)   //MOV ECX, ESI
-			+	CALL()          //CALL func2
+				CALL(ALLWC)    //CALL func1
+			+	TEST(AL, AL)   //TEST AL, AL
+			+	JZ(0x16)       //JZ SHORT addr1
+			+	MOV(ECX, R32)  //MOV ECX, ESI
+			+	CALL()         //CALL func2
 			;
 			addr = Exe.FindHex(code, addr - 0x40, addr);
 		}
@@ -157,16 +157,16 @@ NoHShield = function()
 	{
 		/// 3.4 - Find the JNE after it that skips the HShield calls
 		code =
-			CMP(BYTE_PTR, [POS3WC], 0)  //CMP BYTE PTR DS:[addr1], 0
-		+	JNE(WCp)                    //JNE SHORT addr2
+			CMP(BYTE_PTR, [POS3WC], 0) //CMP BYTE PTR DS:[addr1], 0
+		+	JNE(WCp)                   //JNE SHORT addr2
 		;
 		let addr2 = Exe.FindHex(code, addr, addr + 0x80);
 
 		if (addr2 < 0)
 		{
 			code =
-				CMP([POS3WC], R32)  //CMP DWORD PTR DS:[addr1], reg32_A
-			+	JNE(WCp)            //JNE SHORT addr2
+				CMP([POS3WC], R32)     //CMP DWORD PTR DS:[addr1], reg32_A
+			+	JNE(WCp)               //JNE SHORT addr2
 			;
 			addr2 = Exe.FindHex(code, addr, addr + 0x80);
 		}
@@ -272,16 +272,16 @@ NoGGuard = function()
 	if (Exe.Version >= 10.0)
 	{
 		code +=
-			PUSH(-1)        //PUSH -1
-		+	PUSH()          //PUSH value
+			PUSH(-1)    //PUSH -1
+		+	PUSH()      //PUSH value
 		;
 		addr = Exe.FindHex(code, addr - 0x160, addr);
 	}
 	else
 	{
 		code +=
-			SUB(ESP, POS2WC)	//SUB ESP, const 
-		+	PUSH_R				//PUSH reg32
+			SUB(ESP, POS2WC) //SUB ESP, const
+		+	PUSH_R           //PUSH reg32
 		;
 		addr = Exe.FindHex(code, addr - 0x1A0, addr);
 	}
@@ -304,7 +304,7 @@ NoGGuard = function()
 	?
 		PUSH([])      //PUSH DWORD PTR DS:[addr2]
 	:
-		PUSH_R		  //PUSH reg32_B
+		PUSH_R        //PUSH reg32_B
 	);
 
 	let addrs = Exe.FindHexN(code);
@@ -315,19 +315,19 @@ NoGGuard = function()
 	if (Exe.Version >= 10.0)
 	{
 		code =
-			TEST(AL, AL)  //TEST AL, AL
-		+	JE(WCp)       //JE SHORT addr
-		+	CALL(NEG3WC)  //CALL addr2
-		+	MOV(ECX, EAX) //MOV ECX, EAX
-		+	CALL()        //CALL addr3
+			TEST(AL, AL)       //TEST AL, AL
+		+	JE(WCp)            //JE SHORT addr
+		+	CALL(NEG3WC)       //CALL addr2
+		+	MOV(ECX, EAX)      //MOV ECX, EAX
+		+	CALL()             //CALL addr3
 		;
 	}
 	else
 	{
 		code =
-			TEST(EAX, EAX)		//TEST EAX, EAX
-		+	JZ(WCp)				//JZ SHORT addr
-		+	MOV(R32, [POS3WC])	//MOV reg32_A, DWORD PTR DS:[addr2]
+			TEST(EAX, EAX)     //TEST EAX, EAX
+		+	JZ(WCp)            //JZ SHORT addr
+		+	MOV(R32, [POS3WC]) //MOV reg32_A, DWORD PTR DS:[addr2]
 		;
 	}
 	let found = false;
@@ -364,19 +364,19 @@ NoCDefender = function()
 {
 	/// 1.1 - Find the g_CCheatDefenderMgr assignment & CALL to CCheatDefenderMgr_init 
 	let parts = [
-		MOV(ECX, [POS4WC])			//MOV ECX, DWORD PTR DS:[g_CCheatDefenderMgr]
-	+	CALL(ALLWC)					//CALL CCheatDefenderMgr::init
-	+	CMP(AL, 1)					//CMP AL, 1    <-- change here
-	+	MOV(EAX, [POS4WC])			//MOV EAX, DWORD PTR DS:[g_CCheatDefenderMgr]
+		MOV(ECX, [POS4WC])          //MOV ECX, DWORD PTR DS:[g_CCheatDefenderMgr]
+	+	CALL(ALLWC)                 //CALL CCheatDefenderMgr::init
+	+	CMP(AL, 1)                  //CMP AL, 1    <-- change here
+	+	MOV(EAX, [POS4WC])          //MOV EAX, DWORD PTR DS:[g_CCheatDefenderMgr]
 	,
-		SETZ(CL)					//SETZ CL
+		SETZ(CL)                    //SETZ CL
 	,
-		PUSH(POS4WC)				//PUSH OFFSET g_zoneServerAddr
+		PUSH(POS4WC)                //PUSH OFFSET g_zoneServerAddr
 	,
-		MOV(BYTE_PTR, [EAX, 5], CL)	//MOV BYTE PTR DS:[EAX+5], CL
-	+	CALL(ALLWC)					//CALL CRagConnection::instanceR
-	+	MOV(ECX, EAX)				//MOV ECX, EAX
-	+	CALL()						//CALL CRagConnection::some_func
+		MOV(BYTE_PTR, [EAX, 5], CL) //MOV BYTE PTR DS:[EAX+5], CL
+	+	CALL(ALLWC)                 //CALL CRagConnection::instanceR
+	+	MOV(ECX, EAX)               //MOV ECX, EAX
+	+	CALL()                      //CALL CRagConnection::some_func
 	];
 
 	if (Exe.Version > 11.0) //VC14.16
@@ -403,9 +403,9 @@ NoCDefender = function()
 	///       (g_CCheatDefenderMgr->enc_enabled = 1)
 	let gCCDM = Exe.GetHex(addrs[0] + offset1, 4);
 	let code =
-		MOV(EAX, [gCCDM])			//MOV EAX, DWORD PTR DS:[g_CCheatDefenderMgr]
-	+	MOV(BYTE_PTR, [EAX, 5], 1)	//MOV BYTE PTR DS:[EAX+5], 1
-	+	MOV(EAX, POS3WC)			//MOV EAX, CZ_ENTER
+		MOV(EAX, [gCCDM])           //MOV EAX, DWORD PTR DS:[g_CCheatDefenderMgr]
+	+	MOV(BYTE_PTR, [EAX, 5], 1)  //MOV BYTE PTR DS:[EAX+5], 1
+	+	MOV(EAX, POS3WC)            //MOV EAX, CZ_ENTER
 	;
 	let addr = Exe.FindHex(code, addrs[1], addrs[1] + 0x150);
 	if (addr < 0)

@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) ?-2020 Shinryo                                           *
+*   Copyright (C) ?-2015 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -52,9 +52,9 @@ MsgStrings = function()
 		else
 		{
 			code =
-				CMP([LANGTYPE], 0)    //CMP DWORD PTR DS:[g_serviceType], 0
-			+	JNZ(WCp)              //JNZ SHORT addr -> continue with msgStringTable.txt loading
-			+	PUSH(ESI)             //PUSH ESI
+				CMP([LANGTYPE], 0) //CMP DWORD PTR DS:[g_serviceType], 0
+			+	JNZ(WCp)           //JNZ SHORT addr -> continue with msgStringTable.txt loading
+			+	PUSH(ESI)          //PUSH ESI
 			;
 			jnzPos = 7;
 		}
@@ -63,10 +63,10 @@ MsgStrings = function()
 	else
 	{
 		code =
-			MOV(EAX, [LANGTYPE])  //MOV EAX, DWORD PTR DS:[g_serviceType]
-		+	PUSH(ESI)             //PUSH ESI
-		+	TEST(EAX, EAX)        //TEST EAX, EAX
-		+	JNZ(WCp)              //JNZ SHORT addr -> continue with msgStringTable.txt loading
+			MOV(EAX, [LANGTYPE])   //MOV EAX, DWORD PTR DS:[g_serviceType]
+		+	PUSH(ESI)              //PUSH ESI
+		+	TEST(EAX, EAX)         //TEST EAX, EAX
+		+	JNZ(WCp)               //JNZ SHORT addr -> continue with msgStringTable.txt loading
 		;
 		addr = Exe.FindHex(code);
 		jnzPos = 8;
@@ -91,14 +91,14 @@ QuestDisplay = function()
 	/// 1 - Find where 'questID2display.txt' is used in a PUSH
 	let prefix = JNE(Exe.Version < 10.0 ? POS3WC : WC);
 	let suffix = 
-		PUSH_0				//PUSH 0
+		PUSH_0                //PUSH 0
 	+	(Exe.Version < 9.0 
 	?
-		LEA(R32, [R32, WC])	//LEA reg32_A, [reg32_B + const]
+		LEA(R32, [R32, WC])   //LEA reg32_A, [reg32_B + const]
 	:
 		''
 	)
-	+	PUSH(QD_Addr)		//PUSH OFFSET addr ; ASCII "questID2display.txt"
+	+	PUSH(QD_Addr)         //PUSH OFFSET addr ; ASCII "questID2display.txt"
 	;
 
 	let addr = Exe.FindHex(prefix + suffix);

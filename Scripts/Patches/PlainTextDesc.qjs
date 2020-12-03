@@ -38,41 +38,41 @@ PlainTextDesc = function()
 
 	/// 2 - Find the Langtype comparison in DataTxtDecode function
 	let prefix, suffix = '';
-	if (Exe.Version < 9.0) //VC6
+	if (Exe.Version < 9.0)//VC6
 	{
 		prefix =
-			MOV(EAX, [LANGTYPE])  	//MOV EAX, DWORD PTR DS:[g_serviceType]
-		+	PUSH(ESI)             	//PUSH ESI
-		+	TEST(EAX, EAX)        	//TEST EAX, EAX
-		+	PUSH(EDI)             	//PUSH EDI
-		+	JNZ(WCp)              	//JNZ SHORT addr
+			MOV(EAX, [LANGTYPE])      //MOV EAX, DWORD PTR DS:[g_serviceType]
+		+	PUSH(ESI)                 //PUSH ESI
+		+	TEST(EAX, EAX)            //TEST EAX, EAX
+		+	PUSH(EDI)                 //PUSH EDI
+		+	JNZ(WCp)                  //JNZ SHORT addr
 		;
 	}
 	else 
 	{
 		prefix =
-			CMP([LANGTYPE], 0)		//CMP DWORD PTR DS:[g_serviceType], 0
-		+	JNZ(WCp)          		//JNZ SHORT addr
+			CMP([LANGTYPE], 0)        //CMP DWORD PTR DS:[g_serviceType], 0
+		+	JNZ(WCp)                  //JNZ SHORT addr
 		;
 
-		if (Exe.Version < 11.0) //VC9 - VC10
+		if (Exe.Version < 11.0)//VC9 - VC10
 		{
 			suffix =
-				PUSH(ESI)			//PUSH ESI
-			+	PUSH(EDI)			//PUSH EDI
+				PUSH(ESI)             //PUSH ESI
+			+	PUSH(EDI)             //PUSH EDI
 			;
 		}
-		else if (Exe.Version < 14.0) //VC11
+		else if (Exe.Version < 14.0)//VC11
 		{
 			suffix =
-				PUSH(EDI)			//PUSH EDI
+				PUSH(EDI)             //PUSH EDI
 			;
 		}
 		else //VC14.16
 		{
 			suffix =
-				MOV(R32, [EBP, 8])	//MOV reg32_A, DWORD PTR SS:[EBP+8]
-			+	PUSH(ESI)			//PUSH ESI
+				MOV(R32, [EBP, 8])    //MOV reg32_A, DWORD PTR SS:[EBP+8]
+			+	PUSH(ESI)             //PUSH ESI
 			;
 		}
 	}

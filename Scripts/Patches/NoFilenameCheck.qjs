@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2013-2020 Neo Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,10 +23,9 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-02                                             *
 *                                                                          *
 \**************************************************************************/
-
 
 ///
 /// \brief Change the conditional jump to JMP inside WinMain to skip showing the "Invalid Exe" message.
@@ -45,20 +45,20 @@ NoFilenameCheck = function()
 	/// 1.2 - Find the comparison before it
 	let code =
 		CALL(NEG2WC)    //CALL SearchProcessIn9X
-    +   JMP(5)          //JMP SHORT addr2
-    +   CALL(NEG2WC)    //CALL SearchProcessInNT <= addr1
-    +   TEST(AL, AL)    //TEST AL, AL <= addr2
-    +   JNZ(WCp)        //JNZ SHORT addr3
-    ;
+	+	JMP(5)          //JMP SHORT addr2
+	+	CALL(NEG2WC)    //CALL SearchProcessInNT <= addr1
+	+	TEST(AL, AL)    //TEST AL, AL <= addr2
+	+	JNZ(WCp)        //JNZ SHORT addr3
+	;
 
-    addr = Exe.FindHex(code, addr - 0x40, addr + 1);
-    if (addr < 0)
+	addr = Exe.FindHex(code, addr - 0x40, addr + 1);
+	if (addr < 0)
 		throw Error("Comparison not found");
-    
-    /// 2 - Change the conditional jump
-    Exe.SetJMP(addr + code.byteCount() - 2);
-	
-    return true;
+
+	/// 2 - Change the conditional jump
+	Exe.SetJMP(addr + code.byteCount() - 2);
+
+	return true;
 };
 
 ///

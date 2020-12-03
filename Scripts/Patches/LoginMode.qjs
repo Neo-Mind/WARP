@@ -256,8 +256,8 @@ RestoreLoginWindow = function()
 	/// 5.1 - Extract the reference and construct the code for getting g_modeMgr to ECX + C & mode setter to EDX (same as shown initially)
 	let infix = 
 		Exe.GetHex(addr - 2, 6)  //MOV ECX, DWORD PTR DS:[Reference]
-	+ 	MOV(EAX, [ECX])			 //MOV EAX, DWORD PTR DS:[ECX]
-	+ 	MOV(EDX, [EAX, 0x18])	 //MOV EDX, DWORD PTR DS:[EAX+18]
+	+ 	MOV(EAX, [ECX])          //MOV EAX, DWORD PTR DS:[ECX]
+	+ 	MOV(EDX, [EAX, 0x18])    //MOV EDX, DWORD PTR DS:[EAX+18]
 	;
 
 	/// 5.2 - Find how many PUSH 0s are there. Older clients had 3 arguments but newer ones only have 3
@@ -267,14 +267,14 @@ RestoreLoginWindow = function()
 	code =
 		MOV(ESI, ECX)           //MOV ESI,ECX
 	+ 	MOV(EAX, [ESI, 4])      //MOV EAX,DWORD PTR DS:[ESI+4]
-	+ 	MOV([EAX, 0x14], 0)		//MOV DWORD PTR DS:[EAX+14], 0
+	+ 	MOV([EAX, 0x14], 0)     //MOV DWORD PTR DS:[EAX+14], 0
 	+ 	CMP([LANGTYPE], 0xB)    //CMP DWORD PTR DS:[g_serviceType], 0B
 	+	(Exe.Version > 10.0
 	?
-		JNE(0x1C)				//JNE SHORT addr1 -> after CALL instruction below
+		JNE(0x1C)               //JNE SHORT addr1 -> after CALL instruction below
 	:
 		JNE(0x1D)               //JNE SHORT addr1 -> after CALL instruction below
-	+ 	MOV(ECX, [POS3WC])	    //MOV ECX,DWORD PTR DS:[g_hMainWnd]
+	+ 	MOV(ECX, [POS3WC])      //MOV ECX,DWORD PTR DS:[g_hMainWnd]
 	)
 	+ 	PUSH_1                  //PUSH 1
 	+ 	PUSH_0                  //PUSH 0
@@ -283,11 +283,11 @@ RestoreLoginWindow = function()
 	+ 	PUSH(POS3WC)            //PUSH addr3 ; ASCII "open"
 	+	(Exe.Version > 10.0
 	?
-		PUSH([POS4WC])			//PUSH DWORD PTR DS:[g_hMainWnd] ; For recent client g_hMainWnd is directly pushed instead of assigning to ECX first
+		PUSH([POS4WC])          //PUSH DWORD PTR DS:[g_hMainWnd] ; For recent client g_hMainWnd is directly pushed instead of assigning to ECX first
 	:
 		PUSH(ECX)               //PUSH ECX
 	)
-	+	CALL([POS3WC])        	//CALL DWORD PTR DS:[<&SHELL32.ShellExecuteA>]
+	+	CALL([POS3WC])          //CALL DWORD PTR DS:[<&SHELL32.ShellExecuteA>]
 	+	MOV([ESI], 0)	 	    //MOV DWORD PTR DS:[ESI],0 (ESI is supposed to have g_modeMgr but it doesn't always point to it, so we assign it another way)
 	;
 
@@ -306,12 +306,12 @@ RestoreLoginWindow = function()
 		PUSH(EDX)                    //PUSH EDX
 	+ 	PUSH_EAX                     //PUSH EAX
 	+ 	infix                        //MOV ECX,DWORD PTR DS:[Reference]
-									//MOV EAX,DWORD PTR DS:[ECX]
-									//MOV EDX,DWORD PTR DS:[EAX+18]
+		                             //MOV EAX,DWORD PTR DS:[ECX]
+		                             //MOV EDX,DWORD PTR DS:[EAX+18]
 	+	PUSH_0.repeat(pushes.length) //PUSH 0 sequence
-	+	PUSH(0x271D)				 //PUSH 271D
+	+	PUSH(0x271D)                 //PUSH 271D
 	+	MOV([ECX, 0xC], 3)           //MOV DWORD PTR DS:[ECX+0C],3
-	+	CALL(EDX)	                 //CALL EDX
+	+	CALL(EDX)                    //CALL EDX
 	+	POP(EAX)                     //POP EAX
 	+	POP(EDX)                     //POP EDX
 	;
