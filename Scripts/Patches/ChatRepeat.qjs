@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-12-05                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,31 +35,31 @@
 ChatRepeat = function(patchName)
 {
 	/// 1.1 - Ensure the LANGTYPE is loaded
-	if (!LANGTYPE.load())
-		throw LANGTYPE.Error;
-		
+	LANGTYPE.load();
+
 	/// 1.2 - Find the Langtype comparison to identify ::IsSameSentence
-	let part1 = CMP([LANGTYPE], 0xA); //CMP DWORD PTR DS:[g_serviceType], 0A
-	let part2 = JE(WC);               //JE SHORT addr
-	let part3 = CMP(ROC.HasFP ?
-		[EBP, 8]                      //CMP DWORD PTR SS:[EBP+8], 02
-	:	                              // or
-		[ESP, 4]                      //CMP DWORD PTR SS:[ESP+4], 02
-	, 2);
-	let part4 = JL(WC);               //JL SHORT addr
-	let addr = Exe.FindHex(part1 + part2 + part3 + part4);
-	if (addr < 0)
-	{
-		part2 = JE(POS1WC); //change JE SHORT to JE
-		part4 = JL(POS1WC); //change JL SHORT to JL
-		addr = Exe.FindHex(part1 + part2 + part3 + part4);
-	}
+	let dist = Exe.Version < 9.0 ? POS1WC : WCp;
+
+	let prefix =
+		CMP([LANGTYPE], 0xA) //CMP DWORD PTR DS:[g_serviceType], 0A
+	+	JE(dist)             //JE SHORT addr or JE addr
+	+	CMP(ROC.HasFP
+	?
+		[EBP, 8]             //CMP DWORD PTR SS:[EBP+8], 2
+	:                        //or
+		[ESP, 4]             //CMP DWORD PTR SS:[ESP+4], 2
+		, 2
+	);
+
+	let suffix = JL(dist);  //JL SHORT addr or JL addr
+
+	let addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("Langtype comparison missing");
-	
+
 	/// 2.1 - Point addr to position of the JL
-	addr += part1.byteCount() + part2.byteCount() + part3.byteCount();
-	
+	addr += prefix.byteCount();
+
 	if (patchName === "UnlimitedChatRepeat")
 	{
 		/// 2.2 - If no limit is needed, change the JL to JMP
@@ -70,12 +70,12 @@ ChatRepeat = function(patchName)
 		/// 2.3 - Otherwise, get the new limit from the user
 		let limit = Exe.GetUserInput('$chatFloodLimit', D_Uint8, "Chat Limit", "Enter the new limit", 2, {max: 127});
 		if (limit === false)
-			throw "Cancelled - Chat Limit reverted to 2";
-		
+			Cancel("Chat Limit", 2);
+
 		/// 2.4 - Change the limit in the Exe
 		Exe.SetFromVar(addr - 1, '$chatFloodLimit');
 	}
-	
+
 	return true;
 };
 

@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2013 Shakto                                              *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shakto                                                 *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-14                                             *
+*   Last Modified : 2020-12-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,29 +31,29 @@
 ///
 AllowSpaceInGName = function()
 {
-    /// 1.1 - Find the character check
-    let code =
-        PUSH(0x20)          //PUSH 20
-    +   PUSH_R              //PUSH reg32_B
-    +   CALL(R32)           //CALL reg32_A; MSVCR#.strchr
-    +   ADD(ESP, 8)         //ADD ESP, 8
-    +   TEST(EAX, EAX)      //TEST EAX, EAX
-    ;
+	/// 1.1 - Find the character check
+	let code =
+		PUSH(0x20)          //PUSH 20
+	+	PUSH_R              //PUSH reg32_B
+	+	CALL(R32)           //CALL reg32_A; MSVCR#.strchr
+	+	ADD(ESP, 8)         //ADD ESP, 8
+	+	TEST(EAX, EAX)      //TEST EAX, EAX
+	;
 
-    let addr = Exe.FindHex(code);
-    if (addr < 0 && Exe.BuildDate > 20190000)
+	let addr = Exe.FindHex(code);
+	if (addr < 0 && Exe.BuildDate > 20190000)
 	{
 		code = code.replace(CALL(R32), CALL(POS3WC));
 		addr = Exe.FindHex(code);
 	}
-    if (addr < 0)
-        throw Error("Character check not found");
-	
-    /// 1.2 - Set addr to location after TEST
-    addr += code.byteCount();
+	if (addr < 0)
+		throw Error("Character check not found");
 
-    /// 2 - Overwrite conditional jump after TEST. 
-    ///     NOP out JNEs and change JZ to JMP
+	/// 1.2 - Set addr to location after TEST
+	addr += code.byteCount();
+
+	/// 2 - Overwrite conditional jump after TEST. 
+	///     NOP out JNEs and change JZ to JMP
 	let ins = Instr.FromAddr(addr);
 	if (ins.Codes[0] === 0x74 || ins.Codes[1] === 0x84)
 	{
@@ -68,7 +68,7 @@ AllowSpaceInGName = function()
 		throw Error("No JMP formats found");
 	}
 
-    return true;
+	return true;
 };
 
 ///
