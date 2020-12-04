@@ -431,12 +431,13 @@ FindInstr = function(testFn, from, to)
 }
 
 ///
-/// \brief Create a string to be used in Warning messages indicating patch cancellation
+/// \brief Throws a cancellation warning with the specified argument.
+///        If default value is specified then a 'reverted' message is thrown.
 ///
 Cancel = (arg, defVal = undefined) =>
-	defVal === undefined
+	throw defVal === undefined
 	?	`Cancelled - ${arg}`
-	:	`Cancelled - ${arg} reverted to <b>${defVal}</b>`
+	:	`Cancelled - <b>'${arg}'</b> reverted to <b><u>${defVal}</u></b>`
 ;
 
   //====================//
