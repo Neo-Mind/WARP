@@ -98,7 +98,7 @@ groups:
             - RestoreIcon:
                 title : Restore Inbuilt Icon
                 recommend : yes
-                author : Shinryo & Neo-Mind
+                author : Neo-Mind
                 desc : Makes the client use the inbuilt icon instead of the generic Win32 app icon.
             
             - CustomIcon:
@@ -1254,7 +1254,7 @@ groups:
             - AllowGuildInClan:
                 title : Allow guild activities in clan
                 recommend : no
-                author : Functor & Secret
+                author : Functor, Secret & Neo-Mind
                 desc : Remove restriction of guild functionality while being a member of a clan.
             
     - CustomEquipWin:

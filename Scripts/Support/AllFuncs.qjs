@@ -435,10 +435,11 @@ FindInstr = function(testFn, from, to)
 ///        If default value is specified then a 'reverted' message is thrown.
 ///
 Cancel = (arg, defVal = undefined) =>
+{
 	throw defVal === undefined
 	?	`Cancelled - ${arg}`
-	:	`Cancelled - <b>'${arg}'</b> reverted to <b><u>${defVal}</u></b>`
-;
+	:	`Cancelled - <b>'${arg}'</b> reverted to <b><i>${defVal}</i></b>`
+};
 
   //====================//
  // Syntax Identifiers //
