@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-11-16                                             *
+*   Last Modified : 2020-12-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -43,20 +43,20 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 			this.Codes    = [];   //List of opcode bytes. Length can be 1, 2 (0F ##) or 3 (0F 38 ## or 0F 3A ##)
 			//this.MRM            //ModRM object - not defined right now
 			//this.SIB            //SIBase object (Scale * Index + Byte)  - not defined right now
-								
+
 			//this.Disp           //Displacement value  - not defined right now
 			this.BC_Disp  = 0;    //Byte count of Displacement value
-								
+
 			// this.Immd          //Immediate value  - not defined right now
 			this.BC_Immd  = 0;    //Byte count of Immediate value
-								
+
 			//this.SegNum         //Segment number for FAR type instructions  - not defined right now
 			//this.NestLvl        //Nesting Level used for ENTER instruction  - not defined right now
-								
+
 			this.Size     = -1;   //Total Size in bytes of this instruction 
 			this.NextAddr = -1;   //Address of the next instruction
 		}
-		
+
 		///
 		/// \brief Method to add prefix byte(s) to "Prefixes"
 		///
@@ -65,16 +65,16 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 			/// 1 - If array is provided just assign it
 			if (Array.isArray(p))
 				this.Prefixes = p;
-	
+
 			/// 2 - Or if the provided value is an IPrefix object push its contents to existing array
 			else if (p instanceof IPrefix)
 				this.Prefixes.push(p.Value);
-			
+
 			/// 3 - Or if the provided value is a byte (number or hex string) then push it directly to existing array
 			else if (IsByte(p, false))
 				this.Prefixes.push(p);
 		}
-		
+
 		///
 		/// \brief Method to add opcode byte(s) to "Codes"
 		///
@@ -83,12 +83,12 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 			/// 1 - If array is provided just assign it
 			if (Array.isArray(o))
 				this.Codes = o;
-	
+
 			/// 2 - Otherwise push to existing Codes array
 			else if (o !== undefined)
 				this.Codes.push(o);
 		}
-		
+
 		///
 		/// \brief Method to check whether current 'Instr' expects a ModRM byte
 		///
@@ -98,7 +98,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 				(this.Codes[1] !== undefined && !OpCodeList.SecWithoutModRM.includes(this.Codes[1]))
 			);
 		}
-		
+
 		///
 		/// \brief Method to check whether current 'Instr' has to reverse the direction of arguments (via a direction bit)
 		///
@@ -108,7 +108,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 				(this.Codes[1] !== undefined && !OpCodeList.SecNonReverse.includes(this.Codes[1]))
 			);
 		}
-		
+
 		///
 		/// \brief Method to check whether the prefixes contain Addr Override
 		///
@@ -116,7 +116,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 		{
 			return this.Prefixes.includes(AD16.Value);
 		}
-		
+
 		///
 		/// \brief Method to check whether the prefixes contain Operand Override
 		///
@@ -124,7 +124,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 		{
 			return this.Prefixes.includes(OPCH.Value);
 		}
-		
+
 		///
 		/// \brief Method to auto calculate the size of immediate value expected based on Prefixes and Codes
 		///
@@ -157,7 +157,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 				this.BC_Immd = 0;//better to keep -1 but need to add extra checks then
 			}
 		}
-		
+
 		///
 		/// \brief 'Static' Method to extract all the instruction bytes at addr into an 'Instr' object
 		///
@@ -167,7 +167,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 			let result = new this(addr);
 			if (addr < 0 || addr > Exe.FileSize)
 				return result;
-			
+
 			/// 1.2 - Extract the first byte
 			let b = Exe.GetUint8(addr++);
 
@@ -177,32 +177,32 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 				result.addPrefix(b);
 				b = Exe.GetUint8(addr++);
 			}
-			
+
 			/// 2.1 - Append the opcode
 			result.addOpCode(b);
-			
+
 			/// 2.2 - Check for multibyte opcodes & append accordingly
 			if (b === 0x0F)
 			{
 				b = Exe.GetUint8(addr++);
 				result.addOpCode(b);
-				
+
 				if (b === 0x38 || b === 0x3A)
 				{
 					b = Exe.GetUint8(addr++);
 					result.addOpCode(b);
 				}
 			}
-			
+
 			/// 3.1 - If the instruction expects a ModRM byte then extract it
 			if (result.needModRM())
 			{
 				result.MRM = new ModRM(Exe.GetUint8(addr++));
-				
+
 				/// 3.2 - If the ModRM expects an accompanying SIB byte then extract it.
 				if (result.MRM.needSIB())
 					result.SIB = new SIBase(Exe.GetUint8(addr++));
-				
+
 				/// 3.3 - If the ModRM specifies a Displacement then extract it
 				if (result.MRM.Mode === 1)
 				{
@@ -210,8 +210,8 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 					result.BC_Disp = 1;
 				}
 				else if ( result.MRM.Mode === 2 || 
-						 (result.MRM.Mode === 0 && result.MRM.RegM === EBP.Index) || 
-						 (result.SIB !== undefined && result.SIB.Base === EBP.Index)
+						(result.MRM.Mode === 0 && result.MRM.RegM === EBP.Index) || 
+						(result.SIB !== undefined && result.SIB.Base === EBP.Index)
 				)
 				{
 					if (result.Prefixes.includes(AD16.Value)) //Address override
@@ -233,7 +233,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 				result.Disp = Exe.GetInt32(addr);
 				addr += 4;
 			}
-			
+
 			/// 3.4 - Calculate the size (byte count) of Immediate value expected if any
 			result.calcImmSize();
 
@@ -243,11 +243,11 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 				case 1: 
 					result.Immd = Exe.GetInt8(addr);
 					break;
-					
+
 				case 2: 
 					result.Immd = Exe.GetInt16(addr);
 					break;
-					
+
 				case 4:
 					result.Immd = Exe.GetInt32(addr);
 					break;
@@ -259,22 +259,22 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 			{	
 				result.NestLvl = Exe.GetInt8(addr++);
 			}
-			
+
 			/// 4.2 - Otherwise Extract the Far type segment number if expected
 			else if (OpCodeList.FarType.includes(result.Codes[0]))
 			{
 				result.SegNum = Exe.GetInt16(addr);
 				addr += 2;
 			}
-	
+
 			/// 4.3 - Calculate & assign the instruction Size in bytes as well as the address of the next instruction
 			result.NextAddr = addr;
 			result.Size = result.NextAddr - result.Addr;
-	
+
 			/// 4.4 - Return the created Instr
 			return result;
 		}
-		
+
 		///
 		/// \brief 'Static' Method to generate an 'Instr' object using its components
 		///
@@ -282,35 +282,35 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 		{
 			/// 1.1 - Create the 'Instr' object
 			let result = new this(-1);
-			
+
 			/// 1.2 - Get the Operation Type
 			let type = (data instanceof OpData) ? data.OpType : OpTypes.ERR;
-		
+
 			/// 1.3 - Ensure valid operation type and opcode(s) to proceed
 			if (type === OpTypes.ERR || codes === undefined)
 				return result;
-			
+
 			/// 1.4 - Assign all the prefixes
 			data.Prefix.forEach( p => result.addPrefix(p) );
-			
+
 			/// 1.5 - Assign all the opcodes
 			result.Codes = Wrap(codes);
-			
+
 			/// 1.6 - Calculate the byte count for immediate value if any
 			result.calcImmSize();
 			if (result.BC_Immd === 0 && data.ImSize > 0)
 				result.BC_Immd = data.ImSize / 8;
-			
+
 			/// 1.7 - Save the immediate value
 			result.Immd = data.Immd;
-			
+
 			/// 1.8 - Save the displacement if available along with its size in bytes
 			if (data.Disp !== undefined)
 			{
 				result.Disp = data.Disp;
 				result.BC_Disp = data.DpSize / 8;
 			}
-			
+
 			if (result.needModRM())
 			{
 				/// 2.1 - Calculate the Mod R M components.
@@ -330,12 +330,12 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 							rm = data.TgtReg;
 						}
 						break;
-					
+
 					case OpTypes.R_P: //Reg, Mem Ptr <, imm>
 					case OpTypes.A_D:
 						ro = data.TgtReg;
 						break;
-						
+
 					case OpTypes.P_R: //Mem Ptr, Reg <, imm>
 					case OpTypes.D_A:
 					case OpTypes.P  : //Mem Ptr <, imm>
@@ -355,10 +355,10 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 						ro = oper;
 						rm = data.TgtReg;
 						break;
-					
+
 					//Nothing to do for OpTypes.I
 				}
-					
+
 				/// 2.2 - Check for ptr arguments on either target or source
 				if (data.Index !== undefined || data.Disp !== undefined) // only true for ptrs
 				{	
@@ -368,33 +368,33 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 						mod = 0;
 						rm = 5;
 					}
-					
+
 					/// 2.4 - Set mod & rm for [Reg] & [Reg + Disp] ptrs
 					else if (data.Scale === 1 && data.Base === undefined)
 					{
 						/// 2.4.1 - Set the mod value based on Displacement size (0 if no disp present)
 						mod = result.BC_Disp > 0 ? (result.BC_Disp === 1 ? 1 : 2) : 0;
-												
+
 						/// 2.4.2 - Save the register to rm
 						rm = data.Index;
-						
+
 						/// 2.4.5 - Override rm for 16 bit addressing
 						if (data.Index.Width === 16)
 						{
 							rm = rm.equals(BX) ? 7
-							   : rm.equals(BP) ? 6
-							   : rm.equals(DI) ? 5
-							   : rm.equals(SI) ? 4
-							   : rm ;
+							: rm.equals(BP) ? 6
+							: rm.equals(DI) ? 5
+							: rm.equals(SI) ? 4
+							: rm ;
 						}
 					}
-						
+
 					/// 2.5 - Set mod & rm for remaining ptr patterns ([Reg + reg] and [scale*Reg + ...])
 					else
 					{
 						/// 2.5.1 - Set rm to 4 by default
 						rm = 4;
-						
+
 						/// 2.5.2 - Override rm for 16 bit addressing & undefine Base to avoid SIBase generation
 						if (IsReg(data.Base))
 						{
@@ -403,34 +403,34 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 								rm = data.Index.equals(BX) ? 0 
 								: data.Index.equals(BP) ? 2
 								: rm;
-							
+
 								if (data.Base.equals(DI))
 									rm |= 1;
-								
+
 								data.Base = undefined;
 							}
 						}
-						
+
 						/// 2.5.3 - Set mod according to the displacement
 						mod = (data.Base === 5 || result.BC_Disp <= 0) ? 0
-						    : result.BC_Disp == 1 ? 1
+							: result.BC_Disp == 1 ? 1
 							: 2;
 					}
 				}
-				
+
 				/// 2.6 - Construct the ModRM object if mod is valid
 				if (mod !== undefined)
 					result.MRM = ModRM.FromParts(mod, ro, rm);
-				
+
 				/// 2.7 - Construct the SIBase object if base is valid
 				if (data.Base !== undefined)
 					result.SIB = SIBase.FromParts(data.Scale, data.Index, data.Base);
 			}
-			
+
 			/// 3 - Return the created object
 			return result;
 		}
-		
+
 		///
 		/// \brief toString override - Constructs the hex equivalent (i.e. ASM code) of the 'Instr' 
 		///
@@ -442,10 +442,10 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 
 			/// 1.2 - Add the prefixes
 			this.Prefixes.forEach(append);
-			
+
 			/// 1.3 - Add the opcodes
 			this.Codes.forEach(append);
-			
+
 			/// 2.1 - Add the ModRM byte
 			if (this.MRM instanceof ModRM)
 				append(this.MRM.Data);
@@ -456,7 +456,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 
 			/// 2.3 - Add the displacement
 			result =  result.appendAsHex(this.Disp, this.BC_Disp);
-				
+
 			/// 2.4 - Add the immediate value
 			result =  result.appendAsHex(this.Immd, this.BC_Immd);
 
@@ -468,6 +468,6 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 			return result;
 		}
 	};
-	
+
 	IdentifyClass(Instr);
 }
