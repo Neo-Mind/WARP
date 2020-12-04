@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-11-28                                             *
+*   Last Modified : 2020-12-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -40,7 +40,7 @@ if (typeof(PtrSize) === 'undefined') //avoid redefinition
 		{
 			this.Value = size;
 		}
-		
+
 		///
 		/// \brief toString override
 		///
@@ -49,7 +49,7 @@ if (typeof(PtrSize) === 'undefined') //avoid redefinition
 			return this.Value.toString();
 		}
 	};
-	
+
 	IdentifyClass(PtrSize);
 
 	///
@@ -65,15 +65,15 @@ if (typeof(PtrSize) === 'undefined') //avoid redefinition
 	].forEach( pair =>
 		Assign(
 			pair[0],
-			"new PtrSize(" + pair[1] + ")"
+			`new PtrSize(${pair[1]})`
 		)
 	);
-	
+
 	///
 	/// \brief Tests whether given var contains a 'PtrSize' object
 	///
 	IsPtrSize = v =>
 		v instanceof PtrSize;
-	
+
 	IdentifyObj("IsPtrSize");
 }

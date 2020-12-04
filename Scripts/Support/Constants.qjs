@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-11-28                                             *
+*   Last Modified : 2020-12-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@ if (typeof TAB === 'undefined')  //avoid redefinition
 {
 	//4 blank spaces to use in 'console' & perhaps other places too
 	AssignStr('TAB', "&nbsp;".repeat(4));
-	
+
 	//filter to use with D_InFile for YAML input files
 	AssignStr('YMLFILTER', "YAML Files (*.yml;*.yaml)");
 }
@@ -43,11 +43,14 @@ if (typeof TAB === 'undefined')  //avoid redefinition
 ///
 if (typeof NO_ALLOC === 'undefined') //avoid redefinition
 {
-	Assign('NO_ALLOC', 'new Error("Space Allocation failed")'); //used as error message for Exe.FindSpace
-	
-	Assign('NO_EXE', 'new Error("No Valid Exe loaded")'); //used as error message after Exe.FileSize===0 in extensions
-	
-	Assign('NO_OUTPUT', 'new Error("Unable to generate output file")'); //used as error message for TextFile.Open & BinFile.Open failures in extensions
+	//used as error message for Exe.FindSpace
+	Assign('NO_ALLOC', 'new Error("Space Allocation failed")'); 
+
+	//used as error message after Exe.FileSize===0 in extensions
+	Assign('NO_EXE', 'new Error("No Valid Exe loaded")'); 
+
+	//used as error message for TextFile.Open & BinFile.Open failures in extensions
+	Assign('NO_OUTPUT', 'new Error("Unable to generate output file")'); 
 }
 
 ///
@@ -63,26 +66,26 @@ if (typeof WC === 'undefined') //avoid redefinition
 		['WC' , " ??"], //Wild Card byte
 		['WCp', " [0.......]"], //Wild Card byte with +ve sign bit
 		['WCn', " [1.......]"], //Wild Card byte with -ve sign bit
-	
+
 		///
 		/// \brief Some common patterns for a DWORD (32 bit) 
 		///
 		['ALLWC' , " ?? ?? ?? ??"],
 		['ALLWCp', " ?? ?? ?? [0.......]"], //Only +ve sign bit is known
 		['ALLWCn', " ?? ?? ?? [1.......]"], //Only -ve sign bit is known
-	
+
 		['ALL00' , " 00 00 00 00"], // 0 in 4 bytes
 		['POS1WC', " ?? 00 00 00"],
 		['POS2WC', " ?? ?? 00 00"],
 		['POS3WC', " ?? ?? ?? 00"],
 		['POS4WC', " ?? ?? ?? 0?"],
-		
+
 		['ALLFF' , " FF FF FF FF"], //-1 in 4 bytes
 		['NEG1WC', " ?? FF FF FF"],
 		['NEG2WC', " ?? ?? FF FF"],
 		['NEG3WC', " ?? ?? ?? FF"],
 		['NEG4WC', " ?? ?? ?? F?"],
-		
+
 		///
 		/// \brief - Some common instructions
 		///
@@ -118,7 +121,7 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 			//0xE# are having implicit arguments 
 			0xF3, 0xF6, 0xF7, 0xFE, 0xFF
 		],
-		
+
 		"WithImm8" : 
 		[
 			0x04, 0x0C,
@@ -136,12 +139,12 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 			0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xEB,
 			0xF6
 		],
-		
+
 		"WithImm16" : //Even without 0x66 prefix (operand modifier prefix)
 		[
 			0xC2, 0xC8, 0xCA //C8 (ENTER) has an extra byte at the end for nesting level
 		],
-		
+
 		"WithImm32" : 
 		[
 			0x05, 0x0D,
@@ -160,12 +163,12 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 			0xE8, 0xE9, 0xEA, //EA is FAR JMP, so it also has Seg member after the Imm32
 			0xF7,
 		],
-		
+
 		"WithDisp32" : 
 		[
 			0xA0, 0xA1, 0xA2, 0xA3,	
 		],
-		
+
 		"SecWithoutModRM" : //Secondary opcodes without ModR/M byte - smaller list than the alternative
 		[ 
 			0x05, 0x06, 0x07, 0x08, 0x09, 0x0B, 0x0E,
@@ -176,30 +179,30 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 			0xB9,
 			0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF,
 		],
-		
+
 		"SecWithImm8" :  //Secondary opcodes with 8 bit Immediate value
 		[
 			0x70, 
 			0xA4, 0xAC,
 			0xC2, 0xC4, 0xC6        
 		],
-		
+
 		"SecWithImm32" :  //Secondary opcodes with 32 bit Immediate value
 		[
 			0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
 		],
-		
+
 		"TerWithImm8" : //Tertiary opcode with 8 bit Immediate value
 		[ 
 			0x0F
 		],
-		
+
 		"FarType" : 
 		[
 			0x9A,
 			0xEA
 		],
-		
+
 		"Reverse" : //Primary opcodes that reverse the direction (for e.g. DWORD PTR becomes the source)
 		[ 
 			0x02, 0x03, 0x0A, 0x0B,
@@ -210,7 +213,7 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 			0x8A, 0x8B, 0x8D, 0x8E,
 			0xA1, 0xA2,
 		],
-		
+
 		"SecNonReverse" : //Secondary opcodes that don't reverse the direction (DWORD PTR is always the source for the most of them)
 		[ 
 			0x00, 0x01,
@@ -224,6 +227,6 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 			0xC0, 0xC1, 0xC3,
 			0xE7,
 		],
-	};	
+	};
 	IdentifyObj('OpCodeList');
 }

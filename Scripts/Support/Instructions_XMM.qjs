@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2020-11-30                                             *
+*   Last Modified : 2020-12-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,12 +35,12 @@
 ///
 const _define_with = function(prefix)
 {
-	for (let i = 1; i < arguments.length; i++)
+	for (let idx = 1; idx < arguments.length; idx++)
 	{
-		let set = arguments[i];
+		let set = arguments[idx];
 		Assign(
 			set[0],
-			"function(){ return _xmm_cmd(" + set[1] + ", " + set[2] + ", " + set[3] + ", arguments, " + prefix + ")}"
+			`function(){ return _xmm_cmd(${set[1]}, ${set[2]}, ${set[3]}, arguments, ${prefix}) }`
 		);
 	}
 };
@@ -50,12 +50,12 @@ const _define_with = function(prefix)
 ///
 const _define_mux_with = function(prefix)
 {
-	for (let i = 1; i < arguments.length; i++)
+	for (let idx = 1; idx < arguments.length; idx++)
 	{
-		let name = arguments[i];
+		let name = arguments[idx];
 		Assign(
 			name,
-			"function(){ return _xmm_cmd_Mux(" + (i-1) + ", arguments, " + prefix + ")}"
+			`function(){ return _xmm_cmd_Mux(${idx-1}, arguments, ${prefix}) }`
 		);
 	}
 }
