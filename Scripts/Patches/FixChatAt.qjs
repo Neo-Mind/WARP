@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-03                                             *
+*   Last Modified : 2020-12-06                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -94,25 +94,29 @@ FixChatAt = function()
 		+	XOR(EAX, EAX)                      //XOR EAX,EAX
 		+	RETN(4)                            //RETN 4
 		+	POPAD                              //POPAD <- addr1
-		+	PUSH(func)                         //PUSH func
-		+	RETN()                             //RETN; Alternative to "JMP func" with no relative addr calculation needed
+		+	JMP(MakeFiller(1))				   //JMP func
 		;
+		let csize = code.byteCount();
 
 		/// 3.2 - Allocate space for adding our function
-		let free = Exe.FindSpace(code.byteCount());
+		let free = Exe.FindSpace(csize, 0x10);
 		if (free < 0)
 			throw NO_ALLOC;
 
-		/// 3.3 - Add our function there
+		/// 3.3 - Fill in the blanks
+		code = SwapFiller(code, 1, func - Exe.Phy2Vir(free + csize, DIFF));
+
+		/// 3.4 - Add our function there
 		Exe.AddHex(free, code);
 
-		/// 3.4 - Change the CALLed address from func to our function.
+		/// 3.5 - Change the CALLed address from func to our function.
 		Exe.SetTgtAddr(addr + 3, free, PHYSICAL);
 	}
+
 	return true;
 };
 
 ///
-/// \brief Disable for really old clients
+/// \brief Disable for unsupported clients
 ///
-FixChatAt.validate = () => Exe.BuildDate >= 20100000;
+FixChatAt.validate = IsPost2010;
