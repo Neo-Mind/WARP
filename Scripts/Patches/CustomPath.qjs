@@ -34,66 +34,93 @@
 ///
 if (typeof(CP_Data) === 'undefined') //avoid redefinition
 {
-	CP_Data = [
-		{
-			varName: '$newBGMPath', 
-			suffix: "Default BGM", 
+	CP_Data =
+	{
+		'CustomDefaultBGM' : {
+			strType: "Path",
+			varName: '$newBGMPath',
+			prefix: "Default BGM",
 			name: "bgm\\01.mp3"
 		},
-		{
-			varName: '$newItemInfo', 
-			suffix: "ItemInfo Lua"
+
+		'CustomItemInfoLub' : {
+			strType: "Path",
+			varName: '$newItemInfo',
+			prefix: "ItemInfo Lua",
+			parts: ["System/iteminfo", "Sak.lub", "true.lub", ".lub"]
 		},
-		{
-			varName: '$newAchList', 
-			suffix: "Achievement List Lua", 
+
+		'CustomAchieveLub' : {
+			strType: "Path",
+			varName: '$newAchList',
+			prefix: "Achievement List Lua",
 			name: "system\\Achievement_list.lub"
 		},
-		{
-			varName: '$newMonSizeEfct', 
-			suffix: "Monster Size Effect Lua"
+
+		'CustomMonSizeEffLub' : {
+			strType: "Path",
+			varName: '$newMonSizeEfct',
+			prefix: "Monster Size Effect Lua"
 		},
-		{
+
+		'CustomTownInfoLub' : {
+			strType: "Path",
 			varName: '$newTownInfo',
-			suffix: "Town Info Lua",
+			prefix: "Town Info Lua",
 			name: "System/Towninfo.lub"
 		},
-		{
-			varName: '$newPetEvoCln', 
-			suffix: "Pet Evolution Lua"
+
+		'CustomPetEvoClnLub' : {
+			strType: "Path",
+			varName: '$newPetEvoCln',
+			prefix: "Pet Evolution Lua",
+			parts: ["system\\PetEvolutionCln", "sak.lub", "true.lub", ".lub"]
 		},
-		{
-			varName: '$newTipBox', 
-			suffix: "Tip Box Lua", 
+
+		'CustomTipboxLub' : {
+			strType: "Path",
+			varName: '$newTipBox',
+			prefix: "Tip Box Lua",
 			name: "System/tipbox.lub"
 		},
-		{
-			varName: '$newChkAtt', 
-			suffix: "Check Attendance Lua", 
+
+		'CustomCheckAttLub' : {
+			strType: "Path",
+			varName: '$newChkAtt',
+			prefix: "Check Attendance Lua",
 			name: "System/CheckAttendance.lub"
 		},
-		{
-			varName: '$newPrivPlane', 
-			suffix: "Private Airplane Lua"
+
+		'CustomPrivAirplaneLub' : {
+			strType: "Path",
+			varName: '$newPrivPlane',
+			prefix: "Private Airplane Lua",
+			parts: ["System\\PrivateAirplane", "Sakray.lub", "True.lub", ""]
 		},
-		{
-			varName: '$newOngQInfoList', 
-			suffix: "Ongoing QuestInfoList Lua"
+
+		'CustomOngQuestInfoLub' : {
+			strType: "Prefix",
+			varName: '$newOngQInfoList',
+			prefix: "Ongoing QuestInfoList Lua",
+			parts: ["system\\OngoingQuestInfoList", "Sakray", "True", ""]
 		},
-		{
-			varName: '$newRcmdQInfoList', 
-			suffix: "Recommended QuestInfoList Lua"
+
+		'CustomRcmdQuestInfoLub' : {
+			strType: "Prefix",
+			varName: '$newRcmdQInfoList',
+			prefix: "Recommended QuestInfoList Lua",
+			parts: ["system\\RecommendedQuestInfoList", "Sakray", "True", ""]
 		},
-	];
+	};
 }
 
 ///
 /// \brief Common function to change specific file paths
 ///
-CustomPath = function(index)
+CustomPath = function(patchName)
 {
 	/// 1.1 - Retrieve the data for the index
-	let {varName, suffix, addr, name} = CP_Data[index];
+	let {varName, prefix, strType, addr, name} = CP_Data[patchName];
 
 	/// 1.2 - Find location where the string is used in a PUSH
 	addr = Exe.FindHex( PUSH(addr) );
@@ -101,16 +128,14 @@ CustomPath = function(index)
 		throw Error(`'${name} not used`);
 
 	/// 1.2 - Get the new file name from user
-	let p = index > 8 ? "Prefix" : "Path";
-	let result = Exe.GetUserInput( 
-		varName, D_Text, 
-		"File Path",
-		`Enter the new <b>${suffix} ${p}</b> (relative to RO folder)`,
+	let newStr = Exe.GetUserInput(
+		varName, D_Text, `File ${strType}`,
+		`Enter the new <b>${prefix} ${strType}</b> (relative to RO folder)`,
 		name, {minLen: 1, maxLen: 100}
 	);
 
-	if (result === false)
-		Cancel(p, name);
+	if (newStr === false)
+		Cancel(strType, name);
 
 	/// 2.1 - Allocate space to add the file name
 	let free = Exe.FindSpace(varName);
@@ -129,36 +154,40 @@ CustomPath = function(index)
 ///
 /// \brief Common functions to validate
 ///
-CustomPath.validate = (index) =>
+CustomPath.validate = (patchName) =>
 {
-	let {name} = CP_Data[index];
-	let addr = Exe.FindText(name);
+	let data = CP_Data[patchName];
 
-	if (addr > 0)
+	if (data.parts === undefined) //name is provided directly
 	{
-		CP_Data[index].addr = addr;
-		return true;
+		let {name} = CP_Data[patchName];
+		let addr = Exe.FindText(name);
+
+		if (addr > 0)
+		{
+			CP_Data[patchName].addr = addr;
+			return true;
+		}	
 	}
-
-	return (addr > 0);
-};
-
-CustomPath.validateSak = (index, pref, sakSuf, truSuf, suf = '') =>
-{
-	let name = pref + "_" + (ROC.IsRenewal ? sakSuf : truSuf);
-	let addr = Exe.FindText(name);
-
-	if (addr < 0)
+	else //need to derive the name from parts and then find its address.
 	{
-		name = pref + suf;
-		addr = Exe.FindText(name);
-	}
+		let [pref, sakSuf, truSuf, suf] = data.parts;
 
-	if (addr > 0)
-	{
-		CP_Data[index].addr = addr;
-		CP_Data[index].name = name;
-		return true;
+		let name = pref + "_" + (ROC.IsRenewal ? sakSuf : truSuf);
+		let addr = Exe.FindText(name);
+
+		if (addr < 0)
+		{
+			name = pref + suf;
+			addr = Exe.FindText(name);
+		}
+
+		if (addr > 0)
+		{
+			data.addr = addr;
+			data.name = name;
+			return true;
+		}
 	}
 
 	return false;
@@ -167,21 +196,19 @@ CustomPath.validateSak = (index, pref, sakSuf, truSuf, suf = '') =>
 ///
 /// Wrappers for Individual Patches
 ///
-CustomDefaultBGM = () => CustomPath(0);
-CustomDefaultBGM.validate = () => CustomPath.validate(0);
+CustomDefaultBGM       = CustomPath;
+CustomItemInfoLub      = CustomPath;
+CustomAchieveLub       = CustomPath;
+CustomTownInfoLub      = CustomPath;
+CustomPetEvoClnLub     = CustomPath;
+CustomTipboxLub        = CustomPath;
+CustomCheckAttLub      = CustomPath;
+CustomPrivAirplaneLub  = CustomPath;
+CustomOngQuestInfoLub  = CustomPath;
+CustomRcmdQuestInfoLub = CustomPath;
 
-
-CustomItemInfoLub = () => CustomPath(1);
-CustomItemInfoLub.validate = () =>
-	CustomPath.validateSak(1, "System/iteminfo", "Sak.lub", "true.lub", ".lub");
-
-
-CustomAchieveLub = () => CustomPath(2);
-CustomAchieveLub.validate = () => CustomPath.validate(2);
-
-
-CustomMonSizeEffLub = () => CustomPath(3);
-CustomMonSizeEffLub.validate = () =>
+CustomMonSizeEffLub = (patchName) => CustomPath(patchName);
+CustomMonSizeEffLub.validate = (patchName) =>
 {
 	let suf = (ROC.IsRenewal ? "_sak" : "");
 
@@ -195,50 +222,17 @@ CustomMonSizeEffLub.validate = () =>
 
 	if (addr > 0)
 	{
-		CP_Data[3].addr = addr;
-		CP_Data[3].name = name;
+		CP_Data[patchName].addr = addr;
+		CP_Data[patchName].name = name;
 		return true;
 	}
 
 	return false;
 };
 
-
-CustomTownInfoLub = () => CustomPath(4);
-CustomTownInfoLub.validate = () => CustomPath.validate(4);
-
-
-CustomPetEvoClnLub = () => CustomPath(5);
-CustomPetEvoClnLub.validate = () =>
-	CustomPath.validateSak(5, "system\\PetEvolutionCln", "sak.lub", "true.lub", ".lub");
-
-
-CustomTipboxLub = () => CustomPath(6);
-CustomTipboxLub.validate = () => CustomPath.validate(6);
-
-
-CustomCheckAttLub = () => CustomPath(7);
-CustomCheckAttLub.validate = () => CustomPath.validate(7);
-
-
-CustomPrivAirplaneLub = () => CustomPath(8);
-CustomPrivAirplaneLub.validate = () => 
-	CustomPath.validateSak(8, "System\\PrivateAirplane", "Sakray.lub", "True.lub");
-
-
-CustomOngQuestInfoLub = () => CustomPath(9);
-CustomOngQuestInfoLub.validate = () =>
-	CustomPath.validateSak(9, "system\\OngoingQuestInfoList", "Sakray", "True");
-
-
-CustomRcmdQuestInfoLub = () => CustomPath(10);
-CustomRcmdQuestInfoLub.validate = () =>
-	CustomPath.validateSak(10, "system\\RecommendedQuestInfoList", "Sakray", "True");
-
-
 ///
-/// \brief Change the "..\\licence.txt" & the EULA error string reference to user specified file 
-/// 
+/// \brief Change the "..\\licence.txt" & the EULA error string reference to user specified file
+///
 Orig_LicTxt = "..\\licence.txt";
 CustomLicenseTxt = function()
 {
@@ -289,8 +283,8 @@ CustomLicenseTxt = function()
 
 	/// 3.5 - Update all PUSHes & assigments using the original EULA error string
 	let found = [
-		PUSH(0x20) + PUSH(addr), 
-		MOV(ESI, addr), 
+		PUSH(0x20) + PUSH(addr),
+		MOV(ESI, addr),
 		MOV(EDI, addr)
 	].filter( code =>
 	{
@@ -322,7 +316,7 @@ CustomClientInfo = function()
 	let fromAddr = DGRF.RefAddr;
 	let toAddr = fromAddr + 0x100; //may not need this much
 
-	/// 1.3 - Find where the XML is referenced 
+	/// 1.3 - Find where the XML is referenced
 	let patterns;
 	if (Exe.Version > 10.0)
 	{
@@ -355,7 +349,8 @@ CustomClientInfo = function()
 		throw Error("clientinfo not used");
 
 	/// 1.4 - Add the address & displacement offset to repLocs
-	let repLocs = [ [addr + code.byteCount() - 4, 0] ];
+	let repLocs = new Map();
+	repLocs.set(0, addr + code.byteCount() - 4);
 
 	/// 1.3 - Find the additional references & save the locations where replacement need to be made
 	if (hasMore)
@@ -368,7 +363,7 @@ CustomClientInfo = function()
 				if (addr < 0)
 					throw Error("2nd reference missing");
 
-				repLocs.push([addr + 4, 8]);
+				repLocs.set(8, addr + 4);
 			}
 			else
 			{
@@ -376,13 +371,13 @@ CustomClientInfo = function()
 				if (addr < 0)
 					throw Error("2nd reference missing");
 
-				repLocs.push([addr + 1, 8]);
+				repLocs.set(8, addr + 1);
 
 				addr = Exe.FindHex(MOV(AX, [CCI_Addr + 0xC]), fromAddr, toAddr);
 				if (addr < 0)
 					throw Error("3rd reference missing");
 
-				repLocs.push([addr + 2, 0xC]);
+				repLocs.set(0xC, addr + 2);
 			}
 		}
 		else
@@ -400,7 +395,7 @@ CustomClientInfo = function()
 				if (addr < 0)
 					throw Error("Reference no." + (idx + 2) + " missing");
 
-				repLocs.push([addr + offset, disp]);
+				repLocs.set(disp, addr + offset);
 			});
 		}
 
@@ -415,7 +410,7 @@ CustomClientInfo = function()
 		if (addr < 0)
 			throw Error("4th reference missing");
 
-		repLocs.push([addr + offset, 0xE]);
+		repLocs.set(0xE, addr + offset);
 	}
 
 	/// 2.1 - Get the new name from the user
@@ -429,12 +424,12 @@ CustomClientInfo = function()
 	if (free < 0)
 		throw NO_ALLOC;
 
-	/// 2.3 - Add the name there 
+	/// 2.3 - Add the name there
 	Exe.AddFromVar(free, varName);
 
 	/// 2.4 - Adjust the references
 	let freeVir = Exe.Phy2Vir(free, DIFF);
-	repLocs.forEach( pair => Exe.SetUint32(pair[0], freeVir + pair[1]) );
+	repLocs.forEach( (addr, disp) => Exe.SetUint32(addr, freeVir + disp) );
 
 	return true;
 };

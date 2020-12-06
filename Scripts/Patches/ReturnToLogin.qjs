@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo Mind                                       *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
@@ -23,18 +23,19 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144)                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-03                                             *
+*   Last Modified : 2020-12-06                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Change the PUSHed argument & mode value to Mode Setting calls after disconnection to make it return to login window instead of exiting client
+/// \brief Change the PUSHed argument & mode value to Mode Setting calls after disconnection 
+///        to make it return to login window instead of exiting client.
 ///
 DisConnToLogin = function()
 {
 	/// 1.1 - Sanity Check. Make Sure Restore Login Window is enabled (unless in test mode)
 	if (!Exe.TestMode && !Exe.IsSelected("RestoreLoginWindow"))
-		throw "Cancelled - 'Restore Login Window' patch needs to be ON";
+		Cancel("<b>Restore Login Window</b> patch needs to be ON");
 
 	/// 1.2 - Find all locations where the MsgString ID (635) is PUSHed for the error message :
 	///       "Sorry the character you are trying to use is banned for testing connection."
@@ -65,16 +66,17 @@ DisConnToLogin = function()
 
 	/// 2.3 - Find the refAddr movement after it (We will inject a Jump to our code here)
 	code =
-		CALL(NEG3WC)            //CALL addr
-	+	MOV(ECX, [POS3WC])        //MOV ECX, DWORD PTR DS:[refAddr]
+		CALL(NEG3WC)             //CALL addr
+	+	MOV(ECX, [POS3WC])       //MOV ECX, DWORD PTR DS:[refAddr]
 	;
 	let addr2 = Exe.FindHex(code, addr + 0x5, addr + 0x80);
+
 	if (addr2 < 0)
 	{
 		code =
-			RETN(4)                //RETN 4
-		+	MOV(ECX, [POS3WC])    //MOV ECX, DWORD PTR DS:[refAddr]
-		+	PUSH_0                //PUSH 0
+			RETN(4)              //RETN 4
+		+	MOV(ECX, [POS3WC])   //MOV ECX, DWORD PTR DS:[refAddr]
+		+	PUSH_0               //PUSH 0
 		;
 		addr2 = Exe.FindHex(code, addr + 0x5, addr + 0xB0);
 	}
@@ -103,7 +105,7 @@ DisConnToLogin = function()
 
 	/// 3.2 - Get the number of PUSH 0 instructions between the Mode Change and refAddr assignment before
 	///       We need to push the same number in our code
-	let zeros = Exe.FindHexN( PUSH_0, jmpAddr + 6, addr );
+	let zeros = Exe.FindHexN( PUSH_0, -1, jmpAddr + 6, addr );
 	if (zeros.isEmpty())
 		throw Error("PUSH 0s not found");
 
@@ -131,8 +133,8 @@ DisConnToLogin = function()
 	/// 4.3 - Add the code there
 	Exe.AddHex(free, code);
 
-	/// 4.4 - Change the MOV instruction to a JMP + 1 NOP to our code
-	Exe.SetJMP(jmpAddr, free, PHYSICAL, 1);
+	/// 4.4 - Change the MOV instruction to a JMP to our code and NOP out rest of the stuff between jmpAddr & retnAddr
+	Exe.SetJMP(jmpAddr, free, PHYSICAL, retnAddr - (jmpAddr + 5));
 
 	/******* Next we will work on Disconnection from Map server during Gameplay *******/
 
@@ -226,15 +228,15 @@ DisConnToLogin = function()
 	;
 
 	/// 7.2 - Allocate space to add our code
-	free = Exe.FindSpace(code.byteCount());
+	free = Exe.FindSpace(code.byteCount(), 0x10);
 	if (free < 0)
-		throw Error("Not enough space for 2nd code");
+		throw NO_ALLOC;
 
 	/// 7.3 - Add the code there
 	Exe.AddHex(free, code);
 
 	/// 7.4 - Change the instruction from PUSH 2 onwards into a JMP to our code
-	Exe.SetJMP(jmpAddr, free, PHYSICAL);
+	Exe.SetJMP(jmpAddr, free, PHYSICAL, retnAddr - (jmpAddr + 5));
 
 	return true;
 };
@@ -246,7 +248,7 @@ CancelToLogin = function()
 {
 	/// 1.1 - Sanity Check. Ensure Restore Login Window is enabled (unless in test mode)
 	if (!Exe.TestMode && !Exe.IsSelected("RestoreLoginWindow"))
-		throw "Cancelled - 'Restore Login Window' patch needs to be ON";
+		Cancel("<b>Restore Login Window</b> patch needs to be ON");
 
 	/// 1.2 - Find the case branch that occurs before the Cancel Button case.
 	///      The pattern will match multiple locations of which first (or recently second) is the one we need
@@ -302,8 +304,7 @@ CancelToLogin = function()
 	;
 	let cancSize = canceller.byteCount();
 
-	let found = false;
-	addrs.forEach( memAddr =>
+	let found = addrs.filter( memAddr =>
 	{
 		/***** First we find all required addresses *****/
 
@@ -318,7 +319,7 @@ CancelToLogin = function()
 			addr = Exe.FindHex(canceller.replace(PUSH_R + PUSH_R, PUSH_0 + PUSH_0), memAddr, memAddr + 0x80);
 
 			if (addr < 0)
-				return;
+				return false;
 		}
 		else
 		{
@@ -347,7 +348,7 @@ CancelToLogin = function()
 			addr2 = Exe.FindHex(code, addr + cancSize, addr + cancSize + 0x40);
 		}
 		if (addr2 < 0)
-			return;
+			return false;
 
 		/// 2.6 - Set addr2 to location after the JNE
 		addr2 += code.byteCount();
@@ -361,7 +362,7 @@ CancelToLogin = function()
 
 		let addr3 = Exe.FindHex(code, addr2, addr2 + 0x20);
 		if (addr3 < 0)
-			return;
+			return false;
 
 		/// 3.2 - Set addr3 to location of PUSH 2
 		addr3 += code.byteCount() - 2;
@@ -380,18 +381,19 @@ CancelToLogin = function()
 		// PUSH 2723 and go to the location after the original PUSH 2 => addr3 + 2
 		+	PUSH(0x2723)           //PUSH 2723
 		;
-		
+
 		code +=
 			JMP(addr3 + 2, addr + code.byteCount()) //JMP addr; after PUSH 2.
 		;
 
 		/// 4.2 - Replace with prepared code
 		Exe.SetHex(addr, code);
-		found = true;
+		return true;
+
 	});
 
-	/// 5 - Ensure we got atleast 1 match
-	if (!found)
+	/// 4.3 - Ensure we got atleast 1 match
+	if (found.isEmpty())
 		throw Error("No references matched");
 
 	return true;
