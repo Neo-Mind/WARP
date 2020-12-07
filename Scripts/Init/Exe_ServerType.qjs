@@ -26,7 +26,7 @@
 *                                                                          *
 \**************************************************************************/
 
-if (typeof(SRVRTYPE) === 'undefined') // avoid redefinition
+if (typeof SRVRTYPE === 'undefined') // avoid redefinition
 {
 	///
 	/// \brief Hash describing the ServerType details (only address as of now)

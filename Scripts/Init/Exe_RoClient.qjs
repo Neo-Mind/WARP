@@ -26,7 +26,7 @@
 *                                                                          *
 \**************************************************************************/
 
-if (typeof(ROC) === 'undefined')
+if (typeof ROC === 'undefined')
 {
 	///
 	/// \brief Hash that stores miscellaneous info about the Ragnarok client

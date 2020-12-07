@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-12-04                                             #
+#   Last Modified : 2020-12-07                                             #
 #                                                                          #
 ############################################################################
 
@@ -1233,7 +1233,7 @@ groups:
                 author : Secret, A.K.M. & Neo-Mind
                 desc : Always see black silhouette of hidden objects as if the player has intravision status.
             
-            - CustomQSdelay:
+            - CustomQSDelay:
                 title : Custom Quick Switch Delay
                 recommend : no
                 author : mrjnumber1

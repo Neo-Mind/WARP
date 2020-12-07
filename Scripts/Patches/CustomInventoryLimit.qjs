@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2018 CH.C (jchcc)                                        *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,72 +21,78 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Jchcc, Neo-Mind                                        *
+*   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-06                                             *
 *                                                                          *
 \**************************************************************************/
 
-// TODO - Not working for clients before 2017
+// TODO - Not working for clients before 2017. Can't find the /%d in there either.
 
 ///
 /// \brief Find the max item count display for inventory & replace with user specified value
 ///
 CustomInventoryLimit = function()
 {
-	/// 1 - Find the count
-	let code =
-		PUSH(0x64)			// PUSH 64
-	+	LEA(EAX, [EBP, WC])	// LEA EAX, [EBP+const]
-	+	PUSH(POS3WC)		// PUSH OFFSET addr; ASCII "/%d"
-	;
-
-    let addrs = Exe.FindHexN(code);
-	if (addrs.isEmpty()) //newer clients
+	/// 1 - Find the locations where the /%d string is referenced.
+	let code;
+	if (Exe.Version > 11.0) //VC14.16
 	{
-		if (Exe.Version > 11.0)
-		{
-			code =
-				LEA(EAX, [EBP, WC])	// LEA EAX, [EBP+const]
-			+	ADD(R32, 0x64)	    // ADD reg32_A, 64 ;reg32_A can be EAX or ECX
-			+	PUSH_R   		    // PUSH reg32_A
-			+	PUSH(POS3WC)	    // PUSH OFFSET addr; ASCII "/%d"
-			;
-		}
-		else
-		{
-			code =
-				ADD(R32, 0x64)	    // ADD reg32_A, 64 ;reg32_A can be EAX or ECX
-			+	PUSH_R   		    // PUSH reg32_A
-			+	LEA(EAX, [EBP, WC])	// LEA EAX, [EBP+const]
-			+	PUSH(POS3WC)	    // PUSH OFFSET addr; ASCII "/%d"
-			;
-		}
-		addrs = Exe.FindHexN(code);
+		code =
+			LEA(EAX, [EBP, WC])	// LEA EAX, [EBP+const]
+		+	ADD(R32, 0x64)	    // ADD reg32_A, 64 ;reg32_A can be EAX or ECX
+		+	PUSH_R   		    // PUSH reg32_A
+		+	PUSH(POS3WC)	    // PUSH OFFSET addr; ASCII "/%d"
+		;
 	}
+	else if (Exe.BuildDate > 20181128) //VC11 newer
+	{
+		code =
+			ADD(R32, 0x64)	    // ADD reg32_A, 64 ;reg32_A can be EAX or ECX
+		+	PUSH_R   		    // PUSH reg32_A
+		+	LEA(EAX, [EBP, WC])	// LEA EAX, [EBP+const]
+		+	PUSH(POS3WC)	    // PUSH OFFSET addr; ASCII "/%d"
+		;
+	}
+	else if (Exe.BuildDate > 20170000) //VC11 older
+	{
+		code =
+			PUSH(0x64)			// PUSH 64
+		+	LEA(EAX, [EBP, WC])	// LEA EAX, [EBP+const]
+		+	PUSH(POS3WC)		// PUSH OFFSET addr; ASCII "/%d"
+		;
+	}
+	else
+	{
+		Cancel("No valid pattern known for older clients");
+	}
+
+	let addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
-        throw Error("Item count function missing");
+		throw Error("Item count function missing");
+
 
 	/// 2.1 - Retrieve the new value from user
-	let val = Exe.GetUserInput('$MaxItemCount', D_Uint32, "Limit Input", "Enter the max item count", 100, {max: 999, saveDefault: true});
+	let val = Exe.GetUserInput('$MaxItemCount', D_Uint32, "Limit Input", "Enter the max item count", 100, {max: 999});
 	if (val === true)
-		throw "Cancelled - No max count specified";
-	
+		Cancel("Max Count", 100);
+
 	/// 2.2 - Prep the new string
 	let newStr = "/" + val + "\x00";
-	
+
 	/// 2.3 - Allocate space for it
 	let free = Exe.FindSpace(newStr.length);
 	if (free < 0)
 		throw NO_ALLOC;
-	
+
 	/// 2.4 - Add the string there
-	Exe.AddText(free, newStr, newStr.length);
-	
+	Exe.AddText(free, newStr);
+
 	/// 3 - Replace all the references
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 	let offset = code.byteCount() - 4;
+
 	addrs.forEach( matchAddr => Exe.SetTgtAddr(matchAddr + offset, freeVir) );
-	
+
 	return true;
 };

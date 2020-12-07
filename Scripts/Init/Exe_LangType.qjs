@@ -26,7 +26,7 @@
 *                                                                          *
 \**************************************************************************/
 
-if (typeof(LANGTYPE) === 'undefined') // avoid redefinition
+if (typeof LANGTYPE === 'undefined') // avoid redefinition
 {
 	///
 	/// \brief Hash describing the LangType details (only address as of now)

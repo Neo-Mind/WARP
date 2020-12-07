@@ -26,7 +26,7 @@
 *                                                                          *
 \**************************************************************************/
 
-if (typeof(DGRF) === 'undefined')
+if (typeof DGRF === 'undefined')
 {
 	///
 	/// \brief Hash that stores info about Data.grf

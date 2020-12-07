@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-07                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -161,7 +161,7 @@ _transfer_ = (ocImm, oper, args, noImm8) =>
 					data.Immd -= 2;
 					data.calcImmSize(noImm8);
 
-					if (data.Immd > 0x7F)
+					if (data.Immd < -0x80 || data.Immd > 0x7F)
 					{
 						data.Immd -= 3;
 						opCode = ocImm[1];

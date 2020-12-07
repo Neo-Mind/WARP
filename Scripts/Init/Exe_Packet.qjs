@@ -26,7 +26,7 @@
 *                                                                          *
 \**************************************************************************/
 
-if (typeof(PACKET) === 'undefined') // avoid redefinition
+if (typeof PACKET === 'undefined') // avoid redefinition
 {
 	///
 	/// \brief Values denoting how the KeySetter function is called

@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2013 Shakto                                              *
-*   Copyright (C) 2013-2020 Neo Mind                                       *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-07                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,18 +31,17 @@
 PktKeyPatches = ["CustomFirstKey", "CustomSecondKey", "CustomThirdKey"];
 
 ///
-/// \brief Replaces the key PUSHed or Hijack the KeySetter function to 
+/// \brief Replaces the key PUSHed or Hijack the KeySetter function to
 ///        use our code for assigning the keys. Choice is made based on PACKET.KS_Mode
 ///
 CustomEncKeys = function(patchName)
 {
 	/// 1.1 - Check if Packet Encryption is disabled already (unless in test mode)
 	if (!Exe.TestMode && Exe.IsSelected("NoPacketEncr"))
-		throw "Cancelled - Disable Packet Encryption is ON";
+		Cancel("Disable Packet Encryption is ON");
 
-	/// 1.2 - Ensure the PACKET object has been loaded with valid data
-	if (!PACKET.load())
-		throw PACKET.Error;
+	/// 1.2 - Ensure the PACKET object has been loaded
+	PACKET.load();
 
 	/// 1.3 - Discern the Variable name and index based on patchName
 	let index = PktKeyPatches.indexOf(patchName);
@@ -50,13 +49,14 @@ CustomEncKeys = function(patchName)
 
 	/// 1.3 - Get the new key from user
 	let oldKey = PACKET.Keys[index].toHex(4, true); //need in BE format
-	let newKey = Exe.GetUserInput(varName, D_Hex, "Packet Keys", "Enter the new packet key", oldKey, {minLen: 4, maxLen: 4});    
+	let newKey = Exe.GetUserInput(varName, D_Hex, "Packet Keys", "Enter the new packet key", oldKey, {minLen: 4, maxLen: 4});
 
 	if (newKey === false)
-		throw "Cancelled - No new key specified";
+		Cancel("No new key specified");
 
 	if (PACKET.KS_Mode === KeyMode.Push) //Direct PUSHes
 	{
+		/// 2.1 - For Direct Key PUSHes, find all locations where it occurs.
 		let code =
 			PUSH(PACKET.Keys[2])  //PUSH key3
 		+	PUSH(PACKET.Keys[1])  //PUSH key2
@@ -65,9 +65,11 @@ CustomEncKeys = function(patchName)
 		;
 		let csize = code.byteCount();
 
+		/// 2.2 - Update the respective PUSHed key with the new one in all such locations.
 		Exe.FindHexN(code).forEach( addr =>
 			Exe.SetFromVar(addr + csize - 5*(index + 1), varName)
 		);
+
 		return true;
 	}
 	else //Keys are assigned inside ObfuscateOrInit mixed function
@@ -105,37 +107,32 @@ CustomEncKeys.cleanup = function(patchName)
 	/// 1.2 - Get the index
 	let index = PktKeyPatches.indexOf(patchName);
 
-	/// 1.3 - Reset the specific key to default one 
+	/// 1.3 - Reset the specific key to default one
 	PACKET.PatchData[index] = PACKET.Keys[index];
 
 	/// 2.1 - Set one of the other Packet Key patches as active if they are selected
 	if (PACKET.PatchData[4] === index)
 	{
-		PktKeyPatches.find((name, i) =>
+		let newIdx = PktKeyPatches.findIndex( name => Exe.IsSelected(name) );
+		if (newIdx < 0)
 		{
-			let sel = Exe.IsSelected(name);
-			if (sel)
-				PACKET.PatchData[4] = i;
+			/// 2.2 - If no other patch is selected then clear the data
+			PACKET.PatchData = [];
+			return;
+		}
 
-			return sel;
-		});
+		PACKET.PatchData[4] = newIdx;
 	}
 
-	/// 2.2 - If no other patch is selected then clear the data
-	if (PACKET.PatchData[4] === index)
-	{
-		PACKET.PatchData = [];
-	}
-
-	/// 2.3 - Otherwise set the patch for the different index as the current one and 
-	///       rerun _PK_SetupObfuscate function
-	else
+	/// 2.3 - Otherwise set the patch for the different index as the current one and
+	///       rerun _PK_SetupObfuscate function	
+	if (!PACKET.PatchData.isEmpty() && PACKET.PatchData[4] !== index)
 	{
 		Exe.ClearPatch(patchName);
 		Exe.SetActivePatch(patchName);
 
 		// no need to run the entire PacketKeys function, since we have all relevant data saved
-		_CEK_SetupObfuscate(PACKET.PatchData[4]);
+		_CEK_SetupObfuscate(PACKET.PatchData[4]);	
 	}
 }
 
@@ -154,36 +151,37 @@ _CEK_SetupObfuscate = function(index)
 	let code = "";
 
 	/// 1.1 - Prepare suffix with Stack restore & RETN
-	let suffix = 
-		(ROC.HasFP ? POP(EBP) : NOP)	//POP EBP or NOP
-	+	RETN(4)              			//RETN 4
+	let suffix =
+		(ROC.HasFP ? POP(EBP) : NOP)  //POP EBP or NOP
+	+	RETN(4)                       //RETN 4
 	;
 
-	/// 1.2 - For virtualized function, add the encryption and zero assigning codes as well 
+	/// 1.2 - For virtualized function, add the encryption and zero assigning codes as well
 	///       since we need to replicate the entire function
 	if (PACKET.KS_Mode === KeyMode.Virtual)
 	{
-		code += (ROC.HasFP ?
-			MOV(EAX, [EBP, 8])			//MOV EAX, DWORD PTR SS:[EBP+8]
-		:
-			MOV(EAX, [ESP, 4])			//MOV EAX, DWORD PTR SS:[ESP+4]
+		code += (ROC.HasFP
+		?
+			MOV(EAX, [EBP, 8])    //MOV EAX, DWORD PTR SS:[EBP+8]
+		:                         // or
+			MOV(EAX, [ESP, 4])    //MOV EAX, DWORD PTR SS:[ESP+4]
 		)
-		+   TEST(EAX, EAX)              //TEST EAX, EAX
-		+   JNE(0x19)                   //JNE SHORT addr1
-		+   MOV(EAX, [ECX, 8])          //MOV EAX, DWORD PTR DS:[ECX+8]
-		+   IMUL(EAX, [ECX, 4])         //IMUL EAX, DWORD PTR DS:[ECX+4]
-		+   ADD(EAX, [ECX, 0xC])        //ADD EAX, DWORD PTR DS:[ECX+0C]
-		+   MOV([ECX, 4], EAX)          //MOV DWORD PTR DS:[ECX+4], EAX
-		+   SHR(EAX, 0x10)              //SHR EAX, 10
-		+   AND(EAX, 0x7FFF)            //AND EAX, 00007FFF
-		+   suffix
-		+   CMP(EAX, 1)                 //CMP EAX, 1 <= addr1
-		+   JE(0xF)                     //JE SHORT addr2 ; addr2 is after the RETN 4 below
-		+   XOR(EAX, EAX)               //XOR EAX, EAX
-		+   MOV([ECX, 0x4], EAX)        //MOV DWORD PTR DS:[ECX+4], EAX
-		+   MOV([ECX, 0x8], EAX)        //MOV DWORD PTR DS:[ECX+8], EAX
-		+   MOV([ECX, 0xC], EAX)        //MOV DWORD PTR DS:[ECX+0C], EAX
-		+   suffix
+		+	TEST(EAX, EAX)        //TEST EAX, EAX
+		+	JNE(0x19)             //JNE SHORT addr1
+		+	MOV(EAX, [ECX, 8])    //MOV EAX, DWORD PTR DS:[ECX+8]
+		+	IMUL(EAX, [ECX, 4])   //IMUL EAX, DWORD PTR DS:[ECX+4]
+		+	ADD(EAX, [ECX, 0xC])  //ADD EAX, DWORD PTR DS:[ECX+0C]
+		+	MOV([ECX, 4], EAX)    //MOV DWORD PTR DS:[ECX+4], EAX
+		+	SHR(EAX, 0x10)        //SHR EAX, 10
+		+	AND(EAX, 0x7FFF)      //AND EAX, 00007FFF
+		+	suffix
+		+	CMP(EAX, 1)           //CMP EAX, 1 <= addr1
+		+	JE(0xF)               //JE SHORT addr2 ; addr2 is after the RETN 4 below
+		+	XOR(EAX, EAX)         //XOR EAX, EAX
+		+	MOV([ECX, 0x4], EAX)  //MOV DWORD PTR DS:[ECX+4], EAX
+		+	MOV([ECX, 0x8], EAX)  //MOV DWORD PTR DS:[ECX+8], EAX
+		+	MOV([ECX, 0xC], EAX)  //MOV DWORD PTR DS:[ECX+0C], EAX
+		+	suffix
 		;
 	}
 
@@ -197,7 +195,7 @@ _CEK_SetupObfuscate = function(index)
 	;
 	let csize = code.byteCount();
 
-	/// 2.1 - Check if 4th element (insertion address) is already defined, 
+	/// 2.1 - Check if 4th element (insertion address) is already defined,
 	///       if so clear the other patches.
 	if (PACKET.PatchData[3] !== undefined)
 	{
@@ -218,7 +216,7 @@ _CEK_SetupObfuscate = function(index)
 	}
 
 	/// 2.3 - Add the code at allocated space
-	Exe.AddHex(PACKET.PatchData[3], code, csize);
+	Exe.AddHex(PACKET.PatchData[3], code);
 
 	/// 2.4 - Create a JMP to the allocated space from PACKET.Assigner
 	Exe.SetHex(PACKET.Assigner, JMP(Exe.Phy2Vir(PACKET.PatchData[3]), Exe.Phy2Vir(PACKET.Assigner)) );
