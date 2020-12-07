@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-16                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-07                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,8 @@ if (typeof DGRF === 'undefined')
 		///
 		init : function()
 		{
-			this.Addr    = -1;        //The VIRTUAL address of 'data.grf'
+			this.Name    = '';        //'data.grf' or 'sdata.grf'
+			this.Addr    = -1;        //The VIRTUAL address of name
 			this.RefAddr = -1;        //The address where it is referenced
 			this.MovFMgr = '';        //The MOV ECX, g_FileMgr code
 
@@ -68,8 +69,9 @@ if (typeof DGRF === 'undefined')
 			/// 1.4 - Initialize 'Valid' to false
 			this.Valid = false;
 
-			/// 1.5 - Find 'data.grf'
-			this.Addr = Exe.FindText("data.grf");
+			/// 1.5 - Find 'data.grf' or 'sdata.grf' for really old clients
+			this.Name = ROC.Post2010 ? "data.grf" : "sdata.grf"
+			this.Addr = Exe.FindText(this.Name);
 			if (this.Addr < 0)
 			{
 				this.Error = new Error("DG - 'data.grf' not found");

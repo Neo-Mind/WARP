@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144)                  *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-05                                             *
+*   Last Modified : 2020-12-07                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,76 +36,87 @@ if (typeof(CP_Data) === 'undefined') //avoid redefinition
 {
 	CP_Data =
 	{
-		'CustomDefaultBGM' : {
+		CustomDefaultBGM :
+		{
 			strType: "Path",
 			varName: '$newBGMPath',
 			prefix: "Default BGM",
 			name: "bgm\\01.mp3"
 		},
 
-		'CustomItemInfoLub' : {
+		CustomItemInfoLub :
+		{
 			strType: "Path",
 			varName: '$newItemInfo',
 			prefix: "ItemInfo Lua",
 			parts: ["System/iteminfo", "Sak.lub", "true.lub", ".lub"]
 		},
 
-		'CustomAchieveLub' : {
+		CustomAchieveLub :
+		{
 			strType: "Path",
 			varName: '$newAchList',
 			prefix: "Achievement List Lua",
 			name: "system\\Achievement_list.lub"
 		},
 
-		'CustomMonSizeEffLub' : {
+		CustomMonSizeEffLub :
+		{
 			strType: "Path",
 			varName: '$newMonSizeEfct',
 			prefix: "Monster Size Effect Lua"
 		},
 
-		'CustomTownInfoLub' : {
+		CustomTownInfoLub :
+		{
 			strType: "Path",
 			varName: '$newTownInfo',
 			prefix: "Town Info Lua",
 			name: "System/Towninfo.lub"
 		},
 
-		'CustomPetEvoClnLub' : {
+		CustomPetEvoClnLub :
+		{
 			strType: "Path",
 			varName: '$newPetEvoCln',
 			prefix: "Pet Evolution Lua",
 			parts: ["system\\PetEvolutionCln", "sak.lub", "true.lub", ".lub"]
 		},
 
-		'CustomTipboxLub' : {
+		CustomTipboxLub :
+		{
 			strType: "Path",
 			varName: '$newTipBox',
 			prefix: "Tip Box Lua",
 			name: "System/tipbox.lub"
 		},
 
-		'CustomCheckAttLub' : {
+		CustomCheckAttLub :
+		{
 			strType: "Path",
 			varName: '$newChkAtt',
 			prefix: "Check Attendance Lua",
 			name: "System/CheckAttendance.lub"
 		},
 
-		'CustomPrivAirplaneLub' : {
+		CustomPrivAirplaneLub :
+		{
 			strType: "Path",
 			varName: '$newPrivPlane',
 			prefix: "Private Airplane Lua",
 			parts: ["System\\PrivateAirplane", "Sakray.lub", "True.lub", ""]
 		},
 
-		'CustomOngQuestInfoLub' : {
+		CustomOngQuestInfoLub :
+		{
 			strType: "Prefix",
 			varName: '$newOngQInfoList',
 			prefix: "Ongoing QuestInfoList Lua",
 			parts: ["system\\OngoingQuestInfoList", "Sakray", "True", ""]
 		},
 
-		'CustomRcmdQuestInfoLub' : {
+		CustomRcmdQuestInfoLub :
+		{
 			strType: "Prefix",
 			varName: '$newRcmdQInfoList',
 			prefix: "Recommended QuestInfoList Lua",
@@ -207,7 +218,7 @@ CustomPrivAirplaneLub  = CustomPath;
 CustomOngQuestInfoLub  = CustomPath;
 CustomRcmdQuestInfoLub = CustomPath;
 
-CustomMonSizeEffLub = (patchName) => CustomPath(patchName);
+CustomMonSizeEffLub = patchName => CustomPath(patchName);
 CustomMonSizeEffLub.validate = (patchName) =>
 {
 	let suf = (ROC.IsRenewal ? "_sak" : "");

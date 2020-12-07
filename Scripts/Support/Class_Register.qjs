@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-07                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -145,8 +145,8 @@ if (typeof(Register) === 'undefined') //avoid redefinition
 	__create("XMM$", 128); //Generic Placeholder
 
 	ST$.List  = indices.map( index => __create( 'ST' + index,  80, index) );
-	XMM$.List = indices.map( index => __create('XMM' + index,  64, index) );
-	MM$.List  = indices.map( index => __create( 'MM' + index, 128, index) );
+	MM$.List  = indices.map( index => __create( 'MM' + index,  64, index) );
+	XMM$.List = indices.map( index => __create('XMM' + index, 128, index) );
 
 	ST = i =>
 		i >= 0 && i <= 7 ? eval("ST" + i) : undefined;

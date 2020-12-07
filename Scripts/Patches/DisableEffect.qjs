@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Andrei (4144), X-EcutiOnner        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-07                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -47,25 +47,31 @@ NoEarthQuake = function()
 	if (sufAddr < 0)
 		throw Error("Suffix not found");
 
-	/// 1.2 - Find where its PUSHed
-	let code =
-		PUSH(sufAddr)               //PUSH OFFSET addr; ASCII ".BMP" or ".png"
-	+	MOV(ECX, R32)               //MOV ECX, reg32_A
-	;
+	/// 1.2 - Find where its used in a  PUSH
+	///
+	let code = PUSH(sufAddr);         //PUSH OFFSET addr; ASCII ".BMP" or ".png"
+	if (Exe.BuildDate > 20180200 && (
+			(ROC.IsRenewal && Exe.BuildDate < 20190600) ||
+			(!ROC.IsRenewal && Exe.BuildDate < 20190610)
+		)
+	)
+	{
+		code +=
+			LEA(ECX, [R32, POS2WC]);  //LEA ECX, [reg32_A + const]
+	}
+	else
+	{
+		code +=
+			MOV(ECX, R32);            //MOV ECX, reg32_A
+	}
+
 	addr = Exe.FindHex(code);
 	if (addr < 0)
-	{
-		code =
-			PUSH(sufAddr)           //PUSH OFFSET addr; ASCII ".BMP"
-		+	LEA(ECX, [R32, POS2WC]) //LEA ECX, [reg32_A + const]
-		;
-		addr = Exe.FindHex(code);
-	}
-	if (addr < 0)
-		throw Error("'.BMP' not used");
+		throw Error("'.BMP' / '.png' not used");
 
 	/// 1.3 - Find the SetQuakeInfo call within 0x80 bytes before the PUSH
 	code = CALL(ALLWC); //CALL CView::SetQuakeInfo
+
 	let quakeAddr;
 	if (Exe.Version >= 9.0)
 	{
@@ -92,7 +98,7 @@ NoEarthQuake = function()
 	quakeAddr = Exe.GetTgtAddr(quakeAddr + 1, PHYSICAL);
 
 	/// 1.5 - Change the first instruction to RETN 0C
-	Exe.SetUint32(quakeAddr, 0x0CC2);//C2 0C 00 00
+	Exe.SetHex(quakeAddr, RETN(0xC));
 
 	/// 2.1 - Find the SetQuake call be within 0xA0 bytes before the PUSH
 	code =
@@ -111,9 +117,9 @@ NoEarthQuake = function()
 	else
 	{
 		code +=
-			POP_R           //POP reg32_A
-		+	POP_R           //POP reg32_B
-		+	XOR(EAX, EAX)   //XOR EAX, EAX
+			POP_R          //POP reg32_A
+		+	POP_R          //POP reg32_B
+		+	XOR(EAX, EAX)  //XOR EAX, EAX
 		;
 		quakeAddr = Exe.FindHex(code, addr - 0x120, addr);
 	}
@@ -124,7 +130,7 @@ NoEarthQuake = function()
 	quakeAddr = Exe.GetTgtAddr(quakeAddr + 3, PHYSICAL);
 
 	/// 2.3 - Change the first instruction to RETN 14
-	Exe.SetUint32(quakeAddr, 0x14C2);//C2 14 00 00
+	Exe.SetHex(quakeAddr, RETN(0x14));
 
 	return true;
 };
@@ -137,41 +143,42 @@ NoWavyScreen = function()
 	/// 1.1 - Find the string 'xmas_fild01.rsw'
 	let addr = Exe.FindText("xmas_fild01.rsw");
 	if (addr < 0)
-        throw Error("'xmas_fild01.rsw' not found");
-        
-    /// 1.2 - Find all locations where it is assigned to EAX
-    let addrs = Exe.FindHexN( MOV(EAX, addr) ) ;//MOV EAX, OFFSET addr; ASCII "xmas_fild01.rsw"
-    if (addrs.isEmpty())
-        throw Error("'xmas_fild01.rsw' assignment not found");
-        
-    /// 1.3 - Filter out the location where g_useEffect is assigned before the EAX assignment
-    ///       amongst the matches. It will be inside CGameMode::Initialize 
-    let code = MOV([POS3WC], R32); //MOV DWORD PTR DS:[g_useEffect], reg32
-    let effectAddr = -1; 
+		throw Error("'xmas_fild01.rsw' not found");
 
-	if (addrs.find( addr =>
+	/// 1.2 - Find all locations where it is assigned to EAX
+	let addrs = Exe.FindHexN( MOV(EAX, addr) ) ;//MOV EAX, OFFSET addr; ASCII "xmas_fild01.rsw"
+	if (addrs.isEmpty())
+		throw Error("'xmas_fild01.rsw' assignment not found");
+
+	/// 1.3 - Filter out the location where g_useEffect is assigned before the EAX assignment
+	///       amongst the matches. It will be inside CGameMode::Initialize
+	let code = MOV([POS3WC], R32); //MOV DWORD PTR DS:[g_useEffect], reg32
+	let effectAddr = -1;
+
+	addrs.find( addr =>
 	{
 		addr = Exe.FindHex(code, addr - 8, addr);
-        if (addr > 0)
-        {
-            effectAddr = addr + 2;
-            return true;
-        }
+		if (addr > 0)
+		{
+			effectAddr = addr + 2;
+			return true;
+		}
 		else
 		{
 			return false;
 		}
-    }) === undefined
-	)
-        throw Error("'g_useEffect' assignment not found");
-    
-    /// 1.4 - Extract g_useEffect
-    let UseEffect = Exe.GetHex(effectAddr, 4);
-    
-    /// 2.1 - Find the comparison of g_useEffect with 0
-	let prefix = 
-        MOV(ECX, R32)          //MOV ECX, reg32
-    +	CALL(ALLWC)            //CALL addr1
+	})
+
+	if (effectAddr < 0)
+		throw Error("'g_useEffect' assignment not found");
+
+	/// 1.4 - Extract g_useEffect
+	let UseEffect = Exe.GetHex(effectAddr, 4);
+
+	/// 2.1 - Find the comparison of g_useEffect with 0
+	let prefix =
+		MOV(ECX, R32)          //MOV ECX, reg32
+	+	CALL(ALLWC)            //CALL addr1
 	+	(Exe.Version > 6.0
 	?
 		CMP([UseEffect], 0)    //CMP DWORD PTR DS:[g_useEffect], 0
@@ -182,16 +189,16 @@ NoWavyScreen = function()
 
 	let suffix =
 		JE()                   //JE addr2
-    ;
+	;
 
-    addr = Exe.FindHex(prefix + suffix);
-    if (addr < 0)
-        throw Error("'g_useEffect' comparison not found");
+	addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+		throw Error("'g_useEffect' comparison not found");
 
-    /// 2.2 - Change the conditional jump
-    Exe.SetJMP(addr + prefix.byteCount());
+	/// 2.2 - Change the conditional jump
+	Exe.SetJMP(addr + prefix.byteCount());
 
-    return true;
+	return true;
 };
 
 ///
@@ -205,14 +212,14 @@ NoWavyScreen.validate = () => Exe.BuildDate <= 20120516;
 ///
 NoBlindness = function()
 {
-    /// 1 - Find the pattern after the comparison (which starts with the JNZ to be changed)
-
-    let code = JNZ(" ?? 01 00 00");     //JNZ loc_66BB7A
+	/// 1 - Find the pattern after the comparison (which starts with the JNZ to be changed)
+	let code = JNZ(" ?? 01 00 00");     //JNZ loc_66BB7A
 
 	/*
 	let LaunchEffectPrimOffset, gPrimOffset = 0, mPrimOffset = 0;
 	*/
-	if (Exe.Version < 9.0) //VC6 & before
+
+	if (Exe.Version < 9.0) //VC6
 	{
 		code +=
 			SUB(ESP, 0xC)                //SUB ESP, 0C
@@ -228,11 +235,12 @@ NoBlindness = function()
 		+	MOV([ECX, 8], R32)           //MOV DWORD PTR DS:[ECX + 8], reg32_B
 		+	MOV(ECX, ESI)                //MOV ECX, ESI
 		+	CALL(ALLWC)                  //CALL CRagEffect::LaunchEffectPrim
-		+	(
-			Exe.Version < 6.0
-		?	MOV([POS3WC], EAX)           //MOV DWORD PTR DS:[g_prim], EAX  or
-		:	MOV([ESI, POS3WC], EAX)      //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
-			)
+		+	(!ROC.Post2010
+		?
+			MOV([POS3WC], EAX)           //MOV DWORD PTR DS:[g_prim], EAX  or
+		:                                //  or
+			MOV([ESI, POS3WC], EAX)      //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
+		)
 		+	MOV(ECX, [EAX, POS2WC])      //MOV ECX, DWORD PTR DS:[EAX + const]
 		;
 
@@ -249,7 +257,7 @@ NoBlindness = function()
 		*/
 	}
 	else if (Exe.Version < 11.0) //VC9 & VC10
-    {
+	{
 		let sreg = ROC.HasFP ? EBP : ESP; //StkRef = EBP or ESP + const
 
 		code +=
@@ -305,8 +313,8 @@ NoBlindness = function()
 		;
 
 		/*
-        LaunchEffectPrimOffset = 52;
-        mPrimOffset = [58, 4];		
+		LaunchEffectPrimOffset = 52;
+		mPrimOffset = [58, 4];		
 		*/
 	}
 	else //VC14.16
@@ -329,30 +337,31 @@ NoBlindness = function()
 		;
 
 		/*
-        LaunchEffectPrimOffset = 39;
-        mPrimOffset = [45, 4];
+		LaunchEffectPrimOffset = 39;
+		mPrimOffset = [45, 4];
 		*/
 	}
+
 	let addr = Exe.FindHex(code);
-    if (addr < 0)
-        throw Error("Pattern not found");
+	if (addr < 0)
+		throw Error("Pattern not found");
 
 	/*
-    logRawFunc("CRagEffect_LaunchEffectPrim", addr, LaunchEffectPrimOffset);
-    if (gPrimOffset !== 0)
-    {
-        logVaVar("g_prim", addr, gPrimOffset);
-    }
-    if (mPrimOffset !== 0)
-    {
-        logField("CEffectPrim::m_prim", addr, mPrimOffset);
-    }
+	logRawFunc("CRagEffect_LaunchEffectPrim", addr, LaunchEffectPrimOffset);
+	if (gPrimOffset !== 0)
+	{
+		logVaVar("g_prim", addr, gPrimOffset);
+	}
+	if (mPrimOffset !== 0)
+	{
+		logField("CEffectPrim::m_prim", addr, mPrimOffset);
+	}
 	*/
 
-    /// 2 - Enforce the jump
-    Exe.SetJMP(addr);
+	/// 2 - Enforce the jump
+	Exe.SetJMP(addr);
 
-    return true;
+	return true;
 };
 
 ///
