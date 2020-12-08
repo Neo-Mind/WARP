@@ -229,17 +229,17 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 		let ovrdVir = Exe.Phy2Vir(ovrdAddr);
 
 		code =
-			PUSH([cinfoPort])   //PUSH DWORD PTR DS:[clientinfo_port]
-		+	PUSH([cinfoAddr])   //PUSH DWORD PTR DS:[clientinfo_addr]
-		+	PUSH(s_s)           //PUSH OFFSET addr; ASCII "%s:%s"
-		+	PUSH(-1)            //PUSH -1
-		+	PUSH(0x81)          //PUSH 81
-		+	PUSH(gAuthHost)     //PUSH OFFSET g_auth_host
+			PUSH([cinfoPort])  //PUSH DWORD PTR DS:[clientinfo_port]
+		+	PUSH([cinfoAddr])  //PUSH DWORD PTR DS:[clientinfo_addr]
+		+	PUSH(s_s)          //PUSH OFFSET addr; ASCII "%s:%s"
+		+	PUSH(-1)           //PUSH -1
+		+	PUSH(0x81)         //PUSH 81
+		+	PUSH(gAuthHost)    //PUSH OFFSET g_auth_host
 		;
 
 		code +=
 			CALL(snprintf, ovrdVir + code.byteCount()) //CALL snprintf
-		+	ADD(ESP, 0x18)      //ADD ESP, 18
+		+	ADD(ESP, 0x18)     //ADD ESP, 18
 		;
 
 		code +=

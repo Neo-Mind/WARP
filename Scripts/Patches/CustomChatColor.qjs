@@ -5,7 +5,7 @@
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
-*   WARP is free software: you can redistribute it and/or modify           *
+*   WARP is free software : you can redistribute it and/or modify           *
 *   it under the terms of the GNU General Public License as published by   *
 *   the Free Software Foundation, either version 3 of the License, or      *
 *   (at your option) any later version.                                    *
@@ -23,64 +23,71 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shakto                                      *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-09                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Data to be used for the patches.
 ///
-if (typeof(CCC_Data) === 'undefined') //avoid redefinition
+if (typeof CCC_Data === 'undefined') //avoid redefinition
 {
 	CCC_Data =
-	[
+	{
+		CustomGuildColor :
 		{
-			varName: '$guildChatColor',
-			pattern: 
+			varName : '$guildChatColor',
+			pattern :
 				PUSH(0x4)                 //PUSH 4
 			+	LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
 			+	PUSH(0xB4FFB4)            //PUSH B4,FF,B4 (Light Green)
 			,
-			clrName: "Light Green",
-			title: "Guild Chat Color",
-			clrVal: 0xB4FFB4,
-			rmOnVC9: true
+			clrName : "Light Green",
+			title : "Guild Chat Color",
+			clrVal : 0xB4FFB4,
+			rmOnVC9 : true
 		},
+
+		CustomPartyColor :
 		{
-			varName: '$partyChatColor',
-			pattern: 
+			varName : '$partyChatColor',
+			pattern :
 				PUSH(0x03)                //PUSH 3
 			+	LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
 			+	PUSH(0xC8C8FF)            //PUSH FF,C8,C8 (Light Pink)
 			,
-			clrName: "Light Pink",
-			title: "Party Chat Color",
-			clrVal: 0xC8C8FF,
-			rmOnVC9: true
+			clrName : "Light Pink",
+			title : "Party Chat Color",
+			clrVal : 0xC8C8FF,
+			rmOnVC9 : true
 		},
+
+		CustomPartyColorSelf :
 		{
-			varName: '$yourPartyChatColor',
-			pattern:
+			varName : '$yourPartyChatColor',
+			pattern :
 				PUSH(0x03)                //PUSH 3
 			+	LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
 			+	PUSH(0x00C8FF)            //PUSH FF,C8,00 (Yellowish Brown)
 			,
-			clrName: "Yellowish Brown",
-			title: "Party Chat Color (Self)",
-			clrVal: 0x00C8FF,
-			rmOnVC9: true
+			clrName : "Yellowish Brown",
+			title : "Party Chat Color (Self)",
+			clrVal : 0x00C8FF,
+			rmOnVC9 : true
 		},
+
+		CustomPublicColor :
 		{
-			varName: '$publicChatColor',
-			pattern:
+			varName : '$publicChatColor',
+			pattern :
 					PUSH_1                //PUSH 1
 				+	PUSH(0xFFFFFF)        //PUSH FF,FF,FF (White)
 			,
-			clrName: "White",
-			title: "Public Chat Color",
-			clrVal: 0xFFFFFF,
+			clrName : "White",
+			title : "Public Chat Color",
+			clrVal : 0xFFFFFF,
 		},
-	];
+	};
 }
 
 ///
@@ -88,18 +95,10 @@ if (typeof(CCC_Data) === 'undefined') //avoid redefinition
 ///
 CustomChatColor = function(patchName)
 {
-	/// 1.1 - Retrieve the index based on patch name
-	let index = [
-		"CustomGuildColor",
-		"CustomPartyColor",
-		"CustomPartyColorSelf",
-		"CustomPublicColor"
-	].indexOf(patchName);
+	/// 1.1 - Retrieve the data to be used
+	let {pattern, rmOnVC9, clrName, varName, title, clrVal} = CCC_Data[patchName];
 
-	/// 1.2 - Retrieve the data to be used
-	let {pattern, rmOnVC9, clrName, varName, title, clrVal} = CCC_Data[index];
-
-	/// 1.3 - Calculate the pattern to be searched
+	/// 1.2 - Calculate the pattern to be searched
 	if (rmOnVC9 && Exe.Version >= 9.0)
 		pattern = pattern.remove(LEA(R32, [EBP, NEG2WC]));//Remove the LEA for VC9+
 
@@ -111,9 +110,9 @@ CustomChatColor = function(patchName)
 	/// 2.2 - Retrieve the new color from user
 	let color = Exe.GetUserInput(varName, D_Color, title, "Select the new color", clrVal, {ignoreAlpha: true});
 	if (color === false)
-		Cancel("Color", `${clrName} (0x` + clrVal.toHex(3, true) + `)`);
+		Cancel("Color", clrName + " (0x" + clrVal.toHex(3, true) + ")");
 
-	/// 2.3 - Replace the color 
+	/// 2.3 - Replace the color
 	Exe.SetFromVar(addr + pattern.byteCount() - 4, varName);
 
 	return true;
@@ -122,14 +121,14 @@ CustomChatColor = function(patchName)
 ///
 /// \brief Wrappers for individual patches
 ///
-CustomGuildColor     = CustomChatColor; //PUSHed inside CGameMode::Zc_guild_chat
-CustomPartyColor     = CustomChatColor; //inside CGameMode::Zc_Notify_Chat_Party function for other Members' messages
+CustomGuildColor     = CustomChatColor; //PUSHed inside CGameMode ::Zc_guild_chat
+CustomPartyColor     = CustomChatColor; //inside CGameMode ::Zc_Notify_Chat_Party function for other Members' messages
 CustomPartyColorSelf = CustomChatColor;
-CustomPublicColor    = CustomChatColor; //inside CGameMode::Zc_Notify_Chat function
+CustomPublicColor    = CustomChatColor; //inside CGameMode ::Zc_Notify_Chat function
 
 ///
-/// \brief Replace all the colors assigned for GM inside 
-///        CGameMode::Zc_Notify_Chat function with user specified value
+/// \brief Replace all the colors assigned for GM inside
+///        CGameMode ::Zc_Notify_Chat function with user specified value
 ///
 CustomGMColor = function()
 {
@@ -163,7 +162,7 @@ CustomGMColor = function()
 };
 
 ///
-/// \brief Replace chat color assigned for Player inside CGameMode::Zc_Notify_PlayerChat 
+/// \brief Replace chat color assigned for Player inside CGameMode ::Zc_Notify_PlayerChat
 ///        function with user specified color
 ///
 CustomPublicColorSelf = function ()

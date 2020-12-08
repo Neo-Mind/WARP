@@ -26,8 +26,6 @@
 *                                                                          *
 \**************************************************************************/
 
-// TODO - PlayTime comparison is not there in Pre-2010 clients.
-
 ///
 /// \brief Change the conditional jumps to JMP after Hourly comparisons inside CRenderer::DrawAgeRate & PlayTime functions
 ///

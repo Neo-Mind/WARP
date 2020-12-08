@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-08                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,7 +50,7 @@ NoGravityAds = () =>
 	NoGravityImages("\xC1\xDF\xB7\xC2\xBC\xBA\xC0\xCE", 1, !ROC.IsZero); //\T_중력성인.tga
 	NoGravityImages("\xC5\xD7\xC0\xD4%d", 2);		               		 //\T_테입%d.tga
 	if (Exe.BuildDate > 20100000)
-		NoGravityImages("GameGrade", 3);         						 //\T_GameGrade.tga
+		NoGravityImages("GameGrade", 3);                 				 //\T_GameGrade.tga
 
 	return true;
 };

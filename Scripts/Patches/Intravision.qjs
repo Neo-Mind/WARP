@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2017 Secret, A.K.M.                                      *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,24 +23,24 @@
 *                                                                          *
 *   Author(s)     : Secret, A.K.M., Neo-Mind                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-12-04                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Infinite intravision patch
+/// \brief Infinite intravision patch (Always see cloaked objects)
 ///
-Intravision = function() 
+Intravision = function()
 {
 	/// 1 - Find the comparison loop
 	let code;
 	if (Exe.BuildDate < 20100000)
 	{
-		code = 
+		code =
 			JNE(2)						//JNE SHORT addr1
 		+	MOV(BL, 1)					//MOV BL, 1
 		+	INC(ECX)					//INC ECX ; addr1
-		+	JMP(WCn)					//JMP SHORT loop_start 
+		+	JMP(WCn)					//JMP SHORT loop_start
 		+	CMP(BL, 1)					//CMP BL, 1
 		;
 	}
@@ -52,27 +53,32 @@ Intravision = function()
 		+	JNZ(WCn)					//JNZ SHORT loop_start
 		;
 	}
-    let addrs = Exe.FindHexN(code);
-    if (addrs.isEmpty())
-        throw Error("Comparison missing");
-	
+	let addrs = Exe.FindHexN(code);
+	if (addrs.isEmpty())
+		throw Error("Comparison missing");
+
 	/// 2 - Change the JZ/JNE SHORT to JMP for the right match
 	code =
 		PUSH_2							//PUSH 2
 	+	MOV(ECX, ESI)					//MOV ECX, ESI
 	+	CALL()							//CALL func
 	;
-	let found = false;
-	addrs.forEach( addr =>
+
+	let found = addrs.filter( addr =>
 	{
 		if (Exe.FindHex(code, addr - 0x30, addr) > 0)
 		{
-			found = true;
 			Exe.SetJMP(addr);
+			return true;
+		}
+		else
+		{
+			return false;
 		}
 	});
-	if (!found)
+
+	if (found.isEmpty())
 		throw Error("Only false matches found");
-	
+
 	return true;
 };

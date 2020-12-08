@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2013-2015 Ai4rei/AN                                      *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-09                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,42 +32,41 @@
 ///
 No3DBoneLimit = function()
 {
-    /// 1.1 - Find the format string (used in sprintf for 3d mob bones)
-    let addr = Exe.FindText("model\\3dmob_bone\\%d_%s.gr2");
-    if (addr < 0)
-        throw Error("Format string not found");
+	/// 1.1 - Find the format string (used in sprintf for 3d mob bones)
+	let addr = Exe.FindText("model\\3dmob_bone\\%d_%s.gr2");
+	if (addr < 0)
+		throw Error("Format string not found");
 
-    /// 1.2 - Find where its used in a PUSH (inside C3dGrannyBoneRes::GetAnimation)
-    addr = Exe.FindHex( PUSH(addr) );
-    if (addr < 0)
-        throw Error("Format string not used");
+	/// 1.2 - Find where its used in a PUSH (inside C3dGrannyBoneRes::GetAnimation)
+	addr = Exe.FindHex( PUSH(addr) );
+	if (addr < 0)
+		throw Error("Format string not used");
 
-    /// 1.3 - Find the limit checker within 0x80 byte before the PUSH
-	let code = Exe.Version < 14.0 ?
-		MOV(BYTE_PTR, [POS3WC], 0)    //MOV BYTE PTR DS:[addr], 0
-	:
-		MOV(BYTE_PTR, [POS3WC], AL)   //MOV BYTE PTR DS:[addr], AL
-	;
-    
-    if (Exe.Version < 9.0)
-    {
-        code +=
-            JL(POS1WC)        //JL addr
-        +   CMP(ESI, 0xA)     //CMP ESI, 0A
-        ;
-    }
-    else
-    {
-        code += CMP(ESI, 9);  //CMP ESI, 9
-    }
-    let limitAddr = Exe.FindHex(code, addr - 0x80, addr);
-    if (limitAddr < 0)
-        throw Error("Limit check not found");
+	/// 1.3 - Find the limit checker within 0x80 byte before the PUSH
+	let code = MOV(BYTE_PTR, [POS4WC], Exe.Version < 14.0 ? 0 : AL) // MOV BYTE PTR DS:[addr], 0 or AL
 
-    /// 1.4 - Set limitAddr to location after CMP
-    limitAddr += code.byteCount();
+	if (Exe.Version < 9.0)
+	{
+		code +=
+			JL(POS1WC)    //JL addr
+		+	CMP(ESI, 0xA) //CMP ESI, 0A
+		;
+	}
+	else
+	{
+		code +=
+			CMP(ESI, 9)   //CMP ESI, 9
+		;
+	}
+	
+	let limitAddr = Exe.FindHex(code, addr - 0x80, addr);
+	if (limitAddr < 0)
+		throw Error("Limit check not found");
 
-    /// 1.5 - NOP out the JA/JGE instruction that will come after CMP
+	/// 1.4 - Set limitAddr to location after CMP
+	limitAddr += code.byteCount();
+
+	/// 1.5 - NOP out the JA/JGE instruction that will come after CMP
 	let ins = Instr.FromAddr(limitAddr);
 	if (
 		(ins.Codes[0] === 0x77 || ins.Codes[0] === 0x7D) || //SHORT JA/JGE
@@ -78,34 +78,34 @@ No3DBoneLimit = function()
 	else
 	{		
 		throw Error("Limit jump not found");
-    }
-    
-    /// 2.1 - Find the index check after ID Comparison (should be within 0x20 bytes)
-    code = 
-		TEST(EDI, EDI)   //TEST EDI, EDI
-	+	JNE(" 2?")		 //JNE SHORT addr ; distance can be 26, 27 or 28
+	}
+
+	/// 2.1 - Find the index check after ID Comparison (should be within 0x20 bytes)
+	code =
+		TEST(EDI, EDI)  //TEST EDI, EDI
+	+	JNE(" 2?")      //JNE SHORT addr ; distance can be 26, 27 or 28
 	;
-	
-    let indexAddr = Exe.FindHex(code, limitAddr, limitAddr + 0x20);
-    if (indexAddr < 0)
-        throw Error("Index check not found");
 
-    /// 2.2 - NOP out the TEST
-    Exe.SetNOPs(indexAddr, 2);
-    
-    /// 2.3 - Change the conditional jump
-    Exe.SetJMP(indexAddr + 2);
+	let indexAddr = Exe.FindHex(code, limitAddr, limitAddr + 0x20);
+	if (indexAddr < 0)
+		throw Error("Index check not found");
 
-    /// 3.1 - Find the annoying warning message
-    addr = Exe.FindText("too many vertex granny model!");
+	/// 2.2 - NOP out the TEST
+	Exe.SetNOPs(indexAddr, 2);
 
-    /// 3.2 - Find where its PUSHed & the CALL after it
-    if (addr > 0)
-        addr = Exe.FindHex( PUSH(addr) + CALL() );
+	/// 2.3 - Change the conditional jump
+	Exe.SetJMP(indexAddr + 2);
 
-    /// 3.3 - NOP out the CALL
-    if (addr > 0)
-        Exe.SetNOPs(addr + 5, 5);
+	/// 3.1 - Find the annoying warning message
+	addr = Exe.FindText("too many vertex granny model!");
 
-    return true;
+	/// 3.2 - Find where its PUSHed & the CALL after it
+	if (addr > 0)
+		addr = Exe.FindHex( PUSH(addr) + CALL() );
+
+	/// 3.3 - NOP out the CALL
+	if (addr > 0)
+		Exe.SetNOPs(addr + 5, 5);
+
+	return true;
 };
