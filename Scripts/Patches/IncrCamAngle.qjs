@@ -22,14 +22,27 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-08                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
+/// \brief Data to be used for the patch
+///
+if (typeof ICA_Data === 'undefined') //avoid redefinition
+{
+	ICA_Data =
+	{
+		LowCamAngle    : (29.5).toIEEE(), //0x41EC0000
+		MediumCamAngle : (42.0).toIEEE(), //0x42280000
+		HighCamAngle   : (65.0).toIEEE(), //0x42820000
+	};
+}
+
+///
 /// \brief Find the current camera angle and replace with the specified value
 ///
-IncrCamAngle = function(newAngle)
+IncrCamAngle = function(patchName)
 {
 	//====================================================================================//
 	// Note - VC9+ compilers finally recognized to store float values which are used more //
@@ -88,7 +101,7 @@ IncrCamAngle = function(newAngle)
 			throw NO_ALLOC;
 
 		/// 3.2 - Put the new angle there
-		Exe.AddHex(free, newAngle.toIEEE(), 4);
+		Exe.AddHex(free, ICA_Data[patchName]);
 
 		/// 3.3 - Update the contents of angleAddr
 		Exe.SetUint32(angleAddr, Exe.Phy2Vir(free, DIFF));
@@ -105,7 +118,7 @@ IncrCamAngle = function(newAngle)
 			throw Error("Incorrect no. of matches found");
 
 		/// 4.2 - Change the angle value for all locations
-		newAngle = newAngle.toIEEE();
+		let newAngle = ICA_Data[patchName];
 		addrs.forEach( addr => Exe.SetHex(addr + 3, newAngle) );
 
 		/// 5.1 - Find the 2 stored angles -25.0 and -65.0 (need to be modified as well)
@@ -131,6 +144,6 @@ IncrCamAngle = function(newAngle)
 ///
 /// \brief Wrappers for individual patches
 ///
-LowCamAngle    = () => IncrCamAngle(29.5); //0x41EC0000
-MediumCamAngle = () => IncrCamAngle(42.0); //0x42280000
-HighCamAngle   = () => IncrCamAngle(65.0); //0x42820000
+LowCamAngle    = IncrCamAngle;
+MediumCamAngle = IncrCamAngle;
+HighCamAngle   = IncrCamAngle;

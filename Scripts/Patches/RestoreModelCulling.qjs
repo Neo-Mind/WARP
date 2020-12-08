@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2015 Curiosity                                           *
+*   Copyright (C) 2015-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +21,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Curiosity                                              *
+*   Author(s)     : Curiosity, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-17                                             *
+*   Last Modified : 2020-12-08                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,23 +34,24 @@ RestoreModelCulling = function()
 {
 	/// 1.1 - Find C3dActor::CullByOBB
 	let reg = (ROC.HasFP ? EBP : ESP);
-    let parts = [
+	let parts = [
 		JE(WCp)						//JE SHORT addr
 	,
 		Exe.BuildDate < 20150000
-		? MOV(ECX, [reg, 8])		//MOV ECX, DWORD PTR SS:[reg+8]
-		: ''
+	?	MOV(ECX, [reg, 8])		    //MOV ECX, DWORD PTR SS:[reg+8]  or 
+	:	''                          //Nothing
 	,
-        LEA(EAX, [ESI, 0x130])   	//LEA EAX, [ESI+130h] (eax = &m_oBoundingBox)
-    +   PUSH_EAX                 	//PUSH EAX
+		LEA(EAX, [ESI, 0x130])   	//LEA EAX, [ESI+130h] (eax = &m_oBoundingBox)
+	+   PUSH_EAX                 	//PUSH EAX
 	,
 		Exe.BuildDate < 20150000
-		? PUSH(ECX)             	//PUSH ECX
-		: PUSH([EBP, 8]) 			//PUSH DWORD PTR SS:[EBP+8]
+	?	PUSH(ECX)             	    //PUSH ECX or
+	:	PUSH([EBP, 8]) 		        //PUSH DWORD PTR SS:[EBP+8]
 	];
 
 	let oldStyle = true;
-    let addr = Exe.FindHex(parts.join(''));
+	let addr = Exe.FindHex(parts.join(''));
+
 	if (addr < 0 && Exe.BuildDate > 20190000)
 	{
 		parts[0] = JNE(WCp);		//JNE SHORT addr
@@ -60,12 +62,13 @@ RestoreModelCulling = function()
 		oldStyle = false;
 		addr = Exe.FindHex(parts.join(''));
 	}
+	
 	if (addr < 0)
 		throw Error("CullByOBB not found");
 
-    /// 1.2 - NOP out the conditional jump
-    Exe.SetNOPs(addr, 2);
-    
+	/// 1.2 - NOP out the conditional jump
+	Exe.SetNOPs(addr, 2);
+
 	if (oldStyle)
 	{
 		/// 2.1 - Find location of C3dNode::SetToAlpha CALL
@@ -73,18 +76,18 @@ RestoreModelCulling = function()
 			addr = Exe.FindHex( MOV(ECX, [ESI, 8]) + CALL(), addr + 7, addr + 0x40); //MOV ECX, DWORD PTR DS:[ESI+8] and CALL C3dNode::SetToAlpha
 		else
 			addr = Exe.FindHex( MOV(ECX, [ESI]) + CALL(), addr + 7, addr + 0x20); //MOV ECX, DWORD PTR DS:[ESI] and CALL C3dNode::SetToAlpha
-		
+
 		if (addr < 0)
 			throw Error("SetToAlpha CALL not found");
-		
+
 		/// 2.2 - Change the CALL to m_isHalfAlpha assignment.
 		code = MOV(BYTE_PTR, [ESI, 0x1EC], 1); // MOV BYTE PTR DS:[ESI+1ECh], 1h ; (m_isHalfAlpha = 1)
 		if (Exe.Version < 9.0)
 			code = NOP + code; //extra byte is there so prefix a NOP
-	
+
 		Exe.SetHex(addr, code);
 	}
-	
+
 	return true;
 };
 
@@ -119,3 +122,4 @@ RestoreModelCulling = function()
  * }
  *
  */
+ 

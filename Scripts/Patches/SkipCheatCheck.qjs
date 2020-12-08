@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2015 Ai4rei/AN                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-12-08                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,41 +33,45 @@
 ///
 function SkipCheatCheck(patchName)
 {
-    /// 1 - Find the comparisons after CSession::IsCheatName CALL
-    let template =
-        TEST(EAX, EAX)          //TEST EAX, EAX
-    +   JZ(WCp)                 //JZ SHORT addr
-    +   PUSH_0                  //PUSH 0
-    +   PUSH_0                  //PUSH 0
-    +   PUSH(0xFFFF)            //PUSH 0FFFF
-    +   PUSH(MakeFiller(1))     //PUSH msgNum
-    ;
-    let code =
-        SwapFiller(template, 1, 0x395)  //msgNum = 0x395 , for Friend List
-    +   JMP(WCp)                        //JMP SHORT addr2
-    +   PUSH_R                          //PUSH reg32_B
-    +   MOV(ECX, POS4WC)                //MOV ECX, OFFSET g_session
-    +   CALL(POS3WC)                    //CALL CSession::IsGuildCheatName
-    +   SwapFiller(template, 1, 0x397)  //msgNum = 0x397, for Guild List
-    ;
+	/// 1 - Find the comparisons after CSession::IsCheatName CALL
+	let template =
+		TEST(EAX, EAX)          //TEST EAX, EAX
+	+	JZ(WCp)                 //JZ SHORT addr
+	+	PUSH_0                  //PUSH 0
+	+	PUSH_0                  //PUSH 0
+	+	PUSH(0xFFFF)            //PUSH 0FFFF
+	+	PUSH(MakeFiller(1))     //PUSH msgNum
+	;
 
-    let addr = Exe.FindHex(code);
-    if (addr < 0)
-    {
-        code = code.replace(/6A 00 6A 00/g, PUSH_R + PUSH_R); //Change all PUSH 0 to PUSH reg32
-        template = template.replace(/6A 00 6A 00/g, PUSH_R + PUSH_R); //Change all PUSH 0 to PUSH reg32 in template as well
-        addr = Exe.FindHex(code);
-    }
-    if (addr < 0)
-        throw Error("Comparisons not found");
+	let code =
+		SwapFiller(template, 1, 0x395, 1)  //msgNum = 0x395 , for Friend List
+	+	JMP(WCp)                           //JMP SHORT addr2
+	+	PUSH_R                             //PUSH reg32_B
+	+	MOV(ECX, POS4WC)                   //MOV ECX, OFFSET g_session
+	+	CALL(POS3WC)                       //CALL CSession::IsGuildCheatName
+	+	SwapFiller(template, 1, 0x397, 1)  //msgNum = 0x397, for Guild List
+	;
 
-    /// 2 - Change the relevant JZ to JMP
-    if (patchName === "SkipInFriendList")
-        Exe.SetJMP(addr + 2); //first JZ
-    else
-        Exe.SetJMP(addr + code.byteCount() - template.byteCount() + 2); //second JZ
-        
-    return true;
+	let addr = Exe.FindHex(code);
+
+	/* - Not needed apparently ... but keeping it for now in case i am missing something
+	if (addr < 0)
+	{
+		code = code.replace(/6A 00 6A 00/g, PUSH_R + PUSH_R); //Change all PUSH 0 to PUSH reg32
+		template = template.replace(/6A 00 6A 00/g, PUSH_R + PUSH_R); //Change all PUSH 0 to PUSH reg32 in template as well
+		addr = Exe.FindHex(code);
+	}
+	*/
+	if (addr < 0)
+		throw Error("Comparisons not found");
+
+	/// 2 - Change the relevant JZ to JMP
+	if (patchName === "SkipInFriendList")
+		Exe.SetJMP(addr + 2); //first JZ
+	else
+		Exe.SetJMP(addr + code.byteCount() - template.byteCount() + 2); //second JZ
+
+	return true;
 }
 
 ///

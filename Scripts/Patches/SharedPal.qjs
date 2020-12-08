@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2015 Ai4rei/AN                                         *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,45 +23,42 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-08                                             *
 *                                                                          *
 \**************************************************************************/
 
-
-/// \brief Change the format string used, to skip some arguments 
+/// \brief Change the format string used, to skip some arguments.
+///        The format string is used in CSession::GetBodyPaletteName (for Body) or CSession::GetHeadPaletteName (for Head)
 ///
-/// The format string is used in CSession::GetBodyPaletteName (for Body) or CSession::GetHeadPaletteName (for Head)
-///
-
 SharedPal = function(oldPrefix, newFormat)
 {
 	/// 1.1 - Find the original format string
-    let addr = -1;
+	let addr = -1;
 	if (Exe.Version <= 9.0)
-        addr = Exe.FindText(oldPrefix + "%s%s_%d.pal"); //Old style used for VC6 and some initial VC9 clients
-        
-    if (addr < 0)
-        addr = Exe.FindText(oldPrefix + "%s_%s_%d.pal"); //New style
-        
-    if (addr < 0)
-        throw Error("Format string not found");
+		addr = Exe.FindText(oldPrefix + "%s%s_%d.pal"); //Old style used for VC6 and some initial VC9 clients
+
+	if (addr < 0)
+		addr = Exe.FindText(oldPrefix + "%s_%s_%d.pal"); //New style
+
+	if (addr < 0)
+		throw Error("Format string not found");
 
 	/// 1.2 - Find where it is used in a PUSH
 	addr = Exe.FindHex( PUSH(addr) );
 	if (addr < 0)
-        throw Error("Format string not used");
-	
+		throw Error("Format string not used");
+
 	/// 2.1 - Allocate space for adding new string
-    var free = Exe.FindSpace(newFormat.length);
-    if (free < 0)
-        throw NO_ALLOC;
+	var free = Exe.FindSpace(newFormat.length);
+	if (free < 0)
+		throw NO_ALLOC;
 
-    /// 2.2 - Add the string there
-    Exe.AddText(free, newFormat);
+	/// 2.2 - Add the string there
+	Exe.AddText(free, newFormat);
 
-    /// 2.3 - Update the PUSHed address
-    Exe.SetInt32(addr + 1, Exe.Phy2Vir(free, DIFF));
-	
+	/// 2.3 - Update the PUSHed address
+	Exe.SetInt32(addr + 1, Exe.Phy2Vir(free, DIFF));
+
 	return true;
 };
 
@@ -86,7 +84,7 @@ SharedBodyPal = patchName =>
 			"\xB8\xF6\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
 			"\xB8\xF6\\body%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
-    );
+	);
 
 ///
 /// \brief Wrappers for individual patches

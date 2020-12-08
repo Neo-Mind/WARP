@@ -22,12 +22,12 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-03                                             *
+*   Last Modified : 2020-12-08                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Use api StrStrIA instead of _mbsstr to enable case-insensitive search in storage
+/// \brief Make the client use StrStrIA instead of _mbsstr to enable case-insensitive search in storage
 ///
 InsensitiveStorageSearch = function()
 {
@@ -40,24 +40,26 @@ InsensitiveStorageSearch = function()
 
 	/// 1.2 - Find string search for storage
 	let prefix =
-		PUSH(ECX)        //PUSH ECX
-	+	PUSH_EAX         //PUSH EAX
+		PUSH(ECX)               //PUSH ECX
+	+	(Exe.Version > 11.0
+	?
+		CMOVNB(EAX, [EBP, WCn]) //CMOVNB EAX, DWORD PTR SS:[EBP - x]
+	:
+		''
+	)
+	+	PUSH_EAX                //PUSH EAX
 	;
+
 	let suffix =
 		CALL([POS4WC])   //CALL DWORD PTR DS:[_mbsstr]
 	+	ADD(ESP, 8)      //ADD ESP,8
-	+ 	TEST(EAX, EAX)   //TEST EAX,EAX
-	+ 	JE(4)            //JE SHORT addr1
+	+	TEST(EAX, EAX)   //TEST EAX,EAX
+	+	JE(4)            //JE SHORT addr1
 	+	MOV(ESI, [ESI])  //MOV ESI, DWORD PTR DS:[ESI]
 	+	JMP(WCp)         //JMP SHORT addr2
 	;
 
 	let addr = Exe.FindHex(prefix + suffix);
-	if (addr < 0) //newer clients
-	{
-		prefix = prefix.replace(PUSH_EAX, CMOVNB(EAX, [EBP, WC]) + PUSH_EAX);//CMOVNB EAX, DWORD PTR SS:[EBP - x]
-		addr = Exe.FindHex(prefix + suffix);
-	}
 	if (addr < 0)
 		throw Error("String search not found");
 
@@ -74,39 +76,34 @@ InsensitiveStorageSearch = function()
 	+	JNE(0x2F)                 //JNE SHORT addr2
 	+	PUSH(MakeFiller(2))       //PUSH OFFSET ; ASCII "Shlwapi.dll"
 	+	CALL([ROC.GetModHandle])  //CALL DWORD PTR DS:[GetModuleHandleA]
-	+ 	PUSH(MakeFiller(3))       //PUSH OFFSET ; ASCII "StrStrIA"
-	+ 	PUSH_EAX                  //PUSH EAX
-	+ 	CALL([ROC.GetProcAddr])   //CALL DWORD PTR DS:[GetProcAddress]
-	+ 	TEST(EAX, EAX)            //TEST EAX, EAX
-	+ 	JNE(0xF)                  //JNE SHORT addr2
+	+	PUSH(MakeFiller(3))       //PUSH OFFSET ; ASCII "StrStrIA"
+	+	PUSH_EAX                  //PUSH EAX
+	+	CALL([ROC.GetProcAddr])   //CALL DWORD PTR DS:[GetProcAddress]
+	+	TEST(EAX, EAX)            //TEST EAX, EAX
+	+	JNE(0xF)                  //JNE SHORT addr2
 	+	callNrestore              //CALL DWORD PTR DS:[_mbsstr]
 		                          //ADD ESP, 8
 	+	PUSH(retnAddr)            //PUSH retnAddr
 	+	RETN()                    //RETN
 	+	MOV([MakeFiller(1)], EAX) //MOV DWORD PTR DS:[StrStrIA], EAX ; addr2
 	+	CALL([MakeFiller(1)])     //CALL DWORD PTR DS:[StrStrIA]
-	+ 	PUSH(retnAddr)            //PUSH retnAddr
-	+ 	RETN()                    //RETN
-	+   ALL00                     //will be used to store [StrStrIA]
+	+	PUSH(retnAddr)            //PUSH retnAddr
+	+	RETN()                    //RETN
+	+	ALL00                     //will be used to store [StrStrIA]
 	;
 	let csize = code.byteCount();
 
 	/// 2.2 - Prepare the strings & total string size
 	let strList = ["Shlwapi.dll", "StrStrIA"];
-	let strings = '';
-	let ssize = 0;
-	strList.forEach(str =>
-	{
-		ssize += str.length + 1;
-		strings += str.toHex() + " 00";
-	});
+	let strings = strList.join('\x00').toHex() + ' 00';
+	let ssize   = strings.byteCount();
 
 	/// 3.1 - Allocate space to add our code
 	let free = Exe.FindSpace(csize + ssize, 0x10);
 	if (free < 0)
 		throw NO_ALLOC;
 
-	let freeVir = Exe.Phy2Vir(free);
+	let freeVir = Exe.Phy2Vir(free, DIFF);
 
 	/// 3.2 - Fill in the blanks
 
@@ -124,7 +121,12 @@ InsensitiveStorageSearch = function()
 	Exe.AddHex(free, code + strings);
 
 	/// 3.4 - Create a JMP to our code
-	Exe.SetJMP(addr + callOffset, freeVir);
+	Exe.SetJMP(addr + callOffset, freeVir, VIRTUAL, 4); //4 NOPs at the end
 
 	return true;
 };
+
+///
+/// \brief Disable for older clients. _mbsstr is not being used in them
+///
+InsensitiveStorageSearch.validate = () => Exe.BuildDate > 20150512;

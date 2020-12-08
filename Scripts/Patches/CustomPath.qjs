@@ -4,6 +4,7 @@
 *   Copyright (C) 2018-2020 Jian                                           *
 *   Copyright (C) 2017 Secret                                              *
 *   Copyright (C) 2017-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2020 X-EcutiOnner                                        *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,104 +24,112 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144)                  *
+*   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144), X-EcutiOnner    *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-08                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Data to be used for the patches.
 ///
-if (typeof(CP_Data) === 'undefined') //avoid redefinition
+if (typeof CP_Data === 'undefined') //avoid redefinition
 {
 	CP_Data =
 	{
 		CustomDefaultBGM :
 		{
-			strType: "Path",
-			varName: '$newBGMPath',
-			prefix: "Default BGM",
-			name: "bgm\\01.mp3"
+			strType : "Path",
+			varName : '$newBGMPath',
+			prefix : "Default BGM",
+			name : "bgm\\01.mp3"
 		},
 
 		CustomItemInfoLub :
 		{
-			strType: "Path",
-			varName: '$newItemInfo',
-			prefix: "ItemInfo Lua",
-			parts: ["System/iteminfo", "Sak.lub", "true.lub", ".lub"]
+			strType : "Path",
+			varName : '$newItemInfo',
+			prefix : "ItemInfo Lua",
+			parts : ["System/iteminfo", "Sak.lub", "true.lub", ".lub"]
 		},
 
 		CustomAchieveLub :
 		{
-			strType: "Path",
-			varName: '$newAchList',
-			prefix: "Achievement List Lua",
-			name: "system\\Achievement_list.lub"
+			strType : "Path",
+			varName : '$newAchieveList',
+			prefix : "Achievement List Lua",
+			name : "system\\Achievement_list.lub"
 		},
 
 		CustomMonSizeEffLub :
 		{
-			strType: "Path",
-			varName: '$newMonSizeEfct',
-			prefix: "Monster Size Effect Lua"
+			strType : "Path",
+			varName : '$newMonSizeEffect',
+			prefix : "Monster Size Effect Lua"
 		},
 
 		CustomTownInfoLub :
 		{
-			strType: "Path",
-			varName: '$newTownInfo',
-			prefix: "Town Info Lua",
-			name: "System/Towninfo.lub"
+			strType : "Path",
+			varName : '$newTownInfo',
+			prefix : "Town Info Lua",
+			name : "System/Towninfo.lub"
 		},
 
 		CustomPetEvoClnLub :
 		{
-			strType: "Path",
-			varName: '$newPetEvoCln',
-			prefix: "Pet Evolution Lua",
-			parts: ["system\\PetEvolutionCln", "sak.lub", "true.lub", ".lub"]
+			strType : "Path",
+			varName : '$newPetEvoCln',
+			prefix : "Pet Evolution Lua",
+			parts : ["system\\PetEvolutionCln", "sak.lub", "true.lub", ".lub"]
 		},
 
 		CustomTipboxLub :
 		{
-			strType: "Path",
-			varName: '$newTipBox',
-			prefix: "Tip Box Lua",
-			name: "System/tipbox.lub"
+			strType : "Path",
+			varName : '$newTipBox',
+			prefix : "Tip Box Lua",
+			name : "System/tipbox.lub"
 		},
 
 		CustomCheckAttLub :
 		{
-			strType: "Path",
-			varName: '$newChkAtt',
-			prefix: "Check Attendance Lua",
-			name: "System/CheckAttendance.lub"
+			strType : "Path",
+			varName : '$newCheckAtt',
+			prefix : "Check Attendance Lua",
+			name : "System/CheckAttendance.lub"
 		},
 
 		CustomPrivAirplaneLub :
 		{
-			strType: "Path",
-			varName: '$newPrivPlane',
-			prefix: "Private Airplane Lua",
-			parts: ["System\\PrivateAirplane", "Sakray.lub", "True.lub", ""]
+			strType : "Path",
+			varName : '$newPrivAirplane',
+			prefix : "Private Airplane Lua",
+			parts : ["System\\PrivateAirplane", "Sakray.lub", "True.lub", ""]
 		},
 
+		CustomMapInfoLub :
+		{
+			strType : "Path",
+			varName : '$newMapInfo',
+			prefix : "MapInfo Lua",
+			parts : ["system\\mapInfo", "sak.lub", "true.lub", ""]
+		},
+		
 		CustomOngQuestInfoLub :
 		{
-			strType: "Prefix",
-			varName: '$newOngQInfoList',
-			prefix: "Ongoing QuestInfoList Lua",
-			parts: ["system\\OngoingQuestInfoList", "Sakray", "True", ""]
+			strType : "Prefix",
+			varName : '$newOngQInfoList',
+			prefix : "Ongoing QuestInfoList Lua",
+			parts : ["system\\OngoingQuestInfoList", "Sakray", "True", ""]
 		},
 
 		CustomRcmdQuestInfoLub :
 		{
-			strType: "Prefix",
-			varName: '$newRcmdQInfoList',
-			prefix: "Recommended QuestInfoList Lua",
-			parts: ["system\\RecommendedQuestInfoList", "Sakray", "True", ""]
+			strType : "Prefix",
+			varName : '$newRcmdQInfoList',
+			prefix : "Recommended QuestInfoList Lua",
+			parts : ["system\\RecommendedQuestInfoList", "Sakray", "True", ""]
 		},
 	};
 }
@@ -215,6 +224,7 @@ CustomPetEvoClnLub     = CustomPath;
 CustomTipboxLub        = CustomPath;
 CustomCheckAttLub      = CustomPath;
 CustomPrivAirplaneLub  = CustomPath;
+CustomMapInfoLub       = CustomPath;
 CustomOngQuestInfoLub  = CustomPath;
 CustomRcmdQuestInfoLub = CustomPath;
 
