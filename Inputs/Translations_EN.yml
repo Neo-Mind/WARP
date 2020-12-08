@@ -1,6 +1,6 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) 2020 Neo Mind                                            #
+#   Copyright (C) 2020 Neo-Mind                                            #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-10                                             #
-#   Last Modified : 2020-11-11                                             #
+#   Last Modified : 2020-12-07                                             #
 #                                                                          #
 ############################################################################
 -
@@ -71,7 +71,7 @@
   ##############################
   desc: Message Box
   #############################
-  find: B8 DE BD C3 C1 F6
+  find: B8 DE BD C3 C1 F6 00
   replace: "'Message'"
 
 -
@@ -80,13 +80,6 @@
   #################################
   find: 28 C4 B3 B8 AF C5 CD 2F C3 D1 20 BD BD B7 D4 29
   replace: "'(Used / Total)'"
-
--
-  #############################
-  desc: Cash Shop Points
-  #############################
-  find: 54 6F 74 61 6C 20 3A 20 25 64 20 C4 B3 BD C3
-  replace: "'Total : %d Points'"
 
 -
   ##################################
@@ -288,7 +281,7 @@
   ##################################
   desc: Dragon
   ##################################
-  find: BF EB C1 B7
+  find: BF EB C1 B7 00
   replace: "'Dragn'"
 
 -
@@ -317,7 +310,7 @@
   desc: Warp to next area
   ##################################
   find: 4E 61 76 69 67 61 74 69 6F 6E 20 3E 3A 20 BF F6 C7 C1 B8 A6 20 C0 CC BF EB C7 CF BF A9 20 B4 D9 C0 BD 20 C1 F6 BF AA C0 B8 B7 CE 20 C0 CC B5 BF C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9 2E
-  replace: "'Navigation >: Using the warp to the next area, please click to go'"
+  replace: "'Navigation >: Using the warp to the next area, click to go'"
 
 -
   ##################################
@@ -332,20 +325,6 @@
   #############################
   find: C3 A3 B0 ED C0 DA 20 C7 CF B4 C2 20 4E 70 63 B0 A1 20 C0 D6 B4 C2 20 B8 CA BF A1 20 B5 B5 C2 F8 20 C7 CF BF B4 BD C0 B4 CF B4 D9 2E 20 4E 70 63 B7 CE 20 C0 CC B5 BF C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9 2E
   replace: "'Arrived on the map that has the Npc your looking for. Go to that NPC'"
-
--
-  ##################################
-  desc: Failed to set loc info
-  ##################################
-  find: B5 B5 C2 F8 20 C1 F6 C1 A1 BF A1 20 B4 EB C7 D1 20 C1 A4 BA B8 20 BC B3 C1 A4 20 BD C7 C6 D0 21
-  replace: "'Failed to set info for location!'"
-
--
-  ##################################
-  desc: Specify target
-  ##################################
-  find: B8 F1 C7 A5 B8 A6 20 C1 F6 C1 A4 20 C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9 2E
-  replace: "'Please specify target goals.'"
 
 -
   ##################################
@@ -379,7 +358,7 @@
   ##################################
   desc: Guidance - Part 1
   ##################################
-  find: 4E 61 76 69 67 61 74 69 6F 6E 20 3E 3A 20 BE C8 B3 BB C7 CF B4 C2 20 25 73 28 C0 BB 29 B8 A6 20 C0 CC BF EB C7 CF BF A9
+  find: 4E 61 76 69 67 61 74 69 6F 6E 20 3E 3A 20 BE C8 B3 BB C7 CF B4 C2 20 25 73 28 C0 BB 29 B8 A6 20 C0 CC BF EB C7 CF BF A9 00
   replace: "'Navigation >: Guidance to %s (A) By using'"
 
 -
@@ -471,7 +450,7 @@
   desc: Distance WarpMove
   ##################################
   find: B0 C5 B8 AE 20 20 20 3A 20 25 64 20 53 65 6C 6C 20 25 64 20 57 61 72 70 4D 6F 76 65
-  replace: "'Dist    %d Cell %d WarpMove'"
+  replace: "'Dist   %d Cell %d WarpMove'"
 
 -
   ##################################
@@ -531,13 +510,6 @@
 
 -
   ##################################
-  desc: Warp By
-  ##################################
-  find: BF F6 C7 C1 20 C0 CC BF EB
-  replace: "'Warp By,'"
-
--
-  ##################################
   desc: ClickNPC
   ##################################
   find: 4E 50 43 20 C5 AC B8 AF
@@ -576,7 +548,7 @@
   desc: Name - Part 1
   ##################################
   find: B8 F1 C7 A5 20 20 20 3A 20 25 73 28 25 73 29
-  replace: "'Name     : %s(%s)'"
+  replace: "'Name   : %s(%s)'"
 
 -
   ##################################
@@ -584,13 +556,6 @@
   ##################################
   find: C0 CF B9 DD
   replace: "'Norm'"
-
--
-  ##################################
-  desc: Name - Part 2
-  ##################################
-  find: B8 F1 C7 A5 20 20 20 3A 20 25 73 28 25 64 2C 20 25 64 29
-  replace: "'Name     : %s(%d, %d)'"
 
 -
   ##################################
@@ -668,13 +633,6 @@
   ##################################
   find: B0 ED B0 B4 B4 D4 C0 C7 20 C0 CC BF EB 20 BD C3 B0 A3 C0 BA
   replace: "'Hours left to use'"
-
--
-  ##################################
-  desc: Time
-  ##################################
-  find: BD C3 B0 A3
-  replace: "'Time'"
 
 -
   ##################################
@@ -1441,8 +1399,8 @@
 -
   ##############################
   desc: Total in Cash Shop
-  ##############################
-  find: 54 6F 74 61 6C 20 3A 20 25 64 20 C4 B3 BD C3
+  #############################
+  find: "'Total : %d Ä³½Ã'"
   replace: "'Total : %d Cash'"
 
 -
@@ -1527,11 +1485,11 @@
   desc: Navigation
   ##############################
   find: 5B B8 F1 C0 FB C1 F6 5D 20 25 73
-  replace: "'[Destination] %s'"
+  replace: "'[Dest] %s'"
 
 -
   ##############################
   desc: Quest Info
   ##############################
-  find: "00 25 64 20 B0 B3 00"
-  replace: "00 25 64 00 00 00 00"
+  find: 25 64 20 B0 B3 00
+  replace: "'%d'"

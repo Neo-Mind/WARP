@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Ai4rei/AN                                         *
-*   Copyright (C) 2013-2020 Neo Mind                                       *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-07                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,10 +35,10 @@ NoLoginEncr = function()
 {
 	/// 1.1 - Find Encryptor function CALL
 	let code =
-		PUSH_R         //PUSH reg32_A
-	+	CALL(NEG3WC)   //CALL Encryptor
-	+	MOV(ECX, 6)    //MOV ECX, 6
-	+	LEA() 		   //LEA reg32_B, [LOCAL.x]
+		PUSH_R        //PUSH reg32_A
+	+	CALL(NEG3WC)  //CALL Encryptor
+	+	MOV(ECX, 6)   //MOV ECX, 6
+	+	LEA() 		  //LEA reg32_B, [LOCAL.x]
 	;
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
@@ -71,11 +71,10 @@ NoPacketEncr = function()
 {
 	/// 1.1 - Check if one of the Packet Key patches are ON (unless in test mode)
 	if (!Exe.TestMode && PktKeyPatches.find( name => Exe.IsSelected(name) ) !== undefined)
-		throw "Cancelled - One of the Encryption Key patches are ON";
+		Cancel("One of the Encryption Key patches are ON");
 
 	/// 1.2 - Ensure the PACKET object has been loaded with valid data
-	if (!PACKET.load())
-		throw PACKET.Error;
+	PACKET.load();
 
 	// Now we diverge a little based on how the keys are assigned.
 	if (PACKET.KS_Mode === KeyMode.Push)
@@ -109,5 +108,7 @@ NoPacketEncr = function()
 ///
 /// \brief Disable for unsupported clients 
 ///
-NoLoginEncr.validate  = () => Exe.BuildDate > 20080600 && Exe.BuildDate < 20100803;
+NoLoginEncr.validate  = () =>
+	Exe.BuildDate > 20080600 && Exe.BuildDate < 20100803;
+
 NoPacketEncr.validate = HasPktKeys;
