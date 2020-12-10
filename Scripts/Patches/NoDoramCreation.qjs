@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2015-2020 Ai4rei/AN, Secret                              *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,22 +22,22 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Secret                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-11-17                                             *
+*   Last Modified : 2020-12-10                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Remove Doram race from character creation UI.                                 #
+/// \brief Remove Doram race from character creation UI.
 ///        Special thanks to @Ai4Rei for the original hex sequences.
 ///
 NoDoramCreation = function()
 {
 	/// 1.1 - Find the first pattern
 	let code =
-		PUSH([EDI, WCp]) // PUSH DWORD PTR DS:[EDI + byte]
-	+	MOV(ECX, EDI)	 // MOV ECX, EDI
-	+	PUSH([EDI, WCp]) // PUSH DWORD PTR DS:[EDI + byte]
-	+	CALL()           // CALL func
+		PUSH([EDI, WCp]) //PUSH DWORD PTR DS:[EDI + byte]
+	+	MOV(ECX, EDI)	 //MOV ECX, EDI
+	+	PUSH([EDI, WCp]) //PUSH DWORD PTR DS:[EDI + byte]
+	+	CALL()           //CALL func
 	;
 	let addr = Exe.FindHex(code);
 
@@ -49,24 +49,25 @@ NoDoramCreation = function()
 
 	/// 2.1 - Find the second pattern (with the MOV)
 	code =
-		MOV([EBP, NEG1WC], 0)	// MOV DWORD PTR SS:[EBP + var_DC], 0
-	+	MOV([EBP, NEG1WC], 0)	// MOV DWORD PTR SS:[EBP + var_D8], 0
-	+	MOV([EBP, NEG1WC], 0)	// MOV DWORD PTR SS:[EBP + var_D4], 0
-	+	PUSH_1				    // PUSH 1
+		MOV([EBP, NEG1WC], 0) //MOV DWORD PTR SS:[EBP + var_DC], 0
+	+	MOV([EBP, NEG1WC], 0) //MOV DWORD PTR SS:[EBP + var_D8], 0
+	+	MOV([EBP, NEG1WC], 0) //MOV DWORD PTR SS:[EBP + var_D4], 0
+	+	PUSH_1				  //PUSH 1
 	;
 
 	addr = Exe.FindHex(code);
+	console.showAddr(addr);
 	if (addr < 0)
-		throw Error("2nd patter (3 MOV) pattern missing");
+		throw Error("2nd pattern (3 MOV) missing");
 
 	/// 2.2 - Point addr to position of PUSH 1
 	addr += code.byteCount() - 2;
-	
+
 	/// 2.3 - Find the XOR code to jump to
 	code =
-		XOR(ESI, ESI)			// XOR ESI, ESI
-	+	LEA(EAX, [EDI, POS2WC]) // LEA EAX, [EDI + const]
-	+	LEA(ECX, [ECX, 0])		// LEA ECX, [ECX + 0]
+		XOR(ESI, ESI)			//XOR ESI, ESI
+	+	LEA(EAX, [EDI, POS2WC]) //LEA EAX, [EDI + const]
+	+	LEA(ECX, [ECX, 0])		//LEA ECX, [ECX + 0]
 	;
 
 	let addr2 = Exe.FindHex(code, addr + 2, addr + 0x300);
@@ -75,14 +76,14 @@ NoDoramCreation = function()
 
 	/// 2.4 - Set a JMP to addr2 from addr
 	Exe.SetJMP(addr, addr2, PHYSICAL);
-	
+
 	/// 3.1 - Find the 3rd pattern
 	code =
-		MOV(ECX, [EBP, -200]) 	// MOV ECX, DWORD PTR SS:[EBP - C8]
-	+	INC(ECX)				// INC ECX
-	+	MOV([EBP, -200], ECX)	// MOV DWORD PTR [EBP - C8], ECX
-	+ 	MOV(EAX, POS2WC)		// MOV EAX, const
-	+	CMP(ECX, 2)				// CMP EAX, 2
+		MOV(ECX, [EBP, -200]) 	//MOV ECX, DWORD PTR SS:[EBP - C8]
+	+	INC(ECX)				//INC ECX
+	+	MOV([EBP, -200], ECX)	//MOV DWORD PTR [EBP - C8], ECX
+	+	MOV(EAX, POS2WC)		//MOV EAX, const
+	+	CMP(ECX, 2)				//CMP EAX, 2
 	;
 
 	addr = Exe.FindHex(code);
@@ -91,11 +92,13 @@ NoDoramCreation = function()
 
 	/// 3.2 - NOP out the pattern after it (needs further investigation)
 	Exe.SetNOPs(addr + code.byteCount(), 6);
-		
+
 	return true;
 };
 
 ///
-/// \brief Disable for older & more recent clients (since they didnt have Doram race or have different interface)
+/// \brief Disable for older & more recent clients 
+///       (since they didnt have Doram race or can be disabled externally)
 ///
-NoDoramCreation.validate = () => Exe.BuildDate <= 20170614;
+NoDoramCreation.validate = () =>
+	Exe.BuildDate > 20151000 && Exe.BuildDate <= 20170614;
