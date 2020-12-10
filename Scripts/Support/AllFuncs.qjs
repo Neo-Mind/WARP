@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,11 +31,12 @@
 //=========//
 
 ///
-/// \brief Tests for primitive types
+/// \brief Tests for primitive types & array (alias)
 ///
 IsNum  = v => typeof v === 'number';
 IsStr  = v => typeof v === 'string';
 IsBool = v => typeof v === 'boolean';
+IsArr = Array.isArray;
 
 IsNumOrStr = v =>
 	typeof v === 'number' || typeof v === 'string';
@@ -92,40 +93,76 @@ IsByte = function(v, signed = true)
 MakeFiller = (idx, bc = 4) => 
 	(ALLWC + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.min(bc, 4));
 
-///
-/// \brief Swaps out the filler hex string with the actual data
-///
-SwapFiller = function(str, idx, data, cnt = -1, bc = 4)
-{
-	/// 1.1 - Limit the byte count
-	bc = Math.min(bc, 4);
 
-	/// 1.2 - Ensure data is hex string
+///
+/// \brief Background function for performing multiple swaps
+///
+_swap_ = function(str, find, repl, cnt, bc)
+{
+	if (repl === undefined)
+		return str;
+
+	let data, dataSet, needNext = Array.isArray(repl);
+	if (needNext)
+	{
+		dataSet = [...repl]; //create a deep copy
+		cnt = dataSet.length;
+		data = dataSet.shift();
+	}
+	else
+	{
+		data = repl;
+	}
+
 	if (typeof data === 'number')
 		data = data.toHex(bc);
+	else if (data !== undefined) //can be undefined to skip a match in an array
+		data = data.toString();
 
-	/// 2.1 - Get the filler string to be replaced
-	let filler = MakeFiller(idx, bc);
-
-	for (; cnt != 0; cnt--)
+	for (let pos = 0; cnt != 0; cnt--)
 	{
-		/// 2.2 - Get each position of the filler
-		let pos = str.indexOf(filler);
+		pos = str.indexOf(find, pos);
 		if (pos < 0)
 			break;
 
-		/// 2.3 - Replace with 'data' at each position
-		str = str.replaceAt(pos, data, filler.length);
+		if (data === undefined)
+			pos += find.length;
+		else
+			str = str.replaceAt(pos, data, find.length);
+
+		if (needNext)
+		{
+			data = dataSet.shift();
+
+			if (typeof data === 'number')
+				data = data.toHex(bc);
+			else if (data !== undefined)
+				data = data.toString();
+		}
 	}
 
-	/// 2.4 - Return the updated string
 	return str;
+}
+
+///
+/// \brief Swaps out the filler hex string with the actual data
+///
+SwapFiller = function(str, idx, dataSet, cnt = -1, bc = 4)
+{
+	/// 1 - Limit the byte count
+	bc = Math.min(bc, 4);
+
+	/// 2 - Create the filler string to search
+	let find = MakeFiller(idx, bc);
+
+	/// 3 - Return the updated string
+	return _swap_(str, find, dataSet, cnt, bc);
 };
 
 ///
 /// \brief Same as SwapFiller but with multiple substitutions at once.
 ///
-SwapFillers = function(str, idMap, sc = -1, bc = 4)
+SwapFillers = function(str, idMap, cnt = -1, bc = 4)
 {
 	/// 1.1 - Limit the byte count
 	bc = Math.min(bc, 4);
@@ -137,27 +174,16 @@ SwapFillers = function(str, idMap, sc = -1, bc = 4)
 		if (Object.is(idx, NaN))
 			continue;
 
-		/// 1.2 - Get the data and ensure it's a hex string
-		let data = idMap[idx];
-		if (typeof data === 'number')
-			data = data.toHex(bc);
+		/// 1.2 - Get the dataSet corresponding to the id
+		let dataSet = idMap[idx];
 
-		/// 2.1 - Get the filler string to be replaced
-		let filler = MakeFiller(idx, bc);
+		/// 2.1 - Create the filler string to search
+		let find = MakeFiller(idx, bc);
 
-		for (let cnt = sc; cnt != 0; cnt--)
-		{
-			/// 2.2 - Get each position of the filler
-			let pos = str.indexOf(filler);
-			if (pos < 0)
-				break;
-
-			/// 2.3 - Replace with 'data' at each position
-			str = str.replaceAt(pos, data, filler.length);
-		}
+		/// 2.2 - Make the substitution
+		str = _swap_(str, find, dataSet, cnt, bc);
 	}
 
-	/// 2.4 - Return the updated string
 	return str;
 };
 
@@ -508,7 +534,7 @@ AssignStr = (name, value) =>
 //=================//
 
 IdentifyMany(
-	'IsNum', 'IsStr', 'IsBool',
+	'IsNum', 'IsStr', 'IsBool', 'IsArr',
 	'IsNumOrStr', 'IsWord', 'IsByte',
 	'MakeFiller', 'SwapFiller', 'SwapFillers',
 	'Wrap', 'BitWidth', 'Distance',

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-10                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -372,12 +372,12 @@ CustomAuraLimits = function()
 
 	/// 4.2 - Load the input file which creates the hash table mapping the id ranges to level limits & aura id
 	let AuraSpec = Warp.LoadYaml(inFile);
-	if (!Array.isArray(AuraSpec))
+	if (!IsArr(AuraSpec))
 		Cancel("Invalid/non-existent mapping file");
 
 	/// 4.3 - Calculate the total table size
 	let tblSize = AuraSpec.reduce( (acc, hash) =>
-		acc + (Array.isArray(hash.IDs) && Array.isArray(hash.Maps)
+		acc + (IsArr(hash.IDs) && IsArr(hash.Maps)
 			? (4 * hash.IDs.length) + 2 + (5 * hash.Maps.length) + 2
 			: 0)
 	, 0);
@@ -470,7 +470,7 @@ CustomAuraLimits = function()
 	let found = AuraSpec.filter( hash =>
 	{
 		/// 5.5 - Skip any entries without IDs or Maps
-		if (!Array.isArray(hash.IDs) || !Array.isArray(hash.Maps))
+		if (!IsArr(hash.IDs) || !IsArr(hash.Maps))
 			return false;
 
 		/// 5.6 - Add the offset to the map
@@ -479,7 +479,7 @@ CustomAuraLimits = function()
 		/// 5.7 - Add the base IDs to the table
 		hash.IDs.forEach( bases =>
 		{
-			if (Array.isArray(bases))
+			if (IsArr(bases))
 				tblData += bases[0].toHex(2) + bases[1].toHex(2);
 			else
 				tblData += bases.toHex(2).repeat(2);  //if its not a pair use the same id twice
@@ -497,7 +497,7 @@ CustomAuraLimits = function()
 		/// 5.10 - Add the level range and aura constant sets
 		let found = hash.Maps.filter( map =>
 		{
-			if (!Array.isArray(map.JobRange) || !IsNum(map.Index))
+			if (!IsArr(map.JobRange) || !IsNum(map.Index))
 				return false;
 
 			tblData += map.JobRange[0].toHex(2) + map.JobRange[1].toHex(2);

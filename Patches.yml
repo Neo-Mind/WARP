@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-12-07                                             #
+#   Last Modified : 2020-12-09                                             #
 #                                                                          #
 ############################################################################
 
@@ -394,6 +394,12 @@ groups:
                 recommend : no
                 author : Jian
                 desc : Make the client load user specified lua file instead of <b>PrivateAirplane*.lub</b>.
+            
+            - CustomMapInfoLub:
+                title : Custom MapInfo lub
+                recommend : no
+                author : X-EcutiOnner
+                desc : Make the client load user specified lua file instead of <b>MapInfo*.lub</b>.
             
             - CustomOngQuestInfoLub:
                 title : Custom OngoingQuestInfoList lub
@@ -966,7 +972,7 @@ groups:
             - NoSerialDisplay:
                 title : Remove Serial Display
                 recommend : yes
-                author : Shinryo
+                author : Shinryo & Neo-Mind
                 desc : Removes the display of the client serial number in the login window (bottom right corner).
             
             - AllowSpaceInGName:
@@ -1062,7 +1068,7 @@ groups:
             - RelativeDelay4CharDel:
                 title : Change Deletion time to relative 
                 recommend : no
-                author : Functor
+                author : Functor & Neo-Mind
                 desc :  Change character display deletion time from actual date & time to remaining time.
             
             - RestoreChatFocus:
@@ -1164,7 +1170,7 @@ groups:
             - IncrMapQuality:
                 title : Increase Map Quality
                 recommend : no
-                author : Curiosity
+                author : Curiosity & Neo-Mind
                 desc : Makes client use 32 bit color maps for Map Textures.
             
             - EnableEffectTool:
@@ -1224,7 +1230,7 @@ groups:
             - RestoreModelCulling:
                 title : Restore Model Culling
                 recommend: no
-                author : Curiosity
+                author : Curiosity & Neo-Mind
                 desc : Culls models in front of player by turning them transparent.
             
             - Intravision:
@@ -1242,7 +1248,7 @@ groups:
             - AllowPL2Leave:
                 title : Allow Party Leader to leave
                 recommend : no
-                author : Andrei Karas (4144)
+                author : Andrei Karas (4144) & Neo-Mind
                 desc : Allow leader to leave the party if no members are on map.
             
             - AllowSkillSpam:
@@ -1330,7 +1336,7 @@ groups:
             - EnableProxy:
                 title : Enable Proxy Support
                 recommend : no
-                author : Ai4rei/AN
+                author : Ai4rei/AN & Neo-Mind
                 desc : Ignores server-provided IP addresses when changing servers.
             
             - CustomCharCreateId:

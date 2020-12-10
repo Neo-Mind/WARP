@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-10                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Operand Types
 ///
-if (typeof(OpTypes) === 'undefined') //avoid redefinition
+if (typeof OpTypes === 'undefined') //avoid redefinition
 {
 	OpTypes = {
 		ERR : 0x0,  //Some illegal operation
@@ -49,7 +49,7 @@ if (typeof(OpTypes) === 'undefined') //avoid redefinition
 ///
 /// \brief Convenience class for parsing Instruction arguments to determine target, source & sizes
 ///
-if (typeof(OpData) === 'undefined')
+if (typeof OpData === 'undefined')
 {
 	OpData = class
 	{
@@ -268,7 +268,7 @@ if (typeof(OpData) === 'undefined')
 				/// 1.6 - Address size is by default 32 bits
 				this.AdSize = 32;
 
-				/// 1.7 - If no extra elements are present then displacement = 0 & Base = EBP
+				/// 1.7 - If no extra elements are present then displacement = 0 & Base = 5
 				if (ptr.length === 2)
 				{
 					this.Disp = 0;
@@ -278,16 +278,11 @@ if (typeof(OpData) === 'undefined')
 				else if (IsReg(ptr[2]))
 				{
 					this.Base = ptr[2];
-					if (this.Base.equals(EBP)) //Intentionally EBP then set a displacement
+					if (this.Base.equals(EBP)) //Intentionally EBP then need a displacement of 0 atleast
 					{
-						this.Disp = 0;
-						this.DpSize = 8;
+						this.Disp = this.Disp || 0;
 					}
 				}
-
-				/// 1.9 - If a valid displacement was found earlier & size isnt set yet then use 32
-				if (this.Disp !== undefined && this.DpSize < 0)
-					this.DpSize = 32;
 			}
 
 			/// 2.1 - If not a number check if its a register 
@@ -315,14 +310,24 @@ if (typeof(OpData) === 'undefined')
 					let dsize = BitWidth(this.Disp);
 					this.DpSize = (dsize > 8) ? this.AdSize : dsize;
 				}
-				else if(this.Base === undefined) //[Reg]  mode
+				if (this.Base === undefined) //[Reg]  mode
 				{
-					if (this.Index.equals(EBP) || this.Index.equals(BP)) //[EBP] & [BP] need a displacement of 1 byte with value 0
+					if (this.Index.equals(EBP) || this.Index.equals(BP)) //[EBP] & [BP] need a displacement of 0 atleast
 					{
-						this.Disp = 0;
-						this.DpSize = 8;
+						this.Disp = this.Disp || 0;
 					}
-				}	
+				}
+				else if (this.Base.equals(EBP)) //Intentionally EBP then need a displacement of 0 atleast
+				{
+					this.Disp = this.Disp || 0;
+				}
+			}
+
+			/// 3 - If a valid displacement was found earlier then set up the size
+			if (this.Disp !== undefined)
+			{
+				let dsize = BitWidth(this.Disp);
+				this.DpSize = (dsize > 8) ? this.AdSize : dsize;
 			}
 		}
 
