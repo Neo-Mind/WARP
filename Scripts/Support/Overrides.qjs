@@ -22,97 +22,9 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
-
-  //===================//
- // Console overrides //
-//===================//
-
-console.debug = console.log;
-
-///
-/// \brief Dumps the key and value pairs of an object
-/// 
-console.dump = function(obj) 
-{
-	if (obj === undefined)
-		return;
-
-	this.log(obj.constructor.name + " =");
-	for (key in obj)
-	{
-		this.info(`${TAB}${key} => " ${obj[key]}`);
-	}
-	this.info('');
-};
-
-///
-/// \brief Shows the physical and virtual counterparts of an address
-/// 
-console.showAddr = function(addr, type = PHYSICAL)
-{
-	if (!IsNum(addr))
-		return;
-
-	let phy, vir;
-	if (type === PHYSICAL)
-	{
-		phy = addr;
-		vir = Exe.Phy2Vir(addr);
-	}
-	else
-	{
-		phy = Exe.Vir2Phy(addr);
-		vir = addr;
-	}
-
-	if (phy >= 0)
-		phy = "0x" + phy.toString(16);
-
-	if (vir >= 0)
-		vir = "0x" + vir.toString(16);
-
-	this.log(`Addr = ${phy} ( ${vir} )`);
-};
-
-///
-/// \brief Shows the physical and virtual counterparts of multiple addresses
-/// 
-console.showAddrs = function(addrs, type = PHYSICAL)
-{
-	if (!Array.isArray(addrs))
-		return;
-
-	this.log("Addrs =")
-	addrs.forEach( (addr, i) =>
-	{
-		if (!IsNum(addr))
-			return;
-
-		let phy, vir;
-		if (type === PHYSICAL)
-		{
-			phy = addr;
-			vir = Exe.Phy2Vir(addr);
-		}
-		else
-		{
-			phy = Exe.Vir2Phy(addr);
-			vir = addr;
-		}
-
-		if (phy >= 0)
-			phy = "0x" + phy.toString(16);
-
-		if (vir >= 0)
-			vir = "0x" + vir.toString(16);
-
-		this.info(`[${i}] = ${phy} ( ${vir} )`);
-	});
-	this.info('');
-};
 
   //============//
  // Converters //
@@ -121,7 +33,7 @@ console.showAddrs = function(addrs, type = PHYSICAL)
 ///
 /// \brief Method to convert integer to bit string
 ///
-Number.prototype.toBits = function(cnt = 32) 
+Number.prototype.toBits = function(cnt = 32)
 {
 	cnt = Math.min(cnt, 32);
 	if (this < 0)
@@ -136,7 +48,7 @@ Number.prototype.toBits = function(cnt = 32)
 };
 
 ///
-/// \brief Method to convert integer to hex string. 
+/// \brief Method to convert integer to hex string.
 ///
 Number.prototype.toHex = function(cnt = 4, bigEndian = false)
 {
@@ -312,7 +224,7 @@ String.prototype.le2be = function()
 ///
 /// \brief Method to check for empty array
 ///
-Array.prototype.isEmpty = function() 
+Array.prototype.isEmpty = function()
 {
 	return this.length === 0;
 };
@@ -434,7 +346,7 @@ String.prototype.byteCount = function()
 	/// 2.2 - Initialize the nibble length
 	let nibLen = 0;
 
-	parts.forEach((part) => 
+	parts.forEach((part) =>
 	{
 		/// 2.3 - Split based on bit wrapper end ']'
 		let subParts = part.split(']');

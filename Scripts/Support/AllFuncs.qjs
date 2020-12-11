@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,11 +31,12 @@
 //=========//
 
 ///
-/// \brief Tests for primitive types
+/// \brief Tests for primitive types & array (alias)
 ///
 IsNum  = v => typeof v === 'number';
 IsStr  = v => typeof v === 'string';
 IsBool = v => typeof v === 'boolean';
+IsArr = Array.isArray;
 
 IsNumOrStr = v =>
 	typeof v === 'number' || typeof v === 'string';
@@ -89,43 +90,79 @@ IsByte = function(v, signed = true)
 ///
 /// \brief Creates a filler hex string with the given index and byte count
 ///
-MakeFiller = (idx, bc = 4) => 
+Filler = (idx, bc = 4) =>
 	(ALLWC + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.min(bc, 4));
+
+
+///
+/// \brief Background function for performing multiple swaps
+///
+_swap_ = function(str, find, repl, cnt, bc)
+{
+	if (repl === undefined)
+		return str;
+
+	let data, dataSet, needNext = Array.isArray(repl);
+	if (needNext)
+	{
+		dataSet = [...repl]; //create a deep copy
+		cnt = dataSet.length;
+		data = dataSet.shift();
+	}
+	else
+	{
+		data = repl;
+	}
+
+	if (typeof data === 'number')
+		data = data.toHex(bc);
+	else if (data !== undefined) //can be undefined to skip a match in an array
+		data = data.toString();
+
+	for (let pos = 0; cnt != 0; cnt--)
+	{
+		pos = str.indexOf(find, pos);
+		if (pos < 0)
+			break;
+
+		if (data === undefined)
+			pos += find.length;
+		else
+			str = str.replaceAt(pos, data, find.length);
+
+		if (needNext)
+		{
+			data = dataSet.shift();
+
+			if (typeof data === 'number')
+				data = data.toHex(bc);
+			else if (data !== undefined)
+				data = data.toString();
+		}
+	}
+
+	return str;
+}
 
 ///
 /// \brief Swaps out the filler hex string with the actual data
 ///
-SwapFiller = function(str, idx, data, cnt = -1, bc = 4)
+SwapFiller = function(str, idx, dataSet, cnt = -1, bc = 4)
 {
-	/// 1.1 - Limit the byte count
+	/// 1 - Limit the byte count
 	bc = Math.min(bc, 4);
 
-	/// 1.2 - Ensure data is hex string
-	if (typeof data === 'number')
-		data = data.toHex(bc);
+	/// 2 - Create the filler string to search
+	let find = Filler(idx, bc);
 
-	/// 2.1 - Get the filler string to be replaced
-	let filler = MakeFiller(idx, bc);
-
-	for (; cnt != 0; cnt--)
-	{
-		/// 2.2 - Get each position of the filler
-		let pos = str.indexOf(filler);
-		if (pos < 0)
-			break;
-
-		/// 2.3 - Replace with 'data' at each position
-		str = str.replaceAt(pos, data, filler.length);
-	}
-
-	/// 2.4 - Return the updated string
-	return str;
+	/// 3 - Return the updated string
+	return _swap_(str, find, dataSet, cnt, bc);
 };
 
 ///
 /// \brief Same as SwapFiller but with multiple substitutions at once.
 ///
-SwapFillers = function(str, idMap, sc = -1, bc = 4)
+SwapFillers = function(str, idMap, cnt = -1, bc = 4)
 {
 	/// 1.1 - Limit the byte count
 	bc = Math.min(bc, 4);
@@ -137,27 +174,16 @@ SwapFillers = function(str, idMap, sc = -1, bc = 4)
 		if (Object.is(idx, NaN))
 			continue;
 
-		/// 1.2 - Get the data and ensure it's a hex string
-		let data = idMap[idx];
-		if (typeof data === 'number')
-			data = data.toHex(bc);
+		/// 1.2 - Get the dataSet corresponding to the id
+		let dataSet = idMap[idx];
 
-		/// 2.1 - Get the filler string to be replaced
-		let filler = MakeFiller(idx, bc);
+		/// 2.1 - Create the filler string to search
+		let find = Filler(idx, bc);
 
-		for (let cnt = sc; cnt != 0; cnt--)
-		{
-			/// 2.2 - Get each position of the filler
-			let pos = str.indexOf(filler);
-			if (pos < 0)
-				break;
-
-			/// 2.3 - Replace with 'data' at each position
-			str = str.replaceAt(pos, data, filler.length);
-		}
+		/// 2.2 - Make the substitution
+		str = _swap_(str, find, dataSet, cnt, bc);
 	}
 
-	/// 2.4 - Return the updated string
 	return str;
 };
 
@@ -168,7 +194,7 @@ SwapFillers = function(str, idMap, sc = -1, bc = 4)
 ///
 /// \brief Wraps the given value into an array unless its already one.
 ///
-Wrap = v => 
+Wrap = v =>
 	Array.isArray(v) ? v : (v === undefined ? [] : [v]);
 
 
@@ -210,7 +236,7 @@ BitWidth = function(v)
 ///
 /// \brief Calculates the Distance between the given target and source (if not numbers then then target itself is returned)
 ///
-Distance = (tgt, src) => 
+Distance = (tgt, src) =>
 	typeof tgt == 'number' && typeof src === 'number' ? tgt - src : tgt;
 
 
@@ -280,7 +306,7 @@ ParseData = function(data, scaled)
 		if (data.length === 3 && typeof data[0] === 'number')
 		{
 			/// 2.2 - First copy the array as is
-			parts = data.slice(); 
+			parts = data.slice();
 
 			/// 2.3 - Extract the numbers from the parts
 			let p0 = scaled ? (Math.log(data[0]) / Math.log(2)) : data[0];
@@ -290,7 +316,7 @@ ParseData = function(data, scaled)
 			/// 2.4 - Construct the hex string and save as the 4th element
 			if (p1 < 0 || p2 < 0) //when either is negative we need to use wildcards
 			{
-				parts[3] = 
+				parts[3] =
 					' ['
 				+	p0.toBits(2)
 				+	(p1 < 0 ? '...' : p1.toBits(3))
@@ -308,7 +334,7 @@ ParseData = function(data, scaled)
 		return parts;
 	}
 
-	/// 3 - Process string type 
+	/// 3 - Process string type
 	if (typeof data === 'string')
 	{
 		/// 3.1 - First remove any square brackets
@@ -362,7 +388,7 @@ ParseData = function(data, scaled)
 			}
 			else
 			{
-				let hb = parseInt(data[0], 16); //Higher byte 
+				let hb = parseInt(data[0], 16); //Higher byte
 				let bits = (hb >> 2) & 0b11; 	//First 2 bits
 				if (scaled)
 					bits = Math.pow(2, bits);
@@ -388,7 +414,7 @@ ParseData = function(data, scaled)
 			parts[3] = data;
 		}
 
-		/// 3.8 - If no wildcards for bytes then convert to number 
+		/// 3.8 - If no wildcards for bytes then convert to number
 		else
 		{
 			data = parseInt(data, 16);
@@ -435,10 +461,11 @@ FindInstr = function(testFn, from, to)
 ///        If default value is specified then a 'reverted' message is thrown.
 ///
 Cancel = (arg, defVal = undefined) =>
+{
 	throw defVal === undefined
 	?	`Cancelled - ${arg}`
-	:	`Cancelled - <b>'${arg}'</b> reverted to <b><u>${defVal}</u></b>`
-;
+	:	`Cancelled - <b>'${arg}'</b> reverted to <b><i>${defVal}</i></b>`
+};
 
   //====================//
  // Syntax Identifiers //
@@ -450,13 +477,13 @@ Cancel = (arg, defVal = undefined) =>
 Identify = Warp.identify;
 
 ///
-/// \brief Adds a class and all its properties to SyntaxAssistant 
+/// \brief Adds a class and all its properties to SyntaxAssistant
 ///        for identification in the Script Editor
 ///
-IdentifyClass = type => 
+IdentifyClass = type =>
 	Warp.identify(
-		type.name, 
-		Object.getOwnPropertyNames(type), 
+		type.name,
+		Object.getOwnPropertyNames(type),
 		Object.keys(new type()).concat(
 			Object.getOwnPropertyNames(type.prototype)
 		)
@@ -466,7 +493,7 @@ IdentifyClass = type =>
 /// \brief Adds an object and all its properties to SyntaxAssistant
 ///        for identification in the Script Editor
 ///
-IdentifyObj = objName => 
+IdentifyObj = objName =>
 {
 	if (eval("typeof " + objName) !== undefined)
 		Warp.identify(objName, Object.getOwnPropertyNames(eval(objName)) );
@@ -507,9 +534,9 @@ AssignStr = (name, value) =>
 //=================//
 
 IdentifyMany(
-	'IsNum', 'IsStr', 'IsBool',
+	'IsNum', 'IsStr', 'IsBool', 'IsArr',
 	'IsNumOrStr', 'IsWord', 'IsByte',
-	'MakeFiller', 'SwapFiller', 'SwapFillers',
+	'Filler', 'SwapFiller', 'SwapFillers',
 	'Wrap', 'BitWidth', 'Distance',
 	'CaseAddr', 'ParseData', 'FindInstr',
 	'Identify', 'IdentifyClass',

@@ -22,16 +22,16 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Convenience class representing Instruction prefixes
 ///
-if (typeof(IPrefix) === 'undefined')
+if (typeof IPrefix === 'undefined')
 {
-	IPrefix = class 
+	IPrefix = class
 	{
 		///
 		/// \brief Constructor

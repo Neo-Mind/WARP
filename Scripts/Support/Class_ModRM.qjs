@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Convenience class for representing a ModR/M byte
 ///
-if (typeof(ModRM) === 'undefined') //avoid redefinition
+if (typeof ModRM === 'undefined') //avoid redefinition
 {
 	ModRM = class
 	{
@@ -60,7 +60,7 @@ if (typeof(ModRM) === 'undefined') //avoid redefinition
 		{
 			if (IsNum(this.Mode) && this.Mode !== 3)
 			{
-				return ( 
+				return (
 					(IsNum(this.RegM) && this.RegM === ESP.Index) ||
 					(IsReg(this.RegM) && this.RegM.Index === ESP.Index)
 				);
@@ -75,7 +75,7 @@ if (typeof(ModRM) === 'undefined') //avoid redefinition
 		static FromParts(mode, ro, rm)
 		{
 			/// 1.1 - Check for hex strings in RegOp
-			if (IsStr(ro)) //WildCard + Direct Hex 
+			if (IsStr(ro)) //WildCard + Direct Hex
 				return new this(ro);
 
 			/// 1.2 - Check for hex strings in RegM
