@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-12-11                                             *
-*   Last Modified : 2020-12-15                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -83,35 +83,64 @@ if (typeof Log == 'undefined')
 			return true;
 		}
 	};
-
-	IdentifyObj('Log');
 };
 
 ///
 /// \brief Function for logging comments in patch & extension functions (including supporting functions)
 ///
-$$ = function(txt, header = false)
+$$ = function(txt)
 {
 	if (txt !== undefined)
 	{
 		if (Log.Handle !== undefined)
-		{
 			Log.Handle.WriteLine(txt);
-			if (header)
-				Log.Handle.WriteLine('-'.repeat(txt.length) + "\n");
-		}
 		
 		if (Log.Tee)
-		{
-			if (header)
-				console.info("<u><b>" + txt + "</b></u><br>");
-			else
-				console.debug(txt);
-		}
+			console.debug(txt);
 	}
 };
 
-IdentifyObj("$$");
+///
+/// \brief Function for adding Headers or Just Underlines to Logs
+///
+$_ = function(arg, chr = '+', bold = false)
+{
+	let len = 0;
+	if (IsNum(arg))
+	{
+		len = arg;
+	}
+	else if (IsStr(arg))
+	{
+		len = arg.length;
+		
+		if (Log.Handle !== undefined)
+			Log.Handle.WriteLine(arg);
+		
+		if (Log.Tee)
+		{
+			if (bold)
+				console.info("<b>" + arg + "</b>");
+			else
+				console.info(arg);
+		}
+	}
+	
+	if (len > 0)
+	{
+		let line = chr.repeat(len);
+		if (Log.Handle !== undefined)
+			Log.Handle.WriteLine(line);
+		
+		if (Log.Tee)
+		{
+			if (bold)
+				console.info("<b>" + line + "</b>");
+			else
+				console.info(line);
+		}
+	}
+}
 
 // For all the following, the output will be send using 'console'
 
@@ -336,9 +365,3 @@ ShowC = function()
 	console.cnt = (console.cnt || 0) + 1	;
 	console.log(console.cnt, Exe.Version, Exe.BuildDate);
 };
-
-IdentifyMany(
-	"Debug", "Info", "Dump", "NewLine",
-	"ShowAddr", "ShowAddrs", "ShowArr",
-	"ShowVar", "ShowC", "ResetC"
-);

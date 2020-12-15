@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-12-15                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -149,13 +149,13 @@ _swap_ = function(str, find, repl, cnt, bc)
 ///
 SwapFiller = function(str, idx, dataSet, cnt = -1, bc = 4)
 {
-	/// 1 - Limit the byte count
+	$$('1 - Limit the byte count')
 	bc = Math.min(bc, 4);
 
-	/// 2 - Create the filler string to search
+	$$('2 - Create the filler string to search')
 	let find = Filler(idx, bc);
 
-	/// 3 - Return the updated string
+	$$('3 - Return the updated string')
 	return _swap_(str, find, dataSet, cnt, bc);
 };
 
@@ -164,23 +164,23 @@ SwapFiller = function(str, idx, dataSet, cnt = -1, bc = 4)
 ///
 SwapFillers = function(str, idMap, cnt = -1, bc = 4)
 {
-	/// 1.1 - Limit the byte count
+	$$('1.1 - Limit the byte count')
 	bc = Math.min(bc, 4);
 
 	for (key in idMap)
 	{
-		/// 1.1 - Get the idx and ensure it is a proper integer
+		$$('1.2 - Get the idx and ensure it is a proper integer')
 		let idx = parseInt(key);
 		if (Object.is(idx, NaN))
 			continue;
 
-		/// 1.2 - Get the dataSet corresponding to the id
+		$$('1.3 - Get the dataSet corresponding to the id')
 		let dataSet = idMap[idx];
 
-		/// 2.1 - Create the filler string to search
+		$$('2.1 - Create the filler string to search')
 		let find = Filler(idx, bc);
 
-		/// 2.2 - Make the substitution
+		$$('2.2 - Make the substitution')
 		str = _swap_(str, find, dataSet, cnt, bc);
 	}
 
@@ -207,29 +207,31 @@ Wrap = v =>
 ///
 BitWidth = function(v)
 {
-	/// 1 - If the value provided is a register then simply return its width
+	$$('1 - If the value provided is a register then simply return its width')
 	if (IsReg(v))
 		return v.Width;
 
 	switch (typeof v)
 	{
-		/// 2 - For numbers, check within specific limits for each size
 		case 'number':
+			$$('2 - For numbers, check within specific limits for each size');
+			
 			return (
 				v >= -0x80 && v <= 0x7F ? 8 :
 				v >= -0x8000 && v <= 0x7FFF ? 16 :
 				32
 			);
 
-		/// 3 - For hex string return the byte count * 8
 		case 'string':
+			$$('3 - For hex string return the byte count * 8');
+			
 			let bc = v.byteCount();
 			if (bc >= 0)
 				return (8 * bc);
 
 	}
 
-	/// 4 - Return -1 for invalid cases
+	$$('4 - Return -1 for invalid cases')
 	return -1;
 };
 
@@ -249,10 +251,10 @@ Distance = (tgt, src) =>
 ///
 CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 {
-	/// 1.1 - Extract the MOVZX instruction
+	$$('1.1 - Extract the MOVZX instruction')
 	let movzxIns = movzxAddr > 0 ? Instr.FromAddr(movzxAddr) : '';
 
-	/// 1.2 - Ensure the address for JMP DWORD PTR is valid
+	$$('1.2 - Ensure the address for JMP DWORD PTR is valid')
 	if (jmpDpAddr !== undefined)
 	{
 		if (movzxIns === '')
@@ -261,10 +263,10 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 		jmpDpAddr = movzxIns.NextAddr;
 	}
 
-	/// 1.3 - Extract the JMP DWORD PTR instruction
+	$$('1.3 - Extract the JMP DWORD PTR instruction')
 	let jmpDpIns = Instr.fromAddr(jmpDpAddr);
 
-	/// 2.1 - Based on the case extract the byte being used in JMP DWORD PTR
+	$$('2.1 - Based on the case extract the byte being used in JMP DWORD PTR')
 	let caseByte = num;
 	if (movzxIns !== '')
 	{
@@ -275,14 +277,14 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 		caseByte = Exe.GetInt8(offset + num);
 	}
 
-	/// 2.2 - Use the byte retrieved to extract the case target address (VIRTUAL)
+	$$('2.2 - Use the byte retrieved to extract the case target address (VIRTUAL)')
 	let offset = Exe.Vir2Phy(jmpdpIns.Disp);
 	if (offset < 0)
 		return -1;
 
 	let caseAddr = Exe.GetInt32(offset + caseByte*4);
 
-	/// 2.3 - Return the physical address if VIRTUAL is not explicity requested
+	$$('2.3 - Return the physical address if VIRTUAL is not explicity requested')
 	return (retnType === VIRTUAL ? caseAddr : Exe.Vir2Phy(caseAddr));
 };
 
@@ -296,24 +298,24 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 ///
 ParseData = function(data, scaled)
 {
-	/// 1 - Initialize the parts
+	$$('1 - Initialize the parts')
 	let parts = [];
 
-	/// 2 - If the data is an array then process differently
+	$$('2 - If the data is an array then process differently')
 	if (Array.isArray(data))
 	{
-		/// 2.1 - Ensure it has 3 values and first one is a number
+		$$('2.1 - Ensure it has 3 values and first one is a number')
 		if (data.length === 3 && typeof data[0] === 'number')
 		{
-			/// 2.2 - First copy the array as is
+			$$('2.2 - First copy the array as is')
 			parts = data.slice();
 
-			/// 2.3 - Extract the numbers from the parts
+			$$('2.3 - Extract the numbers from the parts')
 			let p0 = scaled ? (Math.log(data[0]) / Math.log(2)) : data[0];
 			let p1 = IsReg(data[1]) ? data[1].Index : data[1];
 			let p2 = IsReg(data[2]) ? data[2].Index : data[2];
 
-			/// 2.4 - Construct the hex string and save as the 4th element
+			$$('2.4 - Construct the hex string and save as the 4th element')
 			if (p1 < 0 || p2 < 0) //when either is negative we need to use wildcards
 			{
 				parts[3] =
@@ -330,22 +332,24 @@ ParseData = function(data, scaled)
 			}
 		}
 
-		/// 2.5 - Return the array
+		$$('2.5 - Return the array')
 		return parts;
 	}
 
-	/// 3 - Process string type
+	$$('3 - Process string type')
 	if (typeof data === 'string')
 	{
-		/// 3.1 - First remove any square brackets
+		$$('3.1 - First remove any square brackets')
 		data = data.replace(/[\[ \]]+/g, '');
 
-		/// 3.2 - If more than 2 chars present then its in bitwise format
 		if (data.length > 2)
 		{
-			/// 3.3 - Dot is wildcard for bitwise mode, if present we need to parse each part individually
+			$$('3.2 - If more than 2 chars present then its in bitwise format')
+			
 			if (data.includes('.'))
 			{
+				$$('3.3 - Dot is wildcard for bitwise mode, if present we need to parse each part individually')
+				
 				let bits = data.substr(0, 2); //first 2 bits
 				if (!bits.includes(2))
 				{
@@ -367,20 +371,20 @@ ParseData = function(data, scaled)
 
 				parts[2] = bits;
 
-				/// 3.4 - Since the data is already the hex string, save it as the fourth element
+				$$('3.4 - Since the data is already the hex string, save it as the fourth element')
 				parts[3] = data;
 			}
 			else
 			{
-				/// 3.5 - If no wildcard then we can convert the data into a number
-				///       Next section will parse it into the parts.
+				$$('3.5 - If no wildcard then we can convert the data into a number. Next section will parse it into the parts')
 				data = parseInt(data, 2);
 			}
 		}
 
-		/// 3.6 - If wild card characters (?) are present then parse each nibble individually
 		else if (data[0] === '?' || data[1] === '?')
 		{
+			$$('3.6 - If wild card characters (?) are present then parse each nibble individually')
+			
 			if (data[0] === '?')
 			{
 				parts[0] = '..';
@@ -410,18 +414,18 @@ ParseData = function(data, scaled)
 				parts[2] = lb & 0b111;	//Last 3 bits
 			}
 
-			/// 3.7 - And ofcourse save the data as the fourth element
+			$$('3.7 - And ofcourse save the data as the fourth element')
 			parts[3] = data;
 		}
 
-		/// 3.8 - If no wildcards for bytes then convert to number
 		else
 		{
+			$$('3.8 - If no wildcards for bytes then convert to number')
 			data = parseInt(data, 16);
 		}
 	}
 
-	/// 4 - Process Number type (Integer to be more precise)
+	$$('4 - Process Number type (Integer to be more precise)')
 	if (typeof data === 'number')
 	{
 		parts[0] = (data >> 6) & 0b11; 	//First 2 bits
@@ -541,5 +545,11 @@ IdentifyMany(
 	'CaseAddr', 'ParseData', 'FindInstr',
 	'Identify', 'IdentifyClass',
 	'IdentifyObj', 'IdentifyMany',
-	'Assign', 'AssignStr'
+	'Assign', 'AssignStr',
+	
+//from AllDebug
+	"$$", "$_", "Log",
+	"Debug", "Info", "Dump", "NewLine",
+	"ShowAddr", "ShowAddrs", "ShowArr",
+	"ShowVar", "ShowC", "ResetC"
 );
