@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-11                                             *
+*   Last Modified : 2020-12-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -83,5 +83,5 @@ if (typeof SIBase === 'undefined') //avoid redefinition
 		}		
 	};
 
-	IdentifyClass(SIBase);
+	IdentifyClass(SIBase, ["Scale", "Index", "Base", "Data"]);
 }

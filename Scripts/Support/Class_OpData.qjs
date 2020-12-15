@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-11                                             *
+*   Last Modified : 2020-12-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -62,10 +62,10 @@ if (typeof OpData === 'undefined')
 		{
 			/// 1.1 - Initialize all the values
 			this.Prefix = [];
-			// this.TgtReg
-			// this.SrcReg
-			// this.Immd
-			// this.Disp
+			// this.TgtReg    //Target Register if applicable
+			// this.SrcReg    //Source Register if applicable
+			// this.Immd      //Immediate value if applicable
+			// this.Disp      //Displacement value if applicable
 
 			this.OpSize = -1; //Operand size
 			this.AdSize = -1; //Address size
@@ -375,5 +375,10 @@ if (typeof OpData === 'undefined')
 		}
 	};
 
-	IdentifyClass(OpData);
+	IdentifyClass(OpData, [
+		"Prefix", "TgtReg", "SrcReg",
+		"Immd", "Disp",
+		"OpSize", "AdSize", "DpSize",
+		"ImSize", "PtSize", "OpType"
+	]);
 }

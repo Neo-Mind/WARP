@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-12-11                                             *
+*   Last Modified : 2020-12-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -480,13 +480,13 @@ Identify = Warp.identify;
 /// \brief Adds a class and all its properties to SyntaxAssistant
 ///        for identification in the Script Editor
 ///
-IdentifyClass = type =>
+IdentifyClass = (type, props = []) =>
 	Warp.identify(
 		type.name,
 		Object.getOwnPropertyNames(type),
 		Object.keys(new type()).concat(
 			Object.getOwnPropertyNames(type.prototype)
-		)
+		).concat( props )
 	);
 
 ///

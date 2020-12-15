@@ -22,23 +22,80 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-12-11                                             *
-*   Last Modified : 2020-12-11                                             *
+*   Last Modified : 2020-12-15                                             *
 *                                                                          *
 \**************************************************************************/
 
 // Contains various functions useful for debugging code.
-// All the output will be send using 'console'
+
+if (typeof Comment === 'undefined') //avoid redefinition
+{
+	///
+	/// \brief Function for logging comments
+	///
+	Comment = (txt) =>
+	{
+		if (txt !== undefined && Comment.Handle !== undefined)
+		{
+			Comment.Handle.WriteLine(txt);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	///
+	/// \brief Enable logging of comments
+	///
+	Comment.enable = (file = '') =>
+	{
+		if (Comment.Handle !== undefined)
+			Comment.Handle.Close();
+
+		if (file.isEmpty())
+			file = "Comment_Log_" + System.LocalTime.toISOString().replace(/:/g, '_') + ".txt";
+
+		let fp = new TextFile(OUTDIR + file, "w");
+		if (fp.Valid)
+		{
+			Comment.Handle = fp;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	};
+
+	///
+	/// \brief Disable logging of comments
+	///
+	Comment.disable = () =>
+	{
+		if (Comment.Handle !== undefined)
+			Comment.Handle.Close();
+
+		Comment.Handle = undefined;
+		return true;
+	}
+
+	IdentifyObj("Comment");
+}
+
+// For all the following, the output will be send using 'console'
 
 ///
 /// \brief Aliases
 ///
-CLog = console.log;
-CInfo = console.info;
+Debug = console.log;
+Info = console.info;
 
 ///
 /// \brief Write an empty line
 ///
-CNewLine = () => CInfo('') || true;
+NewLine = () => Info('') || true;
 
 ///
 /// \brief Dump the key and value pairs of an object.
@@ -62,7 +119,7 @@ Dump = function(name, obj, prefix = '')
 	if (obj === undefined)
 		return false;
 
-	CInfo(prefix, name, "=>");
+	Info(prefix, name, "=>");
 
 	for (key in obj)
 	{
@@ -76,7 +133,7 @@ Dump = function(name, obj, prefix = '')
 			if (IsStr(val))
 				val = `"${val}"`;
 
-			CInfo(prefix, TAB, key, "=>", val);
+			Info(prefix, TAB, key, "=>", val);
 		}
 	}
 
@@ -91,7 +148,7 @@ ShowArr = function(arr, prefix = '', name = 'Array')
 	if (!IsArr(arr))
 		return false;
 
-	CInfo(prefix, name, "= [");
+	Info(prefix, name, "= [");
 
 	arr.forEach( (item, index) =>
 	{
@@ -104,11 +161,11 @@ ShowArr = function(arr, prefix = '', name = 'Array')
 			if (IsStr(item))
 				item = `"${item}"`;
 
-			CInfo(prefix, TAB, index, "=>", item);
+			Info(prefix, TAB, index, "=>", item);
 		}
 	});
 
-	CInfo(prefix, ']');
+	Info(prefix, ']');
 
 	return true;
 };
@@ -125,20 +182,20 @@ ShowVar = function(obj, prefix = '')
 	let value = obj[varName];
 	if (IsArr(value))
 	{
-		CInfo(prefix, varName, "= [");
+		Info(prefix, varName, "= [");
 
 		value.forEach( (elem, idx) =>
 			ShowVar({[idx] : elem}, prefix + TAB)
 		);
 
-		CInfo(prefix, ']');
+		Info(prefix, ']');
 	}
 	else
 	{
 		if (IsStr(value))
 			value = `"${value}"`;
 
-		CInfo(prefix, varName, "=>", value);
+		Info(prefix, varName, "=>", value);
 	}
 
 	return true;
@@ -176,7 +233,7 @@ ShowAddr = function(prompt, addr, type)
 		if (vir >= 0)
 			vir = "0x" + vir.toString(16);
 
-		CInfo(prompt, "=>", phy, '(', vir, ')');
+		Info(prompt, "=>", phy, '(', vir, ')');
 		return true;
 	}
 
@@ -197,7 +254,7 @@ ShowAddrs = function(prompt, addrs, type)
 
 	if (IsArr(addrs))
 	{
-		CInfo(prompt, "= [");
+		Info(prompt, "= [");
 
 		let isPhy = (type === undefined || type === PHYSICAL);
 		addrs.forEach( (addr, i) =>
@@ -223,10 +280,10 @@ ShowAddrs = function(prompt, addrs, type)
 			if (vir >= 0)
 				vir = "0x" + vir.toString(16);
 
-			CInfo(TAB, i, "=>", phy, '(', vir, ')');
+			Info(TAB, i, "=>", phy, '(', vir, ')');
 		});
 
-		CInfo(']');
+		Info(']');
 
 		return true;
 	}
@@ -237,7 +294,7 @@ ShowAddrs = function(prompt, addrs, type)
 ///
 /// \brief Reset the internal counter.
 ///
-CReset = () =>
+CReset = function() =>
 {
 	console.cnt = 0;
 	return true;
@@ -246,9 +303,16 @@ CReset = () =>
 ///
 /// \brief Increment & display the current count along with version & build date
 ///
-CShow = () =>
+CShow = function() =>
 {
 	console.cnt = (console.cnt || 0) + 1	;
 	console.log(console.cnt, Exe.Version, Exe.BuildDate);
 	return true;
 };
+
+
+IdentifyMany(
+	"Debug", "Info", "Dump", "NewLine",
+	"ShowAddr", "ShowAddrs", "ShowArr",
+	"ShowVar", "CShow", "CReset"
+);
