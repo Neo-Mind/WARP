@@ -294,16 +294,12 @@ ShowAddrs = function(prompt, addrs, type)
 ///
 /// \brief Reset the internal counter.
 ///
-CReset = function() =>
-{
-	console.cnt = 0;
-	return true;
-};
+CReset = () => (console.cnt = 0) || true;
 
 ///
 /// \brief Increment & display the current count along with version & build date
 ///
-CShow = function() =>
+CShow = function()
 {
 	console.cnt = (console.cnt || 0) + 1	;
 	console.log(console.cnt, Exe.Version, Exe.BuildDate);
