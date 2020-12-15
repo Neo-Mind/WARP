@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-10                                             *
+*   Last Modified : 2020-12-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -54,7 +54,7 @@ if (typeof OpData === 'undefined')
 	OpData = class
 	{
 		///
-		/// \brief Constructor 
+		/// \brief Constructor
 		/// \param args      => 'arguments' object or an array
 		/// \param immIsOper => indicates ImSize should follow OpSize
 		///
@@ -62,10 +62,10 @@ if (typeof OpData === 'undefined')
 		{
 			/// 1.1 - Initialize all the values
 			this.Prefix = [];
-			// this.TgtReg
-			// this.SrcReg
-			// this.Immd
-			// this.Disp
+			// this.TgtReg    //Target Register if applicable
+			// this.SrcReg    //Source Register if applicable
+			// this.Immd      //Immediate value if applicable
+			// this.Disp      //Displacement value if applicable
 
 			this.OpSize = -1; //Operand size
 			this.AdSize = -1; //Address size
@@ -77,7 +77,7 @@ if (typeof OpData === 'undefined')
 			let target, source;
 
 			/// 1.2 - Ensure the args have a length member (array or arguments)
-			if (typeof(args) === 'undefined' || args.length === undefined)
+			if (typeof args === 'undefined' || args.length === undefined)
 				return;
 
 			/// 1.3 - Extract the values from the args
@@ -97,7 +97,7 @@ if (typeof OpData === 'undefined')
 				{
 					if (target === undefined) //first assign Target
 						target = arg;
-					else if (source === undefined) //next source 
+					else if (source === undefined) //next source
 						source = arg;
 					else if (this.Immd === undefined) //finally immediate value
 						this.Immd = arg;
@@ -115,7 +115,7 @@ if (typeof OpData === 'undefined')
 					/// 2.2 - Save the target as 'TgtReg' since its a register
 					this.TgtReg = target;
 
-					/// 2.3 - Set the target register bit width as the operand size 
+					/// 2.3 - Set the target register bit width as the operand size
 					this.OpSize = target.Width;
 
 					/// 2.4 - Set the type to R_R
@@ -129,7 +129,7 @@ if (typeof OpData === 'undefined')
 					/// 3.2 - Set the source register bit width as the operand size
 					this.OpSize = source.Width;
 
-					/// 3.3 - Set the type to D_A or P_R 
+					/// 3.3 - Set the type to D_A or P_R
 					///       (depends whether reg is accumulator o& the ptr only has displacement)
 					this.OpType = (source.isAcc() && target.isDispPtr()) ?
 						OpTypes.D_A //[Displacement], EAX/AX/AL <, imm>
@@ -140,7 +140,7 @@ if (typeof OpData === 'undefined')
 			}
 			else if (Array.isArray(source)) //*, Mem Ptr <, imm>
 			{
-				/// 4.1 - Calculate the address & displacement sizes from the source pointer array 
+				/// 4.1 - Calculate the address & displacement sizes from the source pointer array
 				this.parsePtr(source);
 
 				if (IsReg(target)) //Reg, Mem Ptr <, imm> . Only reg is acceptable as target
@@ -148,10 +148,10 @@ if (typeof OpData === 'undefined')
 					/// 4.2 - Save the target as 'TgtReg' since its a register
 					this.TgtReg = target;
 
-					/// 4.3 - Set the target register bit width as the operand size 
+					/// 4.3 - Set the target register bit width as the operand size
 					this.OpSize = target.Width;
 
-					/// 4.4 - Set the type to A_D or R_P 
+					/// 4.4 - Set the type to A_D or R_P
 					///       (depends whether reg is accumulator & the ptr only has displacement)
 					this.OpType = (target.isAcc() && source.isDispPtr())?
 						OpTypes.A_D //EAX/AX/AL, [Displacement] <, imm>
@@ -165,7 +165,7 @@ if (typeof OpData === 'undefined')
 				/// 5.1 - Save the target as 'TgtReg' since its a register
 				this.TgtReg = target;
 
-				/// 5.2 - Set the target register bit width as the operand size 
+				/// 5.2 - Set the target register bit width as the operand size
 				this.OpSize = target.Width;
 
 				/// 5.3 - Save the source as the immediate value
@@ -181,7 +181,7 @@ if (typeof OpData === 'undefined')
 			}
 			else if (Array.isArray(target)) //Mem Ptr <, imm>
 			{
-				/// 6.1 - Calculate the address & displacement sizes from the target pointer array 
+				/// 6.1 - Calculate the address & displacement sizes from the target pointer array
 				this.parsePtr(target);
 
 				/// 6.2 - Set the operand size to 32 if not already set with a PtrSize object (size cannot be auto determined)
@@ -285,7 +285,7 @@ if (typeof OpData === 'undefined')
 				}
 			}
 
-			/// 2.1 - If not a number check if its a register 
+			/// 2.1 - If not a number check if its a register
 			else if(IsReg(first)) //reg + *
 			{
 				/// 2.1 - Save the register as index reg (may or may not be used as a SIB later on)
@@ -332,7 +332,7 @@ if (typeof OpData === 'undefined')
 		}
 
 		///
-		/// \brief Calculates the Immediate value size 
+		/// \brief Calculates the Immediate value size
 		///
 		calcImmSize(immIsOper = false)
 		{
@@ -357,8 +357,8 @@ if (typeof OpData === 'undefined')
 		toString()
 		{
 			const {OpType, Prefix, OpSize, AdSize, DpSize, ImSize, PtSize} = this;
-			let prefix = 
-				`OpType = ${OpType}, Prefix = ${Prefix}<br>` 
+			let prefix =
+				`OpType = ${OpType}, Prefix = ${Prefix}<br>`
 			+	`Sizes = [OpSize = ${OpSize}, AdSize = ${AdSize}, DpSize = ${DpSize}, ImSize = ${ImSize}, PtSize = ${PtSize}]<br>`
 			+	`Others = [`;
 
@@ -375,5 +375,10 @@ if (typeof OpData === 'undefined')
 		}
 	};
 
-	IdentifyClass(OpData);
+	IdentifyClass(OpData, [
+		"Prefix", "TgtReg", "SrcReg",
+		"Immd", "Disp",
+		"OpSize", "AdSize", "DpSize",
+		"ImSize", "PtSize", "OpType"
+	]);
 }

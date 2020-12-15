@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-15                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Convenience class for representing a SIB byte
 ///
-if (typeof(SIBase) === 'undefined') //avoid redefinition
+if (typeof SIBase === 'undefined') //avoid redefinition
 {
 	SIBase = class
 	{
@@ -83,5 +83,5 @@ if (typeof(SIBase) === 'undefined') //avoid redefinition
 		}		
 	};
 
-	IdentifyClass(SIBase);
+	IdentifyClass(SIBase, ["Scale", "Index", "Base", "Data"]);
 }

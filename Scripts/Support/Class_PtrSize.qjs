@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Convenience class identify Data Sizes for Ptrs and Imms
 ///
-if (typeof(PtrSize) === 'undefined') //avoid redefinition
+if (typeof PtrSize === 'undefined') //avoid redefinition
 {
 	PtrSize = class
 	{

@@ -1,0 +1,318 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-12-11                                             *
+*   Last Modified : 2020-12-15                                             *
+*                                                                          *
+\**************************************************************************/
+
+// Contains various functions useful for debugging code.
+
+if (typeof Comment === 'undefined') //avoid redefinition
+{
+	///
+	/// \brief Function for logging comments
+	///
+	Comment = (txt) =>
+	{
+		if (txt !== undefined && Comment.Handle !== undefined)
+		{
+			Comment.Handle.WriteLine(txt);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	///
+	/// \brief Enable logging of comments
+	///
+	Comment.enable = (file = '') =>
+	{
+		if (Comment.Handle !== undefined)
+			Comment.Handle.Close();
+
+		if (file.isEmpty())
+			file = "Comment_Log_" + System.LocalTime.toISOString().replace(/:/g, '_') + ".txt";
+
+		let fp = new TextFile(OUTDIR + file, "w");
+		if (fp.Valid)
+		{
+			Comment.Handle = fp;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	};
+
+	///
+	/// \brief Disable logging of comments
+	///
+	Comment.disable = () =>
+	{
+		if (Comment.Handle !== undefined)
+			Comment.Handle.Close();
+
+		Comment.Handle = undefined;
+		return true;
+	}
+
+	IdentifyObj("Comment");
+}
+
+// For all the following, the output will be send using 'console'
+
+///
+/// \brief Aliases
+///
+Debug = console.log;
+Info = console.info;
+
+///
+/// \brief Write an empty line
+///
+NewLine = () => Info('') || true;
+
+///
+/// \brief Dump the key and value pairs of an object.
+///
+Dump = function(name, obj, prefix = '')
+{
+	if (obj === undefined)
+	{
+		obj = name;
+		name = obj.constructor.name;
+	}
+	else if (name.isEmpty())
+	{
+		name = obj.constructor.name;
+	}
+	else
+	{
+		name = name + " (" + obj.constructor.name + ")";
+	}
+
+	if (obj === undefined)
+		return false;
+
+	Info(prefix, name, "=>");
+
+	for (key in obj)
+	{
+		let val = obj[key]
+		if (IsArr(val))
+		{
+			ShowArr(val, prefix + TAB, key);
+		}
+		else
+		{
+			if (IsStr(val))
+				val = `"${val}"`;
+
+			Info(prefix, TAB, key, "=>", val);
+		}
+	}
+
+	return true;
+};
+
+///
+/// \brief Displays all the elements in the array hierarchically.
+///
+ShowArr = function(arr, prefix = '', name = 'Array')
+{
+	if (!IsArr(arr))
+		return false;
+
+	Info(prefix, name, "= [");
+
+	arr.forEach( (item, index) =>
+	{
+		if (IsArr(item))
+		{
+			ShowArr(item, prefix + TAB, index);
+		}
+		else
+		{
+			if (IsStr(item))
+				item = `"${item}"`;
+
+			Info(prefix, TAB, index, "=>", item);
+		}
+	});
+
+	Info(prefix, ']');
+
+	return true;
+};
+
+///
+/// \brief Show the variable provided (wrapped in {}) and it's value.
+///
+ShowVar = function(obj, prefix = '')
+{
+	let varName = Object.keys(obj)[0];
+	if (varName === undefined)
+		return false;
+
+	let value = obj[varName];
+	if (IsArr(value))
+	{
+		Info(prefix, varName, "= [");
+
+		value.forEach( (elem, idx) =>
+			ShowVar({[idx] : elem}, prefix + TAB)
+		);
+
+		Info(prefix, ']');
+	}
+	else
+	{
+		if (IsStr(value))
+			value = `"${value}"`;
+
+		Info(prefix, varName, "=>", value);
+	}
+
+	return true;
+}
+
+///
+/// \brief Shows the physical and virtual cntparts of an address
+///
+ShowAddr = function(prompt, addr, type)
+{
+	if (IsNum(prompt)) //no prompt given so just use 'Addr'
+	{
+		type = addr;
+		addr = prompt;
+		prompt = "Addr";
+	}
+
+	if (IsNum(addr))
+	{
+		let phy, vir;
+		if (type === undefined || type === PHYSICAL)
+		{
+			phy = addr;
+			vir = Exe.Phy2Vir(addr);
+		}
+		else
+		{
+			phy = Exe.Vir2Phy(addr);
+			vir = addr;
+		}
+
+		if (phy >= 0)
+			phy = "0x" + phy.toString(16);
+
+		if (vir >= 0)
+			vir = "0x" + vir.toString(16);
+
+		Info(prompt, "=>", phy, '(', vir, ')');
+		return true;
+	}
+
+	return false;
+};
+
+///
+/// \brief Shows the physical and virtual cntparts of multiple addresses
+///
+ShowAddrs = function(prompt, addrs, type)
+{
+	if (IsArr(prompt)) //no prompt given so just use 'Addr'
+	{
+		type = addrs;
+		addrs = prompt;
+		prompt = "Addrs";
+	}
+
+	if (IsArr(addrs))
+	{
+		Info(prompt, "= [");
+
+		let isPhy = (type === undefined || type === PHYSICAL);
+		addrs.forEach( (addr, i) =>
+		{
+			if (!IsNum(addr))
+				return;
+
+			let phy, vir;
+			if (isPhy)
+			{
+				phy = addr;
+				vir = Exe.Phy2Vir(addr);
+			}
+			else
+			{
+				phy = Exe.Vir2Phy(addr);
+				vir = addr;
+			}
+
+			if (phy >= 0)
+				phy = "0x" + phy.toString(16);
+
+			if (vir >= 0)
+				vir = "0x" + vir.toString(16);
+
+			Info(TAB, i, "=>", phy, '(', vir, ')');
+		});
+
+		Info(']');
+
+		return true;
+	}
+
+	return false;
+};
+
+///
+/// \brief Reset the internal counter.
+///
+CReset = function() =>
+{
+	console.cnt = 0;
+	return true;
+};
+
+///
+/// \brief Increment & display the current count along with version & build date
+///
+CShow = function() =>
+{
+	console.cnt = (console.cnt || 0) + 1	;
+	console.log(console.cnt, Exe.Version, Exe.BuildDate);
+	return true;
+};
+
+
+IdentifyMany(
+	"Debug", "Info", "Dump", "NewLine",
+	"ShowAddr", "ShowAddrs", "ShowArr",
+	"ShowVar", "CShow", "CReset"
+);

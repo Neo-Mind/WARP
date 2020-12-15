@@ -22,10 +22,10 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
- 
+
   //==================//
  // Helper functions //
 //==================//
@@ -167,7 +167,7 @@ _st_lod_sto = (oper, args) =>
 					opCode = 0xDB;
 					oper |= 5;
 				}
-				else 
+				else
 				{
 					opCode = (data.OpSize === 32) ? 0xD9 : 0xDD;
 				}
@@ -192,7 +192,7 @@ _st_lod_sto = (oper, args) =>
 
 ///
 /// \brief Arithmetic & Comparison
-/// 
+///
 _define_with_oc('_st_cmd_int', [0xDA, 0xDE],
 	'FIADD', 'FIMUL', 'FICOM', 'FICOMP',
 	'FISUB', 'FISUBR', 'FIDIV', 'FIDIVR'
@@ -351,14 +351,14 @@ IdentifyObj('FSTSW');
 /// \brief Compare floats, check ordered values & set EFLAGS
 ///
 
-FUCOMI = function() 
+FUCOMI = function()
 {
-	return _st_ord_cmp(5, arguments) 
+	return _st_ord_cmp(5, arguments);
 };
 
-FUCOMIP = function() 
+FUCOMIP = function()
 {
-	return _st_ord_cmp(6, arguments)
+	return _st_ord_cmp(6, arguments);
 };
 
 IdentifyObj('FUCOMI');

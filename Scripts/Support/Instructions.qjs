@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -373,7 +373,7 @@ IdentifyObj('MOVZX');
 
 ///
 /// \brief Creates Hex for Sign & Zero Extended moves
-/// 
+///
 _ext_move = (opCode, args) =>
 {
 	let data = new OpData(args, false);
@@ -725,7 +725,7 @@ _define_with('_arith_logic',
 );
 
 ///
-/// \brief Creates hex for Arithmetic, Logical & Comparison Operators 
+/// \brief Creates hex for Arithmetic, Logical & Comparison Operators
 ///
 _arith_logic = (oper, args) =>
 {
@@ -821,9 +821,63 @@ IdentifyObj('TEST');
 //===============================//
 
 [
-	['PUSHAD' , " 60"],
-	['POPAD'  , " 61"],
-	['NOP'    , " 90"],
-	['CWDE'   , " 98"],
-	['LEAVE'  , " C9"],
+	['PUSHAD' , " 60"                        ],
+	['POPAD'  , " 61"                        ],
+	['CWDE'   , " 98"                        ],
+	['LEAVE'  , " C9"                        ],
+	['NOP'    , " 90"                        ], //NOP
+	['NOP2'   , " 66 90"                     ], //66 NOP
+	['NOP3'   , " 0F 1F 00"                  ], //NOP DWORD PTR DS:[EAX]
+	['NOP4'   , " 0F 1F 40 00"               ], //NOP DWORD PTR DS:[EAX + 0]
+	['NOP5'   , " 0F 1F 44 00 00"            ], //NOP DWORD PTR DS:[EAX + EAX + 0]
+	['NOP6'   , " 66 0F 1F 44 00 00"         ], //NOP DWORD PTR DS:[AX + AX + 0]
+	['NOP7'   , " 0F 1F 80 00 00 00 00"      ], //NOP DWORD PTR DS:[EAX + 00000000]
+	['NOP8'   , " 0F 1F 84 00 00 00 00 00"   ], //NOP DWORD PTR DS:[EAX + EAX + 00000000]
+	['NOP9'   , " 66 0F 1F 84 00 00 00 00 00"], //NOP DWORD PTR DS:[AX + AX + 00000000]
 ].forEach( pair => AssignStr(...pair) );
+
+  //===================//
+ // Special functions //
+//===================//
+
+NOPs = function(count)
+{
+	if (count == 1)
+	{
+		return NOP;
+	}
+	else
+	{
+		let str = '';
+		while (count > 0)
+		{
+			switch (count)
+			{
+				case 1:
+					str += NOP;
+					count = 0;
+					break;
+
+				case 2:
+				case 3:
+				case 4:
+				case 5:
+				case 6:
+				case 7:
+				case 8:
+					str += eval(`NOP${count}`);
+					count = 0;
+					break;
+
+				default:
+					str += NOP9;
+					count -= 9;
+					break;
+			}
+		}
+
+		return str;
+	}
+};
+
+IdentifyObj('NOPs');

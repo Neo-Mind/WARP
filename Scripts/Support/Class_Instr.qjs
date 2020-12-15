@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-15                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Convenience class for representing a CPU instruction
 ///
-if (typeof(Instr) === 'undefined') //avoid redefinition
+if (typeof Instr === 'undefined') //avoid redefinition
 {
 	Instr = class
 	{
@@ -53,7 +53,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 			//this.SegNum         //Segment number for FAR type instructions  - not defined right now
 			//this.NestLvl        //Nesting Level used for ENTER instruction  - not defined right now
 
-			this.Size     = -1;   //Total Size in bytes of this instruction 
+			this.Size     = -1;   //Total Size in bytes of this instruction
 			this.NextAddr = -1;   //Address of the next instruction
 		}
 
@@ -104,7 +104,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 		///
 		isReversed()
 		{
-			return (OpCodeList.Reverse.includes(this.Codes[0]) || 
+			return (OpCodeList.Reverse.includes(this.Codes[0]) ||
 				(this.Codes[1] !== undefined && !OpCodeList.SecNonReverse.includes(this.Codes[1]))
 			);
 		}
@@ -131,8 +131,8 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 		calcImmSize()
 		{
 			/// 1 - Check the 1 byte imm lists
-			if (OpCodeList.WithImm8.includes(this.Codes[0]) || 
-				(this.Codes[1] !== undefined && OpCodeList.SecWithImm8.includes(this.Codes[1])) || 
+			if (OpCodeList.WithImm8.includes(this.Codes[0]) ||
+				(this.Codes[1] !== undefined && OpCodeList.SecWithImm8.includes(this.Codes[1])) ||
 				(this.Codes[2] !== undefined && OpCodeList.TerWithImm8.includes(this.Codes[2]))
 			)
 			{
@@ -209,8 +209,8 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 					result.Disp = Exe.GetInt8(addr++);
 					result.BC_Disp = 1;
 				}
-				else if ( result.MRM.Mode === 2 || 
-						(result.MRM.Mode === 0 && result.MRM.RegM === EBP.Index) || 
+				else if ( result.MRM.Mode === 2 ||
+						(result.MRM.Mode === 0 && result.MRM.RegM === EBP.Index) ||
 						(result.SIB !== undefined && result.SIB.Base === EBP.Index)
 				)
 				{
@@ -240,11 +240,11 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 			/// 3.5 - Based on the byte count, extract the immediate value
 			switch (result.BC_Immd)
 			{
-				case 1: 
+				case 1:
 					result.Immd = Exe.GetInt8(addr);
 					break;
 
-				case 2: 
+				case 2:
 					result.Immd = Exe.GetInt16(addr);
 					break;
 
@@ -400,7 +400,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 						{
 							if (data.Index.Width === 16)
 							{
-								rm = data.Index.equals(BX) ? 0 
+								rm = data.Index.equals(BX) ? 0
 								: data.Index.equals(BP) ? 2
 								: rm;
 
@@ -432,7 +432,7 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 		}
 
 		///
-		/// \brief toString override - Constructs the hex equivalent (i.e. ASM code) of the 'Instr' 
+		/// \brief toString override - Constructs the hex equivalent (i.e. ASM code) of the 'Instr'
 		///
 		toString()
 		{
@@ -469,5 +469,9 @@ if (typeof(Instr) === 'undefined') //avoid redefinition
 		}
 	};
 
-	IdentifyClass(Instr);
+	IdentifyClass(Instr, [
+		"Prefixes", "Codes", "MRM", "SIB",
+		"Disp", "BC_Disp", "Immd", "BC_Immd",
+		"SegNum", "NestLvl", "Size", "NextAddr"
+	]);
 }

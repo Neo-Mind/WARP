@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -44,13 +44,13 @@ if (typeof TAB === 'undefined')  //avoid redefinition
 if (typeof NO_ALLOC === 'undefined') //avoid redefinition
 {
 	//used as error message for Exe.FindSpace
-	Assign('NO_ALLOC', 'new Error("Space Allocation failed")'); 
+	Assign('NO_ALLOC', 'new Error("Space Allocation failed")');
 
 	//used as error message after Exe.FileSize===0 in extensions
-	Assign('NO_EXE', 'new Error("No Valid Exe loaded")'); 
+	Assign('NO_EXE', 'new Error("No Valid Exe loaded")');
 
 	//used as error message for TextFile.Open & BinFile.Open failures in extensions
-	Assign('NO_OUTPUT', 'new Error("Unable to generate output file")'); 
+	Assign('NO_OUTPUT', 'new Error("Unable to generate output file")');
 }
 
 ///
@@ -68,7 +68,7 @@ if (typeof WC === 'undefined') //avoid redefinition
 		['WCn', " [1.......]"], //Wild Card byte with -ve sign bit
 
 		///
-		/// \brief Some common patterns for a DWORD (32 bit) 
+		/// \brief Some common patterns for a DWORD (32 bit)
 		///
 		['ALLWC' , " ?? ?? ?? ??"],
 		['ALLWCp', " ?? ?? ?? [0.......]"], //Only +ve sign bit is known
@@ -103,26 +103,26 @@ if (typeof WC === 'undefined') //avoid redefinition
 ///
 if (typeof OpCodeList === 'undefined') //avoid redefinition
 {
-	OpCodeList = 
+	OpCodeList =
 	{
-		"WithModRM" : 
+		WithModRM :
 		[
-			0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0A, 0x0B, 
-			0x10, 0x11, 0x12, 0x13, 0x18, 0x19, 0x1A, 0x1B, 
-			0x20, 0x21, 0x22, 0x23, 0x28, 0x29, 0x2A, 0x2B, 
+			0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0A, 0x0B,
+			0x10, 0x11, 0x12, 0x13, 0x18, 0x19, 0x1A, 0x1B,
+			0x20, 0x21, 0x22, 0x23, 0x28, 0x29, 0x2A, 0x2B,
 			0x30, 0x31, 0x32, 0x33, 0x38, 0x39, 0x3A, 0x3B,
 			//0x4# - 0x5# are INC reg32, DEC reg32, PUSH reg32 & POP reg32
 			0x62, 0x63, 0x69, 0x6B,
 			//0x7# are all Conditional SHORT jumps
 			0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
-			//0x9# - 0xA# are all having implicit arguments 
-			0xC0, 0xC1, 0xC4, 0xC5, 0xC6, 0xC7, 
+			//0x9# - 0xA# are all having implicit arguments
+			0xC0, 0xC1, 0xC4, 0xC5, 0xC6, 0xC7,
 			0xD0, 0xD1, 0xD2, 0xD3, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF,
-			//0xE# are having implicit arguments 
+			//0xE# are having implicit arguments
 			0xF3, 0xF6, 0xF7, 0xFE, 0xFF
 		],
 
-		"WithImm8" : 
+		WithImm8 :
 		[
 			0x04, 0x0C,
 			0x14, 0x1C,
@@ -140,12 +140,12 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 			0xF6
 		],
 
-		"WithImm16" : //Even without 0x66 prefix (operand modifier prefix)
+		WithImm16 : //Even without 0x66 prefix (operand modifier prefix)
 		[
 			0xC2, 0xC8, 0xCA //C8 (ENTER) has an extra byte at the end for nesting level
 		],
 
-		"WithImm32" : 
+		WithImm32 :
 		[
 			0x05, 0x0D,
 			0x15, 0x1D,
@@ -164,13 +164,13 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 			0xF7,
 		],
 
-		"WithDisp32" : 
+		WithDisp32 :
 		[
 			0xA0, 0xA1, 0xA2, 0xA3,	
 		],
 
-		"SecWithoutModRM" : //Secondary opcodes without ModR/M byte - smaller list than the alternative
-		[ 
+		SecWithoutModRM : //Secondary opcodes without ModR/M byte - smaller list than the alternative
+		[
 			0x05, 0x06, 0x07, 0x08, 0x09, 0x0B, 0x0E,
 			0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x37,
 			0x77,
@@ -180,31 +180,31 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 			0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF,
 		],
 
-		"SecWithImm8" :  //Secondary opcodes with 8 bit Immediate value
+		SecWithImm8 :  //Secondary opcodes with 8 bit Immediate value
 		[
-			0x70, 
+			0x70,
 			0xA4, 0xAC,
-			0xC2, 0xC4, 0xC6        
+			0xC2, 0xC4, 0xC6
 		],
 
-		"SecWithImm32" :  //Secondary opcodes with 32 bit Immediate value
+		SecWithImm32 :  //Secondary opcodes with 32 bit Immediate value
 		[
 			0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
 		],
 
-		"TerWithImm8" : //Tertiary opcode with 8 bit Immediate value
-		[ 
+		TerWithImm8 : //Tertiary opcode with 8 bit Immediate value
+		[
 			0x0F
 		],
 
-		"FarType" : 
+		FarType :
 		[
 			0x9A,
 			0xEA
 		],
 
-		"Reverse" : //Primary opcodes that reverse the direction (for e.g. DWORD PTR becomes the source)
-		[ 
+		Reverse : //Primary opcodes that reverse the direction (for e.g. DWORD PTR becomes the source)
+		[
 			0x02, 0x03, 0x0A, 0x0B,
 			0x12, 0x13, 0x1A, 0x1B,
 			0x22, 0x23, 0x2A, 0x2B,
@@ -214,8 +214,8 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 			0xA1, 0xA2,
 		],
 
-		"SecNonReverse" : //Secondary opcodes that don't reverse the direction (DWORD PTR is always the source for the most of them)
-		[ 
+		SecNonReverse : //Secondary opcodes that don't reverse the direction (DWORD PTR is always the source for the most of them)
+		[
 			0x00, 0x01,
 			0x11, 0x13, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
 			0x20, 0x21, 0x29, 0x2B,
@@ -228,5 +228,6 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 			0xE7,
 		],
 	};
+
 	IdentifyObj('OpCodeList');
 }
