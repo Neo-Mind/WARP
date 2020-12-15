@@ -28,61 +28,90 @@
 
 // Contains various functions useful for debugging code.
 
-if (typeof Comment === 'undefined') //avoid redefinition
+///
+/// \brief Enable/Disable logging of comments
+///
+if (typeof Log == 'undefined')
 {
-	///
-	/// \brief Function for logging comments
-	///
-	Comment = (txt) =>
+	Log =
 	{
-		if (txt !== undefined && Comment.Handle !== undefined)
+		Tee : false,
+
+		start : function(file = '')
 		{
-			Comment.Handle.WriteLine(txt);
+			if (this.Handle !== undefined)
+				return true;
+
+			if (file.isEmpty())
+				file = "Comment_Log_" + System.LocalTime.toISOString().replace(/:/g, '_') + ".txt";
+
+			let fp = new TextFile(OUTDIR + file, "w");
+			if (fp.Valid)
+			{
+				this.Handle = fp;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		},
+
+		stop : function()
+		{
+			if (this.Handle !== undefined)
+			{
+				this.Handle.Close();
+				Warp.Show(this.Handle.Path);
+			}
+
+			this.Handle = undefined;
 			return true;
-		}
-		else
+		},
+
+		show : function()
 		{
-			return false;
-		}
-	}
+			if (this.Handle !== undefined)
+			{
+				Warp.Show(this.Handle.Path);
+			}
+		},
 
-	///
-	/// \brief Enable logging of comments
-	///
-	Comment.enable = (file = '') =>
-	{
-		if (Comment.Handle !== undefined)
-			Comment.Handle.Close();
-
-		if (file.isEmpty())
-			file = "Comment_Log_" + System.LocalTime.toISOString().replace(/:/g, '_') + ".txt";
-
-		let fp = new TextFile(OUTDIR + file, "w");
-		if (fp.Valid)
+		cc : function(state = true)
 		{
-			Comment.Handle = fp;
+			this.Tee = state;
 			return true;
-		}
-		else
-		{
-			return false;
 		}
 	};
 
-	///
-	/// \brief Disable logging of comments
-	///
-	Comment.disable = () =>
+	IdentifyObj('Log');
+};
+
+///
+/// \brief Function for logging comments in patch & extension functions (including supporting functions)
+///
+$$ = function(txt, header = false)
+{
+	if (txt !== undefined)
 	{
-		if (Comment.Handle !== undefined)
-			Comment.Handle.Close();
-
-		Comment.Handle = undefined;
-		return true;
+		if (Log.Handle !== undefined)
+		{
+			Log.Handle.WriteLine(txt);
+			if (header)
+				Log.Handle.WriteLine('-'.repeat(txt.length) + "\n");
+		}
+		
+		if (Log.Tee)
+		{
+			if (header)
+				console.info("<u><b>" + txt + "</b></u><br>");
+			else
+				console.debug(txt);
+		}
 	}
+};
 
-	IdentifyObj("Comment");
-}
+IdentifyObj("$$");
 
 // For all the following, the output will be send using 'console'
 
@@ -95,7 +124,7 @@ Info = console.info;
 ///
 /// \brief Write an empty line
 ///
-NewLine = () => Info('') || true;
+NewLine = () => console.info('') || true;
 
 ///
 /// \brief Dump the key and value pairs of an object.
@@ -119,21 +148,21 @@ Dump = function(name, obj, prefix = '')
 	if (obj === undefined)
 		return false;
 
-	Info(prefix, name, "=>");
+	console.log(prefix, name, "=>");
 
 	for (key in obj)
 	{
 		let val = obj[key]
 		if (IsArr(val))
 		{
-			ShowArr(val, prefix + TAB, key);
+			ShowArr(val, prefix + TAB, key, true);
 		}
 		else
 		{
 			if (IsStr(val))
 				val = `"${val}"`;
 
-			Info(prefix, TAB, key, "=>", val);
+			console.info(prefix, TAB, key, "=>", val);
 		}
 	}
 
@@ -143,29 +172,32 @@ Dump = function(name, obj, prefix = '')
 ///
 /// \brief Displays all the elements in the array hierarchically.
 ///
-ShowArr = function(arr, prefix = '', name = 'Array')
+ShowArr = function(arr, prefix = '', name = 'Array', useInfo = false)
 {
 	if (!IsArr(arr))
 		return false;
 
-	Info(prefix, name, "= [");
+	if (useInfo)
+		console.info(prefix, name, "= [");
+	else
+		console.log(prefix, name, "= [");
 
 	arr.forEach( (item, index) =>
 	{
 		if (IsArr(item))
 		{
-			ShowArr(item, prefix + TAB, index);
+			ShowArr(item, prefix + TAB, index, true);
 		}
 		else
 		{
 			if (IsStr(item))
 				item = `"${item}"`;
 
-			Info(prefix, TAB, index, "=>", item);
+			console.info(prefix, TAB, index, "=>", item);
 		}
 	});
 
-	Info(prefix, ']');
+	console.info(prefix, ']');
 
 	return true;
 };
@@ -182,20 +214,20 @@ ShowVar = function(obj, prefix = '')
 	let value = obj[varName];
 	if (IsArr(value))
 	{
-		Info(prefix, varName, "= [");
+		console.info(prefix, varName, "= [");
 
 		value.forEach( (elem, idx) =>
 			ShowVar({[idx] : elem}, prefix + TAB)
 		);
 
-		Info(prefix, ']');
+		console.info(prefix, ']');
 	}
 	else
 	{
 		if (IsStr(value))
 			value = `"${value}"`;
 
-		Info(prefix, varName, "=>", value);
+		console.info(prefix, varName, "=>", value);
 	}
 
 	return true;
@@ -233,7 +265,7 @@ ShowAddr = function(prompt, addr, type)
 		if (vir >= 0)
 			vir = "0x" + vir.toString(16);
 
-		Info(prompt, "=>", phy, '(', vir, ')');
+		console.info(prompt, "=>", phy, '(', vir, ')');
 		return true;
 	}
 
@@ -254,7 +286,7 @@ ShowAddrs = function(prompt, addrs, type)
 
 	if (IsArr(addrs))
 	{
-		Info(prompt, "= [");
+		console.info(prompt, "= [");
 
 		let isPhy = (type === undefined || type === PHYSICAL);
 		addrs.forEach( (addr, i) =>
@@ -280,10 +312,10 @@ ShowAddrs = function(prompt, addrs, type)
 			if (vir >= 0)
 				vir = "0x" + vir.toString(16);
 
-			Info(TAB, i, "=>", phy, '(', vir, ')');
+			console.info(TAB, i, "=>", phy, '(', vir, ')');
 		});
 
-		Info(']');
+		console.info(']');
 
 		return true;
 	}
@@ -294,21 +326,19 @@ ShowAddrs = function(prompt, addrs, type)
 ///
 /// \brief Reset the internal counter.
 ///
-CReset = () => (console.cnt = 0) || true;
+ResetC = () => (console.cnt = 0) || true;
 
 ///
 /// \brief Increment & display the current count along with version & build date
 ///
-CShow = function()
+ShowC = function()
 {
 	console.cnt = (console.cnt || 0) + 1	;
 	console.log(console.cnt, Exe.Version, Exe.BuildDate);
-	return true;
 };
-
 
 IdentifyMany(
 	"Debug", "Info", "Dump", "NewLine",
 	"ShowAddr", "ShowAddrs", "ShowArr",
-	"ShowVar", "CShow", "CReset"
+	"ShowVar", "ShowC", "ResetC"
 );
