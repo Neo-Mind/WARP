@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-11-28                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -49,14 +49,14 @@ const _define_with = function(name)
 		let set = Wrap(arguments[idx]);
 		Assign(
 			set[0],
-			"function() { return " + name + "(" + (idx-1) + ", arguments) }"
+			`function(){ return ${name}(${idx-1}, arguments) }`
 		);
-		
+
 		if (set.length > 1)
 			set.forEach(_equate_);
 	}
 };
-	
+
   //==================//
  // Stack Operations //
 //==================//
@@ -83,7 +83,7 @@ IdentifyObj('POP');
 _stack_op = (ocReg, ocPtr, ocImm, oper, args) =>
 {
 	let data = new OpData(args);
-	
+
 	let opCode;
 	switch (data.OpType)
 	{
@@ -93,31 +93,31 @@ _stack_op = (ocReg, ocPtr, ocImm, oper, args) =>
 				opCode = " 5?";
 			else
 				opCode = data.TgtReg.Index + ocReg;
-			
+
 			break;
-		
+
 		case OpTypes.P:
 			opCode = ocPtr;
 			break;
-		
+
 		case OpTypes.I:
 			if (ocImm.length === 2)
 			{
 				opCode = (data.ImSize === 8) ? ocImm[0] : ocImm[1];
 				break;
 			}
-			
+
 		default:
 			return "";
 	}
-	
+
 	return Instr.FromParts(data, opCode, oper).toString();
 };
 
   //==================//
  // Control Transfer //
 //==================//
-	
+
 CALL = function(arg)
 {
 	if (arg === undefined)
@@ -152,7 +152,7 @@ _transfer_ = (ocImm, oper, args, noImm8) =>
 		case OpTypes.P:
 			opCode = 0xFF;
 			break;
-		
+
 		case OpTypes.I:
 			if (Array.isArray(ocImm))
 			{
@@ -160,8 +160,8 @@ _transfer_ = (ocImm, oper, args, noImm8) =>
 				{
 					data.Immd -= 2;
 					data.calcImmSize(noImm8);
-			
-					if (data.Immd > 0x7F)
+
+					if (data.Immd < -0x80 || data.Immd > 0x7F)
 					{
 						data.Immd -= 3;
 						opCode = ocImm[1];
@@ -180,11 +180,11 @@ _transfer_ = (ocImm, oper, args, noImm8) =>
 			{
 				if (IsNum(args[0]) && IsNum(args[1]))
 					data.Immd -= 5;
-			
+
 				opCode = ocImm;
 			}
 			break;			
-		
+
 		default:
 			return "";
 	}
@@ -215,7 +215,7 @@ ENTER = (size, nestLevel) =>
 {
 	if (size === undefined)
 		return " C8";
-	
+
 	if (IsNum(size))
 		size = size.toHex(2);
 
@@ -262,11 +262,11 @@ _cond_jump = (addon, args) =>
 		{
 			data.Immd -= 2;
 			data.calcImmSize();
-			
+
 			if (data.Immd > 0x7F)			
 				data.Immd -= 3;
 		}
-		
+
 		let opCode = data.ImSize === 8 ? (0x70 + addon) : [0x0F, 0x80 + addon];
 		return Instr.FromParts(data, opCode).toString();
 	}
@@ -287,7 +287,7 @@ LEA = function(arg)
 {
 	if (arg === undefined)
 		return " 8D";
-	
+
 	let data = new OpData(arguments);
 
 	switch (data.OpType)
@@ -297,7 +297,7 @@ LEA = function(arg)
 			if (data.OpSize >= 16) //only 16/32 bit operation allowed
 				return Instr.FromParts(data, 0x8D).toString();
 	}
-	
+
 	return "";
 };
 
@@ -317,32 +317,32 @@ MOV = function()
 		case OpTypes.R_P:
 			opCode = 0x8B;
 			break;
-		
+
 		case OpTypes.D_A:
 			opCode = 0xA3;
 			break;
-		
+
 		case OpTypes.P_R:
 			opCode = 0x89;
 			break;
-		
+
 		case OpTypes.A_D:
 			opCode = 0xA1;
 			break;
-		
+
 		case OpTypes.A:
 		case OpTypes.R:
 			if (data.TgtReg.isPlaceHolder())
 				opCode = (data.OpSize === 8 ? " [10110...]" : " [10111...]");
 			else
 				opCode = data.TgtReg.Index + (data.OpSize === 8 ? 0xB1 : 0xB8);//B1 instead of B0 because we are decrementing below
-		
+
 			break;
-	
+
 		case OpTypes.P:
 			opCode = 0xC7;
 			break;
-		
+
 		default:
 			return "";
 	}
@@ -373,7 +373,7 @@ IdentifyObj('MOVZX');
 
 ///
 /// \brief Creates Hex for Sign & Zero Extended moves
-/// 
+///
 _ext_move = (opCode, args) =>
 {
 	let data = new OpData(args, false);
@@ -389,14 +389,14 @@ _ext_move = (opCode, args) =>
 			}
 			else
 				return "";
-	
+
 		case OpTypes.R_P:
 		case OpTypes.A_D:
 			if (data.TgtReg.Width === 16 || data.PtSize === 8)
 				opCode[1]--;
-			
+
 			break;
-	
+
 		default:
 			return "";
 	}
@@ -442,7 +442,7 @@ _cond_move = (addon, args) =>
 			if (data.OpSize >= 16)
 				return Instr.FromParts(data, [0x0F, 0x40 + addon]).toString();
 	}
-	
+
 	return "";
 };
 
@@ -481,11 +481,11 @@ _cond_set = (addon, args) =>
 		case OpTypes.R:
 			if (data.OpSize !== 8)
 				break;
-			
+
 		case OpTypes.P:
 			return Instr.FromParts(data, [0x0F, 0x90 + addon], 0).toString();
 	}
-	
+
 	return "";
 };
 
@@ -512,7 +512,7 @@ IdentifyObj('DEC');
 _add_sub_1 = (ocReg, oper, args) =>
 {
 	let data = new OpData(args);
-	
+
 	let opCode;
 	switch (data.OpType)
 	{
@@ -525,18 +525,18 @@ _add_sub_1 = (ocReg, oper, args) =>
 				:
 					ocReg + data.TgtReg.Index
 				;
-				
+
 				break;
 			}
-		
+
 		case OpTypes.P:
 			opCode = data.OpSize === 8 ? 0xFE : 0xFF;
 			break;
-			
+
 		default:
 			return "";
 	}
-	
+
 	return Instr.FromParts(data, opCode, oper).toString();
 };
 
@@ -581,7 +581,7 @@ IdentifyObj('IDIV');
 _cmpl_mul_div = (oper, args) =>
 {
 	let data = new OpData(args);
-	
+
 	let opCode;
 	switch (data.OpType)
 	{
@@ -594,7 +594,7 @@ _cmpl_mul_div = (oper, args) =>
 				return Instr.FromParts(data, opCode, oper).toString();
 			}
 	}
-	
+
 	return "";
 };
 
@@ -626,7 +626,7 @@ IMUL = function()
 				data.Source = data.Target;
 				data.OpType = OpTypes.R_R;
 			}
-		
+
 		case OpTypes.R_R:
 		case OpTypes.R_P:
 		case OpTypes.A_D:
@@ -638,7 +638,7 @@ IMUL = function()
 			{
 				if (data.ImSize < 0)
 					data.ImSize = BitWidth(data.Immd, data.OpSize === 16);
-			
+
 				opCode = (data.ImSize === 8) ? 0x6B : 0x69;
 			}
 			else
@@ -646,7 +646,7 @@ IMUL = function()
 				opCode = [0x0F, 0xAF];
 			}
 			break;
-	
+
 		default:
 			return "";
 	}
@@ -685,14 +685,14 @@ _bit_move = (oper, args) =>
 			{
 				return "";
 			}
-	
+
 		case OpTypes.A:
 		case OpTypes.R:
 		case OpTypes.P:
 			let imm = data.Immd;
 			if (IsStr(imm))
 				imm = imm.toInt();
-		
+
 			if (imm === undefined || imm === 1)
 			{
 				data.Immd = undefined;
@@ -704,7 +704,7 @@ _bit_move = (oper, args) =>
 				opCode = 0xC1;
 			}
 			break;
-		
+
 		default:
 			return "";
 	}
@@ -725,7 +725,7 @@ _define_with('_arith_logic',
 );
 
 ///
-/// \brief Creates hex for Arithmetic, Logical & Comparison Operators 
+/// \brief Creates hex for Arithmetic, Logical & Comparison Operators
 ///
 _arith_logic = (oper, args) =>
 {
@@ -740,19 +740,19 @@ _arith_logic = (oper, args) =>
 		case OpTypes.R_P:
 			opCode = addon + 3;
 			break;
-			
+
 		case OpTypes.D_A:
 		case OpTypes.P_R:
 			opCode = addon + 1;
 			break;
-		
+
 		case OpTypes.A:
 			if (data.ImSize > 8 || data.OpSize === 8)
 			{
 				opCode = addon + 5;//should be 4 for AL but it will decremented below
 				break;
 			}
-		
+
 		case OpTypes.R:
 		case OpTypes.P:
 			if (data.ImSize > 0) //should be always > 0 since we expect 2 args
@@ -760,7 +760,7 @@ _arith_logic = (oper, args) =>
 				opCode = (data.OpSize > 8 && data.ImSize === 8) ? 0x83 : 0x81 ;
 				break;
 			}
-		
+
 		default:
 			return "";
 	}
@@ -777,7 +777,7 @@ _arith_logic = (oper, args) =>
 TEST = function()
 {
 	let data = new OpData(arguments, true);
-	
+
 	let opCode;
 	switch (data.OpType)
 	{
@@ -786,31 +786,31 @@ TEST = function()
 		case OpTypes.P_R:
 			opCode = 0x85;
 			break;
-		
+
 		case OpTypes.A_D:
 		case OpTypes.R_P:
 			opCode = 0x85;
-			
+
 			data.SrcReg = data.TgtReg; //Change the target reg to source reg (TEST only allows Pointer to be target not the other way around)
 			data.OpType = (data.OpType === OpTypes.A_D) ? OpTypes.D_A : OpTypes.P_R; //change A_D to D_A and R_P to P_R
-			
+
 			break;
-		
+
 		case OpTypes.A:
 			opCode = 0xA9;
 			break;
-			
+
 		case OpTypes.R:
 		case OpTypes.P:
 			opCode = 0xF7;
 			break;
-			
+
 		default:
 			return "";
 	}
 	if (data.OpSize === 8)
 		opCode--;
-	
+
 	return Instr.FromParts(data, opCode, 0).toString();
 };
 
@@ -821,9 +821,63 @@ IdentifyObj('TEST');
 //===============================//
 
 [
-	['PUSHAD' , " 60"],
-	['POPAD'  , " 61"],
-	['NOP'    , " 90"],
-	['CWDE'   , " 98"],
-	['LEAVE'  , " C9"],
+	['PUSHAD' , " 60"                        ],
+	['POPAD'  , " 61"                        ],
+	['CWDE'   , " 98"                        ],
+	['LEAVE'  , " C9"                        ],
+	['NOP'    , " 90"                        ], //NOP
+	['NOP2'   , " 66 90"                     ], //66 NOP
+	['NOP3'   , " 0F 1F 00"                  ], //NOP DWORD PTR DS:[EAX]
+	['NOP4'   , " 0F 1F 40 00"               ], //NOP DWORD PTR DS:[EAX + 0]
+	['NOP5'   , " 0F 1F 44 00 00"            ], //NOP DWORD PTR DS:[EAX + EAX + 0]
+	['NOP6'   , " 66 0F 1F 44 00 00"         ], //NOP DWORD PTR DS:[AX + AX + 0]
+	['NOP7'   , " 0F 1F 80 00 00 00 00"      ], //NOP DWORD PTR DS:[EAX + 00000000]
+	['NOP8'   , " 0F 1F 84 00 00 00 00 00"   ], //NOP DWORD PTR DS:[EAX + EAX + 00000000]
+	['NOP9'   , " 66 0F 1F 84 00 00 00 00 00"], //NOP DWORD PTR DS:[AX + AX + 00000000]
 ].forEach( pair => AssignStr(...pair) );
+
+  //===================//
+ // Special functions //
+//===================//
+
+NOPs = function(count)
+{
+	if (count == 1)
+	{
+		return NOP;
+	}
+	else
+	{
+		let str = '';
+		while (count > 0)
+		{
+			switch (count)
+			{
+				case 1:
+					str += NOP;
+					count = 0;
+					break;
+
+				case 2:
+				case 3:
+				case 4:
+				case 5:
+				case 6:
+				case 7:
+				case 8:
+					str += eval(`NOP${count}`);
+					count = 0;
+					break;
+
+				default:
+					str += NOP9;
+					count -= 9;
+					break;
+			}
+		}
+
+		return str;
+	}
+};
+
+IdentifyObj('NOPs');

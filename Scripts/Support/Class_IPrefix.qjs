@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,16 +22,16 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-11-28                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Convenience class representing Instruction prefixes
 ///
-if (typeof(IPrefix) === 'undefined')
+if (typeof IPrefix === 'undefined')
 {
-	IPrefix = class 
+	IPrefix = class
 	{
 		///
 		/// \brief Constructor
@@ -40,7 +40,7 @@ if (typeof(IPrefix) === 'undefined')
 		{
 			this.Value = data;
 		}
-		
+
 		///
 		/// \brief Simple comparison
 		///
@@ -48,7 +48,7 @@ if (typeof(IPrefix) === 'undefined')
 		{
 			return (this.Value === p.Value);
 		}
-		
+
 		///
 		/// \brief toString override
 		///
@@ -57,9 +57,9 @@ if (typeof(IPrefix) === 'undefined')
 			return this.Value.toHex(1);
 		}
 	};
-	
+
 	IdentifyClass(IPrefix);
-	
+
 	///
 	/// \brief Define all the prefixes
 	///
@@ -71,16 +71,16 @@ if (typeof(IPrefix) === 'undefined')
 		['FS'   , 0x64],
 		['GS'   , 0x65],
 		['SS'   , 0x36],
-	
+
 		// Operand Size Change/Override - 32 bit to 16 bit, 64 bit to 128 bit etc..
 		['OPCH' , 0x66],
-		
+
 		// Address Override to 16 bit
 		['AD16' , 0x67],
-		
+
 		// Repeat/Lock to grant exclusive use of all shared memory
 		['LOCK' , 0xF0],
-		
+
 		// String Manipulation
 		['REPE' , 0xF2],
 		['REPN' , 0xF3],
@@ -88,7 +88,7 @@ if (typeof(IPrefix) === 'undefined')
 	{
 		Assign(
 			pair[0],
-			"new IPrefix(" + pair[1] + ")"
+			`new IPrefix(${pair[1]})`
 		);
 		return pair[1];
 	});

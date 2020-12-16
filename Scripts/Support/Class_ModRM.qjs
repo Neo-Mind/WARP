@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-11-07                                             *
+*   Last Modified : 2020-12-15                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Convenience class for representing a ModR/M byte
 ///
-if (typeof(ModRM) === 'undefined') //avoid redefinition
+if (typeof ModRM === 'undefined') //avoid redefinition
 {
 	ModRM = class
 	{
@@ -44,7 +44,7 @@ if (typeof(ModRM) === 'undefined') //avoid redefinition
 				this.Mode = parts[0];
 				this.RgOp = parts[1];
 				this.RegM = parts[2];
-				
+
 				this.Data = parts[3];
 			}
 			else
@@ -52,7 +52,7 @@ if (typeof(ModRM) === 'undefined') //avoid redefinition
 				this.Data = -1;
 			}
 		}
-		
+
 		///
 		/// \brief Method to check whether current 'ModRM' needs an SIB byte
 		///
@@ -60,44 +60,44 @@ if (typeof(ModRM) === 'undefined') //avoid redefinition
 		{
 			if (IsNum(this.Mode) && this.Mode !== 3)
 			{
-				return ( 
+				return (
 					(IsNum(this.RegM) && this.RegM === ESP.Index) ||
 					(IsReg(this.RegM) && this.RegM.Index === ESP.Index)
 				);
 			}
-			
+
 			return false;
 		}
-		
+
 		///
 		/// \brief 'Static' Method to create a 'ModRM' object from its components
 		///
 		static FromParts(mode, ro, rm)
 		{
 			/// 1.1 - Check for hex strings in RegOp
-			if (IsStr(ro)) //WildCard + Direct Hex 
+			if (IsStr(ro)) //WildCard + Direct Hex
 				return new this(ro);
-			
+
 			/// 1.2 - Check for hex strings in RegM
 			if (IsStr(rm)) //WildCard + Direct Hex
 				return new this(rm);
-				
+
 			/// 2.1 - If all the arguments are provided then create Instance with them
 			if (arguments.length === 3)
 				return new this([mode, ro, rm]);
-			
+
 			/// 2.2 - Otherwise return an empty modrm
 			return new this(0);
 		}
-		
+
 		///
 		/// \brief toString override
 		///
 		toString()
 		{
-			return "Data = " + this.Data + " {Mode = " + this.Mode + ", RegOp = " + this.RgOp + ", RegM = " + this.RegM + "}";
+			return `Data = ${this.Data} {Mode = ${this.Mode}, RegOp = ${this.RgOp}, RegM = ${this.RegM}}`;
 		}
 	};
-	
-	IdentifyClass(ModRM);
+
+	IdentifyClass(ModRM, ["Mode", "RegOp", "RegM", "Data"]);
 }

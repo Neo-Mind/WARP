@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,97 +22,9 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-11-30                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
-
-  //===================//
- // Console overrides //
-//===================//
-
-console.debug = console.log;
-
-///
-/// \brief Dumps the key and value pairs of an object
-/// 
-console.dump = function(obj) 
-{
-	if (obj === undefined)
-		return;
-	
-	this.log(obj.constructor.name + " =");
-	for (key in obj)
-	{
-		this.info(TAB + key + " => " + obj[key]);
-	}
-	this.info('');
-};
-
-///
-/// \brief Shows the physical and virtual counterparts of an address
-/// 
-console.showAddr = function(addr, type = PHYSICAL)
-{
-	if (!IsNum(addr))
-		return;
-	
-	let phy, vir;
-	if (type === PHYSICAL)
-	{
-		phy = addr;
-		vir = Exe.Phy2Vir(addr);
-	}
-	else
-	{
-		phy = Exe.Vir2Phy(addr);
-		vir = addr;
-	}
-	
-	if (phy >= 0)
-		phy = "0x" + phy.toString(16);
-	
-	if (vir >= 0)
-		vir = "0x" + vir.toString(16);
-	
-	this.log("Addr = " + phy + " ( " + vir + " )");
-};
-
-///
-/// \brief Shows the physical and virtual counterparts of multiple addresses
-/// 
-console.showAddrs = function(addrs, type = PHYSICAL)
-{
-	if (!Array.isArray(addrs))
-		return;
-	
-	this.log("Addrs =")
-	addrs.forEach( (addr, i) =>
-	{
-		if (!IsNum(addr))
-			return;
-	
-		let phy, vir;
-		if (type === PHYSICAL)
-		{
-			phy = addr;
-			vir = Exe.Phy2Vir(addr);
-		}
-		else
-		{
-			phy = Exe.Vir2Phy(addr);
-			vir = addr;
-		}
-
-		if (phy >= 0)
-			phy = "0x" + phy.toString(16);
-		
-		if (vir >= 0)
-			vir = "0x" + vir.toString(16);
-		
-		this.info("[" + i + "] = " + phy + " ( " + vir + " )");
-	});
-	this.info('');
-};
 
   //============//
  // Converters //
@@ -121,7 +33,7 @@ console.showAddrs = function(addrs, type = PHYSICAL)
 ///
 /// \brief Method to convert integer to bit string
 ///
-Number.prototype.toBits = function(cnt = 32) 
+Number.prototype.toBits = function(cnt = 32)
 {
 	cnt = Math.min(cnt, 32);
 	if (this < 0)
@@ -136,7 +48,7 @@ Number.prototype.toBits = function(cnt = 32)
 };
 
 ///
-/// \brief Method to convert integer to hex string. 
+/// \brief Method to convert integer to hex string.
 ///
 Number.prototype.toHex = function(cnt = 4, bigEndian = false)
 {
@@ -146,32 +58,32 @@ Number.prototype.toHex = function(cnt = 4, bigEndian = false)
 		bigEndian = cnt;
 		cnt = 4;
 	}
-	
+
 	/// 1.2 - Restrict byte count to 4
 	cnt = Math.min(cnt, 4);
-	
+
 	/// 1.3 - Convert signed to equivalent unsigned version
 	let num = this;
 	if (num < 0)
 		num = 0xFFFFFFFF + num + 1;
-	
+
 	/// 2.1 - Calculate the length using the cnt
 	let len = cnt * 2;
-	
+
 	/// 2.2 - Use the toString method to generate the hex string (big endian)
 	let hex = ("00000000" + num.toString(16).toUpperCase()).slice(-len);
-	
+
 	/// 2.3 - If big endian is needed, return the string
 	if (bigEndian)
 		return hex;
-	
+
 	/// 2.4 - Otherwise convert it to little endian with spaces prefixed per byte
 	let result = "";
 	for (let index = 0; index < len; index += 2)
-    {
-        result = " " + hex.substr(index, 2) + result;
-    }
-    return result;
+	{
+		result = " " + hex.substr(index, 2) + result;
+	}
+	return result;
 };
 
 ///
@@ -181,30 +93,30 @@ Number.prototype.toIEEE = function(bigEndian = false)
 {
 	/// 1.1 - Prefix the sign bit
 	let bin = (this < 0 ? '1' : '0'); //sign bit
-	
+
 	/// 1.2 - Get the integer part
 	let num = Math.abs(this);
-	
+
 	/// 1.3 - Initialize the exponent
 	let exp = 0;
-	
+
 	/// 2.1 - For numbers < 1 , decrement the exponent
 	if (num < 1)
 		for (; num < 1; num *= 2.0, exp--);
-	
+
 	/// 2.2 - For numbers > 2 , increment the exponent
 	else if (num > 2)
 		for (; num > 2; num /= 2.0, exp++);
-	
+
 	/// 2.3 - Suffix the exponent + 127 to the binary (ensure 8 bits)
 	bin += ('0'.repeat(8) + (exp + 127).toString(2)).slice(-8);  //exponent + 0x7F
-	
+
 	/// 2.4 - Suffix the mantissa (i.e. num) with 1. removed
 	bin += num.toString(2).slice(2);
-	
+
 	/// 2.5 - Clip anything beyond 32 bits
 	bin = (bin + '0'.repeat(23)).slice(0, 32);
-    
+
 	/// 2.6 - Convert the binary to hex and return
 	return parseInt(bin, 2).toHex(4, bigEndian);
 };
@@ -220,24 +132,24 @@ String.prototype.toInt = function(cnt = 4, signed = true)
 		signed = cnt;
 		cnt = 4;
 	}
-	
+
 	/// 1.2 - Restrict the byte count
 	cnt = Math.min(cnt, 4);
-	
+
 	/// 1.3 - Calculate the max value possible (used for signed conversion)
-    let max = Math.pow(0x100, cnt);
-    
+	let max = Math.pow(0x100, cnt);
+
 	/// 2.1 - Convert to Big endian format
-    let beHex = "0x" + this.le2be().slice(-cnt*2);
-    
+	let beHex = "0x" + this.le2be().slice(-cnt*2);
+
 	/// 2.2 - Use parseInt to convert to integer
-    let num = (-1 & parseInt(beHex, 16));
-    
+	let num = (-1 & parseInt(beHex, 16));
+
 	/// 2.3 - Account for signed integer & return the result
-    if (signed && num > max/2)
-        num -= max;
-    
-    return num;
+	if (signed && num > max/2)
+		num -= max;
+
+	return num;
 };
 
 ///
@@ -247,22 +159,22 @@ String.prototype.toHex = function()
 {
 	/// 1.1 - Initialize the result string
 	let result = "";
-	
-    for (let i = 0; i < this.length; i++)
-    {
+
+	for (let i = 0; i < this.length; i++)
+	{
 		/// 1.2 - Convert each charcter to equivalent hex
-        let hex = this.charCodeAt(i).toString(16).toUpperCase();
-		
+		let hex = this.charCodeAt(i).toString(16).toUpperCase();
+
 		/// 1.3 - Prefix '0' for 0-15 to ensure 2 hex chars per byte
-        if (hex.length == 1)
-            hex = '0' + hex; //prefix 0 for byte 0-F
-        
+		if (hex.length == 1)
+			hex = '0' + hex; //prefix 0 for byte 0-F
+
 		/// 1.4 - Prefix space
-        result += ' ' + hex;
-    }
-	
+		result += ' ' + hex;
+	}
+
 	/// 2 - Return the result
-    return result;
+	return result;
 };
 
 ///
@@ -272,21 +184,21 @@ String.prototype.toAscii = function()
 {
 	/// 1.1 - Split the hex string into the respective bytes (2chars each)
 	let parts = this.trim().split(/ +/);
-	
+
 	/// 1.2 - Initialize the result
-    let str = "";
-    
-    for (let i = 0; i < parts.length; i++)
-    {
+	let str = "";
+
+	for (let i = 0; i < parts.length; i++)
+	{
 		/// 1.3 - Convert each part to its equivalent number
-        let ccode = parseInt(parts[i], 16);
-		
+		let ccode = parseInt(parts[i], 16);
+
 		/// 1.4 - Convert the number to equivalent ascii character and append
-        str += String.fromCharCode(ccode);
-    }
-	
+		str += String.fromCharCode(ccode);
+	}
+
 	/// 2 - Return the result
-    return str;
+	return str;
 };
 
 ///
@@ -296,13 +208,13 @@ String.prototype.le2be = function()
 {
 	/// 1.1 - Split based on space and reverse it and join back
 	let be = this.split(/ +/).reverse().join('');
-	
+
 	/// 1.2 - Prefix '0' to ensure even no of characters
 	if ((be.length % 2) !== 0)
-        be = '0' + be;
-    
+		be = '0' + be;
+
 	/// 2 - Return the result
-    return be;
+	return be;
 };
 
   //=========//
@@ -312,7 +224,7 @@ String.prototype.le2be = function()
 ///
 /// \brief Method to check for empty array
 ///
-Array.prototype.isEmpty = function() 
+Array.prototype.isEmpty = function()
 {
 	return this.length === 0;
 };
@@ -349,9 +261,9 @@ String.prototype.isHex = function()
 	return this.search(/[^ a-f0-9\?\.\[\]]/i) < 0;
 };
 
-  //========//
- // Addons //
-//========//
+  //==============//
+ // Transformers //
+//==============//
 
 ///
 /// \brief Method to remove substring and return the modified string. Original is unaffected
@@ -368,14 +280,14 @@ String.prototype.replaceAt = function(index, newstr, len = -1)
 {
 	/// 1.1 - Use the new string's length as default replacement length
 	if (len <= 0)
-        len = newstr.length;
+		len = newstr.length;
 
 	/// 1.2 - If negative index provided then consider it wrt end of string
-    if (index < 0)
-        index += this.length;
-    
+	if (index < 0)
+		index += this.length;
+
 	/// 2 - Return the replaced string
-    return (this.slice(0, index) + newstr + this.slice(index + len));
+	return (this.slice(0, index) + newstr + this.slice(index + len));
 };
 
 ///
@@ -394,25 +306,17 @@ String.prototype.appendAsHex = function(data, bc, bigEndian)
 {
 	/// 1 - Get the type of the data provided
 	let type = typeof data;
-	
+
 	/// 2.1 - If it is a number append the data converted to hex and return it
 	if (type === 'number')
 		return (this + data.toHex(bc, bigEndian));
-	
+
 	/// 2.2 - If it is a string append the data and return it
 	if (type === 'string')
 		return (this + data);
-	
+
 	/// 2.3 - Return the original if neither
 	return this + '';
-};
-
-///
-/// \brief Method to get the last value easily
-///
-Array.prototype.last = function()
-{
-	return this[this.length - 1];
 };
 
   //=============//
@@ -427,28 +331,51 @@ String.prototype.byteCount = function()
 	/// 1 - Ensure string is a hex string (also supports bitwise parts i.e. [.])
 	if (!this.isHex())
 		return -1;
-	
+
 	/// 2.1 - Split the string into parts based on bit wrapper '['
 	let parts = this.replace(/ +/g, '').split('[');
-	
+
 	/// 2.2 - Initialize the nibble length
 	let nibLen = 0;
-	
-	parts.forEach((part) => 
+
+	parts.forEach((part) =>
 	{
 		/// 2.3 - Split based on bit wrapper end ']'
 		let subParts = part.split(']');
-		
+
 		/// 2.4 - If it was there then left of it is binary and right is hex . Otherwise its all hex
 		if (subParts.length > 1)
 			nibLen += subParts[0].length/4 + subParts[1].length;
 		else
 			nibLen += subParts[0].length;
 	});
-		
+
 	/// 3 - Return the half of the length
-    return Math.round(nibLen/2);
+	return Math.round(nibLen/2);
 };
+
+  //===========//
+ // Utilities //
+//===========//
+
+///
+/// \brief Method to get the last value easily
+///
+Array.prototype.last = function()
+{
+	return this[this.length - 1];
+};
+
+///
+/// \brief Method to take out the first element if it matches the typeName provided. Kind of like a stack.
+///
+Array.prototype.take_if = function(typeName, defVal)
+{
+	if (this.length == 0 || typeof this[0] != typeName)
+		return defVal;
+	else
+		return this.shift();
+}
 
   //=================//
  // Identifications //
