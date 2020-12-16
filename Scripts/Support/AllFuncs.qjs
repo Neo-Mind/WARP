@@ -102,7 +102,8 @@ _swap_ = function(str, find, repl, cnt, bc)
 	if (repl === undefined)
 		return str;
 
-	let data, dataSet, needNext = Array.isArray(repl);
+	let data, dataSet;
+	let needNext = Array.isArray(repl);
 	if (needNext)
 	{
 		dataSet = [...repl]; //create a deep copy
@@ -149,7 +150,7 @@ _swap_ = function(str, find, repl, cnt, bc)
 ///
 SwapFiller = function(str, idx, dataSet, cnt = -1, bc = 4)
 {
-	_$_(arguments.callee.name);
+	_$_('SwapFiller');
 
 	$$('1 - Limit the byte count')
 	bc = Math.min(bc, 4);
@@ -166,7 +167,7 @@ SwapFiller = function(str, idx, dataSet, cnt = -1, bc = 4)
 ///
 SwapFillers = function(str, idMap, cnt = -1, bc = 4)
 {
-	_$_(arguments.callee.name);
+	_$_('SwapFillers');
 
 	$$('1.1 - Limit the byte count')
 	bc = Math.min(bc, 4);
@@ -211,7 +212,7 @@ Wrap = v =>
 ///
 BitWidth = function(v)
 {
-	_$_(arguments.callee.name + ' - ' + v);
+	_$_('BitWidth - ' + v);
 
 	$$('1 - If the value provided is a register then simply return its width')
 	if (IsReg(v))
@@ -257,7 +258,7 @@ Distance = (tgt, src) =>
 ///
 CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 {
-	_$_(arguments.callee.name);
+	_$_('CaseAddr');
 
 	$$('1.1 - Extract the MOVZX instruction')
 	let movzxIns = movzxAddr > 0 ? Instr.FromAddr(movzxAddr) : '';
@@ -306,7 +307,7 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 ///
 ParseData = function(data, scaled)
 {
-	_$_(arguments.callee.name + " - " + data);
+	_$_('ParseData - ' + data);
 
 	$$('1 - Initialize the parts')
 	let parts = [];
@@ -452,7 +453,7 @@ ParseData = function(data, scaled)
 ///
 FindInstr = function(testFn, from, to)
 {
-	_$_(arguments.callee.name);
+	_$_('FindInstr');
 
 	if (typeof testFn !== 'function' || typeof from !== 'number')
 		return false;
