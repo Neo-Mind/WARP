@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-12-11                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2020-12-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -187,7 +187,7 @@ _$_ = function(tee, msg)
 	let args = Array.prototype.slice.call(arguments, 2);
 	args.unshift(msg.length);
 	args.unshift(tee);
-	
+
 	$_(...args);
 	$_(...arguments);
 };
@@ -208,7 +208,7 @@ NewLine = () => console.info('') || true;
 ///
 /// \brief Dump the key and value pairs of an object.
 ///
-Dump = function(name, obj, prefix = '')
+Dump = function(name, obj)
 {
 	if (obj === undefined)
 	{
@@ -234,21 +234,21 @@ Dump = function(name, obj, prefix = '')
 	if (obj === undefined)
 		return false;
 
-	console.log(prefix, name, "=>");
+	console.log(name, "=>");
 
 	for (key in obj)
 	{
 		let val = obj[key]
 		if (IsArr(val))
 		{
-			ShowArr(val, prefix + TAB, key, true);
+			ShowArr(val, TAB, key, true);
 		}
 		else
 		{
 			if (IsStr(val))
 				val = `"${val}"`;
 
-			console.info(prefix, TAB, key, "=>", val);
+			console.info(TAB, key, "=>", val);
 		}
 	}
 
@@ -258,11 +258,19 @@ Dump = function(name, obj, prefix = '')
 ///
 /// \brief Displays all the elements in the array hierarchically.
 ///
-ShowArr = function(arr, prefix = '', name = 'Array', useInfo = false)
+ShowArr = function()
 {
+	let args = [...arguments];
+
+	let arr = args.last();
 	if (!IsArr(arr))
 		return false;
 
+	let useInfo = args.take_if('boolean', false);
+	let indent = args.take_if('number', 0);
+	let name = args.take_if('string', 'Array');
+
+	let prefix = TAB.repeat(indent);
 	if (useInfo)
 		console.info(prefix, name, "= [");
 	else
@@ -272,7 +280,7 @@ ShowArr = function(arr, prefix = '', name = 'Array', useInfo = false)
 	{
 		if (IsArr(item))
 		{
-			ShowArr(item, prefix + TAB, index, true);
+			ShowArr(true, indent+1, index.toString(), item);
 		}
 		else
 		{
@@ -291,11 +299,19 @@ ShowArr = function(arr, prefix = '', name = 'Array', useInfo = false)
 ///
 /// \brief Show the variable provided (wrapped in {}) and it's value.
 ///
-ShowVar = function(obj, prefix = '')
+ShowVar = function()
 {
+	let args = [...arguments];
+	let obj = args.last();
+
+	if (typeof obj !== 'object')
+		return false;
+
 	let varName = Object.keys(obj)[0];
 	if (varName === undefined)
 		return false;
+
+	let prefix = args.take_if('string', '');
 
 	let value = obj[varName];
 	if (IsArr(value))
@@ -303,7 +319,7 @@ ShowVar = function(obj, prefix = '')
 		console.info(prefix, varName, "= [");
 
 		value.forEach( (elem, idx) =>
-			ShowVar({[idx] : elem}, prefix + TAB)
+			ShowVar(prefix + TAB, {[idx] : elem})
 		);
 
 		console.info(prefix, ']');
@@ -322,23 +338,58 @@ ShowVar = function(obj, prefix = '')
 ///
 /// \brief Shows the physical and virtual cntparts of an address
 ///
-ShowAddr = function(prompt, addr, type = PHYSICAL)
+ShowAddr = function()
 {
-	if (IsNum(prompt)) //no prompt given so just use 'Addr'
+	let args = [...arguments];
+
+	let prompt = args.take_if('string', 'Addr');
+	let addr = args.take_if('number', -1);
+	let type = args.take_if('object', PHYSICAL);
+
+	let phy, vir;
+	if (type === PHYSICAL)
 	{
-		type = addr;
-		addr = prompt;
-		prompt = "Addr";
+		phy = addr;
+		vir = Exe.Phy2Vir(addr);
 	}
-	else if (!IsStr(prompt)) //prompt given but its not a string so use 'Addr'
+	else
 	{
-		prompt = "Addr";
+		phy = Exe.Vir2Phy(addr);
+		vir = addr;
 	}
 
-	if (IsNum(addr))
+	if (phy >= 0)
+		phy = "0x" + phy.toString(16);
+
+	if (vir >= 0)
+		vir = "0x" + vir.toString(16);
+
+	console.info(prompt, "=>", phy, '(', vir, ')');
+};
+
+///
+/// \brief Shows the physical and virtual cntparts of multiple addresses
+///
+ShowAddrs = function()
+{
+	let args = [...arguments];
+
+	let prompt = args.take_if('string', 'Addrs');
+
+	let addrs = args.shift();
+	if (!IsArr(addrs))
+		return false;
+
+	let isPhy = (args.take_if('object', PHYSICAL) === PHYSICAL);
+
+	console.info(prompt, "= [");
+	addrs.forEach( (addr, i) =>
 	{
+		if (!IsNum(addr))
+			return;
+
 		let phy, vir;
-		if (type === PHYSICAL)
+		if (isPhy)
 		{
 			phy = addr;
 			vir = Exe.Phy2Vir(addr);
@@ -355,62 +406,12 @@ ShowAddr = function(prompt, addr, type = PHYSICAL)
 		if (vir >= 0)
 			vir = "0x" + vir.toString(16);
 
-		console.info(prompt, "=>", phy, '(', vir, ')');
-		return true;
-	}
+		console.info(TAB, i, "=>", phy, '(', vir, ')');
+	});
 
-	return false;
-};
+	console.info(']');
 
-///
-/// \brief Shows the physical and virtual cntparts of multiple addresses
-///
-ShowAddrs = function(prompt, addrs, type = PHYSICAL)
-{
-	if (IsArr(prompt)) //no prompt given so just use 'Addr'
-	{
-		type = addrs;
-		addrs = prompt;
-		prompt = "Addrs";
-	}
-
-	if (IsArr(addrs))
-	{
-		console.info(prompt, "= [");
-
-		let isPhy = (type === PHYSICAL);
-		addrs.forEach( (addr, i) =>
-		{
-			if (!IsNum(addr))
-				return;
-
-			let phy, vir;
-			if (isPhy)
-			{
-				phy = addr;
-				vir = Exe.Phy2Vir(addr);
-			}
-			else
-			{
-				phy = Exe.Vir2Phy(addr);
-				vir = addr;
-			}
-
-			if (phy >= 0)
-				phy = "0x" + phy.toString(16);
-
-			if (vir >= 0)
-				vir = "0x" + vir.toString(16);
-
-			console.info(TAB, i, "=>", phy, '(', vir, ')');
-		});
-
-		console.info(']');
-
-		return true;
-	}
-
-	return false;
+	return true;
 };
 
 ///
