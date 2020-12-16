@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -42,9 +42,11 @@ CustomQuestLua = function()
 
 	/// 2.1 - Load the list
 	let LuaFiles = Warp.LoadYaml(inFile);
+	if (LuaFiles === false)
+		return false
 
-	if (!Array.isArray(LuaFiles))
-		Cancel("Invalid/Non-existent list file");
+	else if (!IsArr(LuaFiles))
+		throw Error("Need a list of file names");
 
 	if (LuaFiles.isEmpty())
 		Cancel("Empty list provided");

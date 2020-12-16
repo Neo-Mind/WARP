@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,12 +38,12 @@ EnableMailAccess = function()
 	let tc = " [.0.....1] [11000...]"; //Common match for TEST EAX, EAX & CMP EAX, r32
 
 	let code =
-		tc							//TEST or CMP
-	+   JE(WCp)    					//JE SHORT addr1
-	+   CMP(EAX, 8)					//CMP EAX, 08
-	+   JE(WCp)    					//JE SHORT addr1
-	+   CMP(EAX, 9)					//CMP EAX, 09
-	+   JE(WCp)    					//JE SHORT addr1
+		tc           //TEST or CMP
+	+   JE(WCp)      //JE SHORT addr1
+	+   CMP(EAX, 8)  //CMP EAX, 08
+	+   JE(WCp)    	 //JE SHORT addr1
+	+   CMP(EAX, 9)	 //CMP EAX, 09
+	+   JE(WCp)    	 //JE SHORT addr1
 	;
 	let nopCount = code.byteCount();   
 
@@ -64,12 +64,12 @@ EnableMailAccess = function()
 	let prefix = MOV(EAX, [LANGTYPE]);    //MOV EAX, DWORD PTR DS:[g_serviceType]
 
 	code =
-		tc             		//TEST or CMP
-	+   JE(POS2WC)          //JE addr1
-	+   CMP(EAX, 8)         //CMP EAX, 08
-	+   JE(POS2WC)          //JE addr1
-	+   CMP(EAX, 9)         //CMP EAX, 09
-	+   JE(POS2WC)          //JE addr1
+		tc           //TEST or CMP
+	+   JE(POS2WC)   //JE addr1
+	+   CMP(EAX, 8)  //CMP EAX, 08
+	+   JE(POS2WC)   //JE addr1
+	+   CMP(EAX, 9)  //CMP EAX, 09
+	+   JE(POS2WC)   //JE addr1
 	;
 	nopCount = code.byteCount();
 
@@ -99,4 +99,5 @@ EnableMailAccess = function()
 ///
 /// \brief Disable Patch for Clients that dont have this issue (Pre-2013) or don't use regular mailbox anymore (Post-Aug 2014)
 ///
-EnableMailAccess.validate = () => Exe.BuildDate >= 20130320 && Exe.BuildDate <= 20140800;
+EnableMailAccess.validate = () =>
+	Exe.BuildDate >= 20130320 && Exe.BuildDate <= 20140800;

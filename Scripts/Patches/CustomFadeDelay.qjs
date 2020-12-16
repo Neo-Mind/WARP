@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-06                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -117,7 +117,7 @@ CustomFadeDelay = function()
 		+	PUSH_R                    //PUSH reg32_A
 		;
 	}
-	else if (Exe.Version > 6.0)
+	else if (Exe.Version > 6.0) //VC9 & VC10
 	{
 		prefix =
 			CALL(EDI)             //CALL EDI
@@ -138,7 +138,7 @@ CustomFadeDelay = function()
 		;
 
 		patAddr3 = Exe.FindHex(prefix + suffix);
-		if (patAddr3 < 0 && Exe.Version == 10.0)
+		if (patAddr3 < 0 && Exe.Version === 10.0)
 		{
 			suffix = suffix.replace( MOV(R32, [EAX, WCp]),
 				MOV(R32, [EAX, WCp])  //MOV reg32_B, DWORD PTR DS:[EAX + const]
@@ -148,7 +148,7 @@ CustomFadeDelay = function()
 			patAddr3 = Exe.FindHex(prefix + suffix);
 		}
 	}
-	else
+	else //VC6
 	{
 		prefix =
 			CALL(EDI)                 //CALL EDI

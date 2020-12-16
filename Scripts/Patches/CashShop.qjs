@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144), CH.C (jchcc)                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-05                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -128,7 +128,7 @@ MoveShopIcon = function()
 		throw NO_ALLOC;
 
 	/// 3.4 - Add the code at the allocated space
-	Exe.AddHex(free, code, csize);
+	Exe.AddHex(free, code);
 
 	/// 3.5 - Create a CALL to our code at addr (originally will have the substraction)
 	Exe.SetCALL(addr, free, PHYSICAL);

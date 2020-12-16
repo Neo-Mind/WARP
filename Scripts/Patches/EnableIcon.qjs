@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2020-12-05                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -75,7 +75,7 @@ EnableIcon = function(patchName)
 		/// 3.3 - Load the new icon
 		let iconFile = Exe.GetUserInput('$inpIconFile', D_InFile, "Custom Icon", "Enter the icon file", "Inputs/Sample_32x32_8bpp.ico", {filters: "Icon files (*.ico)"});
 		if (iconFile === false)
-			return "Cancelled - No icon file selected";
+			Cancel("No icon file selected");
 
 		let iconObj = new Icon(iconFile);
 

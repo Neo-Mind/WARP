@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -107,7 +107,8 @@ EnableProxy = function()
 	}
 
 	/// 2.4 - Extract address of ws2_32.connect
-	let connAddr = indirectCALL ?
+	let connAddr = indirectCALL
+	?
 		Exe.GetInt32(callAddr + 1)
 	:
 		Exe.GetTgtAddr(callAddr + 1)
@@ -115,17 +116,17 @@ EnableProxy = function()
 
 	/// 3.1 - Create the custom function (IP saver code)
 	code =
-		MOV(EAX, [MakeFiller(1)])   //MOV EAX, DWORD PTR DS:[g_saveIP]
-	+   TEST(EAX, EAX)              //TEST EAX, EAX
-	+   JNZ(0x08)                   //JNZ SHORT addr
-	+   MOV(EAX, [ESI, 0xC])        //MOV EAX, DWORD PTR DS:[ESI+C]
-	+   MOV([MakeFiller(1)], EAX)   //MOV DWORD PTR DS:[g_saveIP], EAX
-	+   MOV([ESI, 0xC], EAX)        //MOV DWORD PTR DS:[ESI+C], EAX <- addr
+		MOV(EAX, [Filler(1)])   //MOV EAX, DWORD PTR DS:[g_saveIP]
+	+   TEST(EAX, EAX)          //TEST EAX, EAX
+	+   JNZ(0x08)               //JNZ SHORT addr
+	+   MOV(EAX, [ESI, 0xC])    //MOV EAX, DWORD PTR DS:[ESI+C]
+	+   MOV([Filler(1)], EAX)   //MOV DWORD PTR DS:[g_saveIP], EAX
+	+   MOV([ESI, 0xC], EAX)    //MOV DWORD PTR DS:[ESI+C], EAX <- addr
 	+	(indirectCALL
 	?
-		JMP([connAddr])             //JMP DWORD PTR DS:[<&WS2_32.connect>]
-	:
-		JMP(MakeFiller(2))          //JMP <&WS2_32.connect>; will be filled later since we need relative addr
+		JMP([connAddr])         //JMP DWORD PTR DS:[<&WS2_32.connect>]
+	:                           //  or
+		JMP(Filler(2))          //JMP <&WS2_32.connect>; will be filled later since we need relative addr
 	);
 
 	let csize = code.byteCount();

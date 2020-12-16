@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind, Andrei (4144), X-EcutiOnner       *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -191,7 +191,7 @@ NoHShield = function()
 		// we need to get & set all the details from / to ROC.ImpInfo hash
 
 		/// 4.2 - Construct the Image Descriptor Pattern (Relative Virtual Address prefixed by 8 zeros) i.e. the import entry
-		let aosEntry = ALL00 + ALL00 + Exe.Phy2Rva(NHS_Addr).toHex();
+		let aosEntry = ALL00 + ALL00 + NHS_Addr;
 
 		/// 4.3 - Remove the aossdk import entry from the table and save it to newTblData
 		let tblData = ROC.ImpInfo.TblData;
@@ -234,8 +234,12 @@ NoHShield = function()
 ///
 NoHShield.validate = function()
 {
-	NHS_Addr = Exe.FindText("aossdk.dll", PHYSICAL, true, true, Exe.GetSectBegin(DATA), Exe.FileSize);
-	return (NHS_Addr > 0);
+	let addr = Exe.FindText("aossdk.dll", Exe.GetSectBegin(DATA), Exe.FileSize);
+	if (addr < 0)
+		return false;
+		
+	NHS_Addr = (addr - Exe.ImageBase).toHex();
+	return true;
 };
 
 ///
@@ -269,7 +273,7 @@ NoGGuard = function()
 		PUSH(EBP)       //PUSH EBP
 	+	MOV(EBP, ESP)   //MOV EBP, ESP
 	;
-	if (Exe.Version >= 10.0)
+	if (Exe.Version >= 10.0) //VC10+
 	{
 		code +=
 			PUSH(-1)    //PUSH -1
@@ -312,7 +316,7 @@ NoGGuard = function()
 		throw Error("'nProtect GameGuard' not used");
 
 	/// 3.3 - Find the conditional jump (JE) before the PUSH (within 0x50 bytes)
-	if (Exe.Version >= 10.0)
+	if (Exe.Version >= 10.0) //VC10+
 	{
 		code =
 			TEST(AL, AL)       //TEST AL, AL

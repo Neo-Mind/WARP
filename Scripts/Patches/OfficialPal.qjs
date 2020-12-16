@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,7 +36,7 @@ OfficialPal = function()
 {
 	/// 1.1 - Check if Custom Job patch is being used (unless test mode is ON)
 	if (!Exe.TestMode && Exe.IsSelected("CustomJobs"))
-		Cancel("Won't work while Custom Job patch is ON");
+		Cancel("Custom Job patch should not be ON");
 
 	/// 1.2 - Find the location of 'Å©·ç'
 	///       (Palette prefix for Knight - Same string is used for job path as well as imf)
@@ -57,7 +57,7 @@ OfficialPal = function()
 	let jneAddr = -1;
 	addrs.find( addr =>
 	{
-		jneAddr = Exe.FindHex( JNE(POS2WC), addr - 0x20, addr);
+		jneAddr = Exe.FindHex(JNE(POS2WC), addr - 0x20, addr);
 		return (jneAddr > 0);
 	});
 

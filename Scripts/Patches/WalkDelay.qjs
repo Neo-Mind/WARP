@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : MegaByte                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,16 +34,16 @@
 WalkDelay = function(patchName)
 {
 	/// 1.1 - Find the delay addition
-	let reg = (Exe.Version < 9.0 ? EDX : ECX);
+	let reg = (Exe.Version < 9.0 ? EDX : ECX); //VC6 uses EDX
 	let code =
 		ADD(reg, 0x258)   //ADD reg32,00000258 ; 600ms
 	+   CMP(EAX, reg)     //CMP EAX, reg32
 	;
-	
+
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Delay addition not found.");
-	
+
 	if (patchName === "NoWalkDelay")
 	{
 		/// 1.2 - NOP out the addition if no walk delay is desired
@@ -52,13 +52,14 @@ WalkDelay = function(patchName)
 	else
 	{
 		/// 2.1 - Get the new delay value from user
-		if (Exe.GetUserInput('$walkDelay', D_Uint16, "Walk Delay", "Enter the new walk delay (snaps to closest valid value)", 600, {min: 0, max: 1000}) === false)
+		let result = Exe.GetUserInput('$walkDelay', D_Uint16, "Walk Delay", "Enter the new walk delay (snaps to closest valid value)", 600, {min: 0, max: 1000});
+		if (result === false)
 			Cancel("Delay", 600);
-	
+
 		/// 2.2 - Replace the value
 		Exe.SetFromVar(addr + 2, '$walkDelay');
 	}
-	
+
 	return true;
 };
 

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@ NoGravityImages = function(suffix, idx, throwErr = true)
 	/// 1 - Find the Image suffix
 	let addr = Exe.FindText("\\T_" + suffix + ".tga", PHYSICAL, false);
 	if (addr < 0 && throwErr)
-		throw Error("Suffix No." + idx + " not found");
+		throw Error(`Suffix No. ${idx} not found`);
 
 	/// 2 - Change the 'T' to NULL
 	Exe.SetUint8(addr + 1, 0);

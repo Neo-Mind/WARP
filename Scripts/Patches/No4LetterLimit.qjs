@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,11 +38,10 @@ No4LetterLimit = function(patchName)
 	+	CMP(EAX, 4)  //CMP EAX, 4
 	;
 
-	let addrs =
-		Exe.FindHexN(prefix + JL(WC)).concat(  //JL SHORT addr
-		Exe.FindHexN(prefix + JL(POS2WC)))     //JL addr
-	;
-
+	let addrs = [
+		...Exe.FindHexN(prefix + JL(WC)),    //JL SHORT addr
+		...Exe.FindHexN(prefix + JL(POS2WC)) //JL addr
+	];
 	if (addrs.length < 3)
 		throw Error("Not enough comparisons found");
 

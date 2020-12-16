@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -68,7 +68,7 @@ ShowResButton = function()
 		+	JNE(WCp)              //JNE SHORT addr
 		;
 	}
-	else if (Exe.Version == 10.0) //VC10
+	else if (Exe.Version === 10.0) //VC10
 	{
 		code =
 			CMP([EAX, WCp], R32)  //CMP DWORD PTR DS:[EAX + const], reg32
@@ -85,7 +85,7 @@ ShowResButton = function()
 	let cmpAddr = Exe.FindHex(code.repeat(3), addr, addr + 0x40);
 	if (cmpAddr < 0)
 	{
-		if (Exe.Version == 10.0) //VC10
+		if (Exe.Version === 10.0) //VC10
 		{
 			code = code.replace( JNE(POS2WC), JNE(WCp) ); //change JNE to SHORT JNE
 			cmpAddr = Exe.FindHex(code.repeat(3), addr, addr + 0x40);

@@ -22,25 +22,25 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Change the conditional jump to JMP after CSession::IsCheatName/IsGuildCheatName CALL
-///        The CALL comes inside UIWindowMgr::AddWhisperChatToWhisperWnd. 
+///        The CALL comes inside UIWindowMgr::AddWhisperChatToWhisperWnd.
 ///        The enforced JMP ensures the result is ignored.
 ///
 function SkipCheatCheck(patchName)
 {
 	/// 1 - Find the comparisons after CSession::IsCheatName CALL
 	let template =
-		TEST(EAX, EAX)          //TEST EAX, EAX
-	+	JZ(WCp)                 //JZ SHORT addr
-	+	PUSH_0                  //PUSH 0
-	+	PUSH_0                  //PUSH 0
-	+	PUSH(0xFFFF)            //PUSH 0FFFF
-	+	PUSH(MakeFiller(1))     //PUSH msgNum
+		TEST(EAX, EAX)   //TEST EAX, EAX
+	+	JZ(WCp)          //JZ SHORT addr
+	+	PUSH_0           //PUSH 0
+	+	PUSH_0           //PUSH 0
+	+	PUSH(0xFFFF)     //PUSH 0FFFF
+	+	PUSH(Filler(1))  //PUSH msgNum
 	;
 
 	let code =

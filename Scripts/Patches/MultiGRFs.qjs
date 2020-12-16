@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -140,14 +140,14 @@ _MG_INI = (callAddr, AddPak) =>
 	+	TEST(EAX, EAX)                  //TEST EAX, EAX
 	+	JZ(0x23)                        //JZ SHORT addr2
 	+	MOV(EDI, [ROC.GetProcAddr])     //MOV EDI,DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
-	+	PUSH(MakeFiller(1))             //PUSH addr3 ; ASCII "GetPrivateProfileStringA"
+	+	PUSH(Filler(1))                 //PUSH addr3 ; ASCII "GetPrivateProfileStringA"
 	+	MOV(EBX, EAX)                   //MOV EBX, EAX
 	+	PUSH_EAX                        //PUSH EAX ; hModule
 	+	CALL(EDI)                       //CALL EDI ; GetProcAddress()
 	+	TEST(EAX, EAX)                  //TEST EAX, EAX
 	+	JZ(0x0F)                        //JZ SHORT addr2
 	+	MOV([EBP, -0xA], EAX)           //MOV DWORD PTR SS:[EBP-0A], EAX
-	+	PUSH(MakeFiller(2))             //PUSH addr4 ; ASCII "WritePrivateProfileStringA"
+	+	PUSH(Filler(2))                 //PUSH addr4 ; ASCII "WritePrivateProfileStringA"
 	+	MOV(EAX, EBX)                   //MOV EAX, EBX
 	+	PUSH_EAX                        //PUSH EAX ; hModule
 	+	CALL(EDI)                       //CALL EDI ; GetProcAddress()
@@ -157,14 +157,14 @@ _MG_INI = (callAddr, AddPak) =>
 	+	XOR(EDX, EDX)                   //XOR EDX, EDX
 	+	MOV(WORD_PTR, [EBP, -2], 0x39)  //MOV WORD PTR SS:[EBP-2], 39 ; char 9
 	+	PUSH(EDX)                       //PUSH EDX
-	+	PUSH(MakeFiller(4))             //PUSH addr5 ; INI filename
+	+	PUSH(Filler(4))                 //PUSH addr5 ; INI filename
 	+	PUSH(0x74)                      //PUSH 74
 	+	LEA(EBX, [EBP, -0x7F])          //LEA EBX, [EBP-7F]
 	+	PUSH(EBX)                       //PUSH EBX
 	+	LEA(EAX, [EBP, -2])             //LEA EAX, [EBP-2]
 	+	PUSH_EAX                        //PUSH EAX
 	+	PUSH_EAX                        //PUSH EAX
-	+	PUSH(MakeFiller(3))             //PUSH addr6 ; ASCII "Data"
+	+	PUSH(Filler(3))                 //PUSH addr6 ; ASCII "Data"
 	+	CALL([EBP, -0xA])               //CALL DWORD PTR SS:[EBP-0A]
 	+	LEA(ECX, [EBP, -2])             //LEA ECX, [EBP-2]
 	+	MOV(CX, [ECX])                  //MOV CX, WORD PTR DS:[ECX]
@@ -175,7 +175,7 @@ _MG_INI = (callAddr, AddPak) =>
 	+	PUSH(EDX)                       //PUSH EDX
 	+	PUSH(EBX)                       //PUSH EBX
 	+	DGRF.MovFMgr                    //MOV ECX, g_fileMgr
-	+	CALL(MakeFiller(5))             //CALL CFileMgr::AddPak()
+	+	CALL(Filler(5))                 //CALL CFileMgr::AddPak()
 	;
 	let pakPos = code.byteCount();
 
@@ -187,12 +187,12 @@ _MG_INI = (callAddr, AddPak) =>
 	+	JNB(-0x3F)                      //JNB SHORT addr8
 	+	TEST(EDX, EDX)                  //TEST EDX, EDX
 	+	JNZ(0x20)                       //JNZ SHORT addr9
-	+	PUSH(MakeFiller(4))             //PUSH addr5 ; INI filename
+	+	PUSH(Filler(4))                 //PUSH addr5 ; INI filename
 	+	PUSH(DGRF.Addr)                 //PUSH OFFSET addr ; "data.grf"
 	+	MOV(WORD_PTR, [EBP, -2], 0x32)  //MOV WORD PTR SS:[EBP-2], 32
 	+	LEA(EAX, [EBP, -2])             //LEA EAX, [EBP-2]
 	+	PUSH_EAX                        //PUSH EAX
-	+	PUSH(MakeFiller(3))             //PUSH addr6 ; ASCII "Data"
+	+	PUSH(Filler(3))                 //PUSH addr6 ; ASCII "Data"
 	+	CALL([EBP, -6])                 //CALL DWORD PTR SS:[EBP-6]
 	+	TEST(EAX, EAX)                  //TEST EAX, EAX
 	+	JNZ(-0x69)                      //JNZ SHORT
@@ -280,9 +280,9 @@ _MG_EMB = (callAddr, AddPak) =>
 
 	/// 2.1 - Prepare template for load 1 GRF (same needs to be repeated for all GRF files)
 	let template =
-		PUSH(MakeFiller(1))  //PUSH OFFSET addr; GRF name
-	+	DGRF.MovFMgr         //MOV ECX, OFFSET g_fileMgr
-	+	CALL(MakeFiller(2))  //CALL CFileMgr::AddPak()
+		PUSH(Filler(1))  //PUSH OFFSET addr; GRF name
+	+	DGRF.MovFMgr     //MOV ECX, OFFSET g_fileMgr
+	+	CALL(Filler(2))  //CALL CFileMgr::AddPak()
 	;
 	let tsize = template.byteCount();
 

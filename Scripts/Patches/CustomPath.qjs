@@ -26,7 +26,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144), X-EcutiOnner    *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -115,7 +115,7 @@ if (typeof CP_Data === 'undefined') //avoid redefinition
 			prefix : "MapInfo Lua",
 			parts : ["system\\mapInfo", "sak.lub", "true.lub", ""]
 		},
-		
+
 		CustomOngQuestInfoLub :
 		{
 			strType : "Prefix",
@@ -339,7 +339,7 @@ CustomClientInfo = function()
 
 	/// 1.3 - Find where the XML is referenced
 	let patterns;
-	if (Exe.Version > 10.0)
+	if (Exe.Version > 10.0) //VC11+
 	{
 		patterns = [
 			MOVQ(XMM$, [CCI_Addr]),
@@ -376,7 +376,7 @@ CustomClientInfo = function()
 	/// 1.3 - Find the additional references & save the locations where replacement need to be made
 	if (hasMore)
 	{
-		if (Exe.Version > 10.0)
+		if (Exe.Version > 10.0)//VC11+
 		{
 			if (CCI_Name === "sclientinfo.xml")
 			{

@@ -59,15 +59,15 @@ RouletteVis = function(patchName)
 			Cancel("Roulette Icon is already shown");
 
 		/// 2.2 - Prepare our code to create the icon
-		code += MakeFiller(1)     //CALL UIWindowMgr::MakeWindow ; E8 opcode is already there
+		code += Filler(1)    //CALL UIWindowMgr::MakeWindow ; E8 opcode is already there
 		;
 		let pos1 = code.byteCount();
 
 		code +=
-			PUSH(id)              //PUSH 11D or 10C
-		+	WINMGR.MovECX         //MOV ECX, OFFSET g_windowMgr
-		+	CALL(MakeFiller(2))   //CALL UIWindowMgr::MakeWindow
-		+	JMP(MakeFiller(3))    //JMP retnAddr; jump back to retnAddr
+			PUSH(id)         //PUSH 11D or 10C
+		+	WINMGR.MovECX    //MOV ECX, OFFSET g_windowMgr
+		+	CALL(Filler(2))  //CALL UIWindowMgr::MakeWindow
+		+	JMP(Filler(3))   //JMP retnAddr; jump back to retnAddr
 		;
 		let pos2 = code.byteCount();
 
@@ -89,7 +89,7 @@ RouletteVis = function(patchName)
 		Exe.AddHex(free, code);
 
 		/// 2.6 - Create a jump to it at jmpAddr
-		Exe.SetHex(jmpAddr, JMP(freeVir, Exe.Phy2Vir(jmpAddr, CODE)));
+		Exe.SetJMP(jmpAddr, freeVir);
 	}
 	else
 	{

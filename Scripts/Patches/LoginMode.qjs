@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Neo-Mind, Andrei (4144)            *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-03                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -116,8 +116,9 @@ UseOldLogin = function()
 	let prefix =
 		CMP(BYTE_PTR, [POS4WC], 0) //CMP BYTE PTR DS:[g_passwordencrypt], 0
 	+	JNE(POS2WC)                //JNE addr1
-	+	MOV(Exe.Version > 10 ? 
-			R32 : EAX, [LANGTYPE]  //MOV reg32_A, DWORD PTR DS:[g_serviceType] ; reg32_A will be EAX for older clients
+	+	MOV(Exe.Version > 10 
+			? R32                  //MOV reg32_A, DWORD PTR DS:[g_serviceType]
+			: EAX, [LANGTYPE]      //reg32_A will be EAX for older clients
 		)
 	;
 	let suffix =
@@ -259,7 +260,7 @@ RestoreLoginWindow = function()
 	;
 
 	/// 5.2 - Find how many PUSH 0s are there. Older clients had 3 arguments but newer ones only have 3
-	let pushes = Exe.FindHexN(PUSH_0, -1, addr + 4, addr + 16);
+	let pushes = Exe.FindHexN(PUSH_0, addr + 4, addr + 16);
 
 	/// 5.3 - Find error handler (CModeMgr::Quit)
 	code =
@@ -270,7 +271,7 @@ RestoreLoginWindow = function()
 	+	(Exe.Version > 10.0
 	?
 		JNE(0x1C)               //JNE SHORT addr1 -> after CALL instruction below
-	:
+	:                           //  or
 		JNE(0x1D)               //JNE SHORT addr1 -> after CALL instruction below
 	+ 	MOV(ECX, [POS3WC])      //MOV ECX,DWORD PTR DS:[g_hMainWnd]
 	)
@@ -282,7 +283,7 @@ RestoreLoginWindow = function()
 	+	(Exe.Version > 10.0
 	?
 		PUSH([POS4WC])          //PUSH DWORD PTR DS:[g_hMainWnd] ; For recent client g_hMainWnd is directly pushed instead of assigning to ECX first
-	:
+	:                           //  or
 		PUSH(ECX)               //PUSH ECX
 	)
 	+	CALL([POS3WC])          //CALL DWORD PTR DS:[<&SHELL32.ShellExecuteA>]
@@ -301,17 +302,17 @@ RestoreLoginWindow = function()
 
 	/// 5.4 - Construct the full replacement code
 	let replace =    
-		PUSH(EDX)                    //PUSH EDX
-	+ 	PUSH_EAX                     //PUSH EAX
-	+ 	infix                        //MOV ECX,DWORD PTR DS:[Reference]
-									//MOV EAX,DWORD PTR DS:[ECX]
-									//MOV EDX,DWORD PTR DS:[EAX+18]
-	+	PUSH_0.repeat(pushes.length) //PUSH 0 sequence
-	+	PUSH(0x271D)                 //PUSH 271D
-	+	MOV([ECX, 0xC], 3)           //MOV DWORD PTR DS:[ECX+0C],3
-	+	CALL(EDX)                    //CALL EDX
-	+	POP(EAX)                     //POP EAX
-	+	POP(EDX)                     //POP EDX
+		PUSH(EDX)                     //PUSH EDX
+	+ 	PUSH_EAX                      //PUSH EAX
+	+ 	infix                         //MOV ECX,DWORD PTR DS:[Reference]
+		                              //MOV EAX,DWORD PTR DS:[ECX]
+		                              //MOV EDX,DWORD PTR DS:[EAX+18]
+	+	PUSH_0.repeat(pushes.length)  //PUSH 0 sequence
+	+	PUSH(0x271D)                  //PUSH 271D
+	+	MOV([ECX, 0xC], 3)            //MOV DWORD PTR DS:[ECX+0C],3
+	+	CALL(EDX)                     //CALL EDX
+	+	POP(EAX)                      //POP EAX
+	+	POP(EDX)                      //POP EDX
 	;
 	replace += JMP(code.byteCount(), replace.byteCount()); //Skip to the POP ESI
 

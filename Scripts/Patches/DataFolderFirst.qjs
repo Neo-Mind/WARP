@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,7 +50,7 @@ DataFolderFirst = function()
 		gloc = code.byteCount() - 4;
 		rloc = 5;
 	}
-	else if (Exe.Version == 11.0) // VC11
+	else if (Exe.Version === 11.0) // VC11
 	{
 		code =
 			CMOVNE(R32, R32)   //CMOVNE reg32_A, reg32_B

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Secret, A.K.M., Neo-Mind                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@ Intravision = function()
 {
 	/// 1 - Find the comparison loop
 	let code;
-	if (Exe.BuildDate < 20100000)
+	if (!ROC.Post2010)
 	{
 		code =
 			JNE(2)						//JNE SHORT addr1

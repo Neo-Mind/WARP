@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-11                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -64,25 +64,22 @@ CustomBarLimits = function()
     let afterBB = baseBegin + code.byteCount();
     
     /// 2.1 - Find the base level assignment/comparison after the CALLs
-    if (Exe.Version < 9.0)
-    {
-        code =
-            MOV(EAX, [POS3WC])  //MOV EAX, DWORD PTR DS:[g_baseLevel]
-        +	MOV(EDI, 0x63)      //MOV EDI, 63
-        ;
-    }
-    else if (Exe.BuildDate < 20130000)
-    {
-        code = CMP([POS3WC], EDI); //CMP DWORD PTR DS:[g_baseLevel], EDI
-    }
-    else if (Exe.BuildDate < 20170000)
-    {
-        code = CMP([POS3WC], 0xAF); //CMP DWORD PTR DS:[g_baseLevel], 0AF
-    }
-	else
-	{
-		code = CMP(R32, [POS4WC]); //CMP reg32_A, DWORD PTR DS:[g_baseLevel]
-	}
+    code = 
+		Exe.Version < 9.0 //VC6
+    ?
+		MOV(EAX, [POS3WC])  //MOV EAX, DWORD PTR DS:[g_baseLevel]
+	+	MOV(EDI, 0x63)      //MOV EDI, 63
+    :
+		Exe.BuildDate < 20130000
+	?
+		CMP([POS3WC], EDI)  //CMP DWORD PTR DS:[g_baseLevel], EDI
+	:
+		Exe.BuildDate < 20170000
+    ?
+        CMP([POS3WC], 0xAF) //CMP DWORD PTR DS:[g_baseLevel], 0AF
+    :
+		CMP(R32, [POS4WC])  //CMP reg32_A, DWORD PTR DS:[g_baseLevel]
+	;
 
     addr = Exe.FindHex(code, afterBB, afterBB + 0x100);
     if (addr < 0)
@@ -94,7 +91,7 @@ CustomBarLimits = function()
     /// 2.3 - Find the ESI + const assignment between afterBB & refAddr
     addr = Exe.FindHex( MOV(ECX, [ESI, POS1WC]), afterBB, refAddr);//MOV ECX, DWORD PTR DS:[ESI+const]
 
-    if (addr < 0 && Exe.Version > 11.0)
+    if (addr < 0 && Exe.Version > 11.0) //VC14.16
 		addr = Exe.FindHex( MOV(EDX, [ESI, POS1WC]), afterBB, refAddr);//MOV EDX, DWORD PTR DS:[ESI+const]
 
     if (addr < 0)
@@ -120,7 +117,7 @@ CustomBarLimits = function()
     /// 3.1 - Find the end of the base exp display code after the ESI movement
     code =
         PUSH(0x55)            //PUSH 55
-    +	(Exe.Version < 9.0 || Exe.Version == 11.0
+    +	(Exe.Version < 9.0 || Exe.Version === 11.0
 	?
 		CALL([R32, FuncOff])  //CALL DWORD PTR DS:[reg32 + FuncOff] ;VC6 & VC11
 	:                         // or 
@@ -151,7 +148,7 @@ CustomBarLimits = function()
     }
 	else
 	{
-		let prefix = (Exe.BuildDate < 20100620 || Exe.BuildDate == 20101214 ||  Exe.BuildDate > 20110620
+		let prefix = (Exe.BuildDate < 20100620 || Exe.BuildDate === 20101214 ||  Exe.BuildDate > 20110620
 		?
 			JMP(WCp) //JMP SHORT addr
 		:            // or
@@ -177,7 +174,7 @@ CustomBarLimits = function()
 	?
 		CALL([R32, FuncOff]) //CALL DWORD PTR DS:[reg32 + FuncOff] ;//VC6, VC11, VC14.16
 	:
-		CALL(R32)			 //CALL reg32 ; VC9, VC10
+		CALL(R32)			 //CALL reg32 ;// VC9, VC10
 	)
     ;
     
@@ -203,8 +200,11 @@ CustomBarLimits = function()
 
     /// 4.2 - Load the input file which creates the hash table mapping the id ranges to max base & job levels
 	let ExpSpec = Warp.LoadYaml(inFile);
-	if (!IsArr(ExpSpec))
-		Cancel("Invalid/non-existent mapping file");
+	if (ExpSpec === false)
+		return false;
+
+	else if (!IsArr(ExpSpec))
+		throw Error("Need a list of Exp Bar specifications")
 
 	/// 4.3 - Calculate size of mapping table
     let identSize = ExpSpec.reduce( (acc, hash) => acc + hash.IDs.length*4 + 2, 0);
@@ -214,59 +214,59 @@ CustomBarLimits = function()
 	let callPos = baseVir + 7; //2 from the PUSHes & 5 from the MOV
 
     code =
-        PUSH(EDX)                      //PUSH EDX
-    +	PUSH(EBX)                      //PUSH EBX
-    +	MOV(ECX, Session)              //MOV ECX, g_session
-    +	CALL(GetJobID, callPos)        //CALL CSession::GetJobID  ; callPos
-    +	MOV(EBX, MakeFiller(1))        //MOV EBX, mapTblAddr
-    +	MOV(ECX, [EBX])                //MOV ECX, DWORD PTR DS:[EBX];	loop_mapTbl
-    +	TEST(ECX, ECX)                 //TEST ECX, ECX
-    +	JE(0x26)                       //JE SHORT _noMatches
-    +	MOVSX(EDX, [ECX])              //MOVSX EDX, WORD PTR DS:[ECX]; loop_idTbl
-    +	TEST(EDX, EDX)                 //TEST EDX, EDX
-    +	JS(0x15)                       //JS SHORT _fetchNextIDTbl
-    +	CMP(EAX, EDX)                  //CMP EAX, EDX
-    +	JL(0xC)                        //JL SHORT _fetchNextIDPair
-    +	MOVSX(EDX, [ECX, 2])           //MOVSX EDX, WORD PTR DS:[ECX+2]
-    +	TEST(EDX, EDX)                 //TEST EDX, EDX
-    +	JS(0x9)                        //JS SHORT _fetchNextIDTbl
-    +	CMP(EAX, EDX)                  //CMP EAX, EDX
-    +	JLE(0xA)                       //JLE SHORT _foundIDMatch
-    +	ADD(ECX, 4)                    //ADD ECX, 4;	_fetchNextIDPair
-    +	JMP(-0x28)                     //JMP SHORT loop_idTbl
-    +	ADD(EBX, 8)                    //ADD EBX, 8;	_fetchNextIDTbl
-    +	JMP(-0x39)                     //JMP SHORT loop_mapTbl
-    +	LEA(EDI, [EBX, 4])             //LEA EDI, [EBX + 4] ; _foundIDMatch
-    +	JMP(0x5)                       //JMP SHORT addr7
-    +	MOV(EDI, MakeFiller(2))        //MOV EDI, OFFSET defAddr ; _noMatches
-    +	POP(EBX)                       //POP EBX; addr7
-    +	POP(EDX)                       //POP EDX
-    +	MOVZX(EAX, [EDI])              //MOVZX EAX, WORD PTR DS:[EDI]
-    +	CMP([BaseLevel], EAX)          //CMP DWORD PTR DS:[g_baseLevel], EAX
-    +	MOV(ECX, [ESI, HideBase])      //MOV ECX, DWORD PTR DS:[ESI + HideBase]
-    +	JL(0x9)                        //JL SHORT _lowBase
-    +	PUSH(0x4E)                     //PUSH 4E
-    +	PUSH(-0xC8)                    //PUSH -0C8
-    +	JMP(0xC)                       //JMP SHORT _common1
-    +	MOV(EAX, [ESI, ShowBars])      //MOV EAX, DWORD PTR DS:[ESI + ShowBars]; _lowBase
-    +	ADD(EAX, 0x4C)                 //ADD EAX, 4C
-    +	PUSH_EAX                       //PUSH EAX
-    +	PUSH(0x55)                     //PUSH 55
-    +	MOV(EAX, [ECX])                //MOV EAX, DWORD PTR DS:[ECX]; _common1
-    +	CALL([EAX, FuncOff])           //CALL DWORD PTR DS:[EAX + funcOff]
-    +	MOVZX(EAX, [EDI, 2])           //MOVZX EAX, WORD PTR DS:[EDI+2]
-    +	CMP([JobLevel], EAX)           //CMP DWORD PTR DS:[g_jobLevel], EAX
-    +	MOV(ECX, [ESI, HideJob])       //MOV ECX, DWORD PTR DS:[ESI + HideJob]
-    +	JL(0x9)                        //JL SHORT _lowJob
-    +	PUSH(0x58)                     //PUSH 58
-    +	PUSH(-0xC8)                    //PUSH -0C8
-    +	JMP(0xC)                       //JMP SHORT _common2
-    +	MOV(EAX, [ESI, ShowBars])      //MOV EAX, DWORD PTR DS:[ESI + ShowBars]; _lowJob
-    +	ADD(EAX, 0x58)                 //ADD EAX, 58
-    +	PUSH_EAX                       //PUSH EAX
-    +	PUSH(0x55)                     //PUSH 55
-    +	MOV(EAX, [ECX])                //MOV EAX, DWORD PTR DS:[ECX]; _common2
-    +	CALL([EAX, FuncOff])           //CALL DWORD PTR DS:[EAX + funcOff]
+        PUSH(EDX)                  //PUSH EDX
+    +	PUSH(EBX)                  //PUSH EBX
+    +	MOV(ECX, Session)          //MOV ECX, g_session
+    +	CALL(GetJobID, callPos)    //CALL CSession::GetJobID  ; callPos
+    +	MOV(EBX, Filler(1))        //MOV EBX, mapTblAddr
+    +	MOV(ECX, [EBX])            //MOV ECX, DWORD PTR DS:[EBX];	loop_mapTbl
+    +	TEST(ECX, ECX)             //TEST ECX, ECX
+    +	JE(0x26)                   //JE SHORT _noMatches
+    +	MOVSX(EDX, [ECX])          //MOVSX EDX, WORD PTR DS:[ECX]; loop_idTbl
+    +	TEST(EDX, EDX)             //TEST EDX, EDX
+    +	JS(0x15)                   //JS SHORT _fetchNextIDTbl
+    +	CMP(EAX, EDX)              //CMP EAX, EDX
+    +	JL(0xC)                    //JL SHORT _fetchNextIDPair
+    +	MOVSX(EDX, [ECX, 2])       //MOVSX EDX, WORD PTR DS:[ECX+2]
+    +	TEST(EDX, EDX)             //TEST EDX, EDX
+    +	JS(0x9)                    //JS SHORT _fetchNextIDTbl
+    +	CMP(EAX, EDX)              //CMP EAX, EDX
+    +	JLE(0xA)                   //JLE SHORT _foundIDMatch
+    +	ADD(ECX, 4)                //ADD ECX, 4;	_fetchNextIDPair
+    +	JMP(-0x28)                 //JMP SHORT loop_idTbl
+    +	ADD(EBX, 8)                //ADD EBX, 8;	_fetchNextIDTbl
+    +	JMP(-0x39)                 //JMP SHORT loop_mapTbl
+    +	LEA(EDI, [EBX, 4])         //LEA EDI, [EBX + 4] ; _foundIDMatch
+    +	JMP(0x5)                   //JMP SHORT addr7
+    +	MOV(EDI, Filler(2))        //MOV EDI, OFFSET defAddr ; _noMatches
+    +	POP(EBX)                   //POP EBX; addr7
+    +	POP(EDX)                   //POP EDX
+    +	MOVZX(EAX, [EDI])          //MOVZX EAX, WORD PTR DS:[EDI]
+    +	CMP([BaseLevel], EAX)      //CMP DWORD PTR DS:[g_baseLevel], EAX
+    +	MOV(ECX, [ESI, HideBase])  //MOV ECX, DWORD PTR DS:[ESI + HideBase]
+    +	JL(0x9)                    //JL SHORT _lowBase
+    +	PUSH(0x4E)                 //PUSH 4E
+    +	PUSH(-0xC8)                //PUSH -0C8
+    +	JMP(0xC)                   //JMP SHORT _common1
+    +	MOV(EAX, [ESI, ShowBars])  //MOV EAX, DWORD PTR DS:[ESI + ShowBars]; _lowBase
+    +	ADD(EAX, 0x4C)             //ADD EAX, 4C
+    +	PUSH_EAX                   //PUSH EAX
+    +	PUSH(0x55)                 //PUSH 55
+    +	MOV(EAX, [ECX])            //MOV EAX, DWORD PTR DS:[ECX]; _common1
+    +	CALL([EAX, FuncOff])       //CALL DWORD PTR DS:[EAX + funcOff]
+    +	MOVZX(EAX, [EDI, 2])       //MOVZX EAX, WORD PTR DS:[EDI+2]
+    +	CMP([JobLevel], EAX)       //CMP DWORD PTR DS:[g_jobLevel], EAX
+    +	MOV(ECX, [ESI, HideJob])   //MOV ECX, DWORD PTR DS:[ESI + HideJob]
+    +	JL(0x9)                    //JL SHORT _lowJob
+    +	PUSH(0x58)                 //PUSH 58
+    +	PUSH(-0xC8)                //PUSH -0C8
+    +	JMP(0xC)                   //JMP SHORT _common2
+    +	MOV(EAX, [ESI, ShowBars])  //MOV EAX, DWORD PTR DS:[ESI + ShowBars]; _lowJob
+    +	ADD(EAX, 0x58)             //ADD EAX, 58
+    +	PUSH_EAX                   //PUSH EAX
+    +	PUSH(0x55)                 //PUSH 55
+    +	MOV(EAX, [ECX])            //MOV EAX, DWORD PTR DS:[ECX]; _common2
+    +	CALL([EAX, FuncOff])       //CALL DWORD PTR DS:[EAX + funcOff]
 	;
 
 	let csize = code.byteCount();
@@ -337,7 +337,7 @@ CustomBarLimits = function()
 ShowExpNumbers = function()
 {
     /// 1.1 - Find the string 'Alt+V, Ctrl+V'
-    let addr = Exe.FindText("Alt+V, Ctrl+V", VIRTUAL, false);
+    let addr = Exe.FindText("Alt+V, Ctrl+V", false);
     if (addr < 0)
         throw Error("Reference string not found");
 
@@ -356,17 +356,16 @@ ShowExpNumbers = function()
 
     /// 2.1 - Find the double PUSH pattern after the above PUSH (addresses of Total and Current Exp values are being sent as args to be filled)
     code =
-        MOV(ECX, [R32, POS1WC])     //MOV ECX, DWORD PTR DS:[reg32_B + const]
-    +	PUSH(POS3WC)                //PUSH totExp
-    +	PUSH(POS3WC)                //PUSH curExp
-    +	CALL()                      //CALL loaderFunc
+        MOV(ECX, [R32, POS1WC])  //MOV ECX, DWORD PTR DS:[reg32_B + const]
+    +	PUSH(POS3WC)             //PUSH totExp
+    +	PUSH(POS3WC)             //PUSH curExp
+    +	CALL()                   //CALL loaderFunc
     ;
 	let totOffset = 7; //6 from MOV and 1 for PUSH opcode
-console.log(1, Exe.Version, Exe.BuildDate);
+
     let pushAddr = Exe.FindHex(code, addr, addr + 0x300);
 	if (pushAddr < 0)
 	{
-console.log(2, Exe.Version, Exe.BuildDate);
 		code =
 			MOV(ECX, [R32, POS1WC]) //MOV ECX, DWORD PTR DS:[reg32_B + const]
 		+	PUSH([POS4WC])          //PUSH DWORD PTR DS:[totExp]
@@ -456,42 +455,42 @@ console.log(2, Exe.Version, Exe.BuildDate);
         throw Error("No print functions found");
 
     // '%d / %d'
-    let ddAddr = Exe.FindText("%d / %d", VIRTUAL, false);
+    let ddAddr = Exe.FindText("%d / %d", false);
     if (ddAddr < 0)
         throw Error("Format string for exp not found");
     
     /// 4.2 - Prepare the template code for displaying the exp numbers (common for both Base & Job Exp) 
     let template =
-        MOV(EAX, MakeFiller(1))  //MOV EAX, DWORD PTR DS:[totExp*]
-    +	MOV(ECX, MakeFiller(2))  //MOV ECX, DWORD PTR DS:[curExp*]
-    +	OR(ECX, EAX)             //OR ECX, EAX
-    +	JE(MakeFiller(3, 1))     //JE SHORT addr ; location after TextOutA CALL
-    +	PUSH_EAX                 //PUSH EAX
-    +	MOV(EAX, MakeFiller(2))  //MOV EAX, DWORD PTR DS:[curExp*]
-    +	PUSH_EAX                 //PUSH EAX
-    +	PUSH(ddAddr)             //PUSH addr; ASCII "%d / %d"
-    +	LEA(EAX, [ESP, 0xC])     //LEA EAX, [ESP + 0C]
-    +	PUSH_EAX                 //PUSH EAX
-    +	CALL([printFunc])        //CALL DWORD PTR DS:[<&MSVCR#.sprintf>] ; wsprintfA if sprintf is not found
-    +	ADD(ESP, 0x10)           //ADD ESP, 10
-    +	MOV(EAX, ESP)            //MOV EAX, ESP
-    +	extraPush                //PUSH 0     ; Arg8 = unknown. Only for new clients
-    +	PUSH_0                   //PUSH 0     ; Arg7 = Color
-    +	PUSH(0xD)                //PUSH 0D    ; Arg6 = Font Height
-    +	PUSH_1                   //PUSH 1     ; Arg5 = Font Index
-    +	PUSH_0                   //PUSH 0     ; Arg4 = Char count (0 => calculate string size)
-    +	PUSH_EAX                 //PUSH EAX   ; Arg3 = String i.e. output from sprintf above
-    +	PUSH(MakeFiller(4, 1))   //PUSH y     ; Arg2 = y Coord
-    +	PUSH(0x56)               //PUSH x     ; Arg1 = x Coord
-    +	MovECX                   //MOV ECX, reg32_A
-    +	CALL(MakeFiller(5))      //CALL UIWindow::TextOutA ; stdcall => No Stack restore required
+        MOV(EAX, Filler(1))   //MOV EAX, DWORD PTR DS:[totExp*]
+    +	MOV(ECX, Filler(2))   //MOV ECX, DWORD PTR DS:[curExp*]
+    +	OR(ECX, EAX)          //OR ECX, EAX
+    +	JE(Filler(3, 1))      //JE SHORT addr ; location after TextOutA CALL
+    +	PUSH_EAX              //PUSH EAX
+    +	MOV(EAX, Filler(2))   //MOV EAX, DWORD PTR DS:[curExp*]
+    +	PUSH_EAX              //PUSH EAX
+    +	PUSH(ddAddr)          //PUSH addr; ASCII "%d / %d"
+    +	LEA(EAX, [ESP, 0xC])  //LEA EAX, [ESP + 0C]
+    +	PUSH_EAX              //PUSH EAX
+    +	CALL([printFunc])     //CALL DWORD PTR DS:[<&MSVCR#.sprintf>] ; wsprintfA if sprintf is not found
+    +	ADD(ESP, 0x10)        //ADD ESP, 10
+    +	MOV(EAX, ESP)         //MOV EAX, ESP
+    +	extraPush             //PUSH 0     ; Arg8 = unknown. Only for new clients
+    +	PUSH_0                //PUSH 0     ; Arg7 = Color
+    +	PUSH(0xD)             //PUSH 0D    ; Arg6 = Font Height
+    +	PUSH_1                //PUSH 1     ; Arg5 = Font Index
+    +	PUSH_0                //PUSH 0     ; Arg4 = Char count (0 => calculate string size)
+    +	PUSH_EAX              //PUSH EAX   ; Arg3 = String i.e. output from sprintf above
+    +	PUSH(Filler(4, 1))    //PUSH y     ; Arg2 = y Coord
+    +	PUSH(0x56)            //PUSH x     ; Arg1 = x Coord
+    +	MovECX                //MOV ECX, reg32_A
+    +	CALL(Filler(5))       //CALL UIWindow::TextOutA ; stdcall => No Stack restore required
     ;
 	let tsize = template.byteCount();
     template = SwapFiller(template, 3, tsize - 14, 1, 1); //putting the distance in JE SHORT (this is needed since byteCount can vary)
 	 
     /// 4.3 - Prepare the full code from the template
     code = 
-		CALL(MakeFiller(10))    //CALL UIWindow::TextOutA
+		CALL(Filler(10))        //CALL UIWindow::TextOutA
     +	PUSH_EAX                //PUSH EAX
     +	SUB(ESP, 0x20)          //SUB ESP, 20
     +	SwapFillers(template, { 
@@ -504,7 +503,7 @@ console.log(2, Exe.Version, Exe.BuildDate);
 		})
     +	ADD(ESP, 0x20)          //ADD ESP, 20
     +	POP(EAX)                //POP EAX
-    +	JMP(MakeFiller(11))     //JMP retAddr = injectAddr + 5
+    +	JMP(Filler(11))         //JMP retAddr = injectAddr + 5
     ;
     let csize = code.byteCount();
     

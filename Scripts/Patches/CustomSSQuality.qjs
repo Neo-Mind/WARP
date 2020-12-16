@@ -63,7 +63,7 @@ CustomSSQuality = function()
 	let jqAddr = Instr.FromAddr(addr).Disp + 60;
 
 	/// 2.2 - Prepare code to change DIBChannels member assignment to jquality member assignment.
-	///     By default DIBChannels is 3 and DIBColor is 2 already, so overwriting their assignments doesnt matter
+	///       By default DIBChannels is 3 and DIBColor is 2 already, so overwriting their assignments doesnt matter
 	///
 	code = MOV( [(ROC.HasFP ? EBP : ESP), jqAddr], newValue);  //MOV DWORD PTR SS:[EBP + jqAddr], newValue ;jqAddr is negative or
 	                                                           //MOV DWORD PTR SS:[ESP + jqAddr], newValue ;jqAddr is positive

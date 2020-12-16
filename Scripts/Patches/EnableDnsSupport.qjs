@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -84,7 +84,7 @@ EnableDnsSupport = function()
 	/// 3.1 - Find some essential addresses for our function
 
 	// gethostbyname
-	let GetHostByName = Exe.FindFunc("gethostbyname", "ws2_32.dll", 52);//(#52 when imported by ordinal)
+	let GetHostByName = Exe.FindFunc("gethostbyname", 52, "ws2_32.dll");//(#52 when imported by ordinal)
 	if (GetHostByName < 0)
 		throw Error("gethostbyname function not found");
 
@@ -100,31 +100,31 @@ EnableDnsSupport = function()
 
 	/// 3.2 - Prepare our function
 	let dnsCode =
-		CALL(MakeFiller(1))                //CALL g_ResMgr ; call the actual function that was supposed to be run
-	+	PUSHAD                             //PUSHAD
-	+	MOV(ESI, [AccountAddr])            //MOV ESI, DWORD PTR DS:[g_accountAddr]
-	+	PUSH(ESI)                          //PUSH ESI
-	+	CALL([GetHostByName])              //CALL DWORD PTR DS:[<&WS2_32.#52>] ; WS2_32.gethostbyname()
-	+	MOV(ECX, [EAX, 0xC])               //MOV ECX, DWORD PTR DS:[EAX+0C]
-	+	MOV(EDX, [ECX])                    //MOV EDX, DWORD PTR DS:[ECX]
-	+	MOV(EAX, EDX)                      //MOV EAX, EDX
-	+	MOVZX(ECX, BYTE_PTR, [EAX, 3])     //MOVZX ECX, BYTE PTR DS:[EAX+3]
-	+	PUSH(ECX)                          //PUSH ECX
-	+	MOVZX(ECX, BYTE_PTR, [EAX, 2])     //MOVZX ECX, BYTE PTR DS:[EAX+2]
-	+	PUSH(ECX)                          //PUSH ECX
-	+	MOVZX(ECX, BYTE_PTR, [EAX, 1])     //MOVZX ECX, BYTE PTR DS:[EAX+1]
-	+	PUSH(ECX)                          //PUSH ECX
-	+	MOVZX(ECX, BYTE_PTR, [EAX])        //MOVZX ECX, BYTE PTR DS:[EAX]
-	+	PUSH(ECX)                          //PUSH ECX
-	+	PUSH(IPformat)                     //PUSH OFFSET addr1 ; ASCII "%d.%d.%d.%d"
-	+	PUSH(MakeFiller(2))                //PUSH OFFSET addr2 ; location is at the end of the code with Initial value "127.0.0.1"
-	+	CALL([WsprintfA])                  //CALL DWORD PTR DS:[<&USER32.wsprintfA>]
-	+	ADD(ESP, 0x18)                     //ADD ESP,18
-	+	MOV([AccountAddr], MakeFiller(2))  //MOV DWORD PTR DS:[g_accountAddr], addr2 ; Replace g_accountAddr current value with its ip address
-	+	POPAD                              //POPAD
-	+	RETN()                             //RETN
-	+	" 00"                              //Just a gap in between
-	+	"127.000.000.001\x00".toHex()      //addr2 ; Putting enough space for 4*3 digits  + 3 Dots + 1 NULL at the end
+		CALL(Filler(1))                 //CALL g_ResMgr ; call the actual function that was supposed to be run
+	+	PUSHAD                          //PUSHAD
+	+	MOV(ESI, [AccountAddr])         //MOV ESI, DWORD PTR DS:[g_accountAddr]
+	+	PUSH(ESI)                       //PUSH ESI
+	+	CALL([GetHostByName])           //CALL DWORD PTR DS:[<&WS2_32.#52>] ; WS2_32.gethostbyname()
+	+	MOV(ECX, [EAX, 0xC])            //MOV ECX, DWORD PTR DS:[EAX+0C]
+	+	MOV(EDX, [ECX])                 //MOV EDX, DWORD PTR DS:[ECX]
+	+	MOV(EAX, EDX)                   //MOV EAX, EDX
+	+	MOVZX(ECX, BYTE_PTR, [EAX, 3])  //MOVZX ECX, BYTE PTR DS:[EAX+3]
+	+	PUSH(ECX)                       //PUSH ECX
+	+	MOVZX(ECX, BYTE_PTR, [EAX, 2])  //MOVZX ECX, BYTE PTR DS:[EAX+2]
+	+	PUSH(ECX)                       //PUSH ECX
+	+	MOVZX(ECX, BYTE_PTR, [EAX, 1])  //MOVZX ECX, BYTE PTR DS:[EAX+1]
+	+	PUSH(ECX)                       //PUSH ECX
+	+	MOVZX(ECX, BYTE_PTR, [EAX])     //MOVZX ECX, BYTE PTR DS:[EAX]
+	+	PUSH(ECX)                       //PUSH ECX
+	+	PUSH(IPformat)                  //PUSH OFFSET addr1 ; ASCII "%d.%d.%d.%d"
+	+	PUSH(Filler(2))                 //PUSH OFFSET addr2 ; location is at the end of the code with Initial value "127.0.0.1"
+	+	CALL([WsprintfA])               //CALL DWORD PTR DS:[<&USER32.wsprintfA>]
+	+	ADD(ESP, 0x18)                  //ADD ESP,18
+	+	MOV([AccountAddr], Filler(2))   //MOV DWORD PTR DS:[g_accountAddr], addr2 ; Replace g_accountAddr current value with its ip address
+	+	POPAD                           //POPAD
+	+	RETN()                          //RETN
+	+	" 00"                           //Just a gap in between
+	+	"127.000.000.001\x00".toHex()   //addr2 ; Putting enough space for 4*3 digits  + 3 Dots + 1 NULL at the end
 	;
 	let fullSize = dnsCode.byteCount();
 	let csize = fullSize - (3*1 + 4*3 + 1); //(3 Dots, 4x3 digits, NULL)

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Secret                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-10                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -56,7 +56,6 @@ NoDoramCreation = function()
 	;
 
 	addr = Exe.FindHex(code);
-	console.showAddr(addr);
 	if (addr < 0)
 		throw Error("2nd pattern (3 MOV) missing");
 

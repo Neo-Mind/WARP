@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-11                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,14 +38,14 @@
 CustomAuraSprites = function()
 {
 	/// 1.1 - Find the string 'effect\ring_blue.tga'
-	let addr = Exe.FindText("effect\\ring_blue.tga", VIRTUAL, false); //Some clients dont have NULL prefix
+	let addr = Exe.FindText("effect\\ring_blue.tga", false); //Some clients dont have NULL prefix
 	if (addr < 0)
 		throw Error("'effect\\ring_blue.tga' not found");
 
 	let rblue = addr.toHex();
 
 	/// 1.2 - Find the string 'effect\pikapika2.bmp'
-	addr = Exe.FindText("effect\\pikapika2.bmp", VIRTUAL, false); //same issue
+	addr = Exe.FindText("effect\\pikapika2.bmp", false); //same issue
 	if (addr < 0)
 		throw Error("'effect\\pikapika2.bmp' not found");
 
@@ -70,13 +70,13 @@ CustomAuraSprites = function()
 
 	/// 3.1 - Find the first pattern (original strings are PUSHed to display the aura)
 	let template =
-		PUSH(MakeFiller(1))  //PUSH OFFSET addr
+		PUSH(Filler(1))         //PUSH OFFSET addr
 	+	(Exe.Version <= 11.0 && Exe.BuildDate < 20191000
-	?	MOV(ECX, R32)        //MOV ECX, reg32_A ; Not present for 14.16
+	?	MOV(ECX, R32)           //MOV ECX, reg32_A ; Not present for 14.16
 	:	''
 	)
-	+	CALL(ALLWC)          //CALL addr2
-	+	JMP(ALLWC)           //JMP addr3
+	+	CALL(ALLWC)             //CALL addr2
+	+	JMP(ALLWC)              //JMP addr3
 	+	(Exe.Version > 11.0
 	?	MOV(ECX, [EBP, NEG2WC]) //MOV ECX, DWORD PTR SS:[EBP-x] ; Only present for 14.16
 	:	''
@@ -90,7 +90,7 @@ CustomAuraSprites = function()
 	let offPP = template.byteCount() + 2;
 
 	// PUSH reg for VC6 & some clients in VC9. PUSH 0 for the remaining
-	let infix = Exe.Version < 9.0 || (Exe.Version == 9.0 && Exe.BuildDate > 20101116) ? PUSH_R : PUSH_0 ;
+	let infix = Exe.Version < 9.0 || (Exe.Version === 9.0 && Exe.BuildDate > 20101116) ? PUSH_R : PUSH_0 ;
 
 	addr = Exe.FindHex(codeRB + infix + codePP);
 	if (addr < 0)
@@ -109,12 +109,12 @@ CustomAuraSprites = function()
 	{
 		/// 4.1 - Find the second pattern
 		let code =
-			PUSH(ESI)        //PUSH ESI
-		+	MOV(ESI, ECX)    //MOV ESI, ECX
-		+	CALL(NEG2WC)     //CALL addr1
-		+	MOV(ECX, ESI)    //MOV ECX, ESI
-		+	POP(ESI)         //POP ESI
-		+	JMP(NEG2WC)      //JMP addr2
+			PUSH(ESI)      //PUSH ESI
+		+	MOV(ESI, ECX)  //MOV ESI, ECX
+		+	CALL(NEG2WC)   //CALL addr1
+		+	MOV(ECX, ESI)  //MOV ECX, ESI
+		+	POP(ESI)       //POP ESI
+		+	JMP(NEG2WC)    //JMP addr2
 		;
 		let csize = code.byteCount();
 		let addrs = Exe.FindHexN(code);
@@ -156,14 +156,14 @@ CustomAuraLimits = function()
 {
 	/// 1.1 - Find the double PUSH before ReLaunchBlurEffects is CALLed
 	let code =
-		PUSH(0x14E)     //PUSH 14E
+		PUSH(0x14E)  //PUSH 14E
 	+	(Exe.BuildDate > 20191022
 	?
-		PUSH_0          //PUSH 0 ;extra for newer clients
+		PUSH_0       //PUSH 0 ;extra for newer clients
 	:
 		''
 	)
-	+	PUSH(0x6D)      //PUSH 6D
+	+	PUSH(0x6D)   //PUSH 6D
 	;
 	let addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
@@ -280,7 +280,7 @@ CustomAuraLimits = function()
 		AuraConsts[3] = AuraConsts[2];
 
 		/// 2.16 - Get the number of zero pushes before the aura const push
-		let addrs = Exe.FindHexN(pushZero, -1, addr - 10, addr + 4);
+		let addrs = Exe.FindHexN(pushZero, addr - 10, addr + 4);
 
 		/// 2.17 - Construct the PUSH0s for use later
 		PUSH0s = pushZero.repeat(addrs.length);
@@ -372,8 +372,11 @@ CustomAuraLimits = function()
 
 	/// 4.2 - Load the input file which creates the hash table mapping the id ranges to level limits & aura id
 	let AuraSpec = Warp.LoadYaml(inFile);
-	if (!IsArr(AuraSpec))
-		Cancel("Invalid/non-existent mapping file");
+	if (AuraSpec === false) //some error occured while loading
+		return false;
+
+	else if (!IsArr(AuraSpec))
+		throw Error("Need a list of Aura specifications");
 
 	/// 4.3 - Calculate the total table size
 	let tblSize = AuraSpec.reduce( (acc, hash) =>
@@ -392,8 +395,8 @@ CustomAuraLimits = function()
 	+	PUSH(EDX)                       //PUSH EDX
 	+	PUSH(EBX)                       //PUSH EBX
 	+	MovSSN                          //MOV ECX, g_session
-	+	CALL(MakeFiller(1))             //CALL GetJobID
-	+	MOV(EBX, MakeFiller(2))         //MOV EBX, tblAddr
+	+	CALL(Filler(1))                 //CALL GetJobID
+	+	MOV(EBX, Filler(2))             //MOV EBX, tblAddr
 	+	MOV(ECX, [EBX])                 //MOV ECX, DWORD PTR DS:[EBX]; idTblLoop
 	+	TEST(ECX, ECX)                  //TEST ECX, ECX
 	+	JE(0x49)                        //JE SHORT exitFunc

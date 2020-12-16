@@ -107,8 +107,8 @@ EnableWho = function()
 
 		if (addr > 0)
 		{
-			/// 3.2 - Retrieve the JNE's target address.
-			let tgtAddr = Exe.GetTgtAddr(addr + code.byteCount() - 1, VIRTUAL, 1);
+			/// 3.2 - Retrieve the JNE SHORT target address.
+			let tgtAddr = Exe.GetTgtAddr(addr + code.byteCount() - 1, 1);
 
 			/// 3.3 - Create a JMP to it right after the CMP
 			Exe.SetJMP(addr + 3, tgtAddr);

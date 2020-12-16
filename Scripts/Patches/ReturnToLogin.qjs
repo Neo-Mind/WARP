@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144)                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-06                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -105,7 +105,7 @@ DisConnToLogin = function()
 
 	/// 3.2 - Get the number of PUSH 0 instructions between the Mode Change and refAddr assignment before
 	///       We need to push the same number in our code
-	let zeros = Exe.FindHexN( PUSH_0, -1, jmpAddr + 6, addr );
+	let zeros = Exe.FindHexN( PUSH_0, jmpAddr + 6, addr );
 	if (zeros.isEmpty())
 		throw Error("PUSH 0s not found");
 
@@ -152,7 +152,7 @@ DisConnToLogin = function()
 			throw Error("JMP to Mode changer CALL location not found");
 
 		/// 5.3 - Goto the JMP address
-		addr = Exe.GetTgtAddr(addr + 1, PHYSICAL, 4);
+		addr = Exe.GetTgtAddr(addr + 1, PHYSICAL);
 	}
 
 	/// 5.4 - Find the CALL to ErrorMsg function
@@ -169,7 +169,7 @@ DisConnToLogin = function()
 	{
 		code =
 			CALL(NEG3WC)    //CALL UIWindowMgr::ErrorMsg
-		+	MOV(EAX, [EDI])    //MOV EAX, DWORD PTR DS:[EDI]
+		+	MOV(EAX, [EDI]) //MOV EAX, DWORD PTR DS:[EDI]
 		;
 		offset = 5;
 	}
@@ -180,19 +180,19 @@ DisConnToLogin = function()
 	jmpAddr = addr + offset;
 
 	/// 6.1 - Find the Mode changer CALL after <addr>
-	if (Exe.Version < 9.0 || Exe.Version >= 11.0) //VC6 & VC11+
+	if (Exe.Version === 10.0) //VC10
+	{
+		code =
+			PUSH_2               //PUSH 2
+		+	CALL(EDX)            //CALL EDX
+		;
+	}
+	else if (Exe.Version < 9.0 || Exe.Version >= 11.0) //VC6 & VC11+
 	{
 		code =
 			PUSH_2               //PUSH 2
 		+	MOV(ECX, EDI)        //MOV ECX, EDI
 		+	CALL([EAX, 0x18])    //CALL DWORD PTR DS:[EAX+18]
-		;
-	}
-	else if (Exe.Version >= 10.0) //VC10
-	{
-		code =
-			PUSH_2               //PUSH 2
-		+	CALL(EDX)            //CALL EDX
 		;
 	}
 	else //VC9
@@ -205,7 +205,7 @@ DisConnToLogin = function()
 	}
 
 	retnAddr = Exe.FindHex(code, addr, addr + 0x20);
-	if (retnAddr < 0 && Exe.Version >= 9.0 && Exe.Version < 10.0) //VC9 2nd format
+	if (retnAddr < 0 && Exe.Version === 9.0) //VC9 2nd format
 	{
 		code = code.replace( MOV(ECX, EDI), MOV(ECX, EBP) ); //Change EDI to EBP in ECX assignment
 		retnAddr = Exe.FindHex(code, addr, addr + 0x20);

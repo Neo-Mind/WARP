@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -44,7 +44,7 @@ TildeForMatk = function()
 		throw Error("Incorrect no. of matches found");
 
 	/// 2.1 - Find the string '%d ~ %d'
-	addr = Exe.FindText("%d ~ %d", VIRTUAL, false);
+	addr = Exe.FindText("%d ~ %d", false);
 	if (addr < 0)
 	{
 		/// 2.2 - If not present, allocate space for adding the string

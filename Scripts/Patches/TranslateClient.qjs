@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -77,8 +77,11 @@ TranslateClient = function()
 
 	/// 2.2 - Load the mapping
 	let Translations = Warp.LoadYaml(inFile);
-	if (!Array.isArray(Translations))
-		Cancel("Invalid/Non-existent translation file");
+	if (Translations === false)
+		return false;
+
+	else if (!IsArr(Translations))
+		throw Error("Need a list of translations");
 
 	/// 2.3 - Open the Failed Translations output file - for writing out unexpected translation fails
 	let fp = new TextFile(OUTDIR + "FailedTranslations_" + ROC.BaseName + ".txt", 'w');
@@ -94,11 +97,14 @@ TranslateClient = function()
 	/// 3.2 - Save the filtered array with successful translations
 	let translated = Translations.filter( (hash, idx) =>
 	{
-		/// 3.3 - Retrieve the 3 parts
+		/// 3.3 - Retrieve the 3 parts & verify if we are within the expected date range for the builddate
 		let findPat = hash.find;
 		let replStr = hash.replace;
-		let desc = hash.desc;
-
+		let {startDate, endDate, desc} = hash;
+		
+		if ( (IsNum(startDate) && Exe.BuildDate < startDate) || (IsNum(endDate) && Exe.BuildDate > endDate) )
+			return true; // its not a fail
+	
 		/// 3.4 - Ensure description is a valid string/number, defaults to the replacement string
 		if (desc === undefined)
 			desc = replStr;
@@ -177,7 +183,7 @@ TranslateClient = function()
 	});
 	fp.Close();
 
-	/// 4.1 - If 'translated' is empty i.e. everything in Translations array failed, then report error
+	/// 4.1 - If 'translated' is empty i.e. everything in Translations array failed (highly unlikely), then report error
 	if (translated.isEmpty())
 		throw Error("All translations had issues");
 

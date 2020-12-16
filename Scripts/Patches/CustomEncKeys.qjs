@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -219,7 +219,7 @@ _CEK_SetupObfuscate = function(index)
 	Exe.AddHex(PACKET.PatchData[3], code);
 
 	/// 2.4 - Create a JMP to the allocated space from PACKET.Assigner
-	Exe.SetHex(PACKET.Assigner, JMP(Exe.Phy2Vir(PACKET.PatchData[3]), Exe.Phy2Vir(PACKET.Assigner)) );
+	Exe.SetJMP(PACKET.Assigner, PACKET.PatchData[3], PHYSICAL);
 
 	/// 2.5 - Save the index as the 5th element
 	PACKET.PatchData[4] = index;

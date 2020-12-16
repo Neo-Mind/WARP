@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -44,7 +44,7 @@ EnableHttpEmblem = function()
 	if (addr < 0)
 		throw Error("Pattern not found")
 
-	/// 2 - Change buffer addr
+	/// 2 - Change buffer addr from 6C to 3C
 	Exe.SetUint8(addr + 5, 0x3C);
 
 	/* Used for debug

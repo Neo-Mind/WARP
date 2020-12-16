@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-10                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -122,7 +122,7 @@ NoMultiWindow = function()
 	+   PUSH(ESI)                      //PUSH ESI
 	+   CALL(EAX)                      //CALL EAX
 	+   POP(ESI)                       //POP ESI ; addr2
-	+   JMP(MakeFiller(1))             //JMP addr3 (jmpAddr + 6)
+	+   JMP(Filler(1))                 //JMP addr3 (jmpAddr + 6)
 	;
 	let csize = code.byteCount();
 
@@ -140,7 +140,7 @@ NoMultiWindow = function()
 	Exe.AddHex(free, code);
 
 	/// 2.6 - Create JMP + 1 NOP to the function at jmpAddr
-	Exe.SetJMP(jmpAddr, freeVir, VIRTUAL, 1);
+	Exe.SetJMP(jmpAddr, freeVir, 1);
 
 	return true;
 };

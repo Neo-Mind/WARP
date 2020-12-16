@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-12-10                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -40,39 +40,39 @@ RemoveBookingJobs = function()
 	if (Exe.Version < 9.0) //VC6
 	{        
 		code =
-			LEA(R32, [R32, 0x65D])   //LEA reg32_A, [reg32_B + 65D]
-		+   ADD(R32, R32)            //ADD reg32_B, reg32_C
-		+   MOV([EBP, WCn], R32)     //MOV DWORD PTR SS:[EBP-const1], reg32_A
-		+   MOV([EBP, WCn], R32)     //MOV DWORD PTR SS:[EBP-const2], reg32_B
-		+   MOV(EAX, [EBP, WCn])     //MOV EAX, DWORD PTR SS:[EBP-const1]
-		+   PUSH_EAX                 //PUSH EAX
-		+   CALL()                   //CALL MsgStr
+			LEA(R32, [R32, 0x65D])  //LEA reg32_A, [reg32_B + 65D]
+		+   ADD(R32, R32)           //ADD reg32_B, reg32_C
+		+   MOV([EBP, WCn], R32)    //MOV DWORD PTR SS:[EBP-const1], reg32_A
+		+   MOV([EBP, WCn], R32)    //MOV DWORD PTR SS:[EBP-const2], reg32_B
+		+   MOV(EAX, [EBP, WCn])    //MOV EAX, DWORD PTR SS:[EBP-const1]
+		+   PUSH_EAX                //PUSH EAX
+		+   CALL()                  //CALL MsgStr
 		;
 		type = 1;
 	}
-	else if (Exe.Version == 10.0 || Exe.Version > 11.0) //VC10 & VC14.16
+	else if (Exe.Version === 10.0 || Exe.Version > 11.0) //VC10 & VC14.16
 	{
 
-		let reg = Exe.Version == 10.0 ? R32 : EAX;
+		let reg = Exe.Version === 10.0 ? R32 : EAX;
 		code =
-			MOV(reg, [EBP, WCn])     //MOV reg32_A, DWORD PTR SS:[EBP-const]
+			MOV(reg, [EBP, WCn])    //MOV reg32_A, DWORD PTR SS:[EBP-const]
 		+	(Exe.Version > 11.0
 		?	NOP
 		:	''
 		)
-		+   ADD(reg, 0x65D)          //ADD reg32_A, 65D
-		+   PUSH_R                   //PUSH reg32_A
-		+   CALL()                   //CALL MsgStr
+		+   ADD(reg, 0x65D)         //ADD reg32_A, 65D
+		+   PUSH_R                  //PUSH reg32_A
+		+   CALL()                  //CALL MsgStr
 		;
 		type = 3;
 	}
 	else //VC9 & VC11
 	{
 		code =
-			LEA(ECX, [ECX, 0])       //LEA ECX, [ECX] ; 0 is required since it is looking for the 3 byte version
-		+   LEA(R32, [R32, 0x65D])   //LEA reg32_A, [reg32_B + 65D]
-		+   PUSH_R                   //PUSH reg32_A
-		+   CALL()                   //CALL MsgStr
+			LEA(ECX, [ECX, 0])      //LEA ECX, [ECX] ; 0 is required since it is looking for the 3 byte version
+		+   LEA(R32, [R32, 0x65D])  //LEA reg32_A, [reg32_B + 65D]
+		+   PUSH_R                  //PUSH reg32_A
+		+   CALL()                  //CALL MsgStr
 		;
 		type = 2; 
 	}
@@ -124,7 +124,7 @@ RemoveBookingJobs = function()
 		}
 		case 2:
 		{
-			if (Exe.Version == 11.0) //VC11
+			if (Exe.Version === 11.0) //VC11
 			{
 				code =
 					ADD(ESP, 4)                  //ADD ESP, 4
@@ -152,31 +152,31 @@ RemoveBookingJobs = function()
 		}
 		case 3: //VC10 & VC14.16
 		{
-			if (Exe.Version == 10.0) //VC10
+			if (Exe.Version === 10.0) //VC10
 			{
 				code =
-					MOV(R32, 1)                     //MOV reg32_A, 1
-				+   ADD([EBP, WCn], R32)            //ADD DWORD PTR SS:[EBP-const1], reg32_A
-				+   SUB([EBP, WCn], R32)            //SUB DWORD PTR SS:[EBP-const2], reg32_A
-				+   MOV([EBP, WCn], 0xF)            //MOV DWORD PTR SS:[EBP-const3], 0F
-				+   MOV([EBP, WCn], R32)            //MOV DWORD PTR SS:[EBP-const4], reg32_B
-				+   MOV([EBP, WCn], R8)             //MOV BYTE PTR SS:[EBP-const5], reg8_B
-				+   JNZ(WCn)                        //JNZ SHORT addr
+					MOV(R32, 1)                  //MOV reg32_A, 1
+				+   ADD([EBP, WCn], R32)         //ADD DWORD PTR SS:[EBP-const1], reg32_A
+				+   SUB([EBP, WCn], R32)         //SUB DWORD PTR SS:[EBP-const2], reg32_A
+				+   MOV([EBP, WCn], 0xF)         //MOV DWORD PTR SS:[EBP-const3], 0F
+				+   MOV([EBP, WCn], R32)         //MOV DWORD PTR SS:[EBP-const4], reg32_B
+				+   MOV([EBP, WCn], R8)          //MOV BYTE PTR SS:[EBP-const5], reg8_B
+				+   JNZ(WCn)                     //JNZ SHORT addr
 				;
 			}
 			else //VC14.16
 			{
 				code =
-					MOV(R32, [EBP, WCn])            //MOV reg32_A, DWORD PTR SS:[EBP-const1]
-				+	INC(R32)                        //INC reg32_A
-				+	MOV(R32, [EBP, WCn])            //MOV reg32_B, DWORD PTR SS:[EBP-const2]
-				+	INC(R32)                        //INC reg32_B
-				+	MOV([EBP, WCn], 0)              //MOV DWORD PTR SS:[EBP-const3], 0
-				+	MOV([EBP, WCn], 0xF)            //MOV DWORD PTR SS:[EBP-const4], F
-				+	MOV(BYTE_PTR, [EBP, WCn], 0)    //MOV BYTE PTR SS:[EBP-const5], 0
-				+	MOV([EBP, WCn], R32)            //MOV DWORD PTR SS:[EBP-const2], reg32_B
-				+	CMP(R32, [4, R32, EBP, WCn])    //CMP reg32_A, DWORD PTR SS:[4*reg32_A + EBP + const6]
-				+	JL(NEG2WC)                      //JL addr
+					MOV(R32, [EBP, WCn])         //MOV reg32_A, DWORD PTR SS:[EBP-const1]
+				+	INC(R32)                     //INC reg32_A
+				+	MOV(R32, [EBP, WCn])         //MOV reg32_B, DWORD PTR SS:[EBP-const2]
+				+	INC(R32)                     //INC reg32_B
+				+	MOV([EBP, WCn], 0)           //MOV DWORD PTR SS:[EBP-const3], 0
+				+	MOV([EBP, WCn], 0xF)         //MOV DWORD PTR SS:[EBP-const4], F
+				+	MOV(BYTE_PTR, [EBP, WCn], 0) //MOV BYTE PTR SS:[EBP-const5], 0
+				+	MOV([EBP, WCn], R32)         //MOV DWORD PTR SS:[EBP-const2], reg32_B
+				+	CMP(R32, [4, R32, EBP, WCn]) //CMP reg32_A, DWORD PTR SS:[4*reg32_A + EBP + const6]
+				+	JL(NEG2WC)                   //JL addr
 				;
 			}
 
@@ -200,8 +200,11 @@ RemoveBookingJobs = function()
 
 	/// 3.2 - Retrieve the list from the file
 	let idList = Warp.LoadYaml(inFile);
-	if (!IsArr(idList))
-		Cancel("Improper/Non-existent file received");
+	if (idList === false)
+		return false;
+		
+	else if (!IsArr(idList))
+		throw Error("Need a list of Job IDs");
 
 	/// 3.3 - Prune out invalid values.
 	idList = idList.filter( id => IsNum(id) && id >= 0x65D );
@@ -213,33 +216,33 @@ RemoveBookingJobs = function()
 
 	/// 4.1 - Prepare our function to check the ID
 	code =
-		PUSH_EAX                  //PUSH EAX
-	+   PUSH(ECX)                 //PUSH ECX
-	+   PUSH(EDX)                 //PUSH EDX
-	+   MOV(EAX, [ESP, 0x10])     //MOV EAX, DWORD PTR SS:[ESP+10]; Arg0
-	+   INC(EAX)                  //INC EAX ; Needed because the ids start from 0
-	+   MOV(ECX, MakeFiller(1))   //MOV ECX, listaddr
-	+   MOVZX(EDX, [ECX])         //MOVZX EDX, WORD PTR DS:[ECX] ; addr3
-	+   TEST(EDX, EDX)            //TEST EDX, EDX
-	+   JE(8)                     //JE SHORT addr1
-	+   CMP(EAX, EDX)             //CMP EAX, EDX
-	+   JE(0xC)                   //JE SHORT addr2
-	+   INC(ECX)                  //INC ECX
-	+   INC(ECX)                  //INC ECX
-	+   JMP(-0xF)                 //JMP SHORT addr3
-	+   POP(EDX)                  //POP EDX
-	+   POP(ECX)                  //POP ECX
-	+   POP(EAX)                  //POP EAX
-	+   JMP(MakeFiller(2))        //JMP MsgStr
+		PUSH_EAX               //PUSH EAX
+	+   PUSH(ECX)              //PUSH ECX
+	+   PUSH(EDX)              //PUSH EDX
+	+   MOV(EAX, [ESP, 0x10])  //MOV EAX, DWORD PTR SS:[ESP+10]; Arg0
+	+   INC(EAX)               //INC EAX ; Needed because the ids start from 0
+	+   MOV(ECX, Filler(1))    //MOV ECX, listaddr
+	+   MOVZX(EDX, [ECX])      //MOVZX EDX, WORD PTR DS:[ECX] ; addr3
+	+   TEST(EDX, EDX)         //TEST EDX, EDX
+	+   JE(8)                  //JE SHORT addr1
+	+   CMP(EAX, EDX)          //CMP EAX, EDX
+	+   JE(0xC)                //JE SHORT addr2
+	+   INC(ECX)               //INC ECX
+	+   INC(ECX)               //INC ECX
+	+   JMP(-0xF)              //JMP SHORT addr3
+	+   POP(EDX)               //POP EDX
+	+   POP(ECX)               //POP ECX
+	+   POP(EAX)               //POP EAX
+	+   JMP(Filler(2))         //JMP MsgStr
 	;
 	let offsetMSS = code.byteCount();
 
 	code +=
-		POP(EDX)                  //POP EDX
-	+   POP(ECX)                  //POP ECX
-	+   POP(EAX)                  //POP EAX
-	+   ADD(ESP, 8)               //ADD ESP, 8
-	+   JMP(MakeFiller(3))        //JMP retnAddr
+		POP(EDX)               //POP EDX
+	+   POP(ECX)               //POP ECX
+	+   POP(EAX)               //POP EAX
+	+   ADD(ESP, 8)            //ADD ESP, 8
+	+   JMP(Filler(3))         //JMP retnAddr
 	;
 	let csize = code.byteCount();
 

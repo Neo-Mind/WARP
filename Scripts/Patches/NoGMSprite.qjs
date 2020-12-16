@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -44,7 +44,6 @@ NoGMSprite = function()
 	/* - Seems to be not of any use 
 	if (addr < 0)
 	{
-		console.log(2, Exe.Version, Exe.BuildDate);
 		code = code.remove( MOV(ECX, R32) ); //Remove the first MOV ECX, reg32_A . It might have been assigned earlier
 		addr = Exe.FindHex(code);
 	}
@@ -69,7 +68,7 @@ NoGMSprite = function()
 	+	TEST(AL, AL)		//TEST AL, AL
 	;
 	let jzPos;
-	if (Exe.Version == 9.0) //VC9
+	if (Exe.Version === 9.0) //VC9
 	{
 		code += JZ(WCp);    //JZ SHORT addr2
 		jzPos = -2;

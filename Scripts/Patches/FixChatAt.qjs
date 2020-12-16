@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-06                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ///
 FixChatAt = function()
 {
-	if (Exe.Version >= 9.0)
+	if (Exe.Version > 6.0)
 	{
 		/// 1.1 - Find the JZ after '@' check
 		let code =
@@ -94,7 +94,7 @@ FixChatAt = function()
 		+	XOR(EAX, EAX)                      //XOR EAX,EAX
 		+	RETN(4)                            //RETN 4
 		+	POPAD                              //POPAD <- addr1
-		+	JMP(MakeFiller(1))				   //JMP func
+		+	JMP(Filler(1))				       //JMP func
 		;
 		let csize = code.byteCount();
 

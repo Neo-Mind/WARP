@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei Karas (4144)                                    *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ///
 NoHardCodedAddr = function()
 {
-	if (Exe.Version < 14.0) //VC11 basically since the patch aint valid for older versions
+	if (Exe.Version < 14.0) //VC11 basically since the patch isnt valid for older versions
 	{
 		/// 1.1 - Find the code where we will remove call
 		let code =
@@ -145,25 +145,32 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 		Exe.SetHex(ovrdAddr, code);
 
 		/// 2.2 - Find otp_addr usage
-		code =	PUSH([otpAddr]);             //PUSH DWORD PTR DS:[otp_addr]
-
-		if (isOld)
-			code +=	MOV(R32, [POS3WC]);      //MOV reg32_A, DWORD PTR DS:[addr] ; reg32_A is usually ESI & addr is _snprintf_s
-		else
-			code += LEA(R32, [R32, NEG3WC]); //LEA reg32_B, [reg32_C + buf]; reg32_B is usually EAX and reg32_C is EBP
-
-		code +=
-			PUSH(POS3WC)                     //PUSH OFFSET addr ; ASCII "%s"
-		+	PUSH(-1)                         //PUSH 0FFFFFFFF (-1)
-		;
-
-		if (isOld)
-			code += LEA(R32, [R32, NEG2WC]); //LEA reg32_B, [reg32_C + buf]; reg32_B is usually EAX and reg32_C is EBP
-
-		code +=	PUSH(0x10);                  //PUSH 10
-
-		if (!isOld)
-			code +=	PUSH_EAX ;               //PUSH EAX
+		code = [
+			PUSH([otpAddr])          //PUSH DWORD PTR DS:[otp_addr]
+		,
+			isOld
+		?
+			MOV(R32, [POS3WC])       //MOV reg32_A, DWORD PTR DS:[addr] ; reg32_A is usually ESI & addr is _snprintf_s
+		:                            // or
+			LEA(R32, [R32, NEG3WC])  //LEA reg32_B, [reg32_C + buf]; reg32_B is usually EAX and reg32_C is EBP
+		,
+			PUSH(POS3WC)             //PUSH OFFSET addr ; ASCII "%s"
+		+	PUSH(-1)                 //PUSH 0FFFFFFFF (-1)
+		,
+			isOld
+		?	
+			LEA(R32, [R32, NEG2WC])  //LEA reg32_B, [reg32_C + buf]; reg32_B is usually EAX and reg32_C is EBP
+		:
+			''
+		,
+			PUSH(0x10)               //PUSH 10
+		,
+			isOld
+		?
+			''
+		:
+			PUSH_EAX                 //PUSH EAX
+		].join('');
 
 		addr = Exe.FindHex(code);
 		if (addr < 0)
@@ -210,7 +217,7 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 		let gAuthHost = Exe.GetInt32(addr + offsetAuth);
 
 		/// 3.5 - Find the format string '%s:%s'
-		let s_s = Exe.FindText("%s:%s", VIRTUAL, false);
+		let s_s = Exe.FindText("%s:%s", false);
 		if (s_s < 0)
 		{
 			/// 3.6 - If not found then allocate space for adding it

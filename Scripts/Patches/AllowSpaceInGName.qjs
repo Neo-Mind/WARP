@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shakto                                                 *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,11 +33,11 @@ AllowSpaceInGName = function()
 {
 	/// 1.1 - Find the character check
 	let code =
-		PUSH(0x20)          //PUSH 20
-	+	PUSH_R              //PUSH reg32_B
-	+	CALL(R32)           //CALL reg32_A; MSVCR#.strchr
-	+	ADD(ESP, 8)         //ADD ESP, 8
-	+	TEST(EAX, EAX)      //TEST EAX, EAX
+		PUSH(0x20)      //PUSH 20
+	+	PUSH_R          //PUSH reg32_B
+	+	CALL(R32)       //CALL reg32_A; MSVCR#.strchr
+	+	ADD(ESP, 8)     //ADD ESP, 8
+	+	TEST(EAX, EAX)  //TEST EAX, EAX
 	;
 
 	let addr = Exe.FindHex(code);

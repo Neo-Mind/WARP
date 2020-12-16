@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Yommy, Neo-Mind                             *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-06                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -45,9 +45,9 @@ CustomFontHeight = function()
 
 	/// 2.1 - Prepare our function which swaps out the FontHeight
 	let code =
-		MakeFiller(1)                 //This will contain VIRTUAL address of 4 bytes later (needed since we are hijacking indirect CALL)
-	+	MOV([ESP, 4], MakeFiller(2))  //MOV DWORD PTR SS:[ESP+4], newHeight
-	+	JMP([CreateFontA])            //JMP DWORD PTR DS:[<&GDI32.CreateFontA>]
+		Filler(1)                 //This will contain VIRTUAL address of 4 bytes later (needed since we are hijacking indirect CALL)
+	+	MOV([ESP, 4], Filler(2))  //MOV DWORD PTR SS:[ESP+4], newHeight
+	+	JMP([CreateFontA])        //JMP DWORD PTR DS:[<&GDI32.CreateFontA>]
 	;
 	let csize = code.byteCount();
 
@@ -91,7 +91,7 @@ CustomFontHeight = function()
 CustomFontName = function()
 {
 	/// 1.1 - Find location of 'Gulim' (Korean language font which serves as the first entry of the array)
-	let gulAddr = Exe.FindText("Gulim", VIRTUAL, false);
+	let gulAddr = Exe.FindText("Gulim", false);
 	if (gulAddr < 0)
 		throw Error("'Gulim' not found");
 

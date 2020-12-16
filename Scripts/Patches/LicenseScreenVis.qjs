@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, MS, Neo-Mind                                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,8 +39,8 @@ ShowLicense = function()
 
 	/// 1.2 - Find where its PUSHed (it comes just before the conditional jump)
 	let code =
-		PUSH(5)        //PUSH 5
-	+	PUSH(addr)     //PUSH addr; ASCII "model\3dmob\guildflag90_1.gr2"
+		PUSH(5)      //PUSH 5
+	+	PUSH(addr)   //PUSH addr; ASCII "model\3dmob\guildflag90_1.gr2"
 	;
 	addr = Exe.FindHex(code);
 	if (addr < 0)
@@ -51,13 +51,13 @@ ShowLicense = function()
 
 	/// 2.1 - Find the Langtype comparisons after the PUSH
 	code =
-		CMP(EAX, 4)    //CMP EAX, 4
-	+	JE(WCp)        //JE SHORT addr
-	+	CMP(EAX, 8)    //CMP EAX, 8
-	+	JE(WCp)        //JE SHORT addr
-	+	CMP(EAX, 9)    //CMP EAX, 9
-	+	JE(WCp)        //JE SHORT addr
-	+	CMP(EAX, 6)    //CMP EAX, 6
+		CMP(EAX, 4)  //CMP EAX, 4
+	+	JE(WCp)      //JE SHORT addr
+	+	CMP(EAX, 8)  //CMP EAX, 8
+	+	JE(WCp)      //JE SHORT addr
+	+	CMP(EAX, 9)  //CMP EAX, 9
+	+	JE(WCp)      //JE SHORT addr
+	+	CMP(EAX, 6)  //CMP EAX, 6
 	;
 	addr = Exe.FindHex(code, refAddr, refAddr + 0x60);
 

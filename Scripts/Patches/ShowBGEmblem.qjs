@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -74,7 +74,7 @@ ShowBGEmblem = function()
 	/// 2.1 - Save the JNZ's location, it's VIRTUAL counterpart & its target location.
 	let jnzAddr = matchAddr + csize - 2;
 	let showAddr = Exe.Phy2Vir(jnzAddr, CODE);
-	let hideAddr = Exe.GetTgtAddr(jnzAddr + 1, VIRTUAL, 1);
+	let hideAddr = Exe.GetTgtAddr(jnzAddr + 1, 1);
 
 	/// 2.2 - Change the JNZ to XOR EAX, EAX - to avoid coordinate issue later
 	///       (not really needed for recent clients though)
@@ -95,9 +95,9 @@ ShowBGEmblem = function()
 
 	/// 3.1 - Prep our code
 	code =
-		CALL(MakeFiller(1)) //CALL CSession::IsBgMode
-	+	JNZ(MakeFiller(2))  //JNZ showAddr
-	+	JMP(MakeFiller(3))  //JMP hideAddr
+		CALL(Filler(1)) //CALL CSession::IsBgMode
+	+	JNZ(Filler(2))  //JNZ showAddr
+	+	JMP(Filler(3))  //JMP hideAddr
 	;
 
 	/// 3.2 - Allocate space to add it

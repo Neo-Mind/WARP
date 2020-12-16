@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Andrei (4144), X-EcutiOnner        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,7 +37,7 @@ NoEarthQuake = function()
 	let sufAddr = Exe.FindText(".BMP");
 	if (sufAddr < 0 && Exe.BuildDate > 20180000)
 	{
-		sufAddr = Exe.FindText(".BMP", VIRTUAL, false);
+		sufAddr = Exe.FindText(".BMP", false);
 	}
 	if (sufAddr < 0 && Exe.BuildDate > 20180000)
 	{
@@ -293,7 +293,7 @@ NoBlindness = function()
 		}
 		*/
 	}
-	else if (Exe.Version < 14.0) //VC11
+	else if (Exe.Version === 11.0) //VC11
 	{
 		code +=
 			SUB(ESP, 0xC)                //SUB ESP, 0C

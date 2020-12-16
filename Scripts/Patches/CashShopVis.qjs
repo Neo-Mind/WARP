@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-05                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -78,11 +78,11 @@ CashShopVis = function(patchName)
 		let pos1 = code.byteCount() + 4;
 
 		code += 
-			MakeFiller(1)        //Remaining parts are already used for search above
-		+	PUSH(0xBE)           //PUSH 0BE ; addr2
-		+	WINMGR.MovECX        //MOV ECX, OFFSET g_windowMgr
-		+	CALL(MakeFiller(2))  //CALL UIWindowMgr::MakeWindow
-		+	JMP(MakeFiller(3))   //JMP retnAddr; jump back to retnAddr
+			Filler(1)        //Remaining parts are already used for search above
+		+	PUSH(0xBE)       //PUSH 0BE ; addr2
+		+	WINMGR.MovECX    //MOV ECX, OFFSET g_windowMgr
+		+	CALL(Filler(2))  //CALL UIWindowMgr::MakeWindow
+		+	JMP(Filler(3))   //JMP retnAddr; jump back to retnAddr
 		;
 
 		let pos2 = code.byteCount();
@@ -105,7 +105,7 @@ CashShopVis = function(patchName)
 		Exe.AddHex(free, code);
 
 		/// 3.7 - Create a jump to it at jmpAddr
-		Exe.SetHex(jmpAddr, JMP(freeVir, Exe.Phy2Vir(jmpAddr, CODE)));
+		Exe.SetJMP(jmpAddr, freeVir);
 	}
 
 	return true;

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -96,7 +96,7 @@ NoPacketEncr = function()
 	else
 	{
 		/// 3.1 - Retrieve the PHYSICAL address of the KeySetter (which serves as the obfuscator/encryptor as well).
-		let addr = Exe.Vir2Phy(PACKET.KeySetter);
+		let addr = Exe.Vir2Phy(PACKET.KeySetter, CODE);
 
 		/// 3.2 - Change it to EAX = 0 and RETN 4. It will affect all the CALLs but it shouldnt matter.
 		Exe.SetHex(addr, XOR(EAX, EAX) + RETN(4));

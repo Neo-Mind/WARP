@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -72,11 +72,11 @@ InsensitiveStorageSearch = function()
 
 	/// 2.1 - Prepare our code
 	let code =
-		CMP([MakeFiller(1)], 0)   //CMP DWORD PTR DS:[StrStrIA], 0
+		CMP([Filler(1)], 0)       //CMP DWORD PTR DS:[StrStrIA], 0
 	+	JNE(0x2F)                 //JNE SHORT addr2
-	+	PUSH(MakeFiller(2))       //PUSH OFFSET ; ASCII "Shlwapi.dll"
+	+	PUSH(Filler(2))           //PUSH OFFSET ; ASCII "Shlwapi.dll"
 	+	CALL([ROC.GetModHandle])  //CALL DWORD PTR DS:[GetModuleHandleA]
-	+	PUSH(MakeFiller(3))       //PUSH OFFSET ; ASCII "StrStrIA"
+	+	PUSH(Filler(3))           //PUSH OFFSET ; ASCII "StrStrIA"
 	+	PUSH_EAX                  //PUSH EAX
 	+	CALL([ROC.GetProcAddr])   //CALL DWORD PTR DS:[GetProcAddress]
 	+	TEST(EAX, EAX)            //TEST EAX, EAX
@@ -85,8 +85,8 @@ InsensitiveStorageSearch = function()
 		                          //ADD ESP, 8
 	+	PUSH(retnAddr)            //PUSH retnAddr
 	+	RETN()                    //RETN
-	+	MOV([MakeFiller(1)], EAX) //MOV DWORD PTR DS:[StrStrIA], EAX ; addr2
-	+	CALL([MakeFiller(1)])     //CALL DWORD PTR DS:[StrStrIA]
+	+	MOV([Filler(1)], EAX)     //MOV DWORD PTR DS:[StrStrIA], EAX ; addr2
+	+	CALL([Filler(1)])         //CALL DWORD PTR DS:[StrStrIA]
 	+	PUSH(retnAddr)            //PUSH retnAddr
 	+	RETN()                    //RETN
 	+	ALL00                     //will be used to store [StrStrIA]
@@ -121,7 +121,7 @@ InsensitiveStorageSearch = function()
 	Exe.AddHex(free, code + strings);
 
 	/// 3.4 - Create a JMP to our code
-	Exe.SetJMP(addr + callOffset, freeVir, VIRTUAL, 4); //4 NOPs at the end
+	Exe.SetJMP(addr + callOffset, freeVir, 4); //4 NOPs at the end
 
 	return true;
 };

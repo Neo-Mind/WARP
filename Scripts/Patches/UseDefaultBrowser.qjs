@@ -23,11 +23,9 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
-
-// TODO - Pattern not updated for before 2012-02-22. Need to check if its reall needed
 
 ///
 /// \brief Enforce usage of default browser using ShellExecuteA function 
@@ -112,15 +110,7 @@ UseDefaultBrowser = function()
 	Exe.SetCALL(jmpAddr, free, PHYSICAL, saveIns.Size - 5); //Extra NOPs at the end
 
 	/// 3.1 - Find offset where ROWebBrowser is CALLed
-	if (Exe.Version < 10.0) //VC6 - VC9
-	{
-		code =
-			PUSH(EBP)         //PUSH EBP
-		+	PUSH(EBX)         //PUSH EBX
-		+	MOV(ECX, POS3WC)  //MOV ECX, addr
-		;
-	}
-	else if (Exe.Version < 11.0) //VC10
+	if (Exe.Version === 10.0) //VC10
 	{
 		code =
 			MOV(R32, [EBP, NEG2WC]) //MOV reg32_A, DWORD PTR SS:[EBP-x]
@@ -128,11 +118,19 @@ UseDefaultBrowser = function()
 		+	PUSH_R                  //PUSH reg32_A
 		;
 	}
-	else //VC11, VC14.16
+	else if (Exe.Version > 10.0) //VC11, VC14.16
 	{
 		code =
 			PUSH(EBX)            //PUSH EBX
 		+	PUSH([EBP, NEG2WC])  //PUSH DWORD PTR SS:[EBP-x]
+		;
+	}
+	else  //VC6 - VC9
+	{
+		code =
+			PUSH(EBP)         //PUSH EBP
+		+	PUSH(EBX)         //PUSH EBX
+		+	MOV(ECX, POS3WC)  //MOV ECX, addr
 		;
 	}
 
