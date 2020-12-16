@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-11-28                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Convenience class for representing various CPU registers
 ///
-if (typeof(Register) === 'undefined') //avoid redefinition
+if (typeof Register === 'undefined') //avoid redefinition
 {
 	Register = class
 	{
@@ -40,14 +40,14 @@ if (typeof(Register) === 'undefined') //avoid redefinition
 		{
 			/// 1.1 - Assign register name
 			this.Name = name;//just for debug purpose
-			
+
 			/// 1.2 - Assign the index
 			this.Index = (typeof(index) === 'number' && index >= 0 && index <= 7) ? index : -1;
-			
+
 			/// 1.3 - Assign the bit width of the register
 			this.Width = typeof(bitwidth) === 'number' ? bitwidth : 32; //taking 32 bit by default
 		}
-	
+
 		///
 		/// \brief Method to compare 'Register' objects
 		///	
@@ -59,7 +59,7 @@ if (typeof(Register) === 'undefined') //avoid redefinition
 				&& tgt.Width === this.Width
 			);
 		}
-		
+
 		///
 		/// \brief Method to check whether the 'Register' is intended to be a placeholder
 		///
@@ -67,7 +67,7 @@ if (typeof(Register) === 'undefined') //avoid redefinition
 		{
 			return (this.Index === -1);
 		}
-		
+
 		///
 		/// \brief Method to check whether current 'Register' is one of EAX, AX or AL
 		///
@@ -75,87 +75,88 @@ if (typeof(Register) === 'undefined') //avoid redefinition
 		{
 			return (this.Index === 0);
 		}
-		
+
 		///
-		/// \brief Method to write out the details of the register
+		/// \brief Method to write out the details of the register (used for debugging)
 		///
 		toString()
 		{
-			return (this.Name + " {" + this.Width.toString() + "bit Register, index = " + this.Index.toString() + "}");
+			return `${this.Name} {${this.Width} bit Reg , index = ${this.Index}}`;
 		}
 	};
-	
+
 	IdentifyClass(Register);
-	
+
 	///
 	/// \brief Temporary function to create register object & identify it. Returns the created object
 	///
-	function __create(name, bitsize, index)
-	{
+	const _createR_ = (name, bitsize, index) => {
 		Assign(
 			name,
-			"new Register('" + name + "', " + bitsize + ", " + index + ")"
+			`new Register('${name}', ${bitsize}, ${index})`
 		);
 		return eval(name);
-	}
-	
+	};
+
 	///
 	/// \brief Defining the 32 bit register representations
 	///
-	
-	__create('R32', 32); //Generic Placeholder
-	
+
+	_createR_('R32', 32); //Generic Placeholder
+
 	R32.List = [
 		'EAX', 'ECX', 'EDX', 'EBX',
 		'ESP', 'EBP', 'ESI', 'EDI',
-	].map((name, index) => __create(name, 32, index));
-	
-	
+	].map((name, index) => _createR_(name, 32, index));
+
+
 	///
 	/// \brief Defining the 16 bit register representations
 	///
-	
-	__create('R16', 16); //Generic Placeholder
-	
+
+	_createR_('R16', 16); //Generic Placeholder
+
 	R16.List = [
 		'AX', 'CX', 'DX', 'BX',
 		'SP', 'BP', 'SI', 'DI',
-	].map((name, index) => __create(name, 16, index));
-	
-	
+	].map((name, index) => _createR_(name, 16, index));
+
+
 	///
 	/// \brief Defining the 8 bit register representations
 	///
-	
-	__create('R8', 8); //Generic Placeholder
-	
+
+	_createR_('R8', 8); //Generic Placeholder
+
 	R8.List = [
 		'AL', 'CL', 'DL', 'BL', //since ESP, EBP, ESI & EDI dont have 8bit counterparts
 		'AH', 'CH', 'DH', 'BH', //these indices are used for the higher 8bit parts of the above.
-	].map((name, index) => __create(name, 8, index));
-	
-	
+	].map((name, index) => _createR_(name, 8, index));
+
+
 	///
 	/// \brief Defining the FPU Register Stack & SSE Registers
 	///
 	let indices = [0, 1, 2, 3, 4, 6, 7];
-	
-	__create("ST$" ,  80); //Generic Placeholder
-	__create("MM$" ,  64); //Generic Placeholder
-	__create("XMM$", 128); //Generic Placeholder
-	
-	ST$.List  = indices.map( index => __create( 'ST' + index,  80, index) );
-	XMM$.List = indices.map( index => __create('XMM' + index,  64, index) );
-	MM$.List  = indices.map( index => __create( 'MM' + index, 128, index) );
-	
+
+	_createR_("ST$" ,  80); //Generic Placeholder
+	_createR_("MM$" ,  64); //Generic Placeholder
+	_createR_("XMM$", 128); //Generic Placeholder
+
+	ST$.List  = indices.map( index => _createR_( 'ST' + index,  80, index) );
+	MM$.List  = indices.map( index => _createR_( 'MM' + index,  64, index) );
+	XMM$.List = indices.map( index => _createR_('XMM' + index, 128, index) );
+
 	ST = i =>
 		i >= 0 && i <= 7 ? eval("ST" + i) : undefined;
-	
+
+	IdentifyObj("ST");
+
 	///
 	/// \brief Tests whether given var contains a 'Register' object
 	///
 	IsReg = v =>
 		v instanceof Register;
-	
+
 	IdentifyObj('IsReg');
 }

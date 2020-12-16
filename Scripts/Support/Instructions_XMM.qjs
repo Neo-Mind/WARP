@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,12 +35,12 @@
 ///
 const _define_with = function(prefix)
 {
-	for (let i = 1; i < arguments.length; i++)
+	for (let idx = 1; idx < arguments.length; idx++)
 	{
-		let set = arguments[i];
+		let set = arguments[idx];
 		Assign(
 			set[0],
-			"function(){ return _xmm_cmd(" + set[1] + ", " + set[2] + ", " + set[3] + ", arguments, " + prefix + ")}"
+			`function(){ return _xmm_cmd(${set[1]}, ${set[2]}, ${set[3]}, arguments, ${prefix}) }`
 		);
 	}
 };
@@ -50,12 +50,12 @@ const _define_with = function(prefix)
 ///
 const _define_mux_with = function(prefix)
 {
-	for (let i = 1; i < arguments.length; i++)
+	for (let idx = 1; idx < arguments.length; idx++)
 	{
-		let name = arguments[i];
+		let name = arguments[idx];
 		Assign(
 			name,
-			"function(){ return _xmm_cmd_Mux(" + (i-1) + ", arguments, " + prefix + ")}"
+			`function(){ return _xmm_cmd_Mux(${idx-1}, arguments, ${prefix}) }`
 		);
 	}
 }
@@ -196,7 +196,7 @@ _define_with('REPN',
 	['MOVSHDUP'    , 0x16,     , 0x16],	//DQWORD PTR
 
 	['CVTSI2SS'    , 0x2A,     , 0x2A],	//DWORD PTR
-	['MOVNTSS'     ,	       , 0x2B],	//DWORD PTR
+	['MOVNTSS'     ,     , 0x2B      ],	//DWORD PTR
 	['CVTTSS2SI'   , 0x2C,     , 0x2C],	//DWORD PTR
 	['CVTSS2SI'    , 0x2D,     , 0x2D],	//DWORD PTR
 
@@ -242,7 +242,7 @@ _define_with('OPCH',
 	['MOVHPD'      , 0x16, 0x17      ],	//QWORD PTR
 	['MOVAPD'      , 0x28, 0x29, 0x28],	//DQWORD PTR
 	['CVTPI2PD'    , 0x2A,     , 0x2A],	//QWORD PTR
-	['MOVNTPD'     ,		    , 0x2B      ],	//DQWORD PTR
+	['MOVNTPD'     ,     , 0x2B      ],	//DQWORD PTR
 	['CVTTPD2PI'   , 0x2C,     , 0x2C],	//DQWORD PTR
 	['CVTPD2PI'    , 0x2D,     , 0x2D],	//DQWORD PTR
 	['UCOMISD'     , 0x2E,     , 0x2E],	//QWORD PTR
@@ -297,7 +297,7 @@ _define_mux_with('OPCH',
 _xmm_cmd = (ocRP, ocPR, ocRR, args, pre) =>
 {
 	let data = new OpData(args);
-	
+
 	let opCode;
 	switch (data.OpType)
 	{
@@ -305,31 +305,31 @@ _xmm_cmd = (ocRP, ocPR, ocRR, args, pre) =>
 		case OpTypes.A_D:
 			if (ocRP !== undefined)
 				opCode = [0x0F, ocRP];
-			
+
 			break;
-		
+
 		case OpTypes.P_R:
 		case OpTypes.D_A:
 			if (ocPR !== undefined)
 				opCode = [0x0F, ocPR];
-			
+
 			break;
-	
+
 		case OpTypes.R_R:
 			if (ocRR !== undefined)
 				opCode = [0x0F, ocRR];
-			
+
 			break;
-			
+
 		default:
 			break;
 	}
-	
+
 	if (opCode !== undefined)
 	{
 		if (pre instanceof IPrefix)
 			data.Prefix.push(pre);
-		
+
 		return Instr.FromParts(data, opCode).toString();
 	}
 	else
@@ -351,21 +351,21 @@ _xmm_cmd_OO = (ocS, args) =>
 		case OpTypes.R_R:
 			if (data.OpSize === 128)
 				data.Prefix.push(OPCH);
-			
+
 			return Instr.FromParts(data, [0x0F, ocS]).toString();
 	}
-	
+
 	return "";
 };
 
 ///
 /// \brief Creates the hex for SSE instructions with multiple operations
 ///        using supplied immediate value
-/// 
+///
 _xmm_cmd_Mux = (index, args, pre) =>
 {
 	let data = new OpData(args);
-	
+
 	switch (data.OpType)
 	{
 		case OpTypes.R_P:
@@ -378,10 +378,10 @@ _xmm_cmd_Mux = (index, args, pre) =>
 			}
 			if (pre instanceof IPrefix)
 				data.Prefix.push(pre);
-			
+
 			return Instr.FromParts(data, [0x0F, 0xC2]).toString();
 	}
-			
+
 	return "";
 };
 
@@ -403,22 +403,22 @@ MOVD = function()
 		case OpTypes.A_D:
 			opCode = [0x0F, 0x6E];
 			break;
-		
+
 		case OpTypes.P_R:
 		case OpTypes.D_A:
 			opCode = [0x0F, 0x7E];
 			break;
-	
+
 		case OpTypes.R_R:
 			opCode = [0x0F, data.SrcReg.Width === 32 ? 0x6E : 0x7E];//one of the registers should be 32 bit
 			break;
-			
+
 		default:
 			return "";
 	}
 	if (data.OpSize === 128)
 		data.Prefix.push(OPCH);
-	
+
 	return Instr.FromParts(data, opCode).toString();
 };
 
@@ -430,7 +430,7 @@ IdentifyObj('MOVD');
 MOVQ = function()
 {
 	let data = new OpData(arguments);
-	
+
 	let opCode;
 	switch (data.OpType)
 	{
@@ -447,7 +447,7 @@ MOVQ = function()
 				opCode = [0x0F, 0x6F];
 			}
 			break;
-		
+
 		case OpTypes.P_R:
 		case OpTypes.D_A:
 			if (data.OpSize === 128)
@@ -460,11 +460,11 @@ MOVQ = function()
 				opCode = [0x0F, 0x7F];
 			}
 			break;
-	
+
 		default:
 			return "";
 	}
-	
+
 	return Instr.FromParts(data, opCode).toString();
 };
 
