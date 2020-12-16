@@ -264,7 +264,7 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 	}
 
 	$$('1.3 - Extract the JMP DWORD PTR instruction')
-	let jmpDpIns = Instr.fromAddr(jmpDpAddr);
+	let jmpDpIns = Instr.FromAddr(jmpDpAddr);
 
 	$$('2.1 - Based on the case extract the byte being used in JMP DWORD PTR')
 	let caseByte = num;
