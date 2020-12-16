@@ -149,6 +149,8 @@ _swap_ = function(str, find, repl, cnt, bc)
 ///
 SwapFiller = function(str, idx, dataSet, cnt = -1, bc = 4)
 {
+	_$_(arguments.callee.name);
+
 	$$('1 - Limit the byte count')
 	bc = Math.min(bc, 4);
 
@@ -164,6 +166,8 @@ SwapFiller = function(str, idx, dataSet, cnt = -1, bc = 4)
 ///
 SwapFillers = function(str, idMap, cnt = -1, bc = 4)
 {
+	_$_(arguments.callee.name);
+
 	$$('1.1 - Limit the byte count')
 	bc = Math.min(bc, 4);
 
@@ -207,6 +211,8 @@ Wrap = v =>
 ///
 BitWidth = function(v)
 {
+	_$_(arguments.callee.name);
+
 	$$('1 - If the value provided is a register then simply return its width')
 	if (IsReg(v))
 		return v.Width;
@@ -251,6 +257,8 @@ Distance = (tgt, src) =>
 ///
 CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 {
+	_$_(arguments.callee.name);
+
 	$$('1.1 - Extract the MOVZX instruction')
 	let movzxIns = movzxAddr > 0 ? Instr.FromAddr(movzxAddr) : '';
 
@@ -264,7 +272,7 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 	}
 
 	$$('1.3 - Extract the JMP DWORD PTR instruction')
-	let jmpDpIns = Instr.fromAddr(jmpDpAddr);
+	let jmpDpIns = Instr.FromAddr(jmpDpAddr);
 
 	$$('2.1 - Based on the case extract the byte being used in JMP DWORD PTR')
 	let caseByte = num;
@@ -298,6 +306,8 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 ///
 ParseData = function(data, scaled)
 {
+	_$_(arguments.callee.name);
+
 	$$('1 - Initialize the parts')
 	let parts = [];
 
@@ -442,6 +452,8 @@ ParseData = function(data, scaled)
 ///
 FindInstr = function(testFn, from, to)
 {
+	_$_(arguments.callee.name);
+
 	if (typeof testFn !== 'function' || typeof from !== 'number')
 		return false;
 

@@ -173,6 +173,15 @@ $__ = function()
 	$_(true, ...arguments);
 };
 
+///
+/// \brief Same as above but add the line on top and bottom
+///
+_$_ = function(msg)
+{
+	$_(true, msg.length, ...Array.prototype.slice.call(arguments, 1));
+	$_(true, ...arguments);
+};
+
 // For all the following, the output will be send using 'console'
 
 ///
