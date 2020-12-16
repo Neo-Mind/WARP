@@ -41,7 +41,6 @@ MultiGRFs = function(patchName)
 
 	/// 1.2 - Retrieve the refAddr (PUSH location)
 	let addr = DGRF.RefAddr;
-	console.showAddr(addr);
 
 	/// 2.1 - Find the AddPak CALL after the PUSH
 	let code;
