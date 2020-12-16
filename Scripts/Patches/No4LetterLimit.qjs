@@ -96,8 +96,6 @@ No4LetterLimit = function(patchName)
 					addr !== passAddr
 				)
 				{
-					console.log("OK");
-					console.showAddr(addr + psize - 1);
 					Exe.SetUint8(addr + psize - 1, 0);
 					return true;
 				}
