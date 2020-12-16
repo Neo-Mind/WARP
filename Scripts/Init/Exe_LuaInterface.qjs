@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -108,7 +108,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			this.PushD2S = PUSH(addr);
 
 			/// 1.7 - Find the string 'd>d'
-			addr = Exe.FindText("d>d", VIRTUAL, false);
+			addr = Exe.FindText("d>d", false);
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'd>d' not found");
@@ -430,7 +430,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			Exe.AddHex(tgt, code + strings, csize + ssize);
 
 			/// 4.2 - Enforce a JMP from hookAddr to target (NOP out all code in between)
-			Exe.SetJMP(hookAddr, tgtVir, VIRTUAL, retnPhy - (hookAddr + 5));
+			Exe.SetJMP(hookAddr, tgtVir, retnPhy - (hookAddr + 5));
 
 			/// 4.3 - Return the target address
 			return tgt;

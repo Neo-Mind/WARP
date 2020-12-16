@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-12-06                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -76,7 +76,7 @@ if (typeof ROC === 'undefined')
 			/// 2.3 - Also Get the address of "KERNEL32.dll"
 			this.Kernel32 = Exe.FindText("KERNEL32.dll");
 			if (this.Kernel32 < 0)
-				this.Kernel32 = Exe.FindText("kernel32.dll", VIRTUAL, false); // new clients have it in small letters
+				this.Kernel32 = Exe.FindText("kernel32.dll", false); // new clients have it in small letters and not necessarily seperated from previous string with a NULL
 
 			/// 2.4 - Set the base name
 			this.BaseName = System.BaseName(Exe.FilePath);
