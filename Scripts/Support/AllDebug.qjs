@@ -174,15 +174,22 @@ $__ = function()
 };
 
 ///
-/// \brief Same as above but add the line on top and bottom
+/// \brief Same as $_ but add the line on top and bottom
 ///
-_$_ = function(msg)
+_$_ = function(tee, msg)
 {
-	let args = Array.prototype.slice.call(arguments, 1);
+	if (msg === undefined)
+	{
+		msg = tee;
+		tee = Log.Tee;
+	}
+
+	let args = Array.prototype.slice.call(arguments, 2);
 	args.unshift(msg.length);
+	args.unshift(tee);
 	
-	$_(true, ...args);
-	$_(true, ...arguments);
+	$_(...args);
+	$_(...arguments);
 };
 
 // For all the following, the output will be send using 'console'
