@@ -381,19 +381,19 @@ Array.prototype.take_if = function(typeName, defVal)
  // Identifications //
 //=================//
 
-Identify('console', [
+Warp.identify('console', [
 	'debug', 'dump', 'showAddr', 'showAddrs'
 ]);
 
-Identify('Array', [], [
+Warp.identify('Array', [], [
 	'isEmpty', 'isRegPtr', 'isDispPtr', 'last'
 ]);
 
-Identify('Number', [], [
+Warp.identify('Number', [], [
 	'toBits', 'toHex', 'toIEEE'
 ]);
 
-Identify('String', [], [
+Warp.identify('String', [], [
 	'appendAsHex', 'byteCount', 'insertAt', 'isEmpty',
 	'isHex', 'le2be', 'remove', 'replaceAt', 'toAscii',
 	'toHex', 'toInt'
