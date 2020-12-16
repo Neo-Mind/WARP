@@ -261,9 +261,9 @@ String.prototype.isHex = function()
 	return this.search(/[^ a-f0-9\?\.\[\]]/i) < 0;
 };
 
-  //========//
- // Addons //
-//========//
+  //==============//
+ // Transformers //
+//==============//
 
 ///
 /// \brief Method to remove substring and return the modified string. Original is unaffected
@@ -319,14 +319,6 @@ String.prototype.appendAsHex = function(data, bc, bigEndian)
 	return this + '';
 };
 
-///
-/// \brief Method to get the last value easily
-///
-Array.prototype.last = function()
-{
-	return this[this.length - 1];
-};
-
   //=============//
  // Calculators //
 //=============//
@@ -361,6 +353,29 @@ String.prototype.byteCount = function()
 	/// 3 - Return the half of the length
 	return Math.round(nibLen/2);
 };
+
+  //===========//
+ // Utilities //
+//===========//
+
+///
+/// \brief Method to get the last value easily
+///
+Array.prototype.last = function()
+{
+	return this[this.length - 1];
+};
+
+///
+/// \brief Method to take out the first element if it matches the typeName provided. Kind of like a stack.
+///
+Array.prototype.take_if = function(typeName, defVal)
+{
+	if (this.length == 0 || typeof this[0] != typeName)
+		return defVal;
+	else
+		return this.shift();
+}
 
   //=================//
  // Identifications //

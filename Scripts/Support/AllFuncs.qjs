@@ -215,7 +215,7 @@ BitWidth = function(v)
 	{
 		case 'number':
 			$$('2 - For numbers, check within specific limits for each size');
-			
+
 			return (
 				v >= -0x80 && v <= 0x7F ? 8 :
 				v >= -0x8000 && v <= 0x7FFF ? 16 :
@@ -224,7 +224,7 @@ BitWidth = function(v)
 
 		case 'string':
 			$$('3 - For hex string return the byte count * 8');
-			
+
 			let bc = v.byteCount();
 			if (bc >= 0)
 				return (8 * bc);
@@ -345,11 +345,11 @@ ParseData = function(data, scaled)
 		if (data.length > 2)
 		{
 			$$('3.2 - If more than 2 chars present then its in bitwise format')
-			
+
 			if (data.includes('.'))
 			{
 				$$('3.3 - Dot is wildcard for bitwise mode, if present we need to parse each part individually')
-				
+
 				let bits = data.substr(0, 2); //first 2 bits
 				if (!bits.includes(2))
 				{
@@ -384,7 +384,7 @@ ParseData = function(data, scaled)
 		else if (data[0] === '?' || data[1] === '?')
 		{
 			$$('3.6 - If wild card characters (?) are present then parse each nibble individually')
-			
+
 			if (data[0] === '?')
 			{
 				parts[0] = '..';
@@ -546,9 +546,9 @@ IdentifyMany(
 	'Identify', 'IdentifyClass',
 	'IdentifyObj', 'IdentifyMany',
 	'Assign', 'AssignStr',
-	
+
 //from AllDebug
-	"$$", "$_", "Log",
+	"$$", "$$$", "$_", "$__", "Log",
 	"Debug", "Info", "Dump", "NewLine",
 	"ShowAddr", "ShowAddrs", "ShowArr",
 	"ShowVar", "ShowC", "ResetC"

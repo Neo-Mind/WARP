@@ -86,7 +86,7 @@ if (typeof Log == 'undefined')
 };
 
 ///
-/// \brief Function for logging comments in patch & extension functions (including supporting functions)
+/// \brief Function for logging comments in patch & extension functions (including supporting functions) and console if requested
 ///
 $$ = function(txt)
 {
@@ -94,45 +94,68 @@ $$ = function(txt)
 	{
 		if (Log.Handle !== undefined)
 			Log.Handle.WriteLine(txt);
-		
+
 		if (Log.Tee)
 			console.debug(txt);
 	}
 };
 
 ///
-/// \brief Function for adding Headers or Just Underlines to Logs
+/// \brief Same as above but always reports to console as well
 ///
-$_ = function(arg, chr = '+', bold = false)
+$$$ = function(txt)
 {
-	let len = 0;
-	if (IsNum(arg))
+	if (txt !== undefined)
 	{
-		len = arg;
-	}
-	else if (IsStr(arg))
-	{
-		len = arg.length;
-		
 		if (Log.Handle !== undefined)
-			Log.Handle.WriteLine(arg);
-		
-		if (Log.Tee)
-		{
-			if (bold)
-				console.info("<b>" + arg + "</b>");
-			else
-				console.info(arg);
-		}
+			Log.Handle.WriteLine(txt);
+
+		console.debug(txt);
 	}
-	
+};
+
+///
+/// \brief Function for adding Headers or Just Underlines to Logs and console if requested.
+///
+$_ = function()
+{
+	let args = [...arguments];
+
+	let tee = args.take_if('boolean', Log.Tee);
+	let msg = args.shift();
+	let bold = args.take_if('boolean', false);
+	let chr = args.take_if('string', '+');
+
+	let len = 0;
+	switch (typeof msg)
+	{
+		case 'number':
+			len = msg;
+			break;
+
+		case 'string':
+			len = msg.length;
+
+			if (Log.Handle !== undefined)
+				Log.Handle.WriteLine(msg);
+
+			if (tee)
+			{
+				if (bold)
+					console.info("<b>" + msg + "</b>");
+				else
+					console.info(msg);
+			}
+			break;
+	}
+
 	if (len > 0)
 	{
 		let line = chr.repeat(len);
 		if (Log.Handle !== undefined)
 			Log.Handle.WriteLine(line);
-		
-		if (Log.Tee)
+
+		if (tee)
 		{
 			if (bold)
 				console.info("<b>" + line + "</b>");
@@ -140,7 +163,15 @@ $_ = function(arg, chr = '+', bold = false)
 				console.info(line);
 		}
 	}
-}
+};
+
+///
+/// \brief Same as above just added the 'Tee' override directly
+///
+$__ = function()
+{
+	$_(true, ...arguments);
+};
 
 // For all the following, the output will be send using 'console'
 
@@ -165,13 +196,20 @@ Dump = function(name, obj, prefix = '')
 		obj = name;
 		name = obj.constructor.name;
 	}
-	else if (name.isEmpty())
+	else if (IsStr(name))
 	{
-		name = obj.constructor.name;
+		if (name.isEmpty())
+		{
+			name = obj.constructor.name;
+		}
+		else
+		{
+			name = name + " (" + obj.constructor.name + ")";
+		}
 	}
 	else
 	{
-		name = name + " (" + obj.constructor.name + ")";
+		name = obj.constructor.name;
 	}
 
 	if (obj === undefined)
@@ -260,12 +298,12 @@ ShowVar = function(obj, prefix = '')
 	}
 
 	return true;
-}
+};
 
 ///
 /// \brief Shows the physical and virtual cntparts of an address
 ///
-ShowAddr = function(prompt, addr, type)
+ShowAddr = function(prompt, addr, type = PHYSICAL)
 {
 	if (IsNum(prompt)) //no prompt given so just use 'Addr'
 	{
@@ -273,11 +311,15 @@ ShowAddr = function(prompt, addr, type)
 		addr = prompt;
 		prompt = "Addr";
 	}
+	else if (!IsStr(prompt)) //prompt given but its not a string so use 'Addr'
+	{
+		prompt = "Addr";
+	}
 
 	if (IsNum(addr))
 	{
 		let phy, vir;
-		if (type === undefined || type === PHYSICAL)
+		if (type === PHYSICAL)
 		{
 			phy = addr;
 			vir = Exe.Phy2Vir(addr);
@@ -304,7 +346,7 @@ ShowAddr = function(prompt, addr, type)
 ///
 /// \brief Shows the physical and virtual cntparts of multiple addresses
 ///
-ShowAddrs = function(prompt, addrs, type)
+ShowAddrs = function(prompt, addrs, type = PHYSICAL)
 {
 	if (IsArr(prompt)) //no prompt given so just use 'Addr'
 	{
@@ -317,7 +359,7 @@ ShowAddrs = function(prompt, addrs, type)
 	{
 		console.info(prompt, "= [");
 
-		let isPhy = (type === undefined || type === PHYSICAL);
+		let isPhy = (type === PHYSICAL);
 		addrs.forEach( (addr, i) =>
 		{
 			if (!IsNum(addr))
