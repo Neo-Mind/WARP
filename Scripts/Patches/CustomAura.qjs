@@ -62,7 +62,7 @@ CustomAuraSprites = function()
 		throw NO_ALLOC;
 
 	/// 2.3 - Add the strings there (since there are null characters in between we will convert to hex and add)
-	Exe.AddHex(free, (strAF + strAR).toHex(), size);
+	Exe.AddHex(free, (strAF + strAR).toHex());
 
 	/// 2.4 - Get the new string addrs
 	let offsetAF = Exe.Phy2Vir(free, DIFF);

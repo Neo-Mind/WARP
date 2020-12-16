@@ -311,7 +311,7 @@ AutoMute = function()
 	});
 
 	/// 3.5 - Add the code at allocated space 
-	Exe.AddHex(free, buffer + code, size);
+	Exe.AddHex(free, buffer + code);
 
 	/// 3.6 - Create the CALL at hookAddr
 	Exe.SetCALL(hookAddr, freeVir + 16);

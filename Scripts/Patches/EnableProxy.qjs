@@ -132,7 +132,7 @@ EnableProxy = function()
 	let csize = code.byteCount();
 
 	/// 3.2 - Allocate space for the function
-	let free = Exe.FindSpace(0x4 + csize, 0x10); //First 4 bytes are g_saveIP
+	let free = Exe.FindSpace(4 + csize, 0x10); //First 4 bytes are g_saveIP
 	if (free < 0)
 		throw NO_ALLOC;
 
@@ -145,8 +145,8 @@ EnableProxy = function()
 	if (!indirectCALL)
 		code = SwapFiller(code, 2, connAddr - (freeVir + csize));
 
-	/// 3.5 - Inject the function at the gap
-	Exe.AddHex(free, ALL00 + code, 4 + csize);
+	/// 3.5 - Add the function at the allocated space
+	Exe.AddHex(free, ALL00 + code);
 
 	/// 3.6 - Redirect the connect call to use our function
 	Exe.SetTgtAddr(callAddr + 1, freeVir + 4);

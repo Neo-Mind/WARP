@@ -53,7 +53,7 @@ TildeForMatk = function()
 			throw NO_ALLOC;
 
 		/// 2.3 - Add the string there
-		Exe.AddText(addr, "%d ~ %d\x00");
+		Exe.AddText(addr, "%d ~ %d");
 
 		/// 2.4 - Convert to VIRTUAL address
 		addr = Exe.Phy2Vir(addr, DIFF);

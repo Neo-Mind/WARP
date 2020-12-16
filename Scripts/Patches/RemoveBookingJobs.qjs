@@ -264,7 +264,7 @@ RemoveBookingJobs = function()
 
 	/// 4.4 - Add the ids and the function at the allocated space
 	let idHex = idList.map( id => id.toHex(2) ).join('');
-	Exe.AddHex(free, code + " 00 00" + idHex, size);
+	Exe.AddHex(free, code + " 00 00" + idHex);
 
 	/// 4.5 - Change the CALL target in the MsgStr CALL to our function.
 	Exe.SetTgtAddr(callAddr + 1, fnVir);
