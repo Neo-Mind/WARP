@@ -1,6 +1,6 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) 2020 Neo Mind                                            #
+#   Copyright (C) 2020 Neo-Mind                                            #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
@@ -22,9 +22,9 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-11                                             #
-#   Last Modified : 2020-11-11                                             #
+#   Last Modified : 2020-12-07                                             #
 #                                                                          #
 ############################################################################
 
-- file1.lua
-- file2.lub
+- lua files\quest\file1.lua
+- lua files\quest\file2.lub

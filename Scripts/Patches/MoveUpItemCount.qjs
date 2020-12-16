@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2015-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-12                                             *
+*   Last Modified : 2020-12-10                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ MoveUpItemCount = function()
     {
         code =
             PUSH(0xFFFFFF)  //PUSH 0FFFFFF
-        +   MOVSX(ECX, SI)  //MOVSX ECX, SI
+        +	MOVSX(ECX, SI)  //MOVSX ECX, SI
         ;
         type = 1;//VC6
     }
@@ -46,9 +46,9 @@ MoveUpItemCount = function()
 	{
         code =
             PUSH(0xFFFFFF)      //PUSH 0FFFFFF
-        +   PUSH(0x0B)          //PUSH 0B
-        +   PUSH_0              //PUSH 0
-        +   MOVSX(R32, R16)     //MOVSX reg32_A, reg16_B
+        +	PUSH(0x0B)          //PUSH 0B
+        +	PUSH_0              //PUSH 0
+        +	MOVSX(R32, R16)     //MOVSX reg32_A, reg16_B
         ;
         type = (Exe.Version < 10.0) ? 2 : 3 ;//2 for VC9 and 3 for VC10
     }
@@ -56,10 +56,10 @@ MoveUpItemCount = function()
     {
         code =
             PUSH(0xFFFFFF)      //PUSH 0FFFFFF
-        +   MOV(EAX, 0xE)       //MOV EAX, 0E
-        +   CMOVGE(EAX, ECX)    //CMOVGE EAX, ECX
-        +   PUSH(0x0B)          //PUSH 0B
-        +   CWDE                //CWDE
+        +	MOV(EAX, 0xE)       //MOV EAX, 0E
+        +	CMOVGE(EAX, ECX)    //CMOVGE EAX, ECX
+        +	PUSH(0x0B)          //PUSH 0B
+        +	CWDE                //CWDE
         ;
         type = 4; //VC11
     }
@@ -72,7 +72,7 @@ MoveUpItemCount = function()
 		;
 		type = 5; //VC14.16
 	}
-	
+
 	let addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
         throw Error("No Patterns found");
@@ -83,9 +83,9 @@ MoveUpItemCount = function()
         case 1: //VC6 & Early VC9
         {
             code =
-                MOV(AL, [EBP, 0x18])     //MOV AL, BYTE PTR SS:[EBP+18]
-            +   ADD(ESP, 0xC)            //ADD ESP, 0C
-            +   TEST(AL, AL)             //TEST AL, AL
+				MOV(AL, [EBP, 0x18])     //MOV AL, BYTE PTR SS:[EBP+18]
+            +	ADD(ESP, 0xC)            //ADD ESP, 0C
+            +	TEST(AL, AL)             //TEST AL, AL
             ;
             break;
         }
@@ -109,28 +109,29 @@ MoveUpItemCount = function()
         {
             code = 
                 CMP(BYTE_PTR, [EBP, 0x18], 0)  //CMP BYTE PTR SS:[EBP+18], 0
-            +   PUSH_0                         //PUSH 0
+            +	PUSH_0                         //PUSH 0
             ;
 			if (Exe.BuildDate > 20190910)
 				code += PUSH_0;				   //PUSH 0
-			
+
             break;
         }
     }
 	code += JE(WCp);                          //JE SHORT addr (common suffix)
 
     /// 2.2 - Find the comparison within 0x50 bytes before one of the patterns
-    let addr = -1;
-	if (addrs.find( memAddr =>
+    let cmpAddr = -1;
+	addrs.find( addr =>
     {
-        addr = Exe.FindHex(code, memAddr - 0x50, memAddr);
-        return (addr > 0);
-    }) === undefined
-	)
+        cmpAddr = Exe.FindHex(code, addr - 0x50, addr);
+        return (cmpAddr > 0);
+    });
+	
+	if (cmpAddr < 0)
         throw Error("Comparison not found");
-	
+
     /// 2.3 - Change the conditional jump (JE)
-    Exe.SetJMP(addr + code.byteCount() - 2);
-	
+    Exe.SetJMP(cmpAddr + code.byteCount() - 2);
+
     return true;
 };

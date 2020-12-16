@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2014-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,29 +33,29 @@ CQL_Prefix = "lua files\\quest\\";
 CustomQuestLua = function() 
 {
 	/// 1.1 - Ensure LUA object is loaded
-	if (!LUA.load())
-		throw LUA.Error;
-	
+	LUA.load();
+
 	/// 1.2 - Get the list file with the quest file names
 	let inFile = Exe.GetUserInput('$inpQuest', D_InFile, "Quest Lua List", "Enter the listing file", "Inputs/QuestLuaList.yml", {filters: YMLFILTER});
 	if (inFile === false)
-		throw "Cancelled - No listing file specified";
-	
+		Cancel("No listing file specified");
+
 	/// 2.1 - Load the list
 	let LuaFiles = Warp.LoadYaml(inFile);
-	
-	if (!Array.isArray(LuaFiles))
-		throw "Cancelled - Invalid/Non-existent list file";
-	
+	if (LuaFiles === false)
+		return false
+
+	else if (!IsArr(LuaFiles))
+		throw Error("Need a list of file names");
+
 	if (LuaFiles.isEmpty())
-		throw "Cancelled - Empty list provided";
-	
-	
+		Cancel("Empty list provided");
+
 	/// 2.2 - Inject the loading procedure for all the files specified
 	let result = LUA.addLoaders(LuaFiles, CQL_Prefix + "Quest_function");
 	if (IsStr(result))
-		throw Error("LUA addLoaders : " + result);
-		
+		throw Error(`LUA addLoaders : ${result}`);
+
 	return true;
 };
 

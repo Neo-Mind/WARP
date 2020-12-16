@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Secret                                        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -48,8 +48,8 @@ No1and1Arg = function()
 	:
 		CALL(ALLWC)     //CALL strstr
 	)
-	+   ADD(ESP, 8)     //ADD ESP, 8
-	+   TEST(EAX, EAX)  //TEST EAX, EAX
+	+	ADD(ESP, 8)     //ADD ESP, 8
+	+	TEST(EAX, EAX)  //TEST EAX, EAX
 	;
 
 	let suffix =
@@ -94,7 +94,7 @@ IgnoreAccArg = function()
 	+	JZ(WCp)         //JZ loadClientInfo
 	;
 	let addr2 = Exe.FindHex(code, addr + 5, addr + 0x50);
-	
+
 	if (addr2 < 0)
 	{
 		code = code.replace(TEST(R32, R32), CMP(R32, R32));

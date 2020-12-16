@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-03                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -75,7 +75,7 @@ CloseCutinOnEsc = function()
 
 	code += PUSH(POS3WC);           //PUSH OFFSET EmptyStr ; zeros at the location
 
-	if (Exe.Version > 6.0 && Exe.BuildDate < 20150000)
+	if (Exe.Version > 6.0 && Exe.BuildDate < 20150000) //VC9 - VC10 (some of them)
 	{
 		code +=
 			MOV(ECX, EAX)           //MOV ECX, EAX
@@ -108,17 +108,17 @@ CloseCutinOnEsc = function()
 	let suffix = Exe.GetHex(addr2 + prefix.byteCount(), code.byteCount());
 
 	/// 2.1 - Construct the common code for new & old clients.
-	let part2 = CMP(R32, -1);      //CMP reg32_A, -1
-
-	if (Exe.BuildDate > 20101116 && Exe.BuildDate < 20141020)
-		part2 += JE(POS1WC);       //JE addr1 or
-	else
-		part2 += JZ(WCp);          //JZ SHORT addr1
-
-	part2 +=
-		PUSH(R32)                  //PUSH reg32_A
-	+	MOV(ECX, R32)              //MOV ECX, reg32_B
-	+	CALL(ALLWC)                //CALL UIWindowMgr::DeleteWindow
+	let part2 = 
+		CMP(R32, -1)   //CMP reg32_A, -1
+	+	(Exe.BuildDate > 20101116 && Exe.BuildDate < 20141020
+	?
+		JE(POS1WC)     //JE addr1
+	:                  // or
+		JZ(WCp)        //JZ SHORT addr1
+	)
+	+	PUSH(R32)      //PUSH reg32_A
+	+	MOV(ECX, R32)  //MOV ECX, reg32_B
+	+	CALL(ALLWC)    //CALL UIWindowMgr::DeleteWindow
 	;
 
 	let dwinOffset = part2.byteCount() - 4;
@@ -201,43 +201,43 @@ CloseCutinOnEsc = function()
 
 	/// 3.1 - Prepare our code
 	code =
-		PUSH(78)             //PUSH 78 ; window id
-	+	MovECX_dw            //MOV ECX, reg32_B
-	+	CALL(MakeFiller(1))  //CALL UIWindowMgr::DeleteWindow
+		PUSH(78)            //PUSH 78 ; window id
+	+	MovECX_dw           //MOV ECX, reg32_B
+	+	CALL(Filler(1))     //CALL UIWindowMgr::DeleteWindow
 	;
 	let offsetDW = code.byteCount();
 
 	code +=
-		CMP(AL, 0)           //CMP AL, 0
-	+	JNZ(0xC)             //JNZ SHORT addr1
-	+	MovECX               //MOV ECX, reg32_A or MOV ECX, OFFSET addr
-	+	PUSH(retnVir)        //PUSH retnVir
-	+	JMP(MakeFiller(2))   //JMP UIWindowMgr::check_close or unknownFunc; equivalent to CALL intended for return to retnVir
+		CMP(AL, 0)          //CMP AL, 0
+	+	JNZ(0xC)            //JNZ SHORT addr1
+	+	MovECX              //MOV ECX, reg32_A or MOV ECX, OFFSET addr
+	+	PUSH(retnVir)       //PUSH retnVir
+	+	JMP(Filler(2))      //JMP UIWindowMgr::check_close or unknownFunc; equivalent to CALL intended for return to retnVir
 	;
 	let offsetFF = code.byteCount();
 
 	code +=
-		PUSH(EDX)            //PUSH EDX
-	+	MOV(ECX, gModeMgr)   //MOV ECX, OFFSET g_modeMgr
-	+	CALL(MakeFiller(3))  //CALL CModeMgr::GetGameMode
+		PUSH(EDX)           //PUSH EDX
+	+	MOV(ECX, gModeMgr)  //MOV ECX, OFFSET g_modeMgr
+	+	CALL(Filler(3))     //CALL CModeMgr::GetGameMode
 	;
 	let offsetGGM = code.byteCount();
 
 	code +=
-		MOV(EDX, [EAX])      //MOV EDX, DWORD PTR DS:[EAX]
-	+	suffix               //combinations of 
-		                     //PUSH 0
-		                     //PUSH 0 or 1 (for newer clients)
-		                     //PUSH -1
-		                     //PUSH OFFSET EmptyStr
-		                     //PUSH 64 or 71
-		                     //MOV ECX, EAX
-		                     //CALL DWORD PTR DS:[EDX + const] or MOV reg32_A, DWORD PTR DS:[EDX + const] ; const is either 14 or 18
-		                     //CALL reg32_A
-	+	POP(EDX)             //POP EDX
-	+	POP(ECX)             //POP ECX
-	+	POP(EAX)             //POP EAX
-	+	JMP(MakeFiller(4))   //JMP jmpVir
+		MOV(EDX, [EAX])     //MOV EDX, DWORD PTR DS:[EAX]
+	+	suffix              //combinations of 
+		                    //PUSH 0
+		                    //PUSH 0 or 1 (for newer clients)
+		                    //PUSH -1
+		                    //PUSH OFFSET EmptyStr
+		                    //PUSH 64 or 71
+		                    //MOV ECX, EAX
+		                    //CALL DWORD PTR DS:[EDX + const] or MOV reg32_A, DWORD PTR DS:[EDX + const] ; const is either 14 or 18
+		                    //CALL reg32_A
+	+	POP(EDX)            //POP EDX
+	+	POP(ECX)            //POP ECX
+	+	POP(EAX)            //POP EAX
+	+	JMP(Filler(4))      //JMP jmpVir
 	;
 	let csize = code.byteCount();
 

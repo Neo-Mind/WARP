@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -45,7 +45,7 @@ CustomFadeDelay = function()
 
 	suffix +=
 		MOV([POS4WC], EAX)   //MOV DWORD PTR DS:[dwFadeStart], EAX
-	+	CALL(ALLWC)          //CALL CRenderer_BackupFrame
+	+	CALL(ALLWC)          //CALL CRenderer::BackupFrame
 	+	CALL(ESI)            //CALL ESI ; timeGetTime
 	+	SUB(EAX, [POS4WC])   //SUB EAX, DWORD PTR DS:[dwFadeStart]
 	;
@@ -76,15 +76,15 @@ CustomFadeDelay = function()
 	if (FadeStart !== Exe.GetUint32(patAddr1 + psize + fsOffset2))
 		throw Error("Pattern found but a false match");
 
-	/// 1.5 - Extract the g_renderer address
-	let gRenderer = Exe.GetUint32(patAddr1 + psize + grOffset);
+	/// 1.5 - Extract the g_renderer address ( we can keep it as hex since we are not doing any comparisons )
+	let Renderer = Exe.GetHex(patAddr1 + psize + grOffset, 4);
 
 	/// 1.6 - Add the psize to fdOffset1 (so that its a proper offset wrt patAddr1)
 	fdOffset1 += psize;
 
 	/// 1.8 - Search below in same function for second delay usage
 	let code =
-		MOV(ECX, [gRenderer])  //MOV ECX, DWORD PTR DS:[g_renderer]
+		MOV(ECX, [Renderer])   //MOV ECX, DWORD PTR DS:[g_renderer]
 	+	CALL(ALLWC)            //CALL CRenderer_RestoreFrame
 	+	CALL(ESI)              //CALL ESI ; timeGetTime
 	+	SUB(EAX, [FadeStart])  //SUB EAX, DWORD PTR DS:[dwFadeStart]
@@ -98,8 +98,8 @@ CustomFadeDelay = function()
 		throw Error("2nd pattern not found");
 
 	/// 1.9 - Search for the separate fadeout code in CMode_ProcessFadeIn
-	let patAddr3;
-	if (Exe.Version > 6.0)
+	let patAddr3 = -1;
+	if (Exe.Version > 10.0) //VC11 & VC14.16
 	{
 		prefix =
 			CALL([POS4WC])            //CALL DWORD PTR DS:[timeGetTime]
@@ -112,42 +112,43 @@ CustomFadeDelay = function()
 			JNB(WCp)                  //JNB SHORT locret_71FDBC
 		+	MOV(R32, 0xFF)            //MOV reg32_A, FF ; reg32_A is usually ECX
 		+	SUB(R32, EAX)             //SUB reg32_A, EAX
-		+	MOV(EAX, [gRenderer])     //MOV EAX, DWORD PTR DS:[g_renderer]
+		+	MOV(EAX, [Renderer])      //MOV EAX, DWORD PTR DS:[g_renderer]
 		+	SHL(R32, 0x18)            //SHL reg32_A, 18
 		+	PUSH_R                    //PUSH reg32_A
 		;
-		patAddr3 = Exe.FindHex(prefix + suffix);
-		if (patAddr3 < 0)
-		{
-			prefix =
-				CALL(EDI)             //CALL EDI
-			+	SUB(EAX, [FadeStart]) //SUB EAX, DWORD PTR DS:[dwFadeStart]
-			+	POP(EDI)              //POP EDI
-			+	POP(ESI)              //POP ESI
-			+	CMP(EAX, 0xFF)        //CMP EAX, 0FF
-			;
+	}
+	else if (Exe.Version > 6.0) //VC9 & VC10
+	{
+		prefix =
+			CALL(EDI)             //CALL EDI
+		+	SUB(EAX, [FadeStart]) //SUB EAX, DWORD PTR DS:[dwFadeStart]
+		+	POP(EDI)              //POP EDI
+		+	POP(ESI)              //POP ESI
+		+	CMP(EAX, 0xFF)        //CMP EAX, 0FF
+		;
 
-			suffix =
-				JNB(WCp)              //JNB SHORT addr
-			+	MOV(R32, 0xFF)        //MOV reg32_A, FF ; reg32_A can be ECX or EDX
-			+	SUB(R32, EAX)         //SUB reg32_A, EAX
-			+	MOV(EAX, [gRenderer]) //MOV EAX, DWORD PTR DS:[g_renderer]
-			+	MOV(R32, [EAX, WCp])  //MOV reg32_B, DWORD PTR DS:[EAX + const]
-			+	SHL(R32, 0x18)        //SHL reg32_A, 18
-			+	PUSH_R                //PUSH reg32_A
-			;
-			patAddr3 = Exe.FindHex(prefix + suffix);
-		}
-		if (patAddr3 < 0 && Exe.Version == 10.0)
+		suffix =
+			JNB(WCp)              //JNB SHORT addr
+		+	MOV(R32, 0xFF)        //MOV reg32_A, FF ; reg32_A can be ECX or EDX
+		+	SUB(R32, EAX)         //SUB reg32_A, EAX
+		+	MOV(EAX, [Renderer]) //MOV EAX, DWORD PTR DS:[g_renderer]
+		+	MOV(R32, [EAX, WCp])  //MOV reg32_B, DWORD PTR DS:[EAX + const]
+		+	SHL(R32, 0x18)        //SHL reg32_A, 18
+		+	PUSH_R                //PUSH reg32_A
+		;
+
+		patAddr3 = Exe.FindHex(prefix + suffix);
+		if (patAddr3 < 0 && Exe.Version === 10.0)
 		{
 			suffix = suffix.replace( MOV(R32, [EAX, WCp]),
 				MOV(R32, [EAX, WCp])  //MOV reg32_B, DWORD PTR DS:[EAX + const]
 			+	MOV(EAX, [EAX, WCp])  //MOV EAX, DWORD PTR DS:[EAX + const2]
 			);
+
 			patAddr3 = Exe.FindHex(prefix + suffix);
 		}
 	}
-	else
+	else //VC6
 	{
 		prefix =
 			CALL(EDI)                 //CALL EDI
@@ -165,9 +166,11 @@ CustomFadeDelay = function()
 		+	SHL(EAX, 0x18)            //SHL EAX, 18
 		+	PUSH_EAX                  //PUSH EAX
 		;
-
-		patAddr3 = Exe.FindHex(prefix + suffix);
 	}
+
+	if (patAddr3 < 0) //in the first 2 cases no search is done previously 
+		patAddr3 = Exe.FindHex(prefix + suffix);
+
 	if (patAddr3 < 0)
 		throw Error("3rd pattern missing");
 
@@ -175,14 +178,15 @@ CustomFadeDelay = function()
 	let fdOffset3 = prefix.byteCount() - 4;
 
 	/// 2.1 - Get the new value from user
-	let delay = Exe.GetUserInput('$warpFadeOutDelay', D_Uint32, "Delay value", "Enter new fadeout delay in ms", 255, {max: 512});
+	let varName = '$warpFadeOutDelay';
+	let delay = Exe.GetUserInput(varName, D_Uint32, "Delay value", "Enter new fadeout delay in ms", 255, {max: 512});
 	if (delay === false)
-		throw "Cancelled - Delay reverted to 255";
+		Cancel("Delay", 255);
 
 	/// 2.2 - Replace all the instances where the delay was used for comparison
-	Exe.SetFromVar(patAddr1 + fdOffset1, '$warpFadeOutDelay'); // first delay in fade out function
-	Exe.SetFromVar(patAddr2 + fdOffset2, '$warpFadeOutDelay'); // second delay in fade out function
-	Exe.SetFromVar(patAddr3 + fdOffset3, '$warpFadeOutDelay'); // last one in separate fade out code
+	Exe.SetFromVar(patAddr1 + fdOffset1, varName); // first delay in fade out function
+	Exe.SetFromVar(patAddr2 + fdOffset2, varName); // second delay in fade out function
+	Exe.SetFromVar(patAddr3 + fdOffset3, varName); // last one in separate fade out code
 
 	return true;
 };

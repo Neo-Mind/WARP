@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2014-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,100 +22,102 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
-// TODO - Need to fix for latest RE clients  (they dont detect properly) //
-
 ///
-/// \brief NOP out the Cash Shop Icon UIWindow creation code (ID = 0xBE)
+/// \brief Find the reference UIWindow creation code and use it to 
+///        HideCashShop - NOP out the code for Cash Shop Icon creation (ID = 0xBE) if present before it.
+///        ShowCashShop - Inject code for Cash Shop Icon creation (ID = 0xBE) before it if not present.
 ///
-HideCashShop = function()
+CashShopVis = function(patchName)
 {
-    /// 1 - Ensure the WINMGR object has been loaded with valid data
-	if (!WINMGR.load())
-		throw WINMGR.Error;
+	/// 1.1 - Ensure the WINMGR object has been loaded
+	WINMGR.load();
 
-    /// 2 - Find the UIWindow creation for Cash Shop (0xBE)
-    let code =
-        PUSH(0xBE)      //PUSH 0BE
-    +   WINMGR.MovECX   //MOV ECX, OFFSET g_windowMgr
-    +   CALL()          //CALL UIWindowMgr::MakeWindow
-    ;
-    let addr = Exe.FindHex(code);
-    if (addr < 0)
-        throw "Cancelled - Cash Shop Icon is already hidden";
+	/// 1.2 - Find the reference location (where another icon is created)
+	let code =
+		JNE(0xF)       //JNE SHORT addr; skips to location after the call for creating another icon
+	+	PUSH(0x9F)     //PUSH 09F
+	+	WINMGR.MovECX  //MOV ECX, OFFSET g_windowMgr
+	+	CALL()         //CALL UIWindowMgr::MakeWindow
+	;
 
-    /// 3 - If found then NOP it out
-    Exe.SetNOPs(addr, code.byteCount() + 4);
-	
+	let jmpAddr = Exe.FindHex(code);
+	if (jmpAddr < 0)
+		throw Error("Reference PUSH missing");
+
+	/// 1.3 - Now check if the code for cash shop creation is already present.
+	let code2 = 
+		PUSH(0xBE)     //PUSH 0BE
+	+	WINMGR.MovECX  //MOV ECX, OFFSEET g_windowMgr
+	+	CALL()         //CALL UIWindowMgr::MakeWindow
+	;
+	let addr = Exe.FindHex( code2, jmpAddr - 0x30, jmpAddr );
+
+	if (patchName === "HideCashShop")
+	{
+		/// 2.1 - For hiding, ensure it is actually present
+		if (addr < 0)
+			Cancel("Icon is already hidden");
+
+		/// 2.2 - NOP out the creation code
+		Exe.SetNOPs(addr, code2.byteCount() + 4);
+	}
+	else
+	{
+		/// 3.1 - For showing, ensure it is not already created
+		if (addr > 0)
+			Cancel("Icon is already shown");
+
+		/// 3.2 - Save the location after the CALL for 0x9F.
+		let retnAddr = jmpAddr + code.byteCount() + 4;
+
+		/// 3.3 - Prepare our code to create the icon.
+		let pos1 = code.byteCount() + 4;
+
+		code += 
+			Filler(1)        //Remaining parts are already used for search above
+		+	PUSH(0xBE)       //PUSH 0BE ; addr2
+		+	WINMGR.MovECX    //MOV ECX, OFFSET g_windowMgr
+		+	CALL(Filler(2))  //CALL UIWindowMgr::MakeWindow
+		+	JMP(Filler(3))   //JMP retnAddr; jump back to retnAddr
+		;
+
+		let pos2 = code.byteCount();
+
+		/// 3.4 - Allocate space to add our code
+		let free = Exe.FindSpace(code.byteCount(), 0x10);
+		if (free < 0)
+			throw NO_ALLOC;
+
+		let freeVir = Exe.Phy2Vir(free, DIFF);
+
+		/// 3.5 - Fill in the Blanks
+		code = SwapFillers(code, {
+			1: WINMGR.MakeWin - (freeVir + pos1),
+			2: WINMGR.MakeWin - (freeVir + pos2 - 5),
+			3: Exe.Phy2Vir(retnAddr, CODE) - (freeVir + pos2)
+		}, 1);
+
+		/// 3.6 - Add the code at the allocated space
+		Exe.AddHex(free, code);
+
+		/// 3.7 - Create a jump to it at jmpAddr
+		Exe.SetJMP(jmpAddr, freeVir);
+	}
+
 	return true;
 };
 
 ///
-/// \brief Add the Cash Shop Icon UIWindow creation code (ID = 0xBE) and hook it to where it was supposed to be present
+/// Disable for unsupported clients (need to have cash shop present)
 ///
-ShowCashShop = function()
-{
-    /// 1.1 - Ensure the WINMGR object has been loaded with valid data
-	if (!WINMGR.load())
-		throw WINMGR.Error;
-
-    /// 1.2 - Find the location where the cash shop icon was supposed to be created
-    code =
-        JNE(0xF)        //JNE SHORT addr; skips to location after the call for creating another icon
-    +   PUSH(0x9F)      //PUSH 09F
-    +   WINMGR.MovECX   //MOV ECX, OFFSET g_windowMgr
-    +   CALL()          //CALL UIWindowMgr::MakeWindow
-    ;
-
-    let jmpAddr = Exe.FindHex(code);
-    if (jmpAddr < 0)
-        throw Error("Icon creation location not found");
-
-    /// 1.3 - Save location after the CALL
-    let retnAddr = jmpAddr + code.byteCount() + 4;
-
-    /// 2.1 - Check if the cash shop Icon creation is already there before it
-    if (Exe.FindHex( PUSH(0xBE) + WINMGR.MovECX, jmpAddr - 0x30, jmpAddr) > 0)
-        return "Cancelled - Icon is already shown";
-
-    /// 2.2 - Prepare our code to create the icon
-    let pos1 = code.byteCount() + 4;
-	
-    code += 
-		MakeFiller(1)          //Remaining parts are already used for search above
-    +   PUSH(0xBE)             //PUSH 0BE ; addr2
-    +   WINMGR.MovECX          //MOV ECX, OFFSET g_windowMgr
-    +   CALL(MakeFiller(2))    //CALL UIWindowMgr::MakeWindow
-    +   JMP(MakeFiller(3))     //JMP retnAddr; jump back to retnAddr
-    ;
-    let pos2 = code.byteCount();
-    
-    /// 2.3 - Allocate space to add our code
-    let free = Exe.FindSpace(code.byteCount(), 0x10);
-    if (free < 0)
-        throw NO_ALLOC;
-
-    let freeVir = Exe.Phy2Vir(free, DIFF);
-
-    /// 2.4 - Fill in the Blanks
-    code = SwapFiller(code, 1, WINMGR.MakeWin - (freeVir + pos1));
-    code = SwapFiller(code, 2, WINMGR.MakeWin - (freeVir + pos2 - 5));
-    code = SwapFiller(code, 3, Exe.Phy2Vir(retnAddr, CODE) - (freeVir + pos2));
-
-    /// 2.5 - Add the code at the allocated space
-    Exe.AddHex(free, code);
-    
-    /// 2.6 - Create a jump to it at jmpAddr
-	Exe.SetHex(jmpAddr, JMP(freeVir, Exe.Phy2Vir(jmpAddr, CODE)));
-    
-    return true;
-}
+CashShopVis.validate = HasCashShop;
 
 ///
-/// \brief Wrappers for individual patch validation
+/// \brief Wrappers for individual patches
 ///
-HideCashShop.validate = HasCashShop;
-ShowCashShop.validate = HasCashShop;
+HideCashShop = CashShopVis;
+ShowCashShop = CashShopVis;

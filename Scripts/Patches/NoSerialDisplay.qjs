@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +21,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Shinryo                                                *
+*   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-03                                             *
+*   Last Modified : 2020-12-08                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,17 +32,17 @@
 ///
 NoSerialDisplay = function()
 {
-    /// 1 - Find the comparison in the function
-    let prefix =
-        ADD(EAX, WCp)        //ADD EAX, const1
+	/// 1 - Find the comparison in the function
+	let prefix =
+		ADD(EAX, WCp)        //ADD EAX, const1
 	;
 	let suffix =
 		CMP(EAX, [ECX, WCp]) //CMP EAX, DWORD PTR DS:[ECX+const2]
-    +	JL(POS1WC)           //JL addr
-    +	PUSH(ESI)            //PUSH ESI
-    ;
+	+	JL(POS1WC)           //JL addr
+	+	PUSH(ESI)            //PUSH ESI
+	;
 
-    let addr = Exe.FindHex(prefix + suffix);
+	let addr = Exe.FindHex(prefix + suffix);
 
 	if (addr < 0 && Exe.BuildDate > 20180000)
 	{
@@ -50,21 +51,21 @@ NoSerialDisplay = function()
 		;
 		addr = Exe.FindHex(prefix + suffix);
 	}
-    if (addr < 0)
-        throw Error("Comparison not found");
+	if (addr < 0)
+		throw Error("Comparison not found");
 
-    /// 2 - Overwrite ADD and CMP statements with code for setting EAX = 0.
-    ///     Since EAX is 0, the JL will always Jump
+	/// 2 - Overwrite ADD and CMP statements with code for setting EAX = 0.
+	///     Since EAX is 0, the JL will always Jump
 	Exe.SetHex(addr,
-        NOP                  //NOP
-    +   XOR(EAX, EAX)        //XOR EAX, EAX
+		NOP                  //NOP
+	+   XOR(EAX, EAX)        //XOR EAX, EAX
 	);                          
-							    
+
 	Exe.SetHex(addr + prefix.byteCount(),
 		CMP(EAX, 1)          //CMP EAX, 1
-    );
+	);
 
-    return true;
+	return true;
 };
 
 ///

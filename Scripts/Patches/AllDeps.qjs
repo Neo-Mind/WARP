@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-06                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -43,6 +43,12 @@ HasHiddenLogWin = () =>
 ///
 HasPktKeys = () =>
 	ROC.HasPktKeys;
+
+///
+/// \brief Common Validation function for various patches only for 2010+ clients
+///
+IsPost2010 = () =>
+	ROC.Post2010;
 
 ///
 /// \brief Extract the import table from the exe as a hex string.

@@ -1,10 +1,11 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2013 Ai4rei/AN                                         *
+*   Copyright (C) 2013 Shakto                                              *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
-*   WARP is free software: you can redistribute it and/or modify           *
+*   WARP is free software : you can redistribute it and/or modify           *
 *   it under the terms of the GNU General Public License as published by   *
 *   the Free Software Foundation, either version 3 of the License, or      *
 *   (at your option) any later version.                                    *
@@ -22,166 +23,174 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shakto                                      *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-11-10                                             *
+*   Last Modified : 2020-12-09                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Data to be used for the patches.
 ///
-CCC_Data = [
+if (typeof CCC_Data === 'undefined') //avoid redefinition
+{
+	CCC_Data =
 	{
-		letName: '$guildChatColor',
-		pattern: 
-			PUSH(0x4)                 //PUSH 4
-		+   LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
-		+   PUSH(0xB4FFB4)            //PUSH B4,FF,B4 (Light Green)
-		,
-		prefix: "Light Green",
-		title: "Guild Chat Color",
-		defVal: 0xB4FFB4,
-		rmOnVC9: true
-	},
-	{
-		letName: '$partyChatColor',
-		pattern: 
-			PUSH(0x03)                //PUSH 3
-		+   LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
-		+   PUSH(0xC8C8FF)            //PUSH FF,C8,C8 (Light Pink)
-		,
-		prefix: "Light Pink",
-		title: "Party Chat Color",
-		defVal: 0xC8C8FF,
-		rmOnVC9: true
-	},
-	{
-		letName: '$yourPartyChatColor',
-		pattern:
-			PUSH(0x03)                //PUSH 3
-		+   LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
-		+   PUSH(0x00C8FF)            //PUSH FF,C8,00 (Yellowish Brown)
-		,
-		prefix: "Yellowish Brown",
-		title: "Party Chat Color (Self)",
-		defVal: 0x00C8FF,
-		rmOnVC9: true
-    },
-	{
-		letName: '$publicChatColor',
-		pattern:
-				PUSH_1              	  //PUSH 1
-			+   PUSH(0xFFFFFF)      	  //PUSH FF,FF,FF (White)
-		,
-		prefix: "White",
-		title: "Public Chat Color",
-		defVal: 0xFFFFFF,
-	},
-];
+		CustomGuildColor :
+		{
+			varName : '$guildChatColor',
+			pattern :
+				PUSH(0x4)                 //PUSH 4
+			+	LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
+			+	PUSH(0xB4FFB4)            //PUSH B4,FF,B4 (Light Green)
+			,
+			clrName : "Light Green",
+			title : "Guild Chat Color",
+			clrVal : 0xB4FFB4,
+			rmOnVC9 : true
+		},
+
+		CustomPartyColor :
+		{
+			varName : '$partyChatColor',
+			pattern :
+				PUSH(0x03)                //PUSH 3
+			+	LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
+			+	PUSH(0xC8C8FF)            //PUSH FF,C8,C8 (Light Pink)
+			,
+			clrName : "Light Pink",
+			title : "Party Chat Color",
+			clrVal : 0xC8C8FF,
+			rmOnVC9 : true
+		},
+
+		CustomPartyColorSelf :
+		{
+			varName : '$yourPartyChatColor',
+			pattern :
+				PUSH(0x03)                //PUSH 3
+			+	LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
+			+	PUSH(0x00C8FF)            //PUSH FF,C8,00 (Yellowish Brown)
+			,
+			clrName : "Yellowish Brown",
+			title : "Party Chat Color (Self)",
+			clrVal : 0x00C8FF,
+			rmOnVC9 : true
+		},
+
+		CustomPublicColor :
+		{
+			varName : '$publicChatColor',
+			pattern :
+					PUSH_1                //PUSH 1
+				+	PUSH(0xFFFFFF)        //PUSH FF,FF,FF (White)
+			,
+			clrName : "White",
+			title : "Public Chat Color",
+			clrVal : 0xFFFFFF,
+		},
+	};
+}
 
 ///
 /// \brief Replace Specific color PUSHed at the end of the pattern with user specified color
 ///
 CustomChatColor = function(patchName)
 {
-	/// 1.1 - Retrieve the index based on patch name
-	let index = [
-		"CustomGuildColor",
-		"CustomPartyColor",
-		"CustomPartyColorSelf",
-		"CustomPublicColor"
-	].indexOf(patchName);
-	
-	/// 1.2 - Retrieve the data to be used
-	let data = CCC_Data[index];
-	
-	/// 1.3 - Calculate the pattern to be searched
-	let code = data.pattern;
-	if (data.rmOnVC9 && Exe.Version >= 9.0)
-		code = code.remove(LEA(R32, [EBP, NEG2WC]));//Remove the LEA for VC9+
-	
-	let addr = Exe.FindHex(code);
+	/// 1.1 - Retrieve the data to be used
+	let {pattern, rmOnVC9, clrName, varName, title, clrVal} = CCC_Data[patchName];
+
+	/// 1.2 - Calculate the pattern to be searched
+	if (rmOnVC9 && Exe.Version >= 9.0)
+		pattern = pattern.remove(LEA(R32, [EBP, NEG2WC]));//Remove the LEA for VC9+
+
+	/// 2.1 - Find the pattern
+	let addr = Exe.FindHex(pattern);
 	if (addr < 0)
-		throw Error("'" + data.prefix + "' reference missing");
-	
-	if (Exe.GetUserInput(data.letName, D_Color, data.title, "Select the new color", data.defVal, {ignoreAlpha: true}) === false)
-		throw "Cancelled - Color returned to " + data.prefix + " (0x" + data.defVal.toHex(3, true) + ")";
-	
-	Exe.SetFromVar(addr + data.pattern.byteCount() - 4, data.varName);
-	
+		throw Error(`'${clrName}' reference missing`);
+
+	/// 2.2 - Retrieve the new color from user
+	let color = Exe.GetUserInput(varName, D_Color, title, "Select the new color", clrVal, {ignoreAlpha: true});
+	if (color === false)
+		Cancel("Color", clrName + " (0x" + clrVal.toHex(3, true) + ")");
+
+	/// 2.3 - Replace the color
+	Exe.SetFromVar(addr + pattern.byteCount() - 4, varName);
+
 	return true;
 };
 
 ///
 /// \brief Wrappers for individual patches
 ///
-CustomGuildColor     = CustomChatColor; //PUSHed inside CGameMode::Zc_guild_chat
-CustomPartyColor     = CustomChatColor; //inside CGameMode::Zc_Notify_Chat_Party function for other Members' messages
+CustomGuildColor     = CustomChatColor; //PUSHed inside CGameMode ::Zc_guild_chat
+CustomPartyColor     = CustomChatColor; //inside CGameMode ::Zc_Notify_Chat_Party function for other Members' messages
 CustomPartyColorSelf = CustomChatColor;
-CustomPublicColor    = CustomChatColor; //inside CGameMode::Zc_Notify_Chat function
+CustomPublicColor    = CustomChatColor; //inside CGameMode ::Zc_Notify_Chat function
 
 ///
-/// \brief Replace all the colors assigned for GM inside 
-///        CGameMode::Zc_Notify_Chat function with user specified value
+/// \brief Replace all the colors assigned for GM inside
+///        CGameMode ::Zc_Notify_Chat function with user specified value
 ///
 CustomGMColor = function()
 {
-    /// 1.1 - Find the Orange color (#FF8D1D) PUSHed for Langtype 11
-    let addr1 = Exe.FindHex( PUSH(0x1D8DFF) ); //colors are in reverse order not sure why
-    if (addr1 < 0)
-        throw Error("Orange PUSH not found");
+	/// 1.1 - Find the Orange color (#FF8D1D) PUSHed for Langtype 11
+	let addr1 = Exe.FindHex( PUSH(0x1D8DFF) ); //colors are in reverse order not sure why
+	if (addr1 < 0)
+		throw Error("'Orange' reference missing");
 
-    /// 1.2 - Find the Cyan color (#FFFF00) PUSH in the vicinity of addr1
-    let addr2 = Exe.FindHex( PUSH(0x00FFFF), addr1 - 0x30, addr1 + 0x30);
-    if (addr2 < 0)
-        throw Error("Cyan PUSH not found");
+	/// 1.2 - Find the Cyan color (#FFFF00) PUSH in the vicinity of addr1
+	let addr2 = Exe.FindHex( PUSH(0x00FFFF), addr1 - 0x30, addr1 + 0x30);
+	if (addr2 < 0)
+		throw Error("'Cyan' reference missing");
 
-    /// 1.3 - Find the Yellow color (#00FFFF) PUSH in the vicinity of addr1
-    let addr3 = Exe.FindHex( PUSH(0xFFFF00), addr1 - 0x30, addr1 + 0x30);
-    if (addr3 < 0)
-        throw Error("Yellow PUSH not found");
+	/// 1.3 - Find the Yellow color (#00FFFF) PUSH in the vicinity of addr1
+	let addr3 = Exe.FindHex( PUSH(0xFFFF00), addr1 - 0x30, addr1 + 0x30);
+	if (addr3 < 0)
+		throw Error("'Yellow' reference missing");
 
-    /// 2.1 - Get the new color from user
-    let color = Exe.GetUserInput('$gmChatColor', D_Color, "GM Chat Color", "Select the new color", 0x00FFFF, {ignoreAlpha: true});
-    if (color === false)
-        throw "Cancelled - Color reverted to Cyan (0x00FFFF)";
+	/// 2.1 - Get the new color from user
+	let varName = '$gmChatColor';
+	let color = Exe.GetUserInput(varName, D_Color, "GM Chat Color", "Select the new color", 0x00FFFF, {ignoreAlpha: true});
+	if (color === false)
+		Cancel("Color", "Cyan (0x00FFFF)");
 
-    /// 2.2 - Replace the PUSHed color at all 3 addrs found
-    Exe.SetFromVar(addr1 + 1, '$gmChatColor');
-    Exe.SetFromVar(addr2 + 1, '$gmChatColor');
-    Exe.SetFromVar(addr3 + 1, '$gmChatColor');
+	/// 2.2 - Replace the PUSHed color at all 3 addrs found
+	Exe.SetFromVar(addr1 + 1, varName);
+	Exe.SetFromVar(addr2 + 1, varName);
+	Exe.SetFromVar(addr3 + 1, varName);
 
-    return true;
+	return true;
 };
 
 ///
-/// \brief Replace chat color assigned for Player inside CGameMode::Zc_Notify_PlayerChat 
+/// \brief Replace chat color assigned for Player inside CGameMode ::Zc_Notify_PlayerChat
 ///        function with user specified color
 ///
 CustomPublicColorSelf = function ()
 {
-    /// 1.1 - Find all locations where Dark Green (#007800) is PUSHed
-    let addrs = Exe.FindHexN( PUSH(0x007800) ); //PUSH 00,78,00
-    if (addrs.isEmpty())
-        throw Error("'Dark Green' referenced");
+	/// 1.1 - Find all locations where Dark Green (#007800) is PUSHed
+	let addrs = Exe.FindHexN( PUSH(0x007800) ); //PUSH 00,78,00
+	if (addrs.isEmpty())
+		throw Error("'Dark Green' reference missing");
 
-    /// 1.2 - Find the original color (Green) PUSH within the vicinity of one of the addrs
-    let greenAddr;
-	if (addrs.find(addr =>
+	/// 1.2 - Find the original color (Green) PUSH within the vicinity of one of the addrs
+	let greenAddr = -1;
+	addrs.find(addr =>
 	{
-        let greenAddr = Exe.FindHex( PUSH(0x00FF00), addr + 5, addr + 40);
-        return (greenAddr > 0);
-    }) === undefined)
-	{
-        throw Error("'Green' reference missing");
-	}
+		greenAddr = Exe.FindHex( PUSH(0x00FF00), addr + 5, addr + 40);
+		return (greenAddr > 0);
+	});
 
-    /// 2.1 - Get the new color from user
-    let color = Exe.GetUserInput('$yourChatColor', D_Color, "Public Chat Color (Self)", "Select the new color", 0x00FF00, {ignoreAlpha: true});
-    if (color === false)
-        throw "Cancelled - Color reverted to Green (0x00FF00)";
+	if (greenAddr < 0)
+		throw Error("'Green' reference missing");
 
-    /// 2.2 - Replace PUSHed color with new one
-    Exe.SetFromVar(greenAddr + 1, '$yourChatColor');
+	/// 2.1 - Get the new color from user
+	let varName = '$yourChatColor';
+	let color = Exe.GetUserInput(varName, D_Color, "Public Chat Color (Self)", "Select the new color", 0x00FF00, {ignoreAlpha: true});
+	if (color === false)
+		Cancel("Color", "Green (0x00FF00)");
 
-    return true;
-}
+	/// 2.2 - Replace PUSHed color with new one
+	Exe.SetFromVar(greenAddr + 1, varName);
+
+	return true;
+};

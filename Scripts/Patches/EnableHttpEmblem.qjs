@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 CH.C (jchcc)                                        *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +20,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Jchcc                                                  *
+*   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-11-24                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,27 +34,27 @@ EnableHttpEmblem = function()
 	/// 1 - Find the code
 	let code =
 		PUSH(EBP)		//0 PUSH EBP
-    +	MOV(EBP, ESP)	//1 MOV EBP, ESP
-    +	ADD(ECX, 0x6C)	//3 ADD ECX, 6C
-    +	POP(EBP)		//6 POP EBP
-    +	JMP()	        //7 JMP addr
-    ;
+	+	MOV(EBP, ESP)	//1 MOV EBP, ESP
+	+	ADD(ECX, 0x6C)	//3 ADD ECX, 6C
+	+	POP(EBP)		//6 POP EBP
+	+	JMP()	        //7 JMP addr
+	;
 
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Pattern not found")
-	
-	/// 2 - Change buffer addr
+
+	/// 2 - Change buffer addr from 6C to 3C
 	Exe.SetUint8(addr + 5, 0x3C);
-	
+
 	/* Used for debug
 	let InsertFrontDataOffset = 8;
 	let recvQueue2Offset = [5, 1];
-	
+
 	logRawFunc("CPacketQueue_InsertFrontData", addr, InsertFrontDataOffset);
 	logField("CRagConnection::m_recvQueue2", addr, recvQueue2Offset);
 	*/
-	
+
 	return true;
 };
 

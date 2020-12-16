@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-09                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,12 +37,13 @@ UseStateLubIcon = function()
 		throw Error("Reference string not PUSHed");
 
 	/// 2 - Find the comparison followed by switch-case
-	let limit = (Exe.Version > 9.0 ? 4 : 3)
+	let limit = (Exe.BuildDate > 20130626 ? 4 : 3);
 	let code =
 		CMP(R32, limit)        //CMP reg32, 4 or 3
 	+	JA(POS2WC)             //JA addr1
 	+	JMP([4, R32, POS3WC])  //JMP DWORD PTR DS:[reg32*4 + addr2]
 	;
+
 	addr = Exe.FindHex(code, addr, addr + 0x100);
 	if (addr < 0)
 		throw Error("Comparison missing");

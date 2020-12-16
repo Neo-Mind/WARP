@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -236,45 +236,45 @@ AutoMute = function()
 
 	/// 3.2 - Prepare our function code
 	code =
-		CALL(EDI)                   //CALL EDI (timeGetTime)
-	+	CMP(EAX, [MakeFiller(1)])   //CMP EAX, DWORD PTR DS:[lastCheck]
-	+	JL(0x9A)                    //JL addr1
-	+	ADD(EAX, 500)               //ADD EAX, 1F4 (500)
-	+	MOV([MakeFiller(1)], EAX)   //MOV DWORD PTR DS:[lastCheck], EAX
-	+	CMP([MakeFiller(2)], 1)     //CMP DWORD PTR DS:[isMuted], 01
-	+	JE(0x1C)                    //JE SHORT addr2
-	+	MovMgr                      //MOV ECX, DWORD PTR DS:[g_soundMgr]
-	+	MOV(EAX, [ECX, 0xEC])       //MOV EAX, DWORD PTR DS:[ECX + EC]
-	+	MOV([MakeFiller(3)], EAX)   //MOV DWORD PTR DS:[bgmVol], EAX
-	+	MOV(EAX, [ECX, 0xF0])       //MOV EAX, DWORD PTR DS:[ECX + F0]
-	+	MOV([MakeFiller(4)], EAX)   //MOV DWORD PTR DS:[effVol], EAX
-	+	CALL([GetActiveWindow])     //CALL DWORD PTR DS:[GetActiveWindow]
-	+	MovMgr                      //MOV ECX, DWORD PTR DS:[g_soundMgr]
-	+	TEST(EAX, EAX)              //TEST EAX,EAX
-	+	JE(0x33)                    //JE SHORT addr3
-	+	CMP([MakeFiller(2)], 0)     //CMP DWORD PTR DS:[isMuted], 0
-	+	JE(0x52)                    //JE SHORT addr4
-	+	XOR(EAX, EAX)               //XOR EAX, EAX
-	+	MOV([MakeFiller(2)], EAX)   //MOV DWORD PTR DS:[isMuted], EAX
-	+	PUSH([MakeFiller(4)])       //PUSH DWORD PTR DS:[effVol]
-	+	CALL(MakeFiller(5))         //CALL CSoundMgr::Set2DEffectVolume (pos = 99)
-	+	PUSH([MakeFiller(4)])       //PUSH DWORD PTR DS:[effVol]
-	+	CALL(MakeFiller(6))         //CALL CSoundMgr::Set3DEffectVolume (pos = 110)
-	+	PUSH([MakeFiller(3)])       //push [bgmVol]
-	+	CALL(MakeFiller(7))         //CALL CSoundMgr::SetStreamVol (pos = 121)
-	+ 	JMP(0x28)                   //JMP SHORT addr5
-	+	CMP([MakeFiller(2)], 1)     //CMP DWORD PTR DS:[isMuted], 1
-	+	JE(0x1F)                    //JE SHORT addr6
-	+	MOV(EAX, 1)                 //MOV EAX, 1
-	+	MOV([MakeFiller(2)], EAX)   //MOV DWORD PTR DS:[isMuted], EAX
-	+	PUSH_0                      //PUSH 0
-	+	CALL(MakeFiller(15))        //CALL CSoundMgr::Set2DEffectVolume (pos = 149)
-	+	PUSH_0                      //PUSH 0
-	+	CALL(MakeFiller(16))        //CALL CSoundMgr::Set3DEffectVolume (pos = 156)
-	+	PUSH_0                      //PUSH 0
-	+	CALL(MakeFiller(17))        //CALL CSoundMgr::SetStreamVol (pos = 163)
-	+	Exe.GetHex(hookAddr, 6)     //MOV ECX, OFFSET g_Weather
-	+	RETN()                      //RETN
+		CALL(EDI)                //CALL EDI (timeGetTime)
+	+	CMP(EAX, [Filler(1)])    //CMP EAX, DWORD PTR DS:[lastCheck]
+	+	JL(0x9A)                 //JL addr1
+	+	ADD(EAX, 500)            //ADD EAX, 1F4 (500)
+	+	MOV([Filler(1)], EAX)    //MOV DWORD PTR DS:[lastCheck], EAX
+	+	CMP([Filler(2)], 1)      //CMP DWORD PTR DS:[isMuted], 01
+	+	JE(0x1C)                 //JE SHORT addr2
+	+	MovMgr                   //MOV ECX, DWORD PTR DS:[g_soundMgr]
+	+	MOV(EAX, [ECX, 0xEC])    //MOV EAX, DWORD PTR DS:[ECX + EC]
+	+	MOV([Filler(3)], EAX)    //MOV DWORD PTR DS:[bgmVol], EAX
+	+	MOV(EAX, [ECX, 0xF0])    //MOV EAX, DWORD PTR DS:[ECX + F0]
+	+	MOV([Filler(4)], EAX)    //MOV DWORD PTR DS:[effVol], EAX
+	+	CALL([GetActiveWindow])  //CALL DWORD PTR DS:[GetActiveWindow]
+	+	MovMgr                   //MOV ECX, DWORD PTR DS:[g_soundMgr]
+	+	TEST(EAX, EAX)           //TEST EAX,EAX
+	+	JE(0x33)                 //JE SHORT addr3
+	+	CMP([Filler(2)], 0)      //CMP DWORD PTR DS:[isMuted], 0
+	+	JE(0x52)                 //JE SHORT addr4
+	+	XOR(EAX, EAX)            //XOR EAX, EAX
+	+	MOV([Filler(2)], EAX)    //MOV DWORD PTR DS:[isMuted], EAX
+	+	PUSH([Filler(4)])        //PUSH DWORD PTR DS:[effVol]
+	+	CALL(Filler(5))          //CALL CSoundMgr::Set2DEffectVolume (pos = 99)
+	+	PUSH([Filler(4)])        //PUSH DWORD PTR DS:[effVol]
+	+	CALL(Filler(6))          //CALL CSoundMgr::Set3DEffectVolume (pos = 110)
+	+	PUSH([Filler(3)])        //push [bgmVol]
+	+	CALL(Filler(7))          //CALL CSoundMgr::SetStreamVol (pos = 121)
+	+ 	JMP(0x28)                //JMP SHORT addr5
+	+	CMP([Filler(2)], 1)      //CMP DWORD PTR DS:[isMuted], 1
+	+	JE(0x1F)                 //JE SHORT addr6
+	+	MOV(EAX, 1)              //MOV EAX, 1
+	+	MOV([Filler(2)], EAX)    //MOV DWORD PTR DS:[isMuted], EAX
+	+	PUSH_0                   //PUSH 0
+	+	CALL(Filler(15))         //CALL CSoundMgr::Set2DEffectVolume (pos = 149)
+	+	PUSH_0                   //PUSH 0
+	+	CALL(Filler(16))         //CALL CSoundMgr::Set3DEffectVolume (pos = 156)
+	+	PUSH_0                   //PUSH 0
+	+	CALL(Filler(17))         //CALL CSoundMgr::SetStreamVol (pos = 163)
+	+	Exe.GetHex(hookAddr, 6)  //MOV ECX, OFFSET g_Weather
+	+	RETN()                   //RETN
 	;
 
 	/// 3.2 - Prepare the initial values for the extra addresses we are using in the code
@@ -311,7 +311,7 @@ AutoMute = function()
 	});
 
 	/// 3.5 - Add the code at allocated space 
-	Exe.AddHex(free, buffer + code, size);
+	Exe.AddHex(free, buffer + code);
 
 	/// 3.6 - Create the CALL at hookAddr
 	Exe.SetCALL(hookAddr, freeVir + 16);

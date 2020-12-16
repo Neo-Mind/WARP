@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-03                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -44,7 +44,7 @@ NoNagle = function()
 		throw Error("GetProcAddress not found");
 
 	// socket function address
-	let WS2_socket = Exe.FindFunc("socket", "ws2_32.dll", 23);
+	let WS2_socket = Exe.FindFunc("socket", 23, "ws2_32.dll");
 	if (WS2_socket < 0)
 		throw Error("'socket' function not found");
 
@@ -52,7 +52,7 @@ NoNagle = function()
 
 	/// 2.1 - Prepare the function to override with
 	let code =
-		MakeFiller(1)             //Address to be used in CALL DWORD PTR and JMP DWORD PTR replacements
+		Filler(1)                 //Address to be used in CALL DWORD PTR and JMP DWORD PTR replacements
 	+	PUSH(EBP)                 //PUSH EBP <- Actual start of function
 	+	MOV(EBP, ESP)             //MOV EBP,ESP
 	+	SUB(ESP, 0xC)             //SUB ESP,0C
@@ -105,10 +105,10 @@ NoNagle = function()
 	Exe.AddHex(free, code);
 
 	/// 3.1 - Find all JMP DWORD PTR & CALL DWORD PTR to ws2_32.socket function
-	let addrs = 
-		Exe.FindHexN( JMP([WS2_socHex]) ).concat(
-		Exe.FindHexN( CALL([WS2_socHex]) )
-	);
+	let addrs = [
+		...Exe.FindHexN( JMP([WS2_socHex])  ),
+		...Exe.FindHexN( CALL([WS2_socHex]) )
+	];
 
 	/// 3.2 - Change the called address with our function.
 	addrs.forEach( addr => Exe.SetInt32(addr + 2, freeVir) );

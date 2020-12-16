@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,11 +21,13 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Andrei (4144)                                          *
+*   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-08                                             *
 *                                                                          *
 \**************************************************************************/
+
+// TODO - Pattern not present in clients before 2017-10-18
 
 ///
 /// \brief Change the conditional jump to JMP inside CGameMode_virt24 to 
@@ -32,28 +35,32 @@
 ///
 AllowPL2Leave = function()
 {
-	/// 1 - Find the pattern where the check occurs
+	/// 1.1 - Find the PUSHes 
 	let code =
-		TEST(AL, AL)            //TEST AL, AL
-	+	JZ(0x34)                //JZ addr1	<-- patch here
-	+	MOV([EBP, WC], -1)      //MOV DWORD PTR SS:[EBP + constA], -1
-	+	LEA(ECX, [EBP, ALLWC])  //LEA ECX, [EBP + fInfo]
-	+	CALL(ALLWC)             //CALL FRIEND_INFO_destructor
-	+	INC(ESI)                //INC ESI
-	+	CMP(ESI, EBX)           //CMP ESI, EBX
-	+	JL(WC)                  //JL addr2
-	+	MOV(AL, [EBP, ALLWC])   //MOV AL, BYTE PTR [EBP+B]
-	+	TEST(AL, AL)            //TEST AL, AL
-	+	JZ(WC)                  //JZ addr3
-	+	PUSH_0                  //PUSH 0
-	+	PUSH_0                  //PUSH 0
-	+	PUSH(0xFF)              //PUSH 0FFh
-	+	PUSH(0XCC9)             //PUSH 0CC9h
-	+	JMP()                   //JMP addr3
+		JZ(WCp)      //JZ addr3
+	+	PUSH_0       //PUSH 0
+	+	PUSH_0       //PUSH 0
+	+	PUSH(0xFF)   //PUSH 0FFh
+	+	PUSH(0XCC9)  //PUSH 0CC9h
+	+	JMP()        //JMP addr3
 	;
-	let addr = Exe.FindHex(code);
+
+	let refAddr = Exe.FindHex(code);
+	if (refAddr < 0)
+		throw Error("Reference pattern missing");
+
+	/// 1.2 - Find the JZ/JNZ pattern before it
+	code =
+		TEST(AL, AL)              //TEST AL, AL
+	+	" [0111010.] [0011....]"  //JZ/JNZ addr1 <-- patch here
+	+	MOV([EBP, WC], -1)        //MOV DWORD PTR SS:[EBP + constA], -1
+	+	LEA(ECX, [EBP, ALLWC])    //LEA ECX, [EBP + fInfo]
+	+	CALL(ALLWC)               //CALL FRIEND_INFO_destructor
+	;
+
+	let addr = Exe.FindHex(code, refAddr - 0x40, refAddr);
 	if (addr < 0)
-		throw Error("Pattern not found");
+		throw Error("JZ/JNZ Pattern not found");
 
 	/// 2 - Enforce the Jump
 	Exe.SetJMP(addr + 2);

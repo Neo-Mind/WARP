@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,11 +22,11 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-04                                             *
 *                                                                          *
 \**************************************************************************/
 
-if (typeof(PACKET) === 'undefined') // avoid redefinition
+if (typeof PACKET === 'undefined') // avoid redefinition
 {
 	///
 	/// \brief Values denoting how the KeySetter function is called
@@ -74,22 +74,27 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 		{
 			/// 1.1 - Check if load was already called
 			if (this.Valid !== undefined)
-				return this.Valid;
+			{
+				/// 1.2 - If we got error previously then report it again.
+				if (!this.Valid)
+					throw this.Error;
+			}
 
+			/// 1.3 - Identify the remaining members to Syntax Assistant
 			Identify("PACKET", ["Valid", "Error"]);
 
-			/// 1.2 - Initialize 'Valid' to false && the 'KS_Mode' to KeyMode.Unknown
+			/// 1.4 - Initialize 'Valid' to false && the 'KS_Mode' to KeyMode.Unknown
 			this.Valid = false;
 			this.KS_Mode = KeyMode.Unknown;
 
-			/// 1.3 - Ensure the Build date is within valid values
+			/// 1.5 - Ensure the Build date is within valid values
 			if (!ROC.HasPktKeys)
 			{
 				this.Error = new Error("PKT - Unsupported build date");
-				return false;
+				throw this.Error;
 			}
 
-			/// 1.4 - Find where the string 'PACKET_CZ_ENTER' is PUSHed
+			/// 1.6 - Find where the string 'PACKET_CZ_ENTER' is PUSHed
 			let addr = Exe.FindText("PACKET_CZ_ENTER");
 			if (addr > 0)
 			{
@@ -98,7 +103,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 
 			if (addr < 0)
 			{
-				/// 1.5 - If not found then look for the CALL, MOV, CALL pattern
+				/// 1.7 - If not found then look for the CALL, MOV, CALL pattern
 				let inb4 =
 					CALL(ALLWC)   //CALL func1
 				+	MOV(ECX, EAX) //MOV ECX, EAX
@@ -119,7 +124,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				this.Error = new Error("PKT - reference location not found");
-				return false;
+				throw this.Error;
 			}
 
 			/// 2.1 - Look for 3 PUSHes followed by a CALL (keys are PUSHed to function)
@@ -146,7 +151,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 
 				/// 2.4 - Set validity to true
 				this.Valid = true;
-				return true;
+				return;
 			}
 
 			/// 3.1 - Look for PUSH 1, CALL pattern next (keys get assigned inside the function)
@@ -159,7 +164,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 			if (callAddr < 0)
 			{
 				this.Error = new Error("PKT - ObfuscateOrInit CALL not found");
-				return false;
+				throw this.Error;
 			}
 
 			/// 3.2 - Extract the MOV statement
@@ -204,7 +209,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 
 				/// 4.4 - Set validity to true.
 				this.Valid = true;
-				return true;
+				return;
 			}
 
 			/// 5.1 - Next look for the shared key pattern
@@ -236,7 +241,7 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 
 				/// 5.5 - Set validity to true.
 				this.Valid = true;
-				return true;
+				return;
 			}
 
 			/// 6.1 - Since neither pattern matched we need to use explicit mapping
@@ -258,18 +263,17 @@ if (typeof(PACKET) === 'undefined') // avoid redefinition
 				if (this.Valid)
 				{
 					this.Keys = arr;
-					return true;
+					return;
 				}
 				else
 				{
 					this.Error = new Error("PKT - No patterns or mappings matched");
-					return false;
+					throw this.Error;
 				}
 			}
 
 			/// 6.5 - For newer clients, the keys are 0 by default.
 			this.Valid = true;
-			return true;
 		},
 	};
 }

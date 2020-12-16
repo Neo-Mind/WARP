@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2020-12-03                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,39 +36,46 @@
 ///
 MultiGRFs = function(patchName)
 {
-	/// 1.1 - Load the DGRF object
-	if (!DGRF.load())
-		throw DGRF.Error;
+	/// 1.1 - Ensure the DGRF object is loaded
+	DGRF.load();
 
 	/// 1.2 - Retrieve the refAddr (PUSH location)
 	let addr = DGRF.RefAddr;
+	console.showAddr(addr);
 
 	/// 2.1 - Find the AddPak CALL after the PUSH
-	let code = (Exe.Version >= 9.0 && Exe.Version < 14.0) //VC9 - VC11
-	?
+	let code;
+	if (Exe.Version >= 9.0 && Exe.Version < 14.0) //VC9 - VC11
+	{
+		code =
 			CALL(ALLWC)             //CALL CFileMgr::AddPak
 		+	MOV(R32, [POS3WC])      //MOV reg32, DWORD PTR DS:[addr1]
 		+	MOV(EAX, [POS3WC])      //MOV EAX, DWORD PTR DS:[addr2]
-
-	: (Exe.Version < 9.0) //VC6
-	?
+		;
+	}
+	else if (Exe.Version < 9.0) //VC6
+	{
+		code =
 			CALL(ALLWC)             //CALL CFileMgr::AddPak
 		+	MOV(EDI, POS3WC)        //MOV EDI, OFFSET addr2
-
-	: //VC14.16
-
+		;
+	}
+	else //VC14.16
+	{
+		code =
 			CALL(ALLWC)             //CALL CFileMgr::AddPak
 		+	MOV(EAX, [POS3WC])      //MOV EAX, DWORD PTR DS:[addr2]
-	;
+		;
+	}
 
 	let callAddr = Exe.FindHex(code, addr + 5, addr + 40);
 	if (callAddr < 0)
 	{
-		if (Exe.Version > 14.0)
+		if (Exe.Version > 14.0 || !ROC.Post2010)
 		{
 			code =
 				CALL(ALLWC)         //CALL CFileMgr::AddPak
-			+	PUSH(POS3WC)        //PUSH OFFSET addr; ASCII "rdata.grf"
+			+	PUSH(POS3WC)        //PUSH OFFSET addr; ASCII "rdata.grf" or ASCII "1pvpsak1"
 			;
 			callAddr = Exe.FindHex(code, addr + 5, addr + 40);
 		}
@@ -133,14 +140,14 @@ _MG_INI = (callAddr, AddPak) =>
 	+	TEST(EAX, EAX)                  //TEST EAX, EAX
 	+	JZ(0x23)                        //JZ SHORT addr2
 	+	MOV(EDI, [ROC.GetProcAddr])     //MOV EDI,DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
-	+	PUSH(MakeFiller(1))             //PUSH addr3 ; ASCII "GetPrivateProfileStringA"
+	+	PUSH(Filler(1))                 //PUSH addr3 ; ASCII "GetPrivateProfileStringA"
 	+	MOV(EBX, EAX)                   //MOV EBX, EAX
 	+	PUSH_EAX                        //PUSH EAX ; hModule
 	+	CALL(EDI)                       //CALL EDI ; GetProcAddress()
 	+	TEST(EAX, EAX)                  //TEST EAX, EAX
 	+	JZ(0x0F)                        //JZ SHORT addr2
 	+	MOV([EBP, -0xA], EAX)           //MOV DWORD PTR SS:[EBP-0A], EAX
-	+	PUSH(MakeFiller(2))             //PUSH addr4 ; ASCII "WritePrivateProfileStringA"
+	+	PUSH(Filler(2))                 //PUSH addr4 ; ASCII "WritePrivateProfileStringA"
 	+	MOV(EAX, EBX)                   //MOV EAX, EBX
 	+	PUSH_EAX                        //PUSH EAX ; hModule
 	+	CALL(EDI)                       //CALL EDI ; GetProcAddress()
@@ -150,14 +157,14 @@ _MG_INI = (callAddr, AddPak) =>
 	+	XOR(EDX, EDX)                   //XOR EDX, EDX
 	+	MOV(WORD_PTR, [EBP, -2], 0x39)  //MOV WORD PTR SS:[EBP-2], 39 ; char 9
 	+	PUSH(EDX)                       //PUSH EDX
-	+	PUSH(MakeFiller(4))             //PUSH addr5 ; INI filename
+	+	PUSH(Filler(4))                 //PUSH addr5 ; INI filename
 	+	PUSH(0x74)                      //PUSH 74
 	+	LEA(EBX, [EBP, -0x7F])          //LEA EBX, [EBP-7F]
 	+	PUSH(EBX)                       //PUSH EBX
 	+	LEA(EAX, [EBP, -2])             //LEA EAX, [EBP-2]
 	+	PUSH_EAX                        //PUSH EAX
 	+	PUSH_EAX                        //PUSH EAX
-	+	PUSH(MakeFiller(3))             //PUSH addr6 ; ASCII "Data"
+	+	PUSH(Filler(3))                 //PUSH addr6 ; ASCII "Data"
 	+	CALL([EBP, -0xA])               //CALL DWORD PTR SS:[EBP-0A]
 	+	LEA(ECX, [EBP, -2])             //LEA ECX, [EBP-2]
 	+	MOV(CX, [ECX])                  //MOV CX, WORD PTR DS:[ECX]
@@ -168,7 +175,7 @@ _MG_INI = (callAddr, AddPak) =>
 	+	PUSH(EDX)                       //PUSH EDX
 	+	PUSH(EBX)                       //PUSH EBX
 	+	DGRF.MovFMgr                    //MOV ECX, g_fileMgr
-	+	CALL(MakeFiller(5))             //CALL CFileMgr::AddPak()
+	+	CALL(Filler(5))                 //CALL CFileMgr::AddPak()
 	;
 	let pakPos = code.byteCount();
 
@@ -180,12 +187,12 @@ _MG_INI = (callAddr, AddPak) =>
 	+	JNB(-0x3F)                      //JNB SHORT addr8
 	+	TEST(EDX, EDX)                  //TEST EDX, EDX
 	+	JNZ(0x20)                       //JNZ SHORT addr9
-	+	PUSH(MakeFiller(4))             //PUSH addr5 ; INI filename
-	+	PUSH(DGRF.Addr)                  //PUSH OFFSET addr ; "data.grf"
+	+	PUSH(Filler(4))                 //PUSH addr5 ; INI filename
+	+	PUSH(DGRF.Addr)                 //PUSH OFFSET addr ; "data.grf"
 	+	MOV(WORD_PTR, [EBP, -2], 0x32)  //MOV WORD PTR SS:[EBP-2], 32
 	+	LEA(EAX, [EBP, -2])             //LEA EAX, [EBP-2]
 	+	PUSH_EAX                        //PUSH EAX
-	+	PUSH(MakeFiller(3))             //PUSH addr6 ; ASCII "Data"
+	+	PUSH(Filler(3))                 //PUSH addr6 ; ASCII "Data"
 	+	CALL([EBP, -6])                 //CALL DWORD PTR SS:[EBP-6]
 	+	TEST(EAX, EAX)                  //TEST EAX, EAX
 	+	JNZ(-0x69)                      //JNZ SHORT
@@ -196,11 +203,8 @@ _MG_INI = (callAddr, AddPak) =>
 
 	/// 2.1 - Get the INI file name from user
 	let iniFile = Exe.GetUserInput('$dataINI', D_Text, "INI File path", "Enter the name of the INI file", "DATA.INI", {minLen: 1, maxLen: 20, saveDefault: true});
-	if (iniFile === false)
-		throw "Cancelled - No File specified";
-
-	if (iniFile.isEmpty())
-		throw "Cancelled - Empty string received";
+	if (iniFile === false || iniFile.trim().isEmpty())
+		Cancel("No File name specified");
 
 	iniFile = ".\\" + iniFile;
 
@@ -243,10 +247,10 @@ _MG_EMB = (callAddr, AddPak) =>
 	/// 1.1 - Get the INI file from user to read
 	let file = Exe.GetUserInput('$inpMultGRF', D_InFile, "File Input", "Enter your INI file", "Inputs/Sample_DATA.INI");
 	if (file === false)
-		throw "Cancelled - No input file received";
+		Cancel("No input file received");
 
 	if (file.isEmpty())
-		throw "Cancelled - Empty file name received";
+		Cancel("Empty file name received");
 
 	let handle = new TextFile(file, 'r');
 	if (!handle.Valid)
@@ -269,16 +273,16 @@ _MG_EMB = (callAddr, AddPak) =>
 
 	/// 1.3 - Account for empty input file (atleast data.grf should be there)
 	if (grfNames.isEmpty())
-		grfNames[0] = "data.grf";
+		grfNames[0] = DGRF.Name;
 
 	/// 1.4 - Remove empty indices
 	grfNames = grfNames.filter( name => name !== undefined );
 
 	/// 2.1 - Prepare template for load 1 GRF (same needs to be repeated for all GRF files)
 	let template =
-		PUSH(MakeFiller(1))  //PUSH OFFSET addr; GRF name
-	+	DGRF.MovFMgr         //MOV ECX, OFFSET g_fileMgr
-	+	CALL(MakeFiller(2))  //CALL CFileMgr::AddPak()
+		PUSH(Filler(1))  //PUSH OFFSET addr; GRF name
+	+	DGRF.MovFMgr     //MOV ECX, OFFSET g_fileMgr
+	+	CALL(Filler(2))  //CALL CFileMgr::AddPak()
 	;
 	let tsize = template.byteCount();
 
@@ -313,7 +317,7 @@ _MG_EMB = (callAddr, AddPak) =>
 	code += RETN() + " 00";//RETN and 1 extra NULL
 
 	/// 2.5 - Add the function at the gap
-	Exe.AddHex(free, code + strings, fullSize);
+	Exe.AddHex(free, code + strings);
 
 	/// 2.6 - Change the AddPak CALL to use our function
 	Exe.SetTgtAddr(callAddr + 1, freeVir);

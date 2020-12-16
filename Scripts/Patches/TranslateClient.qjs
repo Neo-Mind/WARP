@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Ai4rei/AN                                         *
-*   Copyright (C) 2013-2020 Neo Mind                                       *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -73,15 +73,18 @@ TranslateClient = function()
 	/// 2.1 - Get the translation map file from user
 	let inFile = Exe.GetUserInput('$translationFile', D_InFile, "Translation Mapping", "Enter the translation file", "Inputs/Translations_EN.yml", {filters: YMLFILTER});
 	if (inFile === false)
-		throw "Cancelled - No translation file specified";
+		Cancel("No translation file specified");
 
 	/// 2.2 - Load the mapping
 	let Translations = Warp.LoadYaml(inFile);
-	if (!Array.isArray(Translations))
-		throw "Cancelled - Invalid/Non-existent translation file";
+	if (Translations === false)
+		return false;
+
+	else if (!IsArr(Translations))
+		throw Error("Need a list of translations");
 
 	/// 2.3 - Open the Failed Translations output file - for writing out unexpected translation fails
-	let fp = new TextFile(Warp.Path + "Outputs/FailedTranslations_" + ROC.BaseName + ".txt", 'w');
+	let fp = new TextFile(OUTDIR + "FailedTranslations_" + ROC.BaseName + ".txt", 'w');
 	if (!fp.Valid)
 		throw Error("Unable to create FailedTranslations Output file");
 
@@ -91,16 +94,17 @@ TranslateClient = function()
 	let dend  = Exe.GetSectEnd(DATA);
 	let d2end = Exe.GetSectEnd(DATA2);
 
-	/// 3.2 - Initialize the failed translation count
-	let failCount = 0;
-
-	Translations.forEach( (hash, idx) =>
+	/// 3.2 - Save the filtered array with successful translations
+	let translated = Translations.filter( (hash, idx) =>
 	{
-		/// 3.3 - Retrieve the 3 parts 
+		/// 3.3 - Retrieve the 3 parts & verify if we are within the expected date range for the builddate
 		let findPat = hash.find;
 		let replStr = hash.replace;
-		let desc = hash.desc;
-
+		let {startDate, endDate, desc} = hash;
+		
+		if ( (IsNum(startDate) && Exe.BuildDate < startDate) || (IsNum(endDate) && Exe.BuildDate > endDate) )
+			return true; // its not a fail
+	
 		/// 3.4 - Ensure description is a valid string/number, defaults to the replacement string
 		if (desc === undefined)
 			desc = replStr;
@@ -112,17 +116,16 @@ TranslateClient = function()
 		if (!IsStr(findPat))
 		{
 			fp.WriteLine(desc + " => Invalid/Non-existent search pattern");
-			failCount++;
-			return;
+			return false;
 		}
+
 		if (!IsStr(replStr))
 		{
 			fp.WriteLine(desc + " => Invalid/Non-existent replacement pattern");
-			failCount++;
-			return;
+			return false;
 		}
 
-		/// 3.6 - Check if the search pattern is hex or text string 
+		/// 3.6 - Check if the search pattern is hex or text string
 		let hexMode = true;
 		let parts = findPat.match(/^\s*'(.*)'\s*$/);
 		if (parts !== null)
@@ -151,8 +154,7 @@ TranslateClient = function()
 		if (addr < 0)
 		{
 			fp.WriteLine(desc + " => Pattern not found");
-			failCount++;
-			return;
+			return false;
 		}
 
 		/// 3.9 - Increment addr for hexMode (since we searched with 0 prefixed)
@@ -173,14 +175,21 @@ TranslateClient = function()
 
 		/// 3.11 - Replace based on hexMode
 		if (hexMode)
-			Exe.SetHex(addr, replStr);
+			Exe.SetHex(addr, replStr + " 00");
 		else
-			Exe.SetText(addr, replStr);
-	});
+			Exe.SetText(addr, replStr + "\x00");
 
-	/// 4 - If the fail count is same as the length of the Translations array then report it
-	if (failCount === Translations.length)
-		throw Error("All translations had issues");
-	else
 		return true;
+	});
+	fp.Close();
+
+	/// 4.1 - If 'translated' is empty i.e. everything in Translations array failed (highly unlikely), then report error
+	if (translated.isEmpty())
+		throw Error("All translations had issues");
+
+	/// 4.2 - If any fails were found, show the FailedTranslations.txt for user to cross check if any expected ones got failed (only displays for Main GUI)
+	if (!Exe.TestMode && translated.length < Translations.length)
+		Warp.Show(fp.Path);
+
+	return true;
 };

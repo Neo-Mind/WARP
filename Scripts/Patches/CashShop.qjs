@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo Mind                                       *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
 *   Copyright (C) 2018-2020 CH.C (jchcc)                                   *
 *                                                                          *
@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144), CH.C (jchcc)                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,18 +35,18 @@ MoveShopIcon = function()
 {
 	/// 1.1 - Find the XCoord calculation pattern
 	let tgtReg = (Exe.Version < 11.0) ? EDX : EAX;
-	
+
 	let code =
 		SUB(tgtReg, 0xBB)      //SUB reg, 0BB
-	+   PUSH(tgtReg)           //PUSH reg
+	+	PUSH(tgtReg)           //PUSH reg
 	;
-	
+
 	let addr = Exe.FindHex(code);
 	if (addr < 0 && Exe.Version >= 11.0)
 	{
 		code = code.replace(PUSH_EAX , PUSH(WCp) + PUSH_EAX );//PUSH const before PUSH EAX
 		addr = Exe.FindHex(code);
-	
+
 		/// 1.2 - If this pattern matches then move up the PUSH and increment addr by 2
 		if (addr > 0)
 		{
@@ -56,45 +56,45 @@ MoveShopIcon = function()
 	}
 	if (addr < 0)
 		throw Error("Coordinate calculation not found");
-	
+
 	/// 1.3 - For EDX there is an extra byte so NOP it
 	if (tgtReg.equals(EDX)) //EDX
 	{
 		Exe.SetNOPs(addr, 1);
 		addr++;
 	}
-	
+
 	/// 2.1 - Find the pattern where the Screen Size is picked up (Width is at 0x24, Height is at 0x28) - We need the address of g_ScreenStats
 	code = MOV( Exe.Version >= 11.0 ? EAX : ECX, [POS3WC]);   //MOV EAX or ECX, DWORD PTR DS:[g_ScreenStats]
 	let addr2 = Exe.FindHex(code + " 8B", addr - 0x18, addr); //Some MOV follows after the g_ScreenStats MOV
 	if (addr2 < 0)
 		throw Error("Screen size retrieval not found");
-	
+
 	/// 2.2 - Extract g_ScreenStats
 	let ScreenStats = Exe.GetHex(addr2 + code.byteCount() - 6, 4);
-	
+
 	/// 3.1 - Get new Coordinates from user
 	let xCoord = Exe.GetUserInput('$cashShopX', D_Int16, "CashShop Position", "Enter new X coordinate:", -0xBB, {min: -1366, max: 1366});
 	let yCoord = Exe.GetUserInput('$cashShopY', D_Int16, "CashShop Position", "Enter new Y coordinate:", 0x10, {min: -768, max: 768});
-	
+
 	if (xCoord === false && yCoord === false)
-		throw "Cancelled - Coordinates reverted to (-187,16)";
-	
+		Cancel("Coordinates", "(-187,16)");
+
 	if (xCoord === false)
 		xCoord = -0xBB;
-	
+
 	else if (yCoord === false)
 		yCoord = 0x10;
-	
+
 	/// 3.2 - Prepare code to add based on the sign of each coordinate (negative values are relative to width and height respectively)
 	code = "";
-	
+
 	if (yCoord < 0)
 	{
 		code +=
 			MOV(ECX, [ScreenStats])  //MOV ECX, DWORD PTR DS:[g_ScreenStats]
-		+   MOV(ECX, [ECX, 0x28])    //MOV ECX, DWORD PTR DS:[ECX+28]
-		+   ADD(ECX, yCoord)         //ADD ECX, yCoord; yCoord is negative
+		+	MOV(ECX, [ECX, 0x28])    //MOV ECX, DWORD PTR DS:[ECX+28]
+		+	ADD(ECX, yCoord)         //ADD ECX, yCoord; yCoord is negative
 		;
 	}
 	else
@@ -102,13 +102,13 @@ MoveShopIcon = function()
 		code += MOV(ECX, yCoord);    //MOV ECX, yCoord
 	}
 	code += MOV([ESP, 4], ECX);      //MOV DWORD PTR DS:[ESP+4], ECX
-	
+
 	if (xCoord < 0)
 	{
 		code +=
 			MOV(ECX, [ScreenStats])  //MOV ECX, DWORD PTR DS:[g_ScreenStats]
-		+   MOV(ECX, [ECX, 0x24])    //MOV ECX, DWORD PTR DS:[ECX+24]
-		+   ADD(ECX, xCoord)         //ADD ECX, xCoord; xCoord is negative
+		+	MOV(ECX, [ECX, 0x24])    //MOV ECX, DWORD PTR DS:[ECX+24]
+		+	ADD(ECX, xCoord)         //ADD ECX, xCoord; xCoord is negative
 		;
 	}
 	else
@@ -117,22 +117,22 @@ MoveShopIcon = function()
 	}
 	code +=
 		MOV(tgtReg, ECX)             //MOV tgtReg, ECX
-	+   RETN()                       //RETN
+	+	RETN()                       //RETN
 	;
-	
+
 	let csize = code.byteCount();
-	
+
 	/// 3.3 - Allocate space to add our code
 	let free = Exe.FindSpace(csize, 0x10);
 	if (free < 0)
 		throw NO_ALLOC;
-	
+
 	/// 3.4 - Add the code at the allocated space
-	Exe.AddHex(free, code, csize);
-	
+	Exe.AddHex(free, code);
+
 	/// 3.5 - Create a CALL to our code at addr (originally will have the substraction)
 	Exe.SetCALL(addr, free, PHYSICAL);
-	
+
 	return true;
 };
 
@@ -162,14 +162,14 @@ ZeroCinShop = function()
 	+	PUSH_EAX            //PUSH EAX
 	+	CALL()              //CALL std::string::sprintf
 	;
-	
+
 	addr = Exe.FindHex(part1 + part2);
 	if (addr < 0)
 		throw Error("Format string reference missing");
-	
+
 	/// 2.1 - Set addr to position of PUSH DWORD PTR
 	addr += part1.byteCount();
-	
+
 	/// 2.2 - Change it to a PUSH 0
 	part2 =
 		PUSH_0  //PUSH 0
@@ -179,7 +179,7 @@ ZeroCinShop = function()
 	+	NOP     //NOP
 	;
 	Exe.SetHex(addr, part2);
-	
+
 	return true;
 };
 
@@ -190,7 +190,7 @@ ZeroCinShop.validate = () =>
 {
 	if (ROC.CashShopAddr < 0)
 		return false;
-	
+
 	ZC_Addr = Exe.FindText("%d C");
 	return ZC_Addr > 0;
 };
@@ -204,19 +204,19 @@ DefShopBrowser = function()
 	let addrs = Exe.FindHexN( PUSH(EAX) + PUSH(SB_Addr) );
 	if (addrs.isEmpty())
 		throw Error("String references missing");
-	
+
 	/// 2 - Prep code to change arguments of ShellExecuteA
 	code =
 		PUSH_0     //PUSH 0
 	+	PUSH(EAX)  //PUSH EAX
-	+ 	NOP        //NOP
-	+ 	NOP        //NOP
-	+ 	NOP        //NOP
+	+	NOP        //NOP
+	+	NOP        //NOP
+	+	NOP        //NOP
 	;
-	
+
 	/// 3 - Replace the arguments of ShellExecuteA
 	addrs.forEach( addr => Exe.SetHex(addr, code));
-	
+
 	return true;
 };
 
@@ -227,7 +227,7 @@ DefShopBrowser.validate = () =>
 {
 	if (ROC.CashShopAddr < 0)
 		return false;
-	
+
 	SB_Addr = Exe.FindText("iexplore.exe");
 	return SB_Addr > 0;
 };

@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,11 +23,12 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-11-29                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
-// TODO - AuraSprites is having issue finding the 2nd set of PUSHes in 2019 onwards
+// TODO - 2nd set of PUSHes are not found easily in VC14.16 clients. need another approach after inspection in client.
+//        disabling that part for now.
 
 ///
 /// \brief Change the filename references used for Level99 Aura effect
@@ -35,506 +37,516 @@
 ///
 CustomAuraSprites = function()
 {
-    /// 1.1 - Find the string 'effect\ring_blue.tga'
-    let addr = Exe.FindText("effect\\ring_blue.tga", VIRTUAL, false);//false for not prefixing zero.
-    if (addr < 0)
-        throw Error("'effect\\ring_blue.tga' not found");
+	/// 1.1 - Find the string 'effect\ring_blue.tga'
+	let addr = Exe.FindText("effect\\ring_blue.tga", false); //Some clients dont have NULL prefix
+	if (addr < 0)
+		throw Error("'effect\\ring_blue.tga' not found");
 
-    let rblue = addr.toHex();
+	let rblue = addr.toHex();
 
-    /// 1.2 - Find the string 'effect\pikapika2.bmp'
-    addr = Exe.FindText("effect\\pikapika2.bmp", VIRTUAL, false);//false for not prefixing zero.
-    if (addr < 0)
-        throw Error("'effect\\pikapika2.bmp' not found");
+	/// 1.2 - Find the string 'effect\pikapika2.bmp'
+	addr = Exe.FindText("effect\\pikapika2.bmp", false); //same issue
+	if (addr < 0)
+		throw Error("'effect\\pikapika2.bmp' not found");
 
-    let ppika2 = addr.toHex();
+	let ppika2 = addr.toHex();
 
-    /// 2.1 - Prepare replacement strings
-    let strAF = "effect\\aurafloat.tga\x00";
-    let strAR = "effect\\auraring.bmp\x00";
-    let size = strAF.length + strAR.length;
+	/// 2.1 - Prepare replacement strings
+	let strAF = "effect\\aurafloat.tga\x00";
+	let strAR = "effect\\auraring.bmp\x00";
+	let size = strAF.length + strAR.length;
 
-    /// 2.2 - Allocate space to add the strings
-    let free = Exe.FindSpace(size);
-    if (free < 0)
-        throw NO_ALLOC;
+	/// 2.2 - Allocate space to add the strings
+	let free = Exe.FindSpace(size);
+	if (free < 0)
+		throw NO_ALLOC;
 
-    /// 2.3 - Add the strings there (since there are null characters in between we will convert to hex and add)
-    Exe.AddHex(free, (strAF + strAR).toHex(), size);
+	/// 2.3 - Add the strings there (since there are null characters in between we will convert to hex and add)
+	Exe.AddHex(free, (strAF + strAR).toHex());
 
-    /// 2.4 - Get the new string addrs
-    let offsetAF = Exe.Phy2Vir(free, DIFF);
-    let offsetAR = offsetAF + strAF.length;
+	/// 2.4 - Get the new string addrs
+	let offsetAF = Exe.Phy2Vir(free, DIFF);
+	let offsetAR = offsetAF + strAF.length;
 
-    /// 3.1 - Find the first pattern (original strings are PUSHed to display the aura)
-    let template =
-        PUSH(MakeFiller(1))  //PUSH OFFSET addr
-    +   MOV(ECX, R32)        //MOV ECX, reg32_A
-    +   CALL(ALLWC)          //CALL addr2
-    +   JMP(ALLWC)           //JMP addr3
-    ;
+	/// 3.1 - Find the first pattern (original strings are PUSHed to display the aura)
+	let template =
+		PUSH(Filler(1))         //PUSH OFFSET addr
+	+	(Exe.Version <= 11.0 && Exe.BuildDate < 20191000
+	?	MOV(ECX, R32)           //MOV ECX, reg32_A ; Not present for 14.16
+	:	''
+	)
+	+	CALL(ALLWC)             //CALL addr2
+	+	JMP(ALLWC)              //JMP addr3
+	+	(Exe.Version > 11.0
+	?	MOV(ECX, [EBP, NEG2WC]) //MOV ECX, DWORD PTR SS:[EBP-x] ; Only present for 14.16
+	:	''
+	)
+	;
 
-    let code1 = SwapFiller(template, 1, rblue);  //addr => ASCII "effect\ring_blue.tga"
-    let code2 = SwapFiller(template, 1, ppika2); //addr => ASCII "effect\pikapika2.bmp"
-    let offRB = 1;
-    let offPP = template.byteCount() + 2;
+	let codeRB = SwapFiller(template, 1, rblue, 1);  //addr => ASCII "effect\ring_blue.tga"
+	let offRB = 1;
 
-    addr = Exe.FindHex(code1 + PUSH_R + code2);//PUSH reg32_B in between
-    if (addr < 0)
-    {
-        addr = Exe.FindHex(code1 + PUSH_0 + code2);//PUSH 0 in between
-        offPP++;
-    }
-    if (addr < 0) //Some 2019 clients assign ECX (from memory) before the PUSHes but we can put it after the JMP in the template
+	let codePP = SwapFiller(template, 1, ppika2, 1); //addr => ASCII "effect\pikapika2.bmp"
+	let offPP = template.byteCount() + 2;
+
+	// PUSH reg for VC6 & some clients in VC9. PUSH 0 for the remaining
+	let infix = Exe.Version < 9.0 || (Exe.Version === 9.0 && Exe.BuildDate > 20101116) ? PUSH_R : PUSH_0 ;
+
+	addr = Exe.FindHex(codeRB + infix + codePP);
+	if (addr < 0)
+		throw Error("First PUSHes not found");
+
+	/// 3.2 - Update the string addrs
+	Exe.SetInt32(addr + offRB, offsetAF);
+	Exe.SetInt32(addr + offPP, offsetAR);
+
+	///===========================================///
+	/// For new clients above is left unused but  ///
+	/// we are still going to keep it as failsafe ///
+	///===========================================///
+
+	if (Exe.BuildDate >= 20110700 && Exe.Version < 14.0)
 	{
-		template = template.remove(MOV(ECX, R32)) + MOV(ECX, [EBP, NEG2WC]);
-		code1 = SwapFiller(template, 1, rblue);
-		code2 = SwapFiller(template, 1, ppika2);
-		offPP += 4;
-		
-		addr = Exe.FindHex(code1 + PUSH_0 + code2);//PUSH 0 in between
+		/// 4.1 - Find the second pattern
+		let code =
+			PUSH(ESI)      //PUSH ESI
+		+	MOV(ESI, ECX)  //MOV ESI, ECX
+		+	CALL(NEG2WC)   //CALL addr1
+		+	MOV(ECX, ESI)  //MOV ECX, ESI
+		+	POP(ESI)       //POP ESI
+		+	JMP(NEG2WC)    //JMP addr2
+		;
+		let csize = code.byteCount();
+		let addrs = Exe.FindHexN(code);
+
+		offRB = -1;
+		offPP = -1;
+
+		/// 4.2 - Filter out the pattern that CALLs pikapika2 effect followed by JMP to ring_blue.
+		let found = addrs.find( patAddr =>
+		{
+			addr = Exe.GetTgtAddr(patAddr + 4, PHYSICAL);
+			offPP = Exe.FindHex( PUSH(ppika2), addr, addr + 0x100);
+
+			addr = Exe.GetTgtAddr(patAddr + csize - 4, PHYSICAL);
+			offRB = Exe.FindHex( PUSH(rblue) , addr, addr + 0x120);
+
+			return (offPP > 0 && offRB > 0);
+
+		});
+
+		if (found === undefined)
+			throw Error("Second PUSHes not found");
+
+		/// 4.3 - Update the string addrs
+		Exe.SetInt32(offRB + 1, offsetAF);
+		Exe.SetInt32(offPP + 1, offsetAR);
 	}
-    if (addr < 0)
-        throw Error("First PUSHes not found");
 
-    /// 3.2 - Update the string addrs
-    Exe.SetInt32(addr + offRB, offsetAF);
-    Exe.SetInt32(addr + offPP, offsetAR);
-
-    ///===========================================///
-    /// For new clients above is left unused but  ///
-    /// we are still going to keep it as failsafe ///
-    ///===========================================///
-
-    if (Exe.BuildDate >= 20110700 && Exe.Version < 14)
-    {
-        /// 4.1 - Find the second pattern
-        let code =
-            PUSH(ESI)        //PUSH ESI
-        +   MOV(ESI, ECX)    //MOV ESI, ECX
-        +   CALL(NEG2WC)     //CALL addr1
-        +   MOV(ECX, ESI)    //MOV ECX, ESI
-        +   POP(ESI)         //POP ESI
-        +   JMP(NEG2WC)      //JMP addr2
-        ;
-        let csize = code.byteCount();
-        let addrs = Exe.FindHexN(code);
-
-        offRB = -1;
-        offPP = -1;
-    
-        /// 4.2 - Filter out the pattern that CALLs pikapika2 effect followed by JMP to ring_blue.
-		if (addrs.find( patAddr =>
-        {
-            addr = Exe.GetTgtAddr(patAddr + 4, PHYSICAL);
-            offPP = Exe.FindHex( PUSH(ppika2), addr, addr + 0x100);
-    
-            addr = Exe.GetTgtAddr(patAddr + csize - 4, PHYSICAL);
-            offRB = Exe.FindHex( PUSH(rblue) , addr, addr + 0x120);
-    
-            return (offPP > 0 && offRB > 0);
-			
-        }) === undefined
-		)
-            throw Error("Second PUSHes not found");
-        
-        /// 4.3 - Update the string addrs
-        Exe.SetInt32(offRB + 1, offsetAF);
-        Exe.SetInt32(offPP + 1, offsetAR);
-    }
-    return true;
+	return true;
 };
 
+// TODO - Need further inspection . Failing for very old clients
+
 ///
-/// \brief Modify the Aura setting code inside CPlayer::ReLaunchBlurEffects to CALL custom function 
+/// \brief Modify the Aura setting code inside CPlayer::ReLaunchBlurEffects to CALL custom function
 ///        The function sets up aura based on limits as per user specified input file.
 ///
 CustomAuraLimits = function()
 {
-    /// 1.1 - Find the double PUSH before ReLaunchBlurEffects is CALLed
-    let code =
-        PUSH(0x14E)     //PUSH 14E
-    +   PUSH(0x6D)      //PUSH 6D
-    ;
+	/// 1.1 - Find the double PUSH before ReLaunchBlurEffects is CALLed
+	let code =
+		PUSH(0x14E)  //PUSH 14E
+	+	(Exe.BuildDate > 20191022
+	?
+		PUSH_0       //PUSH 0 ;extra for newer clients
+	:
+		''
+	)
+	+	PUSH(0x6D)   //PUSH 6D
+	;
+	let addrs = Exe.FindHexN(code);
+	if (addrs.isEmpty())
+		throw Error("Reference PUSHes not found");
 
-    let addr = Exe.FindHex(code);
-    if (addr < 0)
+	let csize = code.byteCount();
+
+	/// 1.2 - Find the CALL below it
+	code =
+		MOV(R32, [R32, POS1WC])  //MOV reg32_A, DWORD PTR DS:[reg32_B+const]
+	+	MOV(ECX, [R32, WCp])     //MOV ECX, DWORD PTR DS:[reg32_A+const2]
+	+	CALL(POS3WC)             //CALL CPlayer::ReLaunchBlurEffects
+	;
+
+	let addr = -1;
+	addrs.find( memAddr =>
 	{
-		code = code.replace(PUSH(0x6D), PUSH_0 + PUSH(0x6D));
-		addr = Exe.FindHex(code);
-	}
-    if (addr < 0)
-        throw Error("Reference PUSHes not found");
+		addr = Exe.FindHex(code, memAddr + csize, memAddr + csize + 0x100);
+		return (addr > 0);
+	})
 
-    /// 1.2 - Set addr to the location after the PUSHes
-    addr += code.byteCount();
+	if (addr < 0)
+		throw Error("ReLaunchBlurEffects CALL not found");
 
-    /// 1.3 - Find the CALL below it
-    code =
-        MOV(R32, [R32, POS1WC])  //MOV reg32_A, DWORD PTR DS:[reg32_B+const]
-    +   MOV(ECX, [R32, WCp])     //MOV ECX, DWORD PTR DS:[reg32_A+const2]
-    +   CALL(POS3WC)             //CALL CPlayer::ReLaunchBlurEffects
-    ;
+	/// 1.3 - Go inside the function
+	addr = Exe.GetTgtAddr(addr + code.byteCount() - 4, PHYSICAL);
 
-    addr = Exe.FindHex(code, addr, addr + 0x100);
-    if (addr < 0)
-        throw Error("ReLaunchBlurEffects CALL not found");
+	/// 1.4 - Find the first JE inside the function
+	let refAddr = Exe.FindHex( JE(POS2WC), addr, addr + 0x80);
+	if (refAddr < 0)
+		throw Error("First JE not found");
 
-    /// 1.4 - Set addr to the PHYSICAL address of ReLaunchBlurEffects
-    addr = Exe.GetTgtAddr(addr + code.byteCount() - 4, PHYSICAL);
-	
-    /// 2.1 - Find the first JE inside the function
-    addr = Exe.FindHex( JE(POS2WC), addr, addr + 0x80);
-    if (addr < 0)
-        throw Error("First JE not found");
+	// Now we need to diverge to determine all the needed info
 
-	/// 2.2 - Save JE's target address (PHYSICAL)
-	let cmpBegin;
-	let cmpEnd = Exe.GetTgtAddr(addr + 2, PHYSICAL);//JE opcode is 0F 84, so the addr is 2 bytes afterwards
-	
-	/// 2.3 - Look for comparison & aura creation code closer to the first JE for 2019+ clients
-	let addr2 = -1;
-	if (Exe.BuildDate > 20190000)
+	let cmpBegin, cmpEnd, MovSSN, GetJobID, gLevel, AuraConsts = [], PUSH0s, AssgnZero;
+
+	let directCMP = Exe.BuildDate < 20130000;
+	if (directCMP) //aura constants are assigned in here itself
 	{
-		code =
-			MOV(AX, [POS4WC])		//MOV AX, WORD PTR DS:[g_level]
-		+	MOV(R32, R32)			//MOV reg32_A, reg32_B
-		+	MOV([R32, POS2WC], AX)	//MOV WORD PTR DS:[reg32_B + const], AX
-		+	CALL(NEG3WC)			//CALL func
-		;
-		addr2 = Exe.FindHex(code, addr + 6, addr + 0x50);
-		
-		if (addr2 > 0)
-		{
-			cmpBegin = addr2;
-			cmpEnd = addr2 + code.byteCount();
-		}
-	}
-	
-	/// 2.4 - If not there look for PUSH 2E2 after first JE
-	if (addr2 < 0)
-	{
-		addr2 = Exe.FindHex( PUSH(0x2E2), addr + 6, addr + 0x100);
-		if (addr2 < 0)
+		/// 2.1 - Save JE's target address (PHYSICAL) as end address of comparison
+		cmpEnd = Exe.GetTgtAddr(refAddr + 2, PHYSICAL);
+
+		/// 2.2 - Find the 2E2 PUSH after the JZ
+		let addr = Exe.FindHex( PUSH(0x2E2), refAddr + 6, refAddr + 0x100);
+		if (addr < 0)
 			throw Error("2E2 assignment missing");
-		
-		/// 2.5 - Find the second JE after it
-		addr = Exe.FindHex( JE(POS2WC), addr2 + 5, addr2 + 0x80);
+
+		/// 2.3 - Find the second JE after it
+		addr = Exe.FindHex( JE(POS2WC), addr + 5, addr + 0x80);
 		if (addr < 0)
 			throw Error("Second JE not found");
 
-		/// 2.6 - Save JE's target address (PHYSICAL)
-		cmpBegin = Exe.GetTgtAddr(addr + 2, PHYSICAL);//JE opcode is 0F 84, so the addr is 2 bytes afterwards
-	}
-	
-    ///---------------------------------------------------------------------
-    /// Now we Check for the comparison style.
-    ///   Old Clients directly compare there itself.
-    ///   New Clients do it in a seperate function (by New i mean 2013+)
-    ///---------------------------------------------------------------------
+		/// 2.6 - Save JE's target address (PHYSICAL) as the beginning address of comparison
+		cmpBegin = Exe.GetTgtAddr(addr + 2, PHYSICAL);
 
-	let directCMP, Session, GetJobID, Level, AuraConsts, ZeroPushes, AssignZero;
-    if (Exe.GetUint8(cmpBegin) === 0xB9) //MOV ECX, g_session ; Old Style - alternatively we can also check by client date
-    {
-        directCMP = true;
+		/// 2.7 - Extract the instruction at cmpBegin and ensure it is MOV ECX, g_session
+		MovSSN = Instr.FromAddr(cmpBegin);
+		if (MovSSN.Codes[0] !== 0xB9)
+			throw Error("Unexpected instruction found");
 
-        /// 3.1 - Extract g_session and job Id getter addresses
-        Session  = Exe.GetInt32(cmpBegin + 1);
-        GetJobID = Exe.GetTgtAddr(cmpBegin + 6);
+		/// 2.8 - Next instruction should be CALL GetJobID
+		if (Exe.GetUint8(MovSSN.NextAddr) != 0xE8)
+			throw Error("Function CALL missing");
 
-        /// 3.2 - Find the Level address comparison
-        code = MOV(EAX, [POS3WC]); //MOV EAX, DWORD PTR DS:[g_level] ; EAX is later compared with 96
-        addr = Exe.FindHex(code, cmpBegin, cmpBegin + 0x20);
+		/// 2.19 - Save the target address
+		GetJobID = Exe.GetTgtAddr(MovSSN.NextAddr + 1);
 
-        if (addr < 0)
-        {
-            code = CMP([POS3WC], POS1WC); //CMP DWORD PTR DS:[g_level], 96 or AF
-            addr = Exe.FindHex(code, cmpBegin, cmpBegin + 0x80);
-        }
-        if (addr < 0)
-            throw Error("Level Comparison not found");
-
-        /// 3.3 - Set addr to location after the instruction
-        addr += code.byteCount();
-
-        /// 3.4 - Extract g_level address
-        Level = Exe.GetInt32(addr - 4);
-
-        /// 4.1 - Find the Aura Displayer Call (its a reg call so dunno the name of the function)
-        code =
-            PUSH(WC)            //PUSH auraconst
-        +   PUSH_0              //PUSH 0
-        +   MOV(ECX, ESI)       //MOV ECX, ESI
-        +   " FF"               //CALL reg32 or CALL DWORD PTR DS:[reg32+8]
-        ;
-        let argPush = PUSH_0;
-        let addr2 = Exe.FindHex(code, addr, addr + 0x20);
-
-        if (addr2 < 0)
-        {
-            code = code.replace(PUSH_0, PUSH_R);//swap PUSH 0 with PUSH reg32_B
-            argPush = '';
-            addr2 = Exe.FindHex(code, addr, addr + 0x20);
-        }
-        if (addr2 < 0)
-            throw Error("Aura Call not found");
-
-        /// 4.2 - Extract the PUSH reg32_B
-        if (argPush.isEmpty())
-            argPush = Exe.GetHex(addr2 + 2, 1);
-
-        /// 4.3 - Extract the aura constant
-        AuraConsts = [Exe.GetHex(addr2 + 1, 1)];
-        AuraConsts[1] = AuraConsts[2] = AuraConsts[0];//Same value is used for All Auras - and therefore shows only 1 type of aura per job
-
-        /// 4.4 - Get the PUSH 0s before PUSH auraconst (it differs for some dates)
-        let count = argPush.byteCount();
-        argPush = Exe.GetHex(addr2 - 4 * count, 4 * count);
-
-        if (argPush.substr(0, 3 * count) === argPush.substr(9 * count)) //First and Last is same means there are actually 4 PUSHes
-            ZeroPushes = PUSH_0.repeat(4);
-        else
-            ZeroPushes = PUSH_0.repeat(3);
-
-        /// 4.5 - Setup AssignZero variable
-        AssignZero =
-            JMP(8)              //JMP SHORT addr  ;addr is after MOV EAX, EAX below
-        +   LEA(ESP, [ESP])     //LEA ESP, [ESP]  ;These are
-        +   LEA(EBP, [EBP])     //LEA EBP, [EBP]  ;never
-        +   MOV(EAX, EAX)       //MOV EAX, EAX    ;executed
-        ;
-    }
-    else //MOV reg16, WORD PTR DS:[g_level] ; New Style - comparisons are done inside a seperate function
-    {
-        directCMP = false;
-
-        /// 5.1 - Extract g_level address
-        Level = Instr.FromAddr(cmpBegin).Disp;
-
-        /// 5.2 - Find the comparison function call
-        addr = Exe.FindHex( CALL(NEG3WC), cmpBegin, cmpBegin + 0x30);
-        if (addr < 0)
-            throw Error("Function CALL not found");
-
-        /// 5.3 - Go inside the function
-        addr = Exe.GetTgtAddr(addr + 1, PHYSICAL);
-
-        /// 5.4 - Find g_session assignment
-        code =
-            CALL(ALLWC)         //CALL GetJobID
-        +   PUSH_EAX            //PUSH EAX
-        +   MOV(ECX, POS4WC)    //MOV ECX, g_session
-        +   CALL()              //CALL addr
-        ;
-        addr = Exe.FindHex(code, addr, addr + 0x50);
-        if (addr < 0)
-            throw Error("g_session assignment not found");
-
-        /// 5.5 - Extract Session & job Id getter address (we really dont need the Session for this one)
-        GetJobID = Exe.GetTgtAddr(addr + 1);
-		
-		addr += code.byteCount();
-        Session = Exe.GetInt32(addr - 5);
-
-        /// 5.6 - Find the Zero assignment at the end of the function
-        code = 
-			MOV([ESI, POS2WC], 0); 	//MOV DWORD PTR DS:[ESI + const], 0
-		+	POP(ESI)				//POP ESI
-		+	RETN					//RETN
+		/// 2.10 - Now we need to find the level comparison
+		let code = Exe.Version < 9.0 || Exe.BuildDate > 20120716
+		?
+			MOV(EAX, [POS3WC])     //MOV EAX, DWORD PTR DS:[g_level] ; EAX is compared afterwards
+		:                          //   or
+			CMP([POS3WC], POS1WC)  //CMP DWORD PTR DS:[g_level], 96 or AF
 		;
 
-        addr = Exe.FindHex(code, addr + 4, addr + 0x250);
-        if (addr < 0)
-            throw Error("Zero assignment not found");
+		addr = Exe.FindHex(code, cmpBegin, cmpBegin + 0x80);
+		if (addr < 0)
+			throw Error("Level comparison missing");
 
-        /// 5.7 - Save it (only needed for new types)
-        AssignZero = Instr.FromAddr(addr).toString();
+		/// 2.11 - Extract the displacement i.e. g_level
+		gLevel = Instr.FromAddr(addr).Disp;
 
-        /// 5.8 - Setup the Aura constants
-        AuraConsts = [" 7D", " 93", " 92"];
-		
-		/// 5.9 - Find 7D push before the zero assignment
-		code =
-			PUSH_0		//PUSH 0
-		+	PUSH_0		//PUSH 0
-		+	PUSH(0x7D)	//PUSH 0
-		+	PUSH_0		//PUSH 0
-		;
-		let addr2 = Exe.FindHex(code, addr - 0x60, addr);
-		if (addr2 < 0)
-			throw Error("Zero PUSHes missing");
-		
-		/// 5.10 - Extract all the PUSH 0s before 7D push
-        ZeroPushes = PUSH_0;
-		while (Exe.GetHex(addr2, 2) === PUSH_0)
+		/// 2.12 - Now we find the CALL to Aura Displayer (dunno the name of the function).
+		let pushZero = Exe.Version > 6.0 ? PUSH_0 : PUSH(EBX);
+
+		let parts = [
+			pushZero
+		,
+			PUSH(' [011111..]') //PUSH 7D or PUSH 7E
+		,
+			pushZero            //PUSH 0 or PUSH reg (reg will contain 0 already)
+		+	MOV(ECX, ESI)       //MOV ECX, ESI
+		+	' FF'               //Can be CALL reg32 or CALL DWORD PTR DS:[reg32 + 8]
+		];
+
+		addr = Exe.FindHex(parts.join(''), cmpBegin, cmpBegin + 0x80);
+		if (addr < 0 && Exe.BuildDate > 20120700)
 		{
-			ZeroPushes += PUSH_0;
-			addr2 -= 2;
+			parts[2] = JMP(0x20); //JMP SHORT addr ;  to location where the CALL is done
+			addr = Exe.FindHex(parts.join(''), cmpBegin, cmpBegin + 0x80);
+
+			AuraConsts[2] = ' 92';
 		}
-    }
 
-    /// 6.1 - Get the Input file
-    let inFile = Exe.GetUserInput('$auraSpec', D_InFile, "Aura Limit Spec", "Enter the Aura Mapping file", "Inputs/AuraSpec.yml", {filters: YMLFILTER});
-    if (inFile === false)
-        throw "Cancelled - No mapping file specified";
+		if (addr < 0)
+			throw Error("Aura Call not found");
 
-    /// 6.2 - Load the input file which creates the hash table mapping the id ranges to level limits & aura id
+		/// 2.14 - Extract the constant PUSHed which is the Aura constant for 1st and 2nd levels.
+		let arg = Exe.GetHex(addr + pushZero.byteCount() + 1, 1);
+
+		/// 2.15 - Save to AuraConsts array.
+		AuraConsts[0] = AuraConsts[1] = arg;
+		AuraConsts[2] = AuraConsts[2] || arg;
+		AuraConsts[3] = AuraConsts[2];
+
+		/// 2.16 - Get the number of zero pushes before the aura const push
+		let addrs = Exe.FindHexN(pushZero, addr - 10, addr + 4);
+
+		/// 2.17 - Construct the PUSH0s for use later
+		PUSH0s = pushZero.repeat(addrs.length);
+
+		/// 2.18 - Setup AssgnZero code
+		AssgnZero =
+			" 36 66 0F 1F 84 00 00 00 00 00" //NOP WORD PTR SS:[EAX + EAX + 0]; 10 byte NOP basically
+		;
+
+	}
+	else //uses a seperate function
+	{
+		/// 3.1 - Get the target address of JE
+		let jeTarget = Exe.GetTgtAddr(refAddr + 2, PHYSICAL);
+
+		/// 3.2 - Find the function CALL pattern
+		let reg = Exe.Version > 10.0 ? AX : DX;
+		let code =
+			MOV(reg, [POS4WC])       //MOV reg32_A, DWORD PTR DS:[g_level]
+		+	MOV(ECX, R32)            //MOV ECX, reg32_B; usually ESI
+		+	MOV([R32, POS2WC], reg)  //MOV DWORD PTR DS:[reg32_C + const], reg
+		+	CALL(NEG3WC)             //CALL func
+		;
+
+		let addr = Exe.FindHex(code, jeTarget - 0x80, jeTarget);
+
+		if (addr < 0 && Exe.Version > 11.0) //It occurs right after the JE instruction for some of the recent clients
+		{
+			addr = Exe.FindHex(code, refAddr + 6, refAddr + 0x50);
+		}
+
+		if (addr < 0)
+			throw Error("Assigner CALL missing");
+
+		/// 3.3 - Save the beginning and end of the code as cmpBegin & cmpEnd
+		cmpBegin = addr;
+		cmpEnd = addr + code.byteCount();
+
+		/// 3.4 - Extract the displacement i.e. g_level
+		gLevel = Instr.FromAddr(cmpBegin).Disp;
+
+		/// 3.5 - Go inside the function
+		addr = Exe.GetTgtAddr(cmpEnd - 4, PHYSICAL);
+
+		/// 3.6 - Find the GetJobID CALL & g_session assignment afterwards
+		let prefix =
+			CALL(ALLWC)         //CALL GetJobID
+		+	PUSH_EAX            //PUSH EAX
+		;
+		let suffix =
+			MOV(ECX, POS4WC)    //MOV ECX, g_session
+		+	CALL()              //CALL addr
+		;
+
+		addr = Exe.FindHex(prefix + suffix, addr, addr + 0x50);
+		if (addr < 0)
+			throw Error("Function CALL missing");
+
+		/// 3.7 - Extract the target
+		GetJobID = Exe.GetTgtAddr(addr + 1);
+
+		/// 3.8 - Extract g_session movement
+		MovSSN = Instr.FromAddr(addr + prefix.byteCount());
+
+		/// 3.9 - Find the zero assignment at the end of the function
+		code =
+			MOV([ESI, POS2WC], 0) //MOV DWORD PTR DS:[ESI + const], 0
+		+	POP(ESI)              //POP ESI
+		+	RETN()                //RETN
+		;
+
+		addr = Exe.FindHex(code, addr + 0x20, addr + 0x250);
+		if (addr < 0)
+			throw Error("Zero assignment missing");
+
+		/// 3.10 - Save it as AssgnZero
+		AssgnZero = Instr.FromAddr(addr).toString();
+
+		/// 3.11 - Setup AuraConsts & PUSH0s
+		AuraConsts = [' 7D', ' 93', ' 92', ' 96'];
+
+		PUSH0s = PUSH_0.repeat(4);
+	}
+
+	/// 4.1 - Get the Input file
+	let inFile = Exe.GetUserInput('$auraSpec', D_InFile, "Aura Limit Spec", "Enter the Aura Mapping file", "Inputs/AuraSpec.yml", {filters: YMLFILTER});
+	if (inFile === false)
+		Cancel("No Mapping file specified");
+
+	/// 4.2 - Load the input file which creates the hash table mapping the id ranges to level limits & aura id
 	let AuraSpec = Warp.LoadYaml(inFile);
-	if (!Array.isArray(AuraSpec))
-		throw "Cancelled - Invalid/non-existent mapping file";
-	
-	/// 6.3 - Calculate the total table size
-    let tblSize = 0;
-	AuraSpec.forEach( hash =>
+	if (AuraSpec === false) //some error occured while loading
+		return false;
+
+	else if (!IsArr(AuraSpec))
+		throw Error("Need a list of Aura specifications");
+
+	/// 4.3 - Calculate the total table size
+	let tblSize = AuraSpec.reduce( (acc, hash) =>
+		acc + (IsArr(hash.IDs) && IsArr(hash.Maps)
+			? (4 * hash.IDs.length) + 2 + (5 * hash.Maps.length) + 2
+			: 0)
+	, 0);
+
+	if (tblSize === 0)
+		Cancel("Need both IDs & Maps for all entries");
+
+	/// 5.1 - Prepare code to insert (Reads the table, compare against Base Level & Job ID & apply appropriate constant)
+	code =
+		PUSH(ESI)                       //PUSH ESI
+	+	MOV(ESI, ECX)                   //MOV ESI, ECX
+	+	PUSH(EDX)                       //PUSH EDX
+	+	PUSH(EBX)                       //PUSH EBX
+	+	MovSSN                          //MOV ECX, g_session
+	+	CALL(Filler(1))                 //CALL GetJobID
+	+	MOV(EBX, Filler(2))             //MOV EBX, tblAddr
+	+	MOV(ECX, [EBX])                 //MOV ECX, DWORD PTR DS:[EBX]; idTblLoop
+	+	TEST(ECX, ECX)                  //TEST ECX, ECX
+	+	JE(0x49)                        //JE SHORT exitFunc
+	+	MOVSX(EDX, [ECX])               //MOVSX EDX, WORD PTR DS:[ECX];	idLoop
+	+	TEST(EDX, EDX)                  //TEST EDX, EDX
+	+	JS(0x15)                        //JS SHORT nextTblEntry
+	+	CMP(EAX, EDX)                   //CMP EAX, EDX
+	+	JL(0xC)                         //JL SHORT nextId
+	+	MOVSX(EDX, [ECX, 2])            //MOVSX EDX, WORD PTR DS:[ECX+2]
+	+	TEST(EDX, EDX)                  //TEST EDX, EDX
+	+	JS(0x9)                         //JS SHORT nextTblEntry
+	+	CMP(EAX, EDX)                   //CMP EAX, EDX
+	+	JLE(0xA)                        //JLE SHORT lvlCompare
+	+	ADD(ECX, 4)                     //ADD ECX, 4;	nextId
+	+	JMP(-0x1C)                      //JMP SHORT idLoop
+	+	ADD(EBX, 8)                     //ADD EBX, 8;	nextTblEntry
+	+	JMP(-0x27)                      //JMP SHORT idTblLoop
+	+	MOV(EAX, [gLevel])              //MOV EAX, DWORD PTR DS:[g_level]; lvlCompare
+	+	MOV(ECX, [EBX, 4])              //MOV ECX, DWORD PTR DS:[EBX+4]
+	+	TEST(ECX, ECX)                  //TEST ECX, ECX
+	+	JE(0x1C)                        //JE SHORT exitFunc
+	+	MOVSX(EDX, [ECX])               //MOVSX EDX, WORD PTR DS:[ECX];	lvlLoop
+	+	TEST(EDX, EDX)                  //TEST EDX, EDX
+	+	JS(0x15)                        //JS SHORT exitFunc
+	+	CMP(EAX, EDX)                   //CMP EAX, EDX
+	+	JL(0xC)                         //JL SHORT nextLvlRange
+	+	MOVSX(EDX, [ECX, 2])            //MOVSX EDX, WORD PTR DS:[ECX+2]
+	+	TEST(EDX, EDX)                  //TEST EDX,EDX
+	+	JS(0x9)                         //JS SHORT exitFunc
+	+	CMP(EAX, EDX)                   //CMP EAX, EDX
+	+	JLE(0x14)                       //JLE SHORT matchFound
+	+	ADD(ECX, 5)                     //ADD ECX, 5;	nextLvlRange
+	+	JMP(-0x28)                      //JMP SHORT lvlLoop
+	+	POP(EBX)                        //POP EBX; exitFunc
+	+	POP(EDX)                        //POP EDX
+	+	AssgnZero                       //MOV DWORD PTR DS:[ESI+const], 0 (or Dummy)
+	+	POP(ESI)                        //POP ESI
+	+	RETN()                          //RETN
+	+	NOP                             //NOP
+	+	POP(EBX)                        //POP EBX; matchFound
+	+	POP(EDX)                        //POP EDX
+	+	PUSH0s                          //PUSH 0 (3 or 4)
+	+	MOVZX(ECX, BYTE_PTR, [ECX, 4])  //MOVZX ECX, BYTE PTR DS:[ECX + 4]
+	+	PUSH(ECX)                       //PUSH ECX
+	+	PUSH_0                          //PUSH 0
+	+	MOV(EAX, [ESI])                 //MOV EAX, DWORD PTR DS:[ESI]
+	+	MOV(ECX, ESI)                   //MOV ECX, ESI
+	+	CALL([EAX, 8])                  //CALL DWORD PTR DS:[EAX+8]
+	+	POP(ESI)                        //POP ESI
+	+	RETN()                          //RETN
+	;
+
+	/// 5.2 - Allocate space to add the code and the table data
+	csize = code.byteCount();
+
+	let size = tblSize + csize + 8 * AuraSpec.length + 4;
+	let free = Exe.FindSpace(size);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+
+	/// 5.3 - Fill in the blanks
+	code = SwapFillers(code, {
+		1: GetJobID - (freeVir + 15),
+		2: freeVir + csize
+	}, 1);
+
+	// Now we construct the map and table to insert
+	let mapData = "";
+	let tblData = "";
+
+	let offset = size - tblSize;
+	let found = AuraSpec.filter( hash =>
 	{
-		tblSize += (4 * hash.IDs.length) + 2;
-		tblSize += (5 * hash.Map.length) + 2;
-	});
+		/// 5.5 - Skip any entries without IDs or Maps
+		if (!IsArr(hash.IDs) || !IsArr(hash.Maps))
+			return false;
 
-    /// 7.1 - Prepare code to insert (for reading the table and compare against Base level and Job ID)
-    code =
-        PUSH(ESI)                       //PUSH ESI
-    +   MOV(ESI, ECX)                   //MOV ESI, ECX
-    +   PUSH(EDX)                       //PUSH EDX
-    +   PUSH(EBX)                       //PUSH EBX
-    +   MOV(ECX, Session)               //MOV ECX, g_session
-    +   CALL(MakeFiller(1))             //CALL GetJobID
-    +   MOV(EBX, MakeFiller(2))         //MOV EBX, tblAddr
-    +   MOV(ECX, [EBX])                 //MOV ECX, DWORD PTR DS:[EBX];	addr6
-    +   TEST(ECX, ECX)                  //TEST ECX, ECX
-    +   JE(0x49)                        //JE SHORT addr1
-    +   MOVSX(EDX, [ECX])               //MOVSX EDX, WORD PTR DS:[ECX];	addr5
-    +   TEST(EDX, EDX)                  //TEST EDX, EDX
-    +   JS(0x15)                        //JS SHORT addr2
-    +   CMP(EAX, EDX)                   //CMP EAX, EDX
-    +   JL(0xC)                         //JL SHORT addr3
-    +   MOVSX(EDX, [ECX, 2])            //MOVSX EDX, WORD PTR DS:[ECX+2]
-    +   TEST(EDX, EDX)                  //TEST EDX, EDX
-    +   JS(0x9)                         //JS SHORT addr2
-    +   CMP(EAX, EDX)                   //CMP EAX, EDX
-    +   JLE(0xA)                        //JLE SHORT addr4
-    +   ADD(ECX, 4)                     //ADD ECX, 4;	addr3
-    +   JMP(-0x28)                      //JMP SHORT addr5
-    +   ADD(EBX, 8)                     //ADD EBX, 8;	addr2
-    +   JMP(-0x39)                      //JMP SHORT addr6
-    +   MOV(EAX, [Level])               //MOV EAX, DWORD PTR DS:[g_level];	addr4
-    +   MOV(ECX, [EBX, 4])              //MOV ECX, DWORD PTR DS:[EBX+4]
-    +   TEST(ECX, ECX)                  //TEST ECX, ECX
-    +   JE(0x1C)                        //JE SHORT addr1
-    +   MOVSX(EDX, [ECX])               //MOVSX EDX, WORD PTR DS:[ECX];	addr9
-    +   TEST(EDX, EDX)                  //TEST EDX, EDX
-    +   JS(0x15)                        //JS SHORT addr1
-    +   CMP(EAX, EDX)                   //CMP EAX, EDX
-    +   JL(0xC)                         //JL SHORT addr7
-    +   MOVSX(EDX, [ECX, 2])            //MOVSX EDX, WORD PTR DS:[ECX+2]
-    +   TEST(EDX, EDX)                  //TEST EDX,EDX
-    +   JS(0x9)                         //JS SHORT addr1
-    +   CMP(EAX, EDX)                   //CMP EAX, EDX
-    +   JLE(0x14)                       //JLE SHORT addr8
-    +   ADD(ECX, 5)                     //ADD ECX, 5;	addr7
-    +   JMP(-0x28)                      //JMP SHORT addr9
-    +   POP(EBX)                        //POP EBX; addr1
-    +   POP(EDX)                        //POP EDX
-    +   AssignZero                      //MOV DWORD PTR DS:[ESI+const], 0 (or Dummy)
-    +   POP(ESI)                        //POP ESI
-    +   RETN                            //RETN
-    +   NOP                             //NOP
-    +   POP(EBX)                        //POP EBX; addr8
-    +   POP(EDX)                        //POP EDX
-    +   ZeroPushes                      //PUSH 0 * n = 3, 4 or 9
-    +   MOVZX(ECX, BYTE_PTR, [ECX, 4])  //MOVZX ECX, BYTE PTR DS:[ECX + 4]; addr8
-    +   PUSH(ECX)                       //PUSH ECX
-    +   PUSH_0                          //PUSH 0
-    +   MOV(EAX, [ESI])                 //MOV EAX, DWORD PTR DS:[ESI]
-    +   MOV(ECX, ESI)                   //MOV ECX, ESI
-    +   CALL([EAX, 8])                  //CALL DWORD PTR DS:[EAX+8]
-    +   POP(ESI)                        //POP ESI
-    +   RETN                            //RETN
-    ;
-    if (!directCMP)
-        code = code.replace( MOV(ECX, Session), NOP.repeat(5));
+		/// 5.6 - Add the offset to the map
+		mapData += (freeVir + offset).toHex();
 
-    /// 7.2 - Allocate space to add the code and the table data
-    let size = code.byteCount() + 8 * AuraSpec.length + 4 + tblSize;
-    let free = Exe.FindSpace(size);
-    if (free < 0)
-        throw NO_ALLOC;
-
-    let freeVir = Exe.Phy2Vir(free, DIFF);
-
-    /// 7.3 - Fill in the blanks
-    code = SwapFiller(code, 1, GetJobID - (freeVir + 15));
-    code = SwapFiller(code, 2, freeVir + code.byteCount());
-	
-    /// 7.4 - Construct the map data and table to insert
-    let mapData = "";
-    let tblData = "";
-	
-	addr = size - tblSize;
-
-	AuraSpec.forEach( hash =>
-	{
-		/// 7.4.1 - Add the addr to the map
-		mapData += (freeVir + addr).toHex(4);
-		
-		/// 7.4.2 - Add the base IDs to the table
+		/// 5.7 - Add the base IDs to the table
 		hash.IDs.forEach( bases =>
 		{
-			if (Array.isArray(bases))
+			if (IsArr(bases))
 				tblData += bases[0].toHex(2) + bases[1].toHex(2);
 			else
-				tblData += bases.toHex(2).repeat(2);
-			
-			addr += 4;
+				tblData += bases.toHex(2).repeat(2);  //if its not a pair use the same id twice
+
+			offset += 4;
 		});
-		/// 7.4.3 - Add the -1 to end the table
+
+		/// 5.8 - Add the -1 to end the table
 		tblData += " FF FF";
-		addr += 2;
-		
-		/// 7.4.4 - Add the addr to the map
-		mapData += (freeVir + addr).toHex(4);
-		
-		/// 7.4.5 - Add the level range and aura constant sets
-		hash.Map.forEach( map =>
+		offset += 2;
+
+		/// 5.9 - Add the offset to the map
+		mapData += (freeVir + offset).toHex();
+
+		/// 5.10 - Add the level range and aura constant sets
+		let found = hash.Maps.filter( map =>
 		{
+			if (!IsArr(map.JobRange) || !IsNum(map.Index))
+				return false;
+
 			tblData += map.JobRange[0].toHex(2) + map.JobRange[1].toHex(2);
 			tblData += AuraConsts[map.Index];
-			
-			addr += 5;
+
+			offset += 5;
+
+			return true;
 		});
-		
-		/// 7.4.6 - Add the -1 to end the table
+
+		/// 5.11 - Add the -1 to end the table
 		tblData += " FF FF";
-		addr += 2;
+		offset += 2;
+
+		return (!found.isEmpty());
 	});
 
-    /// 7.5 - Add the function code and table data at free space
-    Exe.AddHex(free, code + mapData + ALL00 + tblData, size);
+	if (found.isEmpty())
+		Cancel("No complete elements found");
 
-    if (directCMP)
-    {
-        /// 8.1 - Since there was no existing Function CALL, We add a CALL to our function after ECX assignment
-        code =
-            MOV(ECX, ESI)                                   //MOV ECX, ESI
-        +   CALL(freeVir, Exe.Phy2Vir(cmpBegin + 7, CODE))  //CALL func
-        +   JMP(cmpEnd, (cmpBegin + 9))                     //JMP SHORT cmpEnd
-        ;
+	/// 5.12 - Add everything at the allocated space
+	Exe.AddHex(free, code + mapData + ALL00 + tblData);
 
-        Exe.SetHex(cmpBegin, code);
-    }
-    else
-    {
-        /// 8.2 - Find the function call... again and replace it with a CALL to our Function
-        addr = Exe.FindHex( CALL(NEG3WC), cmpBegin, cmpBegin + 0x30);
-        Exe.SetTgtAddr(addr + 1, freeVir);
+	// Again we need to diverge based on directCMP
 
-        /// 8.3 - Set addr to location after the CALL
-        addr += 5;
+	if (directCMP)
+	{
+		/// 6.1 - Since there was no existing Function CALL, We add a CALL to our function after ECX assignment
+		code =
+			MOV(ECX, ESI)                                   //MOV ECX, ESI
+		+	CALL(freeVir, Exe.Phy2Vir(cmpBegin + 7, CODE))  //CALL func
+		+	JMP(cmpEnd, (cmpBegin + 9))                     //JMP SHORT cmpEnd
+		;
 
-        /// 8.4 - Fill with NOPs till cmpEnd
-        if (addr < cmpEnd)
-            Exe.SetNOPs(addr, cmpEnd - addr);
-    }
-	
-    return true;
+		Exe.SetHex(cmpBegin, code);
+	}
+	else
+	{
+		/// 6.2 - Replace the target to our code (cmpEnd is right after the CALL)
+		Exe.SetTgtAddr(cmpEnd - 4, freeVir);
+	}
+
+	return true;
 };
+
+///
+/// \brief Disable for really old clients - Its possible to make it work but not sure if the client will support it properly
+///
+CustomAuraLimits.validate = IsPost2010;

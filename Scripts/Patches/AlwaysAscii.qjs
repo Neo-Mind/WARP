@@ -27,7 +27,7 @@
 \**************************************************************************/
 
 ///
-/// \brief NOP out the conditional jump after comparison inside CSession::IsOnlyEnglish //
+/// \brief NOP out the conditional jump after comparison inside CSession::IsOnlyEnglish
 ///
 AlwaysAscii = function()
 {

@@ -1,9 +1,10 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo Mind                                       *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
 *   Copyright (C) 2018-2020 Jian                                           *
 *   Copyright (C) 2017 Secret                                              *
 *   Copyright (C) 2017-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2020 X-EcutiOnner                                        *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,97 +24,146 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144)                  *
+*   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144), X-EcutiOnner    *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-16                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Data to be used for the patches.
 ///
-CP_Data = [
+if (typeof CP_Data === 'undefined') //avoid redefinition
+{
+	CP_Data =
 	{
-		varName: '$newBGMPath', 
-		suffix: "Default BGM", 
-		name: "bgm\\01.mp3"
-	},
-	{
-		varName: '$newItemInfo', 
-		suffix: "ItemInfo Lua"
-	},
-	{
-		varName: '$newAchList', 
-		suffix: "Achievement List Lua", 
-		name: "system\\Achievement_list.lub"
-	},
-	{
-		varName: '$newMonSizeEfct', 
-		suffix: "Monster Size Effect Lua"
-	},
-	{
-		varName: '$newTownInfo',
-		suffix: "Town Info Lua",
-		name: "System/Towninfo.lub"
-	},
-	{
-		varName: '$newPetEvoCln', 
-		suffix: "Pet Evolution Lua"
-	},
-	{
-		varName: '$newTipBox', 
-		suffix: "Tip Box Lua", 
-		name: "System/tipbox.lub"
-	},
-	{
-		varName: '$newChkAtt', 
-		suffix: "Check Attendance Lua", 
-		name: "System/CheckAttendance.lub"
-	},
-	{
-		varName: '$newPrivPlane', 
-		suffix: "Private Airplane Lua"
-	},
-	{
-		varName: '$newOngQInfoList', 
-		suffix: "Ongoing QuestInfoList Lua"
-	},
-	{
-		varName: '$newRcmdQInfoList', 
-		suffix: "Recommended QuestInfoList Lua"
-	},
-];
+		CustomDefaultBGM :
+		{
+			strType : "Path",
+			varName : '$newBGMPath',
+			prefix : "Default BGM",
+			name : "bgm\\01.mp3"
+		},
+
+		CustomItemInfoLub :
+		{
+			strType : "Path",
+			varName : '$newItemInfo',
+			prefix : "ItemInfo Lua",
+			parts : ["System/iteminfo", "Sak.lub", "true.lub", ".lub"]
+		},
+
+		CustomAchieveLub :
+		{
+			strType : "Path",
+			varName : '$newAchieveList',
+			prefix : "Achievement List Lua",
+			name : "system\\Achievement_list.lub"
+		},
+
+		CustomMonSizeEffLub :
+		{
+			strType : "Path",
+			varName : '$newMonSizeEffect',
+			prefix : "Monster Size Effect Lua"
+		},
+
+		CustomTownInfoLub :
+		{
+			strType : "Path",
+			varName : '$newTownInfo',
+			prefix : "Town Info Lua",
+			name : "System/Towninfo.lub"
+		},
+
+		CustomPetEvoClnLub :
+		{
+			strType : "Path",
+			varName : '$newPetEvoCln',
+			prefix : "Pet Evolution Lua",
+			parts : ["system\\PetEvolutionCln", "sak.lub", "true.lub", ".lub"]
+		},
+
+		CustomTipboxLub :
+		{
+			strType : "Path",
+			varName : '$newTipBox',
+			prefix : "Tip Box Lua",
+			name : "System/tipbox.lub"
+		},
+
+		CustomCheckAttLub :
+		{
+			strType : "Path",
+			varName : '$newCheckAtt',
+			prefix : "Check Attendance Lua",
+			name : "System/CheckAttendance.lub"
+		},
+
+		CustomPrivAirplaneLub :
+		{
+			strType : "Path",
+			varName : '$newPrivAirplane',
+			prefix : "Private Airplane Lua",
+			parts : ["System\\PrivateAirplane", "Sakray.lub", "True.lub", ""]
+		},
+
+		CustomMapInfoLub :
+		{
+			strType : "Path",
+			varName : '$newMapInfo',
+			prefix : "MapInfo Lua",
+			parts : ["system\\mapInfo", "sak.lub", "true.lub", ""]
+		},
+
+		CustomOngQuestInfoLub :
+		{
+			strType : "Prefix",
+			varName : '$newOngQInfoList',
+			prefix : "Ongoing QuestInfoList Lua",
+			parts : ["system\\OngoingQuestInfoList", "Sakray", "True", ""]
+		},
+
+		CustomRcmdQuestInfoLub :
+		{
+			strType : "Prefix",
+			varName : '$newRcmdQInfoList',
+			prefix : "Recommended QuestInfoList Lua",
+			parts : ["system\\RecommendedQuestInfoList", "Sakray", "True", ""]
+		},
+	};
+}
 
 ///
 /// \brief Common function to change specific file paths
 ///
-CustomPath = function(index)
+CustomPath = function(patchName)
 {
-	/// 1.1 - Get the data for the index
-	let data = CP_Data[index];
+	/// 1.1 - Retrieve the data for the index
+	let {varName, prefix, strType, addr, name} = CP_Data[patchName];
 
 	/// 1.2 - Find location where the string is used in a PUSH
-	let addr = Exe.FindHex( PUSH(data.addr) );
+	addr = Exe.FindHex( PUSH(addr) );
 	if (addr < 0)
-		throw Error("'" + data.name + "' not used");
+		throw Error(`'${name} not used`);
 
 	/// 1.2 - Get the new file name from user
-	let newFile = Exe.GetUserInput(
-		data.varName, D_Text, "File Path", 
-		"Enter the new '" + data.suffix + "' " + (index > 8 ? "prefix" : "path") + " (relative to RO folder)",
-		data.name, {minLen: 1, maxLen: 100}
+	let newStr = Exe.GetUserInput(
+		varName, D_Text, `File ${strType}`,
+		`Enter the new <b>${prefix} ${strType}</b> (relative to RO folder)`,
+		name, {minLen: 1, maxLen: 100}
 	);
 
-	if (newFile === false)
-		throw "Cancelled - Path reverted to '" + data.suffix + "'";
+	if (newStr === false)
+		Cancel(strType, name);
 
 	/// 2.1 - Allocate space to add the file name
-	let free = Exe.FindSpace(newFile.length);
+	let free = Exe.FindSpace(varName);
 	if (free < 0)
 		throw NO_ALLOC;
 
 	/// 2.2 - Add the name there
-	Exe.AddFromVar(free, data.varName);
+	Exe.AddFromVar(free, varName);
 
 	/// 2.3 - Update the PUSHed address
 	Exe.SetUint32(addr + 1, Exe.Phy2Vir(free, DIFF));
@@ -124,120 +174,112 @@ CustomPath = function(index)
 ///
 /// \brief Common functions to validate
 ///
-CustomPath.validate = (index) =>
+CustomPath.validate = (patchName) =>
 {
-	let data = CP_Data[index];
-	data.addr = Exe.FindText(data.name);
-	return (data.addr > 0);
-};
+	let data = CP_Data[patchName];
 
-CustomPath.validateSak = (index, pref, sakSuf, truSuf, suf = '') =>
-{
-	let data = CP_Data[index];
-
-	data.name = pref + "_" + (ROCL.IsRenewal ? sakSuf : truSuf);
-	data.addr = Exe.FindText(data.name);
-
-	if (addr < 0 && !ROCL.IsRenewal)
+	if (data.parts === undefined) //name is provided directly
 	{
-		data.name = pref + suf;
-		data.addr = Exe.FindText(data.name);
+		let {name} = CP_Data[patchName];
+		let addr = Exe.FindText(name);
+
+		if (addr > 0)
+		{
+			CP_Data[patchName].addr = addr;
+			return true;
+		}	
+	}
+	else //need to derive the name from parts and then find its address.
+	{
+		let [pref, sakSuf, truSuf, suf] = data.parts;
+
+		let name = pref + "_" + (ROC.IsRenewal ? sakSuf : truSuf);
+		let addr = Exe.FindText(name);
+
+		if (addr < 0)
+		{
+			name = pref + suf;
+			addr = Exe.FindText(name);
+		}
+
+		if (addr > 0)
+		{
+			data.addr = addr;
+			data.name = name;
+			return true;
+		}
 	}
 
-	return (data.addr > 0);
+	return false;
 };
 
 ///
 /// Wrappers for Individual Patches
 ///
-CustomDefaultBGM = () => CustomPath(0);
-CustomDefaultBGM.validate = () => CustomPath.validate(0);
+CustomDefaultBGM       = CustomPath;
+CustomItemInfoLub      = CustomPath;
+CustomAchieveLub       = CustomPath;
+CustomTownInfoLub      = CustomPath;
+CustomPetEvoClnLub     = CustomPath;
+CustomTipboxLub        = CustomPath;
+CustomCheckAttLub      = CustomPath;
+CustomPrivAirplaneLub  = CustomPath;
+CustomMapInfoLub       = CustomPath;
+CustomOngQuestInfoLub  = CustomPath;
+CustomRcmdQuestInfoLub = CustomPath;
 
-CustomItemInfoLub = () => CustomPath(1);
-CustomItemInfoLub.validate = () => CustomPath.validateSak(1, "System/iteminfo", "Sak.lub", "true.lub", ".lub");
-
-CustomAchieveLub = () => CustomPath(2);
-CustomAchieveLub.validate = () => CustomPath.validate(2);
-
-CustomMonSizeEffLub = () => CustomPath(3);
-CustomMonSizeEffLub.validate = () =>
+CustomMonSizeEffLub = patchName => CustomPath(patchName);
+CustomMonSizeEffLub.validate = (patchName) =>
 {
-	let suf = (ROCL.IsRenewal ? "_sak" : "");
-	let data = CP_Data[3];
+	let suf = (ROC.IsRenewal ? "_sak" : "");
 
-	data.name = "System/monster_size_effect" + suf + "_new.lub";
-	data.addr = Exe.FindText(data.name);
+	let name = "System/monster_size_effect" + suf + "_new.lub";
+	let addr = Exe.FindText(name);
 	if (addr < 0)
 	{
-		data.name = "System/monster_size_effect" + suf + ".lub";
-		data.addr = Exe.FindText(data.name);
+		name = "System/monster_size_effect" + suf + ".lub";
+		addr = Exe.FindText(name);
 	}
 
-	return (data.addr > 0);
-}
-
-CustomTownInfoLub = () => CustomPath(4);
-CustomTownInfoLub.validate = () => CustomPath.validate(4);
-
-CustomPetEvoClnLub = () => CustomPath(5);
-CustomPetEvoClnLub.validate = () =>
-{
-	let data = CP_Data[5];
-	data.name = "system\\PetEvolutionCln_" + (ROCL.IsRenewal ? "sak" : "true") + ".lub";
-	data.addr = Exe.FindText(data.name);
-
-	if (addr < 0)
+	if (addr > 0)
 	{
-		data.name = "system\\PetEvolutionCln.lub";
-		data.addr = Exe.FindText(data.name);
+		CP_Data[patchName].addr = addr;
+		CP_Data[patchName].name = name;
+		return true;
 	}
 
-	return (data.addr > 0);
+	return false;
 };
 
-CustomTipboxLub = () => CustomPath(6);
-CustomTipboxLub.validate = () => CustomPath.validate(6);
-
-CustomCheckAttLub = () => CustomPath(7);
-CustomCheckAttLub.validate = () => CustomPath.validate(7);
-
-CustomPrivAirplaneLub = () => CustomPath(8);
-CustomPrivAirplaneLub.validate = () => CustomPath.validate(8);
-
-CustomOngQuestInfoLub = () => CustomPath(9);
-CustomOngQuestInfoLub.validate = () => CustomPath.validateSak(9, "system\\OngoingQuestInfoList", "Sakray", "True");
-
-CustomRcmdQuestInfoLub = () => CustomPath(10);
-CustomRcmdQuestInfoLub.validate = () => CustomPath.validateSak(10, "system\\RecommendedQuestInfoList", "Sakray", "True");
-
 ///
-/// \brief Change the "..\\licence.txt" & the EULA error string reference to user specified file 
-/// 
+/// \brief Change the "..\\licence.txt" & the EULA error string reference to user specified file
+///
 Orig_LicTxt = "..\\licence.txt";
 CustomLicenseTxt = function()
 {
 	/// 1.1 - Find the string '..\\licence.txt'
 	let addr = Exe.FindText(Orig_LicTxt);
 	if (addr < 0)
-		throw Error("'" + Orig_LicTxt + "' not found");
+		throw Error(`'${Orig_LicTxt}' not found`);
 
 	/// 1.2 - Find where it is assigned
 	addr = Exe.FindHex( MOV([POS3WC], addr) ); //MOV DWORD PTR DS:[g_licence], stringAddr
 	if (addr < 0)
-		throw Error("'" + Orig_LicTxt + "' not assigned");
+		throw Error(`'${Orig_LicTxt}' not assigned`);
 
 	/// 2.1 - Get new Filename from user
-	let txtFile = Exe.GetUserInput('$licenseTXT', D_Text, "License file", "Enter the name of the Txt file", Orig_LicTxt, {minLen: 1, maxLen: 20});
-	if (txtFile === false)
-		return "Cancelled - License file reverted to '" + Orig_LicTxt + "'";
+	let varName = '$licenseTXT';
+	let newFile = Exe.GetUserInput(varName, D_Text, "License file", "Enter the name of the Txt file", Orig_LicTxt, {minLen: 1, maxLen: 20});
+	if (newFile === false)
+		Cancel("License file", Orig_LicTxt);
 
 	/// 2.2 - Allocate space to add new file name
-	let free = Exe.FindSpace(txtFile.length + 1);
+	let free = Exe.FindSpace(varName);
 	if (free < 0)
 		throw NO_ALLOC;
 
 	/// 2.3 - Add the file name there
-	Exe.AddFromVar(free, '$licenseTXT', txtFile.length + 1);
+	Exe.AddFromVar(free, varName);
 
 	/// 2.4 - Change the address in the assignment
 	Exe.SetInt32(addr + 6, Exe.Phy2Vir(free, DIFF));
@@ -248,12 +290,12 @@ CustomLicenseTxt = function()
 		throw Error("EULA string not found");
 
 	/// 3.2 - Prepare the new EULA error string using the filename received
-	let eulaString = "No EULA text file. (" + txtFile.replace("..\\", "") + ")\x00";
+	let eulaString = "No EULA text file. (" + newFile.replace("..\\", "") + ")\x00";
 
 	/// 3.3 - Allocate space to add the EULA error string
 	free = Exe.FindSpace(eulaString.length);
 	if (free < 0)
-		throw Error("Not enough gap for EULA string");
+		throw NO_ALLOC;
 
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 
@@ -261,13 +303,24 @@ CustomLicenseTxt = function()
 	Exe.AddText(free, eulaString);
 
 	/// 3.5 - Update all PUSHes & assigments using the original EULA error string
-	[PUSH(0x20) + PUSH(addr), MOV(ESI, addr), MOV(EDI, addr)].forEach( instr =>
+	let found = [
+		PUSH(0x20) + PUSH(addr),
+		MOV(ESI, addr),
+		MOV(EDI, addr)
+	].filter( code =>
 	{
-		let isize = instr.byteCount();
-		Exe.FindHexN(instr).forEach( 
-			addr => Exe.SetInt32(addr + isize - 4, freeVir)
-		);
+		let addrs = Exe.FindHexN(code);
+		if (addrs.isEmpty())
+			return false;
+
+		let csize = code.byteCount();
+		addrs.forEach( addr => Exe.SetInt32(addr + csize - 4, freeVir) );
+
+		return true;
 	});
+
+	if (found.isEmpty())
+		throw Error("No EULA references found");
 
 	return true;
 };
@@ -277,52 +330,53 @@ CustomLicenseTxt = function()
 ///
 CustomClientInfo = function()
 {
-	/// 1.1 - Load the DGRF object
-	if (!DGRF.load())
-		throw DGRF.Error;
+	/// 1.1 - Ensure the DGRF object is loaded
+	DGRF.load();
 
 	/// 1.2 - Retrieve the refAddr (PUSH location) & calculate the end address
 	let fromAddr = DGRF.RefAddr;
 	let toAddr = fromAddr + 0x100; //may not need this much
 
-	/// 1.3 - Find where the XML is referenced 
-	let addr, offset;
-	let hasMore = true;
-	if (Exe.Version > 10.0)
+	/// 1.3 - Find where the XML is referenced
+	let patterns;
+	if (Exe.Version > 10.0) //VC11+
 	{
-		addr = Exe.FindHex(MOVQ(XMM$, [CCI_Addr]), fromAddr, toAddr);
-		if (addr < 0)
-		{
-			addr = Exe.FindHex(MOVUPS(XMM$, [CCI_Addr]), fromAddr, toAddr);
-			hasMore = false;
-		}
-		offset = 4;
+		patterns = [
+			MOVQ(XMM$, [CCI_Addr]),
+			MOVUPS(XMM$, [CCI_Addr])
+		];
 	}
 	else
 	{
-		addr = Exe.FindHex(MOV(R32, [CCI_Addr]), fromAddr, toAddr);
-		offset = 2;
-		if (addr < 0)
-		{
-			addr = Exe.FindHex(MOV(EAX, [CCI_Addr]), fromAddr, toAddr);
-			offset = 1;
-		}
-		if (addr < 0)
-		{
-			addr = Exe.FindHex(MOV(R32, CCI_Addr), fromAddr, toAddr);
-			hasMore = false;
-		}
+		patterns = [
+			MOV(R32, [CCI_Addr]),
+			MOV(EAX, [CCI_Addr]),
+			MOV(R32, CCI_Addr)
+		];
 	}
+
+	let addr = -1;
+	let hasMore; //indicates there are more addresses for replacement
+
+	let code = patterns.find( (pat, index) =>
+	{
+		addr = Exe.FindHex(pat, fromAddr, toAddr);
+		hasMore = index < patterns.length - 1; //false for the last index in both pattern list
+
+		return (addr > 0);
+	});
+
 	if (addr < 0)
 		throw Error("clientinfo not used");
 
-	/// 1.4 - Add the displacement offset to repLocs
-	let repLocs = [[addr + offset], 0]; //both cases it will be after F3 0F ?? ?? so we can do this way
+	/// 1.4 - Add the address & displacement offset to repLocs
+	let repLocs = new Map();
+	repLocs.set(0, addr + code.byteCount() - 4);
 
 	/// 1.3 - Find the additional references & save the locations where replacement need to be made
 	if (hasMore)
 	{
-		if (Exe.Version > 10.0)
+		if (Exe.Version > 10.0)//VC11+
 		{
 			if (CCI_Name === "sclientinfo.xml")
 			{
@@ -330,7 +384,7 @@ CustomClientInfo = function()
 				if (addr < 0)
 					throw Error("2nd reference missing");
 
-				repLocs.push([addr + 4, 8]);
+				repLocs.set(8, addr + 4);
 			}
 			else
 			{
@@ -338,35 +392,37 @@ CustomClientInfo = function()
 				if (addr < 0)
 					throw Error("2nd reference missing");
 
-				repLocs.push([addr + 1, 8]);
+				repLocs.set(8, addr + 1);
 
 				addr = Exe.FindHex(MOV(AX, [CCI_Addr + 0xC]), fromAddr, toAddr);
 				if (addr < 0)
 					throw Error("3rd reference missing");
 
-				repLocs.push([addr + 2, 0xC]);
+				repLocs.set(0xC, addr + 2);
 			}
 		}
 		else
 		{
-			[4, 8, 0xC].forEach( (addon, idx) =>
+			[4, 8, 0xC].forEach( (disp, idx) =>
 			{
-				addr = Exe.FindHex(MOV(R32, [CCI_Addr + addon]), fromAddr, toAddr);
-				offset = 2;
+				addr = Exe.FindHex(MOV(R32, [CCI_Addr + disp]), fromAddr, toAddr);
+				let offset = 2;
+
 				if (addr < 0)
 				{
-					addr = Exe.FindHex(MOV(EAX, [CCI_Addr + addon]), fromAddr, toAddr);
+					addr = Exe.FindHex(MOV(EAX, [CCI_Addr + disp]), fromAddr, toAddr);
 					offset = 1;
 				}
 				if (addr < 0)
 					throw Error("Reference no." + (idx + 2) + " missing");
 
-				repLocs.push([addr + offset], addon);
+				repLocs.set(disp, addr + offset);
 			});
 		}
 
 		addr = Exe.FindHex(MOV(AL, [CCI_Addr + 0xE]), fromAddr, toAddr);
-		offset = 1;
+		let offset = 1;
+
 		if (addr < 0)
 		{
 			addr = Exe.FindHex(MOV(R8, [CCI_Addr + 0xE]), fromAddr, toAddr);	
@@ -375,25 +431,26 @@ CustomClientInfo = function()
 		if (addr < 0)
 			throw Error("4th reference missing");
 
-		repLocs.push([addr + offset, 0xE]);
+		repLocs.set(0xE, addr + offset);
 	}
 
 	/// 2.1 - Get the new name from the user
-	let newFile = Exe.GetUserInput('$newclientinfo', D_Text, "Client Info XML", "Enter the new clientinfo path", CCI_Name, {minLen: 9, maxLen: 20});
+	let varName = '$newclientinfo';
+	let newFile = Exe.GetUserInput(varName, D_Text, "Client Info XML", "Enter the new clientinfo path", CCI_Name, {minLen: 9, maxLen: 20});
 	if (newFile === false)
-		throw "Cancelled - Filename reverted to " + CCI_Name;
+		Cancel("Filename", CCI_Name);
 
 	/// 2.2 - Allocate space for the new name
-	let free = Exe.FindSpace(newFile.length + 1);
+	let free = Exe.FindSpace(varName);
 	if (free < 0)
 		throw NO_ALLOC;
 
-	/// 2.3 - Add the name there 
-	Exe.AddFromVar(free, '$newclientinfo', newFile.length + 1);
+	/// 2.3 - Add the name there
+	Exe.AddFromVar(free, varName);
 
 	/// 2.4 - Adjust the references
 	let freeVir = Exe.Phy2Vir(free, DIFF);
-	repLocs.forEach( pair => Exe.SetUint32(pair[0], freeVir + pair[1]) );
+	repLocs.forEach( (addr, disp) => Exe.SetUint32(addr, freeVir + disp) );
 
 	return true;
 };
