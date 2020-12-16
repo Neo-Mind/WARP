@@ -211,7 +211,7 @@ Wrap = v =>
 ///
 BitWidth = function(v)
 {
-	_$_(arguments.callee.name);
+	_$_(arguments.callee.name + ' - ' + v);
 
 	$$('1 - If the value provided is a register then simply return its width')
 	if (IsReg(v))
@@ -306,7 +306,7 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 ///
 ParseData = function(data, scaled)
 {
-	_$_(arguments.callee.name);
+	_$_(arguments.callee.name + " - " + data);
 
 	$$('1 - Initialize the parts')
 	let parts = [];
