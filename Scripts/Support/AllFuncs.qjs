@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2020-12-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,7 +36,7 @@
 IsNum  = v => typeof v === 'number';
 IsStr  = v => typeof v === 'string';
 IsBool = v => typeof v === 'boolean';
-IsArr = Array.isArray;
+IsArr = v => v !== undefined && v.join !== undefined;
 
 IsNumOrStr = v =>
 	typeof v === 'number' || typeof v === 'string';
