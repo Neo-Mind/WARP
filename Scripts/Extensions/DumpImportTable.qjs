@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2020-11-02                                             *
+*   Last Modified : 2020-12-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -97,7 +97,7 @@ DumpImportTable = function()
 				if (thunkData > 0) //By Name
 				{
 					let funcPhy = Exe.Rva2Phy(thunkData);
-					fp.Write(", Function Hint = 0x" + Exe.GetHex(funcPhy, 2).replace(/ /g, ""));
+					fp.Write(", Thunk Data = 0x" + (thunkData + Exe.ImageBase).toHex(true) + " (0x" + funcPhy.toHex(true) + "), Function Hint = 0x" + Exe.GetHex(funcPhy, 2).replace(/ /g, ""));
 					fp.WriteLine( ", Function Name = " + Exe.GetText(funcPhy + 2));
 				}
 				else //By Ordinal

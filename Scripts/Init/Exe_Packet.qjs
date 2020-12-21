@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2020-12-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -57,12 +57,13 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			this.MovECX    = "";              //The code for MOV ECX, DWORD PTR DS:[KeyAddr]
 			this.Keys      = [0,0,0];         //The set of Packet Keys that were extracted/mapped out
 
+			this.RefAddr   = -1;              //Reference Location from where we started
 			this.Assigner  = -1;              //Location where the keys are assigned inside ObfuscateOrInit function
 			this.PatchData = [];              //Data saved by packet key patches
 
 			this.Valid     = undefined;       //True or False indicating extraction status
 			this.Error     = undefined;	      //Error Object containing a message about the issue
-											//encountered during extraction if any
+											  //encountered during extraction if any
 
 			IdentifyObj("PACKET");
 		},
@@ -111,14 +112,19 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				;
 
 				let code = 
-					inb4
+					inb4          //CALL CRagConnection::instanceR
+					              //MOV ECX, EAX
+					              //CALL CRagConnection::GetPacketSize
 				+	PUSH_EAX      //PUSH EAX
-				+	inb4
+				+	inb4          //CALL CRagConnection::instanceR
+					              //MOV ECX, EAX
+					              //CALL CRagConnection::SendPacket
 				+	PUSH_1        //PUSH 1
-				+	inb4
+				+	inb4          //CALL CRagConnection::instanceR
+					              //MOV ECX, EAX
+					              //CALL CConnection::SetBlock
 				+	PUSH(6)       //PUSH 6
 				;
-
 				addr = Exe.FindHex(code);
 			}			
 			if (addr < 0)
@@ -126,6 +132,9 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				this.Error = new Error("PKT - reference location not found");
 				throw this.Error;
 			}
+
+			/// 1.8 - Save the address
+			this.RefAddr = addr;
 
 			/// 2.1 - Look for 3 PUSHes followed by a CALL (keys are PUSHed to function)
 			let code =
