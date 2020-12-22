@@ -53,7 +53,7 @@ IncrViewID = function()
 		CMP(EAX, oldValue),
 		PUSH(oldValue)
 	].reduce( (acc, code) =>
-		acc.concat(Exe.FindHexN(code, -1, addr - 0xA0, addr + 0x60)), []
+		acc.concat(Exe.FindHexN(code, addr - 0xA0, addr + 0x60)), []
 	);
 
 	if (addrs.length < 2 || addrs.length > 3)
@@ -61,7 +61,7 @@ IncrViewID = function()
 
 	/// 2.2 - Get the new limit from user
 	let varName = '$viewIDLimit';
-	let newValue = Exe.GetUserInput(varName, D_Uint32, "View ID Limit", "Enter the new Max Headgear View ID", oldValue, {min: oldValue, max: 32000});
+	let newValue = Exe.GetUserInput(varName, D_Uint32, "View ID Limit", "Enter the new Max Headgear View ID", oldValue, {min: oldValue, max: 64000});
 	if (newValue === false)
 		Cancel("Limit", oldValue);
 
