@@ -1,0 +1,49 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 X-EcutiOnner                                        *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : X-EcutiOnner                                           *
+*   Created Date  : 2020-12-26                                             *
+*   Last Modified : 2020-12-26                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change one of the Login Background format strings (str1) to the other (str2) //
+///
+NoAdminNeeded = function()
+{
+	/// 1 - Find the manifest string (Ideally we would traverse the resource directory but this is a faster mechanism)
+	let addrs = Exe.FindTextN('<requestedExecutionLevel level="requireAdministrator"', PHYSICAL, false, false, Exe.GetSectBegin(RSRC));
+	if (addrs.isEmpty())
+		throw Error("Manifest not found");
+
+	/// 2 - Replace the string with 'asInvoker' privilege instead
+	let newstr = 'asInvoker"           '; //the blank space is to keep the same length since there are other characters after it
+	addrs.forEach(addr => Exe.SetText(addr + 32, newstr));
+	
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients (Pre-2010 there was no UAC requirement)
+///
+NoAdminNeeded.validate = IsPost2010;
