@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-12-09                                             #
+#   Last Modified : 2020-12-26                                             #
 #                                                                          #
 ############################################################################
 
@@ -1308,6 +1308,12 @@ groups:
                 recommend : no
                 author : CH.C (jchcc)
                 desc : Use default web browser to open &lt;URL&gt; instead of built-in ROWebBrowser.
+            
+            - NoAdminNeeded:
+                title : Remove Admin privilege requirement
+                recommend : no
+                author : X-EcutiOnner
+                desc : Removes the explicit requirement for user access elevation (i.e. Admin privileges) from the client
     
     - CustomNW:
         title : NETWORK CUSTOMIZATION
