@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-12-26                                             #
+#   Last Modified : 2020-12-28                                             #
 #                                                                          #
 ############################################################################
 
@@ -75,19 +75,19 @@ groups:
             - Zoom150Percent:
                 title : Increase Zoom Out (150%)
                 recommend : no
-                author : Shinryo & Andrei Karas (4144)
+                author : Shinryo , Andrei Karas (4144)
                 desc : Increases the zoom-out range by 50 percent.
             
             - Zoom175Percent:
                 title : Increase Zoom Out (175%)
                 recommend : no
-                author : Shinryo & Andrei Karas (4144)
+                author : Shinryo , Andrei Karas (4144)
                 desc : Increases the zoom-out range by 75 percent.
             
             - ZoomMax:
                 title : Increase Zoom Out (Maximum)
                 recommend : no
-                author : Shinryo & Andrei Karas (4144)
+                author : Shinryo , Andrei Karas (4144)
                 desc : Maximizes the zoom-out range.
     
     - EnableIcon:
@@ -132,13 +132,13 @@ groups:
             - BodyPalMF:
                 title : Shared Body Palettes Male & Female
                 recommend : no
-                author : Ai4rei/AN & Neo-Mind
+                author : Ai4rei/AN , Neo-Mind
                 desc : Makes the client use a single cloth palette set (body_%s_%d.pal) for all job classes but separate for both genders.
             
             - BodyPalUnisex:
                 title : Shared Body Palettes Unisex
                 recommend : no
-                author : Ai4rei/AN & Neo-Mind
+                author : Ai4rei/AN , Neo-Mind
                 desc : Makes the client use a single cloth palette set (body_%d.pal) for all job classes & genders.
 
     - SharedHeadPal:
@@ -149,13 +149,13 @@ groups:
             - HeadPalMF:
                 title : Shared Head Palettes Male & Female
                 recommend : no
-                author : Ai4rei/AN & Neo-Mind
+                author : Ai4rei/AN , Neo-Mind
                 desc : Makes the client use a single hair palette set (head_%s_%d.pal) for all job classes but separate for both genders.
             
             - HeadPalUnisex:
                 title : Shared Head Palettes Unisex
                 recommend : no
-                author : Ai4rei/AN & Neo-Mind
+                author : Ai4rei/AN , Neo-Mind
                 desc : Makes the client use a single hair palette set (head_%d.pal) for all job classes and genders.
     
     - SelectLoginBG:
@@ -184,19 +184,19 @@ groups:
             - CustomFirstKey:
                 title : Custom Packet Encryption Key (1st)
                 recommend : no
-                author : Shakto & Neo-Mind
+                author : Shakto , Neo-Mind
                 desc : Change the 1st key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
             
             - CustomSecondKey:
                 title : Custom Packet Encryption Key (2nd)
                 recommend : no
-                author : Shakto & Neo-Mind
+                author : Shakto , Neo-Mind
                 desc : Change the 2nd key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
             
             - CustomThirdKey:
                 title : Custom Packet Encryption Key (3rd)
                 recommend : no
-                author : Shakto & Neo-Mind
+                author : Shakto , Neo-Mind
                 desc : Change the 3rd key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
     
     - LoginMode:
@@ -207,7 +207,7 @@ groups:
             - RestoreLoginWindow:
                 title : Restore Login Window
                 recommend : yes
-                author : Shinryo & Neo-Mind
+                author : Shinryo , Neo-Mind
                 desc : Circumvents Gravity's new token-based login system and restores the normal login window.
             
             - UseSSOLogin:
@@ -219,7 +219,7 @@ groups:
             - UseOldLogin:
                 title : Use Old Login Packet
                 recommend : no
-                author : Ai4rei/AN & Andrei Karas (4144)
+                author : Ai4rei/AN , Andrei Karas (4144)
                 desc : Enable the old login packet (0x64) used for Login Window. Intended for new clients which cannot restore the login window anymore.
     
     - CashShopVis:
@@ -291,7 +291,7 @@ groups:
             - HideLicense:
                 title : Always Hide License Screen
                 recommend : no
-                author : Shinryo & MS
+                author : Shinryo , MS
                 desc : Make the client skip the license screen and go directly to the Service Select screen.
             
             - ShowLicense:
@@ -536,37 +536,37 @@ groups:
             - CustomGMColor:
                 title : Change Chat Color (GM)
                 recommend : no
-                author : Ai4rei/AN & Shakto
+                author : Ai4rei/AN , Shakto
                 desc : Changes the GM Chat color to the specified value. Default value is ffff00 (Yellow).
         
             - CustomGuildColor:
                 title : Change Chat Color (Guild)
                 recommend : no
-                author : Ai4rei/AN & Shakto
+                author : Ai4rei/AN , Shakto
                 desc : Changes the Guild Chat color to the specified value. Default Value is b4ffb4 (Light Green).
             
             - CustomPartyColor:
                 title : Change Chat Color (Party - Others)
                 recommend : no
-                author : Ai4rei/AN & Shakto
+                author : Ai4rei/AN , Shakto
                 desc : Changes the Party Chat color for other members to the specified value. Default value is ffc8c8 (Pinkish).
             
             - CustomPartyColorSelf:
                 title : Change Chat Color (Party - Self)
                 recommend : no
-                author : Ai4rei/AN & Shakto
+                author : Ai4rei/AN , Shakto
                 desc : Changes the Party Chat color for the playing character to the specified value. Default value is ffc800 (Orange).
             
             - CustomPublicColor:
                 title : Change Chat Color (Public - Others)
                 recommend : no
-                author : Ai4rei/AN & Shakto
+                author : Ai4rei/AN , Shakto
                 desc : Changes the Public Chat color for other players to the specified value. Default value is ffffff (White).
             
             - CustomPublicColorSelf:
                 title : Change Chat Color (Public - Self)
                 recommend : no
-                author : Ai4rei/AN & Shakto
+                author : Ai4rei/AN , Shakto
                 desc : Changes the Public Chat color for the playing character to the specified value. Default value is 00ff00 (Green).
     
     - ShowButton:
@@ -676,22 +676,28 @@ groups:
         
         patches:
             - IgnoreRsrcErr:
-                title : Ignore Missing Resource Errors
+                title : Ignore Resource Errors
                 recommend : no
-                author : Shinryo & Andrei Karas (4144)
-                desc : Prevents the client from displaying a variety of Error messages (but not all of them) including missing files. This does not guarantee the client will work in-spite of missing files.
+                author : Shinryo, Andrei Karas (4144) , Ai4rei/AN
+                desc : Prevents the client from displaying a variety of Error messages (but not all of them) including missing files. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of missing files.
             
             - IgnorePalErr:
-                title : Ignore Missing Palette Errors
+                title : Ignore Palette Errors
                 recommend : no
-                author : Shinryo
-                desc : Prevents the client from displaying error messages about missing palettes. It does not guarantee client will not crash if files are missing.
+                author : Shinryo , Ai4rei/AN
+                desc : Prevents the client from displaying error messages about missing palettes. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of missing files.
             
             - IgnoreLuaErr:
-                title : Ignore Missing Lua Errors
+                title : Ignore Lua Errors
                 recommend : no
-                author : Andrei Karas (4144) & X-EcutiOnner
-                desc : Prevents the client from displaying a error messages from lua code like 'attempt to call nil value'.
+                author : Andrei Karas (4144), X-EcutiOnner , Ai4rei/AN
+                desc : Prevents the client from displaying a error messages from lua code like 'attempt to call nil value'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+            
+            - IgnoreQuestErr:
+                title : Ignore Quest Errors
+                recommend : no
+                author : Andrei Karas (4144), X-EcutiOnner , Ai4rei/AN
+                desc : Prevents the client from displaying a error messages like 'Not found Quest Info = XXXX'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
     
     - ClientArgs:
         title : CLIENT ARGUMENTS
@@ -758,7 +764,7 @@ groups:
             - CustomFontHeight:
                 title : Custom Font height
                 recommend : no
-                author : Yommy & Neo-Mind
+                author : Yommy , Neo-Mind
                 desc : Resizes the height of the font used to the user specified value.
 
     - DisableEncr:
@@ -786,7 +792,7 @@ groups:
             - NoHShield:
                 title : Disable HShield
                 recommend : yes
-                author : Ai4rei/AN & Neo-Mind
+                author : Ai4rei/AN , Neo-Mind
                 desc : Disables HackShield from clients that use it.
             
             - NoGGuard:
@@ -798,7 +804,7 @@ groups:
             - NoCDefender:
                 title : Disable Cheat Defender Game Guard
                 recommend : yes
-                author : Andrei Karas (4144) & X-EcutiOnner
+                author : Andrei Karas (4144) , X-EcutiOnner
                 desc : Disables Cheat Defender Game Guard from new clients.
     
     - ReturnToLogin:
@@ -809,13 +815,13 @@ groups:
             - DisConnToLogin:
                 title : Disconnect to Login Window
                 recommend : no
-                author : Neo-Mind & Andrei Karas (4144)
+                author : Neo-Mind , Andrei Karas (4144)
                 desc : Make the client return to Login Window upon disconnection.
             
             - CancelToLogin:
                 title : Cancel to Login Window
                 recommend : yes
-                author : Neo-Mind & Andrei Karas (4144)
+                author : Neo-Mind , Andrei Karas (4144)
                 desc : Makes the Cancel button in Character selection window return to login window instead of Quitting.
     
     - DisableEffect:
@@ -883,13 +889,13 @@ groups:
             - ResizePlayerBar:
                 title : Resize Player HP/SP Bar
                 recommend : no
-                author : CH.C (jchcc) & Neo-Mind
+                author : CH.C (jchcc) , Neo-Mind
                 desc : Resize the HP/SP bar drawn under playing character as per user specified value.
             
             - ResizeBossBar:
                 title : Resize Boss Monster HP Bar
                 recommend : no
-                author : CH.C (jchcc) & Neo-Mind
+                author : CH.C (jchcc) , Neo-Mind
                 desc : Resize the HP bar drawed under Boss monsters as per user specified value.
     
     - CustomAutoFollow:
@@ -900,7 +906,7 @@ groups:
             - NoAutoFollow:
                 title : Disable Auto Follow
                 recommend : no
-                author : Functor & Neo-Mind
+                author : Functor , Neo-Mind
                 desc : Disables player auto-follow on Shift + Right click.
             
             - DecrAFDelay:
@@ -936,7 +942,7 @@ groups:
             - TranslateClient:
                 title : Translate Client
                 recommend : yes
-                author : Ai4rei/AN & Neo-Mind
+                author : Ai4rei/AN , Neo-Mind
                 desc : Translates some of the Hard-coded Korean phrases using a user specified mapping file (defaults to <b>Translations_EN.yml</b>). It also fixes the Korean Job name issue with Langtype.
             
             - GuildBrackets:
@@ -972,7 +978,7 @@ groups:
             - NoSerialDisplay:
                 title : Remove Serial Display
                 recommend : yes
-                author : Shinryo & Neo-Mind
+                author : Shinryo , Neo-Mind
                 desc : Removes the display of the client serial number in the login window (bottom right corner).
             
             - AllowSpaceInGName:
@@ -984,13 +990,13 @@ groups:
             - NoDoramCreation:
                 title : Disable Doram Character Creation UI [Experimental]
                 recommend : no
-                author : Ai4rei/AN & Secret
+                author : Ai4rei/AN , Secret
                 desc : Disable Doram race in the character creation UI. Server-side disabling is also recommended.
             
             - CustomInventoryLimit:
                 title : Custom Inventory Limit
                 recommend : no
-                author : CH.C (jchcc) & Neo-Mind
+                author : CH.C (jchcc) , Neo-Mind
                 desc : Change the Maximum no of items in inventory to user specified value.
             
             - CustomPartyLimit:
@@ -1032,7 +1038,7 @@ groups:
             - CloseCutinOnEsc:
                 title : Close cutin on Esc key
                 recommend : no
-                author : Andrei Karas (4144) & Neo-Mind
+                author : Andrei Karas (4144) , Neo-Mind
                 desc : Allow closing of cutin window by pressing ESC key.
                 
             - EnableMailAccess:
@@ -1056,7 +1062,7 @@ groups:
             - CustomFadeDelay:
                 title : Custom fade in/out delay
                 recommend : no
-                author : Andrei Karas (4144) & Neo-Mind
+                author : Andrei Karas (4144) , Neo-Mind
                 desc : Change fade in/out time in warps on same map.
             
             - RemoveBookingJobs:
@@ -1068,7 +1074,7 @@ groups:
             - RelativeDelay4CharDel:
                 title : Change Deletion time to relative 
                 recommend : no
-                author : Functor & Neo-Mind
+                author : Functor , Neo-Mind
                 desc :  Change character display deletion time from actual date & time to remaining time.
             
             - RestoreChatFocus:
@@ -1122,13 +1128,13 @@ groups:
             - NoMultiWindow:
                 title : Disable Multiple Windows
                 recommend : no
-                author : Shinryo & Ai4rei/AN
+                author : Shinryo , Ai4rei/AN
                 desc : Prevents the client from creating more than one Client Window on all Langtypes.
 
             - CallKoreaClientInfo:
                 title : Always Call SelectKoreaClientInfo()
                 recommend : yes
-                author : Shinryo & Secret
+                author : Shinryo , Secret
                 desc : Ensures SelectKoreaClientInfo() is called along with SelectClientInfo() allowing you to use features that would be only visible on Korean Service Type.
             
             - DataFolderFirst:
@@ -1140,13 +1146,13 @@ groups:
             - PlainTextDesc:
                 title : Use Plain Text Descriptions
                 recommend : yes
-                author : Shinryo & Neo-Mind
+                author : Shinryo , Neo-Mind
                 desc : Enforces client to treat txt file contents as ASCII, not encoded.
             
             - LoadKrExtSettings:
                 title : Always load Korea ExternalSettings lua file
                 recommend : no
-                author : Secret, Andrei Karas (4144) & X-EcutiOnner
+                author : Secret , Andrei Karas (4144) , X-EcutiOnner
                 desc : Makes the client load Korea server's ExternalSettings file for all langtypes.
             
             - IncrViewID:
@@ -1158,7 +1164,7 @@ groups:
             - No3DBoneLimit:
                 title : Remove 3D Bones Limit
                 recommend : no
-                author : Ai4rei/AN & Neo-Mind
+                author : Ai4rei/AN , Neo-Mind
                 desc : Enables the use of custom 3D monsters (Granny) by removing the Hard-coded ID limit.
     
             - CustomQuestLua:
@@ -1170,7 +1176,7 @@ groups:
             - IncrMapQuality:
                 title : Increase Map Quality
                 recommend : no
-                author : Curiosity & Neo-Mind
+                author : Curiosity , Neo-Mind
                 desc : Makes client use 32 bit color maps for Map Textures.
             
             - EnableEffectTool:
@@ -1194,7 +1200,7 @@ groups:
             - FixActDelay:
                 title : Fix Act Delay
                 recommend : no
-                author : Functor & Andrei Karas (4144)
+                author : Functor , Andrei Karas (4144)
                 desc : Fix act delay for act files with big amount of frames.
             
             - CustomDLL:
@@ -1230,13 +1236,13 @@ groups:
             - RestoreModelCulling:
                 title : Restore Model Culling
                 recommend: no
-                author : Curiosity & Neo-Mind
+                author : Curiosity , Neo-Mind
                 desc : Culls models in front of player by turning them transparent.
             
             - Intravision:
                 title : Always see hidden/cloaked objects
                 recommend : no
-                author : Secret, A.K.M. & Neo-Mind
+                author : Secret, A.K.M. , Neo-Mind
                 desc : Always see black silhouette of hidden objects as if the player has intravision status.
             
             - CustomQSDelay:
@@ -1248,19 +1254,19 @@ groups:
             - AllowPL2Leave:
                 title : Allow Party Leader to leave
                 recommend : no
-                author : Andrei Karas (4144) & Neo-Mind
+                author : Andrei Karas (4144) , Neo-Mind
                 desc : Allow leader to leave the party if no members are on map.
             
             - AllowSkillSpam:
                 title : Allow spam skills by hotkey
                 recommend : no
-                author : Functor & Andrei Karas (4144)
+                author : Functor , Andrei Karas (4144)
                 desc : Allow spamming of skills by continuous press of hotkey.
             
             - AllowGuildInClan:
                 title : Allow guild activities in clan
                 recommend : no
-                author : Functor, Secret & Neo-Mind
+                author : Functor, Secret , Neo-Mind
                 desc : Remove restriction of guild functionality while being a member of a clan.
             
     - CustomEquipWin:
@@ -1271,13 +1277,13 @@ groups:
             - NoEquipSwap:
                 title : Remove Equipment Swap Button
                 recommend : no
-                author : Functor, Andrei Karas (4144) & X-EcutiOnner
+                author : Functor, Andrei Karas (4144) ,  X-EcutiOnner
                 desc : Remove equipment swap button on the equipment window.
             
             - NoEquipTitleUI:
                 title : Remove Equipment Title UI
                 recommend : no
-                author : CH.C (jchcc), Andrei Karas (4144) & X-EcutiOnner
+                author : CH.C (jchcc), Andrei Karas (4144) , X-EcutiOnner
                 desc : Remove equipment title ui on the equipment window.
     
     - CustomEnv:
@@ -1288,7 +1294,7 @@ groups:
             - NoFilenameCheck:
                 title : Disable Filename Check
                 recommend : yes
-                author : Shinryo & Neo-Mind
+                author : Shinryo , Neo-Mind
                 desc : Disables the check that forces the client to quit if not called an official name like ragexe.exe for all Langtypes.
             
             - HKLMtoHKCU:
@@ -1324,7 +1330,7 @@ groups:
             - SendMD5Hash:
                 title : Send MD5 Hash Packet
                 recommend : no
-                author : GreenBox & Neo-Mind
+                author : GreenBox , Neo-Mind
                 desc : Makes the client send a packet with it's MD5 hash for all LangTypes. Only use if you have enabled it in your server.
             
             - NoNagle:
@@ -1342,7 +1348,7 @@ groups:
             - EnableProxy:
                 title : Enable Proxy Support
                 recommend : no
-                author : Ai4rei/AN & Neo-Mind
+                author : Ai4rei/AN , Neo-Mind
                 desc : Ignores server-provided IP addresses when changing servers.
             
             - CustomCharCreateId:
