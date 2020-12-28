@@ -3,6 +3,7 @@
 *   Copyright (C) ?-2015 Shinryo                                           *
 *   Copyright (C) 2017-2020 Andrei Karas (4144)                            *
 *   Copyright (C) 2020 X-EcutiOnner (xex.ecutionner@gmail.com)             *
+*   Copyright (C) 2020 Ai4rei/AN                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,14 +23,14 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Shinryo, Andrei (4144), X-EcutiOnner                   *
+*   Author(s)     : Shinryo, Andrei (4144), X-EcutiOnner, Ai4rei/AN        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2020-12-28                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Modify ErrorMsg function to return without showing the MessageBox
+/// \brief Modify ErrorMsg function to send the error message using OutputDebugStringA instead of showing the MessageBox
 ///
 IgnoreRsrcErr = function()
 {
@@ -56,35 +57,52 @@ IgnoreRsrcErr = function()
 	if (addr < 0)
 		throw Error("GDIFlip CALL missing");
 
-	/// 2.2 - Replace code after the CALL with XOR EAX, EAX followed by RETN .
-	///       For Frame pointer types, POP EBP is also needed before RETN
-	code = 
-		XOR(EAX, EAX)
-	+  (ROC.HasFP ? POP(EBP) : NOP)
-	+	RETN()
-	;   
-	Exe.SetHex(addr + 5, code);
+	/// 2.2 - Set the address to after the call.
+	addr += 5;
+
+	/// 2.3 - Prep code to replace with (for calling OutputDebugStringA & stack restoration)
+	let OutDbgStrA = Exe.FindFunc("OutputDebugStringA");
+	if (OutDbgStrA < 0)
+		throw Error("'OutputDebugStringA' function missing");
+
+	code =
+		PUSH(ROC.HasFP ? [EBP, 8] : [ESP, 4]) //PUSH DWORD PTR DS:[ARG.1]
+	+	CALL([OutDbgStrA])                    //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
+	+	XOR(EAX, EAX)                         //XOR EAX, EAX
+	+  	(ROC.HasFP
+	?
+		POP(EBP)                              //POP EBP ; if EBP was PUSHed before
+	:
+		''
+	)
+	+	RETN()                                //RETN
+	;
+	Exe.SetHex(addr, code);
 
 	return true;
 };
 
 ///
-/// \brief Change the conditional jump to JMP for CFile::Open result status
-///        inside CPaletteRes::Load function
+/// \brief Change the code used to show message box when CFile::Open result status is false (inside CPaletteRes::Load function)
+///        into reporting with OutputDebugStringA instead.
 ///
 IgnorePalErr = function()
 {
-	/// 1.1 - Find the error message
+	/// 1.1 - Ensure IgnoreRsrcErr is not already ON (it would already be covered in that case)
+	if (!Exe.TestMode && Exe.IsSelected("IgnoreRsrcErr"))
+		Cancel("'Ignore Resource Errors' is ON and covers Palette errors as well");
+
+	/// 1.2 - Find the error message
 	let msgAddr = Exe.FindText("CPaletteRes :: Cannot find File : ");
 	if (msgAddr < 0)
 		throw Error("CPaletteRes string not found");
 
-	/// 1.2 - Find where its PUSHed/assigned
+	/// 1.3 - Find where its PUSHed/assigned
 	let code = PUSH(msgAddr);  //PUSH OFFSET addr; ASCII "CPaletteRes :: Cannot find File : "
 
 	let addr = Exe.FindHex(code + LEA());   //LEA ECX, [LOCAL.x]
 	if (addr < 0)
-		addr = Exe.FindHex(code + MOV([])); //MOV DWORD PTR 
+		addr = Exe.FindHex(code + MOV([])); //MOV DWORD PTR
 
 	if (addr < 0)
 	{
@@ -104,83 +122,236 @@ IgnorePalErr = function()
 	if (addr < 0)
 		throw Error("CFile::Open CALL not found");
 
-	/// 2.2 - Change the conditional jump
-	Exe.SetJMP(addr + 7);
+	/// 2.2 - Save the location after the conditional jump
+	let modAddr = addr + code.byteCount();
+
+	/// 2.3 - Goto the location of the conditional jump
+	addr = Exe.GetTgtAddr(modAddr - 4, PHYSICAL);
+
+	/// 2.4 - Find the location to jump to (based on build version) before the jump address
+	let jmpAddr;
+	if (Exe.Version < 9.0) //VC6
+	{
+		code =
+			LEA(ECX, [EBP, NEG1WC]) //LEA ECX, [LOCAL.x]
+		+	MOV([EBP, WCn], ESI)    //MOV DWORD PTR SS:[LOCAL.y], ESI
+		+	MOV([EBP, WCn], ESI)    //MOV DWORD PTR SS:[LOCAL.z], ESI
+		;
+		jmpAddr = Exe.FindHex(code, addr - 0x38, addr);
+	}
+	else if (Exe.Version < 11.0) //VC9 & VC10
+	{
+		code =
+			LEA(ECX, ROC.HasFP ? [EBP, NEG2WC] : [ESP, POS2WC]) //LEA ECX, [LOCAL.x]
+		+	CALL(POS3WC)                                        //CALL func
+		+	XOR(AL, AL)                                         //XOR AL, AL
+		;
+		jmpAddr = Exe.FindHex(code, addr - 0x20, addr);
+	}
+	else //VC11 & VC14.16
+	{
+		code =
+			XOR(BL, BL) //XOR BL, BL
+		;
+		jmpAddr = Exe.FindHex(code, addr - 0x10, addr);
+	}
+
+	if (jmpAddr < 0)
+		throw Error("End code missing");
+
+	/// 3.1 - Get the OutputDebugStringA function address
+	let OutDbgStrA = Exe.FindFunc("OutputDebugStringA");
+	if (OutDbgStrA < 0)
+		throw Error("'OutputDebugStringA' function missing");
+
+	/// 3.2 - Prep new code to send the message to OutputDebugStringA function
+	code =
+		PUSH(EDX)          //PUSH EDX
+	+	SUB(ESP, 0x100)    //SUB ESP, 100
+	+	MOV(ECX, ESP)      //MOV ECX, ESP
+	+	MOV(EDX, msgAddr)  //MOV EDX, OFFSET addr; ASCII "CPaletteRes :: Cannot find File : "
+	+	MOV(AL, [EDX])     //MOV AL, BYTE PTR DS:[EDX] ;loop1
+	+	MOV([ECX], AL)     //MOV BYTE PTR DS:[ECX], AL
+	+	INC(ECX)           //INC ECX
+	+	INC(EDX)           //INC EDX
+	+	TEST(AL, AL)       //TEST AL, AL
+	+	JNE(-0xA)          //JNE SHORT loop1
+	+	DEC(ECX)           //DEC ECX ; to remove the NULL
+	+	MOV(EDX, ESI)      //MOV EDX, ESI
+	+	MOV(AL, [EDX])     //MOV AL, BYTE PTR DS:[EDX] ;loop2
+	+	MOV([ECX], AL)     //MOV BYTE PTR DS:[ECX], AL
+	+	INC(ECX)           //INC ECX
+	+	INC(EDX)           //INC EDX
+	+	TEST(AL, AL)       //TEST AL, AL
+	+	JNE(-0xA)          //JNE SHORT loop2
+	+	PUSH(ESP)          //PUSH ESP
+	+	CALL([OutDbgStrA]) //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
+	+	ADD(ESP, 0x100)    //ADD ESP, 100
+	+	POP(EDX)           //POP EDX
+	;
+
+	/// 3.2 - Replace at the modAddr
+	Exe.SetHex(modAddr, code);
+
+	/// 3.3 - Put a JMP after the code to the jmpAddr we found
+	Exe.SetJMP(modAddr + code.byteCount(), jmpAddr, PHYSICAL);
 
 	return true;
 };
 
 ///
-/// \brief Modify LuaErrorMsg function to return without showing the MessageBox
+/// \brief Modify LuaErrorMsg function to send the error message to OutputDebugStringA instead of showing it with MessageBoxA
 ///
-IgnoreLuaErr = function() 
+IgnoreLuaErr = function()
 {
-	/// 1.1 - Find "MessageBoxA" imported function
-	let func = Exe.FindFunc("MessageBoxA");
-	if (func < 0)
+	/// 1.1 - Find 'MessageBoxA' imported function
+	let MBoxA = Exe.FindFunc("MessageBoxA");
+	if (MBoxA < 0)
 		throw Error("MessageBoxA function missing");
 
 	/// 1.2 - Find the LuaErrorMsg function code
-	let part1;
-	if (Exe.Version >= 9.0)
-	{
-		part1 =
-			CALL([POS3WC])       //CALL DWORD PTR DS:[<&MSVCR110.vsprintf>] ; can also be different print function
-		+	ADD(ESP, WCp)        //ADD ESP,0C or 1C
-		;                        
-	}                            
-	else //VC6                   
-	{                            
-		part1 =                  
+	let cmn = ROC.HasFP ?
+		LEA(R32, [EBP, NEG2WC])  //LEA reg32_B, [EBP-x]
+	:
+		LEA(R32, [ESP, WCp])     //LEA reg32_B, [ESP+x]
+	;
+
+	let parts =
+	[
+		Exe.Version < 9.0
+	?
 			CALL(ALLWC)          //CALL sprintf equivalent
 		+	MOV(R32, [EBP, WCp]) //MOV reg32, DWORD PTR SS:[EBP+x]
-		+	ADD(ESP, WCp)        //ADD ESP,0C or some other constant possibly
-		;
-	}
-
-	let cmn = ROC.HasFP ?
-		LEA(R32, [EBP, NEG2WC])  //LEA reg32, [EBP-x] <- patch position
+		+	ADD(ESP, WCp)        //ADD ESP, 0C or some other constant possibly
 	:
-		LEA(R32, [ESP, WCp])     //LEA reg32, [ESP+x]
-	;
+			CALL([POS3WC])       //CALL DWORD PTR DS:[<&MSVCR110.vsprintf>] ; can also be different print function
+		+	ADD(ESP, WCp)        //ADD ESP, 0C or 1C
+	,
+			''
+	,
+			cmn                  //LEA reg32_B, [LOCAL.x]
+	,
+			PUSH_0               //PUSH 0
+		+	PUSH_R               //PUSH reg32_A
+	,
+			PUSH_R               //PUSH reg32_B
+		+	PUSH_0               //PUSH 0
+		+	CALL([MBoxA])         //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
+	];
 
-	let part2 =
-		cmn                      //LEA EAX, [LOCAL.x]
-	+	PUSH_0                   //PUSH 0
-	+	PUSH_R                   //PUSH reg32_A
-	+	PUSH_R                   //PUSH reg32_B
-	+	PUSH_0                   //PUSH 0
-	+	CALL([func])             //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
-	;
-
-	let addr = Exe.FindHex(part1 + part2);
+	let addr = Exe.FindHex(parts.join(''));
 	if (addr < 0)
 	{
-		part2 =
-			PUSH_0                //PUSH 0
-		+	PUSH_R                //PUSH reg32_A
-		+	cmn                   //LEA EAX, [LOCAL.x]
-		+	PUSH_R                //PUSH reg32_B
-		+	PUSH_0                //PUSH 0
-		+	CALL([func])          //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
-		;
-		addr = Exe.FindHex(part1 + part2);
+		[parts[1], parts[3]] = [parts[3], parts[1]];
+
+		addr = Exe.FindHex(parts.join(''));
 	}
 
 	if (addr < 0)
 		throw Error("LuaErrorMsg function missing");
 
-	/// 2.1 - Point addr to location of the 2nd part
-	addr += part1.byteCount();
+	/// 2.1 - Get the OutputDebugStringA function address
+	let OutDbgStrA = Exe.FindFunc("OutputDebugStringA");
+	if (OutDbgStrA < 0)
+		throw Error("'OutputDebugStringA' function missing");
 
-	/// 2.2 - Overwrite with XOR EAX, EAX followed by NOPs.
-	Exe.SetHex(addr, XOR(EAX, EAX));
-	Exe.SetNOPs(addr + 2, part2.byteCount() - 2);
+	/// 2.2 - Skip over the 1st part
+	addr += parts[0].byteCount();
+
+	/// 2.3 - NOP out any code in 2nd part
+	if (!parts[1].isEmpty())
+	{
+		let count = parts[1].byteCount();
+		Exe.SetNOPs(addr, count);
+		addr += count;
+	}
+
+	/// 2.4 - Skip over the LEA EAX
+	addr += parts[2].byteCount();
+
+	/// 2.5 - NOP out any code in 4th part
+	if (!parts[3].isEmpty())
+	{
+		let count = parts[3].byteCount();
+		Exe.SetNOPs(addr, count);
+		addr += count;
+	}
+
+	/// 2.6 - Change the MessageBoxA CALL to OutputDebugStringA CALL followed by XOR EAX, EAX
+	Exe.SetHex(addr + 1,
+		CALL([OutDbgStrA])
+	+	XOR(EAX, EAX)
+	);
 
 	return true;
 };
 
 ///
-/// \brief Disable for unsupported clients
+/// \brief Modify QuestErrorMsg function to send the error message to OutputDebugStringA instead of showing it with MessageBoxA
 ///
-IgnoreLuaErr.validate = () => Exe.BuildDate > 20100000;
+IgnoreQuestErr = function()
+{
+	/// 1.1 - Find 'MessageBoxA' function
+	let MBoxA = Exe.FindFunc("MessageBoxA");
+	if (MBoxA < 0)
+		throw Error("MessageBoxA function missing");
+
+	/// 1.2 - Find the MessageBoxA CALL inside QuestErrorMsg function
+	let prefix =
+		PUSH(IQE_Addr)          //PUSH OFFSET addr; ASCII "Not found Quest Info = %lu"
+	+	PUSH_EAX                //PUSH EAX
+	+	CALL(ALLWC)             //CALL std_string_sprintf
+	+	ADD(ESP, 0xC)           //ADD ESP, 0C
+	+	MOV([EBP, WC], 1)       //MOV DWORD PTR SS:[EBP+var_4], 1
+	+	CMP([EAX, 0x14], 0x10)  //CMP DWORD PTR DS:[EAX+14], 10
+	+	JB(2)                   //JB SHORT addr ; skip the MOV below
+	+	MOV(EAX, [EAX])         //MOV EAX, DWORD PTR DS:[EAX]
+	;
+
+	let suffix =
+		PUSH_0                  //PUSH 0
+	+	PUSH(POS4WC)            //PUSH OFFSET addr; ASCII "Error"
+	+	PUSH_EAX                //PUSH EAX
+	+	PUSH([POS4WC])          //PUSH DWORD PTR DS:[g_hMainWnd]
+	+	CALL([MBoxA])           //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
+	;
+
+	let addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+		throw Error("QuestErrorMsg not found");
+
+	/// 2.1 - Set addr to location after prefix
+	addr += prefix.byteCount();
+
+	/// 2.2 - Get the OutputDebugStringA function address
+	let OutDbgStrA = Exe.FindFunc("OutputDebugStringA");
+	if (OutDbgStrA < 0)
+		throw Error("'OutputDebugStringA' function missing");
+
+	/// 2.3 - Prepare the replacement code (CALLs OutputDebugStringA instead)
+	let code =
+		PUSH_EAX            //PUSH EAX
+	+	CALL([OutDbgStrA])  //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
+	+	XOR(EAX, EAX)       //XOR EAX, EAX
+	;
+	code += NOPs(suffix.byteCount() - code.byteCount());
+
+	/// 2.4 - Now replace it
+	Exe.SetHex(addr, code);
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients - Only 2010+ have Lua
+///
+IgnoreLuaErr.validate = IsPost2010;
+
+///
+/// \brief Disable for unsupported clients - Need that format string present
+///
+IgnoreQuestErr.validate = function()
+{
+	IQE_Addr = Exe.FindText("Not found Quest Info = %lu");
+	return (IQE_Addr > 0);
+};
