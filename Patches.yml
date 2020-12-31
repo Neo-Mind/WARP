@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2020-12-28                                             #
+#   Last Modified : 2021-01-01                                             #
 #                                                                          #
 ############################################################################
 
@@ -1159,7 +1159,7 @@ groups:
                 title : Increase Headgear ViewID Limit
                 recommend : no
                 author : Shinryo
-                desc : Changes the limit for the headgear ViewIDs from default (1000-2000 depending on client) to User Defined value (max 32000).
+                desc : Changes the limit for the headgear ViewIDs from default (1000-3000 depending on client) to User Defined value (max 64000).
             
             - No3DBoneLimit:
                 title : Remove 3D Bones Limit

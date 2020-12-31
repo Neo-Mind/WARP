@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-12-17                                             *
+*   Last Modified : 2021-01-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,7 +35,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 		Push: 0,    //Keys pushed as argument
 		Move: 1,    //Direct assignment inside Function
 		Shared: 2,  //Extension of the above but with a shared key
-		Virtual: 3, //Virtualized function (need to use an explicit mapping instead) OR 
+		Virtual: 3, //Virtualized function (need to use an explicit mapping instead) OR
 		            //The function is only assigning 0s now
 		Unknown: 4  //Self Explanatory
 	};
@@ -44,7 +44,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 	///
 	/// \brief Hash describing the Packet Encryption details
 	///
-	PACKET = 
+	PACKET =
 	{
 		///
 		/// \brief Initialize the data members
@@ -111,7 +111,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				+	CALL(ALLWC)   //CALL func2
 				;
 
-				let code = 
+				let code =
 					inb4          //CALL CRagConnection::instanceR
 					              //MOV ECX, EAX
 					              //CALL CRagConnection::GetPacketSize
@@ -126,7 +126,25 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				+	PUSH(6)       //PUSH 6
 				;
 				addr = Exe.FindHex(code);
-			}			
+			}
+
+			if (addr < 0 && Exe.BuildDate > 20200800)
+			{
+				/// 1.8 - In more recent clients the GetPacketSize & SendPacket sequences are not present,
+				///       so we look for the RegSetValueExA CALL for CASH_CATEGORY as reference.
+				///
+				let ccAddr = Exe.FindText("CASH_CATEGORY");
+				if (ccAddr > 0)
+				{
+					let code =
+						PUSH(4)      //PUSH 4 ; Type = REG_DWORD
+					+	PUSH_0       //PUSH 0 ; Reserved = 0
+					+	PUSH(ccAddr) //PUSH OFFSET addr; SubKey = "CASH_CATEGORY"
+					;
+					addr = Exe.FindHex(code);
+				}
+			}
+
 			if (addr < 0)
 			{
 				this.Error = new Error("PKT - reference location not found");
