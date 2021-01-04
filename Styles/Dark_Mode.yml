@@ -1,0 +1,133 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) 2020-2021 Neo-Mind                                       #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation- either version 3 of the License- or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful-        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not- see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2021-01-01                                             #
+#   Last Modified : 2021-01-04                                             #
+#                                                                          #
+############################################################################
+
+
+#######################
+# Dark Mode Overrides #
+#######################
+
+# Image paths
+paths:
+    githubBtn:
+        inactive: Images/Dark_Mode/github_i.png
+        active: Images/Dark_Mode/github_a.png
+    
+    sizegrip:
+        indicator: Images/Dark_Mode/grip.png
+    
+    msgHeader:
+        successBox: Images/Dark_Mode/success_header.png
+        warnBox: Images/Dark_Mode/warn_header.png
+        errBox: Images/Dark_Mode/error_header.png
+        queryBox: Images/Dark_Mode/query_header.png
+    
+    boldBtn:
+        on: Images/Dark_Mode/bold_on.png
+
+    italicBtn:
+        on: Images/Dark_Mode/italic_on.png
+
+colors:
+    global:
+        # Colors Globally used in various sections of the UI
+        background: '#2B2E33'
+        border: '#444B50'
+        
+        primary: '#8CAFCD'
+        secondary: '#9B59B6'
+        accent: '#A578FA'
+        highlight: black
+        
+        # Colors for Accept & Reject Buttons
+        rejector: '#E03C4C'
+
+    # Colors for drop down menus (ContextMenu & ChoiceButton uses it)
+    dropDown:
+        background: [30, 43, 49, 255]
+        border: [58, 85, 120, 255]
+    
+    # Colors for pages in Tester
+    page:
+        background: [50, 52, 59, 255]
+        border: [68, 75, 100, 255]
+    
+    # Colors for Text Editor
+    editor:
+        background: [55, 56, 70, 255]
+    
+    # Colors for Message Boxes
+    successBox:
+        border: [70, 158, 230, 255]
+    
+    warnBox:
+        border: [214, 119, 35, 255]
+    
+    errBox:
+        border: [233, 30, 99, 255]
+    
+    queryBox:
+        border: [40, 200, 160, 255]
+
+    aboutBox:
+        border: steelblue
+    
+    # Colors for Delegates
+    delegate:
+        text: [120, 150, 190, 255]
+        background: [63, 63, 75, 255]
+
+    # Color for the 'Quick Actions' frame. Best to keep it transparent
+    actionFrame:
+        border: transparent
+    
+    # Colors for 'Output' messages
+    outputView:
+        success: '#00FF00'
+        error: '#FF0000'
+        info: '#59B69B'
+        
+        patInfo: cyan
+        extnInfo: cyan
+        exeInfo: '#E020D8'
+        patIgnored: '#A578FA'
+        extnOutput: '#A578FA'
+    
+    # Colors for Script Editor
+    syntax:
+        operator: lime
+        keyword: deepskyblue
+        regexp: '#A578FA'
+        globVal: mistyrose
+        docComment: teal
+        member: hotpink
+        string: olivedrab
+
+    # Colors for Finder
+    matches:
+        background: dimgray
+        text: honeydew
