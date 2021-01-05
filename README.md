@@ -34,9 +34,7 @@ WARP/
 │
 ├── LastSession.yml  (YAML session file from the last patch application)
 │
-├── Wiki/     (All files used for Documentation purposes)
-│   │
-│   └── Snapshots (Folder containing various snaps of the tools)
+├── Wiki/     (The Wiki's repository)
 │
 ├── Fonts/    (All fonts contained in here are automatically loaded. NovaFlat is used as default.)
 │   │
@@ -44,6 +42,8 @@ WARP/
 │   └── NovaFlat.ttf
 │
 ├── Images/   (Contains all images used by the Tools.)
+│   │
+│   ├── Wiki (Images used in the Wiki)
 │   │
 │   ├── Dark_Mode (Overrides used in Dark Mode)
 │   │   ├── bold_on.png
