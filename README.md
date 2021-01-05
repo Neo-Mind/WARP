@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="Wiki/logo.png?raw=true" alt="Warp logo" width=128 height=128>
+    <img src="Images/logo.png?raw=true" alt="Warp logo" width=128 height=128>
 </p>
 
 # Win App Revamp Package
@@ -36,7 +36,6 @@ WARP/
 │
 ├── Wiki/     (All files used for Documentation purposes)
 │   │
-│   ├── logo.png
 │   └── Snapshots (Folder containing various snaps of the tools)
 │
 ├── Fonts/    (All fonts contained in here are automatically loaded. NovaFlat is used as default.)
@@ -79,6 +78,7 @@ WARP/
 │   ├── info_i.png
 │   ├── italic_off.png
 │   ├── italic_on.png
+│   ├── logo.png
 │   ├── next_a.png
 │   ├── next_i.png
 │   ├── prev_a.png
