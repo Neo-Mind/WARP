@@ -1,245 +1,340 @@
-RTL: no
-
-tabs:
-    - Patches
-    - Extensions
-    - Testers
-    - Results
-
-dialogs:
-    src: Choose source exe file
-    tgt: Choose target exe file
-    loadS: Choose session file to load
-    saveS: Choose session file to save as
-    dir: Choose directory containing test exes
-
-texts:
-    loadDate: Loaded Date
-    selCount: Selected Patches
-    extnSelCount: Selected Extensions
-    
-    src: Source
-    tgt: Target
-    tstDir: Test Dir
-    
-    fontSize: Font Size
-    
-    exePath: Exe Path
-    path: Path
-    filter: Filter Text
-    
-    patchFrame: Patch List
-    actionFrame: Quick Actions
-    extnFrame: Extension List
-    exeFrame: Exe List
-    fontFrame: Font Names
-    demoFrame: Demo
-    optionFrame: Options
-    editorFrame: Script Editor
-    outputFrame: Output
-    
-    langPrompt: "Language :"
-    stylePrompt: "Style :"
-    cutPrompt: Cut
-    copyPrompt: Copy
-    pastePrompt: Paste
-    delPrompt: Delete
-    clrPrompt: Clear
-    undoPrompt: Undo
-    redoPrompt: Redo
-    deselPrompt: Deselect
-    selAllPrompt: Select All
-
-actions:
-    loadSrcExe:
-        title: "Load<br>Source"
-        tooltip: Load the source exe file (& scripts if not already done)
-    
-    selectPrev:
-        title: "Select<br>Previous"
-        tooltip: Select all patches which were applied last time
-    
-    selectRcmd:
-        title: "Select<br>Recommended"
-        tooltip: "Select all patches marked as 'recommended'"
-    
-    applyPatches:
-        title: "Apply<br>Patches"
-        tooltip: Apply selected patches on the loaded exe and save as the target file
-    
-    loadAllScripts:
-        title: "Load<br>Scripts"
-        tooltip: "Load/Reload (Alt+A) all the .qjs script files (Patches, Support & Extensions) inside 'Scripts' directory"
-    
-    loadPatchScripts:
-        title: Load 'Patches'
-        tooltip: "Load/Reload (Alt+P) all the .qjs script files inside 'Scripts/Patches' directory"
-    
-    loadExtnScripts:
-        title: Load 'Extensions'
-        tooltip: "Load/Reload (Alt+E) all the .qjs script files inside 'Scripts/Extensions' directory"
-    
-    loadSuppScripts:
-        title: Load 'Support'
-        tooltip: "Load/Reload (Alt+S) all the .qjs script files inside 'Scripts/Support' directory"
-    
-    showScriptWin:
-        title: "Show Script Window"
-        tooltip: "Displays (Alt+W) the script window used for quickly testing scripts"
-    
-    loadSession:
-       title: "Load<br>Session"
-       tooltip: Load patch selections and inputs from specified session file
-    
-    saveSession:
-        title: "Save<br>Session"
-        tooltip: Save patch selections and inputs to specified session file
-    
-    refreshLanguages:
-        title: "Refresh Languages"
-        tooltip: "Load list of languages provided via .yml files in 'Languages' folder"
-    
-    refreshStyles:
-        title: "Refresh Styles"
-        tooltip: "Load list of styles provided via .yml files in 'Styles' folder"
-    
-    loadExtns:
-       title: "Load Extensions"
-       tooltip: "Fills the Extension drawer with all the defined extensions"
-    
-    clearEditor:
-       title: "Clear"
-       tooltip: "Clear the script editor"
-    
-    evalScript:
-       title: "Evaluate"
-       tooltip: "Evaluate (Ctrl+R) the script in the Editor & dump the result to the Output"
-    
-    clearOutput:
-       title: "Clear"
-       tooltip: "Clear the output view"
-    
-    getPatches:
-       title: "Get<br>Patches"
-       tooltip: "Fills the Patch List with all defined patches"
-    
-    selectAllPatches:
-       title: "Select<br>All"
-       tooltip: "Select all available patches"
-    
-    clearSelPatches:
-       title: "Clear<br>Selected"
-       tooltip: "Clear all selected patches"
-    
-    getExtns:
-       title: "Get<br>Extensions"
-       tooltip: "Fills the Extensions List with all defined extensions"
-    
-    selectAllExtns:
-       title: "Select<br>All"
-       tooltip: "Select all available extensions"
-    
-    clearSelExtns:
-       title: "Clear<br>Selected"
-       tooltip: "Clear all selected extensions"
-    
-    getExes:
-       title: "Get<br>Exes"
-       tooltip: "Fills the Exe List with all .exe files found in the Test directory"
-    
-    selectAllExes:
-       title: "Select<br>All"
-       tooltip: "Select all exe files listed"
-    
-    clearSelExes:
-       title: "Clear<br>Selected"
-       tooltip: "Clear all selected exe files"
-    
-    runTest:
-       title: "Run<br>Test"
-       tooltip: "Tests the selected patches & extensions on the list of exes selected and outputs to 'Test Results' tab"
-    
-    clearResults:
-       title: "Clear<br>Results"
-       tooltip: "Clear the test output results page"
-    
-messages:
-    # MessageDialog titles generic
-    success: Tool Info
-    query: Tool Query
-    warn: Tool Warning
-    error: Tool Error
-    
-    # MessageDialog titles for script
-    errS: Script Error
-    
-    # MessageDialog titles for patch
-    infoP: "Patch Info : <b>'%0'</b>"
-    warnP: "Patch Warning : <b>'%0'</b>"
-    errP: "Patch Error : <b>'%0'</b>"
-
-    # MessageDialog titles for extension
-    infoE: "Extension Info : <b>'%0'</b>"
-    warnE: "Extension Warning : <b>'%0'</b>"
-    errE: "Extension Error : <b>'%0'</b>"
-
-    # Button titles
-    btnOK: OK
-    btnCANC: Cancel
-    btnYES: Yes
-    btnNO: No
-    btnLOAD: Load
-    btnSAVE: Save
-    btnSEL: Select Current
-
-    # Error prompts
-    noAccess: "<b>'%0'</b> is inaccessible"
-    noWrite: Unable to open <b>'%0'</b> for writing
-    
-    wrongSig: <b>'%0'</b> signature is invalid
-    wrongPE: PE header not found in <b>'%0'</b>
-    need32: Only 32 bit exes can be used as <b>'%0'</b>
-    
-    yamlErr: "YAML parse error (%0) : <b>%1</b>"
-    evalErr: "Error at line %0 of %1 : <b>%2</b>"
-    grpErr: "<b>'groups'</b> should be present as an array/sequence"
-    extErr: Extensions should provided as an array/sequence
-    
-    loadFail: "<b>'%0'</b> loading failed"
-    callFail: "<b>Patch Function</b> could not be called"
-    applyFail: "<b>Patches</b> could not be applied"
-    tgtFail: "<b>Target Exe</b> could not be written"
-    funcFail: "<b>%0 Function</b> missing or uncallable"
-
-    # Warning prompts
-    empty: "<b>'%0'</b> is empty"
-    noneLoaded: "No Exe has been loaded"
-    skipWarn: "Certain <b>%0</b> have been skipped due to various reasons (Missing functions, improper syntax etc.)"
-    retnFalse: "Function returned <b>false</b>"
-    patInvalid: "Patch is unsupported - Validator failed"
-    noExes: "No Exes selected for Testing"
-    noPatExts: "No Patches or Extensions selected for Testing"
-    setNoSave: "Setting <b>'%0'</b> could not be saved"
-
-    # Success prompts
-    ready: "<b>'%0'</b> loaded successfully"
-    tgtReady: Patches have been written to <b>Target Exe</b>
-    patSuccess: Patch is successful
-    extnSuccess: Extension is successful
-
-    # Info prompts
-    patInfo: "Testing Patch : <b>%0</b>"
-    exeInfo: "Working on <b>'%0'</b><br>"
-    extnInfo: "Testing Extension : <b>%0</b>"
-    extnOutput: "<b>Result => %0</b>"
-
-    # Query prompts
-    srcQuery: "Update Target Exe path?"
-
+#RTL: no
+#
+#tabs:
+#    - Patches
+#    - Extensions
+#    - Testers
+#    - Results
+#
+#dialogs:
+#    dir: Choose directory containing test exes
+#    src: Choose source exe file
+#    tgt: Choose target exe file
+#    loadS: Choose session file to load
+#    saveS: Choose session file to save as
+#
+#actions:
+#
+#    #==============#
+#    # Patches Page #
+#    #==============#
+#    
+#    getPatches:
+#        title:  Get<br>Patches
+#        tooltip: Fills the Patch List with all defined patches
+#    
+#    selVisiblePatches:
+#        title: Select<br>Visible
+#        tooltip: Select all patches currently visible
+#    
+#    clearSelPatches:
+#        title: Clear<br>Selected
+#        tooltip: Clear all selected patches
+#    
+#    #=================#
+#    # Extensions Page #
+#    #=================#
+#    
+#    getExtns:
+#        title: Get<br>Extensions
+#        tooltip: Fills the Extensions List with all defined extensions
+#    
+#    selVisibleExtns:
+#        title: Select<br>Visible
+#        tooltip: Select all extensions currently visible
+#    
+#    clearSelExtns:
+#        title: Clear<br>Selected
+#        tooltip: Clear all selected extensions
+#    
+#    #==============#
+#    # Testers Page #
+#    #==============#
+#    
+#    getExes: 
+#        title: Get Exes
+#        tooltip: Fills the Exe List with all .exe files found in the Test directory
+#    
+#    selVisibleExes:
+#        title: Select<br>Visible
+#        tooltip: Select all exe files currently visible
+#    
+#    clearSelExes:
+#        title: Clear<br>Selected
+#        tooltip: Clear all selected exe files
+#    
+#    #==============#
+#    # Results Page #
+#    #==============#
+#    
+#    runTest: 
+#        title: Run Test
+#        tooltip: Tests the selected patches & extensions on the list of exes selected and outputs to 'Results' tab
+#        
+#    clearResults:
+#        title: Clear<br>Results
+#        tooltip: Clear the 'Output' view in 'Results' tab
+#    
+#    #=======================#
+#    # Script Window related #
+#    #=======================#
+#    
+#    showScriptWin:
+#        title: Show Script Window
+#        tooltip: Displays (Alt+W) the script window used for quickly testing scripts
+#    
+#    clearOutput:
+#        title: Clear
+#        tooltip: Clear the output view
+#    
+#    #=========================#
+#    # Remaining Quick Actions #
+#    #=========================#
+#    
+#    loadSrcExe:
+#        title: Load<br>Source
+#        tooltip: Load the source exe file (& scripts if not already done)
+#    
+#    applyPatches: 
+#        title: Apply<br>Patches
+#        tooltip: Apply selected patches on the loaded exe and save as the target file
+#    
+#    selectPrev:
+#        title: Select<br>Previous
+#        tooltip: Select all patches which were applied last time
+#    
+#    selectRcmd:
+#        title: Select<br>Recommended
+#        tooltip: Select all patches marked as 'recommended'
+#    
+#    loadChangedScripts:
+#        title: Load<br>Scripts
+#        tooltip: Load/Reload (Alt+C) all modified (since last loading) .qjs script files coming under 'Patches', 'Support' & 'Extensions' sub-folders inside 'Scripts' directory
+#    
+#    evalScript: 
+#        title: Evaluate
+#        tooltip: Evaluate (Ctrl+R) the script in the Editor & dump the result to the Output
+#    
+#    clearEditor: 
+#        title: Clear
+#        tooltip: Clear the script editor
+#    
+#    #============#
+#    # Menu Items #
+#    #============#
+#    
+#    loadPatchScripts:
+#        title: Load from <b>'Patches'</b>
+#        tooltip: Load/Reload (Alt+P) all the .qjs script files inside 'Scripts/Patches' directory
+#    
+#    loadExtnScripts:
+#        title: Load from <b>'Extensions'</b>
+#        tooltip: Load/Reload (Alt+E) all the .qjs script files inside 'Scripts/Extensions' directory
+#    
+#    loadSuppScripts:
+#        title: Load from <b>'Support'</b>
+#        tooltip: Load/Reload (Alt+S) all the .qjs script files inside 'Scripts/Support' directory
+#    
+#    loadAllScripts:
+#        title: Load <b>All</b> Scripts
+#        tooltip: Load/Reload (Alt+A) all the .qjs script files coming under 'Patches', 'Support' & 'Extensions' sub-folders inside 'Scripts' directory
+#    
+#    loadSession:
+#        title: Load Session file
+#        tooltip: Load patch selections and inputs from specified session file
+#    
+#    saveSession:
+#        title: Save Session file
+#        tooltip: Save patch selections and inputs to specified session file
+#    
+#    refreshLanguages:
+#        title: Refresh Languages
+#        tooltip: Load list of languages provided via .yml files in 'Languages' folder
+#    
+#    refreshStyles:
+#        title: Refresh Styles
+#        tooltip: Load list of styles provided via .yml files in 'Styles' folder
+#    
+#    loadExtns:
+#        title: Load Extensions
+#        tooltip: Fills the Extension drawer with all the defined extensions
+#
+#messages:
+#    
+#    #====================#
+#    # Regular Box titles #
+#    #====================#
+#    
+#    success: Tool Info
+#    query: Tool Query
+#    warn: Tool Warning
+#    error: Tool Error
+#    
+#    #============================#
+#    # Script specific Box titles #
+#    #============================#
+#    
+#    errS: Script Error
+#    
+#    #===========================#
+#    # Patch specific Box titles #
+#    #===========================#
+#    
+#    warnP: "Patch Warning : <b>'%0'</b>"
+#    errP: "Patch Error : <b>'%0'</b>"
+#    
+#    #===============================#
+#    # Extension specific Box titles #
+#    #===============================#
+#    
+#    infoE: "Extension Info : <b>'%0'</b>"
+#    warnE: "Extension Warning : <b>'%0'</b>"
+#    errE: "Extension Error : <b>'%0'</b>"
+#    
+#    #===============#
+#    # Button titles #
+#    #===============#
+#    
+#    btnOK: OK
+#    btnCANC: Cancel
+#    btnYES: Yes
+#    btnNO: No
+#    btnLOAD: Load
+#    btnSAVE: Save
+#    btnSEL: Select Current
+#    
+#    #===============#
+#    # Error prompts #
+#    #===============#
+#    
+#    noAccess: "<b>'%0'</b> is inaccessible"
+#    noWrite: "Unable to open <b>'%0'</b> for writing"
+#    
+#    wrongSig: "<b>'%0'</b> signature is invalid"
+#    wrongPE: "PE header not found in <b>'%0'</b>"
+#    need32: "Only 32 bit exes can be used as <b>'%0'</b>"
+#    
+#    yamlErr: "YAML parse error (%0) : <b>%1</b>"
+#    evalErr: "Error at line %0 of %1 : <b>%2</b>"
+#    grpErr: "<b>'groups'</b> should be present as an array/sequence"
+#    extErr: "Extensions should provided as an array/sequence"
+#    
+#    loadFail: "<b>'%0'</b> loading failed"
+#    callFail: "<b>Patch Function</b> could not be called"
+#    applyFail: "<b>Patches</b> could not be applied"
+#    tgtFail: "<b>Target Exe</b> could not be written"
+#    funcFail: "<b>%0 Function</b> missing or uncallable"
+#    
+#    #=================#
+#    # Warning prompts #
+#    #=================#
+#    
+#    empty: "<b>'%0'</b> is empty"
+#    noneLoaded: "No Exe has been loaded"
+#    skipWarn: "Certain <b>%0</b> have been skipped due to various reasons (Missing functions, improper syntax etc.)"
+#    retnFalse: "Function returned <b>false</b>"
+#    noExes: "No Exes selected for Testing"
+#    noPatExts: "No Patches or Extensions selected for Testing"
+#    setNoSave: "Setting <b>'%0'</b> could not be saved"
+#    
+#    #=================#
+#    # Success prompts #
+#    #=================#
+#    
+#    ready: "<b>'%0'</b> loaded successfully"
+#    tgtReady: "Patches have been written to <b>Target Exe</b>"
+#    patSuccess: "Patch is successful"
+#    extnSuccess: "Extension is successful"
+#    
+#    #==============#
+#    # Info prompts #
+#    #==============#
+#    
+#    patInfo: "Testing Patch : <b>%0</b>"
+#    exeInfo: "Working on <b>'%0'</b>\n"
+#    extnInfo: "Testing Extension : <b>%0</b>"
+#    extnOutput: "<b>Result => %0</b>"
+#    patIgnored: "Patch is ignored for this build date"
+#    
+#    #===============#
+#    # Query prompts #
+#    #===============#
+#    srcQuery: "Update Target Exe path?"
+#
+#texts:
+#    
+#    #================#
+#    # Header Prompts #
+#    #================#
+#    
+#    loadDate: Loaded Date
+#    selCount: Selected Patches
+#    extnSelCount: Selected Extensions
+#    exeSelCount: Selected Exes
+#    
+#    #===========================================#
+#    # StringField titles (appears on the frame) #
+#    #===========================================#
+#    
+#    srcEntry: Source
+#    tgtEntry: Target
+#    dirEntry: Test Dir
+#    
+#    #===============================#
+#    # StringField placeholder texts #
+#    #===============================#
+#    
+#    exePath: Exe Path
+#    path: Path
+#    filter: Filter Expression
+#    find: Regular Expression
+#    
+#    #==============#
+#    # Frame titles #
+#    #==============#
+#    
+#    actionFrame: Quick Actions
+#    patchFrame: Patch List
+#    extnFrame: Extension List
+#    exeFrame: Exe List
+#    fontFrame: Font Names
+#    demoFrame: Demo
+#    optionFrame: Options
+#    
+#    #====================#
+#    # Text Editor titles #
+#    #====================#
+#    
+#    scriptEditor: Script Editor
+#    outputView: Output
+#    
+#    #======================#
+#    # Context Menu prompts #
+#    #======================#
+#    
+#    cutPrompt: Cut
+#    copyPrompt: Copy
+#    pastePrompt: Paste
+#    delPrompt: Delete
+#    clrPrompt: Clear
+#    undoPrompt: Undo
+#    redoPrompt: Redo
+#    deselPrompt: Deselect
+#    selAllPrompt: Select All
+#    
+#    #===============#
+#    # Other prompts #
+#    #===============#
+#    
+#    fontSizePrompt: "Font Size :"
+#    fontNamePrompt: "Font Name :"
+#    langPrompt: "Language :"
+#    stylePrompt: "Style :"
+#
 #translations:
 #    - find: <original text>
 #      replace: <translated text>
 #        
 #    - find: <original text 2>
 #      replace: <translated text 2>
-    
+#    
