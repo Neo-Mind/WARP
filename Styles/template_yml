@@ -1,85 +1,217 @@
-radius: 8
-
-font:
-    family: "Electrolize"
-    size: 9
-    sizeBig: 12
-    sizeSmall: 8
-    editFamily: "Tahoma"
-    editSize: 10
-
-paths:
-    browseBtn:
-        inactive: "Images/browse_i.png"
-        active: "Images/browse_a.png"
-
-    clearBtn:
-        inactive: "Images/clear_i.png"
-        active: "Images/clear_a.png"
-    
-    actns:
-        inactive: "Images/actns_i.png"
-        active: "Images/actns_a.png"
-    
-    extns:
-        inactive: "Images/extns_i.png"
-        active: "Images/extns_a.png"
-    
-    sort:
-        on: "Images/ascend.png"
-        off: "Images/descend.png"
-    
-    boldBtn:
-        on: "Images/bold_on.png"
-        off: "Images/bold_off.png"
-    
-    italicBtn:
-        on: "Images/italic_on.png"
-        off: "Images/italic_off.png"
-    
-    rcmdTag:
-        inactive: "Images/rcmd_i.png"
-        selected: "Images/rcmd_s.png"
-    
-    search:
-        indicator: "Images/search.png"
-    
-    sizegrip:
-        indicator: "Images/grip.png"
-    
-    msgHeader:
-        successBox: "Images/success_header.png"
-        queryBox: "Images/query_header.png"
-        warnBox: "Images/warn_header.png"
-        errBox: "Images/error_header.png"
-
-colors:
-    global:
-        background: '#FDFDFF'
-        overlay: [0x10, 0x10, 0x10, 0x80]
-        border: '#CED2E8'
-        dropDown: '#E0E8F2'
-        dropBorder: '#C8CFDF'
-        pageBG: '#F4F8FB'
-        pageBorder: '#C0D5E0'
-        
-        primary: '#3F51AD'
-        secondary: '#673AB7'
-        accent: '#9C27B0'
-        highlight: 'white'
-        acceptor: 'lightseagreen'
-        rejector: 'crimson'
-        
-        d_text: '#3850A8'
-        d_groupText: 'lightseagreen'
-        d_selectedText: 'white'
-        d_background: '#E4EAF0'
-        d_selectedBG: 'lightseagreen'
-        
-        errBox: 'crimson'
-        warnBox: 'coral'
-        successBox: 'deepskyblue'
-        queryBox: 'lightseagreen'
-    
+#radius: 8
+#
+##===============#
+## Font settings #
+##===============#
+#
+#font:
+#    family: Nova Flat
+#    size: 9
+#    sizeBig: 12
+#    sizeSmall: 8
+#    editFamily: Cambria
+#    editSize: 10
+#
+#
+##=============#
+## Image paths #
+##=============#
+#
+#paths:
+#    browseBtn:
+#        inactive: "Images/browse_i.png"
+#        active: "Images/browse_a.png"
+#    
+#    clearBtn:
+#        inactive: "Images/clear_i.png"
+#        active: "Images/clear_a.png"
+#    
+#    prevBtn:
+#        inactive: "Images/prev_i.png"
+#        active: "Images/prev_a.png"
+#    
+#    nextBtn:
+#        inactive: "Images/next_i.png"
+#        active: "Images/next_a.png"
+#    
+#    discordBtn:
+#        inactive: "Images/discord_i.png"
+#        active: "Images/discord_a.png"
+#    
+#    githubBtn:
+#        inactive: "Images/github_i.png"
+#        active: "Images/github_a.png"
+#    
+#    infoBtn:
+#        inactive: "Images/info_i.png"
+#        active: "Images/info_a.png"
+#    
+#    actDrawer:
+#        inactive: "Images/actns_i.png"
+#        active: "Images/actns_a.png"
+#    
+#    extnDrawer:
+#        inactive: "Images/extns_i.png"
+#        active: "Images/extns_a.png"
+#    
+#    sort:
+#        on: "Images/ascend.png"
+#        off: "Images/descend.png"
+#    
+#    boldBtn:
+#        on: "Images/bold_on.png"
+#        off: "Images/bold_off.png"
+#    
+#    italicBtn:
+#        on: "Images/italic_on.png"
+#        off: "Images/italic_off.png"
+#    
+#    rcmdTag:
+#        inactive: "Images/rcmd_i.png"
+#        selected: "Images/rcmd_s.png"
+#    
+#    search:
+#        indicator: "Images/search.png"
+#    
+#    sizegrip:
+#        indicator: "Images/grip.png"
+#    
+#    msgHeader:
+#        successBox: "Images/success_header.png"
+#        queryBox: "Images/query_header.png"
+#        warnBox: "Images/warn_header.png"
+#        errBox: "Images/error_header.png"
+#
+#colors:
+#    
+#    #=============================================#	
+#    # Used globally in various sections of the UI #
+#    #=============================================#	
+#    
+#    global: 
+#        background: '#FDFDFF'
+#        overlay: '#80101010'
+#        border: '#CED2E8'
+#    
+#        primary: '#3F51AD'
+#        secondary: '#673AB7'
+#        accent: '#9C27B0'
+#        highlight: white
+#    
+#    #==========================#
+#    # Used for Drop Down menus #
+#    #==========================#
+#    
+#    dropDown: 
+#        background: '#E0E8F2'
+#        border: '#C8CFDF'
+#    
+#    #===================================#
+#    # Used for tabs/pages in Test Bench #
+#    #===================================#
+#    
+#    page: 
+#        background: '#F4F8FB'
+#        border: '#C0D5E0'
+#    
+#    #===============================#
+#    # Used for Text Editor controls #
+#    #===============================#
+#    
+#    editor: 
+#        background: aliceblue
+#    
+#    #===================================================================#
+#    # Override for Quick Action Frames (looks better without the lines) #
+#    #===================================================================#
+#    
+#    actionFrame: 
+#        border: transparent
+#    
+#    #=============================================================#
+#    # Used for the items in Patch List, Extension List & Exe List #
+#    #=============================================================#
+#    
+#    delegate: 
+#        text: '#3850A8'
+#        groupText: lightseagreen
+#        selectedText: white
+#        background: '#E4EAF0'
+#        selectedBG: lightseagreen
+#    
+#    #=============================#
+#    # Used for Dialog Box Buttons #
+#    #=============================#
+#    
+#    dialog:
+#        acceptor: lightseagreen
+#        rejector: crimson
+#    
+#    #=============================#
+#    # Used for Message Box frames #
+#    #=============================#
+#    
+#    errBox:
+#        border: '#E81E60'
+#    
+#    warnBox:
+#        border: '#EF8028'
+#    
+#    successBox:
+#        border: '#389FDF'
+#    
+#    queryBox:
+#        border: '#20B295'
+#    
+#    aboutBox:
+#        border: steelblue
+#    
+#    #====================================================#
+#    # Used for pattern matches with Finder in Test Bench #
+#    #====================================================#
+#    
+#    matches:
+#        background: darkgray
+#        text: mintcream
+#        currentBG: lightseagreen
+#        currentText: white
+#    
+#    #===========================================#
+#    # Used for Test & Script Evaluation results #
+#    #===========================================#
+#    
+#    outputView:
+#        success: darkgreen
+#        info: '#007f7f'
+#        error: '#dc143c'
+#        warn: '#ff8c00'
+#    
+#        patInfo: blue
+#        extnInfo: blue
+#        exeInfo: darkmagenta
+#        patIgnored: magenta
+#        extnOutput: magenta
+#    
+#    #============================================#
+#    # Used by Syntax Assistant for Script Editor #
+#    #============================================#
+#    syntax:
+#        comment: gray
+#        docComment: darkcyan
+#        number: darkorange
+#        string: darkgreen
+#        escSequence: magenta
+#        regexp: darkmagenta
+#        operator: black
+#        keyword: blue
+#        globVal: mediumturquoise
+#        member: mediumvioletred
+#        invalid: red
+#    
+#    #===================================#
+#    # Individual Control Customizations #
+#    #===================================#
+#    
 #    <objectName>:
-#        <property>: <value>
+#        <colorKey>: <value>
+#
