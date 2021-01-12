@@ -23,25 +23,58 @@
 *                                                                          *
 *   Author(s)     : Functor, Andrei (4144)                                 *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2021-01-12                                             *
 *                                                                          *
 \**************************************************************************/
+
+// TODO - Pre 2017 the patterns are completely missing
 
 ///
 /// \brief Enforce Movement of g_session.field_5ADC to ensure spam skill by hotkey
 ///
 AllowSkillSpam = function()
 {
-	/// 1.1 - Find the comparison
-	let code =
-		MOV(EAX, [POS3WC])    //MOV EAX, DWORD PTR DS:[g_session.virtual_key_code]
-	+	CMP(EBX, 0x7F4)       //CMP EBX, 7F4
-	+	CMOVZ(EAX, [POS3WC])  //CMOVZ EAX, DWORD PTR DS:[g_session.field_5ADC]
-	+	MOV([POS3WC], EAX)    //MOV DWORD PTR DS:[g_session.virtual_key_code], EAX
+	/// 1 - Find the comparison
+	let prefix =
+		MOV(EAX, [POS4WC])    //MOV EAX, DWORD PTR DS:[g_session.virtual_key_code]
 	;
-	let addr = Exe.FindHex(code);
+	let suffix =
+		CMP(EBX, 0x7F4)       //CMP EBX, 7F4
+	+	CMOVZ(EAX, [POS4WC])  //CMOVZ EAX, DWORD PTR DS:[g_session.field_5ADC]
+	+	MOV([POS4WC], EAX)    //MOV DWORD PTR DS:[g_session.virtual_key_code], EAX
+	;
+
+	let addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0 && ROC.IsZero)
+	{
+		prefix = "";
+		suffix =
+			CMP(R32, 0x7F4)       //CMP reg32_A, 7F4
+		+	MOV(EAX, [POS4WC])    //MOV EAX, DWORD PTR DS:[g_session.virtual_key_code]
+		+	MOV(R32, 0x5D)        //MOV reg32_B, 5D
+		+	CMOVE(EAX, [POS4WC])  //CMOVZ EAX, DWORD PTR DS:[g_session.field_5ADC]
+		+	MOV([POS4WC], EAX)    //MOV DWORD PTR DS:[g_session.virtual_key_code], EAX
+		;
+		addr = Exe.FindHex(prefix + suffix);
+	}
+
+	if (addr < 0 && Exe.BuildDate > 20180000)
+	{
+		prefix = "";
+		suffix =
+			CMP(Exe.Version < 14 ? R32 : EAX, 0x7F4) //CMP reg32_A, 7F4
+		+	JE(WCp)                  //JE skip over
+		+	MOV(R32, [EBP, NEG2WC])  //MOV reg32_B, DWORD PTR SS:[LOCAL.x]
+		+	MOV(R32, 0x438)          //MOV reg32_C, 438
+		+	MOV([EBP, NEG2WC], R16)  //MOV WORD PTR DS:[LOCAL.y], reg16_C
+		;
+		addr = Exe.FindHex(prefix + suffix);
+	}
+
 	if (addr < 0)
 		throw Error("Pattern not found");
+
+	/* No need of this since we are not getting any false matches.
 
 	/// 1.2 - Save the location after the pattern
 	let endAddr = addr + code.byteCount();
@@ -52,18 +85,21 @@ AllowSkillSpam = function()
 
 	if ((Exe.GetUint32(addr + 1) + 4) !== Exe.GetUint32(endAddr - 9))
 		throw Error("False match found (2nd offset mismatch)");
+	*/
 
 	/// 2.1 - Prepare replacement code - CMP is for triggering Zero Flag.
 	code = 
 		CMP(EBX, EBX)  //CMP EBX, EBX
-	+	NOP            //NOP
-	+	NOP            //NOP
-	+	NOP            //NOP
-	+	NOP            //NOP
+	+	NOP4           //4 byte NOP
 	;
 
 	/// 2.2 - Overwrite the original CMP
-	Exe.SetHex(addr + 5, code);
+	Exe.SetHex(addr + prefix.byteCount(), code);
 
 	return true;
 };
+
+///
+/// \brief Disable for Pre-2017 (for now).
+///
+AllowSkillSpam.validate = () =>  Exe.BuildDate > 20170000;
