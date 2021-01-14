@@ -65,9 +65,10 @@ if (typeof ROC === 'undefined')
 			/// 1.6 - Check for packet key presence
 			this.HasPktKeys = Exe.BuildDate >= 20110817;
 
-			/// 2.1 - Get the address of 'NC_CashShop' & Roulette bmp string
+			/// 2.1 - Get the address of 'NC_CashShop', Roulette bmp string & 'adventurerAgency'
 			this.CashShopAddr = Exe.FindText("NC_CashShop");
 			this.RouletteAddr = Exe.FindText("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\roullette\\RoulletteIcon.bmp");
+			this.AdvAgencyAddr = Exe.FindText("adventurerAgency");
 
 			/// 2.2 - Get the addresses of the respective imported functions (used commonly in various patches)
 			this.GetModHandle = Exe.FindFunc("GetModuleHandleA", "KERNEL32.dll");

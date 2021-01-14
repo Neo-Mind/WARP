@@ -162,10 +162,14 @@ HideButton = function(patchName)
 ///
 HideButton.validate = function(patchName)
 {
-	/// 1 - Retrieve the data based on the patch name
+	/// 1.1 - Ensure the clients are using the older style of buttons
+	if (ROC.AdvAgencyAddr > 0)
+		return false;
+	
+	/// 1.2 - Retrieve the data based on the patch name
 	let {strings, zeroPrefix} = HB_Data[patchName];
 
-	/// 2 - Find the first match amongst the strings specified
+	/// 2.1 - Find the first match amongst the strings specified
 	let addr = -1;
 	strings.find( str =>
 	{
@@ -173,7 +177,7 @@ HideButton.validate = function(patchName)
 		return (addr > 0);
 	});
 
-	/// 3 - When found save it into HB_Data . Also save the VIRTUAL address if zeroPrefix is ON since we need it.
+	/// 2.2 - When found save it into HB_Data . Also save the VIRTUAL address if zeroPrefix is ON since we need it.
 	if (addr > 0)
 	{
 		HB_Data[patchName].strPhy = addr;

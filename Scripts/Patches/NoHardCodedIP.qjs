@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-10                                             *
+*   Last Modified : 2021-01-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -41,7 +41,7 @@ NoHardCodedIP = function()
 	/// 2 - Find all instances and replace with 0.0.0.0
 	let found = ipAddrs.filter( ip =>
 	{
-		let addrs = Exe.FindTextN(ip, -1, PHYSICAL, true, false);
+		let addrs = Exe.FindTextN(ip, PHYSICAL, true, false);
 		if (addrs.isEmpty())
 			return false;
 

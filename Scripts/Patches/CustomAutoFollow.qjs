@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Neo-Mind, CH.C (jchcc)                        *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2021-01-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,18 +36,20 @@ NoAutoFollow = function()
 {
 	/// 1 - Find the m_lastLockOnPcGid assignment (matches multiple locations)
 	let prefix =
-		PUSH_1                       //PUSH 1
-	+	PUSH(' [00011..0]')          //PUSH 1A or 1C
-	;
-
-	if (Exe.Version < 14.0)
-		prefix +=  MOV(ECX, ESI);    //MOV ECX, ESI
-
-	if (Exe.Version < 9.0 || Exe.Version >= 11.0
+		PUSH_1               //PUSH 1
+	+	PUSH(' [00011..0]')  //PUSH 1A or 1C
+	+	(Exe.Version < 14.0
+	?
+		MOV(ECX, ESI)        //MOV ECX, ESI
+	:
+		""
 	)
-		prefix += CALL([R32, WCp]);  //CALL DWORD PTR DS:[reg32_A+x]
-	else
-		prefix += CALL(R32);         //CALL reg32_A
+	+	(Exe.Version < 9.0 || Exe.Version >= 11.0
+	?
+		CALL([R32, WCp])     //CALL DWORD PTR DS:[reg32_A+x]
+	:
+		CALL(R32)            //CALL reg32_A
+	);
 
 	let suffix;
 	if (Exe.Version < 9.0)
@@ -77,23 +79,32 @@ NoAutoFollow = function()
 ///
 DecrAFDelay = function() 
 {
-	/// 1 - Find the delay comparison
+	/// 1.1 - Find the delay comparisons
+	let reg = Exe.Version > 6 ? EDI : EBX
 	let code =
-		CALL(EDI)           //CALL EDI                     ; timeGetTime
+		CALL(reg)           //CALL EDI or EBX              ; [<&WINMM.timeGetTime>]
 	+	SUB(EAX, [POS4WC])  //SUB EAX, DWORD PTR DS:[addr] ; lastFollowTime
 	+	CMP(EAX, 0x3E8)     //CMP EAX, 3E8                 ; 1000ms
 	;
 
-	let addr = Exe.FindHex(code);
-	if (addr < 0)
+	let addrs = Exe.FindHexN(code);
+	if (addrs.isEmpty())
 		throw Error("Delay comparison missing");
+	
+	/// 1.2 - Find the register movement before it to find the correct match
+	let movReg = MOV(reg, [POS3WC]); //MOV reg, DWORD PTR DS:[<&WINMM.timeGetTime>]
+	let addr = addrs.find( memAddr => 
+		Exe.FindLastHex(movReg, memAddr, memAddr - 0x20) > 0
+	);
+	if (addr == undefined)
+		throw Error("No matches found");
 
-	/// 2 - Get the new value from the user
+	/// 2.1 - Get the new value from the user
 	let newDelay = Exe.GetUserInput('$followDelay', D_Uint32, "Delay Value", "Enter the new autofollow delay", 1000, {max: 1000});
 	if (newDelay === false)
-		throw "Cancelled - Delay reverted to 1000";
+		Cancel("Delay", 1000);
 
-	/// 3 - Replace the old value
+	/// 2.2 - Replace the old value
 	Exe.SetFromVar(addr + code.byteCount() - 4, '$followDelay');
 
 	return true;

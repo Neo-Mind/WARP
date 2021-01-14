@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -201,9 +201,10 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			addr = ins.NextAddr;
 
 			/// 4.1 - Find the GlobLuaState assignment (different code for different linker)
-			code = Exe.BuildDate < 20100817 ? MOV(EAX, [POS3WC]) :
+			code = 
+				Exe.BuildDate < 20100817 ? MOV(EAX, [POS3WC]) :
 				Exe.Version < 11.0       ? MOV(R32, [POS3WC]) :
-											PUSH([POS4WC]) ;
+				                           PUSH([POS4WC]) ;
 
 			addr = Exe.FindHex(code, addr, addr + 0x10);
 			if (addr < 0)
@@ -220,15 +221,19 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			addr = ins.NextAddr;
 
 			/// 4.4 - Find the CALL after the assignment (this is lua function invoker)
-			addr = Exe.FindHex( CALL(NEG3WC), addr, addr + 0x10 );
-			if (addr < 0)
+			let callAddr = Exe.FindHex( CALL(NEG3WC), addr, addr + 0x10 );
+			if (callAddr < 0 && Exe.BuildDate > 20200000)
+			{
+				callAddr = Exe.FindHex( CALL(POS3WC), addr, addr + 0x10 );
+			}
+			if (callAddr < 0)
 			{
 				this.Error = new Error("LUA - function invoker missing");
 				throw this.Error;
 			}
 
 			/// 4.5 - Save the function address.
-			this.FnInvoker = Exe.GetTgtAddr(addr + 1);
+			this.FnInvoker = Exe.GetTgtAddr(callAddr + 1);
 
 			/// 5.1 - Find the string 'Lua Files\\DataInfo\\jobName'
 			addr = Exe.FindText("Lua Files\\DataInfo\\jobName");
