@@ -1,6 +1,6 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) ?-2021 *Various authors*                                 #
+#   Copyright (C) ?-2020 *Various authors*                                 #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-01-14                                             #
+#   Last Modified : 2021-01-15                                             #
 #                                                                          #
 ############################################################################
 
@@ -1095,6 +1095,12 @@ groups:
                 author : Andrei Karas (4144)
                 desc : Change guild exp limit percent. Default value is 50%.
             
+            - CustomAdvAgencyLimits:
+                title : Change adventurer agency levels
+                recommend : no
+                author : Andrei Karas (4144), Asheraf
+                desc : Changes the default level range on the Adventure Agency.
+    
     - CustomData:
         title : DATA CUSTOMIZATION
         mutex : false
@@ -1320,6 +1326,12 @@ groups:
                 recommend : no
                 author : X-EcutiOnner
                 desc : Removes the explicit requirement for user access elevation (i.e. Admin privileges) from the client
+            
+            - LoadClientPlugins:
+                title : Always Load Client Plugins [Experimental]
+                recommend : no
+                author : Secret
+                desc : Makes the client load client plug-ins regardless of its sound settings.
     
     - CustomNW:
         title : NETWORK CUSTOMIZATION
@@ -1389,171 +1401,23 @@ groups:
             - Enable44kHzAudio:
                 title : Enable 44.1 kHz Audio Sampling Frequency
                 recommend : no
-                author : CH.C (jchcc)
+                author : jchcc
                 desc : Boosts the audio sampling frequency to 44.1 kHz, improving the audio quality in the game.
             
             - AutoMute:
                 title : Auto Mute Audio [Experimental]
                 recommend : no
-                author : CH.C (jchcc)
+                author : jchcc
                 desc : Auto mute audio when game window is not active.
     
-    - NewButtonVis:
-        title: NEW BUTTON VISIBILITY
-        mutex: false
+    - CustomSpecials:
+        title : SPECIAL CUSTOMIZATIONS
+        mutex : false
+        color : deeppink
         
         patches:
-            - HideNewNavBtn:
-                title: Hide Navigation Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Hide the Navigation button located under the HP/SP Bars.
-                
-            # - HideNewBgBtn:
-                # title: Hide Battleground Button
-                # recommend: no
-                # author : CH.C (jchcc), Neo-Mind
-                # desc: Hide the Battleground button located under the HP/SP Bars.
-            
-            - HideNewBankBtn :
-                title: Hide Bank Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Hide the Bank button located under the HP/SP Bars.
-            
-            - HideNewBookBtn :
-                title: Hide Booking Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Hide the Booking button located under the HP/SP Bars.
-            
-            - ShowNewBookBtn :
-                title: Show Booking Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Show the Booking button under the HP/SP Bars. You might need to hide another button in case there is not enough space.
-            
-            - HideNewRodexBtn :
-                title: Hide Rodex Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Hide the Rodex button located under the HP/SP Bars.
-            
-            - HideNewAchieveBtn :
-                title: Hide Achievements Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Hide the Achievements button located under the HP/SP Bars.
-            
-            - HideNewRecordBtn :
-                title: Hide Record Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Hide the Record button located under the HP/SP Bars.
-            
-            # - HideNewMapBtn :
-                # title: Hide Map Button
-                # recommend: no
-                # author : CH.C (jchcc), Neo-Mind
-                # desc: Hide the Map button located under the HP/SP Bars.
-            
-            # - HideNewQuestBtn:
-                # title: Hide Quest Button
-                # recommend: no
-                # author : CH.C (jchcc), Neo-Mind
-                # desc: Hide the Quest button located under the HP/SP Bars.
-              
-            - HideTipBtn :
-                title: Hide Tip Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Hide the Tip button located under the HP/SP Bars.
-            
-            - HideNewShopBtn :
-                title: Hide Shop Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Hide the Shop button located under the HP/SP Bars.
-            
-            - HideSNSBtn :
-                title: Hide SNS Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Hide the SNS (Twitter) button located under the HP/SP Bars.
-                
-            - ShowSNSBtn :
-                title: Show SNS Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Show the SNS (Twitter) button under the HP/SP Bars. You might need to hide another button in case there is not enough space.
-            
-            - HideAttendBtn :
-                title: Hide Attendance Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Hide the Attendance button located under the HP/SP Bars.
-            
-            - HideAdvAgencyBtn :
-                title: Hide Adventure Agency Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Hide the Adventure Agency button located under the HP/SP Bars.
-            
-            - ShowAdvAgencyBtn :
-                title: Show Adventure Agency Button
-                recommend: no
-                author : CH.C (jchcc), Neo-Mind
-                desc: Show the Adventure Agency button under the HP/SP Bars. You might need to hide another button in case there is not enough space.
-            
-            # - HideNewStatusBtn :
-                # title: Hide Status Button
-                # recommend: no
-                # author : CH.C (jchcc), Neo-Mind
-                # desc: Hide the Status Window launcher button located under the HP/SP Bars.
-            
-            # - HideNewEquipBtn :
-                # title: Hide Equip Button
-                # recommend: no
-                # author : CH.C (jchcc), Neo-Mind
-                # desc: Hide the Equip Window launcher button located under the HP/SP Bars.
-            
-            # - HideNewInvBtn :
-                # title: Hide Inventory Button
-                # recommend: no
-                # author : CH.C (jchcc), Neo-Mind
-                # desc: Hide the Inventory Window launcher button located under the HP/SP Bars.
-            
-            # - HideNewSkillBtn :
-                # title: Hide Skill Button
-                # recommend: no
-                # author : CH.C (jchcc), Neo-Mind
-                # desc: Hide the Skill Window launcher button located under the HP/SP Bars.
-            
-            # - HideNewPartyBtn :
-                # title: Hide Party Button
-                # recommend: no
-                # author : CH.C (jchcc), Neo-Mind
-                # desc: Hide the Friends & Party Member List Window launcher button located under the HP/SP Bars.
-            
-            # - HideNewGuildBtn :
-                # title: Hide Guild Button
-                # recommend: no
-                # author : CH.C (jchcc), Neo-Mind
-                # desc: Hide the Guild Window launcher button located under the HP/SP Bars.
-            
-            # - HideNewOptionBtn :
-                # title: Hide Options Button
-                # recommend: no
-                # author : CH.C (jchcc), Neo-Mind
-                # desc: Hide the Options/Settings Window launcher button located under the HP/SP Bars.
-            
-            # - HideShortcutBtn :
-                # title: Hide Shortcuts Button
-                # recommend: no
-                # author : CH.C (jchcc), Neo-Mind
-                # desc: Hide the Shortcut Window launcher button located under the HP/SP Bars.
-
-    # - CustomSpecials:
-        # title : SPECIAL CUSTOMIZATIONS
-        # mutex : false
-        # color : deeppink
+            - CustomShields:
+                title : Enable Custom Shields [WIP]
+                recommend : no
+                author : Neo-Mind
+                desc : Enables the use of Custom Shield Types (using Lua Files similar to Xray.
