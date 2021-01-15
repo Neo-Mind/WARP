@@ -22,11 +22,11 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2020-12-10                                             *
+*   Last Modified : 2021-01-14                                             *
 *                                                                          *
 \**************************************************************************/
 
-// TODO - Need to find an alternative for newer clients
+// TODO - Need to find an alternative for clients with repetitive imports
 
 ///
 /// \brief Create a new import table containing all the existing DLL + functions 
@@ -165,11 +165,13 @@ CustomDLL = function()
 	return true;
 };
 
+/*
 ///
-/// \brief Disable for 2014+ clients since their import tables are messed up 
+/// \brief Disable for 2014-2017 clients since their import tables are messed up 
 ///        and the client doesnt allow its movement.
 ///
-CustomDLL.validate = () => Exe.BuildDate < 20140700;
+CustomDLL.validate = () => Exe.BuildDate < 20140700 || Exe.BuildDate > 20170700 ;
+*/
 
 ///
 /// \brief Rerun the NoHShield function if the HShield patch is selected 

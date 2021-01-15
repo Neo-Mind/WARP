@@ -1,0 +1,143 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2018 CH.C (jchcc)                                        *
+*   Copyright (C) 2021 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
+*   Created Date  : 2021-01-14                                             *
+*   Last Modified : 2021-01-14                                             *
+*                                                                          *
+\**************************************************************************/
+
+//TODO - Need to change the code to make a seperate Jump Table (irrespective of how the switch case is like in the client)
+
+///
+/// \brief Data to be used for the patches.
+///
+if (typeof NBV_IDs === 'undefined') //avoid redefinition
+{
+	NBV_IDs = 
+	{
+		HideNewNavBtn     : 0x197,
+		HideNewBgBtn      : 0x161,
+		HideNewBankBtn    : 0x1B6,
+		HideNewBookBtn    : 0x164,
+		ShowNewBookBtn    : 0x164,
+		HideNewRodexBtn   : 0x1C5,
+		HideNewAchieveBtn : 0x1C2,
+		HideNewRecordBtn  : 0x178, //Technically its called Replay now but it does recording.
+		HideNewMapBtn     : 0x0C4,
+		HideNewQuestBtn   : 0x152,
+		HideTipBtn        : 0x1E8,
+		HideNewShopBtn    : 0x1E9,
+		HideSNSBtn        : 0x1EF,
+		ShowSNSBtn        : 0x1EF,
+		HideAttendBtn     : 0x205,
+		HideAdvAgencyBtn  : 0x209,
+		ShowAdvAgencyBtn  : 0x209,
+		HideNewStatusBtn  : 0x0A9,
+		HideNewEquipBtn   : 0x0AC,
+		HideNewInvBtn     : 0x0AB,
+		HideNewSkillBtn   : 0x0AD,
+		HideNewPartyBtn   : 0x0B0,
+		HideNewGuildBtn   : 0x15E,
+		HideNewOptionBtn  : 0x0AA,
+		HideShortcutBtn   : 0x15B,
+	};
+}
+
+///
+/// \brief Modify the mechanism used for fetching images for the New Buttons (2018+ clients).
+///        Most of them use a jump table but some use conditional jumps instead so we need to branch accordingly.
+///
+NewButtonVis = function(patchName)
+{	
+	/// 1.1 - Find where the reference string is PUSHed
+	let addr = Exe.FindHex(PUSH(ROC.AdvAgencyAddr));
+	if (addr < 0)
+        throw Error("String reference missing");
+
+	/// 1.2 - Find and extract address of button display table
+	let code =
+		MOVZX(EAX, BYTE_PTR, [EAX, POS4WC]) //MOVZX EAX, BYTE PTR DS:[EAX + switchTbl]
+	+	JMP([4, EAX, POS4WC])               //JMP DWORD PTR DS:[4*EAX + jumpTbl]
+	;
+	addr = Exe.FindHex(code, addr + 5, addr + 0xE0);
+	if (addr < 0)
+        throw Error("Button display table not found");
+
+    let switchTbl = Exe.Vir2Phy(Exe.GetUint32(addr + 3));
+
+	/// 2.1 - Point to the offset for the button
+	let valueAddr = switchTbl + NBV_IDs[patchName] - 0x164;
+	if (valueAddr < switchTbl)
+		throw Error("Cannot use IDs lower than 164 yet");
+
+	/// 2.2 - Extract the old value & ensure its not already set to what is required
+	let oldValue = Exe.GetInt8(valueAddr);
+	let newValue = patchName[0] === 'S' ? 1 : 0; //Show => newValue is 1
+
+	if (oldValue === newValue)
+		Cancel("Button is already " + (newValue === 1 ? "visible" : "hidden"));
+
+	/// 2.3 - Also ensure it is a boolean (not a false match)	
+	if (oldValue !== 1 && oldValue !== 0)
+		throw Error("Expected boolean but got " + oldValue);
+
+	/// 2.4 - Toggle the status
+	Exe.SetInt8(valueAddr, newValue);
+
+    return true;
+};
+
+///
+/// \brief Disable for unsupported clients (uses the "adventurerAgency" string)
+///
+NewButtonVis.validate = () => ROC.AdvAgencyAddr > 0;
+
+///
+/// \brief Wrappers for individual patches
+///
+HideNewNavBtn     = NewButtonVis;
+// HideNewBgBtn      = NewButtonVis;
+HideNewBankBtn    = NewButtonVis;
+HideNewBookBtn    = NewButtonVis;
+ShowNewBookBtn    = NewButtonVis;
+HideNewRodexBtn   = NewButtonVis;
+HideNewAchieveBtn = NewButtonVis;
+HideNewRecordBtn  = NewButtonVis;
+// HideNewMapBtn     = NewButtonVis;
+// HideNewQuestBtn   = NewButtonVis;
+HideTipBtn        = NewButtonVis;
+HideNewShopBtn    = NewButtonVis;
+HideSNSBtn        = NewButtonVis;
+ShowSNSBtn        = NewButtonVis;
+HideAttendBtn     = NewButtonVis;
+HideAdvAgencyBtn  = NewButtonVis;
+ShowAdvAgencyBtn  = NewButtonVis;
+// HideNewStatusBtn  = NewButtonVis;
+// HideNewEquipBtn   = NewButtonVis;
+// HideNewInvBtn     = NewButtonVis;
+// HideNewSkillBtn   = NewButtonVis;
+// HideNewPartyBtn   = NewButtonVis;
+// HideNewGuildBtn   = NewButtonVis;
+// HideNewOptionBtn  = NewButtonVis;
+// HideShortcutBtn   = NewButtonVis;

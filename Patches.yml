@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-01-01                                             #
+#   Last Modified : 2021-01-15                                             #
 #                                                                          #
 ############################################################################
 
@@ -740,7 +740,7 @@ groups:
         patches:
             - EnableSysMenu:
                 title : Enable Title Bar Menu
-                recommend : no
+                recommend : yes
                 author : Shinryo
                 desc : Enable Title Bar Menu (Reduce, Maximize, Close button) and the window icon.
         
@@ -1095,6 +1095,12 @@ groups:
                 author : Andrei Karas (4144)
                 desc : Change guild exp limit percent. Default value is 50%.
             
+            - CustomAdvAgencyLimits:
+                title : Change adventurer agency levels
+                recommend : no
+                author : Andrei Karas (4144), Asheraf
+                desc : Changes the default level range on the Adventure Agency.
+    
     - CustomData:
         title : DATA CUSTOMIZATION
         mutex : false
@@ -1320,6 +1326,12 @@ groups:
                 recommend : no
                 author : X-EcutiOnner
                 desc : Removes the explicit requirement for user access elevation (i.e. Admin privileges) from the client
+            
+            - LoadClientPlugins:
+                title : Always Load Client Plugins [Experimental]
+                recommend : no
+                author : Secret
+                desc : Makes the client load client plug-ins regardless of its sound settings.
     
     - CustomNW:
         title : NETWORK CUSTOMIZATION
@@ -1398,7 +1410,14 @@ groups:
                 author : jchcc
                 desc : Auto mute audio when game window is not active.
     
-    # - CustomSpecials:
-        # title : SPECIAL CUSTOMIZATIONS
-        # mutex : false
-        # color : deeppink
+    - CustomSpecials:
+        title : SPECIAL CUSTOMIZATIONS
+        mutex : false
+        color : deeppink
+        
+        patches:
+            - CustomShields:
+                title : Enable Custom Shields [WIP]
+                recommend : no
+                author : Neo-Mind
+                desc : Enables the use of Custom Shield Types (using Lua Files similar to Xray.

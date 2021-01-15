@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -197,15 +197,13 @@ if (typeof LUA === 'undefined') // avoid redefinition
 					throw this.Error;
 			}
 
-			/// 3.4 - Get the next instruction's address
-			addr = ins.NextAddr;
-
-			/// 4.1 - Find the GlobLuaState assignment (different code for different linker)
-			code = Exe.BuildDate < 20100817 ? MOV(EAX, [POS3WC]) :
+			/// 4.1 - Find the GlobLuaState assignment (different code for different linker) after the instruction
+			code =
+				Exe.BuildDate < 20100300 ? MOV(EAX, [POS3WC]) :
 				Exe.Version < 11.0       ? MOV(R32, [POS3WC]) :
-											PUSH([POS4WC]) ;
+				                           PUSH([POS4WC]) ;
 
-			addr = Exe.FindHex(code, addr, addr + 0x10);
+			addr = Exe.FindHex(code, ins.NextAddr, ins.NextAddr + 0x10);
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - global state assignment missing");
@@ -216,18 +214,19 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			ins = Instr.FromAddr(addr);
 			this.PushState = PUSH( [ins.Disp] );
 
-			/// 4.3 - Get the next address 
-			addr = ins.NextAddr;
-
-			/// 4.4 - Find the CALL after the assignment (this is lua function invoker)
-			addr = Exe.FindHex( CALL(NEG3WC), addr, addr + 0x10 );
+			/// 4.3 - Find the CALL after the assignment (this is lua function invoker)
+			addr = Exe.FindHex( CALL(NEG3WC), ins.NextAddr, ins.NextAddr + 0x10 );
+			if (addr < 0 && Exe.BuildDate > 20190000)
+			{
+				addr = Exe.FindHex( CALL(POS3WC), ins.NextAddr, ins.NextAddr + 0x10 );
+			}
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - function invoker missing");
 				throw this.Error;
 			}
 
-			/// 4.5 - Save the function address.
+			/// 4.4 - Save the function address.
 			this.FnInvoker = Exe.GetTgtAddr(addr + 1);
 
 			/// 5.1 - Find the string 'Lua Files\\DataInfo\\jobName'
@@ -372,8 +371,8 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			/// 2.1 - Prepare the template to use for each file & save its size
 			let template = 
 				Exe.GetHex(hookAddr, addr - hookAddr)
-			+	PUSH(MakeFiller(1))
-			+	CALL(MakeFiller(2))
+			+	PUSH(Filler(1))
+			+	CALL(Filler(2))
 			;
 			let tsize = template.byteCount();
 

@@ -1,0 +1,327 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2021-01-15                                             *
+*   Last Modified : 2021-01-15                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Still in progress. Need to have an extra function for checks against job id
+
+///
+/// \brief: Change the Hardcoded loading & retrieval of Shield prefix to Lua based code
+///
+CustomShields = function()
+{
+	/// 1.1 - Ensure LUA object is loaded
+	LUA.load();
+
+	//===========================================================//
+	// Find first inject & return locations - table loading area //
+	//===========================================================//
+
+	/// 1.2 - Find address of _가드 (Guard's suffix)
+	let sufAddr = Exe.FindText("_\xB0\xA1\xB5\xE5");
+	if (sufAddr < 0)
+		throw Error("Guard suffix not found");
+
+	/// 1.3 - Find where it gets loaded to the table (Inject location)
+	let code, argSetup;
+	if (Exe.Version < 9.0) //VC6
+	{
+		code =
+			PUSH(3)              //PUSH 3
+		+	MOV(ECX, R32)        //MOV ECX, reg32_A
+		+	MOV([EAX], sufAddr)  //MOV DWORD PTR DS:[EAX], addr <guard suffix>
+		;
+
+		argSetup =
+			SUB(EAX, 4)  //SUB EAX, 4
+		+	PUSH_EAX     //PUSH EAX
+		;
+	}
+	else //VC9+
+	{
+		code =
+			MOV([R32, 4], sufAddr); //MOV DWORD PTR DS:[reg32_A + 4], addr <guard suffix>
+	}
+
+	let hookReq = Exe.FindHex(code);
+	if (hookReq < 0)
+		throw Error("Guard suffix not used");
+
+	/// 1.4 - Extract the register that points to the location to store the suffix & PUSH it (for VC9+)
+	if (Exe.Version >= 9.0)
+		argSetup = PUSH(R32.List[Instr.FromAddr(hookReq).MRM.RegM]); //PUSH reg32_A
+
+	/// 1.5 - Find the address of _버클러 (Buckler's suffix)
+	sufAddr = Exe.FindText("_\xB9\xF6\xC5\xAC\xB7\xAF");
+	if (sufAddr < 0)
+		throw Error("Buckler suffix not found");
+
+	/// 1.6 - Find where it gets loaded to the table (Return location)
+	code = MOV(Exe.Version < 9.0 ? [EAX] : [R32, 8], sufAddr); //MOV DWORD PTR DS:[EAX], addr <buckler suffix> or 
+	                                                           //MOV DWORD PTR DS:[reg32_A + 8], addr <buckler suffix>
+
+	let addr = Exe.FindHex(code, hookReq, hookReq + 0x38);
+	if (addr < 0)
+		throw Error("Buckler suffix not used");
+
+	/// 1.7 - Return address is after code.
+	let retReq = Exe.Phy2Vir(addr + code.byteCount(), CODE);
+
+	/// 1.8 - Obtain the new Max Shield count from the user.
+	let MaxShield = Exe.GetUserInput('$maxShield', D_Int8, "Shield Limit", "Enter the maximum number of shield types required", 10, {min: 5, saveDefault: true});
+	if (MaxShield === false)
+		return false;
+
+	/// 2.1 - Construct the initial part of the code to be injected.
+	let funcName = "ReqShieldName\x00";
+
+	code =
+		funcName.toHex()
+	+	PUSHAD                       //PUSHAD
+	+	MOV(EDI, 1)                  //MOV EDI, 1
+	+	MOV(EBX, MaxShield)          //MOV EBX, finalValue
+	;
+	let presize = code.byteCount();
+
+	/// 2.2 - Allocate space considering maximum code size possible
+	let free = Exe.FindSpace(presize + 0x50 + 0x12);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+
+	/// 2.3 - Construct the Lua function calling code
+	code += LUA.createCaller(funcName, freeVir, free + presize, "d>s", EDI);
+
+	/// 2.4 - Complete the loop
+	code +=
+		MOV(CL, [EAX])               //MOV CL, BYTE PTR DS:[EAX]
+	+	TEST(CL, CL)                 //TEST CL, CL
+	+	JE(7)                        //JE SHORT addrInc
+	+	MOV(ECX, [ESP, 0x20])        //MOV ECX, DWORD PTR SS:[ESP+20]
+	+	MOV([4, EDI, ECX], EAX)      //MOV DWORD PTR DS:[EDI*4+ECX],EAX
+	+	INC(EDI)                     //INC EDI; addrInc
+	+	CMP(EDI, EBX)                //CMP EDI,EBX
+	;
+
+	code +=
+		JLE(presize, code.byteCount()) //JLE SHORT _loop; to start of generate
+	+	POPAD                        //POPAD
+	+	ADD(ESP, 4)                  //ADD ESP, 4
+	;
+
+	code +=
+		JMP(retReq, freeVir + code.byteCount())
+	;
+
+	/// 2.5 - Insert the code
+	Exe.AddHex(free, code);
+
+	/// 2.6 - Setup a JMP to our code at hookReq
+	code =
+		argSetup
+	+	JMP(freeVir + funcName.length, Exe.Phy2Vir(hookReq + argSetup.byteCount(), CODE))
+	;
+	Exe.SetHex(hookReq, code);
+
+	//=========================//
+	// Inject Lua file loading //
+	//=========================//
+	let result = LUA.addLoaders(
+		[
+		"Lua Files\\DataInfo\\ShieldTable",
+		"Lua Files\\DataInfo\\ShieldTable_F"
+		],
+		"Lua Files\\DataInfo\\jobName"
+	);
+
+	if (IsStr(result))
+		throw Error(`LUA addLoaders : ${result}`);
+
+	//========================================================//
+	// Find second inject location - CSession::GetShieldType. //
+	//========================================================//
+
+	let addrs; //need the addrs later
+	if (Exe.BuildDate < 20170700)
+	{
+		/// 3.1 - Find location where the GetShieldType is called - there are multiple matches but all of them are same
+		code =
+			CMP(EAX, 0x7D0)  //CMP EAX, 7D0
+		+	JLE(WCp)         //JLE SHORT addr1
+		+	PUSH(EAX)        //PUSH EAX
+		+	MOV(ECX, POS4WC) //MOV ECX, g_session; Note: this is the reference value for all the tables
+		+	CALL()           //CALL CSession::GetShieldType
+		;
+
+		addrs = Exe.FindHexN(code);
+		if (addrs.isEmpty())
+			throw Error("GetShieldType CALL missing");
+
+		/// 3.2 - Save the address of the CALL 
+		addr = addrs[0] + code.byteCount() - 1;
+	}
+	else
+	{
+		/// 3.3 - Find location where the GetShieldType is called (Only 1 match now)
+		code =
+			MOV(BYTE_PTR, [EBP, WCn], 3) //MOV BYTE PTR SS:[LOCAL.x], 3
+		+	(Exe.Version === 11.0
+		?
+			PUSH(EBX)                    //PUSH EBX
+		:
+			''
+		)
+		+	MOV(ECX, POS4WC)             //MOV ECX, OFFSET g_session
+		+	(Exe.Version > 11.0
+		?
+			PUSH([EBP, NEG2WC])          //PUSH DWORD PTR SS:[LOCAL.y]
+		:
+			''
+		)
+		;
+
+		let suffix = 
+			CALL(ALLWC)                  //CALL CSession::GetShieldType
+		+	(Exe.Version === 11.0
+		?
+			MOV(ECX, [EBP, NEG2WC])      //MOV ECX, DWORD PTR SS:[LOCAL.z]
+		:                                // or
+			MOV([EBP, NEG2WC], EAX)      //MOV DWORD PTR SS:[LOCAL.z], EAX
+		)
+		;
+
+		addr = Exe.FindHex(code + suffix);
+		if (addr < 0)
+			throw Error("GetShieldType CALL missing (New)");
+
+		/// 3.4 - Save the location of the CALL
+		addr += code.byteCount();
+	}
+	
+	/// 3.5 - Extract the PHYSICAL address of the GetShieldType function
+	let hookMap = Exe.GetTgtAddr(addr + 1, PHYSICAL);
+	ShowAddr("HookMap", hookMap);
+	
+	/// 4.1 - Construct the initial part of the code
+	funcName = "GetShieldID\x00";
+
+	code =
+		funcName.toHex()
+	+	PUSH(EDX)           //PUSH EDX
+	+	MOV(EDX, [ESP, 8])  //MOV EDX, DWORD PTR SS:[ESP+8]
+	;
+	presize = code.byteCount();
+
+	/// 4.2 - Allocate space for code considering max size
+	free = Exe.FindSpace(presize + 0x3D + 0x4);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	freeVir = Exe.Phy2Vir(free, VIRTUAL);
+
+	/// 4.3 - Construct the Lua function calling code
+	code += LUA.createCaller(funcName, freeVir, free + presize, "d>d", EDX);
+
+	/// 4.4 - Add the final steps
+	code +=
+		POP(EDX)            //POP EDX
+	+	RETN(4)             //RETN 4
+	;
+
+	/// 4.5 - Insert the code
+	Exe.AddHex(free, code);
+
+	/// 4.6 - Setup a JMP to the code at hookMap
+	Exe.SetJMP(hookMap, freeVir + funcName.length);
+
+	if (MaxShield !== 5)
+	{
+		if (Exe.Version === 9.0 || Exe.Version === 10.0)
+		{
+			/// 5.1 - Find Register assignment to 5 and replace with MaxShield
+			code =
+				MOV(R32, 5)   //MOV reg32_A, 5
+			+	SUB(R32, R32) //SUB reg32_A, reg32_B
+			;
+
+			addr = Exe.FindHex(code, hookReq - 0x60, hookReq);
+			if (addr < 0)
+				throw Error("No Allocator MOVes found");
+
+			Exe.SetInt32(addr + 1, MaxShield);
+
+			/// 5.2 - Find EAX comparison with 5 before assignment and replace with MaxShield
+			code =
+				CMP(EAX, 5) //CMP EAX, 5
+			+	JAE(WC)     //JAE SHORT addr
+			;
+
+			addr = Exe.FindHex(code, addr - 0x10, addr);
+			if (addr < 0)
+				throw Error("Shield Limit comparison missing");
+
+			Exe.SetInt8(addr + 2, MaxShield)
+		}
+		else 
+		{
+			/// 5.3 - Find PUSH 5 before hookReq and replace with MaxShield if its there
+			code =
+				PUSH_EAX      //PUSH EAX
+			+	PUSH(5)       //PUSH 5
+			+ 	(Exe.Version > 11.0 && (!ROC.IsZero || Exe.BuildDate > 20190910)
+			?
+				CALL(POS3WC)  //CALL allocator
+			:
+				MOV(ECX, R32) //MOV ECX, reg32_A
+			)
+			;
+
+			addr = Exe.FindHex(code, hookReq - 0x30, hookReq);
+			if (addr < 0)
+				throw Error("No Allocator PUSHes found");
+
+			Exe.SetInt8(addr + 2, MaxShield);
+		}
+	}
+
+	/// WORK IN PROGRESS
+	if (Exe.BuildDate < 20170700)
+	{
+		
+	}
+	else
+	{
+		
+	}
+	
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients (Need Lua interface)
+///
+CustomShields.validate = IsPost2010;

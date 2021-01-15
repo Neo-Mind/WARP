@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -110,13 +110,13 @@ CloseCutinOnEsc = function()
 	/// 2.1 - Construct the common code for new & old clients.
 	let part2 = 
 		CMP(R32, -1)   //CMP reg32_A, -1
-	+	(Exe.BuildDate > 20101116 && Exe.BuildDate < 20141020
+	+	((Exe.BuildDate > 20101116 && Exe.BuildDate < 20141020) || Exe.BuildDate > 20200800
 	?
 		JE(POS1WC)     //JE addr1
 	:                  // or
 		JZ(WCp)        //JZ SHORT addr1
 	)
-	+	PUSH(R32)      //PUSH reg32_A
+	+	PUSH_R         //PUSH reg32_A
 	+	MOV(ECX, R32)  //MOV ECX, reg32_B
 	+	CALL(ALLWC)    //CALL UIWindowMgr::DeleteWindow
 	;

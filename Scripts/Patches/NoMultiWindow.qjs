@@ -93,36 +93,36 @@ NoMultiWindow = function()
 	/// 2.2 - Prepare our function for mutex windows
 	code =
 		CALL([CoInit])                 //CALL DWORD PTR DS:[&ole32.CoInitialize>] ; args are already pushed
-	+   PUSH(ESI)                      //PUSH ESI
-	+   XOR(ESI, ESI)                  //XOR ESI, ESI
-	+   PUSH(ROC.Kernel32)             //PUSH addr ; "KERNEL32.dll"
-	+   CALL([ROC.GetModHandle])       //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
-	+   CALL(0x0D)                     //PUSH &JMP
-	+   "CreateMutexA\x00".toHex()     //DB "CreateMutexA", 0
-	+   PUSH_EAX                       //PUSH EAX
-	+   CALL([ROC.GetProcAddr])        //CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
-	+   CALL(0x0F)                     //PUSH &JMP
-	+   "Global\\Surface\x00".toHex()  //DB "Global\Surface",0
-	+   PUSH(ESI)                      //PUSH ESI
-	+   PUSH(ESI)                      //PUSH ESI
-	+   CALL(EAX)                      //CALL EAX
-	+   TEST(EAX, EAX)                 //TEST EAX,EAX
-	+   JE(0xF)                        //JE SHORT addr1 -> ExitProcess call below
-	+   PUSH(ESI)                      //PUSH ESI
-	+   PUSH_EAX                       //PUSH EAX
-	+   CALL([WaitSingle])             //CALL DWORD PTR DS:[<&KERNEL32.WaitForSingleObject>]
-	+   CMP(EAX, 258)                  //CMP EAX, 258 (0x102)   ; WAIT_TIMEOUT
-	+   JNZ(0x26)                      //JNZ SHORT addr2 -> POP ESI below
-	+   PUSH(ROC.Kernel32)             //PUSH addr ; "KERNEL32.dll"
-	+   CALL([ROC.GetModHandle])       //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
-	+   CALL(0x0C)                     //PUSH &JMP
-	+   "ExitProcess\x00".toHex()      //DB "ExitProcess", 0
-	+   PUSH_EAX                       //PUSH EAX
-	+   CALL([ROC.GetProcAddr])        //CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
-	+   PUSH(ESI)                      //PUSH ESI
-	+   CALL(EAX)                      //CALL EAX
-	+   POP(ESI)                       //POP ESI ; addr2
-	+   JMP(Filler(1))                 //JMP addr3 (jmpAddr + 6)
+	+	PUSH(ESI)                      //PUSH ESI
+	+	XOR(ESI, ESI)                  //XOR ESI, ESI
+	+	PUSH(ROC.Kernel32)             //PUSH addr ; "KERNEL32.dll"
+	+	CALL([ROC.GetModHandle])       //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
+	+	CALL(0x0D)                     //PUSH &JMP
+	+	"CreateMutexA\x00".toHex()     //DB "CreateMutexA", 0
+	+	PUSH_EAX                       //PUSH EAX
+	+	CALL([ROC.GetProcAddr])        //CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
+	+	CALL(0x0F)                     //PUSH &JMP
+	+	"Global\\Surface\x00".toHex()  //DB "Global\Surface",0
+	+	PUSH(ESI)                      //PUSH ESI
+	+	PUSH(ESI)                      //PUSH ESI
+	+	CALL(EAX)                      //CALL EAX
+	+	TEST(EAX, EAX)                 //TEST EAX,EAX
+	+	JE(0xF)                        //JE SHORT addr1 -> ExitProcess call below
+	+	PUSH(ESI)                      //PUSH ESI
+	+	PUSH_EAX                       //PUSH EAX
+	+	CALL([WaitSingle])             //CALL DWORD PTR DS:[<&KERNEL32.WaitForSingleObject>]
+	+	CMP(EAX, 258)                  //CMP EAX, 258 (0x102)   ; WAIT_TIMEOUT
+	+	JNZ(0x26)                      //JNZ SHORT addr2 -> POP ESI below
+	+	PUSH(ROC.Kernel32)             //PUSH addr ; "KERNEL32.dll"
+	+	CALL([ROC.GetModHandle])       //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
+	+	CALL(0x0C)                     //PUSH &JMP
+	+	"ExitProcess\x00".toHex()      //DB "ExitProcess", 0
+	+	PUSH_EAX                       //PUSH EAX
+	+	CALL([ROC.GetProcAddr])        //CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
+	+	PUSH(ESI)                      //PUSH ESI
+	+	CALL(EAX)                      //CALL EAX
+	+	POP(ESI)                       //POP ESI ; addr2
+	+	JMP(Filler(1))                 //JMP addr3 (jmpAddr + 6)
 	;
 	let csize = code.byteCount();
 

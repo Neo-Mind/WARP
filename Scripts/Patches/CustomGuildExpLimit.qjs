@@ -22,9 +22,11 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2021-12-14                                             *
 *                                                                          *
 \**************************************************************************/
+
+// TODO - Comparison not there in clients before 2018-06-21 . Need to check if the exp limit is really there in the client
 
 ///
 /// \brief Change the Guild EXP limit from 50 to custom value in UIGuildPositionManageWnd_virt136
@@ -33,38 +35,41 @@ CustomGuildExpLimit = function()
 {
 	/// 1 - Find the comparison
 	let parts = [
-		TEST(EAX, EAX)  //TEST EAX, EAX
+		TEST(EAX, EAX)    //TEST EAX, EAX
+	+	JS(' [0000..01]') //JS SHORT addr1 (delta is 5 or 9)
 	,
-		JS(9)           //JS SHORT addr1
+		CMP(EAX, 0x32)    //CMP EAX, 32
 	,
-		CMP(EAX, 0x32)  //CMP EAX, 32
+		JLE(POS2WC)       //JLE addr2
 	,
-		JLE(POS2WC)     //JLE addr2
-	,
-		PUSH_0          //PUSH 0
-	+	PUSH(0x32)      //PUSH 32
-	+	PUSH(0xD9E)     //PUSH 0D9E
-	+	CALL()          //CALL MsgStr
+		PUSH_0            //PUSH 0
+	+	PUSH(0x32)        //PUSH 32
+	+	PUSH(0xD9E)       //PUSH 0D9E
+	+	CALL()            //CALL MsgStr
 	]
 	;
 
 	let addr = Exe.FindHex(parts.join(''));
 	if (addr < 0)
 	{
-		parts[1] = JS(5);
-		parts[3] = JLE(WCp);
+		parts[2] = JLE(WCp); //change to JLE SHORT 
 		addr = Exe.FindHex(parts.join(''));
 	}
 	if (addr < 0)
 		throw Error("Limit checker missing");
 
 	/// 2.1 - Get the new value from user
-	let newLimit = Exe.GetUserInput('$guildExpLimit', D_Uint8, "Exp Limit", "Enter new guild exp limit", 50, {max: 100});
+	let newLimit = Exe.GetUserInput('$guildExpLimit', D_Uint8, "Exp Limit", "Enter new guild exp limit", 50, {max: 120});
 	if (newLimit === false)
-		throw "Cancelled - Limit changed back to 50";
+		Cancel("Exp Limit", 50);
 
 	/// 2.2 - Set the new limit
-	Exe.SetFromVar(addr + 6, '$guildExpLimit');
+	Exe.SetFromVar(addr + parts[0].byteCount() + 2, '$guildExpLimit');
 
 	return true;
 };
+
+///
+/// \brief Disable for older client since comparison isnt there (atleast in the place it was supposed to be)
+///
+CustomGuildExpLimit.validate = () => Exe.BuildDate > 20180600;

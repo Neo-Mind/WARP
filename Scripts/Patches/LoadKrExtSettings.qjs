@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Secret, Andrei (4144), X-EcutiOnner                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2021-01-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,8 +34,7 @@
 LoadKrExtSettings = function()
 {
 	/// 1.1 - Ensure the LANGTYPE is loaded
-	if (!LANGTYPE.load())
-		throw LANGTYPE.Error;
+	LANGTYPE.load();
 
 	/// 1.2 - Find where the string is PUSHed
 	let refAddr = Exe.FindHex( PUSH(LKES_Addr) );

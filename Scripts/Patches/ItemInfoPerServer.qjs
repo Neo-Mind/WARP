@@ -38,7 +38,7 @@ function ItemInfoPerServer()
 	/// 1.2 - Find the pattern before Server Name is pushed to StringAllocator Function
 	let code =
 		SHL(R32, 5)                             //SHL reg32_A,5 ;reg32_A is usually EDI
-	+ 	CMP(WORD_PTR, [R32, R32, POS2WC], 0x3)  //CMP WORD PTR DS:[reg32_B+reg32_A+const],3 ;const is usually 1F4
+	+	CMP(WORD_PTR, [R32, R32, POS2WC], 0x3)  //CMP WORD PTR DS:[reg32_B+reg32_A+const],3 ;const is usually 1F4
 	;
 
 	let addr = Exe.FindHex(code);
@@ -51,7 +51,7 @@ function ItemInfoPerServer()
 	/// 1.4 - Find the StringAllocator call after pattern
 	code =
 		MOV(ECX, POS4WC)         //MOV ECX, addr
-	+ 	CALL(ALLWC)              //CALL StringAllocator
+	+	CALL(ALLWC)              //CALL StringAllocator
 	+	MOV(R32, [R32, POS2WC])  //MOV reg32_A, DWORD PTR DS:[reg32_B + const]
 	;
 	let directCALL = true;
@@ -91,7 +91,7 @@ function ItemInfoPerServer()
 	/// 2.5 - Change the MOV statement to JMP for skipping the loader 
 	///       Also set AL to 1 (faux return value from the loader)
 	let code2 =
-	+	MOV(AL, 1)  //MOV AL, 1
+		MOV(AL, 1)  //MOV AL, 1
 	+	JMP(7)      //JMP to after iteminfoLoader call
 	;
 	Exe.SetHex(addr + 5, code2);
@@ -139,7 +139,7 @@ function ItemInfoPerServer()
 	code =
 		refMOV            //MOV ECX, DWORD PTR DS:[refAddr]
 	+	PUSH(POS4WC)    //PUSH OFFSET iiAddr
-	+ 	CALL(NEG3WC)    //CALL iteminfoCopier
+	+	CALL(NEG3WC)    //CALL iteminfoCopier
 	;
 	addr = Exe.FindHex(code);
 
@@ -195,9 +195,9 @@ function ItemInfoPerServer()
 	+	ADD(ESP, 8)        //ADD ESP, 8
 	+	PUSH([Filler(2)])  //PUSH DWORD PTR DS:[serverAddr]
 	+	SUB(ESP, 4)        //SUB ESP, 4
-	+ 	CALL(Filler(3))    //CALL StringPusher
-	+ 	JMP(Filler(4))     //JMP addr -> after original CALL LuaFnNamePusher
-	+ 	ALL00              //<-serverAddr
+	+	CALL(Filler(3))    //CALL StringPusher
+	+	JMP(Filler(4))     //JMP addr -> after original CALL LuaFnNamePusher
+	+	ALL00              //<-serverAddr
 	;
 	let csize = code.byteCount();
  
@@ -232,11 +232,11 @@ function ItemInfoPerServer()
 	)
 	+	MOV(EAX, [ESP, -4])   //MOV EAX, DWORD PTR SS:[ESP-4]
 	+	CMP(EAX, [servAddr])  //CMP EAX, DWORD PTR DS:[serverAddr]; need to improve this - better would be to do strcmp on the string addresses
-	+ 	JE(0x20)              //JE Skip
-	+ 	MOV([servAddr], EAX)  //MOV DWORD PTR DS:[serverAddr], EAX
-	+ 	refMOV                //MOV ECX, DWORD PTR DS:[refAddr]
-	+ 	CALL(Filler(2))       //CALL iiLoaderFunc
-	+ 	refMOV                //MOV ECX, DWORD PTR DS:[refAddr] ;You can also add checking before this
+	+	JE(0x20)              //JE Skip
+	+	MOV([servAddr], EAX)  //MOV DWORD PTR DS:[serverAddr], EAX
+	+	refMOV                //MOV ECX, DWORD PTR DS:[refAddr]
+	+	CALL(Filler(2))       //CALL iiLoaderFunc
+	+	refMOV                //MOV ECX, DWORD PTR DS:[refAddr] ;You can also add checking before this
 	+	iiPush                //PUSH OFFSET iiAddr
 	+	CALL(Filler(3))       //CALL iiCopierFunc
 	+	JMP(Filler(4))        //JMP to after original function call

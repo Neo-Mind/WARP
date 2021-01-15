@@ -80,7 +80,7 @@ MoveUpItemCount = function()
     /// 2.1 - Prep the code for finding the comparison based on previous match
     switch (type)
     {
-        case 1: //VC6 & Early VC9
+        case 1: //VC6
         {
             code =
 				MOV(AL, [EBP, 0x18])     //MOV AL, BYTE PTR SS:[EBP+18]

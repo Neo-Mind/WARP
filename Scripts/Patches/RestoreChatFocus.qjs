@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2021-01-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,8 +32,7 @@
 RestoreChatFocus = function()
 {
 	/// 1.1 - Ensure WINMGR is loaded
-	if (!WINMGR.load())
-		throw WINMGR.Error;
+	WINMGR.load();
 
 	/// 1.2 - Find UIWindowMgr::SetFocusEdit CALL in CGameMode static member
 	let code = 
@@ -44,12 +43,18 @@ RestoreChatFocus = function()
 	+	CALL(ALLWC)      //CALL UIWindowMgr::SetFocusEdit
 	+	JMP(WCp)         //JMP SHORT addr2
 	;
+
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("SetFocusEdit CALL missing");
 
-	/// 2 - NOP out the MOV, CALL and JMP
+	/// 2 - NOP out the PUSH, MOV and CALL
 	Exe.SetNOPs(addr + 9, 12);
 
 	return true;
 };
+
+///
+/// \brief Disable for older clients
+///
+RestoreChatFocus.validate = () => Exe.BuildDate > 20170700;
