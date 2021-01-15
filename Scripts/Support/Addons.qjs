@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-12-11                                             *
+*   Last Modified : 2021-01-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -352,6 +352,18 @@ String.prototype.byteCount = function()
 
 	/// 3 - Return the half of the length
 	return Math.round(nibLen/2);
+};
+
+///
+/// \brief Same as above but calculates the total byte count of all the hex strings inside. Returns -1 if none of them are hex strings
+///
+Array.prototype.byteCount = function()
+{
+	let hexList = this.filter( val => IsStr(val) && val.isHex() );
+	if (hexList.isEmpty())
+		return -1;
+	else
+		return hexList.reduce( (acc, str) => acc + str.byteCount(), 0 );
 };
 
   //===========//
