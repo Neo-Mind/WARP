@@ -204,14 +204,18 @@ _settgt_ = function(strParts, pat, target, start, cnt, bc)
 	let patParts = pat.trim().split(/ +/g);
 	let swapped = false;
 
-	for (let pos = 0; pos <= strParts.length - patParts.length && cnt != 0; cnt--)
+	let pos = 0;
+	while (pos <= strParts.length - patParts.length && cnt != 0)
 	{
 		if (patParts.find( (elem, i) => elem !== strParts[pos + i] ) === undefined)
 		{
+			swapped = true;
+			
 			let repl = (target - (start + pos + bc)).toHex(bc).trim().split(' ');
 			repl.forEach( (elem, i) => strParts[pos + i] = elem);
+			cnt--;
+			
 			pos += bc;
-			swapped = true;
 		}
 		else
 		{
