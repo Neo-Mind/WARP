@@ -82,21 +82,23 @@ if (typeof LUA === 'undefined') // avoid redefinition
 		///
 		load : function()
 		{
-			/// 1.1 - Check if load was already called
+			let _ = "LUA.load : ";
+			
+			$$(_ + '1.1 - Check if load was already called')
 			if (this.Valid !== undefined)
 			{
-				/// 1.2 - If we got error previously then report it again.
+				$$(_ + '1.2 - If we got error previously then report it again.')
 				if (!this.Valid)
 					throw this.Error;
 			}
 
-			/// 1.3 - Identify the remaining members to Syntax Assistant
+			$$(_ + '1.3 - Identify the remaining members to Syntax Assistant')
 			Identify("LUA", ["Valid", "Error"]);
 
-			/// 1.4 - Initialize 'Valid' to false
+			$$(_ + '1.4 - Initialize \'Valid\' to false')
 			this.Valid = false;
 
-			/// 1.5 - Find the string 'd>s'
+			$$(_ + '1.5 - Find the string "d>s"')
 			let addr = Exe.FindText("d>s");
 			if (addr < 0)
 			{
@@ -104,10 +106,10 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 1.6 - Save the PUSH 'd>s' instruction
+			$$(_ + '1.6 - Save the PUSH "d>s" instruction')
 			this.PushD2S = PUSH(addr);
 
-			/// 1.7 - Find the string 'd>d'
+			$$(_ + '1.7 - Find the string "d>d"')
 			addr = Exe.FindText("d>d", false);
 			if (addr < 0)
 			{
@@ -115,10 +117,10 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 1.8 - Save the PUSH 'd>d' instruction
+			$$(_ + '1.8 - Save the PUSH "d>d" instruction')
 			this.PushD2D = PUSH(addr);
 
-			/// 1.9 - Find the string 'ReqJobName'
+			$$(_ + '1.9 - Find the string "ReqJobName"')
 			addr = Exe.FindText("ReqJobName");
 			if (addr < 0)
 			{
@@ -126,11 +128,11 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 1.10 - Save the address as well as PUSH 'ReqJobName' instruction
+			$$(_ + '1.10 - Save the address as well as PUSH "ReqJobName" instruction')
 			this.ReqJN = addr;
 			this.PushRJN = PUSH(addr);
 
-			/// 2.1 - Find where 'ReqJobName' is used in a 'PUSH'
+			$$(_ + '2.1 - Find where "ReqJobName" is used in a PUSH')
 			addr = Exe.FindHex(this.PushRJN);
 			if (addr < 0)
 			{
@@ -138,7 +140,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 2.2 - Find the ESP allocation before the PUSH
+			$$(_ + '2.2 - Find the ESP allocation before the PUSH')
 			let code =
 				SUB(ESP, WC)	//SUB ESP, const
 			+	MOV(ECX, ESP)   //MOV ECX, ESP
@@ -150,25 +152,25 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 2.3 - Save the constant used in SUB ESP
+			$$(_ + '2.3 - Save the constant used in SUB ESP')
 			this.StkConst = Exe.GetInt8(movAddr + 2);
 
-			/// 2.4 - Retrieve the instruction after the Push
+			$$(_ + '2.4 - Retrieve the instruction after the PUSH')
 			let ins = Instr.FromAddr(addr + 5);
 
-			/// 3 - Extract & assign based on the opcode
+			$$(_ + '3 - Extract & assign based on the opcode')
 			switch (ins.Codes[0])
 			{
-				/// 3.1 - For DIRECT call (seen in VC6). Save the target address as 'Allocator' 
-				///       & set the type to Regular
 				case 0xE8:
+					$$(_ + '3.1 - For DIRECT call (seen in VC6). Save the target address as \'Allocator\' & set the type to Regular')
+					
 					this.Allocator = Exe.GetTgtAddr(ins.NextAddr - 4);
 					this.Al_Mode = FnMode.Regular;
 					break;
 
-				/// 3.2 - For INDIRECT call (seen in VC9). Save the pointer address as 'Allocator'
-				///       & set the type to Ptr
 				case 0xFF:
+					$$(_ + '3.2 - For INDIRECT call (seen in VC9). Save the pointer address as \'Allocator\' & set the type to Ptr')
+					
 					if (ins.MRM.RgOp !== 2) //ensuring its a CALL DWORD PTR 
 					{
 						this.Error = new Error("LUA - 0xFF seen after PUSH 'ReqJobName', but not a CALL");
@@ -179,9 +181,9 @@ if (typeof LUA === 'undefined') // avoid redefinition
 					this.Al_Mode = FnMode.Ptr;
 					break;
 
-				/// 3.3 - For Zero Init DIRECT call (seen in VC10+). Save the target address as 'Allocator'
-				///       & set the type to ZInit
 				case 0xC6:
+					$$(_ + '3.3 - For Zero Init DIRECT call (seen in VC10+). Save the target address as \'Allocator\' & set the type to ZInit')
+					
 					ins = Instr.FromAddr(ins.NextAddr);
 					if (ins.Codes[0] !== 0xE8) // Ensure the next instruction is a direct CALL
 					{
@@ -197,7 +199,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 					throw this.Error;
 			}
 
-			/// 4.1 - Find the GlobLuaState assignment (different code for different linker) after the instruction
+			$$(_ + '4.1 - Find the GlobLuaState assignment (different code for different linker) after the instruction')
 			code =
 				Exe.BuildDate < 20100300 ? MOV(EAX, [POS3WC]) :
 				Exe.Version < 11.0       ? MOV(R32, [POS3WC]) :
@@ -210,11 +212,11 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 4.2 - Extract the GlobLuaState address & save it as a PUSH DWORD PTR
+			$$(_ + '4.2 - Extract the GlobLuaState address & save it as a PUSH DWORD PTR')
 			ins = Instr.FromAddr(addr);
 			this.PushState = PUSH( [ins.Disp] );
 
-			/// 4.3 - Find the CALL after the assignment (this is lua function invoker)
+			$$(_ + '4.3 - Find the CALL after the assignment (this is lua function invoker)')
 			addr = Exe.FindHex( CALL(NEG3WC), ins.NextAddr, ins.NextAddr + 0x10 );
 			if (addr < 0 && Exe.BuildDate > 20190000)
 			{
@@ -226,10 +228,10 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 4.4 - Save the function address.
+			$$(_ + '4.4 - Save the function address.')
 			this.FnInvoker = Exe.GetTgtAddr(addr + 1);
 
-			/// 5.1 - Find the string 'Lua Files\\DataInfo\\jobName'
+			$$(_ + '5.1 - Find the string "Lua Files\\DataInfo\\jobName"')
 			addr = Exe.FindText("Lua Files\\DataInfo\\jobName");
 			if (addr < 0)
 			{
@@ -237,7 +239,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 5.2 - Find where it is used in a PUSH. Should be followed by a CALL
+			$$(_ + '5.2 - Find where it is used in a PUSH. Should be followed by a CALL')
 			addr = Exe.FindHex( PUSH(addr) + CALL() );
 			if (addr < 0)
 			{
@@ -245,7 +247,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 5.3 - Find the GlobLuaState movement to ECX before the PUSH
+			$$(_ + '5.3 - Find the GlobLuaState movement to ECX before the PUSH')
 			movAddr = Exe.FindHex( MOV(ECX, [ESI, POS2WC]), addr - 10, addr);
 			if (movAddr < 0)
 				movAddr = Exe.FindHex( MOV(ECX, [POS3WC]), addr - 10, addr);
@@ -256,13 +258,13 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 5.4 - Extract the function address
+			$$(_ + '5.4 - Extract the function address')
 			this.FileLoader = Exe.GetTgtAddr(addr + 6);
 
-			/// 5.5 - Extract the MOV ECX
+			$$(_ + '5.5 - Extract the MOV ECX')
 			this.FL_movECX = Instr.FromAddr(movAddr).toString();
 
-			/// 5.6 - Set validity to true
+			$$(_ + '5.6 - Set validity to true')
 			this.Valid = true;
 		},
 
@@ -271,14 +273,16 @@ if (typeof LUA === 'undefined') // avoid redefinition
 		///
 		createCaller : function(name, nameAddr, at, format, reg)
 		{
-			/// 1.1 - Sanity Check (Ensure we have a valid object)
+			let _ = "LUA.createCaller : ";
+			
+			$$(_ + '1.1 - Sanity Check (Ensure we have a valid object)')
 			if (!this.Valid)
 				return false;
 
-			/// 1.2 - Select the appropriate PUSH instruction based on the format
+			$$(_ + '1.2 - Select the appropriate PUSH instruction based on the format')
 			let PUSH_fmt = format === "d>s" ? this.PushD2S : this.PushD2D;
 
-			/// 2.1 - Prepare the code step by step
+			$$(_ + '2.1 - Prepare the code step by step')
 
 			// first PUSH funcNameLength for ptr call type allocator 
 			let code = this.Al_Mode === FnMode.Ptr ? PUSH(name.length) : ''; //PUSH len
@@ -337,7 +341,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			if (this.Al_Mode === FnMode.Regular)
 				code += ADD(ESP, 4);
 
-			/// 2.2 - Return the code created
+			$$(_ + '2.2 - Return the code created')
 			return code;
 		},
 
@@ -346,17 +350,19 @@ if (typeof LUA === 'undefined') // avoid redefinition
 		///
 		addLoaders : function(files, refName, tgt = -1)
 		{
-			/// 1.1 - Find the string inside refName
+			let _ = "LUA.addLoaders : ";
+			
+			$$(_ + '1.1 - Find the string inside refName')
 			let refAddr = Exe.FindText(refName);
 			if (refAddr < 0)
 				return "Reference file missing";
 
-			/// 1.2 - Find where its used in a PUSH (it should be immediately followed by a CALL)
+			$$(_ + '1.2 - Find where its used in a PUSH (it should be immediately followed by a CALL)')
 			let addr = Exe.FindHex( PUSH(refAddr) + CALL() );
 			if (addr < 0)
 				return "Reference file not used";
 
-			/// 1.3 - Find the ECX movement right before it.
+			$$(_ + '1.3 - Find the ECX movement right before it')
 			let hookAddr = Exe.FindHex(this.FL_movECX, addr - 10, addr);
 			if (hookAddr < 0)
 				hookAddr = Exe.FindHex(MOV(ECX, [POS4WC]), addr - 10, addr);
@@ -364,11 +370,11 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			if (hookAddr < 0)
 				return "ECX assignment missing";
 
-			/// 1.4 - Save the location after the CALL
+			$$(_ + '1.4 - Save the location after the CALL')
 			let retnPhy = addr + 10;
 			let retnVir = Exe.Phy2Vir(retnPhy, CODE);
 
-			/// 2.1 - Prepare the template to use for each file & save its size
+			$$(_ + '2.1 - Prepare the template to use for each file & save its size')
 			let template = 
 				Exe.GetHex(hookAddr, addr - hookAddr)
 			+	PUSH(Filler(1))
@@ -376,14 +382,14 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			;
 			let tsize = template.byteCount();
 
-			/// 2.2 - Calculate total code size 
+			$$(_ + '2.2 - Calculate total code size')
 			let csize = tsize * (files.length + 1) + 7; //5 for the JMP at the end and 2 NULL bytes for seperation
 
-			/// 2.3 - Prepare the strings to be appended at the end of the code
+			$$(_ + '2.3 - Prepare the strings to be appended at the end of the code')
 			let strings = files.join('\x00').toHex();
 			let ssize = strings.byteCount();
 
-			/// 2.4 - If no address is specified then allocate space for it
+			$$(_ + '2.4 - If no address is specified then allocate space for it')
 			if (tgt < 0)
 			{
 				tgt = Exe.FindSpace(csize + ssize, 0x10); //snapping to 0x10 since its going to be like a function
@@ -391,47 +397,45 @@ if (typeof LUA === 'undefined') // avoid redefinition
 					throw NO_ALLOC;
 			}
 
-			/// 2.5 - Save the target's VIRTUAL address
+			$$(_ + '2.5 - Save the target\'s VIRTUAL address')
 			let tgtVir = Exe.Phy2Vir(tgt);
 
-			/// 3.1 - Initialize the code variable, set the initial CALL distance 
-			///       and address of first string
+			$$(_ + '3.1 - Initialize the code variable, set the initial CALL distance and address of first string')
 			let code = "";
 			let dist = this.FileLoader - (tgtVir + tsize);
 			let strAddr = tgtVir + csize;
 
 			files.forEach( file =>
 			{
-				/// 3.2 - Fill the template with the string address & distance and
-				///       append to the code
+				$$(_ + '3.2 - Fill the template with the string address & distance and append to the code (' + file + ')')
 				code += SwapFillers(template, {
-					1: strAddr, 
-					2: dist,
+					1 : strAddr, 
+					2 : dist,
 				}, 1);
 
-				/// 3.3 - Update the strAddr to the next string location
+				$$(_ + '3.3 - Update the strAddr to the next string location')
 				strAddr += file.length + 1;
 
-				/// 3.4 - Update the distance for the next CALL
+				$$(_ + '3.4 - Update the distance for the next CALL')
 				dist -= tsize;
 			});
 
-			/// 3.5 - Append the final entry (for the reference string).
+			$$(_ + '3.5 - Append the final entry (for the reference string).')
 			code += SwapFillers(template, {
-				1: refAddr,
-				2: dist,
+				1 : refAddr,
+				2 : dist,
 			}, 1);
 
-			/// 3.6 - Append the JMP at the end along with the 2 NULLs
-			code += JMP(retnVir, tgtVir + csize - 7) + " 00 00"; 			
+			$$(_ + '3.6 - Append the JMP at the end along with the 2 NULLs')
+			code += JMP(retnVir, tgtVir + csize - 7) + " 00 00";
 
-			/// 4.1 - Add the code & strings to the executable
+			$$(_ + '4.1 - Add the code & strings to the executable')
 			Exe.AddHex(tgt, code + strings, csize + ssize);
 
-			/// 4.2 - Enforce a JMP from hookAddr to target (NOP out all code in between)
+			$$(_ + '4.2 - Enforce a JMP from hookAddr to target (NOP out all code in between)')
 			Exe.SetJMP(hookAddr, tgtVir, retnPhy - (hookAddr + 5));
 
-			/// 4.3 - Return the target address
+			$$(_ + '4.3 - Return the target address')
 			return tgt;
 		},
 	};

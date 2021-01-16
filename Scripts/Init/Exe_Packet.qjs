@@ -73,29 +73,31 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 		///
 		load : function()
 		{
-			/// 1.1 - Check if load was already called
+			let _ = "PACKET.load : ";
+			
+			$$(_ + '1.1 - Check if load was already called')
 			if (this.Valid !== undefined)
 			{
-				/// 1.2 - If we got error previously then report it again.
+				$$(_ + '1.2 - If we got error previously then report it again.')
 				if (!this.Valid)
 					throw this.Error;
 			}
 
-			/// 1.3 - Identify the remaining members to Syntax Assistant
+			$$(_ + '1.3 - Identify the remaining members to Syntax Assistant')
 			Identify("PACKET", ["Valid", "Error"]);
 
-			/// 1.4 - Initialize 'Valid' to false && the 'KS_Mode' to KeyMode.Unknown
+			$$(_ + '1.4 - Initialize \'Valid\' to false && the \'KS_Mode\' to KeyMode.Unknown')
 			this.Valid = false;
 			this.KS_Mode = KeyMode.Unknown;
 
-			/// 1.5 - Ensure the Build date is within valid values
+			$$(_ + '1.5 - Ensure the Build date is within valid values')
 			if (!ROC.HasPktKeys)
 			{
 				this.Error = new Error("PKT - Unsupported build date");
 				throw this.Error;
 			}
 
-			/// 1.6 - Find where the string 'PACKET_CZ_ENTER' is PUSHed
+			$$(_ + '1.6 - Find where the string \'PACKET_CZ_ENTER\' is PUSHed')
 			let addr = Exe.FindText("PACKET_CZ_ENTER");
 			if (addr > 0)
 			{
@@ -104,7 +106,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 
 			if (addr < 0)
 			{
-				/// 1.7 - If not found then look for the CALL, MOV, CALL pattern
+				$$(_ + '1.7 - If not found then look for the CALL, MOV, CALL pattern')
 				let inb4 =
 					CALL(ALLWC)   //CALL func1
 				+	MOV(ECX, EAX) //MOV ECX, EAX
@@ -130,9 +132,9 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 
 			if (addr < 0 && Exe.BuildDate > 20200800)
 			{
-				/// 1.8 - In more recent clients the GetPacketSize & SendPacket sequences are not present,
-				///       so we look for the RegSetValueExA CALL for CASH_CATEGORY as reference.
-				///
+				$$(_ + '1.8 - In more recent clients the GetPacketSize & SendPacket sequences are not present,')
+				$$(_ + '      so we look for the RegSetValueExA CALL for CASH_CATEGORY as reference.')
+
 				let ccAddr = Exe.FindText("CASH_CATEGORY");
 				if (ccAddr > 0)
 				{
@@ -151,10 +153,10 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 1.8 - Save the address
+			$$(_ + '1.8 - Save the address')
 			this.RefAddr = addr;
 
-			/// 2.1 - Look for 3 PUSHes followed by a CALL (keys are PUSHed to function)
+			$$(_ + '2.1 - Look for 3 PUSHes followed by a CALL (keys are PUSHed to function)')
 			let code =
 				MOV(ECX, [POS3WC]) //MOV ECX, DWORD PTR DS:[KeyAddr]
 			+	PUSH(ALLWC)        //PUSH key3
@@ -165,23 +167,25 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			let callAddr = Exe.FindHex(code, addr - 0x100, addr);
 			if (callAddr > 0)
 			{
-				/// 2.2 - If found then set the KS_Mode and extract the MOV statement
+				$$(_ + '2.2 - If found then set the KS_Mode and extract the MOV statement')
+				
 				this.KS_Mode = KeyMode.Push;
 				this.MovECX = Exe.GetHex(callAddr, 6);
 
-				/// 2.3 - Extract the KeySetter address and the keys themselves
+				$$(_ + '2.3 - Extract the KeySetter address and the keys themselves')
+				
 				callAddr += code.byteCount();
 				this.KeySetter = Exe.GetTgtAddr(callAddr);
 				this.Keys[0] = Exe.GetInt32(callAddr -  5);
 				this.Keys[1] = Exe.GetInt32(callAddr - 10);
 				this.Keys[2] = Exe.GetInt32(callAddr - 15);
 
-				/// 2.4 - Set validity to true
+				$$(_ + '2.4 - Set validity to true')
 				this.Valid = true;
 				return;
 			}
 
-			/// 3.1 - Look for PUSH 1, CALL pattern next (keys get assigned inside the function)
+			$$(_ + '3.1 - Look for PUSH 1, CALL pattern next (keys get assigned inside the function)')
 			code =
 				MOV(ECX, [POS4WC]) //MOV ECX, DWORD PTR DS:[KeyAddr]
 			+	PUSH_1             //PUSH 1
@@ -194,23 +198,23 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			/// 3.2 - Extract the MOV statement
+			$$(_ + '3.2 - Extract the MOV statement')
 			this.MovECX = Exe.GetHex(callAddr, 6);
 
-			/// 3.3 - Extract the CALLed function address which is the KeySetter
+			$$(_ + '3.3 - Extract the CALLed function address which is the \'KeySetter\'')
 			callAddr += code.byteCount();
 			this.KeySetter = Exe.GetTgtAddr(callAddr);
 
-			/// 3.4 - Go inside the function
+			$$(_ + '3.4 - Go inside the function')
 			let fnAddr = Exe.Vir2Phy(this.KeySetter);
 
-			/// 3.5 - Prep the common prefix for searching
+			$$(_ + '3.5 - Prep the common prefix for searching')
 			let prefix =
 				CMP(EAX, 1) //CMP EAX, 1
 			+	JNE(WCp)    //JNE SHORT addr
 			;
 
-			/// 4.1 - First look for the individual key assignment pattern
+			$$(_ + '4.1 - First look for the individual key assignment pattern')
 			code =
 				prefix
 			+	MOV([ECX, WCp], ALLWC)   //MOV DWORD PTR DS:[ECX+x], <Key A> ;the keys could be assigned in any order
@@ -221,11 +225,11 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			addr = Exe.FindHex(code, fnAddr, fnAddr + 0x60);
 			if (addr > 0)
 			{
-				/// 4.2 - If found then set the mode to 'Move' and save the location of the first MOV as the Assigner
+				$$(_ + '4.2 - If found then set the mode to \'Move\' and save the location of the first MOV as the Assigner')
 				this.Assigner = addr + prefix.byteCount();
 				this.KS_Mode = KeyMode.Move;
 
-				/// 4.3 - Extract the keys being assigned
+				$$(_ + '4.3 - Extract the keys being assigned')
 				addr = this.Assigner;
 				for (let i = 0; i < 3; i++)
 				{
@@ -234,12 +238,12 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 					addr = ins.NextAddr;
 				}
 
-				/// 4.4 - Set validity to true.
+				$$(_ + '4.4 - Set validity to true.')
 				this.Valid = true;
 				return;
 			}
 
-			/// 5.1 - Next look for the shared key pattern
+			$$(_ + '5.1 - Next look for the shared key pattern')
 			code =
 				prefix
 			+	MOV(EAX, ALLWC)        //MOV EAX, <Key A> ; shared key
@@ -251,30 +255,30 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			addr = Exe.FindHex(code, fnAddr, fnAddr + 0x60);
 			if (addr > 0)
 			{
-				/// 5.2 - If found then set the mode to 'Shared' and save the location of the first MOV as the Assigner
+				$$(_ + '5.2 - If found then set the mode to \'Shared\' and save the location of the first MOV as the Assigner')
 				this.Assigner = addr + prefix.byteCount();
 				this.KS_Mode = KeyMode.Shared;
 
-				/// 5.3 - Extract the shared key first
+				$$(_ + '5.3 - Extract the shared key first')
 				let ins = Instr.FromAddr(this.Assigner);
 				let sharedKey = ins.Immd;
 
-				/// 5.4 - Extract all the keys (little more tricky since there is a MOV EAX)
+				$$(_ + '5.4 - Extract all the keys (little more tricky since there is a MOV EAX)')
 				for (let i = 0; i < 3; i++)
 				{
 					ins = Instr.FromAddr(ins.NextAddr);
 					this.Keys[ins.Disp/4 - 1] = (i < 2) ? sharedKey : ins.Immd;
 				}
 
-				/// 5.5 - Set validity to true.
+				$$(_ + '5.5 - Set validity to true.')
 				this.Valid = true;
 				return;
 			}
 
-			/// 6.1 - Since neither pattern matched we need to use explicit mapping
+			$$(_ + '6.1 - Since neither pattern matched we need to use explicit mapping')
 			this.KS_Mode = KeyMode.Virtual;
 
-			/// 6.2 - For older clients we will try to look in the PktKeyMap
+			$$(_ + '6.2 - For older clients we will try to look in the PktKeyMap')
 			if (Exe.BuildDate <= 20180308)
 			{
 				if (typeof(PktKeyMap) === 'undefined' || PktKeyMap === false) //avoid redefinition
@@ -282,10 +286,10 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 					PktKeyMap = Warp.LoadYaml("Inputs/PacketKeyMap.yml");
 				}
 
-				/// 6.3 - Retrieve the keys based on the date
+				$$(_ + '6.3 - Retrieve the keys based on the date')
 				let arr = PktKeyMap[Exe.BuildDate];
 
-				/// 6.4 - Ensure we have a valid array
+				$$(_ + '6.4 - Ensure we have a valid array')
 				this.Valid = Array.isArray(arr) && arr.length === 3;			
 				if (this.Valid)
 				{
@@ -299,7 +303,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				}
 			}
 
-			/// 6.5 - For newer clients, the keys are 0 by default.
+			$$(_ + '6.5 - For newer clients, the keys are 0 by default.')
 			this.Valid = true;
 		},
 	};
