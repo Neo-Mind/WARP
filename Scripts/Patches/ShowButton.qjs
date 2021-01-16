@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -318,20 +318,19 @@ ShowReplayBtn = function()
 	+	PUSH(0x2722)     //PUSH 2722
 	+	JMP(Filler(2))   //JMP retnAddr
 	;
-	let csize = code.byteCount();
 
 	/// 4.2 - Allocate space to add the code
-	let free = Exe.FindSpace(csize, 0x10);
+	let free = Exe.FindSpace(code.byteCount(), 0x10);
 	if (free < 0)
 		throw NO_ALLOC;
 
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 
 	/// 4.3 - Fill in the blanks
-	code = SwapFillers(code, {
-		1: funcAddr - (freeVir + 6),
-		2: Exe.Phy2Vir(retnAddr, CODE) - (freeVir + csize)
-	}, 1);
+	code = SetFillTargets(code, {
+		1 : funcAddr,
+		2 : Exe.Phy2Vir(retnAddr, CODE)
+	}, freeVir, 1);
 
 	/// 4.4 - Add the code at the allocated space
 	Exe.AddHex(free, code);
@@ -461,7 +460,7 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 		let freeVir = Exe.Phy2Vir(free, DIFF);
 
 		/// 3.4 - Fill in the blanks
-		code = SwapFiller(code, 1, Exe.Phy2Vir(retnAddr, CODE) - (freeVir + csize));
+		code = SetFillTarget(code, 1, Exe.Phy2Vir(retnAddr, CODE), freeVir, 1);
 
 		/// 3.5 - Add the code at the allocated space
 		Exe.AddHex(free, code);

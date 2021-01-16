@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,7 +50,7 @@ CustomBarLimits = function()
     +	MOV(ECX, POS4WC)  //MOV ECX, OFFSET g_session
     +	CALL(POS3WC)      //CALL CSession::IsThirdJob
     ;
-    
+
     let addr = Exe.FindHex(code, refAddr - 0x120, refAddr);
     if (addr < 0)
         throw Error("JobID CALL not found");
@@ -60,11 +60,11 @@ CustomBarLimits = function()
     let GetJobID = Exe.GetTgtAddr(addr + 6);// 5 from the MOV and 1 from opcode of CALL
     let baseBegin = addr;
 
-    /// 1.4 - Save location after the 2nd CALL 
+    /// 1.4 - Save location after the 2nd CALL
     let afterBB = baseBegin + code.byteCount();
-    
+
     /// 2.1 - Find the base level assignment/comparison after the CALLs
-    code = 
+    code =
 		Exe.Version < 9.0 //VC6
     ?
 		MOV(EAX, [POS3WC])  //MOV EAX, DWORD PTR DS:[g_baseLevel]
@@ -84,10 +84,10 @@ CustomBarLimits = function()
     addr = Exe.FindHex(code, afterBB, afterBB + 0x100);
     if (addr < 0)
         throw Error("Base level address missing");
-    
-    /// 2.2 - Extract the address 
+
+    /// 2.2 - Extract the address
     let BaseLevel = Instr.FromAddr(addr).Disp; //this is easier and will remain accurate even if some changes happen in later versions
-    
+
     /// 2.3 - Find the ESI + const assignment between afterBB & refAddr
     addr = Exe.FindHex( MOV(ECX, [ESI, POS1WC]), afterBB, refAddr);//MOV ECX, DWORD PTR DS:[ESI+const]
 
@@ -96,10 +96,10 @@ CustomBarLimits = function()
 
     if (addr < 0)
         throw Error("First ESI ptr missing");
-    
-    /// 2.4 - Extract the const (which is HideBase) 
+
+    /// 2.4 - Extract the const (which is HideBase)
     let HideBase = Instr.FromAddr(addr).Disp;
-    
+
     /// 2.5 - Calculate remaining constants
     let HideJob  = HideBase + 0x04;
 	let ShowBars, FuncOff;
@@ -113,14 +113,14 @@ CustomBarLimits = function()
         ShowBars = HideBase + 0x08;
         FuncOff = 0x10;
     }
-    
+
     /// 3.1 - Find the end of the base exp display code after the ESI movement
     code =
         PUSH(0x55)            //PUSH 55
     +	(Exe.Version < 9.0 || Exe.Version === 11.0
 	?
 		CALL([R32, FuncOff])  //CALL DWORD PTR DS:[reg32 + FuncOff] ;VC6 & VC11
-	:                         // or 
+	:                         // or
 		CALL(R32)             //CALL reg32 ; all others
 	)
     +	MOV(ECX, Session)     //MOV ECX, OFFSET g_session
@@ -128,7 +128,7 @@ CustomBarLimits = function()
     let addr2 = Exe.FindHex( code, addr, refAddr + 0x60);
     if (addr2 < 0)
         throw Error("End of Base missing");
-    
+
     /// 3.2 - Save the location of MOV ECX
     let baseEnd = addr2 + code.byteCount() - 5;
     let jobBegin = baseEnd; //MOV ECX also marks the beginning of Job Exp Display code so yea they are same
@@ -154,7 +154,7 @@ CustomBarLimits = function()
 		:            // or
 			RETN(4)  //RETN 4
 		);
-		let suffix = CMP([POS3WC], 0xA); //CMP DWORD PTR DS:[g_jobLevel], 0A 
+		let suffix = CMP([POS3WC], 0xA); //CMP DWORD PTR DS:[g_jobLevel], 0A
 
 		delta = prefix.byteCount();
 
@@ -162,10 +162,10 @@ CustomBarLimits = function()
 	}
     if (addr < 0)
         throw Error("Job level comparison missing");
-    
+
     /// 3.4 - Extract the Address
     let JobLevel = Instr.FromAddr(addr + delta).Disp;
-    
+
     /// 3.5 - Find the coordinate PUSHes for Job exp bar (job End is just after it)
     code =
         PUSH(0x58)           //PUSH 58
@@ -177,11 +177,11 @@ CustomBarLimits = function()
 		CALL(R32)			 //CALL reg32 ;// VC9, VC10
 	)
     ;
-    
+
     addr2 = Exe.FindHex(code, addr + 7, addr + 0x60);
     if (addr2 < 0 && Exe.BuildDate > 20190000)
 	{
-		code = 
+		code =
 			PUSH(0x55)	//PUSH 55
 		+	CALL(R32)	//CALL reg32
 		;
@@ -189,10 +189,10 @@ CustomBarLimits = function()
 	}
     if (addr2 < 0)
         throw Error("Job coord PUSHes missing");
-    
+
     /// 3.6 - Save location after the CALL as jobEnd
     let jobEnd = addr2 + code.byteCount();
-    
+
     /// 4.1 - Get the input file from user
 	let inFile = Exe.GetUserInput('$expBarSpec', D_InFile, "Exp Bar Spec", "Enter the Exp Bar Mapping file", "Inputs/ExpSpec.yml", {filters: YMLFILTER});
     if (inFile === false)
@@ -274,7 +274,7 @@ CustomBarLimits = function()
         JMP(jobEnd, baseBegin + csize) //JMP jobEnd
     +	"FF 00 FF 00"                  //part of the id to level mapping ; defAddr
     ;
-    
+
 	csize += 9; //5 for the JMP & 4 for the default value
 
     /// 5.2 - Calculate mapTblAddr value (we will be placing it right after the JMP jobEnd since we have space for it)
@@ -283,7 +283,7 @@ CustomBarLimits = function()
 
     /// 5.3 - Fill in the blanks
     code = SwapFiller(code, {
-		1: mapTblAddr, 
+		1: mapTblAddr,
 		2: defAddr
 	}, 1);
 
@@ -291,9 +291,9 @@ CustomBarLimits = function()
     let free = Exe.FindSpace(identSize);
     if (free < 0)
         throw NO_ALLOC;
-    
+
     let freeVir = Exe.Phy2Vir(free, DIFF);
-    
+
     /// 5.5 - Concatenate all the ID values and prepare the mapping
     let mapData   = ""; //will contain address pointing to set of IDs and base (16bit) & job (16bit) max levels after the address
     let identData = ""; //will contain the set of IDs
@@ -321,7 +321,7 @@ CustomBarLimits = function()
 
     /// 5.6 - Add the IDs at the allocated space
     Exe.AddHex(free, identData);
-    
+
     /// 5.7 - Put the function & the map at baseBegin
     Exe.SetHex(baseBegin, code + mapData);
 
@@ -331,7 +331,7 @@ CustomBarLimits = function()
 // TODO - Make color and coords configurable for the following at some point in future
 
 ///
-/// \brief Inject code inside UIBasicInfoWnd::OnDraw function to make it also display the exp values 
+/// \brief Inject code inside UIBasicInfoWnd::OnDraw function to make it also display the exp values
 ///        The exp values are displayed along with other info inside the "Basic Info" window when not minimized.
 ///
 ShowExpNumbers = function()
@@ -388,7 +388,7 @@ ShowExpNumbers = function()
 
     /// 2.4 - Extract the Current Exp address
     let CurExpBase = Exe.GetInt32(pushAddr - 9);
-    
+
     /// 2.5 - Find the double PUSH pattern again after the first one (this time it is for Job Exp values)
     pushAddr = Exe.FindHex(code, pushAddr, pushAddr + 0x100);
     if (pushAddr < 0)
@@ -397,7 +397,7 @@ ShowExpNumbers = function()
     /// 2.6 - Extract the Total Exp & Current Exp addresses
     let TotExpJob = Exe.GetInt32(pushAddr + totOffset);
     let CurExpJob = Exe.GetInt32(pushAddr + code.byteCount() - 5);
-    
+
     /// 3.1 - Find the string 'SP'
     let addrs = Exe.FindTextN("SP");
 	let found = addrs.find(matchAddr =>
@@ -419,7 +419,7 @@ ShowExpNumbers = function()
     /// 3.3 - Set addr to location after PUSH 11
     addr += code.byteCount();
 
-    /// 3.4 - Setup ECX movement based on the next instruction 
+    /// 3.4 - Setup ECX movement based on the next instruction
     ///       If the UIWindow::TextOutA function CALL comes immediately after the pattern, ECX should be loaded from ESI
     ///       otherwise the next instruction is a MOV to ECX after which the CALL is expected
 	let MovECX;
@@ -431,11 +431,11 @@ ShowExpNumbers = function()
     {
         MovECX = Exe.GetHex(addr, 2);
         addr += 2;
-        
+
         if (Exe.GetUint8(addr) !== 0xE8)
             throw Error("TextOutA CALL not found");
     }
-    
+
     /// 3.5 - Extract UIWindow::TextOutA and the location where the CALL is made (we will be hijacking the CALL)
     let UIW_TextOutA = Exe.GetTgtAddr(addr + 1);
     let injectAddr = addr;
@@ -444,7 +444,7 @@ ShowExpNumbers = function()
     let extraPush = (Exe.BuildDate > 20140116) ? PUSH_0 : '';
 
     /// 4.1 - Get the essential addresses for our code
-    
+
     // sprintf/wsprintfA
     let printFunc = Exe.FindFunc("sprintf");
 
@@ -458,8 +458,8 @@ ShowExpNumbers = function()
     let ddAddr = Exe.FindText("%d / %d", false);
     if (ddAddr < 0)
         throw Error("Format string for exp not found");
-    
-    /// 4.2 - Prepare the template code for displaying the exp numbers (common for both Base & Job Exp) 
+
+    /// 4.2 - Prepare the template code for displaying the exp numbers (common for both Base & Job Exp)
     let template =
         MOV(EAX, Filler(1))   //MOV EAX, DWORD PTR DS:[totExp*]
     +	MOV(ECX, Filler(2))   //MOV ECX, DWORD PTR DS:[curExp*]
@@ -485,15 +485,15 @@ ShowExpNumbers = function()
     +	MovECX                //MOV ECX, reg32_A
     +	CALL(Filler(5))       //CALL UIWindow::TextOutA ; stdcall => No Stack restore required
     ;
-	let tsize = template.byteCount();
-    template = SwapFiller(template, 3, tsize - 14, 1, 1); //putting the distance in JE SHORT (this is needed since byteCount can vary)
-	 
+	
+	template = SetFillTarget(template, 3, template.byteCount(), 0, 1, 1); //putting the distance in JE SHORT (this is needed since byteCount can vary)
+
     /// 4.3 - Prepare the full code from the template
-    code = 
-		CALL(Filler(10))        //CALL UIWindow::TextOutA
+    code =
+		CALL(Filler(5))         //CALL UIWindow::TextOutA
     +	PUSH_EAX                //PUSH EAX
     +	SUB(ESP, 0x20)          //SUB ESP, 20
-    +	SwapFillers(template, { 
+    +	SwapFillers(template, {
 			1: TotExpBase,      //for Base Exp
 			2: CurExpBase
 		})
@@ -503,10 +503,10 @@ ShowExpNumbers = function()
 		})
     +	ADD(ESP, 0x20)          //ADD ESP, 20
     +	POP(EAX)                //POP EAX
-    +	JMP(Filler(11))         //JMP retAddr = injectAddr + 5
+    +	JMP(Filler(6))          //JMP retAddr = injectAddr + 5
     ;
     let csize = code.byteCount();
-    
+
     /// 4.4 - Allocate space to add our code
     let free = Exe.FindSpace(csize, 0x10);
     if (free < 0)
@@ -515,21 +515,22 @@ ShowExpNumbers = function()
     let freeVir = Exe.Phy2Vir(free, DIFF);
 
     /// 4.5 - Fill in the remaining blanks
-    code = SwapFillers(code, {
-		10: UIW_TextOutA - (freeVir + 5),
-		11: Exe.Phy2Vir(injectAddr + 5, CODE) - (freeVir + csize),
-		5: [UIW_TextOutA - (freeVir + 9 + tsize),  //9 = 5 for CALL, 1 for PUSH EAX and 3 for SUB ESP
-			UIW_TextOutA - (freeVir + 9 + tsize*2)],
-	});
 
-	code = SwapFiller(code, 4, [0x4E, 0x68], 2, 1); //yCoords for Base & Job respectively
+	// CALLs & JMPs
+	code = SetFillTargets(code, {
+		 5 : UIW_TextOutA
+		11 : Exe.Phy2Vir(injectAddr + 5, CODE),
+	}, freeVir);
+
+	// yCoords for Base & Job respectively
+	code = SwapFiller(code, 4, [0x4E, 0x68], 2, 1);
 
     /// 4.6 - Add the code at the allocated space
     Exe.AddHex(free, code);
 
     /// 4.7 - Hijack the CALL at injectAddr (change it to a JMP to our code)
     Exe.SetJMP(injectAddr, freeVir);
-    
+
     return true;
 };
 

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-01-12                                             *
+*   Last Modified : 2021-01-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -269,12 +269,12 @@ AutoMute = function()
 	+	MOV(EAX, 1)              //MOV EAX, 1
 	+	MOV([Filler(2)], EAX)    //MOV DWORD PTR DS:[isMuted], EAX
 	+	PUSH_0                   //PUSH 0
-	+	CALL(Filler(15))         //CALL CSoundMgr::Set2DEffectVolume (pos = 149)
+	+	CALL(Filler(5))          //CALL CSoundMgr::Set2DEffectVolume (pos = 149)
 	+	PUSH_0                   //PUSH 0
-	+	CALL(Filler(16))         //CALL CSoundMgr::Set3DEffectVolume (pos = 156)
+	+	CALL(Filler(6))          //CALL CSoundMgr::Set3DEffectVolume (pos = 156)
 	+	PUSH_0                   //PUSH 0
-	+	CALL(Filler(17))         //CALL CSoundMgr::SetStreamVol (pos = 163)
-	+	Exe.GetHex(hookAddr, 6)  //MOV ECX, OFFSET g_Weather
+	+	CALL(Filler(7))         //CALL CSoundMgr::SetStreamVol (pos = 163)
+	+	Exe.GetHex(hookAddr, 5)  //MOV ECX, OFFSET g_Weather
 	+	RETN()                   //RETN
 	;
 
@@ -292,26 +292,26 @@ AutoMute = function()
 	if (free < 0)
 		throw NO_ALLOC;
 
-	/// 3.4 - Fill in the blanks
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 
+	/// 3.4 - Fill in the blanks
+
+	//All the extra addresses
 	code = SwapFillers(code, {
-		//All the extra addresses
 		 1: freeVir,
 		 2: freeVir + 4,
 		 3: freeVir + 8,
 		 4: freeVir + 0xC,
-
-		//Now all the CALLs
-		 5: Set2DEffectVol - (freeVir + 16 +  99 + 5),
-		15: Set2DEffectVol - (freeVir + 16 + 149 + 5),
-		 6: Set3DEffectVol - (freeVir + 16 + 110 + 5),
-		16: Set3DEffectVol - (freeVir + 16 + 156 + 5),
-		 7: SetStreamVol - (freeVir + 16 + 121 + 5),
-		17: SetStreamVol - (freeVir + 16 + 163 + 5),
 	});
 
-	/// 3.5 - Add the code at allocated space 
+	//Now all the CALLs
+	code = SetFillTargets(code, {
+		 5: Set2DEffectVol,
+		 6: Set3DEffectVol,
+		 7: SetStreamVol,
+	}, freeVir + buffer.byteCount(), 2);
+
+	/// 3.5 - Add the code at allocated space
 	Exe.AddHex(free, buffer + code);
 
 	/// 3.6 - Create the CALL at hookAddr

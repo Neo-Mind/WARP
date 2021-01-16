@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -46,7 +46,7 @@ FixChatAt = function()
 			throw Error("'@' check not found");
 
 		/**==============================================
-		Note: The above will be followed by MOV AL,1 
+		Note: The above will be followed by MOV AL,1
 				and POP EBP/EBX statements
 		==============================================**/
 
@@ -96,21 +96,22 @@ FixChatAt = function()
 		+	POPAD                              //POPAD <- addr1
 		+	JMP(Filler(1))				       //JMP func
 		;
-		let csize = code.byteCount();
 
 		/// 3.2 - Allocate space for adding our function
-		let free = Exe.FindSpace(csize, 0x10);
+		let free = Exe.FindSpace(code.byteCount(), 0x10);
 		if (free < 0)
 			throw NO_ALLOC;
 
+		let freeVir = Exe.Phy2Vir(free, DIFF);
+
 		/// 3.3 - Fill in the blanks
-		code = SwapFiller(code, 1, func - Exe.Phy2Vir(free + csize, DIFF));
+		code = SetFillTarget(code, 1, func, freeVir, 1);
 
 		/// 3.4 - Add our function there
 		Exe.AddHex(free, code);
 
 		/// 3.5 - Change the CALLed address from func to our function.
-		Exe.SetTgtAddr(addr + 3, free, PHYSICAL);
+		Exe.SetTgtAddr(addr + 3, freeVir);
 	}
 
 	return true;
