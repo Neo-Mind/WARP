@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
-*   Copyright (C) 2020 Neo Mind                                            *
+*   Copyright (C) 2020-2021 Neo Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -204,27 +204,15 @@ CloseCutinOnEsc = function()
 		PUSH(78)            //PUSH 78 ; window id
 	+	MovECX_dw           //MOV ECX, reg32_B
 	+	CALL(Filler(1))     //CALL UIWindowMgr::DeleteWindow
-	;
-	let offsetDW = code.byteCount();
-
-	code +=
-		CMP(AL, 0)          //CMP AL, 0
-	+	JNZ(0xC)            //JNZ SHORT addr1
+	+	CMP(AL, 0)          //CMP AL, 0
+	+	JNZ(0xF)            //JNZ SHORT _skip
 	+	MovECX              //MOV ECX, reg32_A or MOV ECX, OFFSET addr
 	+	PUSH(retnVir)       //PUSH retnVir
 	+	JMP(Filler(2))      //JMP UIWindowMgr::check_close or unknownFunc; equivalent to CALL intended for return to retnVir
-	;
-	let offsetFF = code.byteCount();
-
-	code +=
-		PUSH(EDX)           //PUSH EDX
+	+	PUSH(EDX)           //PUSH EDX ; _skip
 	+	MOV(ECX, gModeMgr)  //MOV ECX, OFFSET g_modeMgr
 	+	CALL(Filler(3))     //CALL CModeMgr::GetGameMode
-	;
-	let offsetGGM = code.byteCount();
-
-	code +=
-		MOV(EDX, [EAX])     //MOV EDX, DWORD PTR DS:[EAX]
+	+	MOV(EDX, [EAX])     //MOV EDX, DWORD PTR DS:[EAX]
 	+	suffix              //combinations of 
 		                    //PUSH 0
 		                    //PUSH 0 or 1 (for newer clients)
@@ -239,22 +227,21 @@ CloseCutinOnEsc = function()
 	+	POP(EAX)            //POP EAX
 	+	JMP(Filler(4))      //JMP jmpVir
 	;
-	let csize = code.byteCount();
 
 	/// 3.2 - Allocate space for the code
-	let free = Exe.FindSpace(csize, 0x10);
+	let free = Exe.FindSpace(code.byteCount(), 0x10);
 	if (free < 0)
 		throw NO_ALLOC;
 
-	/// 3.3 - Fill in the blanks
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 
-	code = SwapFillers(code, {
-		1: DeleteWindow - (freeVir + offsetDW),
-		2: FirstFunc - (freeVir + offsetFF),
-		3: GetGameMode - (freeVir + offsetGGM),
-		4: jmpVir - (freeVir + csize)
-	}, 1);
+	/// 3.3 - Fill in the blanks
+	code = SetFillTargets(code, {
+		1 : DeleteWindow,
+		2 : FirstFunc,
+		3 : GetGameMode,
+		4 : jmpVir
+	}, freeVir, 1);
 
 	/// 3.4 - Add the code at the allocated space
 	Exe.AddHex(free, code);

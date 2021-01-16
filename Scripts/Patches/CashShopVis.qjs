@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2014-2020 Neo-Mind                                       *
+*   Copyright (C) 2014-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -75,17 +75,13 @@ CashShopVis = function(patchName)
 		let retnAddr = jmpAddr + code.byteCount() + 4;
 
 		/// 3.3 - Prepare our code to create the icon.
-		let pos1 = code.byteCount() + 4;
-
 		code += 
 			Filler(1)        //Remaining parts are already used for search above
 		+	PUSH(0xBE)       //PUSH 0BE ; addr2
 		+	WINMGR.MovECX    //MOV ECX, OFFSET g_windowMgr
-		+	CALL(Filler(2))  //CALL UIWindowMgr::MakeWindow
-		+	JMP(Filler(3))   //JMP retnAddr; jump back to retnAddr
+		+	CALL(Filler(1))  //CALL UIWindowMgr::MakeWindow
+		+	JMP(Filler(2))   //JMP retnAddr; jump back to retnAddr
 		;
-
-		let pos2 = code.byteCount();
 
 		/// 3.4 - Allocate space to add our code
 		let free = Exe.FindSpace(code.byteCount(), 0x10);
@@ -95,11 +91,10 @@ CashShopVis = function(patchName)
 		let freeVir = Exe.Phy2Vir(free, DIFF);
 
 		/// 3.5 - Fill in the Blanks
-		code = SwapFillers(code, {
-			1: WINMGR.MakeWin - (freeVir + pos1),
-			2: WINMGR.MakeWin - (freeVir + pos2 - 5),
-			3: Exe.Phy2Vir(retnAddr, CODE) - (freeVir + pos2)
-		}, 1);
+		code = SetFillTargets(code, {
+			1 : WINMGR.MakeWin,
+			2 : Exe.Phy2Vir(retnAddr, CODE)
+		}, freeVir);
 
 		/// 3.6 - Add the code at the allocated space
 		Exe.AddHex(free, code);

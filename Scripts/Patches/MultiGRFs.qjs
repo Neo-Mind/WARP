@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) ?-2015 Shinryo                                           * 
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,12 +23,12 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-17                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Overrides data.grf loading with a custom function which loads the grf names 
+/// \brief Overrides data.grf loading with a custom function which loads the grf names
 ///        required in specified order
 ///
 ///        GRFsFromIni  - User specifies the INI file name and it is used for getting the GRF file names & their order during launch.
@@ -93,8 +93,8 @@ MultiGRFs = function(patchName)
 	/// 2.3 - Little trick to avoid changing 10 bytes (change the PUSH to MOV ECX, addr)
 	Exe.SetUint8(addr, 0xB9);
 
-	/// 3.1 - Run one of the helper functions below based on the patch name. 
-	///       Helper functions were made for better readability. 
+	/// 3.1 - Run one of the helper functions below based on the patch name.
+	///       Helper functions were made for better readability.
 	///       Only the uncommon activities are being done in the seperate functions
 	///
 	if (patchName === "GRFsFromIni")
@@ -175,11 +175,7 @@ _MG_INI = (callAddr, AddPak) =>
 	+	PUSH(EBX)                       //PUSH EBX
 	+	DGRF.MovFMgr                    //MOV ECX, g_fileMgr
 	+	CALL(Filler(5))                 //CALL CFileMgr::AddPak()
-	;
-	let pakPos = code.byteCount();
-
-	code +=
-		POP(EDX)                        //POP EDX
+	+	POP(EDX)                        //POP EDX
 	+	INC(EDX)                        //INC EDX
 	+	DEC(BYTE_PTR, [EBP, -2])        //DEC BYTE PTR SS:[EBP-2]
 	+	CMP(BYTE_PTR, [EBP, -2], 0x30)  //CMP BYTE PTR SS:[EBP-2], 30
@@ -227,7 +223,7 @@ _MG_INI = (callAddr, AddPak) =>
 		code = SwapFiller(code, idx + 1, strPos, 2);
 		strPos += str.length + 1;     //1 for null
 	});
-	code = SwapFiller(code, 5, AddPak - (freeVir + pakPos));//AddPak function
+	code = SetFillTarget(code, 5, AddPak, freeVir, 1);//AddPak function
 
 	/// 3.1 - Add the function at the allocated space
 	Exe.AddHex(free, code + strings);
@@ -296,7 +292,7 @@ _MG_EMB = (callAddr, AddPak) =>
 
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 
-	/// 2.4 - Prepare the full code using the template with proper values 
+	/// 2.4 - Prepare the full code using the template with proper values
 	let strAddr = freeVir + grfNames.length * tsize + 2;    //Address of first string
 	let funAddr = AddPak - (strAddr - 2);                   //Difference value for Last AddPak CALL location (first string needs to be loaded last)
 
