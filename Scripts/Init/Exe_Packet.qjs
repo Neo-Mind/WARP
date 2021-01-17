@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-01-01                                             *
+*   Last Modified : 2021-01-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -62,8 +62,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			this.PatchData = [];              //Data saved by packet key patches
 
 			this.Valid     = undefined;       //True or False indicating extraction status
-			this.Error     = undefined;	      //Error Object containing a message about the issue
-											  //encountered during extraction if any
+			this.Error     = undefined;	      //Error Object containing a message about the issue encountered during extraction if any
 
 			IdentifyObj("PACKET");
 		},
