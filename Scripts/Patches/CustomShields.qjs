@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-01-15                                             *
+*   Last Modified : 2021-01-18                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -80,7 +80,7 @@ CustomShields = function()
 		throw Error("Buckler suffix not found");
 
 	/// 1.6 - Find where it gets loaded to the table (Return location)
-	code = MOV(Exe.Version < 9.0 ? [EAX] : [R32, 8], sufAddr); //MOV DWORD PTR DS:[EAX], addr <buckler suffix> or 
+	code = MOV(Exe.Version < 9.0 ? [EAX] : [R32, 8], sufAddr); //MOV DWORD PTR DS:[EAX], addr <buckler suffix> or
 	                                                           //MOV DWORD PTR DS:[reg32_A + 8], addr <buckler suffix>
 
 	let addr = Exe.FindHex(code, hookReq, hookReq + 0x38);
@@ -95,71 +95,71 @@ CustomShields = function()
 	if (MaxShield === false)
 		return false;
 
-	/// 2.1 - Construct the initial part of the code to be injected.
-	let funcName = "ReqShieldName\x00";
+	/// 2.1 - Construct the code to be injected.
+	let funcName = "ReqShieldName";
+	let parts = LUA.createCaller(funcName, "d>s", EDI, EAX);
 
 	code =
-		funcName.toHex()
-	+	PUSHAD                       //PUSHAD
-	+	MOV(EDI, 1)                  //MOV EDI, 1
-	+	MOV(EBX, MaxShield)          //MOV EBX, finalValue
+		PUSHAD                         //PUSHAD
+	+	MOV(EBX, MaxShield)            //MOV EBX, finalValue
+	+	MOV(EDI, 1)                    //MOV EDI, 1
+	+	parts[0]                       //Stack Prep
 	;
 	let presize = code.byteCount();
 
-	/// 2.2 - Allocate space considering maximum code size possible
-	let free = Exe.FindSpace(presize + 0x50 + 0x12);
+	code +=
+		parts[1]                       //LUA Function CALL code ; _loop
+	+	MOV(CL, [EAX])                 //MOV CL, BYTE PTR DS:[EAX]
+	+	TEST(CL, CL)                   //TEST CL, CL
+	+	JE(7)                          //JE SHORT addrInc
+	+	MOV(ECX, [ESP, 0x20])          //MOV ECX, DWORD PTR SS:[ESP+20] ; 20 = 8 registers * 4 due to PUSHAD, starting memory address is PUSHed before the PUSHAD
+	+	MOV([4, EDI, ECX], EAX)        //MOV DWORD PTR DS:[EDI*4+ECX],EAX
+	+	INC(EDI)                       //INC EDI; addrInc
+	+	CMP(EDI, EBX)                  //CMP EDI,EBX
+	;
+
+	code +=
+		JLE(presize, code.byteCount()) //JLE SHORT _loop; to start of the parts[1]
+	+	parts[2]                       //Stack Restore
+	+	POPAD                          //POPAD
+	+	ADD(ESP, 4)                    //ADD ESP, 4
+	+	JMP(Filler(1))                 //JMP retReq
+	;
+
+	let csize = code.byteCount();
+
+	/// 2.2 - Allocate space for the code
+	let free = Exe.FindSpace(csize + funcName.length + 1, 0x10); //extra 1 for a NULL suffix
 	if (free < 0)
 		throw NO_ALLOC;
 
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 
-	/// 2.3 - Construct the Lua function calling code
-	code += LUA.createCaller(funcName, freeVir, free + presize, "d>s", EDI);
+	/// 2.3 - Fill in the blanks
+	code = LUA.finalize(code, freeVir, freeVir + csize);
 
-	/// 2.4 - Complete the loop
-	code +=
-		MOV(CL, [EAX])               //MOV CL, BYTE PTR DS:[EAX]
-	+	TEST(CL, CL)                 //TEST CL, CL
-	+	JE(7)                        //JE SHORT addrInc
-	+	MOV(ECX, [ESP, 0x20])        //MOV ECX, DWORD PTR SS:[ESP+20]
-	+	MOV([4, EDI, ECX], EAX)      //MOV DWORD PTR DS:[EDI*4+ECX],EAX
-	+	INC(EDI)                     //INC EDI; addrInc
-	+	CMP(EDI, EBX)                //CMP EDI,EBX
-	;
-
-	code +=
-		JLE(presize, code.byteCount()) //JLE SHORT _loop; to start of generate
-	+	POPAD                        //POPAD
-	+	ADD(ESP, 4)                  //ADD ESP, 4
-	;
-
-	code +=
-		JMP(retReq, freeVir + code.byteCount())
-	;
+	code = SetFillTarget(code, 1, retReq, freeVir);
 
 	/// 2.5 - Insert the code
-	Exe.AddHex(free, code);
+	Exe.AddHex(free, code + funcName.toHex());
 
 	/// 2.6 - Setup a JMP to our code at hookReq
 	code =
-		argSetup
-	+	JMP(freeVir + funcName.length, Exe.Phy2Vir(hookReq + argSetup.byteCount(), CODE))
+		argSetup //PUSHes the starting memory address
+	+	JMP(freeVir, Exe.Phy2Vir(hookReq + argSetup.byteCount(), CODE))
 	;
 	Exe.SetHex(hookReq, code);
 
 	//=========================//
 	// Inject Lua file loading //
 	//=========================//
-	let result = LUA.addLoaders(
+	LUA.addLoaders(
 		[
 		"Lua Files\\DataInfo\\ShieldTable",
 		"Lua Files\\DataInfo\\ShieldTable_F"
 		],
 		"Lua Files\\DataInfo\\jobName"
 	);
-
-	if (IsStr(result))
-		throw Error(`LUA addLoaders : ${result}`);
 
 	//========================================================//
 	// Find second inject location - CSession::GetShieldType. //
@@ -181,7 +181,7 @@ CustomShields = function()
 		if (addrs.isEmpty())
 			throw Error("GetShieldType CALL missing");
 
-		/// 3.2 - Save the address of the CALL 
+		/// 3.2 - Save the address of the CALL
 		addr = addrs[0] + code.byteCount() - 1;
 	}
 	else
@@ -204,7 +204,7 @@ CustomShields = function()
 		)
 		;
 
-		let suffix = 
+		let suffix =
 			CALL(ALLWC)                  //CALL CSession::GetShieldType
 		+	(Exe.Version === 11.0
 		?
@@ -221,42 +221,38 @@ CustomShields = function()
 		/// 3.4 - Save the location of the CALL
 		addr += code.byteCount();
 	}
-	
+
 	/// 3.5 - Extract the PHYSICAL address of the GetShieldType function
 	let hookMap = Exe.GetTgtAddr(addr + 1, PHYSICAL);
-	ShowAddr("HookMap", hookMap);
-	
-	/// 4.1 - Construct the initial part of the code
-	funcName = "GetShieldID\x00";
+
+	/// 4.1 - Construct the code to be injected
+	funcName = "GetShieldID";
+	parts = LUA.createCaller(funcName, "d>d", EDX, EAX);
 
 	code =
-		funcName.toHex()
-	+	PUSH(EDX)           //PUSH EDX
-	+	MOV(EDX, [ESP, 8])  //MOV EDX, DWORD PTR SS:[ESP+8]
+		PUSH(EDX)            //PUSH EDX
+	+	MOV(EDX, [ESP, 8])   //MOV EDX, [ARG.1]
+	+	parts.join('')       //Function caller (result saved to EAX)
+	+	POP(EDX)             //POP EDX
+	+	RETN(4)              //RETN 4
 	;
-	presize = code.byteCount();
+	csize = code.byteCount();
 
-	/// 4.2 - Allocate space for code considering max size
-	free = Exe.FindSpace(presize + 0x3D + 0x4);
+	/// 4.2 - Allocate space for the code
+	free = Exe.FindSpace(csize + funcName.length + 1, 0x10);
 	if (free < 0)
 		throw NO_ALLOC;
 
 	freeVir = Exe.Phy2Vir(free, VIRTUAL);
 
-	/// 4.3 - Construct the Lua function calling code
-	code += LUA.createCaller(funcName, freeVir, free + presize, "d>d", EDX);
+	/// 4.3 - Fill in the blanks
+	code = LUA.finalize(code, freeVir, freeVir + csize);
 
-	/// 4.4 - Add the final steps
-	code +=
-		POP(EDX)            //POP EDX
-	+	RETN(4)             //RETN 4
-	;
+	/// 4.4 - Insert the code
+	Exe.AddHex(free, code + funcName.toHex());
 
-	/// 4.5 - Insert the code
-	Exe.AddHex(free, code);
-
-	/// 4.6 - Setup a JMP to the code at hookMap
-	Exe.SetJMP(hookMap, freeVir + funcName.length);
+	/// 4.5 - Create a JMP to the code at hookMap
+	Exe.SetJMP(hookMap, freeVir);
 
 	if (MaxShield !== 5)
 	{
@@ -286,7 +282,7 @@ CustomShields = function()
 
 			Exe.SetInt8(addr + 2, MaxShield)
 		}
-		else 
+		else
 		{
 			/// 5.3 - Find PUSH 5 before hookReq and replace with MaxShield if its there
 			code =
@@ -311,13 +307,13 @@ CustomShields = function()
 	/// WORK IN PROGRESS
 	if (Exe.BuildDate < 20170700)
 	{
-		
+
 	}
 	else
 	{
-		
+
 	}
-	
+
 	return true;
 };
 
