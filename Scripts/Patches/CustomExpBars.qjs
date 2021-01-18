@@ -518,7 +518,7 @@ ShowExpNumbers = function()
 
 	// CALLs & JMPs
 	code = SetFillTargets(code, {
-		 5 : UIW_TextOutA
+		 5 : UIW_TextOutA,
 		11 : Exe.Phy2Vir(injectAddr + 5, CODE),
 	}, freeVir);
 

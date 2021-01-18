@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2014-2020 Neo-Mind                                       *
+*   Copyright (C) 2014-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-18                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -30,7 +30,7 @@
 /// \brief Hijack Quest_function lua file loading to load lua files specified in the input file first before loading Quest_function
 ///
 CQL_Prefix = "lua files\\quest\\";
-CustomQuestLua = function() 
+CustomQuestLua = function()
 {
 	/// 1.1 - Ensure LUA object is loaded
 	LUA.load();
@@ -52,9 +52,7 @@ CustomQuestLua = function()
 		Cancel("Empty list provided");
 
 	/// 2.2 - Inject the loading procedure for all the files specified
-	let result = LUA.addLoaders(LuaFiles, CQL_Prefix + "Quest_function");
-	if (IsStr(result))
-		throw Error(`LUA addLoaders : ${result}`);
+	LUA.addLoaders(LuaFiles, CQL_Prefix + "Quest_function");
 
 	return true;
 };
