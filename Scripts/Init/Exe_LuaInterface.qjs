@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-01-18                                             *
+*   Last Modified : 2021-01-19                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -325,7 +325,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 
 				case FnMode.Ptr :
 					code +=
-						PUSH(nameAddr)           //PUSH nameAddr ; ASCII funcName
+						PUSH(Filler(50))         //PUSH nameAddr ; ASCII funcName
 					+	CALL([this.Allocator])   //CALL DWORD PTR DS:[Allocator]
 					;
 					break;
