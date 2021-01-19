@@ -26,8 +26,6 @@
 *                                                                          *
 \**************************************************************************/
 
-// TODO - Still in progress. Need to ensure item id restriction is not there.
-
 ///
 /// \brief: Change the Hardcoded loading & retrieval of Shield prefix to Lua based code
 ///
@@ -390,6 +388,73 @@ CustomShields = function()
 	/// 6.7 - Replace the function with our code + the function name
 	Exe.SetHex(funcAddr, code + funcName.toHex() + " 00");
 
+	/// 7.1 - Find the extra comparison function that got added from 2012-04-18RE onwards. ugh
+	let prefix = 
+		(ROC.HasFP
+	?
+		PUSH(EBP)                             //PUSH EBP
+	+	MOV(EBP, ESP)                         //MOV EBP, ESP
+	:
+		''
+	)
+	+	PUSH(ESI)                             //PUSH ESI
+	+	MOV(ESI, [ROC.HasFP ? EBP : ESP, 8])  //MOV ESI, DWORD PTR SS:[ARG.1]
+	+	PUSH(ESI)                             //PUSH ESI
+	+	CALL(ALLWC)                           //CALL func
+	;
+
+	if (Exe.Version < 11.0)
+	{
+		code =
+			MOV(EAX, [EAX, WCp])              //MOV EAX, DWORD PTR DS:[EAX + const]
+		+	ADD(ESI, -0x835)                  //ADD ESI, -835
+		;
+	}
+	else if (Exe.Version === 11.0)
+	{
+		code =
+			MOV(R32, [EAX, WCp])              //MOV reg32_A, DWORD PTR DS:[EAX + const]
+		+	ADD(ESP, 4)                       //ADD ESP, 4
+		+	CMP(ESI, 0x834)                   //CMP ESI, 834
+		;
+	}
+	else
+	{
+		code =
+			ADD(ESP, 4)                       //ADD ESP, 4
+		+	MOV(EAX, [EAX, WCp])              //MOV EAX, DWORD PTR DS:[EAX + const]
+		+	CMP(ESI, 0x834)                   //CMP ESI, 834
+		;
+	}
+	
+	addr = Exe.FindHex(prefix + code);
+	if (addr < 0 && Exe.BuildDate > 20130000) //Mandatory for 2013+
+		throw Error("Extra Limiter missing");
+	
+	/// 7.2 - Move to the position after the CALL (all the code till that point is relevant)
+	addr += prefix.byteCount();
+	
+	/// 7.3 - Create our replacement code (Calls the earlier hookMap function to retrieve shield id corresponding to item id & turns the result to -1 if valid id.
+	code =
+		TEST(EAX, EAX)  //TEST EAX, EAX
+	+	JZ(3)           //JZ _skip_OR
+	+	OR(EAX, -1)     //OR EAX, FFFFFFFF
+	+	POP(ESI)        //POP ESI
+	+	(ROC.HasFP
+	?
+		POP(EBP)        //POP EBP
+	:
+		''
+	)
+	+	RETN(4)         //RETN 4
+	;
+	
+	/// 7.4 - Replace the function being CALLed
+	Exe.SetTgtAddr(addr - 4, hookMap, PHYSICAL);
+	
+	/// 7.5 - Append our code after the CALL
+	Exe.SetHex(addr, code);
+	
 	return true;
 };
 
