@@ -20,7 +20,7 @@ Max_Shield = 10
 
 --Need to expand upon this later
 function ValidateShieldID(id, jobID)
-  if id > 0 && id < Max_Shield then
+  if id > 0 and id < Max_Shield then
     return 1
   else
     return 0
