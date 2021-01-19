@@ -365,7 +365,6 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				});
 
 				$$(_ + '2.7 - Restore the stack')
-				Debug(ocnt);
 				suf = ADD(ESP, 4 * ocnt +                     //ADD ESP, constO + 4 for Regular CALL
 					(this.Al_Mode === FnMode.Regular ? 4 : 0)
 				);

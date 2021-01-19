@@ -1,6 +1,6 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) ?-2020 *Various authors*                                 #
+#   Copyright (C) ?-2021 *Various authors*                                 #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-01-15                                             #
+#   Last Modified : 2021-01-19                                             #
 #                                                                          #
 ############################################################################
 
@@ -1417,7 +1417,7 @@ groups:
         
         patches:
             - CustomShields:
-                title : Enable Custom Shields [WIP]
+                title : Enable Custom Shields
                 recommend : no
                 author : Neo-Mind
-                desc : Enables the use of Custom Shield Types (using Lua Files similar to Xray.
+                desc : Enables the use of Custom Shield Types (using Lua Files similar to Xray)
