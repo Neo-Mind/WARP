@@ -22,11 +22,11 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-01-18                                             *
+*   Last Modified : 2021-01-19                                             *
 *                                                                          *
 \**************************************************************************/
 
-// TODO - Still in progress. Need to have an extra function for checks against job id
+// TODO - Still in progress. Need to ensure item id restriction is not there.
 
 ///
 /// \brief: Change the Hardcoded loading & retrieval of Shield prefix to Lua based code
@@ -112,7 +112,7 @@ CustomShields = function()
 	+	MOV(CL, [EAX])                 //MOV CL, BYTE PTR DS:[EAX]
 	+	TEST(CL, CL)                   //TEST CL, CL
 	+	JE(7)                          //JE SHORT addrInc
-	+	MOV(ECX, [ESP, 0x20])          //MOV ECX, DWORD PTR SS:[ESP+20] ; 20 = 8 registers * 4 due to PUSHAD, starting memory address is PUSHed before the PUSHAD
+	+	MOV(ECX, [ESP, 0x24])          //MOV ECX, DWORD PTR SS:[ESP+20] ; 20 = 8 registers * 4 due to PUSHAD, starting memory address is PUSHed before the PUSHAD
 	+	MOV([4, EDI, ECX], EAX)        //MOV DWORD PTR DS:[EDI*4+ECX],EAX
 	+	INC(EDI)                       //INC EDI; addrInc
 	+	CMP(EDI, EBX)                  //CMP EDI,EBX
@@ -165,7 +165,7 @@ CustomShields = function()
 	// Find second inject location - CSession::GetShieldType. //
 	//========================================================//
 
-	let addrs; //need the addrs later
+	let refAddr;
 	if (Exe.BuildDate < 20170700)
 	{
 		/// 3.1 - Find location where the GetShieldType is called - there are multiple matches but all of them are same
@@ -177,12 +177,12 @@ CustomShields = function()
 		+	CALL()           //CALL CSession::GetShieldType
 		;
 
-		addrs = Exe.FindHexN(code);
+		let addrs = Exe.FindHexN(code);
 		if (addrs.isEmpty())
 			throw Error("GetShieldType CALL missing");
 
 		/// 3.2 - Save the address of the CALL
-		addr = addrs[0] + code.byteCount() - 1;
+		refAddr = addrs[0] + code.byteCount() - 1;
 	}
 	else
 	{
@@ -219,11 +219,11 @@ CustomShields = function()
 			throw Error("GetShieldType CALL missing (New)");
 
 		/// 3.4 - Save the location of the CALL
-		addr += code.byteCount();
+		refAddr = addr += code.byteCount();
 	}
 
 	/// 3.5 - Extract the PHYSICAL address of the GetShieldType function
-	let hookMap = Exe.GetTgtAddr(addr + 1, PHYSICAL);
+	let hookMap = Exe.GetTgtAddr(refAddr + 1, PHYSICAL);
 
 	/// 4.1 - Construct the code to be injected
 	funcName = "GetShieldID";
@@ -304,15 +304,91 @@ CustomShields = function()
 		}
 	}
 
-	/// WORK IN PROGRESS
+	let funcAddr;
 	if (Exe.BuildDate < 20170700)
 	{
+		/// 6.1 - Find the function directly since its CALLed much later in the call stack
+		if (ROC.HasFP)
+		{
+			code =
+				PUSH(EBP)               //PUSH EBP
+			+	MOV(EBP, ESP)           //MOV EBP, ESP
+			+	(Exe.Version === 11.0
+			?
+				MOV(EAX, ECX)           //MOV EAX, ECX
+			+	MOV(ECX, [EBP, 0xC])    //MOV ECX, DWORD PTR SS:[ARG.2]
+			:                           //  or
+				MOV(EAX, [EBP, 0xC])    //MOV ECX, DWORD PTR SS:[ARG.2]
+			)
+			;
+		}
+		else
+		{
+			code =
+				MOV(EAX, [ESP, 0x8])    //MOV EAX, DWORD PTR SS:[ARG.2]
+		}
 
+		code +=
+			PUSH(ESI)                   //PUSH ESI
+		+	XOR(ESI, ESI)               //XOR ESI, ESI
+		+	(Exe.Version === 11.0
+		?
+			CMP(ECX, 0x88D)             //CMP ECX, 88D
+		:                               //  or
+			CMP(EAX, 0x7D0)             //CMP EAX, 7D0
+		)
+		;
+
+		funcAddr = Exe.FindHex(code);
+		if (funcAddr < 0)
+			throw Error("Missing shield id check (Pre-2018)");
 	}
 	else
 	{
+		/// 6.2 - For later clients, its CALLed after the GetShieldType CALL.
+		code =
+			CMP(R32, 5)             //CMP reg32_A, 5
+		+	JL(POS2WC)              //JL addr
+		+	PUSH_R                  //PUSH reg32_A
+		+	(Exe.Version === 11.0
+		?
+			PUSH_R                  //PUSH reg32_B
+		:                           // or
+			PUSH([EBP, 0x10])       //PUSH DWORD PTR SS:[ARG.3]
+		)
+		+	MOV(ECX, POS4WC)        //MOV ECX, OFFSET addr2
+		+	CALL()                  //CALL validator
+		;
 
+		addr = Exe.FindHex(code, refAddr + 5, refAddr + 0x80);
+		if (addr < 0)
+			throw Error("Missing shield id checker CALL");
+
+		/// 6.3 - Save the CALLed address (PHYSICAL one)
+		funcAddr = Exe.GetTgtAddr(addr + code.byteCount(), PHYSICAL);
 	}
+
+	/// 6.4 - Now convert to VIRTUAL
+	let funcVir = Exe.Phy2Vir(funcAddr, CODE);
+
+	/// 6.5 - Prep the code to be replaced with
+	funcName = "ValidateShieldID";
+	parts = LUA.createCaller(funcName, "dd>d", [EBP, 0xC], [EBP, 8], EAX); //dd>b would have been more apt but its not present in older clients.
+
+	code =
+		PUSH(EBP)      //PUSH EBP
+	+	MOV(EBP, ESP)  //MOV EBP, ESP
+	+	parts.join('') //Function caller code
+	+	POP(EBP)       //POP EBP
+	+	RETN(8)        //RETN 8
+	+	ALL00          //Null bytes for gap
+	;
+
+	/// 6.6 - Fill in the blanks
+	code = LUA.finalize(code, funcVir, funcVir + code.byteCount());
+
+	/// 6.7 - Replace the function with our code + the function name
+	Exe.SetHex(funcAddr, code + funcName.toHex() + " 00");
 
 	return true;
 };
