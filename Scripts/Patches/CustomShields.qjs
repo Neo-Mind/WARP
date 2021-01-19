@@ -241,16 +241,16 @@ CustomShields = function()
 	if (free < 0)
 		throw NO_ALLOC;
 
-	freeVir = Exe.Phy2Vir(free, VIRTUAL);
+	let newMapVir = Exe.Phy2Vir(free, VIRTUAL); //save for later too
 
 	/// 4.3 - Fill in the blanks
-	code = LUA.finalize(code, freeVir, freeVir + csize);
+	code = LUA.finalize(code, newMapVir, newMapVir + csize);
 
 	/// 4.4 - Insert the code
 	Exe.AddHex(free, code + funcName.toHex());
 
 	/// 4.5 - Create a JMP to the code at hookMap
-	Exe.SetJMP(hookMap, freeVir);
+	Exe.SetJMP(hookMap, newMapVir);
 
 	if (MaxShield !== 5)
 	{
@@ -450,7 +450,7 @@ CustomShields = function()
 	;
 	
 	/// 7.4 - Replace the function being CALLed
-	Exe.SetTgtAddr(addr - 4, hookMap, PHYSICAL);
+	Exe.SetTgtAddr(addr - 4, newMapVir);
 	
 	/// 7.5 - Append our code after the CALL
 	Exe.SetHex(addr, code);
