@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *   Copyright (C) 2018-2020 Jian                                           *
 *   Copyright (C) 2017 Secret                                              *
 *   Copyright (C) 2017-2020 Andrei Karas (4144)                            *
@@ -26,7 +26,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144), X-EcutiOnner    *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-20                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -376,11 +376,17 @@ CustomClientInfo = function()
 	/// 1.3 - Find the additional references & save the locations where replacement need to be made
 	if (hasMore)
 	{
+		let has4th = true;
 		if (Exe.Version > 10.0)//VC11+
 		{
 			if (CCI_Name === "sclientinfo.xml")
 			{
 				addr = Exe.FindHex(MOVSS(XMM$, [CCI_Addr + 8]), fromAddr, toAddr);
+				if (addr < 0)
+				{
+					has4th = false; //already takes care of the 4th part because 8 bytes are retrieved
+					addr = Exe.FindHex(MOVQ(XMM$, [CCI_Addr + 8]), fromAddr, toAddr);
+				}
 				if (addr < 0)
 					throw Error("2nd reference missing");
 
@@ -420,18 +426,21 @@ CustomClientInfo = function()
 			});
 		}
 
-		addr = Exe.FindHex(MOV(AL, [CCI_Addr + 0xE]), fromAddr, toAddr);
-		let offset = 1;
-
-		if (addr < 0)
+		if (has4th)
 		{
-			addr = Exe.FindHex(MOV(R8, [CCI_Addr + 0xE]), fromAddr, toAddr);	
-			offset = 2;
-		}
-		if (addr < 0)
-			throw Error("4th reference missing");
+			addr = Exe.FindHex(MOV(AL, [CCI_Addr + 0xE]), fromAddr, toAddr);
+			let offset = 1;
 
-		repLocs.set(0xE, addr + offset);
+			if (addr < 0)
+			{
+				addr = Exe.FindHex(MOV(R8, [CCI_Addr + 0xE]), fromAddr, toAddr);	
+				offset = 2;
+			}
+			if (addr < 0)
+				throw Error("4th reference missing");
+
+			repLocs.set(0xE, addr + offset);
+		}
 	}
 
 	/// 2.1 - Get the new name from the user
