@@ -2916,10 +2916,6 @@
   find : <B1 D5 B5 EE C7 CF B0 D4 20 BA D0 B9 E8>
   replace : "Shared"
 
-- #nProtect KeyCrypt
-  find : <6E 50 72 6F 74 65 63 74 20 4B 65 79 43 72 79 70 74>
-  replace : "nProtect KeyCrypt"
-
 - #Keyboard Driver가 검출되었습니다. \n\n키보드 보안 입력을 위해 추가기능을 설치하시겠습니까?    \n\n(추가기능 설치후, 시스템 reboot 필수)
   find : <4B 65 79 62 6F 61 72 64 20 44 72 69 76 65 72 B0 A1 20 B0 CB C3 E2 B5 C7 BE FA BD C0 B4 CF B4 D9 2E 20 0A 0A C5 B0 BA B8 B5 E5 20 BA B8 BE C8 20 C0 D4 B7 C2 C0 BB 20 C0 A7 C7 D8 20 C3 DF B0 A1 B1 E2 B4 C9 C0 BB 20 BC B3 C4 A1 C7 CF BD C3 B0 DA BD C0 B4 CF B1 EE 3F 20 20 20 20 0A 0A 28 C3 DF B0 A1 B1 E2 B4 C9 20 BC B3 C4 A1 C8 C4 2C 20 BD C3 BD BA C5 DB 20 72 65 62 6F 6F 74 20 C7 CA BC F6 29>
   replace : "Keyboard Driver has been detected. \n\nDo you want to install a program for keyboard security?    \n\n(After installation, System Reboot is required)"
@@ -3388,33 +3384,21 @@
   find : <B0 E1 C8 A5 20 BB F3 B4 EB C0 DA C0 C7 20 C4 B3 B8 AF C5 CD 20 BB E8 C1 A6 20 C0 DB BE F7 C1 DF C0 CC B9 C7 B7 CE 20 C1 A2 BC D3 C0 CC 20 C0 CF BD C3 C0 FB C0 B8 B7 CE 20 C1 A6 C7 D1 B5 CB B4 CF B4 D9 2E>
   replace : "Login is temporarily unavailable while your spouse character is being deleted."
 
-- #Swordman
-  find : <53 77 6F 72 64 6D 61 6E>
+- #
+  find : "Swordman"
   replace : "Swordsman"
 
-- #Magician
-  find : <4D 61 67 69 63 69 61 6E>
+- #
+  find : "MAgician"
   replace : "Mage"
 
-- #Wizerd
-  find : <57 69 7A 65 72 64>
+- #
+  find : "Wizerd"
   replace : "Wizard"
 
-- #Swordman
-  find : <53 77 6F 72 64 6D 61 6E>
-  replace : "Swordsman"
-
-- #Magician
-  find : <4D 61 67 69 63 69 61 6E>
-  replace : "Mage"
-
-- #Prieset
-  find : <50 72 69 65 73 65 74>
+- #
+  find : "Prieset"
   replace : "Priest"
-
-- #Wizerd
-  find : <57 69 7A 65 72 64>
-  replace : "Wizard"
 
 - #(%s)님을 아이로 입양신청
   find : <28 25 73 29 B4 D4 C0 BB 20 BE C6 C0 CC B7 CE 20 C0 D4 BE E7 BD C5 C3 BB>
@@ -3700,181 +3684,133 @@
   find : <C8 A3 B9 AE C0 C7 20 BB F3 C5 C2 B8 A6 20 C6 C4 C0 CF BF A1 20 C0 FA C0 E5 C7 CF C1 F6 20 BE CA BD C0 B4 CF B4 D9 2E>
   replace : "Do not save Homunculus status as a file."
 
-- #Rouge
-  find : <52 6F 75 67 65>
+- #
+  find : "Rouge"
   replace : "Rogue"
 
-- #Crusader_W
-  find : <43 72 75 73 61 64 65 72 5F 57>
+- #
+  find : "Crusader_W"
   replace : "Crusader"
 
-- #Monk_W
-  find : <4D 6F 6E 6B 5F 57>
+- #
+  find : "Monk_W"
   replace : "Monk"
 
-- #Sage_W
-  find : <53 61 67 65 5F 57>
+- #
+  find : "Sage_W"
   replace : "Sage"
 
-- #Rouge_W
-  find : <52 6F 75 67 65 5F 57>
+- #
+  find : "Rouge_W"
   replace : "Rogue"
 
-- #Alchemist_W
-  find : <41 6C 63 68 65 6D 69 73 74 5F 57>
+- #
+  find : "Alchemist_W"
   replace : "Alchemist"
 
-- #Novice High
-  find : <4E 6F 76 69 63 65 20 48 69 67 68>
+- #
+  find : "Novice High"
   replace : "High Novice"
 
-- #Swordman High
-  find : <53 77 6F 72 64 6D 61 6E 20 48 69 67 68>
+- #
+  find : "Swordman High"
   replace : "High Swordsman"
 
-- #Magician High
-  find : <4D 61 67 69 63 69 61 6E 20 48 69 67 68>
+- #
+  find : "Magician High"
   replace : "High Mage"
 
-- #Archer High
-  find : <41 72 63 68 65 72 20 48 69 67 68>
+- #
+  find : "Archer High"
   replace : "High Archer"
 
-- #Acolyte High
-  find : <41 63 6F 6C 79 74 65 20 48 69 67 68>
+- #
+  find : "Acolyte High"
   replace : "High Acolyte"
 
-- #Merchant High
-  find : <4D 65 72 63 68 61 6E 74 20 48 69 67 68>
+- #
+  find : "Merchant High"
   replace : "High Merchant"
 
-- #Thief High
-  find : <54 68 69 65 66 20 48 69 67 68>
+- #
+  find : "Thief High"
   replace : "High Thief"
 
-- #Novice High_W
-  find : <4E 6F 76 69 63 65 20 48 69 67 68 5F 57>
+- #
+  find : "Novice High_W"
   replace : "High Novice"
 
-- #Swordman High_W
-  find : <53 77 6F 72 64 6D 61 6E 20 48 69 67 68 5F 57>
+- #
+  find : "Swordman High_W"
   replace : "High Swordman"
 
-- #Magician High_W
-  find : <4D 61 67 69 63 69 61 6E 20 48 69 67 68 5F 57>
+- #
+  find : "Magician High_W"
   replace : "High Mage"
 
-- #Archer High_W
-  find : <41 72 63 68 65 72 20 48 69 67 68 5F 57>
+- #
+  find : "Archer High_W"
   replace : "High Archer"
 
-- #Acolyte High_W
-  find : <41 63 6F 6C 79 74 65 20 48 69 67 68 5F 57>
+- #
+  find : "Acolyte High_W"
   replace : "High Acolyte"
 
-- #Merchant High_W
-  find : <4D 65 72 63 68 61 6E 74 20 48 69 67 68 5F 57>
+- #
+  find : "Merchant High_W"
   replace : "High Merchant"
 
-- #Thief High_W
-  find : <54 68 69 65 66 20 48 69 67 68 5F 57>
+- #
+  find : "Thief High_W"
   replace : "High Thief"
 
-- #Lord Knight
-  find : <4C 6F 72 64 20 4B 6E 69 67 68 74>
-  replace : "Lord Knight"
-
-- #High Priest
-  find : <48 69 67 68 20 50 72 69 65 73 74>
-  replace : "High Priest"
-
-- #High Wizard
-  find : <48 69 67 68 20 57 69 7A 61 72 64>
-  replace : "High Wizard"
-
-- #White Smith
-  find : <57 68 69 74 65 20 53 6D 69 74 68>
+- #
+  find : "White Smith"
   replace : "Whitesmith"
 
-- #Sniper
-  find : <53 6E 69 70 65 72>
-  replace : "Sniper"
-
-- #Assassin Cross
-  find : <41 73 73 61 73 73 69 6E 20 43 72 6F 73 73>
-  replace : "Assassin Cross"
-
-- #Lord Knight_W
-  find : <4C 6F 72 64 20 4B 6E 69 67 68 74 5F 57>
+- #
+  find : "Lord Knight_W"
   replace : "Lord Knight"
 
-- #High Priest_W
-  find : <48 69 67 68 20 50 72 69 65 73 74 5F 57>
+- #
+  find : "High Priest_W"
   replace : "High Priest"
 
-- #High Wizard_W
-  find : <48 69 67 68 20 57 69 7A 61 72 64 5F 57>
+- #
+  find : "High Wizard_W"
   replace : "High Wizard"
 
-- #White Smith_W
-  find : <57 68 69 74 65 20 53 6D 69 74 68 5F 57>
+- #
+  find : "White Smith_W"
   replace : "Whitesmith"
 
-- #Sniper_W
-  find : <53 6E 69 70 65 72 5F 57>
+- #
+  find : "Sniper_W"
   replace : "Sniper"
 
-- #Assassin Cross_W
-  find : <41 73 73 61 73 73 69 6E 20 43 72 6F 73 73 5F 57>
+- #
+  find : "Assassin Cross_W"
   replace : "Assassin Cross"
 
-- #Paladin
-  find : <50 61 6C 61 64 69 6E>
+- #
+  find : "Paladin_W"
   replace : "Paladin"
 
-- #Champion
-  find : <43 68 61 6D 70 69 6F 6E>
+- #
+  find : "Champion_W"
   replace : "Champion"
 
-- #Professor
-  find : <50 72 6F 66 65 73 73 6F 72>
+- #
+  find : "Professor_W"
   replace : "Professor"
 
-- #Stalker
-  find : <53 74 61 6C 6B 65 72>
+- #
+  find : "Stalker_W"
   replace : "Stalker"
 
-- #Creator
-  find : <43 72 65 61 74 6F 72>
+- #
+  find : "Creator_W"
   replace : "Creator"
-
-- #Clown
-  find : <43 6C 6F 77 6E>
-  replace : "Clown"
-
-- #Paladin_W
-  find : <50 61 6C 61 64 69 6E 5F 57>
-  replace : "Paladin"
-
-- #Champion_W
-  find : <43 68 61 6D 70 69 6F 6E 5F 57>
-  replace : "Champion"
-
-- #Professor_W
-  find : <50 72 6F 66 65 73 73 6F 72 5F 57>
-  replace : "Professor"
-
-- #Stalker_W
-  find : <53 74 61 6C 6B 65 72 5F 57>
-  replace : "Stalker"
-
-- #Creator_W
-  find : <43 72 65 61 74 6F 72 5F 57>
-  replace : "Creator"
-
-- #Gypsy
-  find : <47 79 70 73 79>
-  replace : "Gypsy"
 
 - #비밀번호가 지정되어 있지 않습니다. 새로운 비밀번호를 지정하시겠습니까?
   find : <BA F1 B9 D0 B9 F8 C8 A3 B0 A1 20 C1 F6 C1 A4 B5 C7 BE EE 20 C0 D6 C1 F6 20 BE CA BD C0 B4 CF B4 D9 2E 20 BB F5 B7 CE BF EE 20 BA F1 B9 D0 B9 F8 C8 A3 B8 A6 20 C1 F6 C1 A4 C7 CF BD C3 B0 DA BD C0 B4 CF B1 EE 3F>
@@ -8004,8 +7940,8 @@
   find : <42 61 73 65 20 4C 56 20 25 64 20 C0 CC BB F3>
   replace : "LV %d and higher"
 
-- #Base LV %d ~ %d
-  find : <42 61 73 65 20 4C 56 20 25 64 20 7E 20 25 64>
+- #
+  find : "Base LV %d ~ %d"
   replace : "LV %d ~ %d"
 
 - #제한 없음
@@ -8239,18 +8175,6 @@
 - #== 검색 결과(%d)==
   find : <3D 3D 20 B0 CB BB F6 20 B0 E1 B0 FA 28 25 64 29 3D 3D>
   replace : "= search result (%d) =="
-
-- #Npc)%s:%s
-  find : <4E 70 63 29 25 73 3A 25 73>
-  replace : "Npc)%s:%s"
-
-- #Mob)%s:%s
-  find : <4D 6F 62 29 25 73 3A 25 73>
-  replace : "Mob)%s:%s"
-
-- #Map)%s
-  find : <4D 61 70 29 25 73>
-  replace : "Map)%s"
 
 - #======== 결과 정보 ==========
   find : <3D 3D 3D 3D 3D 3D 3D 3D 20 B0 E1 B0 FA 20 C1 A4 BA B8 20 3D 3D 3D 3D 3D 3D 3D 3D 3D 3D>
@@ -9552,8 +9476,8 @@
   find : <B8 DE C0 CF C0 BB 20 BF AD 20 BC F6 20 BE F8 BD C0 B4 CF B4 D9 2E>
   replace : "You cannot open the mail."
 
-- #You are currently joined in CLan !!
-  find : <59 6F 75 20 61 72 65 20 63 75 72 72 65 6E 74 6C 79 20 6A 6F 69 6E 65 64 20 69 6E 20 43 4C 61 6E 20 21 21>
+- #
+  find : "You are currently joined in CLan !!"
   replace : "You currently belong to a clan."
 
 - #골드 PC방 마일리지 정보
@@ -13180,10 +13104,6 @@
   find : <B8 F0 C7 E8 B0 A1 20 C1 DF B0 B3 BC D2 BF A1 20 B5 EE B7 CF 20 C1 DF C0 D4 B4 CF B4 D9 2E 20 C0 E1 BD C3 B8 B8 20 B1 E2 B4 D9 B7 C1 20 C1 D6 BC BC BF E4 2E>
   replace : "Agency Registration in progress. Please wait."
 
-- #
-  # find : <B0 D4 C0 D3 20 C1 DF 20 C7 D8 B4 E7 20 C0 AF C0 FA C0 C7 20 B0 A1 C0 D4 20 BF E4 C3 BB C0 BB 20 B9 DE C1 F6 20 BE CA BD C0 B4 CF B4 D9 2E>
-  # replace : "During the game, we do not receive requests to join the user."
-
-- #
+- #게임 중 해당 유저의 가입 요청을 받지 않습니다.
   # find : <B0 D4 C0 D3 20 C1 DF 20 C7 D8 B4 E7 20 C0 AF C0 FA C0 C7 20 B0 A1 C0 D4 20 BF E4 C3 BB C0 BB 20 B9 DE C1 F6 20 BE CA BD C0 B4 CF B4 D9 2E>
   # replace : "During the game, we do not receive requests to join the user."
