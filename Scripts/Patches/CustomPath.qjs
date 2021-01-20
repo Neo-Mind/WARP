@@ -269,7 +269,7 @@ CustomLicenseTxt = function()
 
 	/// 2.1 - Get new Filename from user
 	let varName = '$licenseTXT';
-	let newFile = Exe.GetUserInput(varName, D_Text, "License file", "Enter the name of the Txt file", Orig_LicTxt, {minLen: 1, maxLen: 20});
+	let newFile = Exe.GetUserInput(varName, D_Text, "License file", "Enter the name of the Txt file", Orig_LicTxt, {minLen: 9, maxLen: 14});
 	if (newFile === false)
 		Cancel("License file", Orig_LicTxt);
 
