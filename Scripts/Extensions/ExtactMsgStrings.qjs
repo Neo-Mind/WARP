@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo Mind                                       *
+*   Copyright (C) 2013-2021 Neo Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2021-01-20                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -108,10 +108,12 @@ ExtractMsgStrings = function()
 
 		/// 3.4 - Extract the string
 		let msgStr = Exe.GetText(strAddr);
-
+		
 		/// 3.5 - Translate the string if mapping available
 		if (trMap !== undefined && trMap[msgStr] !== undefined)
 			msgStr = trMap[msgStr];
+		else
+			msgStr = msgStr.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
 
 		/// 3.6 - Write into output file
 		fp.WriteLine(msgStr + '#');
@@ -162,18 +164,14 @@ _EMS_LoadTr = function(inFile)
 		replStr = (replStr + '').replace(/\n/g, "\\n").replace(/\r/g, "\\r");
 
 		/// 2.1 - If the pattern is a hex then convert to equivalent bytes, otherwise just extract the data within ''
-		let parts = findPat.match(/^\s*'(.*)'\s*$/);
-		if (parts === null)
-			findPat = findPat.toAscii();
-		else
-			findPat = parts[1];
+		let parts = findPat.match(/^\s*<(.*)>\s*$/);
+		if (parts !== null)
+			findPat = parts[1].toAscii();
 
 		/// 2.2 - Repeat same for replacement string.
 		parts = replStr.match(/^\s*'(.*)'\s*$/);
-		if (parts === null)
-			replStr = replStr.toAscii();
-		else
-			replStr = parts[1];
+		if (parts !== null)
+			replStr = parts[1].toAscii();
 
 		/// 2.3 - Add to the map
 		trMap[findPat] = replStr;

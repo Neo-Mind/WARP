@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Ai4rei/AN                                         *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-20                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -101,10 +101,10 @@ TranslateClient = function()
 		let findPat = hash.find;
 		let replStr = hash.replace;
 		let {startDate, endDate, desc} = hash;
-		
+
 		if ( (IsNum(startDate) && Exe.BuildDate < startDate) || (IsNum(endDate) && Exe.BuildDate > endDate) )
 			return true; // its not a fail
-	
+
 		/// 3.4 - Ensure description is a valid string/number, defaults to the replacement string
 		if (desc === undefined)
 			desc = replStr;
@@ -127,14 +127,17 @@ TranslateClient = function()
 
 		/// 3.6 - Check if the search pattern is hex or text string
 		let hexMode = true;
-		let parts = findPat.match(/^\s*'(.*)'\s*$/);
-		if (parts !== null)
+		let parts = findPat.match(/^\s*<(.*)>\s*$/);
+		if (parts === null)
 		{
-			findPat = parts[1];
 			if (findPat.includes('\x00')) //if null is present then search pattern need to be hex
 				findPat = findPat.toHex();
 			else
 				hexMode = false;
+		}
+		else
+		{
+			findPat = parts[1];
 		}
 
 		/// 3.7 - Find the pattern
@@ -163,14 +166,17 @@ TranslateClient = function()
 
 		/// 3.10 - Repeat 3.6 for replacement string
 		hexMode = true;
-		parts = replStr.match(/^\s*'(.*)'\s*$/);
-		if (parts !== null)
+		parts = replStr.match(/^\s*<(.*)>\s*$/);
+		if (parts === null)
 		{
-			replStr = parts[1];
 			if (replStr.includes('\x00'))
 				replStr = replStr.toHex();
 			else
 				hexMode = false;
+		}
+		else		
+		{
+			replStr = parts[1];
 		}
 
 		/// 3.11 - Replace based on hexMode
