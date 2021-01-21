@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo Mind                                       *
+*   Copyright (C) 2013-2021 Neo Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2021-01-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,33 +34,32 @@ GetPacketKeys = function()
 	/// 1.1 - Need a valid Exe loaded.
 	if (Exe.FileSize == 0)
 		throw NO_EXE;
-	
+
 	/// 1.2 - Ensure PACKET Object is loaded
-	if (!PACKET.load())
-		throw PACKET.Error;
-	
+	PACKET.load();
+
 	/// 2.1 - Open the output file for writing.
 	let fp = new TextFile(OUTDIR + "PacketKeys_" + ROC.BaseName + ".txt", 'w');
 	if (!fp.Valid)
 		throw NO_OUTPUT;
-	
+
 	/// 2.2 - Retrieve the packet keys found and convert to hex
 	let keys = [];
 	PACKET.Keys.forEach( (val, idx) =>
 	{
 		keys[idx] = "0x" + val.toHex(true)
 	});
-	
+
 	/// 2.3 - Write the essentials & the keys in hex to the file.
 	fp.WriteLine("Extracted with WARP")
 	fp.WriteLine("===================")
 	fp.WriteLine("Client: " + Exe.FilePath);
 	fp.WriteLine("BuildDate: " + Exe.BuildDate);
 	fp.WriteLine("Packet Keys : (" + keys.join(', ') + ")");
-	
+
 	/// 2.4 - Close the file
 	fp.Close();
-	
+
 	/// 3 - Show the success message for test mode or display the file otherwise
 	if (Exe.TestMode)
 	{
