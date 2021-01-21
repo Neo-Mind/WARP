@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-01-19                                             #
+#   Last Modified : 2021-01-21                                             #
 #                                                                          #
 ############################################################################
 
@@ -1234,7 +1234,7 @@ groups:
                 desc : Disable GM sprites whilst keeping all the functionality intact like Yellow name and Admin right click menu.
             
             - ShowBGEmblem:
-                title : Enable Emblem hover for BG
+                title : Enable Emblem hover for BG [Experimental]
                 recommend : no
                 author : Neo-Mind
                 desc : Makes the client show the Emblem on top of the character for Battleground mode as well along with GvG.
