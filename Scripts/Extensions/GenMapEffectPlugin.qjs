@@ -1,0 +1,359 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2021 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2021-01-22                                             *
+*   Last Modified : 2021-01-22                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Generate Curiosity's Map Effect Plugin for loaded client
+///        using the template DLL (rdll2.asi) along with header file.
+///
+GenMapEffectPlugin = function()
+{
+	/// 1.1 - Open the template file & ensure exe file is valid
+	if (Exe.FileSize == 0)
+		throw NO_EXE;
+
+	let handle = new BinFile("Inputs/rdll2.asi");
+	if (!handle.Valid)
+		throw Error("Template file is inaccessible");
+	
+	/// 1.2 - Find 'xmas_fild01.rsw'
+	let addr = Exe.FindText("xmas_fild01.rsw");
+	if (addr < 0)
+		throw Error("'xmas_fild01.rsw' not found");
+	
+	/// 1.3 - Find all locations where it is MOVed into a register
+	let prefix = MOV(R32, addr); //MOV reg32_A, OFFSET addr; ASCII "xmas_fild01.rsw"
+	let suffix = MOV(R8, [R32]); //MOV reg8_B, DWORD PTR DS:[reg32_C]
+	
+	let addrs;
+	if (Exe.BuildDate > 20100910 && Exe.BuildDate < 20101200)
+		addrs = [
+			...Exe.FindHexN(prefix + LEA(R32, [R32, 0]) + suffix),
+			...Exe.FindHexN(prefix + LEA(ESP, [ESP, 0]) + suffix)
+		];
+	else
+		addrs = Exe.FindHexN(prefix + suffix);
+
+	if (addrs.isEmpty())
+		throw Error("'xmas_fild01.rsw' not used");
+
+	/// 1.4 - Find 'gef_fild07.rsw'
+	addr = Exe.FindText("gef_fild07.rsw");
+	if (addr < 0)
+		throw Error("'gef_fild07.rsw' not found");
+	
+	/// 1.5 - Find the appropriate one using its address, which will be at the CGameMode_Initialize_EntryPtr
+	let CI_Entry = addrs.find(memAddr => Exe.FindHex(MOV(R32, addr), memAddr + 0x40, memAddr + 0x120) > 0); //MOV reg32_D, OFFSET addr ; ASCII "gef_fild07.rsw"
+	if (CI_Entry < 0)
+		throw Error("Correct match not found");
+
+	/// 2.1 - Look for g_Weather assignment before EntryPtr
+	code =
+		MOV(ECX, POS4WC) //MOV ECX, g_Weather
+	+	CALL()           //CALL CWeather::ScriptProcess
+	;
+	addr = Exe.FindLastHex(code, CI_Entry, CI_Entry - 0x10);
+	if (addr < 0)
+		throw Error("g_Weather assignment missing");
+	
+	/// 2.2 - Extract g_Weather and the MOV ECX instruction
+	let Weather = Exe.GetInt32(addr + 1);
+	let movWeather = Exe.GetHex(addr, 5);
+	
+	/// 2.3 - Find the CALL to LaunchPokJuk to determine the CGameMode_Initialize_ExitPtr
+	code =
+		JE(' 0?')   //JE SHORT _skip
+	+	movWeather  //MOV ECX, OFFSET g_Weather
+	+	CALL()      //CALL CWeather::LaunchPokJuk
+	;
+	addr = Exe.FindHex(code, CI_Entry + 10);
+	if (addr < 0)
+		throw Error("return point missing");
+	
+	/// 2.4 - Save the address after the CALL and the CALLed address
+	addr += code.byteCount();
+	let CW_LPokJuk = Exe.GetTgtAddr(addr);
+	let CI_Exit = addr + 4;
+	
+	/// 3.1 - Find 'yuno.rsw'
+	let yunoAddr = Exe.FindText("yuno.rsw");
+	if (yunoAddr < 0)
+		throw Error("'yuno.rsw' not found");
+	
+	/// 3.2 - Find its reference between CGameMode_Initialize_EntryPtr & CGameMode_Initialize_ExitPtr
+	prefix = MOV(R32, yunoAddr);
+	suffix = MOV(R8, [R32]);
+
+	addr = Exe.FindHex(prefix + suffix, CI_Entry + 0x10, CI_Exit);
+	if (addr < 0)
+	{
+		prefix += NOP7;
+		addr = Exe.FindHex(prefix + suffix, CI_Entry + 0x10, CI_Exit);
+	}
+	if (addr < 0 && Exe.BuildDate > 20190000)
+	{
+		prefix = prefix.replace(NOP7, LEA(ESP, [ESP, ALL00]));
+		addr = Exe.FindHex(prefix + suffix, CI_Entry + 0x10, CI_Exit);
+	}
+	if (addr < 0)
+		throw Error("'yuno.rsw' not used");
+	
+	/// 3.3 - Find the JZ below it which leads to calling LaunchCloud
+	addr += prefix.byteCount() + suffix.byteCount();
+	
+	addr = Exe.FindHex(JZ(POS2WC), addr, addr + 0x80);
+	if (addr < 0)
+		throw Error("LaunchCloud Jump missing");
+	
+	/// 3.4 - Extract the instruction at the JZ target & save its Displacement value (g_useEffect)
+	let ins = Instr.FromAddr(Exe.GetTgtAddr(addr + 2, PHYSICAL));
+	let UseEffect = ins.Disp;
+	if (UseEffect === undefined)
+		throw Error("g_useEffect not found");
+	
+	/// 3.5 - Find the call to LaunchCloud after it
+	addr = ins.NextAddr;
+		
+	code =
+		movWeather //MOV ECX, OFFSET g_Weather
+	+	CALL()     //CALL CWeather::LaunchCloud
+	;
+	addr = Exe.FindHex(code, addr, addr + 0x80);
+	if (addr < 0)
+		throw Error("LaunchCloud CALL missing");
+	
+	/// 3.6 - Save the function address
+	let CW_LCloud = Exe.GetTgtAddr(addr + code.byteCount());
+	
+	/// 3.7 - Find the 2nd reference to 'yuno.rsw' which serves as CGameMode_OnInit_EntryPtr
+	code = MOV(EAX, yunoAddr);
+	let CO_Entry = Exe.FindLastHex(code, CI_Entry);
+	if (CO_Entry < 0)
+		CO_Entry = Exe.FindHex(code, CI_Exit);
+	if (CO_Entry < 0)
+		throw Error("2nd yuno reference missing");
+	
+	/// 4.1 - Find the JZ after CGameMode_OnInit_EntryPtr
+	addr = Exe.FindHex(JZ(POS2WC), CO_Entry + 5, CO_Entry + 0x80);
+	if (addr < 0)
+		throw Error("g_renderer Jump missing");
+	
+	/// 4.2 - Extract the instruction at the JZ target & save its Displacement value (g_renderer)
+	ins = Instr.FromAddr(Exe.GetTgtAddr(addr + 2, PHYSICAL));
+	let Renderer = ins.Disp;
+	if (Renderer === undefined)
+		throw Error("g_renderer not referenced");
+	
+	/// 4.3 - Goto the next instruction & save its Displacement (clearColor offset)
+	ins = Instr.FromAddr(ins.NextAddr);
+	let clearColor = ins.Disp;
+	if (clearColor === undefined)
+		throw Error("clearColor assignment missing");
+		
+	if (clearColor > 0x7F)
+		throw Error("Clear Color is more than 1 byte");
+	
+	/// 4.4 - Goto the last clearColor assignment
+	addr = ins.NextAddr;
+	
+	let clr = Exe.BuildDate > 20130000 ? 0xFF1A0A08 : 0xFF330033;
+	if ((Exe.Version === 9.0 || Exe.Version === 10.0) &&
+	    (Exe.BuildDate < 20120820 || Exe.BuildDate > 20130000))
+	{
+		code =
+			JNE(0xD)                     //JNE SHORT _skip
+		+	MOV(R32, [Renderer])         //MOV reg32_A, DWORD PTR DS:[g_renderer]
+		+	MOV([R32, clearColor], clr)  //MOV DWORD PTR DS:[reg32_A + clearColor], color
+		;
+	}
+	else
+	{
+		code =
+			JNE(0xC)                     //JNE SHORT _skip
+		+	MOV(EAX, [Renderer])         //MOV EAX, DWORD PTR DS:[g_renderer]
+		+	MOV([EAX, clearColor], clr)  //MOV DWORD PTR DS:[EAX + clearColor], color
+		;
+	}
+	
+	addr = Exe.FindHex(code, addr, addr + 0x300);
+	if (addr < 0)
+		throw Error("CO Exit point missing");
+	
+	/// 4.5 - Save the address after the assignment as CGameMode_OnInit_ExitPtr
+	let CO_Exit = addr + code.byteCount();
+
+	/// 5.1 - Find the CALL to CWeather::LaunchSnow after CGameMode_Initialize_EntryPtr
+	code =
+		JZ(7)       //JZ SHORT addr1 -> Calls StopSnow
+	+	CALL(ALLWC) //CALL CWeather::LaunchSnow
+	+	JMP(5)      //JMP SHORT addr2 -> Skip StopSnow
+	+	CALL()      //CALL CWeather::StopSnow ; addr1
+	;
+	
+	addr = Exe.FindHex(code, CI_Entry + 0x20, CI_Entry + 0x100);
+	if (addr < 0)
+		throw Error("Snow CALLs missing");
+	
+	/// 5.2 - Save the LaunchSnow function address
+	let CW_LSnow = Exe.GetTgtAddr(addr + 3);
+	
+	/// 5.3 - Find the LaunchNight function
+	let interval = Exe.Version < 9.0 ? NOP : ' CC';
+	code =
+		interval
+	+	MOV(BYTE_PTR, [ECX], 1)
+	+	RETN()
+	+	interval.repeat(3)
+	;
+	let addrNight = Exe.FindHex(code);
+	if (addrNight < 0)
+		throw Error("LaunchNight function missing");
+	
+	/// 5.4 - Save the LaunchNight function address
+	let CW_LNight = Exe.Phy2Vir(addrNight + 1, CODE);
+	
+	/// 6.1 - Find the pattern inside LaunchMaple function
+	prefix = PUSH(0x14D);                 //PUSH 14D
+	if (Exe.Version > 11.0)
+		suffix = MOV(R32, [R32, WCp]);    //MOV reg32_A, DWORD PTR DS:[reg32_B + const]
+	else if (Exe.Version > 6.0)           //   or
+		suffix = MOV([R32, ' 1?'], R32);  //MOV DWORD PTR DS:[reg32_A + const], reg32_B
+	else                                  //   or
+		suffix = MOV([R32], R32);         //MOV DWORD PTR DS:[reg32_A], reg32_B
+	
+	let addrM = Exe.FindLastHex(prefix + suffix, addrNight);
+	if (addrM < 0)
+		throw Error("LaunchMaple marker missing");
+
+	/// 6.2 - Find the function's starting address
+	code =
+		(ROC.HasFP
+	?
+		PUSH(EBP)        //PUSH EBP
+	+	MOV(EBP, ESP)    //MOV EBP, ESP
+	:
+		''
+	)
+	+	SUB(ESP, WCp)   //SUB ESP, const
+	+	PUSH(ESI)       //PUSH ESI
+	+	(Exe.BuildDate > 20180910
+	?
+		PUSH_R          //PUSH reg32_A
+	:
+		''
+	)
+	+	MOV(R32, ECX)   //MOV reg32_B, ECX
+	;
+	addr = Exe.FindLastHex(code, addrM, addrM - 0x80);
+	if (addr < 0)
+		throw Error("LaunchMaple start missing");
+
+	/// 6.3 - Save the function address
+	let CW_LMaple = Exe.Phy2Vir(addr, CODE);
+	
+	/// 6.4 - Find the pattern inside LaunchSakura
+	prefix = PUSH(0xA3);
+	
+	if (Exe.Version < 11.0)
+		addr = Exe.FindLastHex(prefix + suffix, addr);
+	else
+		addr = Exe.FindHex(prefix + suffix, addrNight, addrNight + 0x300);
+		
+	if (addr < 0)
+		throw Error("LaunchSakura marker missing");
+	
+	/// 6.5 - Find the function's starting address
+	addr = Exe.FindLastHex(code, addr, addr - 0x80);
+	if (addr < 0)
+		throw Error("LaunchSakura start missing");
+	
+	/// 6.6 - Save the function address
+	let CW_LSakura = Exe.Phy2Vir(addr, CODE);
+	
+	/// 7.1 - Extract the DLL contents
+	let dll = handle.ReadHex();
+	handle.Close();
+	
+	/// 7.2 - Fill in the values
+	dll = dll.replace(/ C1 C1 C1 C1/i, Weather);
+	dll = dll.replace(/ C2 C2 C2 C2/i, Renderer);
+	dll = dll.replace(/ C3 C3 C3 C3/i, UseEffect);
+	
+	code =
+		CW_LCloud.toHex()
+	+	CW_LSnow.toHex()
+	+	CW_LMaple.toHex()
+	+	CW_LSakura.toHex()
+	+	CW_LPokJuk.toHex()
+	+	CW_LNight.toHex()
+	;
+	dll = dll.replace(/ C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4 C4/i, code);
+
+	dll = dll.replace(/ C5 C5 C5 C5/i, Exe.Phy2Vir(CI_Entry, CODE).toHex());
+	dll = dll.replace(/ C7 C7 C7 C7/i, Exe.Phy2Vir(CI_Exit,  CODE).toHex());
+	dll = dll.replace(/ C6 C6 C6 C6/i, Exe.Phy2Vir(CO_Entry, CODE).toHex());
+	dll = dll.replace(/ C8 C8 C8 C8/i, Exe.Phy2Vir(CO_Exit,  CODE).toHex());
+
+	dll = dll.replace(/ 6C 5D C3/i, clearColor + " 5D C3");
+
+	/// 7.3 - Write out the updated contents
+	if (!handle.Open(OUTDIR + "rdll2_" + ROC.BaseName + ".asi", 'w'))
+		throw Error("Unable to write the output file");
+	
+	handle.WriteHex(dll);
+	handle.Close();
+	
+	/// 7.4 - Generate the header
+	handle = new TextFile(OUTDIR + "client_" + ROC.BaseName + ".h", 'w');
+	if (handle.Valid)
+	{
+		handle.WriteLine("#include <WTypes.h>");
+		handle.WriteLine("\n// Client Date : " + Exe.BuildDate);
+		handle.WriteLine("\n// Client offsets - some are #define because they were appearing in multiple locations unnecessarily");
+		handle.WriteLine("#define G_WEATHER 0x" + Weather.toHex(true) + ";");
+		handle.WriteLine("#define G_RENDERER 0x" + Renderer.toHex(true) + ";");
+		handle.WriteLine("#define G_USEEFFECT 0x" + UseEffect.toHex(true) + ";");
+		handle.WriteLine("\nDWORD CWeather_EffectId2LaunchFuncAddr[] = {\n\tNULL, //CEFFECT_NONE");
+		handle.WriteLine("\t0x" + CW_LCloud.toHex(true)  + ", // CEFFECT_SKY -> void CWeather::LaunchCloud(CWeather this<ecx>, char param)");
+		handle.WriteLine("\t0x" + CW_LSnow.toHex(true)   + ", // CEFFECT_SNOW -> void CWeather::LaunchSnow(CWeather this<ecx>)");
+		handle.WriteLine("\t0x" + CW_LMaple.toHex(true)  + ", // CEFFECT_MAPLE -> void CWeather::LaunchMaple(CWeather this<ecx>)");
+		handle.WriteLine("\t0x" + CW_LSakura.toHex(true) + ", // CEFFECT_SAKURA -> void CWeather::LaunchSakura(CWeather this<ecx>)");
+		handle.WriteLine("\t0x" + CW_LPokJuk.toHex(true) + ", // CEFFECT_POKJUK -> void CWeather::LaunchPokJuk(CWeather this<ecx>)");
+		handle.WriteLine("\t0x" + CW_LNight.toHex(true)  + ", // CEFFECT_NIGHT -> void CWeather::LaunchNight(CWeather this<ecx>)");
+		handle.WriteLine("};\n");
+	
+		handle.WriteLine("void* CGameMode_Initialize_EntryPtr = (void*)0x" + Exe.Phy2Vir(CI_Entry, CODE).toHex(true) + ";");
+		handle.WriteLine("void* CGameMode_Initialize_ExitPtr = (void*)0x" + Exe.Phy2Vir(CI_Exit, CODE).toHex(true) + ";");
+		handle.WriteLine("void* CGameMode_OnInit_EntryPtr = (void*)0x" + Exe.Phy2Vir(CO_Entry, CODE).toHex(true) + ";");
+		handle.WriteLine("void* CGameMode_OnInit_ExitPtr  = (void*)0x" + Exe.Phy2Vir(CO_Exit, CODE).toHex(true) + ";");
+	
+		handle.WriteLine("\r\n#define GR_CLEAR " + (clearColor/4) + ";");
+		handle.Close();
+	}
+	
+	return "Plugin ASI generated in 'Outputs' directory";
+};

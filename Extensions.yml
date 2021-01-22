@@ -1,6 +1,6 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) 2020 Neo Mind                                            #
+#   Copyright (C) 2020-2021 Neo-Mind                                       #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
@@ -22,34 +22,39 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-18                                             #
-#   Last Modified : 2020-11-19                                             #
+#   Last Modified : 2021-01-22                                             #
 #                                                                          #
 ############################################################################
 
 - GetPacketKeys:
-    title: Get Packet Keys
-    tooltip: Retrieves the packet keys used in the loaded client for Obfuscation
-    author: Neo-Mind
-    icon: Inputs/key.png
+    title : Get Packet Keys
+    tooltip : Retrieves the packet keys used in the loaded client for Obfuscation
+    author : Neo-Mind
+    icon : Inputs/key.png
 
 - ExtractTxtNames:
-    title: Extract txt file names
-    tooltip: Extracts embedded txt file names in the loaded client
-    icon: Inputs/files.png
+    title : Extract txt file names
+    tooltip : Extracts embedded txt file names in the loaded client
+    icon : Inputs/files.png
 
 - ExtractMsgStrings:
-    title: Extract msgstringtable
-    tooltip: Extracts embedded msgstringtable from the loaded client
-    author: Neo-Mind
-    icon: Inputs/files.png
+    title : Extract msgstringtable
+    tooltip : Extracts embedded msgstringtable from the loaded client
+    author : Neo-Mind
+    icon : Inputs/files.png
 
 - DumpImportTable:
-    title: Dump Import Table
-    tooltip: Dumps the Full Import table (dll names and imported functions) for the loaded client
-    author: Neo-Mind
-    icon: Inputs/import.png
+    title : Dump Import Table
+    tooltip : Dumps the Full Import table (dll names and imported functions) for the loaded client
+    author : Neo-Mind
+    icon : Inputs/import.png
     
-- Trial:
-    title: Trial Extension
-    tooltip: Just intended for some trials with Exe & Warp
-    author: Neo-Mind
+- GenMapEffectPlugin:
+    title : Generate MapEffect Plugin [Expt.]
+    tooltip : Generate Mapeffect plugin by Curiosity", "Generates Curiosity's mapeffect plugin for the loaded client"
+    author : Neo-Mind
+ 
+# - Trial:
+    # title : Trial Extension
+    # tooltip : Just intended for some trials with Exe & Warp
+    # author : Neo-Mind
