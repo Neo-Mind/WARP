@@ -51,7 +51,7 @@
     
 - GenMapEffectPlugin:
     title : Generate MapEffect Plugin [Expt.]
-    tooltip : Generate Mapeffect plugin by Curiosity", "Generates Curiosity's mapeffect plugin for the loaded client"
+    tooltip : Generate Curiosity's Mapeffect plugin", "Generates Curiosity's mapeffect plugin for the loaded client (as rdll2_<filename>.asi which needs to be placed in your client area)"
     author : Neo-Mind
  
 # - Trial:
