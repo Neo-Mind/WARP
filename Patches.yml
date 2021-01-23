@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-01-21                                             #
+#   Last Modified : 2021-01-24                                             #
 #                                                                          #
 ############################################################################
 
@@ -218,7 +218,7 @@ groups:
             
             - UseOldLogin:
                 title : Use Old Login Packet
-                recommend : no
+                recommend : yes
                 author : Ai4rei/AN , Andrei Karas (4144)
                 desc : Enable the old login packet (0x64) used for Login Window. Intended for new clients which cannot restore the login window anymore.
     
@@ -731,7 +731,24 @@ groups:
                 title : Always enable '/showname' command
                 recommend : yes
                 author : Neo-Mind
-                desc : Enables <b>/showname</b> command for all Langtypes"
+                desc : Enables <b>/showname</b> command for all Langtypes
+    
+    - SkipLub:
+        title : SKIP LUB
+        mutex : false
+        
+        patches:
+            - SkipSignBoard:
+                title : Skip SignBoard lubs
+                recommend : no
+                author : Andrei Karas (4144) , X-EcutiOnner
+                desc : Makes the client skip loading SignBoardList related lub files
+            
+            - SkipTownInfo:
+                title : Skip Towninfo lub
+                recommend : no
+                author : Andrei Karas (4144) , X-EcutiOnner
+                desc : Makes the client skip loading Towninfo.lub file
     
     - TitleBar:
         title : TITLE BAR CUSTOMIZATION
@@ -999,12 +1016,6 @@ groups:
                 author : CH.C (jchcc) , Neo-Mind
                 desc : Change the Maximum no of items in inventory to user specified value.
             
-            - CustomPartyLimit:
-                title : Custom Party Limit
-                recommend : no
-                author : CH.C (jchcc)
-                desc : Change the Maximum party value displayed on Alt+Z to user specified value.
-            
             - InsensitiveStorageSearch:
                 title : Case-Insensitive Storage Search
                 recommend : no
@@ -1100,6 +1111,18 @@ groups:
                 recommend : no
                 author : Andrei Karas (4144), Asheraf
                 desc : Changes the default level range on the Adventure Agency.
+            
+            - CustomNewCharNameHeight:
+                title : Change new Char Name field height
+                recommend : no
+                author : Andrei Karas (4144)
+                desc : Changes the height in input field of the new char creation dialog to user specified value.
+            
+            - NoEquipPreview:
+                title : Disable Equipment Preview
+                recommend : no
+                author : X-EcutiOnner
+                desc : Remove equipment preview button on the items description window
     
     - CustomData:
         title : DATA CUSTOMIZATION
@@ -1211,10 +1234,16 @@ groups:
             
             - CustomDLL:
                 title : Add Custom DLLs
-                recommend: no
-                author: Neo-Mind
-                desc: Makes the hexed client load the specified DLL and functions.
+                recommend : no
+                author : Neo-Mind
+                desc : Makes the hexed client load the specified DLL and functions.
             
+            - HideBuildInfo:
+                title : Hide Build Info
+                recommend : yes
+                author : Andrei Karas (4144)
+                desc : Hide the actual build info in client by 'NULL' ifying all related values.
+    
     - CustomChar:
         title : CHARACTER CUSTOMIZATION
         mutex : false
@@ -1255,7 +1284,7 @@ groups:
                 title : Custom Quick Switch Delay
                 recommend : no
                 author : mrjnumber1
-                desc : Change quick item switch delay ticks with user specfied value.
+                desc : Change quick item switch delay ticks with user specified value.
             
             - AllowPL2Leave:
                 title : Allow Party Leader to leave
@@ -1274,23 +1303,40 @@ groups:
                 recommend : no
                 author : Functor, Secret , Neo-Mind
                 desc : Remove restriction of guild functionality while being a member of a clan.
-            
+    
+    - CustomFriendWin:
+        title : FRIEND WINDOW CUSTOMIZATION
+        mutex : false
+        
+        patches:
+            - CustomFriendsLimit:
+                title : Change Max Friends
+                recommend : no
+                author : Andrei Karas (4144) ,  X-EcutiOnner
+                desc : Change the Maximum no of friends displayed on Alt+H to user specified value
+                
+            - CustomPartyLimit:
+                title : Change Party Limit
+                recommend : no
+                author : CH.C (jchcc)
+                desc : Change the Maximum no of party members displayed on Alt+Z to user specified value.
+    
     - CustomEquipWin:
         title : EQUIP WINDOW CUSTOMIZATION
         mutex : false
         
         patches:
             - NoEquipSwap:
-                title : Remove Equipment Swap Button
+                title : Remove Swap button
                 recommend : no
-                author : Functor, Andrei Karas (4144) ,  X-EcutiOnner
+                author : Functor , Andrei Karas (4144) ,  X-EcutiOnner
                 desc : Remove equipment swap button on the equipment window.
             
-            - NoEquipTitleUI:
-                title : Remove Equipment Title UI
+            - NoEquipWinTitle:
+                title : Remove Window title
                 recommend : no
                 author : CH.C (jchcc), Andrei Karas (4144) , X-EcutiOnner
-                desc : Remove equipment title ui on the equipment window.
+                desc : Remove equipment UI title on the equipment window.
     
     - CustomEnv:
         title : ENVIRONMENT CUSTOMIZATION

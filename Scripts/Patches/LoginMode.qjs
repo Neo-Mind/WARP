@@ -150,7 +150,7 @@ UseOldLogin = function()
 };
 
 ///
-/// \brief Disable for Unneeded Clients - Only Latest clients dont have the login window
+/// \brief Disable for Unneeded Clients - Only Latest clients have the new login window which needs the old packet
 ///
 UseOldLogin.validate = () => Exe.BuildDate > 20100803 && !ROC.HasLWhidden;
 

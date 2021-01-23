@@ -1,0 +1,143 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANT??ILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Andrei (4144)                                          *
+*   Created Date  : 2021-01-23                                             *
+*   Last Modified : 2021-01-23                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Zero out all the values & text messages responsible for displaying the build information.
+///
+HideBuildInfo = function()
+{
+    /// 1 - Find the format strings
+    let verStr = Exe.FindText("ver : %d.%d.%d");
+    if (verStr < 0)
+        throw Error("Version format string missing");
+
+	let snStr = Exe.FindText("s/n : %s", false);
+    if (snStr < 0)
+        throw Error("Serial format string missing");
+
+	/// 2.1 - Look for arg PUSHes for Build String (time & date values) in CGameMode::ProcessTalkType
+	let code =
+        PUSH(POS4WC)   // PUSH OFFSET addr ; ASCII <timestring>
+	+	PUSH(POS4WC)   // PUSH OFFSET addr ; ASCII <datestring>
+	+	PUSH(HBI_Addr) // PUSH OFFSET addr ; ASCII "build : %s - %s"
+	;
+    let addr = Exe.FindHex(code);
+    if (addr < 0)
+        throw Error("Build string not used");
+
+    /// 2.2 - Add the arg addresses to erase list 
+	let eraseList = [
+		Exe.GetInt32(addr + 1),
+		Exe.GetInt32(addr + 6)
+	];
+	
+    /// 2.3 - Look for arg PUSHes for Version string
+    code =
+        PUSH(WCp)    // PUSH subversion
+	+	PUSH(WCp)    // PUSH minorversion
+	+	PUSH(WCp)    // PUSH majorversion
+	+	PUSH(verStr) // PUSH OFFSET addr ; ASCII "ver : %d.%d.%d"
+	;
+    addr = Exe.FindHex(code);
+    if (addr < 0)
+        throw Error("Version string not used");
+
+	/// 2.4 - Add the arg addresses to erase list
+	eraseList.push(
+		Exe.GetInt32(addr + 1),
+		Exe.GetInt32(addr + 3),
+		Exe.GetInt32(addr + 5),
+	);
+	
+	/// 2.5 - Look for arg PUSHes for Serial Number string.
+	code =
+		PUSH(POS4WC) // PUSH OFFSET addr ; ASCII <serial number>
+	+	PUSH(snStr)  // PUSH OFFSET addr ; ASCII "s/n : %s"
+	;
+	addr = Exe.FindHex(code);
+    if (addr < 0)
+        throw Error("Serial string not used");
+		
+	/// 2.6 - Add the arg address to erase list
+	eraseList.push(
+		Exe.GetInt32(addr + 1)
+	);
+
+	/// 3.1 - Find the string containing 'myLog("'
+	let myStr = Exe.FindText("myLog(\"", false, false);
+	if (myStr > 0)
+	{
+		/// 3.2 - Add to erase list
+		eraseList.push(myStr);
+	}
+	
+	/// 3.3 - Find the string containing 'myLog("' 
+	myStr = Exe.FindText("mylog(\"", false, false);
+	if (myStr > 0)
+	{
+		/// 3.4 - Add to erase list
+		eraseList.push(myStr);
+	}
+	
+    /// 3.5 - Find the string containing 'EnterTraceLog(\"'
+	let logStr = Exe.FindText("EnterTraceLog(\"", false, false);
+	if (logStr > 0)
+	{
+		/// 3.6 - Add to erase list
+		eraseList.push(logStr);
+	}
+
+	/// 3.6 - Finally find all strings containing the year.
+	code = Math.floor(Exe.BuildDate / 10000) + "-";
+	let addrs = Exe.FindTextN(code, false, false);
+	eraseList.push(...addrs);
+	
+	/// 4.1 - Zero out all the strings completely at the addresses in erase list.
+	eraseList.forEach( virAddr =>
+	{
+		let addr = Exe.Vir2Phy(virAddr);
+		let str = Exe.GetText(addr);
+		Exe.SetHex(addr, ' 00'.repeat(str.length));
+	});
+	
+	/// 4.2 - Finally 'NULL' ify the timestamp & checksum in PE header
+	addr = Exe.PEoffset + 0x18;
+	Exe.SetInt32(addr + 4, 0);
+	Exe.SetInt32(addr + 64, 0);
+
+    return true;
+};
+
+///
+/// Disable for older clients which doesnt have the option of showing the buildinfo
+/// 
+HideBuildInfo.validate = function()
+{
+	HBI_Addr = Exe.FindText("build : %s - %s");
+	return HBI_Addr > 0;
+};
