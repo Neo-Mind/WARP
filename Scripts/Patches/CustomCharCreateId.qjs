@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2021-01-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,7 @@
 ///
 CustomCharCreateId = function()
 {
-	/// 1 - Find location where packet 0xA39 is being sent (// 2018-05-30)    
+	/// 1 - Find location where packet 0xA39 is being sent
 	let prefix =
 		MOV(EAX, 0xA39)         //MOV EAX, 0A39h
 	+	MOV([EBP, NEG3WC], AX)  //MOV WORD PTR SS:[EBP + a39.packet_id], AX
@@ -43,7 +43,7 @@ CustomCharCreateId = function()
 	+	MOV([EBP, NEG3WC], AL)  //MOV BYTE PTR SS:[EBP + a39.slot], AL
 	;
 
-	let suffix = 
+	let suffix =
 		MOVSX(EAX, [POS4WC])    //MOVSX EAX, DWORD PTR DS:[jobIdAddr] <-- patch here
 	+	MOV([EBP, NEG3WC], EAX) //MOV DWORD PTR SS:[EBP + a39.starting_job_id], EAX
 	;
@@ -58,10 +58,15 @@ CustomCharCreateId = function()
 	/// 2.1 - Retrieve the new value from user
 	let newId = Exe.GetUserInput('$newJobVal', D_Uint16, "Job Id Input", "Enter the new job id", 1, {saveDefault: true});
 	if (newId === false)
-		throw "Cancelled - User didn't provide any inputs";
+		Cancel("User didn't provide any inputs");
 
-	/// 2.2 - Change the assignment of job id 
+	/// 2.2 - Change the assignment of job id
 	Exe.SetHex(addrs[0] + prefix.byteCount(), MOV(EAX, newId) + NOP + NOP);
 
 	return true;
 };
+
+///
+/// \brief Disable for older clients which doesn't have the packet
+///
+CustomCharCreateId.validate = () => Exe.BuildDate >= 20151001;

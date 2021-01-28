@@ -299,9 +299,9 @@ GenMapEffectPlugin = function()
 	handle.Close();
 	
 	/// 7.2 - Fill in the values
-	dll = dll.replace(/ C1 C1 C1 C1/i, Weather);
-	dll = dll.replace(/ C2 C2 C2 C2/i, Renderer);
-	dll = dll.replace(/ C3 C3 C3 C3/i, UseEffect);
+	dll = dll.replace(/ C1 C1 C1 C1/i, Weather.toHex());
+	dll = dll.replace(/ C2 C2 C2 C2/i, Renderer.toHex());
+	dll = dll.replace(/ C3 C3 C3 C3/i, UseEffect.toHex());
 	
 	code =
 		CW_LCloud.toHex()
@@ -318,7 +318,7 @@ GenMapEffectPlugin = function()
 	dll = dll.replace(/ C6 C6 C6 C6/i, Exe.Phy2Vir(CO_Entry, CODE).toHex());
 	dll = dll.replace(/ C8 C8 C8 C8/i, Exe.Phy2Vir(CO_Exit,  CODE).toHex());
 
-	dll = dll.replace(/ 6C 5D C3/i, clearColor + " 5D C3");
+	dll = dll.replace(/ 6C 5D C3/i, clearColor.toHex(1) + " 5D C3");
 
 	/// 7.3 - Write out the updated contents
 	if (!handle.Open(OUTDIR + "rdll2_" + ROC.BaseName + ".asi", 'w'))

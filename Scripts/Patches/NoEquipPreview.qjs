@@ -1,0 +1,96 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 X-EcutiOnner (xex.ecutionner@gmail.com)             *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : X-EcutiOnner                                           *
+*   Created Date  : 2021-01-23                                             *
+*   Last Modified : 2021-01-23                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Enforce the JZ after comparison of IsEffectHatItem function result inside ITEMWNDINFO function  
+///        (skips creating the equipment preview button on the items description window).
+///
+NoEquipPreview = function()
+{
+	/// 1 - Find the comparison
+	let prefix =
+		PUSH(NEP_Addr)                   // PUSH OFFSET addr ; ASCII "IsEffectHatItem"
+	+	MOV(BYTE_PTR, [ECX], 0)          // MOV BYTE PTR DS:[ECX], 0
+	+	CALL(ALLWC)                      // CALL std_string_assign
+	+	MOV([EBP, WCn], POS2WC)          // MOV DWORD PTR SS:[EBP+var_4], const
+	+	PUSH([POS4WC])                   // PUSH DWORD PTR DS:[GlobLuaState]
+	+	MOV([EBP, WCn], -1)              // MOV DWORD PTR SS:[EBP+var_4], -1
+	+	CALL(ALLWC)                      // CALL FnCaller
+	+	ADD(ESP, 0x28)                   // ADD ESP, 28
+	+	CMP(BYTE_PTR, [EBP, NEG3WC], 1)  // CMP BYTE PTR SS:[EBP+var_2CD], 1
+	;
+	
+	let suffix =
+		JZ(POS3WC)                       // JZ loc_0
+	+	PUSH(POS2WC)                     // PUSH const2
+	+	CALL(ALLWC)                      // CALL operator_new
+	+	ADD(ESP, 4)                      // ADD ESP, 4
+	+	MOV([EBP, NEG3WC], EAX)          // MOV DWORD PTR SS:[EBP+var_2D4], EAX
+	+	MOV([EBP, WCn], POS2WC)          // MOV DWORD PTR SS:[EBP+var_4], const3
+	+	TEST(EAX, EAX)                   // TEST EAX, EAX
+	+	JZ(9)                            // JZ SHORT loc_1
+	+	MOV(ECX, EAX)                    // MOV ECX, EAX
+	+	CALL(ALLWC)                      // CALL UIBasicButton::UIBasicButton
+	+	JMP(WC)                          // JMP SHORT loc_2
+	;
+	
+    let addr = Exe.FindHex(prefix + suffix);
+    if (addr < 0)
+		throw Error("Pattern not found");
+
+    /*
+	let repLoc = 48;
+    let stringAssignOffset = 9;
+    let luaStateOffset = [22, 4];
+    let luaCallVaOffset = 34;
+    let UIBasicButtonSize = [55, 4];
+    let newOffset = 60;
+    let UIBasicButtonConstructorOffset = 87;
+
+    logRawFunc("std_string_assign", offset, stringAssignOffset);
+    logField("CSession::m_lua_state", offset, luaStateOffset);
+    logRawFunc("lua_call_va", offset, luaCallVaOffset);
+    logVal("sizeof UIBasicButton", offset, UIBasicButtonSize);
+    logRawFunc("operator_new", offset, newOffset);
+    logRawFunc("UIBasicButton_UIBasicButton", offset, UIBasicButtonConstructorOffset);
+	*/
+
+    /// 2 - Change the long JZ to JMP
+	Exe.SetJMP(addr + prefix.byteCount());
+	
+    return true;
+}
+
+///
+/// \brief Disable for Unsupported Clients - Need the string 
+///
+NoEquipPreview.validate = function()
+{
+	NEP_Addr = Exe.FindText("IsEffectHatItem");
+	return NEP_Addr > 0;
+};
