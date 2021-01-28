@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-15                                             *
+*   Last Modified : 2021-01-28                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -159,6 +159,21 @@ if (typeof Instr === 'undefined') //avoid redefinition
 		}
 
 		///
+		/// \brief Calculate the Target Address for CALL and different forms of JMP instructions
+		///
+		calcTgtAddr()
+		{
+			if (this.BC_Disp > 0 && this.NextAddr > 0)
+			{
+				return Exe.Phy2Vir(this.NextAddr) + this.Disp;
+			}
+			else
+			{
+				return -1;
+			}
+		}
+
+		///
 		/// \brief 'Static' Method to extract all the instruction bytes at addr into an 'Instr' object
 		///
 		static FromAddr(addr)
@@ -256,7 +271,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 
 			/// 4.1 - Extract the Nesting Level if expected
 			if (result.Codes[0] === 0xC8)//ENTER instruction
-			{	
+			{
 				result.NestLvl = Exe.GetInt8(addr++);
 			}
 
@@ -361,7 +376,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 
 				/// 2.2 - Check for ptr arguments on either target or source
 				if (data.Index !== undefined || data.Disp !== undefined) // only true for ptrs
-				{	
+				{
 					/// 2.3 - Set mod & rm for [Displacement] ptrs
 					if (data.Index === undefined)
 					{
