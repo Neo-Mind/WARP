@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-01-16                                             *
+*   Last Modified : 2021-01-28                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -210,11 +210,11 @@ _settgt_ = function(strParts, pat, target, start, cnt, bc)
 		if (patParts.find( (elem, i) => elem !== strParts[pos + i] ) === undefined)
 		{
 			swapped = true;
-			
+
 			let repl = (target - (start + pos + bc)).toHex(bc).trim().split(' ');
 			repl.forEach( (elem, i) => strParts[pos + i] = elem);
 			cnt--;
-			
+
 			pos += bc;
 		}
 		else
@@ -512,7 +512,7 @@ ParseData = function(data, scaled)
 				if (scaled)
 					bits = Math.pow(2, bits);
 
-				parts[0] = bits;				
+				parts[0] = bits;
 				parts[1] = hb.toBits(2); //Bits 5 & 4  (part of Middle 3 bits)
 			}
 
@@ -576,6 +576,22 @@ FindInstr = function(testFn, from, to)
 
 	return false;
 }
+
+///
+/// \brief Get the 'nth' instruction after the specified one. You can specify either the address or the Instr object itself
+///
+GetInstr = function(current, n)
+{
+	if (typeof(current) === 'number')
+		current = Instr.FromAddr(current);
+
+	while (n > 0)
+	{
+		current = Instr.FromAddr(current.NextAddr);
+	}
+
+	return current;
+};
 
 ///
 /// \brief Throws a cancellation warning with the specified argument.
