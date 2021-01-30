@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-01-19                                             *
+*   Last Modified : 2021-01-30                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -389,7 +389,7 @@ CustomShields = function()
 	Exe.SetHex(funcAddr, code + funcName.toHex() + " 00");
 
 	/// 7.1 - Find the extra comparison function that got added from 2012-04-18RE onwards. ugh
-	let prefix = 
+	let prefix =
 		(ROC.HasFP
 	?
 		PUSH(EBP)                             //PUSH EBP
@@ -426,14 +426,14 @@ CustomShields = function()
 		+	CMP(ESI, 0x834)                   //CMP ESI, 834
 		;
 	}
-	
+
 	addr = Exe.FindHex(prefix + code);
 	if (addr < 0 && Exe.BuildDate > 20130000) //Mandatory for 2013+
 		throw Error("Extra Limiter missing");
-	
+
 	/// 7.2 - Move to the position after the CALL (all the code till that point is relevant)
 	addr += prefix.byteCount();
-	
+
 	/// 7.3 - Create our replacement code (Calls the earlier hookMap function to retrieve shield id corresponding to item id & turns the result to -1 if valid id.
 	code =
 		TEST(EAX, EAX)  //TEST EAX, EAX
@@ -448,13 +448,16 @@ CustomShields = function()
 	)
 	+	RETN(4)         //RETN 4
 	;
-	
+
 	/// 7.4 - Replace the function being CALLed
 	Exe.SetTgtAddr(addr - 4, newMapVir);
-	
+
 	/// 7.5 - Append our code after the CALL
 	Exe.SetHex(addr, code);
-	
+
+	/// 7.6 - Check with user if they want to copy the supporting files to the target area's data folder
+	CS_Response = Exe.GetUserInput("$copyCSLub", D_Bool, "Copy Files", "Do you want the supporting Lub files copied to <b>'data'</b> folder?", true);
+
 	return true;
 };
 
@@ -462,3 +465,23 @@ CustomShields = function()
 /// \brief Disable for unsupported clients (Need Lua interface)
 ///
 CustomShields.validate = IsPost2010;
+
+///
+/// \brief Extra steps when the patch is applied (Copy the Lua files if requested)
+///
+CustomShields.onApplied = function()
+{
+	if (CS_Response)
+	{
+		let suffix = "/Luafiles514/Lua Files/DataInfo";
+		let tgtDir = System.DirPath(Warp.TgtExe) + "/data" + suffix;
+
+		let ready = System.MkDir(tgtDir);
+		if (!ready)
+			return;
+
+		let srcDir = Warp.Path + "Inputs" + suffix;
+		System.Copy(srcDir + "/ShieldTable.lub", tgtDir);
+		System.Copy(srcDir + "/ShieldTable_F.lub", tgtDir);
+	}
+};

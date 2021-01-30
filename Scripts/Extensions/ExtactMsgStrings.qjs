@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-01-20                                             *
+*   Last Modified : 2021-01-30                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -89,13 +89,17 @@ ExtractMsgStrings = function()
 	addr = Exe.Vir2Phy(disp - 4);
 
 	/// 2.1 - Get the mapping file from user
-	let inFile = Exe.GetUserInput('$msgTranslations', D_InFile, "MsgString Translations", "Enter translation mapping file (Optional)", "Inputs/MsgStrMap_EN.yml");
+	let inFile = Exe.GetUserInput('$$msgTranslations', D_InFile, "MsgString Translations", "Enter translation mapping file (Optional)", "Inputs/MsgStrMap_EN.yml");
 
 	/// 2.2 - Load the translation mapping if valid file provided
 	let trMap = (inFile === false ? undefined : _EMS_LoadTr(inFile));
 
 	/// 3.1 - Open output file for writing (Need ASCII encoding).
-	let fp = new TextFile(OUTDIR + "msgStringTable_" + ROC.BaseName + ".txt", ASCII, 'w');
+	let outFile = Exe.GetUserInput("$$msgStrTable", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "msgStringTable_" + ROC.BaseName + ".txt");
+	if (outFile === false)
+		return true;
+
+	let fp = new TextFile(outFile, ASCII, 'w');
 	if (!fp.Valid)
 		throw NO_OUTPUT;
 
@@ -108,7 +112,7 @@ ExtractMsgStrings = function()
 
 		/// 3.4 - Extract the string
 		let msgStr = Exe.GetText(strAddr);
-		
+
 		/// 3.5 - Translate the string if mapping available
 		if (trMap !== undefined && trMap[msgStr] !== undefined)
 			msgStr = trMap[msgStr];
@@ -128,15 +132,15 @@ ExtractMsgStrings = function()
 	/// 3.9 - Close the file
 	fp.Close();
 
-	/// 4  - Show the success message for test mode or display the file otherwise
-	if (Exe.TestMode)
-	{
-		return "MsgStrings have been extracted to the Outputs folder";
-	}
-	else
+	/// 4  - Show the success message or display the file if requested
+	if (!Exe.TestMode && Exe.GetUserInput('$showFile', D_Bool, "Show File", "Display the generated file?", true))
 	{
 		Warp.Show(fp.Path);
 		return true;
+	}
+	else
+	{
+		return "MsgStrings have been extracted";
 	}
 };
 

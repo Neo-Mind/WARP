@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Ai4rei/AN, Yommy                                  *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Yommy, Neo-Mind                             *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-01-30                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ CustomFontHeight = function()
 	if (CreateFontA < 0)
 		throw Error("CreateFontA not found");
 
-	/// 1.2 - Find all its CALLed locations 
+	/// 1.2 - Find all its CALLed locations
 	let addrs = Exe.FindHexN( CALL([CreateFontA]) ); //CALL DWORD PTR DS:[<&GDI32.CreateFontA>]
 	if (addrs.isEmpty())
 		throw Error("CreateFontA not CALLed");
@@ -59,7 +59,7 @@ CustomFontHeight = function()
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 
 	/// 2.3 - Get the new Font height from user
-	let newHeight = Exe.GetUserInput('$newFontHgt', D_FontSize, "Font Height", "Enter the new height (snaps to closest valid value)", 10);
+	let newHeight = Exe.GetUserInput('$newFontHgt', D_FontSize, "Font Height", "Enter the new height (snaps to closest valid value)", 10, {sampleName: "Tahoma"});
 	if (newHeight === false)
 		Cancel("Font height", 10);
 
@@ -103,7 +103,7 @@ CustomFontName = function()
 
 	/// 2.1 - Get the Font name from user
 	let varName = '$newFont';
-	let newFont = Exe.GetUserInput(varName, D_FontName, "Font input", "Select the new Font Family", "Arial");
+	let newFont = Exe.GetUserInput(varName, D_FontName, "Font input", "Select the new Font Family", "Arial", {sampleSize: 10});
 	if (newFont === false)
 		Cancel("Font Family", "Arial");
 
