@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-01-21                                             *
+*   Last Modified : 2021-01-30                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,7 +39,11 @@ GetPacketKeys = function()
 	PACKET.load();
 
 	/// 2.1 - Open the output file for writing.
-	let fp = new TextFile(OUTDIR + "PacketKeys_" + ROC.BaseName + ".txt", 'w');
+	let fileName = Exe.GetUserInput("$$keyOutput", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "PacketKeys_" + ROC.BaseName + ".txt");
+	if (fileName === false)
+		return true;
+
+	let fp = new TextFile(fileName, 'w');
 	if (!fp.Valid)
 		throw NO_OUTPUT;
 
@@ -60,14 +64,14 @@ GetPacketKeys = function()
 	/// 2.4 - Close the file
 	fp.Close();
 
-	/// 3 - Show the success message for test mode or display the file otherwise
-	if (Exe.TestMode)
-	{
-		return "Packet Keys have been written to Output folder";
-	}
-	else
+	/// 3 - Show the success message or display the file requested
+	if (!Exe.TestMode && Exe.GetUserInput('$$showFile', D_Bool, "Show File", "Display the generated file?", true))
 	{
 		Warp.Show(fp.Path);
 		return true;
+	}
+	else
+	{
+		return "Packet Keys have been extracted";
 	}
 };

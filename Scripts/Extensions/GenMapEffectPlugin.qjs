@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-22                                             *
-*   Last Modified : 2021-01-22                                             *
+*   Last Modified : 2021-01-30                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -321,13 +321,18 @@ GenMapEffectPlugin = function()
 	dll = dll.replace(/ 6C 5D C3/i, clearColor.toHex(1) + " 5D C3");
 
 	/// 7.3 - Write out the updated contents
-	if (!handle.Open(OUTDIR + "rdll2_" + ROC.BaseName + ".asi", 'w'))
+	
+	let dir = Exe.GetUserInput("$$rdllOutput", D_Folder, "Target Folder", "Enter the target folder to place the plugin at", OUTDIR);
+	if (dir === false)
+		return true;
+	
+	if (!handle.Open(dir + "/rdll2_" + ROC.BaseName + ".asi", 'w'))
 		throw Error("Unable to write the output file");
 	
 	handle.WriteHex(dll);
 	handle.Close();
 	
-	/// 7.4 - Generate the header
+	/// 7.4 - Generate the header (just for reference)
 	handle = new TextFile(OUTDIR + "client_" + ROC.BaseName + ".h", 'w');
 	if (handle.Valid)
 	{
@@ -355,5 +360,25 @@ GenMapEffectPlugin = function()
 		handle.Close();
 	}
 	
-	return "Plugin ASI generated in 'Outputs' directory";
+	/// 7.5 - Copy the related text file to 'data' folder inside if user wants to.
+	if (!Exe.TestMode)
+	{
+		let response = Exe.GetUserInput('$$copyFile', D_Bool, "Copy File", "Would you like the <b>'mapeffecttable.txt'</b> file copied to <b>'data'</b> sub folder inside?", true);
+		if (response)
+		{
+			let tgtDir = dir + "/data";
+			if (System.MkDir(tgtDir))
+				System.Copy("Inputs/mapeffecttable.txt", tgtDir);
+		}
+		
+		response = Exe.GetUserInput('$$showFolder', D_Bool, "Show Folder", "Display the folder with generated file?", true);
+		if (response)
+		{
+			Warp.ShowInDir(dir + "/rdll2_" + ROC.BaseName + ".asi");
+			return true;
+		}
+	}
+	
+	/// 7.6 - Display the success message if file is not shown (or in TestMode)
+	return "Plugin ASI generated in specified folder";
 };
