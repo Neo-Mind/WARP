@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2021-01-01                                             #
-#   Last Modified : 2021-01-04                                             #
+#   Last Modified : 2021-01-30                                             #
 #                                                                          #
 ############################################################################
 
@@ -101,9 +101,14 @@ colors:
         text: [120, 150, 190, 255]
         background: [63, 63, 75, 255]
 
-    # Color for the 'Quick Actions' frame. Best to keep it transparent
+    # Override Color for the 'Quick Actions' frame. Best to keep it transparent
     actionFrame:
         border: transparent
+    
+    # Override Color for the 'Demo' text field in FontSizeDialog & FontDialog
+    demoText:
+        activeText: mistyrose
+        inactiveText: mistyrose
     
     # Colors for 'Output' messages
     outputView:
@@ -126,7 +131,7 @@ colors:
         docComment: teal
         member: hotpink
         string: olivedrab
-
+    
     # Colors for Finder
     matches:
         background: dimgray
