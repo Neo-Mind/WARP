@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-01-17                                             *
+*   Last Modified : 2021-01-30                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -73,7 +73,13 @@ EnableProxy = function()
 	{
 		/// 2.1 - Find connect call (Indirect) within 0x50 bytes before the PUSH
 		code =
-			CALL([ALLWCp])       //CALL DWORD PTR DS:[<&WS2_32.connect>]
+			(Exe.Version > 10.0
+		?
+			PUSH([R32, 4])       //PUSH DWORD PTR DS:[refReg + 4]
+		:                        //  or
+			MOV([R32, 0xA], R16) //MOV WORD PTR DS:[refReg + 0A], reg16_B
+		)
+		+	CALL([ALLWCp])       //CALL DWORD PTR DS:[<&WS2_32.connect>]
 		+   CMP(EAX, -1)         //CMP EAX, -1
 		+   JNZ(WCp)             //JNZ SHORT addr
 		+   MOV(R32, [ALLWCp])   //MOV reg32_A, DWORD PTR DS:[<&WS2_32.WSAGetLastError>]
@@ -98,15 +104,26 @@ EnableProxy = function()
 	}
 	if (callAddr < 0)
 		throw Error("'connect' CALL not found");
-
-	/// 2.3 - Change indirect CALL to direct one before we proceed
+	
+	let refReg;
 	if (indirectCALL)
 	{
+		/// 2.3 - Extract the register used & move callAddr to the next instruction which is the actual CALL
+		let ins = Instr.FromAddr(callAddr);
+		refReg = R32.List[ins.MRM.RegM];
+		callAddr = ins.NextAddr;
+		
+		/// 2.4 - Change indirect CALL to direct one before we proceed
 		Exe.SetUint16(callAddr, 0xE890); //NOP + CALL opcodes
 		callAddr++;
 	}
+	else
+	{
+		/// 2.5 - If direct CALL, it means they are older clients and only ESI was used
+		refReg = ESI;
+	}
 
-	/// 2.4 - Extract address of ws2_32.connect
+	/// 2.5 - Extract address of ws2_32.connect
 	let connAddr = indirectCALL
 	?
 		Exe.GetInt32(callAddr + 1)
@@ -119,9 +136,9 @@ EnableProxy = function()
 		MOV(EAX, [Filler(1)])   //MOV EAX, DWORD PTR DS:[g_saveIP]
 	+   TEST(EAX, EAX)          //TEST EAX, EAX
 	+   JNZ(0x08)               //JNZ SHORT addr
-	+   MOV(EAX, [ESI, 0xC])    //MOV EAX, DWORD PTR DS:[ESI+C]
+	+   MOV(EAX, [refReg, 0xC]) //MOV EAX, DWORD PTR DS:[refReg + 0C] ; usually ESI
 	+   MOV([Filler(1)], EAX)   //MOV DWORD PTR DS:[g_saveIP], EAX
-	+   MOV([ESI, 0xC], EAX)    //MOV DWORD PTR DS:[ESI+C], EAX <- addr
+	+   MOV([refReg, 0xC], EAX) //MOV DWORD PTR DS:[refReg + 0C], EAX <- addr
 	+	(indirectCALL
 	?
 		JMP([connAddr])         //JMP DWORD PTR DS:[<&WS2_32.connect>]
@@ -150,6 +167,7 @@ EnableProxy = function()
 
 	/// 3.6 - Redirect the connect call to use our function
 	Exe.SetTgtAddr(callAddr + 1, freeVir + 4);
+	ShowAddr(callAddr + 1);
 
 	return true;
 };
