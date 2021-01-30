@@ -1,60 +1,111 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) 2020-2021 Neo-Mind                                       #
+#   Copyright (C) 2020 Neo Mind                                            #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
 #   WARP is free software: you can redistribute it and/or modify           #
 #   it under the terms of the GNU General Public License as published by   #
-#   the Free Software Foundation, either version 3 of the License, or      #
+#   the Free Software Foundation- either version 3 of the License- or      #
 #   (at your option) any later version.                                    #
 #                                                                          #
-#   This program is distributed in the hope that it will be useful,        #
+#   This program is distributed in the hope that it will be useful-        #
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
 #   GNU General Public License for more details.                           #
 #                                                                          #
 #   You should have received a copy of the GNU General Public License      #
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#   along with this program.  If not- see <http://www.gnu.org/licenses/>.  #
 #                                                                          #
 #                                                                          #
 ############################################################################
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
-#   Created Date  : 2020-11-18                                             #
-#   Last Modified : 2021-01-30                                             #
+#   Created Date  : 2020-11-11                                             #
+#   Last Modified : 2020-11-11                                             #
 #                                                                          #
 ############################################################################
 
-- GetPacketKeys:
-    title : Get Packet Keys
-    tooltip : Retrieves the packet keys used in the loaded client for Obfuscation
-    author : Neo-Mind
-    icon : Inputs/key.png
+- IDs: #Normally the novice branch
+    - 0
+    - 4001
+    - 4023
+    - 4124
+    - 4158
+    - 4183
 
-- ExtractTxtNames:
-    title : Extract txt file names
-    tooltip : Extracts embedded txt file names in the loaded client
-    icon : Inputs/files.png
+  BaseLvl: 99
+  JobLvl: 10
 
-- ExtractMsgStrings:
-    title : Extract msgstringtable
-    tooltip : Extracts embedded msgstringtable from the loaded client
-    author : Neo-Mind
-    icon : Inputs/files.png
+- IDs: #First & Second Jobs
+    - [1, 30]
+    - [4002, 4007]
+    - [4023, 4052]
+    - [4114, 4117]
+    - 4119
+    - [4122, 4123]
+    - [4125, 4126]
+    - 4128
+    - 4130
+    - 4131
+    - [4133, 4134]
+    - [4137, 4138]
+    - 4141
+    - 4142
+    - 4145
+    - 4147
+    - 4149
+    - [4154, 4156]
+    - [4159, 4172]
+    - 4181
+    - [4184, 4196]
+    - 4199
+    - 4200
+    - 4203
+    - 4204
+    - 4207
+    - [4210, 4217]
+  
+  BaseLvl: 99
+  JobLvl: 50
 
-- DumpImportTable:
-    title : Dump Import Table
-    tooltip : Dumps the Full Import table (dll names and imported functions) for the loaded client
-    author : Neo-Mind
-    icon : Inputs/import.png
-    
-- GenMapEffectPlugin:
-    title : Generate MapEffect Plugin [Expt.]
-    tooltip : Generates Curiosity's mapeffect plugin for the loaded client (as rdll2_<filename>.asi which needs to be placed in your client area)
-    author : Neo-Mind
- 
-# - Trial:
-    # title : Trial Extension
-    # tooltip : Just intended for some trials with Exe & Warp
-    # author : Neo-Mind
+- IDs : #Transcendent Jobs
+    - [4008, 4022]
+    - 4118
+    - 4121
+    - [4135, 4136]
+    - 4139
+    - 4144
+    - 4146
+    - 4150
+    - [4152, 4153]
+    - 4157
+  
+  BaseLvl: 99
+  JobLvl: 70
+
+-
+  IDs: #Third Jobs
+    - [4053, 4113]
+    - 4120
+    - 4127
+    - 4129
+    - 4132
+    - 4133
+    - 4140
+    - 4143
+    - 4148
+    - 4151
+    - [4173, 4180]
+    - 4182
+    - 4197
+    - 4198
+    - 4201
+    - 4202
+    - 4205
+    - 4206
+    - 4208
+    - 4209
+  
+  BaseLvl : 175
+  JobLvl : 60

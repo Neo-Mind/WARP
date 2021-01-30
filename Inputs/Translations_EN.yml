@@ -1,0 +1,1495 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) 2020-2021 Neo-Mind                                            #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http:##www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2020-11-10                                             #
+#   Last Modified : 2021-01-20                                             #
+#                                                                          #
+############################################################################
+-
+  #######################
+  desc : Make Char
+  #######################
+  find : <C4 C9 B8 AF C5 CD 20 B8 B8 B5 E9 B1 E2 00>
+  replace : "Make Character"
+
+-
+  #######################
+  desc : Skill Timer Hour
+  #######################
+  find : <25 64 20 BD C3 B0 A3 20>
+  replace : "%d hour "
+
+-
+  ###########################
+  desc : Skill Timer Minutes
+  ###########################
+  find : <25 64 20 BA D0 20>
+  replace : "%d min "
+
+-
+  ###########################
+  desc : Skill Timer Seconds
+  ##########################
+  find : <25 64 20 C3 CA>
+  replace : "%d sec"
+
+-
+  ######################################
+  desc : Deletion Time - Part 1
+  ######################################
+  find : <25 64 BF F9 20 25 64 C0 CF 20 25 64 BD C3 20 25 64 BA D0 20 25 64 C3 CA>
+  replace : "Delete: %d/%d - %d:%d:%d"
+
+-
+  ######################################
+  desc : Deletion Time - Part 2
+  ######################################
+  find : <25 64 B3 E2 20 25 64 BF F9 20 25 64 C0 CF 20 25 64 BD C3 20 25 64 BA D0 20 25 64 C3 CA 20>
+  replace : "%d/%d/%d - %d:%d:%d"
+
+-
+  ##############################
+  desc : Message Box
+  #############################
+  find : <B8 DE BD C3 C1 F6 00>
+  replace : "Message"
+
+-
+  #################################
+  desc : Character Slot Usage
+  #################################
+  find : <28 C4 B3 B8 AF C5 CD 2F C3 D1 20 BD BD B7 D4 29>
+  replace : "(Used / Total)"
+
+-
+  ##################################
+  desc : Item Inventory
+  ##################################
+  find : <BE C6 C0 CC C5 DB 20 BA F1 B1 B3>
+  replace : "Item Cmpare"
+
+-
+  ##################################
+  desc : SS prompt
+  ##################################
+  find : <B0 CB BB F6 20 B4 DC BE EE 20 BC B3 C1 A4 20 28 45 78 3A 20 B4 DC BE EE 20 B4 DC BE EE 20 2E 2E 2E>
+  replace : "Enter search string..."
+
+-
+  ##################################
+  desc : Find
+  ##################################
+  find : <B0 CB BB F6>
+  replace : "Find"
+
+-
+  ##################################
+  desc : Back to Nav
+  ##################################
+  find : <B1 E6 20 C1 A4 BA B8>
+  replace : "Back to Navigation"
+
+-
+  ##################################
+  desc : View List
+  ##################################
+  find : <B0 CB BB F6 20 C1 A4 BA B8>
+  replace : "View List"
+
+-
+  ##################################
+  desc : Toggle Minimap
+  ##################################
+  find : <BA B8 B1 E2 20 B8 F0 B5 E5 20 BA AF B0 E6>
+  replace : "Toggle Minimap"
+
+-
+  ##################################
+  desc : More
+  ##################################
+  find : <C0 FC C0 E5>
+  replace : "More"
+
+-
+  ##################################
+  desc : Water
+  ##################################
+  find : <BC F6 BC D3 BC BA 25 64>
+  replace : "Water"
+
+-
+  ##################################
+  desc : Earth
+  ##################################
+  find : <C1 F6 BC D3 BC BA 25 64>
+  replace : "Earth"
+
+-
+  ##################################
+  desc : Shadow
+  ##################################
+  find : <BE CF BC D3 BC BA 25 64>
+  replace : "Shdw"
+
+-
+  ##################################
+  desc : Fire
+  ##################################
+  find : <C8 AD BC D3 BC BA 25 64>
+  replace : "Fire"
+
+-
+  ##################################
+  desc : Ghost
+  ##################################
+  find : <BF B0 BC D3 BC BA 25 64>
+  replace : "Ghost"
+
+-
+  ##################################
+  desc : Wind
+  ##################################
+  find : <C7 B3 BC D3 BC BA 25 64>
+  replace : "Wind"
+
+-
+  ##################################
+  desc : Poison
+  ##################################
+  find : <B5 B6 BC D3 BC BA 25 64>
+  replace : "Poisn"
+
+-
+  ##################################
+  desc : Holy
+  ##################################
+  find : <BC BA BC D3 BC BA 25 64>
+  replace : "Holy"
+
+-
+  ##################################
+  desc : Neutral
+  ##################################
+  find : <B9 AB BC D3 BC BA 25 64>
+  replace : "Neutr"
+
+-
+  ##################################
+  desc : Big
+  ##################################
+  find : <B4 EB C7 FC>
+  replace : "Big"
+
+-
+  ##################################
+  desc : Medium
+  ##################################
+  find : <C1 DF C7 FC>
+  replace : "Med"
+
+-
+  ##################################
+  desc : Small
+  ##################################
+  find : <BC D2 C7 FC>
+  replace : "Smal"
+
+-
+  ##################################
+  desc : Demon
+  ##################################
+  find : <BE C7 B8 B6 C7 FC>
+  replace : "Demon"
+
+-
+  ##################################
+  desc : Demi-Human
+  ##################################
+  find : <C0 CE B0 A3 C7 FC>
+  replace : "Demi-H"
+
+-
+  ##################################
+  desc : Form
+  ##################################
+  find : <B9 AB C7 FC>
+  replace : "Form"
+
+-
+  ##################################
+  desc : Undead - Part 1
+  ##################################
+  find : <BE F0 B5 A5 B5 E5 25 64>
+  replace : "Undead"
+
+-
+  ##################################
+  desc : Plant
+  ##################################
+  find : <BD C4 B9 B0 C7 FC>
+  replace : "Plant"
+
+-
+  ##################################
+  desc : Fish
+  ##################################
+  find : <BE EE C6 D0 C7 FC>
+  replace : "Fish"
+
+-
+  ##################################
+  desc : Brute
+  ##################################
+  find : <B5 BF B9 B0 C7 FC>
+  replace : "Brute"
+
+-
+  ##################################
+  desc : Angel
+  ##################################
+  find : <C3 B5 BB E7 C7 FC>
+  replace : "Angel"
+
+-
+  ##################################
+  desc : Insect
+  ##################################
+  find : <B0 EF C3 E6 C7 FC>
+  replace : "Insect"
+
+-
+  ##################################
+  desc : Dragon
+  ##################################
+  find : <BF EB C1 B7 00>
+  replace : "Dragn"
+
+-
+  ##################################
+  desc : Mob Lvl
+  ##################################
+  find : <4C 65 76 65 6C 3A 25 64 20 28 C0 CF B9 DD 29>
+  replace : "Level:%d (Mob)"
+
+-
+  ##################################
+  desc : Boss Lvl
+  ##################################
+  find : <4C 65 76 65 6C 3A 25 64 20 28 BA B8 BD BA 29>
+  replace : "Level:%d (Boss)"
+
+-
+  ###########################################
+  desc : Find Location
+  ###########################################
+  find : <BE C8 B3 BB C7 CF B4 C2 20 C0 A7 C4 A1 B7 CE 20 C0 CC B5 BF C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9 2E>
+  replace : "To find the location, please go to"
+
+-
+  ##################################
+  desc : Warp to next area
+  ##################################
+  find : <4E 61 76 69 67 61 74 69 6F 6E 20 3E 3A 20 BF F6 C7 C1 B8 A6 20 C0 CC BF EB C7 CF BF A9 20 B4 D9 C0 BD 20 C1 F6 BF AA C0 B8 B7 CE 20 C0 CC B5 BF C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9 2E>
+  replace : "Navigation >: Using the warp to the next area, click to go"
+
+-
+  ##################################
+  desc : Arrived at map
+  ##################################
+  find : <B8 F1 C7 A5 20 B8 CA BF A1 20 B5 B5 C2 F8 C7 CF BF B4 BD C0 B4 CF B4 D9 2E>
+  replace : "Arrived at the target map"
+
+-
+  #############################
+  desc : Arrived on NPC's map
+  #############################
+  find : <C3 A3 B0 ED C0 DA 20 C7 CF B4 C2 20 4E 70 63 B0 A1 20 C0 D6 B4 C2 20 B8 CA BF A1 20 B5 B5 C2 F8 20 C7 CF BF B4 BD C0 B4 CF B4 D9 2E 20 4E 70 63 B7 CE 20 C0 CC B5 BF C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9 2E>
+  replace : "Arrived on the map that has the Npc your looking for. Go to that NPC"
+
+-
+  ##################################
+  desc : Mob map
+  ##################################
+  find : <C3 A3 B0 ED C0 DA 20 C7 CF B4 C2 20 B8 F3 BD BA C5 CD B0 A1 20 C0 D6 B4 C2 20 B8 CA 20 C0 D4 B4 CF B4 D9 2E>
+  replace : "Is the map that your looking for mob"
+
+-
+  ##################################
+  desc : Directions were started
+  ##################################
+  find : <B1 E6 20 BE C8 B3 BB B0 A1 20 BD C3 C0 DB 20 B5 C7 BE FA BD C0 B4 CF B4 D9 2E>
+  replace : "Directions were started"
+
+-
+  ##################################
+  desc : Goto Airship
+  ##################################
+  find : <4E 61 76 69 67 61 74 69 6F 6E 20 3E 3A 20 BA F1 B0 F8 C1 A4 C0 B8 B7 CE 20 C0 CC B5 BF 20 C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9>
+  replace : "Navigation >: Please go to the airship"
+
+-
+  ##################################
+  desc : Move to Map
+  ##################################
+  find : <4E 61 76 69 67 61 74 69 6F 6E 20 3E 3A 20 B8 CA 28 25 73 29 C0 B8 B7 CE 20 C0 CC B5 BF C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9>
+  replace : "Navigation >: (%s) map, please move to"
+
+-
+  ##################################
+  desc : Guidance - Part 1
+  ##################################
+  find : <4E 61 76 69 67 61 74 69 6F 6E 20 3E 3A 20 BE C8 B3 BB C7 CF B4 C2 20 25 73 28 C0 BB 29 B8 A6 20 C0 CC BF EB C7 CF BF A9 00>
+  replace : "Navigation >: Guidance to %s (A) By using"
+
+-
+  ##################################
+  desc : Cancel Nav
+  ##################################
+  find : <BE C8 B3 BB C1 DF 20 C0 D4 B4 CF B4 D9 21 20 C1 BE B7 E1 20 C7 CF BD C3 B0 DA BD C0 B4 CF B1 EE 3F>
+  replace : "Do you want to cancel navigation?"
+
+-
+  ##################################
+  desc : Use Scroll
+  ##################################
+  find : <B4 F8 C0 FC C0 CC B5 BF 20 BD BA C5 A9 B7 D1 20 BB E7 BF EB 20 C0 FB BF EB>
+  replace : "Use Scroll ?"
+
+-
+  ##################################
+  desc : Use Kafra Warp
+  ##################################
+  find : <C0 A7 C4 A1 20 C0 CC B5 BF 20 BC AD BA F1 BD BA 20 C7 E3 BF EB>
+  replace : "Use Kafra Warp ?"
+
+-
+  ##################################
+  desc : Use Airship
+  ##################################
+  find : <BA F1 B0 F8 C1 A4 20 C0 CC B5 BF 20 C0 FB BF EB>
+  replace : "Use Airship ?"
+
+-
+  ##################################
+  desc : Found
+  ##################################
+  find : <B5 B5 C2 F8 2E>
+  replace : "Found"
+
+-
+  ##################################
+  desc : You - Part 1
+  ##################################
+  find : <A1 DA 00>
+  replace : "You"
+
+-
+  ##################################
+  desc : Path Failure
+  ##################################
+  find : <B1 E6 20 C3 A3 B1 E2 20 BD C7 C6 D0>
+  replace : "Path Failure"
+
+-
+  ##################################
+  desc : Guidance - Part 2
+  ##################################
+  find : <3D 3D 3D 3D 3D 3D 3D 20 B1 E6 20 BE C8 B3 BB 20 C1 A4 BA B8 20 3D 3D 3D 3D 3D 3D 3D>
+  replace : "======= Guidance ======="
+
+-
+  ##################################
+  desc : Goal - Part 1
+  ##################################
+  find : <B8 F1 C7 A5 20 20 20 3A 20 25 73 28 25 64 2C 20 25 64 29>
+  replace : "Goal : %s(%d, %d)"
+
+-
+  ##################################
+  desc : Goal - Part 2
+  ##################################
+  find : <B8 F1 C7 A5 20 20 20 3A 20 25 73 28 25 73 29 00 C0 CF B9 DD 00 00>
+  replace : "Goal : %s(%s) General"
+
+-
+  ##################################
+  desc : Coords
+  ##################################
+  find : <B8 F1 C7 A5 B8 CA 3A 20 25 73 28 25 73 29>
+  replace : "Coords %s(%s)"
+
+-
+  ##################################
+  desc : Results
+  ##################################
+  find : <3D 3D 3D 3D 3D 3D 3D 3D 20 B0 E1 B0 FA 20 C1 A4 BA B8 20 3D 3D 3D 3D 3D 3D 3D 3D 3D 3D>
+  replace : "======== Results =========="
+
+-
+  ##################################
+  desc : Distance WarpMove
+  ##################################
+  find : <B0 C5 B8 AE 20 20 20 3A 20 25 64 20 53 65 6C 6C 20 25 64 20 57 61 72 70 4D 6F 76 65>
+  replace : "Dist   %d Cell %d WarpMove"
+
+-
+  ##################################
+  desc : Found (%d)
+  ##################################
+  find : <3D 3D 20 B0 CB BB F6 20 B0 E1 B0 FA 28 25 64 29 3D 3D>
+  replace : "== Found (%d) =="
+
+-
+  ##################################
+  desc : Goto Direction
+  ##################################
+  find : <B0 A1 B8 AE C5 B0 B4 C2 20 B9 E6 C7 E2 C0 B8 B7 CE 20 B0 A1 BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9 2E>
+  replace : "Please go to indicated direction."
+
+-
+  ##################################
+  desc : Goal - Part 3
+  ##################################
+  find : <3C 3C 20 B0 CB BB F6 C1 DF 2E 2E 2E 20 3E 3E>
+  replace : "<< Goal... >>"
+
+-
+  ##################################
+  desc : Goal - Part 4
+  ##################################
+  find : <B8 F1 C7 A5 3A 20 28 25 64 2C 20 25 64 29>
+  replace : "Goal: (%d, %d)"
+
+-
+  ##################################
+  desc : Specify Dest
+  ##################################
+  find : <B8 F1 C7 A5 B8 A6 20 C1 F6 C1 A4 20 C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9 2E>
+  replace : "Please Specify Destination.."
+
+-
+  ##################################
+  desc : No Dest Info
+  ##################################
+  find : <B5 B5 C2 F8 20 C1 F6 C1 A1 BF A1 20 B4 EB C7 D1 20 C1 A4 BA B8 20 BC B3 C1 A4 20 BD C7 C6 D0 21>
+  replace : "Cannot Give the Destination Info"
+
+-
+  ##################################
+  desc : Guidance - Part 3
+  ##################################
+  find : <3C 3C 20 BE C8 B3 BB C1 DF 20 3E 3E>
+  replace : "<<Guidance>>"
+
+-
+  ##################################
+  desc : No Read Info
+  ##################################
+  find : <3E 3E 20 B8 F1 C7 A5 20 C1 A4 BA B8 B8 A6 20 C0 D0 C1 F6 20 B8 F8 C7 D4 21>
+  replace : ">> Failed to Read Info..!"
+
+-
+  ##################################
+  desc : ClickNPC
+  ##################################
+  find : <4E 50 43 20 C5 AC B8 AF>
+  replace : "ClickNPC"
+
+-
+  ##################################
+  desc : Npc Use Warp Service
+  ##################################
+  find : <4E 70 63 20 C0 CC B5 BF BC AD BA F1 BD BA 20 C0 CC BF EB 21>
+  replace : "Npc Use Warp Service"
+
+-
+  ##################################
+  desc : MoveClick
+  ##################################
+  find : <25 73 20 C0 CC B5 BF 20 C5 AC B8 AF>
+  replace : "%s MoveClick"
+
+-
+  ##################################
+  desc : Move - Part 1
+  ##################################
+  find : <25 73 20 C0 CC B5 BF>
+  replace : "%s Move"
+
+-
+  ##################################
+  desc : Npc Warp Service
+  ##################################
+  find : <4E 70 63 20 C0 CC B5 BF 20 BC AD BA F1 BD BA 20 C0 CC BF EB>
+  replace : "Npc Warp Service...."
+
+-
+  ##################################
+  desc : Name - Part 1
+  ##################################
+  find : <B8 F1 C7 A5 20 20 20 3A 20 25 73 28 25 73 29>
+  replace : "Name   : %s(%s)"
+
+-
+  ##################################
+  desc : Norm
+  ##################################
+  find : <C0 CF B9 DD>
+  replace : "Norm"
+
+-
+  ##################################
+  desc : Bifrost message
+  ##################################
+  find : <>->
+    C1 F6 BB F3 C0 C7 20 B3 A1 2C 20 BD BA C7 C3 B6 FB B5 F0 B5 E5 BF CD 20 BA CE C0 AF B4 EB B7 FA 20 BE CB C7 C1 C7 EC C0 D3 C0 BB 20 C0 D5 B4 C2 20 B4 D9 B8 AE 2C 20 BA F1 C7 C1 B7 CE BD BA C6 AE BF A1 20 BB FD B0 DC B3 AD 0A
+    B0 C5 B4 EB C7 D1 20 B1 D5 BF AD 2C 20 B1 D7 B8 AE B0 ED 20 B1 D9 BF F8 C0 BB 20 BE CB 20 BC F6 20 BE F8 B4 C2 20 B9 CC B1 C3 BD A3 2E 0A
+    C0 CC B0 CD C0 BA 20 BF A9 C7 E0 C0 C7 20 B3 A1 C0 BB 20 BE CB B8 AE B4 C2 20 C7 A5 BD C4 C0 CE B0 A1 2C 20 BB F5 B7 CE BF EE 20 BC BC B0 E8 B8 A6 20 BF A9 B4 C2 20 C1 F6 C7 A5 C0 CE B0 A1 21 0A
+    BC F6 C8 A3 C0 DA B4 C2 20 B3 EB B7 A7 B8 BB 20 B0 B0 C0 BA 20 C0 AF C8 A4 BF A1 20 C1 A1 C2 F7 20 B3 CC C0 BB 20 C0 D2 BE EE B0 A1 B0 ED 20 C0 D6 BE FA B4 D9 2E 20 BC F6 C3 B5 20 B3 E2 C0 C7 20 BC BC BF F9 C0 CC 20 C8 E5 B8 A3 B4 C2 20 B5 BF BE C8 2C 20 B1 D7 20 BD BA BD BA B7 CE B0 A1 20 C8 A6 B7 CE 20 BE C8 B0 A3 C8 FB C0 BB 20 BE B2 B8 E7 20 C1 F6 C4 D1 B3 BD 20 B0 CD C0 CC 20 B9 AB BE F9 C0 CC BE FA B4 C2 C1 F6 2C 20 BA C0 C0 CE 20 B5 C7 BE EE 20 B1 E4 20 BD C3 B0 A3 C0 BB 20 B0 A4 C7 F4 B9 F6 B8 B0 20 B0 CD C0 BA 20 BF C0 C8 F7 B7 C1 20 C0 DA BD C5 C0 CC 20 BE C6 B4 CF BE FA B4 C2 C1 F6 20 C8 A5 B6 F5 C0 BB 20 B4 C0 B3 A2 B0 ED 20 C0 D6 BE FA B4 D9 2E 0A
+    C0 AF C8 A4 C0 C7 20 B3 EB B7 A7 B8 BB C0 CC 20 C3 D6 B0 ED C1 B6 BF A1 20 C0 CC B8 A3 B7 B6 C0 BB 20 B6 A7 2C 20 C1 F6 BB F3 C0 C7 20 B3 A1 20 BD BA C7 C3 B6 FB B5 F0 B5 E5 BF CD 20 BA CE C0 AF B4 EB B7 FA 20 BE CB C7 C1 C7 EC C0 D3 C0 BB 20 C0 D5 B4 C2 20 B4 D9 B8 AE 2C 20 BA F1 C7 C1 B7 CE BD BA C6 AE BF A1 20 B0 C5 B4 EB C7 D1 20 B1 D5 BF AD C0 CC 20 BB FD B0 DC B3 B5 B0 ED 2C 20 B1 D7 B7 CE 20 C0 CE C7 D8 20 B5 CE 20 BC BC B0 E8 B0 A3 C0 C7 20 BF D5 B7 A1 B0 A1 20 B2 F7 B1 E2 B8 E9 BC AD 20 BB E7 B6 F7 B5 E9 C0 BA 20 C5 AB 20 BA D2 C6 ED C0 BB 20 B0 DE B0 D4 20 B5 C7 BE FA B4 D9 2E 0A
+    BA F1 C7 C1 B7 CE BD BA C6 AE C0 C7 20 C5 EB B7 CE B4 C2 20 C0 CC C1 A6 20 B9 CC B1 C3 BD A3 20 BB D3 2E 0A
+    B1 D9 BF F8 C1 B6 C2 F7 20 BE CB 20 BC F6 20 BE F8 B4 C2 20 B1 D7 B0 F7 C0 BB 20 B9 AB BB E7 C8 F7 20 C5 EB B0 FA 20 C7 D1 20 BB E7 B6 F7 C0 BA 20 C1 F6 B1 DD B1 EE C1 F6 20 BE C6 B9 AB B5 B5 20 BE F8 BE FA B4 D9 2E 0A
+    BD A2 C7 D1 20 B8 F0 C7 E8 B0 A1 B5 E9 C0 BB 20 C1 FD BE EE 20 BB EF C5 B2 20 C8 A5 B5 B7 C0 C7 20 C1 F6 BF C1 2C 20 B9 CC B1 C3 BD A3 C0 BA 20 B1 D7 20 BC D3 C0 BB 20 B9 E6 C8 B2 C7 CF B4 C2 20 C0 CC B8 A7 20 B8 F0 B8 A6 20 BF A9 C0 CE C0 C7 20 B8 B6 C0 BD C3 B3 B7 B3 20 B4 F5 BF ED 20 B1 ED B0 ED 20 C8 A5 B6 F5 BD BA B7 B4 B0 D4 20 C8 AE C0 E5 B5 C7 B0 ED 20 C0 D6 BE FA B4 D9 2E
+ 
+  replace: "'\
+    For thousands of years, a mysterious melody has mesmerized the guardian for thousands of years.\r\n\
+    After a millennia of slumber, the guardian became confused about what he had been protecting all these years, and began to suspect that he might be the one who has been sealed and hidden away.\r\n\
+    When the melody reached its peak, a giant crevice appeared in Bifrost, the bridge between Splendide, the end of the world, and the floating continent of Alfheim.\r\n\
+    As a result, the two worlds were cut off from each other, causing a big problem for the people.\r\n\
+    Now, the only way to get to Bifrost is through the Labyrinth Forest.'"
+-
+  ##################################
+  desc : Bifrost message Ghostring
+  ##################################
+  find : <B9 D9 B7 CE B0 A1 B1 E2>
+  replace : "Go To"
+
+  ##=====================  2013 Strings Found thanks to TrueNoir  ========================##
+-
+  ###################################
+  desc : Kafra
+  ###################################
+  find : <C4 AB C7 C1 B6 F3>
+  replace : "Kafra"
+
+-
+  ##################################
+  desc : Failed
+  ##################################
+  find : <BA F1 B0 F8 C1 A4>
+  replace : "Failed"
+
+-
+  ##################################
+  desc : Advice
+  ##################################
+  find : <BE C8 B3 BB 20 C1 A4 BA B8>
+  replace : "Advice"
+
+-
+  ##################################
+  desc : Monster
+  ##################################
+  find : <B8 F3 BD BA C5 CD>
+  replace : "Monstr"
+
+-
+  ##################################
+  desc : Forbidden Account Access
+  ##################################
+  find : <C0 AF C0 FA B4 D4 C0 C7 20 B0 E8 C1 A4 C0 BA 20 C1 A2 BC D3 B1 DD C1 F6 20 B5 C7 BF B4 BD C0 B4 CF B4 D9 0A 20 C7 D8 C1 F6 20 BD C3 B0 A3 20 3A 20 25 30 34 64 2D 25 30 32 64 2D 25 30 32 64 20 25 30 32 64 3A 25 30 32 64>
+  replace : "The user's account access is forbidden. Ended : %04d-%02d-%02d %02d:%02d"
+
+-
+  ##################################
+  desc : PermaBan User Connected
+  ##################################
+  find : <C0 AF C0 FA B4 D4 C0 C7 20 B0 E8 C1 A4 C0 BA 20 BF B5 B1 B8 20 C1 A2 BC D3 B1 DD C1 F6 20 B5 C7 BF B4 BD C0 B4 CF B4 D9>
+  replace : "Permantly banned User Account connected"
+
+-
+  ##################################
+  desc : Hours remaining
+  ##################################
+  find : <B0 ED B0 B4 B4 D4 C0 C7 20 C0 CC BF EB 20 BD C3 B0 A3 C0 BA>
+  replace : "Hours left to use"
+
+-
+  ##################################
+  desc : Minutes till end
+  ##################################
+  find : <BA D0 20 C8 C4 BF A1 20 C1 BE B7 E1 B5 CB B4 CF B4 D9>
+  replace : "Minutes till end"
+
+-
+  ##################################
+  desc : Premium
+  ##################################
+  find : <C7 C1 B8 AE B9 CC BE F6>
+  replace : "Premium"
+
+-
+  ##################################
+  desc : Earn
+  ##################################
+  find : <BC AD B9 F6>
+  replace : "Earn"
+
+-
+  ##################################
+  desc : Hour
+  ##################################
+  find : <BD C3 B0 A3>
+  replace : "Hour"
+
+-
+  ##################################
+  desc : Minutes Left
+  ##################################
+  find : <BA D0 20 B3 B2 BE D2 BD C0 B4 CF B4 D9>
+  replace : "Minutes left"
+
+-
+  ##################################
+  desc : time to use
+  ##################################
+  find : <C7 F6 C0 E7 20 B0 ED B0 B4 B4 D4 C0 C7 20 C0 CC BF EB 20 BD C3 B0 A3 C0 BA>
+  replace : "You now have time to use"
+
+-
+  ##################################
+  desc : Hours are
+  ##################################
+  find : <C0 CC BF EB BD C3 B0 A3 C0 CC>
+  replace : "Hours are"
+
+-
+  ##################################
+  desc : NFL Shut down
+  ##################################
+  find : <C1 A6 C0 FB C0 B8 B7 CE 20 C1 BE B7 E1 B5 CB B4 CF B4 D9>
+  replace : "NFL shut down"
+
+-
+  ##################################
+  desc : Normal
+  ##################################
+  find : <C1 A4 BB F3 C0 FB C0 CE>
+  replace : "Normal"
+
+-
+  ##################################
+  desc : Use Game Charge
+  ##################################
+  find : <B0 D4 C0 D3 20 C0 CC BF EB C0 BB 20 C0 A7 C7 D8 20 C3 E6 C0 FC C0 BB 20 C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9>
+  replace : "Please use the game charge for"
+
+-
+  ##################################
+  desc : Remaining
+  ##################################
+  find : <B3 B2 BE D2 BD C0 B4 CF B4 D9>
+  replace : "Remaining"
+
+-
+  ##################################
+  desc : Normal Game Charge
+  ##################################
+  find : <C1 A4 BB F3 C0 FB C0 CE 20 B0 D4 C0 D3 20 C0 CC BF EB C0 BB 20 C0 A7 C7 D8 20 C3 E6 C0 FC C0 BB 20 C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9>
+  replace : "Charge for a normal game, please use"
+
+-
+  ##################################
+  desc : Search Window
+  ##################################
+  find : <B0 CB BB F6 C3 A2 20 B8 ED B7 C9 BE EE>
+  replace : "Search Window"
+
+-
+  ##################################
+  desc : Map Name
+  ##################################
+  find : <B8 CA C0 CC B8 A7>
+  replace : "MapNme"
+
+-
+  ##################################
+  desc : Area
+  ##################################
+  find : <C0 A7 C4 A1>
+  replace : "Area"
+
+-
+  ##################################
+  desc : Enabled
+  ##################################
+  find : <BB E7 BF EB C7 D4>
+  replace : "Enabld"
+
+-
+  ##################################
+  desc : Disabled
+  ##################################
+  find : <BB E7 BF EB BE C8 C7 D4>
+  replace : "Disabled"
+
+-
+  ##################################
+  desc : Command
+  ##################################
+  find : <B8 ED B7 C9 BE EE>
+  replace : "CMD"
+
+-
+  ##################################
+  desc : No invite
+  ##################################
+  find : <C3 CA C3 BB 20 C0 AF C0 FA B0 A1 20 BE C6 B4 D5 B4 CF B4 D9>
+  replace : "User is not invited"
+
+-
+  ##################################
+  desc : Students Full access
+  ##################################
+  find : <C7 F6 C0 E7 20 C1 A2 BC D3 20 C0 CE BF F8 C0 CC 20 B0 A1 B5 E6 20 C3 A1 BD C0 B4 CF B4 D9>
+  replace : "Students now have full access"
+
+-
+  ##################################
+  desc : Waiting rank
+  ##################################
+  find : <C7 F6 C0 E7 20 B4 EB B1 E2 BC F8 C0 A7>
+  replace : "Waiting rank"
+
+-
+  ##################################
+  desc : Minutes
+  ##################################
+  find : <BA D0>
+  replace : "M"
+
+-
+  ##################################
+  desc : Seconds
+  ##################################
+  find : <C3 CA>
+  replace : "S"
+
+-
+  ##################################
+  desc : Wait Time
+  ##################################
+  find : <BF B9 BB F3 20 B4 EB B1 E2 BD C3 B0 A3>
+  replace : "Wait Time is"
+
+-
+  ##################################
+  desc : Point
+  ##################################
+  find : <C6 F7 C0 CE C6 AE>
+  replace : "Point"
+
+-
+  ##################################
+  desc : Rank
+  ##################################
+  find : <BC F8 C0 A7>
+  replace : "Rank"
+
+-
+  ##################################
+  desc : Rank Board
+  ##################################
+  find : <B7 A9 C5 B7 20 BA B8 B5 E5>
+  replace : "RankBoard"
+
+-
+  ##################################
+  desc : Sun, Moon & Stars chant
+  ##################################
+  find : <C0 CC C1 F6 BF AA C0 BA 20 C5 C2 BE E7 B0 FA B4 DE B0 FA BA B0 C0 C7 20 B1 E2 C0 FB 20 C8 BF B0 FA B0 A1 20 B9 DF BB FD C7 CF C1 F6 20 BE CA BD C0 B4 CF B4 D9>
+  replace : "Not reverse the effect of the miracle of the sun, the moon and the stars will no occur"
+
+-
+  ##################################
+  desc : No trade prohibition
+  ##################################
+  find : <C0 CC C1 F6 BF AA C0 BA 20 BE C6 C0 CC C5 DB B1 B3 C8 AF C0 CC 20 B1 DD C1 F6 20 B5 C7 BE EE 20 C0 D6 BD C0 B4 CF B4 D9>
+  replace : "Station does not prohibite item trades"
+
+-
+  ##################################
+  desc : Game Command
+  ##################################
+  find : <B0 D4 C0 D3 20 C4 BF B8 C7 B5 E5>
+  replace : "GameCommand"
+
+-
+  ##################################
+  desc : Game System
+  ##################################
+  find : <B0 D4 C0 D3 20 BD C3 BD BA C5 DB>
+  replace : "Game System"
+
+-
+  ##################################
+  desc : Game Settings
+  ##################################
+  find : <B0 D4 C0 D3 20 BC B3 C1 A4>
+  replace : "Settings"
+
+-
+  ##################################
+  desc : Item in Char Bank
+  ##################################
+  find : <C7 D8 B4 E7 20 BE C6 C0 CC C5 DB C0 BB 20 B0 B3 BA C0 C7 CF BF A9 20 C8 B9 B5 E6 B5 C7 B4 C2 20 BE C6 C0 CC C5 DB B5 E9 C0 BA 20 C4 B3 B8 AF C5 CD 20 B1 CD BC D3 20 BE C6 C0 CC C5 DB 20 28 C3 A2 B0 ED C0 CC B5 BF 20 BA D2 B0 A1 B4 C9 29 20 C0 D4 B4 CF B4 D9>
+  replace : "Opening the item attrutable to aquire items in character bank (Storage Locked) is"
+
+-
+  ##################################
+  desc : Users Meet Destination
+  ##################################
+  find : <BA BB 20 C4 B3 B8 AF C5 CD BF A1 20 BB E7 BF EB C7 CF BD C3 B4 C2 20 B0 CD C0 CC 20 B8 C2 C0 B8 BD C5 C1 F6 20 C8 AE C0 CE C7 D8 C1 D6 BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9>
+  replace : "Meet the characters that use this please check destination"
+
+-
+  ##################################
+  desc : Open the box
+  ##################################
+  find : <BB F3 C0 DA B8 A6 20 B0 B3 BA C0 C7 CF BD C3 B0 DA BD C0 B4 CF B1 EE>
+  replace : "Will you open the box?"
+
+-
+  ##################################
+  desc : Counterfeit detected
+  ##################################
+  find : <C6 C4 C0 CF C0 C7 20 C0 A7 BA AF C1 B6 B0 A1 20 B0 A8 C1 F6 20 B5 C7 BE FA BD C0 B4 CF B4 D9>
+  replace : "Counterfit File was detected"
+
+-
+  ##################################
+  desc : Sex Change Window
+  ##################################
+  find : <BC BA BA B0 20 BC B1 C5 C3 20 C3 A2>
+  replace : "Sex Change"
+
+-
+  ##################################
+  desc : Char Name?
+  ##################################
+  find : <C4 B3 B8 AF C5 CD B8 ED C0 BB 20 C0 D4 B7 C2 C7 CF BC BC BF E4>
+  replace : "Enter Character Name"
+
+-
+  ##################################
+  desc : Char name mismatch
+  ##################################
+  find : <C4 B3 B8 AF B8 ED C0 CC 20 C0 CF C4 A1 C7 CF C1 F6 20 BE CA BD C0 B4 CF B4 D9>
+  replace : "Character name does not match"
+
+-
+  ##################################
+  desc : Make Character 2
+  ##################################
+  find : <C4 B3 B8 AF C5 CD 20 B8 B8 B5 E9 B1 E2>
+  replace : "Make Charactr"
+
+-
+  ##################################
+  desc : Goal is here
+  ##################################
+  find : <B8 F1 C7 A5 B0 A1 20 BF A9 B1 E2 20 C0 D4 B4 CF B4 D9>
+  replace : "The goal is here"
+
+-
+  ##################################
+  desc : Goal is same
+  ##################################
+  find : <C0 CC C0 FC B0 FA 20 B5 BF C0 CF C7 D1 20 B8 F1 C7 A5 20 C0 D4 B4 CF B4 D9>
+  replace : "Goal is the same location"
+
+-
+  ##################################
+  desc : Select & Move
+  ##################################
+  find : <C0 BB 20 BC B1 C5 C3 C7 CF BF A9 20 C0 CC B5 BF 20 C7 CF BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9>
+  replace : "Please select and move to area"
+
+-
+  ##################################
+  desc : Looking for
+  ##################################
+  find : <C3 A3 B0 ED C0 DA 20 C7 CF B4 C2>
+  replace : "Looking for"
+
+-
+  ##################################
+  desc : Arrived at Map
+  ##################################
+  find : <BD C4 C7 CF B4 C2 20 B8 CA BF A1 20 B5 B5 C2 F8 20 C7 CF BF B4 BD C0 B4 CF B4 D9>
+  replace : "Arrived at the map location"
+
+-
+  ##################################
+  desc : Use item & go
+  ##################################
+  find : <BE C6 C0 CC C5 DB C0 BB 20 BB E7 BF EB C7 CF BF A9 20 C0 CC B5 BF C7 CF BF A9 20 C1 D6 BD C3 B1 E2 20 B9 D9 B6 F8 B4 CF B4 D9 2E 00 C3 A3 B0 ED C0 DA 20 C7 CF B4 C2 20 B8 CA C0 CC 20 C7 D8 B4 E7 20 B8 CA 20 C0 D4 B4 CF B4 D9>
+  replace : "Please use the item and go to the map area"
+
+-
+  ##################################
+  desc : Find Map with location
+  ##################################
+  find : <C3 A3 B0 ED C0 DA 20 C7 CF B4 C2 20 B8 CA C0 CC 20 C7 D8 B4 E7 20 B8 CA 20 C0 D4 B4 CF B4 D9>
+  replace : "Find a Map using the location"
+
+-
+  ##################################
+  desc : Find unsupported route
+  ##################################
+  find : <C7 D8 B4 E7 20 B8 CA C0 BA 20 B1 E6 C3 A3 B1 E2 B0 A1 20 C1 F6 BF F8 20 B5 C7 C1 F6 20 BE CA B4 C2 20 B8 CA C0 D4 B4 CF B4 D9>
+  replace : "Find the map route which is not supported"
+
+-
+  ##################################
+  desc : No Navigation
+  ##################################
+  find : <B3 BB BA F1 B0 D4 C0 CC BC C7 BF A1 20 C1 A4 BA B8 B0 A1 20 BE F8 BD C0 B4 CF B4 D9>
+  replace : "We do not have navigation"
+
+-
+  ##################################
+  desc : Latitude player fails
+  ##################################
+  find : <C7 C3 B7 B9 C0 CC BE EE 20 C0 A7 C4 A1 20 C3 A3 B1 E2 20 BD C7 C6 D0>
+  replace : "Latitude player fails"
+
+-
+  ##################################
+  desc : No info on area
+  ##################################
+  find : <C3 E2 B9 DF 20 C1 F6 BF AA BF A1 20 B4 EB C7 D1 20 C1 A4 BA B8 20 BC B3 C1 A4 20 BD C7 C6 D0>
+  replace : "Failed to set info on the area"
+
+-
+  ##################################
+  desc : Match
+  ##################################
+  find : <B8 C5 C4 AA C0 CC>
+  replace : "Match"
+
+-
+  ##################################
+  desc : Fit
+  ##################################
+  find : <B8 C2 C1 F6>
+  replace : "Fit"
+
+-
+  ##################################
+  desc : Not
+  ##################################
+  find : <BE CA B4 C2>
+  replace : "Not"
+
+-
+  ##################################
+  desc : Map of
+  ##################################
+  find : <B8 CA C0 CC B4 D9>
+  replace : "Map of"
+
+-
+  ##################################
+  desc : Goal not found
+  ##################################
+  find : <C3 A3 B0 ED C0 DA 20 C7 CF B4 C2 20 B8 F1 C0 FB C0 CC 20 BA D2 BA D0 B8 ED 20 C7 D5 B4 CF B4 D9>
+  replace : "Unable to find the goal"
+
+-
+  ##################################
+  desc : Unsupported Area
+  ##################################
+  find : <B3 D7 BA F1 B0 D4 C0 CC BC C7 C0 CC 20 C1 F6 BF F8 20 B5 C7 C1 F6 20 BE CA B4 C2 20 C1 F6 BF AA 20 C0 D4 B4 CF B4 D9>
+  replace : "Does not support the navigation area"
+
+-
+  ##################################
+  desc : End Points
+  ##################################
+  find : <B5 B5 C2 F8 C1 A1>
+  replace : "EndPts"
+
+-
+  ##################################
+  desc : By Warp
+  ##################################
+  find : <BF F6 C7 C1 20 C0 CC BF EB>
+  replace : "By Warp"
+
+-
+  ##################################
+  desc : Non moving process
+  ##################################
+  find : <BA F1 B0 F8 C1 A4 20 C0 CC B5 BF>
+  replace : "Non-Moving"
+
+-
+  ##################################
+  desc : Move - Part 2
+  ##################################
+  find : <C0 CC B5 BF>
+  replace : "Move"
+
+-
+  ##################################
+  desc : Service
+  ##################################
+  find : <BA F1 BD BA 20 C0 CC BF EB>
+  replace : "Service"
+
+-
+  ##################################
+  desc : Undead - Part 2
+  ##################################
+  find : <BA D2 BB E7 C7 FC>
+  replace : "Undead"
+
+-
+  ##################################
+  desc : Result list
+  ##################################
+  find : <B0 E1 B0 FA 20 B8 AE BD BA C6 AE 20 C3 A2>
+  replace : "Result List"
+
+-
+  ##################################
+  desc : Route Guidance Mod
+  ##################################
+  find : <B1 E6 20 BE C8 B3 BB 20 C1 A4 BA B8 20 C3 A2 5D 20 C0 B8 B7 CE 20 BA B8 B1 E2 20 B8 F0 B5 E5 20 BA AF B0 E6 20 B0 A1 B4 C9 C7 CF B4 D9>
+  replace : "Change Route By"
+
+-
+  ##################################
+  desc : Change view mode
+  ##################################
+  find : <C0 B8 B7 CE 20 BA B8 B1 E2 20 B8 F0 B5 E5 20 BA AF B0 E6 20 B0 A1 B4 C9 C7 CF B4 D9>
+  replace : "Possible to change view mode"
+
+-
+  ##################################
+  desc : Buttons at bottom
+  ##################################
+  find : <B0 CB BB F6 20 B8 AE BD BA C6 AE C3 A2 20 C7 CF B4 DC 20 B9 F6 C6 B0 C0 BB 20 C0 CC BF EB C7 CF BF A9>
+  replace : "Use buttons at bottom of window"
+
+-
+  ##################################
+  desc : Info Button
+  ##################################
+  find : <BE C8 B3 BB 20 B9 F6 C6 B0 C0 CC>
+  replace : "Info Button"
+
+-
+  ##################################
+  desc : Multiple directions
+  ##################################
+  find : <B7 AF C1 F6 B8 E9 20 B0 E1 B0 FA 20 B8 AE BD BA C6 AE C3 A2 C0 BA 20 B1 E6 BE C8 B3 BB 20 B8 AE BD BA C6 AE 20 C0 E5 C0 B8 B7 CE 20 BA AF B0 E6 20 B5 C8 B4 D9>
+  replace : "Multiple directions, result window changes to chapter"
+
+-
+  ##################################
+  desc : Box
+  ##################################
+  find : <BB F3 C0 DA B8 A6>
+  replace : "Box"
+
+-
+  ##################################
+  desc : You - Part 2
+  ##################################
+  find : <BF F8 C7 CF B4 C2>
+  replace : "You"
+
+-
+  #########################################
+  desc : Guide path can be faster
+  #########################################
+  find : <C3 BC C5 A9 C7 CF BF A9 20 B4 F5 20 BA FC B8 A5 20 B0 E6 B7 CE B8 A6 20 BE C8 B3 BB 20 B9 DE C0 BB 20 BC F6 20 C0 D6 B4 D9>
+  replace : "Check the guide path can be faster"
+
+-
+  ################################################################################
+  desc : Goal guide
+  ################################################################################
+  find : <C3 E2 B7 C2 20 B5 C7 B0 ED 20 C0 D6 B4 C2 20 B8 F1 C7 A5 B0 A1 20 C0 D6 C0 BB B6 A7 20 BE C8 B3 BB 20 B9 F6 C6 B0 C0 BB 20 C5 AC B8 AF C7 CF B8 E9 20 C7 D8 B4 E7 20 B8 F1 C7 A5 B7 CE 20 B1 E6 C0 BB 20 BE C8 B3 BB 20 C7 D1 B4 D9>
+  replace : "Goal being output when you click the button that aim guide you the way to"
+
+-
+  ##################################
+  desc : List
+  ##################################
+  find : <B8 AE BD BA C6 AE BF A1>
+  replace : "List"
+
+-
+  ##################################
+  desc : Item
+  ##################################
+  find : <C7 D7 B8 F1 C0 BB>
+  replace : "Item"
+
+-
+  ##################################
+  desc : Info output to
+  ##################################
+  find : <BC B1 C5 C3 C7 CF B8 E9 20 C1 A4 BA B8 B0 A1 20 C3 E2 B7 C2 B5 C8 B4 D9>
+  replace : "Select info is output to"
+
+-
+  ##################################
+  desc : Saffron Cap
+  ##################################
+  find : <C7 C1 B7 D0 20 C4 AB C7 C1>
+  replace : "Boys Cap"
+
+-
+  ##################################
+  desc : All results to kafra
+  ##################################
+  find : <B0 CB BB F6 20 B0 E1 B0 FA 20 C7 C1 B7 D0 C5 D7 B6 F3 C0 C7 20 C4 AB C7 C1 B6 F3 B8 A6 20 B8 F0 B5 CE 20 C3 E2 B7 C2 20 C7 D1 B4 D9>
+  replace : "Output all results to kafra of Prontera"
+
+-
+  ##################################
+  desc : Command to retrieve
+  ##################################
+  find : <B8 ED B7 C9 BE EE B7 CE 20 B0 CB BB F6 C7 D1 B4 D9>
+  replace : "CMD to retrieve"
+
+-
+  ##################################
+  desc : Rules
+  ##################################
+  find : <B1 D4 C4 A2 C0 BA>
+  replace : "Rules"
+
+-
+  ##################################
+  desc : Want to find
+  ##################################
+  find : <B0 CB BB F6 20 C7 CF B7 C1 B4 C2>
+  replace : "Want toFind"
+
+-
+  ##################################
+  desc : All
+  ##################################
+  find : <C0 CC 20 B8 F0 B5 CE>
+  replace : "All"
+
+-
+  ##################################
+  desc : Information contained
+  ##################################
+  find : <C6 F7 C7 D4 B5 C8 20 C1 A4 BA B8 B8 A6>
+  replace : "Info Containd"
+
+-
+  ##################################
+  desc : Output
+  ##################################
+  find : <C3 E2 B7 C2 20 C7 D1 B4 D9>
+  replace : "Output"
+
+# -
+  ##################################
+  # desc : Dunno
+  ##################################
+  # find : <B0 CB BB F6 20 C1 BE B7 F9 B4 C2 20 C0 FC C3 BC>
+
+-
+  ##################################
+  desc : Map
+  ##################################
+  find : <B8 CA>
+  replace : "MP"
+
+-
+  ##################################
+  desc : Classified Mob
+  ##################################
+  find : <B8 F3 BD BA C5 CD 20 C0 B8 B7 CE 20 BA D0 B7 F9 20 B5 C8 B4 D9>
+  replace : "Classified as a Mob"
+
+-
+  ##################################
+  desc : Details
+  ##################################
+  find : <BC B3 B8 ED>
+  replace : "Note"
+
+-
+  ##################################
+  desc : Output lvl range
+  ##################################
+  find : <C7 D8 B4 E7 20 B7 B9 BA A7 20 B9 FC C0 A7 C0 C7 20 B8 F3 BD BA C5 CD 20 C3 E2 B7 C2>
+  replace : "Output lvl range of Mob that"
+
+-
+  ##################################
+  desc : Mob level output
+  ##################################
+  find : <C7 D8 B4 E7 20 B7 B9 BA A7 C0 C7 20 B8 F3 BD BA C5 CD 20 C3 E2 B7 C2>
+  replace : "Mob of that level output"
+
+-
+  ##################################
+  desc : Output all
+  ##################################
+  find : <B8 F0 B5 E7 20 C7 D7 B8 F1 20 C3 E2 B7 C2>
+  replace : "Output all itm"
+
+-
+  ##################################
+  desc : Class Category
+  ##################################
+  find : <B1 B8 BA D0 20 C7 D7 B8 F1 C0 B8 B7 CE 20 C3 E2 B7 C2 20 C1 BE B7 F9 20 B1 B8 BA D0 20 B0 A1 B4 C9>
+  replace : "Class Category of output types"
+
+-
+  ##################################
+  desc : Map Location
+  ##################################
+  find : <B8 CA C0 CC B8 A7 2C 20 C0 A7 C4 A1>
+  replace : "Map Location"
+
+-
+  ##################################
+  desc : Jenny basic Command
+  ##################################
+  find : <B1 E2 BA BB 20 B8 ED B7 C9 BE EE B4 C2 20 C1 A6 B4 CF 2C 20 BA F1 B0 F8 C1 A4 20 B0 CB BB F6 C0 BB 20 B1 E2 BA BB C0 B8 B7 CE 20 C7 D5 B4 CF B4 D9>
+  replace : "Jenny basic CMD, on the basis of the non-search"
+
+-
+  ##################################
+  desc : Navigation Help
+  ##################################
+  find : <B3 BB BA F1 B0 D4 C0 CC BC C7 20 B5 B5 BF F2 B8 BB>
+  replace : "Navigation Help"
+
+-
+  ##################################
+  desc : Boss
+  ##################################
+  find : <BA B8 BD BA>
+  replace : "Boss"
+
+-
+  ##################################
+  desc : Target
+  ##################################
+  find : <B8 F1 C7 A5>
+  replace : "Trgt"
+
+-
+  ##################################
+  desc : Not read information
+  ##################################
+  find : <C1 A4 BA B8 B8 A6 20 C0 D0 C1 F6 20 B8 F8 C7 D4>
+  replace : "Fail to read info"
+
+-
+  ##########################
+  desc : Help
+  ##########################
+  find : <B5 B5 BF F2 B8 BB>
+  replace : "Help"
+
+-
+  #########################
+  desc : Simple UI Change
+  #########################
+  find : <B0 A3 C6 ED 20 55 49 B7 CE 20 BA AF B0 E6>
+  replace : "SimpleUIChange"
+
+-
+  ###########################################
+  desc : External route info file read
+  ###########################################
+  find : <BF DC BA CE 20 B1 E6 C1 A4 BA B8 20 C6 C4 C0 CF 20 C0 D0 B1 E2>
+  replace : "Ext Route info file"
+
+-
+  ##################################
+  desc : Deadline
+  ##################################
+  find : <B8 B6 B0 A8 BD C3 B0 A3>
+  replace : "Deadline"
+
+-
+  ##################################
+  desc : Limited time
+  ##################################
+  find : <C1 A6 C7 D1 BD C3 B0 A3>
+  replace : "Ltd Time"
+
+-
+  ##################################
+  desc : Navigation Interface
+  ##################################
+  find : <B3 BB BA F1 B0 D4 C0 CC BC C7 20 B5 B5 C5 B7 20 C7 D8 C1 A6>
+  replace : "Navigation Interface"
+
+-
+  ##################################
+  desc : Minimap - Show Location
+  ##################################
+  find : <C0 A7 C4 A1 C7 A5 BD C3>
+  replace : "Show Loc"
+
+-
+  ##################################
+  desc : Minimap - Zoom In
+  ##################################
+  find : <C8 AE B4 EB 00>
+  replace : "Zoom+"
+
+-
+  ##################################
+  desc : Minimap - Zoom Out
+  ##################################
+  find : <C3 E0 BC D2 00>
+  replace : "Zoom-"
+
+-
+  #######################
+  desc : Minimap - Show Map
+  #######################
+  find : <B8 CA BA B8 B1 E2>
+  replace : "Maximz"
+
+-
+  #########################
+  desc : Minimap - World View
+  #########################
+  find : <BF F9 B5 E5 BA B8 B1 E2 00>
+  replace : "WorldView"
+
+-
+  ##############################
+  desc : Total in Cash Shop
+  #############################
+  find : <54 6F 74 61 6C 20 3A 20 25 64 20 C4 B3 BD C3>
+  replace : "Total : %d Cash"
+
+-
+  ########################################
+  desc : 2015-10-01 Char Creation - Part 1
+  ########################################
+  find : <B9 CC B5 E5 B0 A1 B8 A3 B5 E5 20 B4 EB B7 FA C0 C7 20 B4 EB C7 A5 20 C1 BE C1 B7 2E 20 B9 AB C7 D1 C7 D1 20 C0 E1 C0 E7 B7 C2 B0 FA 20 B6 D9 BE EE B3 AD 20 C0 FB C0 C0 B7 C2 C0 B8 B7 CE 20 B9 AE C1 A6 20 C7 D8 B0 E1 BF A1 20 C5 B9 BF F9 C7 D1 20 B0 CD C0 CC 20 C6 AF C2 A1 C0 CC B4 D9 2E>
+  replace : "Race of Midgard continent. Unlimited potential. Excellent adaptability to solve problems."
+
+-
+  ########################################
+  desc : 2015-10-01 Char Creation - Part 2
+  ########################################
+  find : <C6 C4 2D BD BA C5 B8 20 B4 EB B7 FA C0 C7 20 B4 EB C7 A5 C0 FB C0 CE 20 C1 BE C1 B7 20 C1 DF 20 C7 CF B3 AA B7 CE 2C 20 BC B1 C3 B5 C0 FB C0 B8 B7 CE 20 C8 A3 B1 E2 BD C9 C0 CC 20 B0 AD C7 CF B0 ED 20 B9 DF B6 F6 C7 D1 20 BC BA B0 DD C0 BB 20 C1 F6 B3 E6 B4 D9 2E 00>
+  replace : "One of the leading races of the continent star, naturally curious and sporty personality."
+
+-
+  ########################################
+  desc : 2015-10-01 Char Creation - Part 3
+  ########################################
+  find : <B5 B5 B6 F7 00>
+  replace : "Doram"
+
+-
+  ########################################
+  desc : 2015-10-01 Char Creation - Part 4
+  ########################################
+  find : <BC D2 C8 AF BB E7 00 00>
+  replace : "Summoner"
+
+-
+  ########################################
+  desc : 2015-10-01 Char Creation - Part 5
+  ########################################
+  find : <B0 CB BB E7 2C 20 B9 FD BB E7 2C 20 BB F3 C0 CE 2C 20 BA B9 BB E7 2C 20 B5 B5 B5 CF 2C 20 B1 C3 BC F6>
+  replace : "Merch,Swordy,Mage,Thief,Archer,Aco"
+
+-
+  ########################################
+  desc : 2015-10-01 Char Creation - Part 6
+  ########################################
+  find : <C0 CE B0 A3 00>
+  replace : "Human"
+
+-
+  #####################################
+  desc : Message Box 2015 - Part 1
+  #####################################
+  find : <B8 DE BC BC C1 F6 00>
+  replace : "Message"
+
+-
+  #####################################
+  desc : Message Box 2015 - Part 2
+  #####################################
+  find : <20 28 00 00 28 20 54 6F 20>
+  replace: <20 00 00 00 28 20 54 6F 20>
+
+-
+  ####################################################
+  desc : Pet Evolution item amount in non-langtype 0
+  ####################################################
+  find : <25 64 B0 B3 00>
+  replace : "%dea"
+
+-
+  ##############################
+  desc : Tip box - Part 1
+  ##############################
+  find : <BD C3 C0 DB C7 D2 20 B6 A7 20 BF AD B1 E2>
+  replace : "Save Tip?"
+
+-
+  ##############################
+  desc : Tip box - Part 2
+  ##############################
+  find : <B4 DD B1 E2>
+  replace : "Done"
+
+-
+  ##############################
+  desc : Navigation
+  ##############################
+  find : <5B B8 F1 C0 FB C1 F6 5D 20 25 73>
+  replace : "[Dest] %s"
+
+-
+  ##############################
+  desc : Quest Info
+  ##############################
+  find : <25 64 20 B0 B3 00>
+  replace : "%d"

@@ -1,0 +1,71 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2013-2020 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-11-10                                             *
+*   Last Modified : 2020-12-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Need to check if its always the 2nd entry to replace
+
+///
+/// \brief Change the format string used for MATK values with the one using tilde symbol
+///
+TildeForMatk = function()
+{
+	/// 1.1 - Find the string '%d + %d'
+	let addr = Exe.FindText("%d + %d");
+	if (addr < 0)
+		throw Error("Format string not found");
+
+	/// 1.2 - Find all locations where its used in a PUSH (there should be 5)
+	let addrs = Exe.FindHexN( PUSH(addr) );
+	if (addrs.length !== 5)
+		throw Error("Incorrect no. of matches found");
+
+	/// 2.1 - Find the string '%d ~ %d'
+	addr = Exe.FindText("%d ~ %d", false);
+	if (addr < 0)
+	{
+		/// 2.2 - If not present, allocate space for adding the string
+		addr = Exe.FindSpace(8);
+		if (addr < 0)
+			throw NO_ALLOC;
+
+		/// 2.3 - Add the string there
+		Exe.AddText(addr, "%d ~ %d");
+
+		/// 2.4 - Convert to VIRTUAL address
+		addr = Exe.Phy2Vir(addr, DIFF);
+	}
+
+	/// 2.5 - Replace the PUSHed string for the 2nd location out of the 5
+	Exe.SetInt32(addrs[1] + 1, addr); 
+
+	return true;
+};
+
+///
+/// \brief Disable for old clients
+///
+TildeForMatk.validate = IsPost2010;

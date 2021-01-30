@@ -1,0 +1,78 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-11-10                                             *
+*   Last Modified : 2020-12-06                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Common Validation function for Cash Shop related patches
+///
+HasCashShop = () =>
+	ROC.CashShopAddr > 0;
+
+///
+/// \brief Common Validation function for Login Window related patches
+///
+HasHiddenLogWin = () =>
+	ROC.HasLWhidden;
+
+///
+/// \brief Common Validation function for Packet Encryption related patches
+///
+HasPktKeys = () =>
+	ROC.HasPktKeys;
+
+///
+/// \brief Common Validation function for various patches only for 2010+ clients
+///
+IsPost2010 = () =>
+	ROC.Post2010;
+
+///
+/// \brief Extract the import table from the exe as a hex string.
+///        Can also skip over specific DLL as required
+///
+GetImpTable = (skipDLL, impAddr = -1) =>
+{
+	if (impAddr < 0)
+		impAddr = Exe.GetDirAddr(D_Import, PHYSICAL);
+
+	let lastEntry = ' 00'.repeat(20);	
+	let dirEntries = '';
+	for (let curEntry, addr = impAddr; (curEntry = Exe.GetHex(addr, 20)) !== lastEntry; addr += 20)
+	{
+		// Ensure valid name
+		let nameAddr = Exe.Rva2Phy( curEntry.substr(12*3, 4*3).toInt() ); //4 bytes from 12th position
+		if (nameAddr <= 0)
+			break;
+
+		// Skip over specified DLL
+		if (Exe.GetText(nameAddr) === skipDLL)
+			continue;
+
+		dirEntries += curEntry;
+	}
+	return dirEntries;
+};

@@ -1,0 +1,144 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-11-10                                             *
+*   Last Modified : 2020-12-04                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the conditional jump for Langtype comparison inside CGameMode::SendMsg function 
+///        for /w & /who command as well as inside CGameMode::Zc_User_Count
+///
+EnableWho = function()
+{
+	/// 1.1 - Ensure the LANGTYPE is loaded
+	LANGTYPE.load();
+
+	/// 1.2 - Find Langtype comparison
+	let code =
+		MOV(EAX, [LANGTYPE]) //MOV EAX, DWORD PTR DS:[g_serviceType]
+	+	CMP(EAX, 3)          //CMP EAX,3
+	+	JE(POS2WC)           //JE addr1
+	+	CMP(EAX, 8)          //CMP EAX,8
+	+	JE(POS2WC)           //JE addr1
+	+	CMP(EAX, 9)          //CMP EAX,9
+	+	JE(POS2WC)           //JE addr1
+	;
+
+	let addr = Exe.FindHex(code + LEA()); //LEA ECX,[ESP + const]
+	if (addr < 0)
+		addr = Exe.FindHex(code + MOV(EAX)); //MOV EAX, const
+
+	if (addr < 0)
+		throw Error("Langtype comparison not found");
+
+	/// 1.3 - NOP out all the comparisons from first JE (essentially creates a JMP in the exe)
+	Exe.SetNOPs(addr + 5, code.byteCount() - 5);
+
+	/// 2.1 - Find the common pattern to identify Zc_User_Count function
+	code =
+		(Exe.Version < 11.0 ?
+		PUSH_R           //PUSH reg32_A
+	:
+		PUSH([R32, WCp]) //PUSH DWORD PTR DS:[reg32_A + const]
+	)
+	+	PUSH(0xB2)       //PUSH 0B2
+	+	CALL(ALLWC)      //CALL MsgStr
+	+	ADD(ESP, 4)      //ADD ESP, 4
+	;
+	addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("Zc_User_Count not found");
+
+	/// 2.2 - Find the Langtype comparison before the pattern.
+	code =
+		JNE(WCp)            //JNE SHORT addr
+	+	(Exe.Version < 11.0
+	?
+		MOV(EAX, [POS3WC])  //MOV EAX, DWORD PTR DS:[refAddr]
+	+	PUSH_EAX            //PUSH EAX
+	:
+		PUSH([POS4WC])      //PUSH DWORD PTR DS:[refAddr]
+	)
+	+	CALL(ALLWC)         //CALL IsGravityAid
+	+	ADD(ESP, 4)         //ADD ESP, 4
+	+	TEST(AL, AL)        //TEST AL, AL
+	+	JNE(WCp)            //JNE SHORT addr
+	;
+
+	let cmpAddr = Exe.FindHex(code, addr - 0x60, addr);
+	if (cmpAddr < 0)
+		throw Error("2nd Langtype comparison not found");
+
+	/// 2.3 - Change the first JNE
+	Exe.SetJMP(cmpAddr);
+
+	if (Exe.Version >= 9.0)
+	{
+		/// 3.1 - Find the last Langtype comparison (started from some VC9 clients onwards)
+		code =
+			CMP(EAX, 0xF) //CMP EAX, 0F
+		+	JE(5)         //JE SHORT addr
+		+	CMP(EAX, 4)   //CMP EAX, 4
+		+	JNE(WCp)      //JNE SHORT addr2
+		;
+		addr = Exe.FindHex(code);
+
+		if (addr > 0)
+		{
+			/// 3.2 - Retrieve the JNE SHORT target address.
+			let tgtAddr = Exe.GetTgtAddr(addr + code.byteCount() - 1, 1);
+
+			/// 3.3 - Create a JMP to it right after the CMP
+			Exe.SetJMP(addr + 3, tgtAddr);
+		}
+	}
+
+	return true;
+};
+
+///
+/// \brief Change the conditional jump to JMP after Langtype comparison inside 
+///        CSession::SetTextType function when using '/showname'
+///
+EnableShowName = function()
+{
+	/// 1 - Find the Langtype comparison (don't need the langtype value to look for the pattern)
+	let code =
+		TEST(EAX, EAX) //TEST EAX, EAX
+	+	JZ(WCp)        //JZ SHORT addr -> loading setting for showname
+	+	CMP(EAX, 6)    //CMP EAX, 06
+	+	JZ(WCp)        //JZ SHORT addr -> loading setting for showname
+	+	CMP(EAX, 0xA)  //CMP EAX, 0A
+	;
+
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("Langtype comparison not found");
+
+	/// 2 - Change the conditional jump
+	Exe.SetJMP(addr + 2);
+
+	return true;
+};

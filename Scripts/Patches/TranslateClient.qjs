@@ -1,0 +1,201 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Ai4rei/AN                                         *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
+*   Created Date  : 2020-11-10                                             *
+*   Last Modified : 2021-01-20                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Translate Korean strings to user specified strings both loaded from user specified file.
+///        Also fixes Taekwon branch Job names
+///
+TranslateClient = function()
+{
+	[
+		["\xC5\xC2\xB1\xC7\xBC\xD2\xB3\xE0", "TaeKwon Girl"],
+		["\xC5\xC2\xB1\xC7\xBC\xD2\xB3\xE2", "TaeKwon Boy"]
+	].forEach( arr =>
+	{
+		/// 1.1 - Find the korean string.
+		let nameAddr = Exe.FindText(arr[0]);
+		if (nameAddr < 0)
+			throw Error("Korean name missing for " + arr[1]);
+
+		/// 1.2 - Find where it is assigned for being used as job name (can be in multiple places)
+		let addrs = [
+			[R32, 0x3F38],
+			[EAX, 0x3F38],
+			R32,
+			[EBP, WCn]
+		].reduce( (acc, assgn) =>
+			acc.concat( Exe.FindHexN( MOV(assgn, nameAddr)) ), []  //All possible combo of MOVs seen so far in clients.
+		);
+		if (addrs.isEmpty())
+			throw Error("Korean name reference missing for " + arr[1]);
+
+		/// 1.3 - Find the replacement english string
+		let tgtAddr = Exe.FindText(arr[1]);
+		if (tgtAddr < 0)
+			throw Error("'" + arr[1] + "' not found");
+
+		addrs.forEach( addr =>
+		{
+			/// 1.4 - Extract the instruction of the original to get its size
+			let ins = Instr.FromAddr(addr);
+
+			/// 1.5 - Replace the immediate value (i.e. the last 4 bytes)
+			Exe.SetInt32(addr + ins.Size - 4, tgtAddr);
+		});
+	});
+
+	/// 2.1 - Get the translation map file from user
+	let inFile = Exe.GetUserInput('$translationFile', D_InFile, "Translation Mapping", "Enter the translation file", "Inputs/Translations_EN.yml", {filters: YMLFILTER});
+	if (inFile === false)
+		Cancel("No translation file specified");
+
+	/// 2.2 - Load the mapping
+	let Translations = Warp.LoadYaml(inFile);
+	if (Translations === false)
+		return false;
+
+	else if (!IsArr(Translations))
+		throw Error("Need a list of translations");
+
+	/// 2.3 - Open the Failed Translations output file - for writing out unexpected translation fails
+	let fp = new TextFile(OUTDIR + "FailedTranslations_" + ROC.BaseName + ".txt", 'w');
+	if (!fp.Valid)
+		throw Error("Unable to create FailedTranslations Output file");
+
+	/// 3.1 - Retrieve the Section end point addresses
+	let dbegin  = Exe.GetSectBegin(DATA);
+	let d2begin = Exe.GetSectBegin(DATA2);
+	let dend  = Exe.GetSectEnd(DATA);
+	let d2end = Exe.GetSectEnd(DATA2);
+
+	/// 3.2 - Save the filtered array with successful translations
+	let translated = Translations.filter( (hash, idx) =>
+	{
+		/// 3.3 - Retrieve the 3 parts & verify if we are within the expected date range for the builddate
+		let findPat = hash.find;
+		let replStr = hash.replace;
+		let {startDate, endDate, desc} = hash;
+
+		if ( (IsNum(startDate) && Exe.BuildDate < startDate) || (IsNum(endDate) && Exe.BuildDate > endDate) )
+			return true; // its not a fail
+
+		/// 3.4 - Ensure description is a valid string/number, defaults to the replacement string
+		if (desc === undefined)
+			desc = replStr;
+
+		if (!IsNumOrStr(desc))
+			desc = "Translation #" + idx;
+
+		/// 3.5 - Ensure we have valid patterns for search & replace
+		if (!IsStr(findPat))
+		{
+			fp.WriteLine(desc + " => Invalid/Non-existent search pattern");
+			return false;
+		}
+
+		if (!IsStr(replStr))
+		{
+			fp.WriteLine(desc + " => Invalid/Non-existent replacement pattern");
+			return false;
+		}
+
+		/// 3.6 - Check if the search pattern is hex or text string
+		let hexMode = true;
+		let parts = findPat.match(/^\s*<(.*)>\s*$/);
+		if (parts === null)
+		{
+			if (findPat.includes('\x00')) //if null is present then search pattern need to be hex
+				findPat = findPat.toHex();
+			else
+				hexMode = false;
+		}
+		else
+		{
+			findPat = parts[1];
+		}
+
+		/// 3.7 - Find the pattern
+		let addr;
+		if (hexMode)
+		{
+			addr = Exe.FindHex(" 00" + findPat + " 00", dbegin, dend);
+			if (addr < 0 && d2begin > 0)
+				addr = Exe.FindHex(" 00" + findPat + " 00", d2begin, d2end);
+		}
+		else
+		{
+			addr = Exe.FindText(findPat, PHYSICAL);
+		}
+
+		/// 3.8 - If not found write to FailedTranslations.txt
+		if (addr < 0)
+		{
+			fp.WriteLine(desc + " => Pattern not found");
+			return false;
+		}
+
+		/// 3.9 - Increment addr for hexMode (since we searched with 0 prefixed)
+		if (hexMode)
+			addr++;
+
+		/// 3.10 - Repeat 3.6 for replacement string
+		hexMode = true;
+		parts = replStr.match(/^\s*<(.*)>\s*$/);
+		if (parts === null)
+		{
+			if (replStr.includes('\x00'))
+				replStr = replStr.toHex();
+			else
+				hexMode = false;
+		}
+		else		
+		{
+			replStr = parts[1];
+		}
+
+		/// 3.11 - Replace based on hexMode
+		if (hexMode)
+			Exe.SetHex(addr, replStr + " 00");
+		else
+			Exe.SetText(addr, replStr + "\x00");
+
+		return true;
+	});
+	fp.Close();
+
+	/// 4.1 - If 'translated' is empty i.e. everything in Translations array failed (highly unlikely), then report error
+	if (translated.isEmpty())
+		throw Error("All translations had issues");
+
+	/// 4.2 - If any fails were found, show the FailedTranslations.txt for user to cross check if any expected ones got failed (only displays for Main GUI)
+	if (!Exe.TestMode && translated.length < Translations.length)
+		Warp.Show(fp.Path);
+
+	return true;
+};

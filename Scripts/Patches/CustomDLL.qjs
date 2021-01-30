@@ -1,0 +1,208 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-11-19                                             *
+*   Last Modified : 2021-01-14                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Need to find an alternative for clients with repetitive imports
+
+///
+/// \brief Create a new import table containing all the existing DLL + functions 
+///        along with the specified DLL + functions.
+///
+CustomDLL = function()
+{
+	/// 1.1 - Extract the import table (if HShield patch is enabled then skip aossdk entry while extracting)
+	let dirEntries = GetImpTable(Exe.IsSelected("NoHShield") ? "aossdk.dll" : undefined);
+
+	/// 1.2 - Get the list file containing the dlls and functions to add
+	let inFile = Exe.GetUserInput('$customDLL', D_InFile, "DLL Spec", "Enter the DLL specification file", "Inputs/DLLSpec.yml", {filters: YMLFILTER});
+	if (inFile === false)
+		Cancel("No file specified");
+
+	/// 1.3 - Retrieve the specification.
+	let dllSpec = Warp.LoadYaml(inFile);
+	if (!Array.isArray(dllSpec))
+		Cancel("Improper/Non-existent file specified");
+
+	/// 2 - Construct list of strings of all the names as well as compute the relative offsets for 
+	///     all the new entries.
+	let dirSize = dirEntries.byteCount(); //Holds the size of Import Table
+	let strData = "";                     //Holds all the dll and function names as one hex string
+	let strSize = 0;                      //Holds the size of strData
+
+	let found = dllSpec.filter( hash =>
+	{
+		if (hash.Name === undefined || !Array.isArray(hash.Funcs))
+			return false;
+
+		hash.Offset = strSize;
+		strData += hash.Name.toHex() + " 00"; //Append DLL Name
+		strSize += hash.Name.length + 1; //Add name length + 1 for NULL
+
+		dirSize += 20; //Increment for each entry 
+
+		let found = hash.Funcs.filter( (func, idx) =>
+		{
+			if (func.Ordinal !== undefined)
+			{
+				func.Offset = 0x80000000 | func.Ordinal;
+			}
+			else if (IsStr(func.Name))
+			{
+				func.Offset = strSize;
+				strData += idx.toHex(2) + func.Name.toHex() + " 00"; //Append function name
+				strSize += 2 + func.Name.length + 1; //Add the 2 for the index bytes, name length and 1 for NULL
+
+				if (func.Name.length % 2 !== 0) //Even the Odds xD
+				{
+					strData += " 00";
+					strSize++;
+				}
+			}
+			else
+			{
+				return false;
+			}
+
+			dirSize += 4; //Thunk Value VIRTUALs & Ordinals
+			return true;
+		});
+
+		dirSize += 4; //Last Value is 00 00 00 00 after Thunks
+
+		return (found !== undefined);
+	});
+
+	if (found === undefined)
+		Cancel("No usable entries in specified file");
+
+	dirSize += 20; //Accomodate for IAT End Entry
+
+	/// 5.1 - Allocate space to add the new table
+	let free = Exe.FindSpace(strSize + dirSize);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	/// 5.2 - Construct the new Import table using the dllSpec object
+	let strRVA = Exe.Phy2Rva(free, DIFF);
+	let baseRVA = strRVA + strSize;
+	let prefix = ' 00'.repeat(12);
+
+	let dirEntryData = "";
+	let dirTableData = "";
+	let entryPtr = 0;
+
+	dllSpec.forEach( hash =>
+	{	
+		/// 5.2.1 - Sanity check (skip empty function names - shouldnt happen but still)
+		if (hash.Offset === undefined || hash.Funcs.isEmpty())
+			return;
+
+		/// 5.2.2 - Append the 12 byte prefix along with the offset of the dllname & its entry 
+		dirTableData += prefix + (strRVA + hash.Offset).toHex() + (baseRVA + entryPtr).toHex();
+
+		hash.Funcs.forEach( func =>
+		{
+			if (func.Ordinal !== undefined)
+				dirEntryData += func.Offset.toHex();
+			else if (func.Offset !== undefined)
+				dirEntryData += (strRVA + func.Offset).toHex();
+			else
+				return;
+
+			entryPtr += 4;
+		});
+
+		/// 5.2.4 - Append 0s as the end of entry table
+		dirEntryData += " 00 00 00 00";
+		entryPtr += 4;
+	});
+
+	/// 5.3 - Prefix the original import table & append 0s as the end of the new import table
+	dirTableData = dirEntries + dirTableData + prefix + ' 00'.repeat(8);
+
+	/// 5.4 - Save the size of the entry data
+	let entSize = dirEntryData.byteCount();
+
+	/// 6.1 - Load all the details to ImpInfo member of ROC
+	ROC.ImpInfo = 
+	{
+		Addr    : free,
+		Strings : strData,
+		Entries : dirEntryData,
+
+		TblData : dirTableData,
+		TblAddr : baseRVA + Exe.ImageBase + dirEntryData.byteCount(),
+		TblSize : dirTableData.byteCount() - 20
+	};
+
+	/// 6.2 - Call the helper function to setup the new Import table in the client
+	_CDLL_SetupImports();
+
+	return true;
+};
+
+/*
+///
+/// \brief Disable for 2014-2017 clients since their import tables are messed up 
+///        and the client doesnt allow its movement.
+///
+CustomDLL.validate = () => Exe.BuildDate < 20140700 || Exe.BuildDate > 20170700 ;
+*/
+
+///
+/// \brief Rerun the NoHShield function if the HShield patch is selected 
+///        so that it doesnt accomodate for Custom DLL
+///
+CustomDLL.cleanup = function()
+{
+	let patchName = "NoHShield";
+	if (Exe.IsSelected(patchName))
+	{
+		Exe.ClearPatch(patchName);
+		Exe.SetActivePatch(patchName);
+		NoHShield();
+	}
+};
+
+///
+/// \brief Helper function which uses the data from ROC.ImpInfo hash
+///        to create a new import table in the client
+///
+_CDLL_SetupImports = function(tblData)
+{
+	/// 1 - Add the strings, dll entries and import table (either tblData or ROC.ImpInfo.tblData) at the offset
+	Exe.AddHex(
+		ROC.ImpInfo.Addr, 
+		ROC.ImpInfo.Strings + 
+		ROC.ImpInfo.Entries + 
+		(tblData === undefined ? ROC.ImpInfo.TblData : tblData)
+	);
+
+	/// 2 - Update the PE Table Import Data Directory Address
+	Exe.SetDirAddr(D_Import, ROC.ImpInfo.TblAddr);
+	Exe.SetDirSize(D_Import, ROC.ImpInfo.TblSize);
+};

@@ -1,0 +1,69 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Andrei (4144), Neo-Mind                                *
+*   Created Date  : 2020-11-21                                             *
+*   Last Modified : 2020-12-08                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Pattern not present in clients before 2017-10-18
+
+///
+/// \brief Change the conditional jump to JMP inside CGameMode_virt24 to 
+///        ignore test for other members being on same map
+///
+AllowPL2Leave = function()
+{
+	/// 1.1 - Find the PUSHes 
+	let code =
+		JZ(WCp)      //JZ addr3
+	+	PUSH_0       //PUSH 0
+	+	PUSH_0       //PUSH 0
+	+	PUSH(0xFF)   //PUSH 0FFh
+	+	PUSH(0XCC9)  //PUSH 0CC9h
+	+	JMP()        //JMP addr3
+	;
+
+	let refAddr = Exe.FindHex(code);
+	if (refAddr < 0)
+		throw Error("Reference pattern missing");
+
+	/// 1.2 - Find the JZ/JNZ pattern before it
+	code =
+		TEST(AL, AL)              //TEST AL, AL
+	+	" [0111010.] [0011....]"  //JZ/JNZ addr1 <-- patch here
+	+	MOV([EBP, WC], -1)        //MOV DWORD PTR SS:[EBP + constA], -1
+	+	LEA(ECX, [EBP, ALLWC])    //LEA ECX, [EBP + fInfo]
+	+	CALL(ALLWC)               //CALL FRIEND_INFO_destructor
+	;
+
+	let addr = Exe.FindHex(code, refAddr - 0x40, refAddr);
+	if (addr < 0)
+		throw Error("JZ/JNZ Pattern not found");
+
+	/// 2 - Enforce the Jump
+	Exe.SetJMP(addr + 2);
+
+	return true;
+};

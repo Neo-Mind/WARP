@@ -1,0 +1,130 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2014-2020 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2020-12-07                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Modify the constant used in Comparison inside the vending related function (dont have name for it atm)
+///
+CustomVendingLimit = function()
+{
+	/// 1.1 - Find where 1,000,000,000 is PUSHed
+	if (CVL_Vir === undefined)
+		CVL_Vir = Exe.Phy2Vir(CVL_Phy);
+
+	let addr = Exe.FindHex( PUSH(CVL_Vir) );
+	if (addr < 0)
+		throw Error("'1,000,000,000' not PUSHed");
+
+	/// 1.2 - Find the comparison with 1Billion or 1Billion+1 before the PUSH
+	let newStyle = Exe.BuildDate > 20130618;
+	let limiter = (1e9 + (newStyle ? 0 : 1)).toHex(); //1B or 1B+1 in hex
+	let code =
+		limiter  //CMP reg32_A, 3B9ACA00 or 3B9ACA01 ; easier to do without opcode since it changes when reg32_A is EAX
+	+	(newStyle
+	?
+		JLE(WCp) //JLE SHORT addr
+	:            // or
+		JL(WCp)  //JL SHORT addr
+	);
+
+	let cmp1Addr = Exe.FindHex(code, addr - 0x10, addr);
+	if (cmp1Addr < 0)
+		throw Error("First Comparison not found");
+
+	/// 1.5 - Find the MsgString CALL that gets the 0 zeny message
+	code =
+		PUSH_1       //PUSH 1
+	+	PUSH_2       //PUSH 2
+	+	PUSH(0x25C)  //PUSH 25C ; Line no. 605
+	;
+	addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("MsgBox CALL not found");
+
+	/// 1.6 - Find the 2nd 1B or 1B+1 comparison before the PUSHes
+	code =
+		limiter  //CMP reg32_A, 3B9ACA00 or 3B9ACA01 ; easier to do without opcode since it changes when reg32_A is EAX
+	+	(newStyle
+	?
+		JLE(WCp) //JLE SHORT addr
+	:            // or
+		JGE(WCp) //JGE SHORT addr
+	);
+
+	let cmp2Addr = Exe.FindHex(code, addr - 0x80, addr);
+	if (cmp2Addr < 0 && newStyle)
+	{
+		code = code.replace(JLE(WCp), JBE(WCp));//Recent clients use JBE instead of JLE
+		cmp2Addr = Exe.FindHex(code, addr - 0x80, addr);
+	}
+	if (cmp2Addr < 0)
+		throw Error("Second Comparison not found");
+
+	/// 1.7 - Find the 3rd extra comparison for oldstyle clients
+	if (!newStyle)
+	{
+		code = code.replace(JGE(WCp), JNE(WCp));//JNE instead of JGE
+		addr = Exe.FindHex(code, addr - 0x60, addr);
+		if (addr < 0)
+			throw Error("Extra Comparison not found");
+
+		/// 1.8 - Change the JNE to JMP
+		Exe.SetJMP(addr + 4);
+	}
+
+	/// 2.1 - Get the new limit value from user
+	let newLimit = Exe.GetUserInput('$vendingLimit', D_Int32, "Vending Limit", "Enter the new limit", 1e9, {min: 0});
+	if (newLimit === false)
+		Cancel("Vending Limit", 1e9);
+
+	/// 2.2 - Prepare string with commas for the newLimit similar to the original 1B string
+	let str = newLimit.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '\0'; //Adding Commas every 3 digits like the original
+
+	/// 2.3 - Change the 1B string
+	Exe.SetText(CVL_Phy, str);
+
+	/// 2.4 - For the old style increment the replaced value (original was also 1B+1)
+	if (!newStyle)
+		newLimit++;
+
+	/// 2.5 - Replace the limit at both the comparison locations
+	Exe.SetInt32(cmp1Addr, newLimit);
+	Exe.SetInt32(cmp2Addr, newLimit);
+
+	return true;
+};
+
+///
+/// \brief Disable for Old Clients - Only 2013+ Clients have this check
+///
+CustomVendingLimit.validate = function()
+{
+	CVL_Phy = Exe.FindText("1,000,000,000", PHYSICAL);
+	CVL_Vir = undefined;
+
+    return (CVL_Phy > 0);
+};

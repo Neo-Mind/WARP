@@ -1,0 +1,61 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C)  2020 CH.C (jchcc)                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CH.C (jchcc)                                           *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2021-01-14                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Remove hardcoded HTTP service ip address (will set to zeros)
+///
+NoHardCodedIP = function()
+{
+	/// 1 - Construct all the hardcoded ip addresses
+	let ipAddrs = [
+		"http://112.175.128.140:3000", 
+		"http://112.175.128.30:3000",
+		"http://192.168.5.54:3000"
+	];
+
+	/// 2 - Find all instances and replace with 0.0.0.0
+	let found = ipAddrs.filter( ip =>
+	{
+		let addrs = Exe.FindTextN(ip, PHYSICAL, true, false);
+		if (addrs.isEmpty())
+			return false;
+
+		addrs.forEach(addr => Exe.SetText(addr, "http://0.0.0.0/\x00"));
+		return true;
+	});
+
+	if (found.isEmpty()) //need atleast 1 match
+		Cancel("No known HardCoded IPs available");
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients
+///
+NoHardCodedIP.validate = () => Exe.BuildDate >= 20170000;

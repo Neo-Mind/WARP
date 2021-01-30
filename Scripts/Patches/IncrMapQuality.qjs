@@ -1,0 +1,62 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2015 Curiosity                                           *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Curiosity, Neo-Mind                                    *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2020-12-04                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the pf argument of CTexMgr::CreateTexture to 32 bit for increasing the color depth used while rendering map
+///
+IncrMapQuality = function()
+{
+	/// 1 - Find CTexMgr::CreateTexture CALL
+	let reg = (Exe.Version < 10.0 ? ECX : EAX);
+	let part1 =
+		PUSH(reg)          //PUSH ECX/EAX ; imgData
+	+	PUSH(0x100)        //PUSH 100 ; h = 256
+	+	PUSH(0x100)        //PUSH 100 ; w = 256
+	;
+	let part2 = 
+		MOV(ECX, POS3WC);  //MOV ECX, OFFSET g_texMgr
+
+	let addr = Exe.Version < 14.0 ?
+		Exe.FindHex(part1 + part2 + CALL()) //CALL CTexMgr::CreateTexture
+	:
+		Exe.FindHex(part2 + part1 + CALL()) //CALL CTexMgr::CreateTexture
+	;
+	if (addr < 0)
+		throw Error("CreateTexture CALL not found");
+
+	/// 2 - Find the pf argument PUSH before it.
+	addr = Exe.FindHex(PUSH_1, addr - 10, addr);//PUSH 1
+	if (addr < 0)
+		throw Error("pf PUSH not found");
+
+	/// 3 - Change PUSH 1 to PUSH 4
+	Exe.SetInt8(addr + 1, 4);
+
+	return true;
+};

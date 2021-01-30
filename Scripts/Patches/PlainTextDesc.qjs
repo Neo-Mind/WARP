@@ -1,0 +1,87 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2013-2020 Neo Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Shinryo, Neo-Mind                                      *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2020-12-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change conditional jump to JMP after Langtype comparison inside DataTxtDecode function
+///
+PlainTextDesc = function()
+{
+	/// 1 - Ensure the LANGTYPE is loaded
+	LANGTYPE.load();
+
+	/// 2 - Find the Langtype comparison in DataTxtDecode function
+	let prefix, suffix = '';
+	if (Exe.Version < 9.0)//VC6
+	{
+		prefix =
+			MOV(EAX, [LANGTYPE])      //MOV EAX, DWORD PTR DS:[g_serviceType]
+		+	PUSH(ESI)                 //PUSH ESI
+		+	TEST(EAX, EAX)            //TEST EAX, EAX
+		+	PUSH(EDI)                 //PUSH EDI
+		+	JNZ(WCp)                  //JNZ SHORT addr
+		;
+	}
+	else 
+	{
+		prefix =
+			CMP([LANGTYPE], 0)        //CMP DWORD PTR DS:[g_serviceType], 0
+		+	JNZ(WCp)                  //JNZ SHORT addr
+		;
+
+		if (Exe.Version < 11.0)//VC9 - VC10
+		{
+			suffix =
+				PUSH(ESI)             //PUSH ESI
+			+	PUSH(EDI)             //PUSH EDI
+			;
+		}
+		else if (Exe.Version === 11.0)//VC11
+		{
+			suffix =
+				PUSH(EDI)             //PUSH EDI
+			;
+		}
+		else //VC14.16
+		{
+			suffix =
+				MOV(R32, [EBP, 8])    //MOV reg32_A, DWORD PTR SS:[EBP+8]
+			+	PUSH(ESI)             //PUSH ESI
+			;
+		}
+	}
+
+	let addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+		throw Error("Langtype comparison missing");
+
+	/// 3 - Change the conditional jump
+	Exe.SetJMP(addr + prefix.byteCount() - 2);
+
+	return true;
+};

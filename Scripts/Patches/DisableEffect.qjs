@@ -1,0 +1,370 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Ai4rei/AN, Shinryo                                *
+*   Copyright (C) 2020 Andrei Karas (4144)                                 *
+*   Copyright (C) 2020 X-EcutiOnner (xex.ecutionner@gmail.com)             *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANT??ILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Ai4rei/AN, Shinryo, Andrei (4144), X-EcutiOnner        *
+*   Created Date  : 2020-11-10                                             *
+*   Last Modified : 2020-12-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Modify CView::SetQuakeInfo and CView::SetQuake functions to return without assigning any values
+///
+NoEarthQuake = function()
+{
+	/// 1.1 - Find the string '.BMP'
+	let sufAddr = Exe.FindText(".BMP");
+	if (sufAddr < 0 && Exe.BuildDate > 20180000)
+	{
+		sufAddr = Exe.FindText(".BMP", false);
+	}
+	if (sufAddr < 0 && Exe.BuildDate > 20180000)
+	{
+		sufAddr = Exe.FindText(".png");
+	}
+
+	if (sufAddr < 0)
+		throw Error("Suffix not found");
+
+	/// 1.2 - Find where its used in a  PUSH
+	///
+	let code = PUSH(sufAddr);         //PUSH OFFSET addr; ASCII ".BMP" or ".png"
+	if (Exe.BuildDate > 20180200 && (
+			(ROC.IsRenewal && Exe.BuildDate < 20190600) ||
+			(!ROC.IsRenewal && Exe.BuildDate < 20190610)
+		)
+	)
+	{
+		code +=
+			LEA(ECX, [R32, POS2WC]);  //LEA ECX, [reg32_A + const]
+	}
+	else
+	{
+		code +=
+			MOV(ECX, R32);            //MOV ECX, reg32_A
+	}
+
+	addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("'.BMP' / '.png' not used");
+
+	/// 1.3 - Find the SetQuakeInfo call within 0x80 bytes before the PUSH
+	code = CALL(ALLWC); //CALL CView::SetQuakeInfo
+
+	let quakeAddr;
+	if (Exe.Version >= 9.0)
+	{
+		code +=
+			XOR(EAX, EAX)   //XOR EAX, EAX
+		+	JMP(POS2WC)     //JMP addr
+		;
+		quakeAddr = Exe.FindHex(code, addr - 0x80, addr);
+	}
+	else
+	{
+		code +=
+			POP_R           //POP reg32_A
+		+	POP_R           //POP reg32_B
+		+	XOR(EAX, EAX)   //XOR EAX, EAX
+		;
+		quakeAddr = Exe.FindHex(code, addr - 0x100, addr);
+	}
+
+	if (quakeAddr < 0)
+		throw Error("SetQuakeInfo CALL not found");
+
+	/// 1.4 - Goto the location of SetQuakeInfo
+	quakeAddr = Exe.GetTgtAddr(quakeAddr + 1, PHYSICAL);
+
+	/// 1.5 - Change the first instruction to RETN 0C
+	Exe.SetHex(quakeAddr, RETN(0xC));
+
+	/// 2.1 - Find the SetQuake call be within 0xA0 bytes before the PUSH
+	code =
+		PUSH_1             //PUSH 1
+	+	CALL(ALLWC)        //CALL CView::SetQuake
+	;
+
+	if (Exe.Version >= 9.0)
+	{
+		code +=
+			XOR(EAX, EAX)  //XOR EAX, EAX
+		+	JMP(POS2WC)    //JMP addr
+		;
+		quakeAddr = Exe.FindHex(code, addr - 0xA0, addr);
+	}
+	else
+	{
+		code +=
+			POP_R          //POP reg32_A
+		+	POP_R          //POP reg32_B
+		+	XOR(EAX, EAX)  //XOR EAX, EAX
+		;
+		quakeAddr = Exe.FindHex(code, addr - 0x120, addr);
+	}
+	if (quakeAddr < 0)
+		throw Error("SetQuake CALL not found");
+
+	/// 2.2 - Goto the location of SetQuake
+	quakeAddr = Exe.GetTgtAddr(quakeAddr + 3, PHYSICAL);
+
+	/// 2.3 - Change the first instruction to RETN 14
+	Exe.SetHex(quakeAddr, RETN(0x14));
+
+	return true;
+};
+
+///
+/// \brief Change the conditional jump to JMP for the comparison of g_useEffect with 0 in the wavy effect creation function
+///
+NoWavyScreen = function()
+{
+	/// 1.1 - Find the string 'xmas_fild01.rsw'
+	let addr = Exe.FindText("xmas_fild01.rsw");
+	if (addr < 0)
+		throw Error("'xmas_fild01.rsw' not found");
+
+	/// 1.2 - Find all locations where it is assigned to EAX
+	let addrs = Exe.FindHexN( MOV(EAX, addr) ) ;//MOV EAX, OFFSET addr; ASCII "xmas_fild01.rsw"
+	if (addrs.isEmpty())
+		throw Error("'xmas_fild01.rsw' assignment not found");
+
+	/// 1.3 - Filter out the location where g_useEffect is assigned before the EAX assignment
+	///       amongst the matches. It will be inside CGameMode::Initialize
+	let code = MOV([POS3WC], R32); //MOV DWORD PTR DS:[g_useEffect], reg32
+	let effectAddr = -1;
+
+	addrs.find( addr =>
+	{
+		addr = Exe.FindHex(code, addr - 8, addr);
+		if (addr > 0)
+		{
+			effectAddr = addr + 2;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	})
+
+	if (effectAddr < 0)
+		throw Error("'g_useEffect' assignment not found");
+
+	/// 1.4 - Extract g_useEffect
+	let UseEffect = Exe.GetHex(effectAddr, 4);
+
+	/// 2.1 - Find the comparison of g_useEffect with 0
+	let prefix =
+		MOV(ECX, R32)          //MOV ECX, reg32
+	+	CALL(ALLWC)            //CALL addr1
+	+	(Exe.Version > 6.0
+	?
+		CMP([UseEffect], 0)    //CMP DWORD PTR DS:[g_useEffect], 0
+	:
+		MOV(EAX, [UseEffect])  //MOV EAX, DWORD PTR DS:[g_useEffect]
+	+	TEST(EAX, EAX)         //TEST EAX, EAX
+	);
+
+	let suffix =
+		JE()                   //JE addr2
+	;
+
+	addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+		throw Error("'g_useEffect' comparison not found");
+
+	/// 2.2 - Change the conditional jump
+	Exe.SetJMP(addr + prefix.byteCount());
+
+	return true;
+};
+
+///
+/// \brief Disable for New clients since they use inverted effect now
+///
+NoWavyScreen.validate = () => Exe.BuildDate <= 20120516;
+
+///
+/// \brief Enforce the JNZ after comparison to disable Blind skills effect
+///        from blending darkness screen inside SkillEffect function.
+///
+NoBlindness = function()
+{
+	/// 1 - Find the pattern after the comparison (which starts with the JNZ to be changed)
+	let code = JNZ(" ?? 01 00 00");     //JNZ loc_66BB7A
+
+	/*
+	let LaunchEffectPrimOffset, gPrimOffset = 0, mPrimOffset = 0;
+	*/
+
+	if (Exe.Version < 9.0) //VC6
+	{
+		code +=
+			SUB(ESP, 0xC)                //SUB ESP, 0C
+		+	MOV(EDX, EBX)                //MOV EDX, EBX
+		+	MOV(ECX, ESP)                //MOV ECX, ESP
+		+	MOV(EAX, EBX)                //MOV EAX, EBX
+		+	PUSH(0x47)                   //PUSH 47 ; ASCII 'G'
+		+	MOV([EBP, WCn], EBX)         //MOV DWORD PTR SS:[EBP - var_C], EBX
+		+	MOV([ECX], EDX)              //MOV DWORD PTR DS:[ECX], EDX
+		+	MOV([EBP, WCn], EBX)         //MOV DWORD PTR SS:[EBP - var_8], EBX
+		+	MOV([EBP, WCn], EBX)         //MOV DWORD PTR SS:[EBP - var_4], EBX
+		+	MOV([ECX, 4], R32)           //MOV DWORD PTR DS:[ECX + 4], reg32_A
+		+	MOV([ECX, 8], R32)           //MOV DWORD PTR DS:[ECX + 8], reg32_B
+		+	MOV(ECX, ESI)                //MOV ECX, ESI
+		+	CALL(ALLWC)                  //CALL CRagEffect::LaunchEffectPrim
+		+	(!ROC.Post2010
+		?
+			MOV([POS3WC], EAX)           //MOV DWORD PTR DS:[g_prim], EAX  or
+		:                                //  or
+			MOV([ESI, POS3WC], EAX)      //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
+		)
+		+	MOV(ECX, [EAX, POS2WC])      //MOV ECX, DWORD PTR DS:[EAX + const]
+		;
+
+		/*
+		LaunchEffectPrimOffset = 37;
+		if (Exe.Version < 6.0)
+		{
+			gPrimOffset = 42;
+		}
+		else
+		{
+			mPrimOffset = [43, 4];
+		}
+		*/
+	}
+	else if (Exe.Version < 11.0) //VC9 & VC10
+	{
+		let sreg = ROC.HasFP ? EBP : ESP; //StkRef = EBP or ESP + const
+
+		code +=
+			FLDZ                        //FLDZ
+		+	SUB(ESP, 0xC)               //SUB ESP, 0C
+		+	MOV(EAX, ESP)               //MOV EAX, ESP
+		+	FST([sreg, WC])             //FST DWORD PTR SS:[StkRef - var_C]
+		+	MOV(ECX, [sreg, WC])        //MOV ECX, DWORD PTR SS:[StkRef - var_C]
+		+	FST([sreg, WC])             //FST DWORD PTR SS:[StkRef - var_8]
+		+	MOV(EDX, [sreg, WC])        //MOV EDX, DWORD PTR SS:[StkRef - var_8]
+		+	FSTP([sreg, WC])            //FSTP DWORD PTR SS:[StkRef - var_4]
+		+	MOV([EAX], ECX)             //MOV DWORD PTR DS:[EAX], ECX
+		+	MOV(ECX, [sreg, WC])        //MOV ECX, DWORD PTR SS:[StkRef - var_4]
+		+	MOV([EAX, 4], EDX)          //MOV DWORD PTR DS:[EAX + 4], EDX
+		+	MOV([EAX, 8], ECX)          //MOV DWORD PTR DS:[EAX + 8], ECX
+		+	PUSH(0x47)                  //PUSH 47 ; ASCII 'G'
+		+	MOV(ECX, ESI)               //MOV ECX, ESI
+		+	CALL(ALLWC)                 //CALL CRagEffect::LaunchEffectPrim
+		+	MOV([ESI, POS3WC], EAX)     //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
+		+	OR([R32, POS2WC], 0x200)    //OR DWORD PTR DS:[reg32_A + const], 200
+		;
+
+		/*
+		if (ROC.HasFP)
+		{
+			LaunchEffectPrimOffset = 44;
+			mPrimOffset = [50, 4];
+		}
+		else
+		{
+			LaunchEffectPrimOffset = 50;
+			mPrimOffset = [56, 4];
+		}
+		*/
+	}
+	else if (Exe.Version === 11.0) //VC11
+	{
+		code +=
+			SUB(ESP, 0xC)                //SUB ESP, 0C
+		+	MOV(ECX, ESP)                //MOV ECX, ESP
+		+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_C], 0
+		+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_8], 0
+		+	MOVQ(XMM0, [EBP, WC])        //MOVQ XMM0, QWORD PTR SS:[EBP - var_C]
+		+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_4], 0
+		+	MOV(EAX, [EBP, WC])          //MOV EAX, DWORD PTR SS:[EBP - var_4]
+		+	MOVQ([ECX], XMM0)            //MOVQ QWORD PTR DS:[ECX], XMM0
+		+	MOV([ECX, 8], EAX)           //MOV DWORD PTR DS:[ECX + 8], EAX
+		+	PUSH(0x47)                   //PUSH 47 ; ASCII 'G'
+		+	MOV(ECX, ESI)                //MOV ECX, ESI
+		+	CALL(ALLWC)                  //CALL CRagEffect::LaunchEffectPrim
+		+	MOV([ESI, POS3WC], EAX)      //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
+		+	OR([EAX, POS2WC], 0x200)     //OR DWORD PTR DS:[EAX + const], 200
+		;
+
+		/*
+		LaunchEffectPrimOffset = 52;
+		mPrimOffset = [58, 4];		
+		*/
+	}
+	else //VC14.16
+	{
+		code +=
+			SUB(ESP, 0xC)                //SUB ESP, 0C
+		+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_4], 0
+		+	MOV(EAX, [EBP, WC])          //MOV EAX, DWORD PTR SS:[EBP - var_4]
+		+	MOV(ECX, ESP)                //MOV ECX, ESP
+		+	XORPS(XMM0, XMM0)            //XORPS XMM0, XMM0
+		+	UNPCKLPS(XMM0, XMM0)         //UNPCKLPS XMM0, XMM0
+		+	PUSH(0x47)                   //PUSH 47 ; ASCII 'G'
+		+	MOVQ([ECX], XMM0)            //MOVQ QWORD PTR DS:[ECX], XMM0
+		+	MOV([ECX, 8], EAX)           //MOV DWORD PTR DS:[ECX + 8], EAX
+		+	MOV(ECX, ESI)                //MOV ECX, ESI
+		+	CALL(ALLWC)                  //CALL CRagEffect::LaunchEffectPrim
+		+	MOV([ESI, POS3WC], EAX)      //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
+		+	MOV(EDX, 4)                  //MOV EDX, 4
+		+	OR([EAX, POS2WC], 0x200)     //OR DWORD PTR DS:[EAX + const], 200
+		;
+
+		/*
+		LaunchEffectPrimOffset = 39;
+		mPrimOffset = [45, 4];
+		*/
+	}
+
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("Pattern not found");
+
+	/*
+	logRawFunc("CRagEffect_LaunchEffectPrim", addr, LaunchEffectPrimOffset);
+	if (gPrimOffset !== 0)
+	{
+		logVaVar("g_prim", addr, gPrimOffset);
+	}
+	if (mPrimOffset !== 0)
+	{
+		logField("CEffectPrim::m_prim", addr, mPrimOffset);
+	}
+	*/
+
+	/// 2 - Enforce the jump
+	Exe.SetJMP(addr);
+
+	return true;
+};
+
+///
+/// \brief Disable for Unsupported Clients
+///
+NoBlindness.validate = () => Exe.BuildDate > 20020000;

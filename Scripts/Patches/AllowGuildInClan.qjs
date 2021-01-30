@@ -1,0 +1,109 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Functor, Andrei Karas (4144), Neo-Mind              *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Functor, Andrei (4144), Neo-Mind                       *
+*   Created Date  : 2020-11-22                                             *
+*   Last Modified : 2020-12-04                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Skips the check that requires the player to not be in a clan
+///
+AllowGuildInClan = function() 
+{
+	/// 1.1 - Find the original string (only valid for older VC10 clients before it got moved to msgstringtable)
+	let addr = -1;
+	if (Exe.BuildDate < 20141020)
+	{
+		let strAddr = Exe.FindText("You are currently joined in CLan !!");
+		if (strAddr > 0)
+		{
+			let code =
+				JNE(WCp)                //JNE SHORT addr1
+			+	LEA(R32, [EBP, NEG3WC]) //LEA reg32_A, [EBP - const]
+			+	PUSH(strAddr)           //PUSH OFFSET addr; ASCII "You are currently joined in CLan !!"
+			+	PUSH_R                  //PUSH reg32_A
+			+	CALL([POS3WC])          //CALL DWORD PTR DS:[addr2]
+			;
+
+			addr = Exe.FindHex(code);
+		}
+	}
+
+	/// 1.2 - If that was not present, then find Message ID #2605 reference
+	if (addr < 0)
+	{
+		let code =
+			JNE(WCp)            //JNE SHORT addr1
+		+	PUSH(0xA2D)         //PUSH 0A2D
+		+	CALL(NEG3WC)        //CALL MsgStr
+		+	PUSH_EAX            //PUSH EAX
+		;
+
+		addr = Exe.FindHex(code);
+
+		if (addr < 0)
+		{
+			code =
+				JNE(WCp)        //JNE SHORT addr1
+			+	PUSH(0xA2D)     //PUSH 0x0A2D
+			+	JMP(NEG3WC)     //JMP addr2
+			+	MOV(EAX, ALLWC) //MOV EAX, const
+			;
+			addr = Exe.FindHex(code);
+		}
+	}
+
+	if (addr < 0)
+		throw Error("String reference missing");
+
+	/// 1.2 - Enforce the jump
+	Exe.SetJMP(addr);
+
+	/// 2.1 - Look for JNE followed by EAX assignment to 0x168 after the above
+	let code = 
+		JNZ(NEG3WC)              //JNZ addr
+	+	(Exe.Version < 11.0 
+	?
+		MOV(R32, [EBP, NEG3WC])  //MOV reg32_A, DWORD PTR SS:[EBP - const]
+	+	MOV(EAX, [POS3WC])       //MOV EAX, DWORD PTR DS:[addr]
+	:
+		''
+	)
+	+	MOV(EAX, 0x168)          //MOV EAX, 168
+	;
+
+	let jnzAddr = Exe.FindHex(code, addr + 20, addr + 0x200);
+	if (addr < 0)
+		throw Error("Magic jump not found");
+
+	/// 2.2 - NOP out the JNZ
+	Exe.SetNOPs(addr, 6);
+
+	return true;
+};
+
+///
+/// \brief Disable for clients without the /clanchat command
+///
+AllowGuildInClan.validate = () => Exe.FindText("/clanchat") > 0;

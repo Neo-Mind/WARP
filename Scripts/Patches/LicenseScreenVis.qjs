@@ -1,0 +1,110 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Shinryo, MS                                       *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Shinryo, MS, Neo-Mind                                  *
+*   Created Date  : 2020-11-08                                             *
+*   Last Modified : 2020-12-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the conditional jump to JMP in License screen display switch case inside WinMain
+///
+ShowLicense = function()
+{
+	/// 1.1 - Find the location of the Guildflag string
+	let addr = Exe.FindText("model\\3dmob\\guildflag90_1.gr2");
+	if (addr < 0)
+		throw Error("Guildflag string not found");
+
+	/// 1.2 - Find where its PUSHed (it comes just before the conditional jump)
+	let code =
+		PUSH(5)      //PUSH 5
+	+	PUSH(addr)   //PUSH addr; ASCII "model\3dmob\guildflag90_1.gr2"
+	;
+	addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("Guildflag string not PUSHed");
+
+	/// 1.3 - Set addr to location after the PUSH
+	let refAddr = addr + code.byteCount();
+
+	/// 2.1 - Find the Langtype comparisons after the PUSH
+	code =
+		CMP(EAX, 4)  //CMP EAX, 4
+	+	JE(WCp)      //JE SHORT addr
+	+	CMP(EAX, 8)  //CMP EAX, 8
+	+	JE(WCp)      //JE SHORT addr
+	+	CMP(EAX, 9)  //CMP EAX, 9
+	+	JE(WCp)      //JE SHORT addr
+	+	CMP(EAX, 6)  //CMP EAX, 6
+	;
+	addr = Exe.FindHex(code, refAddr, refAddr + 0x60);
+
+	if (addr < 0 && Exe.Version == 6.0) //really old clients have a comparison with 1 as well
+	{
+		code = code.replace(CMP(EAX, 8), CMP(EAX, 1) + JE(WCp) + CMP(EAX, 8));
+		addr = Exe.FindHex(code, refAddr, refAddr + 0x60);
+	}
+
+	if (addr < 0)
+		throw Error("Langtype comparison missing");
+
+	/// 2.2 - Change the first conditional jump
+	Exe.SetJMP(addr + 3);
+
+	return true;
+};
+
+///
+/// \brief Modify the switch inside CLoginMode::OnChangeState to skip transfering to License Screen creation code
+///
+HideLicense = function()
+{
+	/// 1.1 - Find location of 'btn_disagree'
+	let addr = Exe.FindText("btn_disagree");
+	if (addr < 0)
+		throw Error("'btn_disagree' not found");
+
+	/// 1.2 - Find where its PUSHed (only done once in entire client)
+	let refAddr = Exe.FindHex( PUSH(addr) );
+	if (refAddr < 0)
+		throw Error("'btn_disagree' not PUSHed");
+
+	/// 1.3 - Find the Switch Case JMPer within 0x200 bytes before the PUSH
+	addr = Exe.FindHex( JMP([4, Exe.Version > 6.0 ? EAX : R32, POS4WC]), refAddr - 0x200, refAddr); //JMP DWORD PTR DS:[EAX*4 + jmpTable] ; really old clients use other registers like ECX
+	if (addr < 0)
+		throw Error("Switch Case not found");
+
+	/// 2.1 - Extract the jmpTable address
+	let jmpTable = Exe.Vir2Phy(Exe.GetInt32(addr + 3), CODE);//We need the physical address
+
+	/// 2.2 - Extract the 3rd Entry in the jumptable => Case 2. Case 0 and Case 1 are related to License Screen
+	let third = Exe.GetInt32(jmpTable + 8);
+
+	/// 2.3 - Change the 1st and 2nd entry to the 3rd one. i.e. Case 0 and 1 will now use Case 2
+	Exe.SetInt32(jmpTable, third);
+	Exe.SetInt32(jmpTable + 4, third);
+
+	return true;
+};

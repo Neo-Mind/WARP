@@ -1,0 +1,95 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Shinryo                                                *
+*   Created Date  : 2020-11-11                                             *
+*   Last Modified : 2020-12-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the confitional jump to JMP after accountID comparison against GM ID inside CPc::SetSprNameList and CPc::SetActNameList functions
+///
+NoGMSprite = function()
+{
+	/// 1.1 - Find the location where both functions are called
+	let halfCode =
+		PUSH(POS3WC)    //PUSH OFFSET addr; actName / sprName
+	+	PUSH(5)         //PUSH 5; layer
+	+	MOV(ECX, R32)   //MOV ECX, reg32_A
+	+	CALL(NEG2WC)    //CALL CPc::SetActNameList / CPc::SetSprNameList
+	;
+	let code = halfCode + halfCode;
+	let addr = Exe.FindHex(code);
+
+	/* - Seems to be not of any use 
+	if (addr < 0)
+	{
+		code = code.remove( MOV(ECX, R32) ); //Remove the first MOV ECX, reg32_A . It might have been assigned earlier
+		addr = Exe.FindHex(code);
+	}
+	*/
+
+	if (addr < 0)
+		throw Error("Function CALLs not found");
+
+	/// 1.2 - Extract the Function addresses (PHYSICAL)
+	let pos2 = code.byteCount() - 4;
+	let pos1 = pos2 - halfCode.byteCount();
+
+	let funcs = [
+		Exe.GetTgtAddr(addr + pos1, PHYSICAL), //CPc::SetActNameList PHYSICAL address
+		Exe.GetTgtAddr(addr + pos2, PHYSICAL)  //CPc::SetSprNameList PHYSICAL address
+	];
+
+	/// 2.1 - Prep code to look for IsNameYellow function call
+	code =
+		CALL(ALLWC) 		//CALL IsNameYellow; Compares accountID against GM IDs
+	+	ADD(ESP, 4) 		//ADD ESP, 4
+	+	TEST(AL, AL)		//TEST AL, AL
+	;
+	let jzPos;
+	if (Exe.Version === 9.0) //VC9
+	{
+		code += JZ(WCp);    //JZ SHORT addr2
+		jzPos = -2;
+	}
+	else //VC6, VC10, VC11, VC14.16
+	{
+		code += JZ(POS2WC); //JZ addr2
+		jzPos = -6;
+	}
+	let csize = code.byteCount();
+
+	funcs.forEach( (fnAddr, i) =>
+	{
+		/// 2.2 - Find the CALL inside the Set*NameList functions
+		let addr = Exe.FindHex(code, fnAddr, fnAddr + 0x80);
+		if (addr < 0)
+			throw Error(`CALL not found for No. ${i+1}`);
+
+		/// 2.3 - Change conditional jump
+		Exe.SetJMP(addr + csize + jzPos);
+	});
+
+	return true;
+};

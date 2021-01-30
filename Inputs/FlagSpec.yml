@@ -1,60 +1,49 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) 2020-2021 Neo-Mind                                       #
+#   Copyright (C) 2020 Neo Mind                                            #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
 #   WARP is free software: you can redistribute it and/or modify           #
 #   it under the terms of the GNU General Public License as published by   #
-#   the Free Software Foundation, either version 3 of the License, or      #
+#   the Free Software Foundation- either version 3 of the License- or      #
 #   (at your option) any later version.                                    #
 #                                                                          #
-#   This program is distributed in the hope that it will be useful,        #
+#   This program is distributed in the hope that it will be useful-        #
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
 #   GNU General Public License for more details.                           #
 #                                                                          #
 #   You should have received a copy of the GNU General Public License      #
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#   along with this program.  If not- see <http://www.gnu.org/licenses/>.  #
 #                                                                          #
 #                                                                          #
 ############################################################################
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
-#   Created Date  : 2020-11-18                                             #
-#   Last Modified : 2021-01-30                                             #
+#   Created Date  : 2020-11-11                                             #
+#   Last Modified : 2020-11-11                                             #
 #                                                                          #
 ############################################################################
 
-- GetPacketKeys:
-    title : Get Packet Keys
-    tooltip : Retrieves the packet keys used in the loaded client for Obfuscation
-    author : Neo-Mind
-    icon : Inputs/key.png
+1 : 13
+2 : 35
+3 : 48
+4 : 49
+5 : 50
+6 : 51
+7 : 64
+8 : 66
+9 : 67
 
-- ExtractTxtNames:
-    title : Extract txt file names
-    tooltip : Extracts embedded txt file names in the loaded client
-    icon : Inputs/files.png
-
-- ExtractMsgStrings:
-    title : Extract msgstringtable
-    tooltip : Extracts embedded msgstringtable from the loaded client
-    author : Neo-Mind
-    icon : Inputs/files.png
-
-- DumpImportTable:
-    title : Dump Import Table
-    tooltip : Dumps the Full Import table (dll names and imported functions) for the loaded client
-    author : Neo-Mind
-    icon : Inputs/import.png
-    
-- GenMapEffectPlugin:
-    title : Generate MapEffect Plugin [Expt.]
-    tooltip : Generates Curiosity's mapeffect plugin for the loaded client (as rdll2_<filename>.asi which needs to be placed in your client area)
-    author : Neo-Mind
- 
-# - Trial:
-    # title : Trial Extension
-    # tooltip : Just intended for some trials with Exe & Warp
-    # author : Neo-Mind
+# Flag Constants Reference ( check consts.txt in server for full list of emoticon constants ).
+# KOREA       13
+# INDONESIA   35
+# PHILIPPINES 48
+# MALAYSIA    49
+# SINGAPORE   50
+# BRAZIL      51
+# INDIA       64
+# RUSSIA      66
+# VIRGIN(Sp)  67
+# CHINESE     70

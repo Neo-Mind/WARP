@@ -1,0 +1,81 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2017-2020 *Unknown*                                      *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Shinryo                                                *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2020-12-08                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the Limit used for allocating and loading Headgear Prefix table
+///        to user specified value
+///
+IncrViewID = function()
+{
+	/// 1.1 - Find where ReqAccName is PUSHed (only done once in the entire client)
+	let addr = Exe.FindHex( PUSH(IVID_Addr) );
+	if (addr < 0)
+		throw Error("'ReqAccName' not used");
+
+	/// 1.2 - Calculate the current limit in the client based on date
+	let oldValue = (
+		Exe.BuildDate > 20200325 ? 3000 :
+		Exe.BuildDate > 20130000 ? 2000 :
+		                           1000
+	);
+
+	/// 2.1 - Find all occurrences of the old limit
+	let addrs = [
+		MOV(R32, oldValue),
+		MOV(EAX, oldValue),
+		CMP(R32, oldValue),
+		CMP(EAX, oldValue),
+		PUSH(oldValue)
+	].reduce( (acc, code) =>
+		acc.concat(Exe.FindHexN(code, addr - 0xA0, addr + 0x60)), []
+	);
+
+	if (addrs.length < 2 || addrs.length > 3)
+		throw Error("Incorrect no of matches found for Old limit");
+
+	/// 2.2 - Get the new limit from user
+	let varName = '$viewIDLimit';
+	let newValue = Exe.GetUserInput(varName, D_Uint32, "View ID Limit", "Enter the new Max Headgear View ID", oldValue, {min: oldValue, max: 64000});
+	if (newValue === false)
+		Cancel("Limit", oldValue);
+
+	/// 2.3 - Replace old with new for all
+	addrs.forEach( addr => Exe.SetFromVar(Instr.FromAddr(addr).NextAddr - 4, varName) );
+
+	return true;
+};
+
+///
+/// \brief Disable for old clients which doesnt have ReqAccName
+///
+IncrViewID.validate = function()
+{
+	IVID_Addr = Exe.FindText("ReqAccName");
+    return (IVID_Addr > 0);
+};

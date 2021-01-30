@@ -1,0 +1,406 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind, Andrei (4144)                                *
+*   Created Date  : 2020-11-10                                             *
+*   Last Modified : 2020-12-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the PUSHed argument & mode value to Mode Setting calls after disconnection 
+///        to make it return to login window instead of exiting client.
+///
+DisConnToLogin = function()
+{
+	/// 1.1 - Sanity Check. Make Sure Restore Login Window is enabled (unless in test mode)
+	if (!Exe.TestMode && !Exe.IsSelected("RestoreLoginWindow"))
+		Cancel("<b>Restore Login Window</b> patch needs to be ON");
+
+	/// 1.2 - Find all locations where the MsgString ID (635) is PUSHed for the error message :
+	///       "Sorry the character you are trying to use is banned for testing connection."
+	///       We expect 2 matches 1 for Login/Char & 1 for Map server disconnection
+
+	let addrs = Exe.FindHexN( PUSH(0x635) );
+	if (addrs.length !== 2)
+		addrs = Exe.FindHexN( PUSH(0x7E5) ); //new clients have different ID
+
+	if (addrs.length !== 2)
+		throw Error("Incorrect no of MsgString ID PUSHes found");
+
+	/// 1.3 - Save location after the PUSH for both addrs
+	let mapAddr = addrs[0] + 5; //for Map
+	let lcAddr  = addrs[1] + 5; //for Login/Char
+
+	/******* First we will work on Disconnection from Login/Char Server ********/
+
+	/// 2.1 - Find the format string used for error message
+	let addr = Exe.FindText("%s(%d)");
+	if (addr < 0)
+		throw Error("Format string not found");
+
+	/// 2.2 - Find where its used in a PUSH after the MsgString ID PUSH (within 0x120 bytes)
+	addr = Exe.FindHex( PUSH(addr), lcAddr, lcAddr + 0x120);
+	if (addr < 0)
+		throw Error("Format string not used");
+
+	/// 2.3 - Find the refAddr movement after it (We will inject a Jump to our code here)
+	code =
+		CALL(NEG3WC)             //CALL addr
+	+	MOV(ECX, [POS3WC])       //MOV ECX, DWORD PTR DS:[refAddr]
+	;
+	let addr2 = Exe.FindHex(code, addr + 0x5, addr + 0x80);
+
+	if (addr2 < 0)
+	{
+		code =
+			RETN(4)              //RETN 4
+		+	MOV(ECX, [POS3WC])   //MOV ECX, DWORD PTR DS:[refAddr]
+		+	PUSH_0               //PUSH 0
+		;
+		addr2 = Exe.FindHex(code, addr + 0x5, addr + 0xB0);
+	}
+	if (addr2 < 0)
+		throw Error("Reference Address assignment missing");
+
+	/// 2.4 - Save location of the MOV ECX instruction
+	let jmpAddr = Instr.FromAddr(addr2).NextAddr;
+
+	/// 2.5 - Extract the MOV instruction
+	let MovECX = Exe.GetHex(jmpAddr, 6);
+
+	/// 3.1 - Find the Mode changer CALL after jmpAddr
+	code =
+		PUSH_2     //PUSH 2
+	+	CALL(EAX)  //CALL EAX
+	;
+	addr = Exe.FindHex(code, jmpAddr + 0x6, jmpAddr + 0x20);
+	if (addr < 0)
+	{
+		code = code.replace( CALL(EAX), CALL([EAX, 0x18]) ); //Change CALL EAX to CALL DWORD PTR DS:[EAX+18]
+		addr = Exe.FindHex(code, jmpAddr + 0x6, jmpAddr + 0x20);
+	}
+	if (addr < 0)
+		throw Error("Mode changer CALL missing");
+
+	/// 3.2 - Get the number of PUSH 0 instructions between the Mode Change and refAddr assignment before
+	///       We need to push the same number in our code
+	let zeros = Exe.FindHexN( PUSH_0, jmpAddr + 6, addr );
+	if (zeros.isEmpty())
+		throw Error("PUSH 0s not found");
+
+	let PUSH0s = PUSH_0.repeat(zeros.length);
+
+	/// 3.3 - Save location after the CALL (the address we need to return to after Mode Changer call)
+	let retnAddr = addr + code.byteCount();
+
+	/// 4.1 - Prepare our code (same as what was there but arg1 will be 271D and [this + 3] is assigned 3 before the call)
+	code =
+		MovECX                             //MOV ECX, DWORD PTR DS:[refAddr]
+	+	MOV(EAX, [ECX])                    //MOV EAX, DWORD PTR DS:[ECX]
+	+	PUSH0s                             //PUSH 0 - n times
+	+	PUSH(0x271D)                       //PUSH 271D
+	+	MOV([ECX, 0xC], 3)                 //MOV DWORD PTR DS:[ECX+0C],3
+	+	PUSH(Exe.Phy2Vir(retnAddr, CODE))  //PUSH retnAddr
+	+	JMP([EAX, 0x18])                   //JMP DWORD PTR DS:[EAX+18]
+	;
+
+	/// 4.2 - Allocate space to add our code
+	let free = Exe.FindSpace(code.byteCount(), 0x10);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	/// 4.3 - Add the code there
+	Exe.AddHex(free, code);
+
+	/// 4.4 - Change the MOV instruction to a JMP to our code and NOP out rest of the stuff between jmpAddr & retnAddr
+	Exe.SetJMP(jmpAddr, free, PHYSICAL, retnAddr - (jmpAddr + 5));
+
+	/******* Next we will work on Disconnection from Map server during Gameplay *******/
+
+	/// 5.1 - Check if there is a short Jump right after the MsgString ID PUSH.
+	///       If its there go to the address
+	if (Exe.GetUint8(mapAddr) === 0xEB)
+	{
+		addr = Exe.GetTgtAddr(mapAddr + 1, PHYSICAL, 1);
+	}
+	else
+	{
+		/// 5.2 - If not look for a Long Jump after the PUSH
+		addr = Exe.FindHex( JMP(POS2WC), mapAddr, mapAddr + 0x100);
+		if (addr < 0)
+			throw Error("JMP to Mode changer CALL location not found");
+
+		/// 5.3 - Goto the JMP address
+		addr = Exe.GetTgtAddr(addr + 1, PHYSICAL);
+	}
+
+	/// 5.4 - Find the CALL to ErrorMsg function
+	///       (Error Message Window displayer function) after the addr
+	///
+	code =
+		MOV(ECX, POS3WC)    //MOV ECX, OFFSET g_windowMgr
+	+	CALL(NEG3WC)        //CALL UIWindowMgr::ErrorMsg
+	;
+	let offset = 10;
+
+	addr = Exe.FindHex(code, addr, addr + 0x100);
+	if (addr < 0)
+	{
+		code =
+			CALL(NEG3WC)    //CALL UIWindowMgr::ErrorMsg
+		+	MOV(EAX, [EDI]) //MOV EAX, DWORD PTR DS:[EDI]
+		;
+		offset = 5;
+	}
+	if (addr < 0)
+		throw Error("ErrorMsg CALL not found");
+
+	/// 5.5 - Save location after the CALL
+	jmpAddr = addr + offset;
+
+	/// 6.1 - Find the Mode changer CALL after <addr>
+	if (Exe.Version === 10.0) //VC10
+	{
+		code =
+			PUSH_2               //PUSH 2
+		+	CALL(EDX)            //CALL EDX
+		;
+	}
+	else if (Exe.Version < 9.0 || Exe.Version >= 11.0) //VC6 & VC11+
+	{
+		code =
+			PUSH_2               //PUSH 2
+		+	MOV(ECX, EDI)        //MOV ECX, EDI
+		+	CALL([EAX, 0x18])    //CALL DWORD PTR DS:[EAX+18]
+		;
+	}
+	else //VC9
+	{
+		code =
+			PUSH_2               //PUSH 2
+		+	MOV(ECX, EDI)        //MOV ECX, EDI
+		+	CALL(EAX)            //CALL EAX
+		;
+	}
+
+	retnAddr = Exe.FindHex(code, addr, addr + 0x20);
+	if (retnAddr < 0 && Exe.Version === 9.0) //VC9 2nd format
+	{
+		code = code.replace( MOV(ECX, EDI), MOV(ECX, EBP) ); //Change EDI to EBP in ECX assignment
+		retnAddr = Exe.FindHex(code, addr, addr + 0x20);
+	}
+	if (retnAddr < 0)
+		throw Error("Mode changer CALL not found");
+
+	/// 6.2 - Set retnAddr to location after the CALL. This is the Return address
+	retnAddr += code.byteCount();
+
+	/// 7.1 - Prepare our 2nd code. Similar to 1st one we have done few changes
+	//        (arg1 is 8D and ECX is loaded from refAddr instead of depending on some local - value will be same either way)
+	code =
+		MovECX                               //MOV ECX, DWORD PTR DS:[refAddr]
+	+	MOV(EAX, [ECX])                      //MOV EAX, DWORD PTR DS:[ECX]
+	+	PUSH0s                               //PUSH 0 - n times
+	+	PUSH(0x8D)                           //PUSH 8D
+	+	PUSH(Exe.Phy2Vir(retnAddr, CODE))    //PUSH retnAddr
+	+	JMP([EAX, 0x18])                     //JMP DWORD PTR DS:[EAX+18]
+	;
+
+	/// 7.2 - Allocate space to add our code
+	free = Exe.FindSpace(code.byteCount(), 0x10);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	/// 7.3 - Add the code there
+	Exe.AddHex(free, code);
+
+	/// 7.4 - Change the instruction from PUSH 2 onwards into a JMP to our code
+	Exe.SetJMP(jmpAddr, free, PHYSICAL, retnAddr - (jmpAddr + 5));
+
+	return true;
+};
+
+///
+/// \brief Modify the Cancel Button Case in UISelectCharWnd::SendMsg to disconnect and show the Login Window
+///
+CancelToLogin = function()
+{
+	/// 1.1 - Sanity Check. Ensure Restore Login Window is enabled (unless in test mode)
+	if (!Exe.TestMode && !Exe.IsSelected("RestoreLoginWindow"))
+		Cancel("<b>Restore Login Window</b> patch needs to be ON");
+
+	/// 1.2 - Find the case branch that occurs before the Cancel Button case.
+	///      The pattern will match multiple locations of which first (or recently second) is the one we need
+	let code =
+		LEA(R32, [8, R32, POS4WC])  //LEA reg32_B, [reg32_A*8 + refAddr]
+	+	PUSH_R                      //PUSH reg32_B
+	+	PUSH(0x337)                 //PUSH 337
+	+	CALL()                      //CALL addr
+	;
+	let addrs = Exe.FindHexN(code);
+	if (addrs.isEmpty())
+		throw Error("Reference case branch not found");
+
+	let csize = code.byteCount() + 4;
+
+	/// 1.3 - Find CConnection::Disconnect & CRagConnection::instanceR CALLs
+	code =
+		ADD(ESP, 8)       //ADD ESP, 8
+	+	CALL(POS3WC)      //CALL CRagConnection::instanceR
+	+	MOV(ECX, EAX)     //MOV ECX, EAX
+	+	CALL(POS3WC)      //CALL CConnection::Disconnect
+	+	MOV(ECX, POS3WC)  //MOV ECX, OFFSET addr
+	;
+	let addr = Exe.FindHex(code);
+
+	if (addr < 0)
+	{
+		code = code.replace(CALL(POS3WC), CALL(NEG3WC));//Change 1st CALL
+		code = code.replace(CALL(POS3WC), CALL(NEG3WC));//Change 2nd CALL
+		addr = Exe.FindHex(code);
+	}
+	if (addr < 0)
+		throw Error("Disconnect & instanceR CALLs not found");
+
+	/// 1.4 - Extract the function addresses
+	let InstR = Exe.GetTgtAddr(addr +  4, PHYSICAL);
+	let DConn = Exe.GetTgtAddr(addr + 11, PHYSICAL);
+
+	/// 2.1 - Find 메시지 => Korean version of "Message"
+	addr = Exe.FindText("\xB8\xDE\xBD\xC3\xC1\xF6");
+	if (addr < 0)
+		throw Error("'Message' not found");
+
+	/// 2.2 - Prepare pattern of the Cancel case branch to look for
+	///     It creates the msgBox that shows the quit message
+	let canceller =
+		PUSH(addr)  //PUSH addr ; "메시지"
+	+	PUSH_R      //PUSH reg32_A ; contains 0
+	+	PUSH_R      //PUSH reg32_A
+	+	PUSH_1      //PUSH 1
+	+	PUSH_2      //PUSH 2
+	+	PUSH(0x11)  //PUSH 11
+	;
+	let cancSize = canceller.byteCount();
+
+	let found = addrs.filter( memAddr =>
+	{
+		/***** First we find all required addresses *****/
+
+		/// 2.3 - Find the cancel case after memAddr
+		memAddr += csize;
+
+		let zeroPush;
+		addr = Exe.FindHex(canceller, memAddr, memAddr + 0x80);
+		if (addr < 0)
+		{
+			zeroPush = PUSH_0;
+			addr = Exe.FindHex(canceller.replace(PUSH_R + PUSH_R, PUSH_0 + PUSH_0), memAddr, memAddr + 0x80);
+
+			if (addr < 0)
+				return false;
+		}
+		else
+		{
+			zeroPush = Exe.GetHex(addr + 5, 1);
+		}
+
+		/// 2.4 - Check if there is a PUSH 118 (only 2013+ clients have that for msgBox creation)
+		///                     and a PUSH 0   (only 2017+ has it extra)
+		if (Exe.GetHex(addr - 5, 5) === PUSH(0x118))
+			addr -= 7;
+
+		if (Exe.BuildDate > 20170000 && Exe.GetHex(addr - 2, 2) === PUSH_0)
+			addr -= 2;
+
+		/// 2.5 - Find the end point of the msgBox call.
+		///     There will be a comparison for the return code
+		code =
+			CMP(EAX, POS1WC)  //CMP EAX, const
+		+	JNE(ALLWC)        //JNE addr; skip quitting.
+		;
+
+		let addr2 = Exe.FindHex(code, addr + cancSize, addr + cancSize + 0x40);
+		if (addr2 < 0)
+		{
+			code = code.replace(CMP(EAX, POS1WC), CMP(EAX, WC)); //const is only 1 byte long
+			addr2 = Exe.FindHex(code, addr + cancSize, addr + cancSize + 0x40);
+		}
+		if (addr2 < 0)
+			return false;
+
+		/// 2.6 - Set addr2 to location after the JNE
+		addr2 += code.byteCount();
+
+		/// 3.1 - Lastly we find the PUSH 2 below addr2 which serves as argument to the register call (CALL reg32 / CALL DWORD PTR DS:[reg32+18]) - Window Maker?.
+		///       What we need to do is to substitute the 2 with 2723 for it to show Login Window instead of quitting.
+		code =
+			zeroPush.repeat(3)  //PUSH reg32 x3 or PUSH 0 x3
+		+	PUSH_2              //PUSH 2
+		;
+
+		let addr3 = Exe.FindHex(code, addr2, addr2 + 0x20);
+		if (addr3 < 0)
+			return false;
+
+		/// 3.2 - Set addr3 to location of PUSH 2
+		addr3 += code.byteCount() - 2;
+
+		/// 4.1 - Prepare our code for returning to login screen
+
+		// First Disconnect from Char Server
+		code =
+			CALL(InstR, addr)     //CALL CRagConnection::instanceR
+		+	MOV(ECX, EAX)         //MOV ECX, EAX
+		+	CALL(DConn, addr + 7) //CALL CConnection::disconnect
+
+		// Extract and paste all the code between addr2 and addr3 to prep the register call (Window Maker)
+		+	Exe.GetHex(addr2, addr3 - addr2)
+
+		// PUSH 2723 and go to the location after the original PUSH 2 => addr3 + 2
+		+	PUSH(0x2723)           //PUSH 2723
+		;
+
+		code +=
+			JMP(addr3 + 2, addr + code.byteCount()) //JMP addr; after PUSH 2.
+		;
+
+		/// 4.2 - Replace with prepared code
+		Exe.SetHex(addr, code);
+		return true;
+
+	});
+
+	/// 4.3 - Ensure we got atleast 1 match
+	if (found.isEmpty())
+		throw Error("No references matched");
+
+	return true;
+};
+
+///
+/// \brief Wrappers for individual patch validation
+///
+DisConnToLogin.validate = HasHiddenLogWin;
+CancelToLogin.validate  = HasHiddenLogWin;

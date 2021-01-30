@@ -1,0 +1,205 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Shinryo, Ai4rei/AN                                *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Shinryo, Ai4rei/AN                                     *
+*   Created Date  : 2020-11-09                                             *
+*   Last Modified : 2020-12-09                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Pattern missing for PM Box in 2008 clients. Fix it later if needed.
+
+///
+/// \brief Data to be used for the patches.
+///
+if (typeof RB_Data === 'undefined')
+{
+	RB_Data =
+	{
+		ResizeChatBox :
+		{
+			varName : '$chatBoxLen', 
+			arg1 : 0xF0
+		},
+
+		ResizeChatRoomBox :
+		{
+			varName : '$chatRoomBoxLen',
+			arg1 : 0xF2
+		},
+
+		ResizePMBox :
+		{
+			varName : '$pmBoxLen',
+			arg1 : 0xFF,
+			arg2 : 0x00
+		}
+	};
+}
+
+///
+/// \brief Common function to change the length limit from 70 to 
+///        user specified value for the respective box
+///
+ResizeBox = function(patchName)
+{
+	/// 1.1 - Retrieve the data corresponding to the patchName
+	let {varName, arg1, arg2} = RB_Data[patchName];
+
+	/// 1.2 - Find the limit setter (there will be atleast 4 matches)
+	let addrs = Exe.FindHexN( MOV([EAX, WCp], 0x46) ); //MOV DWORD PTR DS:[EAX+byte], 46 (46h = 70d)
+	let delta = 3;
+
+	if (addrs.isEmpty())
+	{
+		addrs = Exe.FindHexN( MOV([EAX, POS2WC], 0x46) ); //MOV DWORD PTR DS:[EAX+dword], 46 (46h = 70d)
+		delta = 6;
+	}
+	if (addrs.length < 4)
+		throw Error("Not enough MOVes found");
+
+	/// 2 - Get the new box length from user
+	let boxLen = Exe.GetUserInput(varName, D_Uint32, "Box Length", "Enter the new box length in no of chars", 0x46, {min:1, max:255});
+	if (boxLen === false)
+		Cancel("Box Length", 70);
+
+	/// 3 - Find the correct address based on the arguments being PUSHed before it and set the value to boxLen
+	if (arg2 === undefined)
+		arg2 = arg1;
+
+	let pattern =
+		PUSH(arg1)  //PUSH arg1
+	+	PUSH(arg2)  //PUSH arg2
+	;
+
+	let found = addrs.find(addr =>
+	{
+		let tgtAddr = Exe.FindHex(pattern, addr - 0x20, addr)	;
+		if (tgtAddr > 0)
+		{
+			Exe.SetFromVar(addr + delta, varName);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	});
+
+	if (found === undefined)
+		throw Error("No matches found for Arg PUSHes");
+
+	return true;
+};
+
+///
+/// \brief Wrappers over individual patches
+///
+ResizeChatBox     = ResizeBox;
+ResizeChatRoomBox = ResizeBox;
+ResizePMBox       = ResizeBox;
+
+///
+/// \brief Modify the stack allocation in CGameMode ::Zc_Say_Dialog from 2052 to the user specified value
+///
+ResizeNpcBox = function()
+{
+	/// 1.1 - Find the string '|%02x'
+	let addr = Exe.FindText("|%02x");
+	if (addr < 0)
+		throw Error("Format string not found");
+
+	/// 1.2 - Find all locations where its PUSHed
+	let addrs = Exe.FindHexN( PUSH(addr) );
+	if (addrs.isEmpty())
+		throw Error("Format string not PUSHed");
+
+	/// 1.3 - Find the Stack allocation instruction within 0x80 bytes before the PUSH (only 1 location will have it)
+	let code = SUB(ESP, " ?? 08 00 00"); //SUB ESP, const; where const = 804+x
+	let subAddr = -1;
+
+	let refAddr = addrs.find(addr =>
+	{
+		subAddr = Exe.FindHex(code, addr - 0x80, addr); 
+		return (subAddr > 0);
+	});
+
+	if (refAddr === undefined)
+		throw Error("Zc_Say_Dialog not found");
+
+	/// 1.4 - Extract the allocated byte count (x in SUB ESP, x)
+	let stackSub = Exe.GetInt32(subAddr + 2);
+
+	/// 2.1 - Find the End of the Function.
+	if (ROC.HasFP)
+	{
+		code =
+			MOV(ESP, EBP)      //MOV ESP, EBP
+		+	POP(EBP)           //POP EBP
+		+	RETN(4)            //RETN 4
+		;
+	}
+	else
+	{
+		code =
+			ADD(ESP, stackSub) //ADD ESP, 804+x
+		+   RETN(4)            //RETN 4
+		;
+	}
+	let addr2 = Exe.FindHex(code, refAddr + 5, subAddr + 0x200);
+	if (addr2 < 0)
+		throw Error("Zc_Say_Dialog end not found");
+
+	/// 2.2 - Get new value from user
+	let value = Exe.GetUserInput('$npcBoxLength', D_Int32, "NPC Dialog Size", "Enter new NPC Dialog box length", 0x804, {min:0x804, max:0x1000});
+	if (value === false)
+		Cancel("Size", 2052);
+
+	/// 2.3 - Change the Stack Allocation with new values
+	Exe.SetInt32(subAddr + 2, value + stackSub - 0x804);//Change x in SUB ESP, x
+
+	if (ROC.HasFP)
+	{
+		/// 3.1 - Update all EBP-x+i Stack references, for now we are limiting i to (0 - 3)
+		for (let i = 0; i <= 3; i++)
+		{
+			code = (i - stackSub).toHex();//-x+i
+			Exe.FindHexN(code, subAddr + 6, addr2).forEach(
+				addr => Exe.SetInt32(addr, i - value)
+			);
+		}
+	}
+	else
+	{
+		Exe.SetInt32(addr2 + 2, value + stackSub - 0x804);//Change x in ADD ESP, x
+
+		/// 3.2 - Update all ESP+i Stack references, where i is in (0x804 - 0x820)
+		for (let i = 0x804; i <= 0x820; i += 4)
+		{
+			Exe.FindHexN(i.toHex(), subAddr + 6, addr2).forEach(
+				addr => Exe.SetInt32(addr, value + i - 0x804)
+			);
+		}
+	}
+
+	return true;
+};

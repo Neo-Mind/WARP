@@ -1,0 +1,135 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2020 Secret                                              *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Shinryo, Secret                                        *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2020-12-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Fix the switch and JMP in InitClientInfo and InitDefaultClientInfo functions to make sure both SelectKoreaClientInfo and SelectClientInfo are called
+///
+CallKoreaClientInfo = function()
+{
+	/// 1.1 - Find the error string
+	let addr = Exe.FindText("Unknown ServiceType !!!");
+	if (addr < 0)
+		throw Error("Message string not found");
+
+	/// 1.2 - Find all locations where it is used in a PUSH
+	let addrs = Exe.FindHexN( PUSH(addr) );
+	if (addrs.isEmpty())
+		throw Error("Message string not used");
+
+	/// 1.3 - Prepare codes to be used in the foreach loop
+	let codes = [
+		MOVZX(R32, BYTE_PTR, [R32, POS3WC]) //MOVZX reg32_A, BYTE PTR DS:[reg32_B + baseAddr]
+	+	JMP([4, R32, POS3WC])               //JMP DWORD PTR DS:[reg32_A*4 + tblAddr]
+	,
+		MOV(R8, BYTE_PTR, [R32, POS3WC])    //MOV reg8_A, BYTE PTR DS:[reg32_B + baseAddr] ; Pattern for really old clients
+	+	JMP([4, R32, POS3WC])               //JMP DWORD PTR DS:[reg32_A*4 + tblAddr]
+	,
+		CALL(ALLWC)                         //CALL SelectKoreaClientInfo
+	+	JMP(ALLWC)                          //JMP addr2 -> Skip calling SelectClientInfo
+	+	PUSH_0                              //PUSH 0
+	+	CALL()                              //CALL SelectClientInfo
+	,
+		JNE(WCp)                            //JNE SHORT addr -> Skip calling SelectKoreaClientInfo ; Pattern for 2017+ clients C/o Secret
+	+	CALL(POS3WC)                        //CALL SelectKoreaClientInfo
+	+	JMP(POS3WC)                         //JMP addr2
+	+	PUSH_0                              //PUSH 0
+	,
+		JNE(POS2WC)                         //JNE addr -> Skip running SelectKoreaClientInfo code ; Pattern for VC14.16 clients
+	+	MOV(R32, [POS4WC])                  //MOV reg32_C, DWORD PTR DS:[addr] ; start of SelectKoreaClientInfo
+	];
+
+	addrs.forEach( (memAddr, index) =>
+	{
+		/// 2.1 - Find the Switch case jump before each PUSH 
+		let csize;
+		if (Exe.Version < 9.0) //VC6
+		{
+			csize = codes[1].byteCount();
+			addr = Exe.FindHex(codes[1], memAddr - 0x50, memAddr);
+		}
+		else
+		{
+			csize = codes[0].byteCount();
+			addr = Exe.FindHex(codes[0], memAddr - (Exe.Version < 14 ? 0x50 : 0x200), memAddr);
+		}
+		if (addr < 0)
+			throw Error(`Switch Case not found for No.${index + 1}`);
+
+		/// 2.2 - Point addr to code after the JMP
+		addr += csize;
+
+		/// 2.3 - Extract the tblAddr
+		let tblAddr = Exe.Vir2Phy(Exe.GetUint32(addr - 4), CODE);
+
+		/// 2.3 - Make the 2nd entry in the table the same as first, so that all valid langtypes will use same case as 0 i.e. Korea
+		Exe.SetUint32(tblAddr + 4, Exe.GetUint32(tblAddr));
+
+		/// 2.4 - Find the Select*Info calls between the PUSH and the Jump
+		let nopCount = 5; //enough to NOP out the 2nd JMP
+		let nopLoc = 5;
+		let addr2 = Exe.FindHex(codes[2], addr, tblAddr);
+
+		if (addr2 < 0)
+		{
+			nopCount = 2;
+			code = codes[2].replace( JMP(ALLWC), JMP(WCp) ); //change second JMP to JMP SHORT
+			addr2 = Exe.FindHex(code, addr, tblAddr);
+		}
+		if (addr2 < 0)
+		{
+			nopLoc = 0;
+			if (Exe.Version > 11.0)
+			{
+				nopCount = 6;
+				addr2 = Exe.FindHex(codes[4], addr, tblAddr);
+			}
+			else if (Exe.BuildDate > 20170000)
+			{
+				nopCount = 2;
+				addr2 = Exe.FindHex(codes[3], addr, tblAddr);
+			}
+		}
+		if (addr2 < 0)
+			throw Error("Select*Info CALLs not found for No." + (index + 1));
+
+		/// 2.5 - NOP out the JMP/JZ
+		Exe.SetNOPs(addr2 + nopLoc, nopCount);
+	});
+
+	return true;
+};
+
+/*
+ Note:
+-------
+ Gravity has their clientinfo hardcoded and seperated the initialization, screw "em.. :(
+ SelectKoreaClientInfo() has for example global letiables like g_extended_slot set
+ which aren"t set by SelectClientInfo(). Just call both functions will fix this as the
+ changes from SelectKoreaClientInfo() will persist and overwritten by SelectClientInfo().
+*/

@@ -1,0 +1,276 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2015-2021 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-11-21                                             *
+*   Last Modified : 2021-01-17                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Some clients in 2012 dont seem to comply to any of the patterns... Need to investigate in future.
+
+///
+/// \brief Hijack the MsgStr function CALL inside the Booking OnCreate function
+///        for filtering out user specified Job ID List. The function creates the combobox
+///        so this is the apt location for patch
+///
+RemoveBookingJobs = function()
+{
+	/// 1.1 - Find the MsgStr CALL used for Job Name loading.
+	let code, type;
+	if (Exe.Version < 9.0) //VC6
+	{
+		code =
+			LEA(R32, [R32, 0x65D])  //LEA reg32_A, [reg32_B + 65D]
+		+	ADD(R32, R32)           //ADD reg32_B, reg32_C
+		+	MOV([EBP, WCn], R32)    //MOV DWORD PTR SS:[EBP-const1], reg32_A
+		+	MOV([EBP, WCn], R32)    //MOV DWORD PTR SS:[EBP-const2], reg32_B
+		+	MOV(EAX, [EBP, WCn])    //MOV EAX, DWORD PTR SS:[EBP-const1]
+		+	PUSH_EAX                //PUSH EAX
+		+	CALL()                  //CALL MsgStr
+		;
+		type = 1;
+	}
+	else if (Exe.Version === 10.0 || Exe.Version > 11.0) //VC10 & VC14.16
+	{
+
+		let reg = Exe.Version === 10.0 ? R32 : EAX;
+		code =
+			MOV(reg, [EBP, WCn])    //MOV reg32_A, DWORD PTR SS:[EBP-const]
+		+	(Exe.Version > 11.0
+		?
+			NOP
+		:
+			''
+		)
+		+	ADD(reg, 0x65D)         //ADD reg32_A, 65D
+		+	PUSH_R                  //PUSH reg32_A
+		+	CALL()                  //CALL MsgStr
+		;
+		type = 3;
+	}
+	else //VC9 & VC11
+	{
+		code =
+			LEA(ECX, [ECX, 0])      //LEA ECX, [ECX] ; 0 is required since it is looking for the 3 byte version
+		+	LEA(R32, [R32, 0x65D])  //LEA reg32_A, [reg32_B + 65D]
+		+	PUSH_R                  //PUSH reg32_A
+		+	CALL()                  //CALL MsgStr
+		;
+		type = 2;
+	}
+
+	let addr = Exe.FindHex(code);
+	if (addr < 0 && type === 1) //Some VC6 clients need this one
+	{
+		code = code.replace(MOV(EAX, [EBP, WCn]),
+			JMP(2)
+		+	XOR(R32, R32)
+		+	MOV(EAX, [EBP, WCn])
+		)
+		;
+		addr = Exe.FindHex(code);
+	}
+	if (addr < 0)
+		throw Error("Loop start not found");
+
+	/// 1.2 - Save location of CALL
+	let callAddr = addr + code.byteCount() - 1;
+
+	/// 1.3 - Extract MsgStr address
+	let MsgStr = Exe.GetTgtAddr(callAddr + 1);
+
+	/// 2.1 - Prepare Pattern for finding end of the loop
+	///       (We need to RETN to the location before Loop counter
+	///        increment which is what jmpDelta is for)
+	///
+	let jmpDelta;
+	switch (type)
+	{
+		case 1: //VC6
+		{
+			code =
+				ADD(ESP, 4)                      //ADD ESP, 4
+			+	MOV(R32, [EBP, WCn])             //MOV reg32_A, DWORD PTR SS:[EBP-const1]
+			+	MOV(R32, [EBP, WCn])             //MOV reg32_B, DWORD PTR SS:[EBP-const2]
+			+	INC(R32)                         //INC reg32_A
+			+	INC(R32)                         //INC reg32_B
+			+	MOV([EBP, WCn], R32)             //MOV DWORD PTR SS:[EBP-const3],reg32_C
+			+	MOV([EBP, WCn], R32)             //MOV DWORD PTR SS:[EBP-const4],reg32_C
+			+	MOV([EBP, WCn], R32)             //MOV DWORD PTR SS:[EBP-const5],reg32_C
+			+	MOV([EBP, WCn], R32)             //MOV DWORD PTR SS:[EBP-const1],reg32_A
+			+	MOV([EBP, WCn], R32)             //MOV DWORD PTR SS:[EBP-const2],reg32_B
+			+	JNZ(NEG1WC)                      //JNZ addr
+			;
+			jmpDelta = 3;
+			break;
+		}
+		case 2:
+		{
+			if (Exe.Version === 11.0) //VC11
+			{
+				code =
+					ADD(ESP, 4)                  //ADD ESP, 4
+				+	INC(R32)                     //INC reg32_A
+				+	MOV([EBP, WCn], 0xF)         //MOV DWORD PTR SS:[EBP-const1], 0F
+				+	MOV([EBP, WCn], 0)           //MOV DWORD PTR SS:[EBP-const2], 0
+				+	MOV(BYTE_PTR, [EBP, WCn], 0) //MOV BYTE PTR SS:[EBP-const3], 0
+				+	DEC(R32)                     //DEC reg32_B
+				+	JNZ(NEG1WC)                  //JNZ addr
+				;
+				jmpDelta = 3;
+			}
+			else //VC9
+			{
+				code =
+					CALL([POS3WC])               //CALL DWORD PTR DS:[<&MSVCP#.$basic*>]
+				+	INC(R32)                     //INC reg32_A
+				+	SUB([ESP, WCp], 1)           //SUB DWORD PTR SS:[ESP+const], 1
+				+	JNZ(WCn)                     //JNZ SHORT addr
+				;
+				jmpDelta = 6;
+			}
+
+			break;
+		}
+		case 3: //VC10 & VC14.16
+		{
+			if (Exe.Version === 10.0) //VC10
+			{
+				code =
+					MOV(R32, 1)                  //MOV reg32_A, 1
+				+	ADD([EBP, WCn], R32)         //ADD DWORD PTR SS:[EBP-const1], reg32_A
+				+	SUB([EBP, WCn], R32)         //SUB DWORD PTR SS:[EBP-const2], reg32_A
+				+	MOV([EBP, WCn], 0xF)         //MOV DWORD PTR SS:[EBP-const3], 0F
+				+	MOV([EBP, WCn], R32)         //MOV DWORD PTR SS:[EBP-const4], reg32_B
+				+	MOV([EBP, WCn], R8)          //MOV BYTE PTR SS:[EBP-const5], reg8_B
+				+	JNZ(WCn)                     //JNZ SHORT addr
+				;
+			}
+			else //VC14.16
+			{
+				code =
+					MOV(R32, [EBP, WCn])         //MOV reg32_A, DWORD PTR SS:[EBP-const1]
+				+	INC(R32)                     //INC reg32_A
+				+	MOV(R32, [EBP, WCn])         //MOV reg32_B, DWORD PTR SS:[EBP-const2]
+				+	INC(R32)                     //INC reg32_B
+				+	MOV([EBP, WCn], 0)           //MOV DWORD PTR SS:[EBP-const3], 0
+				+	MOV([EBP, WCn], 0xF)         //MOV DWORD PTR SS:[EBP-const4], F
+				+	MOV(BYTE_PTR, [EBP, WCn], 0) //MOV BYTE PTR SS:[EBP-const5], 0
+				+	MOV([EBP, WCn], R32)         //MOV DWORD PTR SS:[EBP-const2], reg32_B
+				+	CMP(R32, [4, R32, EBP, WCn]) //CMP reg32_A, DWORD PTR SS:[4*reg32_A + EBP + const6]
+				+	JL(NEG2WC)                   //JL addr
+				;
+			}
+
+			jmpDelta = 0;
+			break;
+		}
+	}
+
+	/// 2.2 - Find the pattern
+	addr = Exe.FindHex(code, callAddr + 5, callAddr + 0x100);
+	if (addr < 0)
+		throw Error("Loop End not found");
+
+	/// 2.3 - Get the VIRTUAL location to return to (add jmpDelta value to addr)
+	let retnAddr = Exe.Phy2Vir(addr + jmpDelta, CODE);
+
+	/// 3.1 - Get the Skip List file from User
+	let inFile = Exe.GetUserInput('$bookingList', D_InFile, "Booking Skip List", "Enter the List file containing Job IDs to skip", "Inputs/BookSkipList.yml", {filters : YMLFILTER});
+	if (inFile === false)
+		Cancel("No list file specified");
+
+	/// 3.2 - Retrieve the list from the file
+	let idList = Warp.LoadYaml(inFile);
+	if (idList === false)
+		return false;
+
+	else if (!IsArr(idList))
+		throw Error("Need a list of Job IDs");
+
+	/// 3.3 - Prune out invalid values.
+	idList = idList.filter( id => IsNum(id) && id >= 0x65D );
+	if (idList.isEmpty())
+		throw Error("List file contains no valid Job IDs");
+
+	/// 3.4 - Finish off with NULL at end of the Array
+	idList.push(0);
+
+	/// 4.1 - Prepare our function to check the ID
+	code =
+		PUSH_EAX               //PUSH EAX
+	+	PUSH(ECX)              //PUSH ECX
+	+	PUSH(EDX)              //PUSH EDX
+	+	MOV(EAX, [ESP, 0x10])  //MOV EAX, DWORD PTR SS:[ESP+10]; Arg0
+	+	INC(EAX)               //INC EAX ; Needed because the ids start from 0
+	+	MOV(ECX, Filler(1))    //MOV ECX, listaddr
+	+	MOVZX(EDX, [ECX])      //MOVZX EDX, WORD PTR DS:[ECX] ; addr3
+	+	TEST(EDX, EDX)         //TEST EDX, EDX
+	+	JE(8)                  //JE SHORT addr1
+	+	CMP(EAX, EDX)          //CMP EAX, EDX
+	+	JE(0xC)                //JE SHORT addr2
+	+	INC(ECX)               //INC ECX
+	+	INC(ECX)               //INC ECX
+	+	JMP(-0xF)              //JMP SHORT addr3
+	+	POP(EDX)               //POP EDX
+	+	POP(ECX)               //POP ECX
+	+	POP(EAX)               //POP EAX
+	+	JMP(Filler(2))         //JMP MsgStr
+	+	POP(EDX)               //POP EDX
+	+	POP(ECX)               //POP ECX
+	+	POP(EAX)               //POP EAX
+	+	ADD(ESP, 8)            //ADD ESP, 8
+	+	JMP(Filler(3))         //JMP retnAddr
+	;
+	let csize = code.byteCount();
+
+	/// 4.2 - Allocate space to add our function and the IDs
+	let size = csize + 2 + idList.length * 2; //each ID is 2 bytes long
+	let free = Exe.FindSpace(size, 0x10);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+
+	/// 4.3 - Fill in the blanks
+	code = SwapFiller(code, 1, freeVir + csize + 2, 1);
+
+	code = SetFillTargets(code, {
+		2 : MsgStr,
+		3 : retnAddr
+	}, freeVir, 1);
+
+	/// 4.4 - Add the ids and the function at the allocated space
+	let idHex = idList.map( id => id.toHex(2) ).join('');
+	Exe.AddHex(free, code + " 00 00" + idHex);
+
+	/// 4.5 - Change the CALL target in the MsgStr CALL to our function.
+	Exe.SetTgtAddr(callAddr + 1, freeVir);
+
+	return true;
+};
+
+///
+/// \brief Disable for Unsupported Clients
+///
+RemoveBookingJobs.validate = () => Exe.BuildDate > 20100223;

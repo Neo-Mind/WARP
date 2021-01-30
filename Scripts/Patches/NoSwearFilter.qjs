@@ -1,0 +1,43 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Shinryo                                                *
+*   Created Date  : 2020-11-10                                             *
+*   Last Modified : 2020-12-04                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Zero out 'manner.txt' so that it never gets loaded to compare text against
+///
+NoSwearFilter = function()
+{
+	/// 1 - Find the location of 'manner.txt'
+	let addr = Exe.FindText("manner.txt", PHYSICAL);
+	if (addr < 0)
+		throw Error("'manner.txt' not found");
+
+	/// 2 - Set first char to zero
+	Exe.SetUint8(addr, 0);
+
+	return true;
+};

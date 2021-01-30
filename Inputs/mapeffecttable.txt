@@ -1,0 +1,94 @@
+//////////////////////////////////////////////////////////////////////////////
+//                                                                          //
+//   Copyright (C) 2014-2021 Curiosity                                      //
+//                                                                          //
+//   This file is a part of WARP project (specific to RO clients)           //
+//                                                                          //
+//   WARP is free software: you can redistribute it and/or modify           //
+//   it under the terms of the GNU General Public License as published by   //
+//   the Free Software Foundation, either version 3 of the License, or      //
+//   (at your option) any later version.                                    //
+//                                                                          //
+//   This program is distributed in the hope that it will be useful,        //
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of         //
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          //
+//   GNU General Public License for more details.                           //
+//                                                                          //
+//   You should have received a copy of the GNU General Public License      //
+//   along with this program.  If not, see <http://www.gnu.org/licenses/>.  //
+//                                                                          //
+//                                                                          //
+//////////////////////////////////////////////////////////////////////////////
+//                                                                          //
+//   Author(s)     : Curiosity                                              //
+//   Created Date  : 2014-06-30                                             //
+//   Last Modified : 2021-01-22                                             //
+//                                                                          //
+//////////////////////////////////////////////////////////////////////////////
+//
+// mapeffecttable.txt by curiosity to be used with rdll2.asi file generated using WARP
+//  
+// Format: MAP_NAME [TAB] CLEAR_COLOR [TAB] WEATHER_EFFECT [TAB] PARAM
+// MAP_NAME - name of rsw file
+// CLEAR_COLOR - Clear (background) color of 3D scene (format: 0xAARRGGBB)
+// WEATHER_EFFECT - CWeather effect to apply:
+// 		sky - floating clouds
+// 		snow - falling snow
+// 		maple - falling maple leaves
+// 		sakura - falling petal leaves
+// 		pokjuk - fireworks
+//		night - night mode
+// 		none - no effect
+// PARAM - effect parameter. Only used in sky effect (supported: 0 to 5, 7 to 9)
+// 		0 - white floaty clouds (visible above minimum height level?)
+// 		1 - ???
+// 		2 - white floaty clouds (water level?)
+// 		3 - red fog (all altitudes)
+// 		4 - fast white clouds (water level?)
+// 		5 - thick red fog (altitude 0?)
+// 		7 - black clouds (altitude 0?)
+// 		8 - pink clouds (altitude 0?)
+// 		9 - sparkling stars (below water?)
+// Note: default entry should stay at top
+default	0x00000000	none	0
+1@mist.rsw	0xFF299986	sky	9
+2009rwc_03.rsw	0xFF99CCFF	sky	1
+2009rwc_07.rsw	0xFF99CCFF	sky	1
+airplane.rsw	0xFF99CCFF	sky	4
+airplane_01.rsw	0xFF99CCFF	sky	4
+bat_fild02.rsw	0xFF99CCFF	sky	1
+bat_b01.rsw	0xFF99CCFF	sky	1
+bat_b02.rsw	0xFF99CCFF	sky	1
+bif_fild01.rsw	0xFF061523	sky	9
+bif_fild02.rsw	0x00ECFFC5	sky	9
+bif_dun01.rsw	0xFF299986	sky	9
+ecl_fild01.rsw	0xFF061523	sky	9
+einbroch.rsw	0x00000000	sky	3
+gef_fild07.rsw	0x00000000	sky	0
+gld2_ald.rsw	0xFF99CCFF	sky	1
+gon_dun02.rsw	0xFF6699CC	sky	1
+gonryun.rsw	0xFF6699CC	sky	1
+himinn.rsw	0xFF99CCFF	sky	2
+mjolnir_01.rsw	0x00000000	sky	0
+moc_fild22.rsw	0x00000000	sky	5
+que_qaru01.rsw	0xFF99CCFF	sky	2
+que_qaru02.rsw	0xFF99CCFF	sky	2
+que_qaru03.rsw	0xFF99CCFF	sky	2
+que_qaru04.rsw	0xFF99CCFF	sky	2
+que_qaru05.rsw	0xFF99CCFF	sky	2
+que_qsch01.rsw	0xFF99CCFF	sky	2
+que_qsch02.rsw	0xFF99CCFF	sky	2
+que_qsch03.rsw	0xFF99CCFF	sky	2
+que_qsch04.rsw	0xFF99CCFF	sky	2
+que_qsch05.rsw	0xFF99CCFF	sky		2
+que_temsky.rsw	0xFF6699CC	sky	1
+ra_temsky.rsw	0xFF6699CC	sky	1
+rwc01.rsw	0xFF99CCFF	sky	2
+sch_gld.rsw	0xFF99CCFF	sky	1
+sky1.rsw	0xFF6699CC	sky	1
+thana_boss.rsw	0xFFE0D5C2	5
+valkyrie.rsw	0xFF99CCFF	sky	2
+yuno.rsw	0xFF000000	sky	9
+xmas_fild01.rsw	0x00000000	snow	0
+xmas_fild02.rsw	0x00000000	snow	0
+prontera.rsw	0x00000000	maple	0

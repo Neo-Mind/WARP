@@ -1,0 +1,89 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2020 <Unknown>                                         *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : -, Neo-Mind                                            *
+*   Created Date  : 2020-11-18                                             *
+*   Last Modified : 2021-01-30                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Extract all strings ending in .txt to an output file
+///
+ExtractTxtNames = function()
+{
+	/// 1.1 - Need a valid Exe loaded.
+	if (Exe.FileSize == 0)
+		throw NO_EXE;
+
+	/// 1.2 - Open output file for writing (Need ASCII encoding).
+	let fileName = Exe.GetUserInput("$$txtNames", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "loaded_Txt_files_" + ROC.BaseName + ".txt");
+	if (fileName === false)
+		return true;
+
+	let fp = new TextFile(fileName, ASCII, 'w');
+	if (!fp.Valid)
+		throw NO_OUTPUT;
+
+	/// 2.1 - First write the essentials to file.
+	fp.WriteLine("Extracted with WARP")
+	fp.WriteLine("===================")
+	fp.WriteLine("Client: " + Exe.FilePath);
+	fp.WriteLine("BuildDate: " + Exe.BuildDate);
+	fp.WriteLine('');
+	fp.WriteLine("Txt Files:");
+
+	/// 2.2 - Find all locations of .txt
+	let addrs = Exe.FindTextN(".txt", PHYSICAL, false);
+	addrs.forEach( addr =>
+	{
+		/// 2.3 - Retrieve the starting location of each string (prepending each character along the way)
+		let str = ".txt";
+		for (addr--; addr > 0; addr--)
+		{
+			let chr = Exe.GetText(addr, 1);
+			if (chr === '\0' || chr === '@')
+				break;
+
+			str = chr + str;
+		}
+
+		/// 2.4 - Write each of them to the file (other than '.txt' itself)
+		if (str.length > 4)
+			fp.WriteLine(" => " + str);
+	});
+
+	/// 2.5 - Close the file
+	fp.Close();
+
+	/// 3 - Show the success message or display the file if requested
+	if (!Exe.TestMode && Exe.GetUserInput('$$showFile', D_Bool, "Show File", "Display the generated file?", true))
+	{
+		Warp.Show(fp.Path);
+		return true;
+	}
+	else
+	{
+		return "Txt filenames have been extracted";
+	}
+};

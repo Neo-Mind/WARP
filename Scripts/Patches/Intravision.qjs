@@ -1,0 +1,84 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2017 Secret, A.K.M.                                      *
+*   Copyright (C) 2020 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Secret, A.K.M., Neo-Mind                               *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2020-12-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Infinite intravision patch (Always see cloaked objects)
+///
+Intravision = function()
+{
+	/// 1 - Find the comparison loop
+	let code;
+	if (!ROC.Post2010)
+	{
+		code =
+			JNE(2)						//JNE SHORT addr1
+		+	MOV(BL, 1)					//MOV BL, 1
+		+	INC(ECX)					//INC ECX ; addr1
+		+	JMP(WCn)					//JMP SHORT loop_start
+		+	CMP(BL, 1)					//CMP BL, 1
+		;
+	}
+	else
+	{
+		code =
+			JZ(ALLWC)					//JZ addr
+		+	ADD(EAX, WCp)				//ADD EAX, const  ; Varies 14 in 2017 clients
+		+	CMP(EAX, ECX)				//CMP EAX, ECX
+		+	JNZ(WCn)					//JNZ SHORT loop_start
+		;
+	}
+	let addrs = Exe.FindHexN(code);
+	if (addrs.isEmpty())
+		throw Error("Comparison missing");
+
+	/// 2 - Change the JZ/JNE SHORT to JMP for the right match
+	code =
+		PUSH_2							//PUSH 2
+	+	MOV(ECX, ESI)					//MOV ECX, ESI
+	+	CALL()							//CALL func
+	;
+
+	let found = addrs.filter( addr =>
+	{
+		if (Exe.FindHex(code, addr - 0x30, addr) > 0)
+		{
+			Exe.SetJMP(addr);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	});
+
+	if (found.isEmpty())
+		throw Error("Only false matches found");
+
+	return true;
+};

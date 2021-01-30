@@ -1,0 +1,132 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Shinryo                                                *
+*   Created Date  : 2020-11-09                                             *
+*   Last Modified : 2020-12-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Find the minimum length comparisons of Username/Password/Charname with 4 & change it to 0
+///        Any non-empty string is valid now
+///
+No4LetterLimit = function(patchName)
+{
+	/// 1.1 - Find all the size comparisons against 4
+	let prefix =
+		CALL(NEG3WC) //CALL UIEditCtrl::GetTextSize
+	+	CMP(EAX, 4)  //CMP EAX, 4
+	;
+
+	let addrs = [
+		...Exe.FindHexN(prefix + JL(WC)),    //JL SHORT addr
+		...Exe.FindHexN(prefix + JL(POS2WC)) //JL addr
+	];
+	if (addrs.length < 3)
+		throw Error("Not enough comparisons found");
+
+	addrs.sort();
+
+	/// 1.2 - Find the location that is part of Username & Password check (compared one after the other)
+	///       others are part of Charname check
+	let userAddr = -1;
+	let passAddr = -1;
+	let GetTextSize = -1; //the function address
+	let psize = prefix.byteCount();
+
+	let prefixNew =
+		CALL(NEG3WC) //CALL UIEditCtrl::GetTextSize
+	+	CMP(EAX, 6)  //CMP EAX, 6
+	;
+
+	addrs.find( addr =>
+	{
+		let addr2 = Exe.FindHex(prefix, addr + psize, addr + psize * 2 + 0x30);
+		if (addr2 > 0)
+		{
+			userAddr = addr2;
+			passAddr = addr;
+			GetTextSize = Exe.GetTgtAddr(addr + 1);
+			return true;
+		}
+
+		addr2 = Exe.FindHex(prefixNew, addr - 0x30, addr);
+		if (addr2 > 0)
+		{
+			userAddr = addr;
+			passAddr = addr2;
+			GetTextSize = Exe.GetTgtAddr(addr + 1);
+			return true;
+		}
+
+		return false;
+	});
+	if (userAddr < 0)
+		throw Error("Essential comparison not found");
+
+	/// 2 - Replace 4 with 0 in the CMP at relevant locations based on mode
+	switch (patchName)
+	{
+		case "NoCharnameLimit":
+		{
+			let found = addrs.filter( addr =>
+			{
+				if (Exe.GetTgtAddr(addr + 1) === GetTextSize &&
+					addr !== userAddr &&
+					addr !== passAddr
+				)
+				{
+					Exe.SetUint8(addr + psize - 1, 0);
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			});
+
+			if (found.isEmpty())
+				throw Error("Address not found");
+
+			break;
+		}
+		case "NoUsernameLimit":
+		{
+			Exe.SetUint8(userAddr + psize - 1, 0);
+			break;
+		}
+		case "NoPasswordLimit":
+		{
+			Exe.SetUint8(passAddr + psize - 1, 0);
+			break;
+		}
+	}
+	return true;
+};
+
+///
+/// \brief Wrappers for individual patches
+///
+NoCharnameLimit = No4LetterLimit;
+NoUsernameLimit = No4LetterLimit;
+NoPasswordLimit = No4LetterLimit;

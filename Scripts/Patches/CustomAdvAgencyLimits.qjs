@@ -1,0 +1,113 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2021 Asheraf                                        *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Andrei (4144), Asheraf                                 *
+*   Created Date  : 2021-01-14                                             *
+*   Last Modified : 2021-01-15                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Update the limits used in Adventure Agency window function
+///
+CustomAdvAgencyLimits = function()
+{
+	/// 1.1 - Find the format string for integers
+	let strAddr = Exe.FindText("%d");
+	if (strAddr < 0)
+        throw Error("Format string missing");
+
+	/// 1.2 - Find all locations of the Upper Limit addition
+    let code =
+		LEA(EAX, [ESI, 5])            //LEA EAX, [ESI+5]
+	+	(Exe.Version > 11
+	?
+		MOV(WORD_PTR, [EBP, WC], 0)   //MOV WORD PTR SS:[EBP + var_20], 0
+	:
+		''
+	)
+	+	PUSH_EAX                      //PUSH EAX
+	+	PUSH(strAddr)                 //PUSH OFFSET addr ; ASCII "%d"
+	+	PUSH(-1)                      //PUSH -1
+	;
+	
+    let addrsU = Exe.FindHexN(code);
+    if (addrsU.isEmpty())
+        throw Error("AgencyUpperLevellimit not found");
+
+	/// 1.3 - Find all locations of the Lower Limit subtraction
+	code =
+		LEA(EAX, [ESI, -5])    //LEA EAX, [ESI-5]
+	+	(Exe.Version > 11.0
+	?
+		XORPS(XMM0, XMM0)      //XORPS XMM0, XMM0
+	:
+		''
+	)
+	+	CMP(EAX, ECX)          //CMP EAX, ECX
+	+	(Exe.Version > 11.0
+	?
+		MOVQ([EBP, WC], XMM0)  //MOVQ DWORD PTR SS:[EBP + var_1C], XMM0
+	:
+		''
+	)
+	+	CMOVL(EAX, ECX)        //CMOVL EAX, ECX
+	+	PUSH_EAX               //PUSH EAX
+	+	PUSH(strAddr)          //PUSH OFFSET addr ; ASCII "%d"
+	+	PUSH(-1)               //PUSH -1
+	;
+	
+    let offsetsL = Exe.FindHexN(code);
+	if (offsetsL.isEmpty())
+        throw Error("AgencyLowerLevellimit not found");
+
+	/// 2.1 - Obtain the 2 limits
+	let upper = Exe.GetUserInput("$upplimitVal", D_Int8, "Level limit", "Enter new upper level limit", 5, {min: 1});
+	let lower = Exe.GetUserInput("$lowlimitVal", D_Int8, "Level limit", "Enter new lower level limit", -5, {max: -1});
+	if (upper === false && lower === false)
+		Cancel("Limits", "(-5, +5)");
+	
+	/// 2.2 - Change the upper limit if new value is provided (won't be false then)
+	if (upper !== false)
+	{
+		addrsU.forEach( addr =>
+			Exe.SetFromVar(addr + 2, "$upplimitVal")
+		);
+	}
+	
+	/// 2.3 - Change the lower limit if new value is provided (won't be false then)
+	if (lower !== false)
+	{
+		offsetsL.forEach( addr =>
+			Exe.SetFromVar(addr + 2, "$lowlimitVal")
+		);
+	}
+	
+    return true;
+};
+
+///
+/// \brief Disable for clients without the string
+///
+CustomAdvAgencyLimits.validate = () =>
+	Exe.FindText("btn_job_def_on", PHYSICAL) > 0;

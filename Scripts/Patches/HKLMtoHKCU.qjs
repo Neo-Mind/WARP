@@ -1,0 +1,58 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Shinryo                                                *
+*   Created Date  : 2020-11-11                                             *
+*   Last Modified : 2020-12-07                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change all HKEY_LOCAL_MACHINE parameters to HKEY_CURRENT_USER
+///
+HKLMtoHKCU = function()
+{
+	/// 1 - Find all occurrences of PUSH HKEY_LOCAL_MACHINE (0x80000002)
+	let addrs = Exe.FindHexN( PUSH(0x80000002) );
+	if (addrs.isEmpty())
+		throw Error("HKEY_LOCAL_MACHINE not PUSHed");
+
+	/// 2 - Change all to HKEY_CURRENT_USER (0x80000001). 
+	///     Ignore in case opcode following the PUSH is a 3B (it is a false match)
+	let found = addrs.filter( addr =>
+	{
+		if (Exe.GetUint8(addr + 5) !== 0x3B)
+		{
+			Exe.SetUint8(addr + 1, 1);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	});
+
+	if (found.isEmpty())
+		Cancel("Only false matches found");
+
+	return true;
+};

@@ -599,9 +599,10 @@ GetInstr = function(current, n)
 ///
 Cancel = (arg, defVal = undefined) =>
 {
-	throw defVal === undefined
-	?	`Cancelled - ${arg}`
-	:	`Cancelled - <b>'${arg}'</b> reverted to <b><i>${defVal}</i></b>`
+	if (defVal === undefined)
+		throw `Cancelled - ${arg}`;
+	else
+		throw `Cancelled - <b>'${arg}'</b> reverted to <b><i>${defVal}</i></b>`;
 };
 
   //====================//

@@ -1,0 +1,72 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) 2014-2020 Neo-Mind                                       #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2020-11-06                                             #
+#   Last Modified : 2020-12-02                                             #
+#                                                                          #
+############################################################################
+
+20141020 : [0x290551EA, 0x2B952C75, 0x2D67669B]
+20150511 : [0x62C86D09, 0x75944F17, 0x112C133D]
+20150915 : [0x17F83A19, 0x116944F4, 0x1CC541E9]
+20150924 : [0x5CFF4561, 0x32514AD1, 0x06D126D1]
+20151029 : [0x45B945B9, 0x45B945B9, 0x45B945B9]
+20151102 : [0x4C17382A, 0x7ED174C9, 0x29961E4F]
+20151222 : [0x347D68D0, 0x2C705320, 0x7B4A199D]
+20160201 : [0x3E1411AF, 0x6C744497, 0x7CFA1BDE]
+20161226 : [0x09366971, 0x005672F1, 0x6F3712AE]
+20170124 : [0x066E04FE, 0x3004224A, 0x04FF0458]
+20170410 : [0x39223393, 0x5C847779, 0x10217985]
+20170418 : [0x1F8F4B3F, 0x2E481F03, 0x39ED4178]
+20170425 : [0x167642A7, 0x1DEC3D26, 0x6D046D4C]
+20170515 : [0x2CC4749A, 0x1FA954DC, 0x72276857]
+20170607 : [0x50564ACD, 0x79CA4E15, 0x405F4894]
+20170613 : [0x5ED10A48, 0x667F4301, 0x2E5D761F]
+20170725 : [0x102F23DB, 0x7E767751, 0x3BC172EF]
+20170821 : [0x22677205, 0x393D1002, 0x58DC6BB4]
+20170830 : [0x1D49592B, 0x00970C17, 0x1E640103]
+20170913 : [0x7A645935, 0x1DA05062, 0x5A7A4C43]
+20170919 : [0x53024DA5, 0x04EC212D, 0x0BF87CD4]
+20170926 : [0x15624100, 0x0CE1463E, 0x0E5D6534]
+20170929 : [0x15E1716C, 0x4E765B63, 0x357D2370]
+20171010 : [0x4F121B3E, 0x12670E17, 0x19896C11]
+20171016 : [0x2CAA109C, 0x158C1EC2, 0x7A5E58F3]
+20171018 : [0x00000000, 0x00000000, 0x00000000] #its not virtualized but there's no packet keys assigned either so using 0
+20171024 : [0x165C565C, 0x565C565C, 0x565C565C]
+20171031 : [0x7056317F, 0x7EEE0589, 0x02672373]
+20171108 : [0x03695685, 0x7FAC12CE, 0x182F7A7B]
+20171113 : [0x23B97A3B, 0x34610993, 0x2892070E]
+20171120 : [0x03221B0E, 0x73AB7A5F, 0x0DD80FD4]
+20171127 : [0x581B77A7, 0x62F74D7A, 0x4F102173]
+20171205 : [0x39D54BD3, 0x577A0C21, 0x4C1C316E]
+20171211 : [0x44E41107, 0x3B126921, 0x00E06AAC]
+20171218 : [0x6EFE009A, 0x440B7BFA, 0x052339C8]
+20171222 : [0x257A2F6E, 0x51140EEE, 0x00FA4452]
+20180102 : [0x348F4BD7, 0x7A425A54, 0x628F589A]
+20180115 : [0x21F477F4, 0x37F437F4, 0x37F437F4]
+20180123 : [0x7EAA1CE0, 0x415D1CFD, 0x4C8F19FA]
+20180206 : [0x45AA1B44, 0x20E716B7, 0x5388105C]
+20180212 : [0x189D69B2, 0x43B85EAD, 0x2B7A687E]
+20180219 : [0x6E2F6233, 0x193B0A66, 0x0D1D2CA5]
+20180221 : [0x6E2F6233, 0x193B0A66, 0x0D1D2CA5]
+20180306 : [0x47DA10EB, 0x4B922CCF, 0x765C5055]

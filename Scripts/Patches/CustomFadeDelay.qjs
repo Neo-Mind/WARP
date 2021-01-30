@@ -1,0 +1,192 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2020 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Andrei (4144), Neo-Mind                                *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2020-12-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change value used in comparison of fade out delay for same map warps
+///
+CustomFadeDelay = function()
+{
+	/// 1.1 - Search for fadeout for cycle in CMode::RunFadeOut
+	let prefix =
+		MOV(ESI, [POS4WC])   //MOV ESI, DWORD PTR DS:[timeGetTime]
+	;
+	let suffix =
+		CALL(ESI)            //CALL ESI ; timeGetTime
+	+	MOV(ECX, [POS4WC])   //MOV ECX, DWORD PTR DS:[g_renderer]
+	;
+	let grOffset = suffix.byteCount() - 4;
+	let fsOffset1 = grOffset + 5;
+
+	suffix +=
+		MOV([POS4WC], EAX)   //MOV DWORD PTR DS:[dwFadeStart], EAX
+	+	CALL(ALLWC)          //CALL CRenderer::BackupFrame
+	+	CALL(ESI)            //CALL ESI ; timeGetTime
+	+	SUB(EAX, [POS4WC])   //SUB EAX, DWORD PTR DS:[dwFadeStart]
+	;
+	let fsOffset2 = suffix.byteCount() - 4;
+	let fdOffset1 = fsOffset2 + 5;
+
+	suffix +=
+		CMP(EAX, 0xFF)       //CMP EAX, 0FF
+	+	JNB(POS2WC)          //JNB addr
+	;
+
+	let patAddr1 = Exe.FindHex(prefix + suffix);
+	if (patAddr1 < 0)
+	{
+		prefix += ADD(ESP, WCp); // ADD ESP, const; usually 18
+		patAddr1 = Exe.FindHex(prefix + suffix);
+	}
+	if (patAddr1 < 0)
+		throw Error("pattern not found");
+
+	/// 1.2 - Get the prefix byte count (need to add to all the offsets)
+	let psize = prefix.byteCount();
+
+	/// 1.3 - Extract the FadeStart address
+	let FadeStart = Exe.GetUint32(patAddr1 + psize + fsOffset1);
+
+	/// 1.4 - Ensure its not a false match
+	if (FadeStart !== Exe.GetUint32(patAddr1 + psize + fsOffset2))
+		throw Error("Pattern found but a false match");
+
+	/// 1.5 - Extract the g_renderer address ( we can keep it as hex since we are not doing any comparisons )
+	let Renderer = Exe.GetHex(patAddr1 + psize + grOffset, 4);
+
+	/// 1.6 - Add the psize to fdOffset1 (so that its a proper offset wrt patAddr1)
+	fdOffset1 += psize;
+
+	/// 1.8 - Search below in same function for second delay usage
+	let code =
+		MOV(ECX, [Renderer])   //MOV ECX, DWORD PTR DS:[g_renderer]
+	+	CALL(ALLWC)            //CALL CRenderer_RestoreFrame
+	+	CALL(ESI)              //CALL ESI ; timeGetTime
+	+	SUB(EAX, [FadeStart])  //SUB EAX, DWORD PTR DS:[dwFadeStart]
+	+	CMP(EAX, 0xFF)         //CMP EAX, 0FF
+	+	JB(NEG2WC)             //JB addr
+	;
+	let fdOffset2 = code.byteCount() - 10; //6 for JB & 4 for the value
+
+	let patAddr2 = Exe.FindHex(code, patAddr1, patAddr1 + 0xD0);
+	if (patAddr2 < 0)
+		throw Error("2nd pattern not found");
+
+	/// 1.9 - Search for the separate fadeout code in CMode_ProcessFadeIn
+	let patAddr3 = -1;
+	if (Exe.Version > 10.0) //VC11 & VC14.16
+	{
+		prefix =
+			CALL([POS4WC])            //CALL DWORD PTR DS:[timeGetTime]
+		+	SUB(EAX, [FadeStart])     //SUB EAX, DWORD PTR DS:[dwFadeStart]
+		+	POP(ESI)                  //POP ESI
+		+	CMP(EAX, 0xFF)            //CMP EAX, 0FF
+		;
+
+		suffix =
+			JNB(WCp)                  //JNB SHORT locret_71FDBC
+		+	MOV(R32, 0xFF)            //MOV reg32_A, FF ; reg32_A is usually ECX
+		+	SUB(R32, EAX)             //SUB reg32_A, EAX
+		+	MOV(EAX, [Renderer])      //MOV EAX, DWORD PTR DS:[g_renderer]
+		+	SHL(R32, 0x18)            //SHL reg32_A, 18
+		+	PUSH_R                    //PUSH reg32_A
+		;
+	}
+	else if (Exe.Version > 6.0) //VC9 & VC10
+	{
+		prefix =
+			CALL(EDI)             //CALL EDI
+		+	SUB(EAX, [FadeStart]) //SUB EAX, DWORD PTR DS:[dwFadeStart]
+		+	POP(EDI)              //POP EDI
+		+	POP(ESI)              //POP ESI
+		+	CMP(EAX, 0xFF)        //CMP EAX, 0FF
+		;
+
+		suffix =
+			JNB(WCp)              //JNB SHORT addr
+		+	MOV(R32, 0xFF)        //MOV reg32_A, FF ; reg32_A can be ECX or EDX
+		+	SUB(R32, EAX)         //SUB reg32_A, EAX
+		+	MOV(EAX, [Renderer]) //MOV EAX, DWORD PTR DS:[g_renderer]
+		+	MOV(R32, [EAX, WCp])  //MOV reg32_B, DWORD PTR DS:[EAX + const]
+		+	SHL(R32, 0x18)        //SHL reg32_A, 18
+		+	PUSH_R                //PUSH reg32_A
+		;
+
+		patAddr3 = Exe.FindHex(prefix + suffix);
+		if (patAddr3 < 0 && Exe.Version === 10.0)
+		{
+			suffix = suffix.replace( MOV(R32, [EAX, WCp]),
+				MOV(R32, [EAX, WCp])  //MOV reg32_B, DWORD PTR DS:[EAX + const]
+			+	MOV(EAX, [EAX, WCp])  //MOV EAX, DWORD PTR DS:[EAX + const2]
+			);
+
+			patAddr3 = Exe.FindHex(prefix + suffix);
+		}
+	}
+	else //VC6
+	{
+		prefix =
+			CALL(EDI)                 //CALL EDI
+		+	MOV(R32, [FadeStart])     //MOV reg32_A, DWORD PTR DS:[dwFadeStart]
+		+	POP(EDI)                  //POP EDI
+		+	SUB(EAX, R32)             //SUB EAX, reg32_A
+		+	POP(ESI)                  //POP ESI
+		+	CMP(EAX, 0xFF)            //CMP EAX, 0FF
+		;
+
+		suffix =
+			JNB(WCp)                  //JNB SHORT addr
+		+	INC(EAX)                  //INC EAX
+		+	NEG(EAX)                  //NEG EAX
+		+	SHL(EAX, 0x18)            //SHL EAX, 18
+		+	PUSH_EAX                  //PUSH EAX
+		;
+	}
+
+	if (patAddr3 < 0) //in the first 2 cases no search is done previously 
+		patAddr3 = Exe.FindHex(prefix + suffix);
+
+	if (patAddr3 < 0)
+		throw Error("3rd pattern missing");
+
+	/// 1.10 - Save the 3rd fade out delay offset
+	let fdOffset3 = prefix.byteCount() - 4;
+
+	/// 2.1 - Get the new value from user
+	let varName = '$warpFadeOutDelay';
+	let delay = Exe.GetUserInput(varName, D_Uint32, "Delay value", "Enter new fadeout delay in ms", 255, {max: 512});
+	if (delay === false)
+		Cancel("Delay", 255);
+
+	/// 2.2 - Replace all the instances where the delay was used for comparison
+	Exe.SetFromVar(patAddr1 + fdOffset1, varName); // first delay in fade out function
+	Exe.SetFromVar(patAddr2 + fdOffset2, varName); // second delay in fade out function
+	Exe.SetFromVar(patAddr3 + fdOffset3, varName); // last one in separate fade out code
+
+	return true;
+};

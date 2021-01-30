@@ -1,0 +1,94 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Ai4rei/AN                                         *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Ai4rei/AN                                              *
+*   Created Date  : 2020-11-11                                             *
+*   Last Modified : 2020-12-16                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the conditional jumps to JMP after Hourly comparisons inside CRenderer::DrawAgeRate & PlayTime functions
+///
+NoHourly = function() 
+{
+	/// 1.1 - Find the comparison for Game Grade
+	let src = [(ROC.HasFP ? EBP : ESP), WC] //DWORD PTR SS:[EBP-y] or DWORD PTR SS:[ESP+x]
+
+	let reg = Exe.Version < 9.0 ? EAX
+	: Exe.BuildDate <= 20171018 ? AX
+	:                             CX
+	;
+
+	let code = 
+		JNE(WCp)        //JNE SHORT addr1
+	+	MOV(reg, src)  	//MOV reg, PTR SS:[src]
+	+	TEST(reg, reg)	//TEST reg, reg
+	+   JNE(WCp)		//JNE SHORT addr2
+	;
+
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("GameGrade comparison not found");
+
+	/// 1.2 - Change conditional jump
+	Exe.SetJMP(addr);
+
+	/// 2.1 - Find all locations with the PlayTime division
+	code =
+		MOV(EAX, 0x95217CB1)    //MOV EAX, 95217CB1
+	+   MUL(ECX)                //MUL ECX
+	;
+
+	let addrs = Exe.FindHexN(code);
+	if (addrs.isEmpty())
+	{
+		code = code.replace(MUL(ECX), SUB(ECX, [POS4WC]) + MUL(ECX));
+		addrs = Exe.FindHexN(code);
+	}
+
+	if (addrs.isEmpty())
+		throw Error("PlayTime division not found");
+
+
+	let found = addrs.filter( memAddr =>
+	{
+		/// 2.2 - Find the JLE after the division (part of PlayTime Reminder comparison)
+		addr = Exe.FindHex( JLE(POS2WC), memAddr + 7, memAddr + 40);//JLE addr
+
+		/// 2.3 - Change the conditional jumps
+		if (addr > 0)
+		{
+			Exe.SetJMP(addr);
+			return true;
+		}
+		else
+			return false;
+
+	});
+
+	/// 2.4 - Ensure atleast one was found and changed
+	if (found.isEmpty())
+		throw Error("No conditional Jumps found");
+
+	return true;
+};

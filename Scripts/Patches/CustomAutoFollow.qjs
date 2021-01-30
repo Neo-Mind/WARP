@@ -1,0 +1,111 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Functor                                             *
+*   Copyright (C) 2020-2021 Neo Mind                                       *
+*   Copyright (C) 2018-2020 CH.C (jchcc)                                   *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Functor, Neo-Mind, CH.C (jchcc)                        *
+*   Created Date  : 2020-11-11                                             *
+*   Last Modified : 2021-01-14                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief NOP out codes for disabling the CGameMode::m_lastLockOnPcGid assignment to ignore shift right click.
+///        The assignment occurs inside CGameMode::ProcessPcPick function.
+///
+NoAutoFollow = function()
+{
+	/// 1 - Find the m_lastLockOnPcGid assignment (matches multiple locations)
+	let prefix =
+		PUSH_1               //PUSH 1
+	+	PUSH(' [00011..0]')  //PUSH 1A or 1C
+	+	(Exe.Version < 14.0
+	?
+		MOV(ECX, ESI)        //MOV ECX, ESI
+	:
+		""
+	)
+	+	(Exe.Version < 9.0 || Exe.Version >= 11.0
+	?
+		CALL([R32, WCp])     //CALL DWORD PTR DS:[reg32_A+x]
+	:
+		CALL(R32)            //CALL reg32_A
+	);
+
+	let suffix;
+	if (Exe.Version < 9.0)
+	{
+		prefix += MOV(R32, [R32, POS2WC]);  //MOV R32, DWORD PTR DS:[reg32_C+const]
+		suffix = MOV([POS3WC], R32);        //MOV DWORD PTR DS:[CGameMode::m_lastLockOnPcGid], reg32_D
+	}
+	else
+	{
+		prefix += MOV(EAX, [R32, POS2WC]);  //MOV EAX, DWORD PTR DS:[reg32_C+const]
+		suffix = MOV([POS4WC], EAX);        //MOV DWORD PTR DS:[CGameMode::m_lastLockOnPcGid], EAX
+	}
+
+	let addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+		throw Error("No matches found for assignment");
+
+	/// 2 - NOP out the assignment
+	let ins = Instr.FromAddr(addr + prefix.byteCount());
+	Exe.SetNOPs(ins.Addr, ins.Size);
+
+	return true;
+};
+
+///
+/// \brief Change the limit value used for comparison against lastFollowTime
+///
+DecrAFDelay = function() 
+{
+	/// 1.1 - Find the delay comparisons
+	let reg = Exe.Version > 6 ? EDI : EBX
+	let code =
+		CALL(reg)           //CALL EDI or EBX              ; [<&WINMM.timeGetTime>]
+	+	SUB(EAX, [POS4WC])  //SUB EAX, DWORD PTR DS:[addr] ; lastFollowTime
+	+	CMP(EAX, 0x3E8)     //CMP EAX, 3E8                 ; 1000ms
+	;
+
+	let addrs = Exe.FindHexN(code);
+	if (addrs.isEmpty())
+		throw Error("Delay comparison missing");
+	
+	/// 1.2 - Find the register movement before it to find the correct match
+	let movReg = MOV(reg, [POS3WC]); //MOV reg, DWORD PTR DS:[<&WINMM.timeGetTime>]
+	let addr = addrs.find( memAddr => 
+		Exe.FindLastHex(movReg, memAddr, memAddr - 0x20) > 0
+	);
+	if (addr == undefined)
+		throw Error("No matches found");
+
+	/// 2.1 - Get the new value from the user
+	let newDelay = Exe.GetUserInput('$followDelay', D_Uint32, "Delay Value", "Enter the new autofollow delay", 1000, {max: 1000});
+	if (newDelay === false)
+		Cancel("Delay", 1000);
+
+	/// 2.2 - Replace the old value
+	Exe.SetFromVar(addr + code.byteCount() - 4, '$followDelay');
+
+	return true;
+};

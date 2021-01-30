@@ -1,0 +1,147 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Ai4rei/AN, Yommy                                  *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Ai4rei/AN, Yommy, Neo-Mind                             *
+*   Created Date  : 2020-11-10                                             *
+*   Last Modified : 2021-01-30                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Hijack CreateFontA function calls to change the pushed Font Height
+///        before Jumping to actual CreateFontA
+///
+CustomFontHeight = function()
+{
+	/// 1.1 - Find CreateFontA imported function
+	let CreateFontA = Exe.FindFunc("CreateFontA", "GDI32.dll");
+	if (CreateFontA < 0)
+		throw Error("CreateFontA not found");
+
+	/// 1.2 - Find all its CALLed locations
+	let addrs = Exe.FindHexN( CALL([CreateFontA]) ); //CALL DWORD PTR DS:[<&GDI32.CreateFontA>]
+	if (addrs.isEmpty())
+		throw Error("CreateFontA not CALLed");
+
+	/// 2.1 - Prepare our function which swaps out the FontHeight
+	let code =
+		Filler(1)                 //This will contain VIRTUAL address of 4 bytes later (needed since we are hijacking indirect CALL)
+	+	MOV([ESP, 4], Filler(2))  //MOV DWORD PTR SS:[ESP+4], newHeight
+	+	JMP([CreateFontA])        //JMP DWORD PTR DS:[<&GDI32.CreateFontA>]
+	;
+	let csize = code.byteCount();
+
+	/// 2.2 - Allocate space for our function
+	let free = Exe.FindSpace(csize);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+
+	/// 2.3 - Get the new Font height from user
+	let newHeight = Exe.GetUserInput('$newFontHgt', D_FontSize, "Font Height", "Enter the new height (snaps to closest valid value)", 10, {sampleName: "Tahoma"});
+	if (newHeight === false)
+		Cancel("Font height", 10);
+
+	/// 2.4 - Fill in the Blanks
+	code = SwapFillers(code, {
+		1: freeVir + 4,
+		2: -newHeight
+	}, 1);
+
+	/// 2.5 - Add the function at the allocated space
+	Exe.AddHex(free, code);
+
+	/// 3.1 - Swap out the CreateFontA CALLs with out function's address
+	addrs.forEach( addr => Exe.SetInt32(addr + 2, freeVir) );
+
+	/// 3.2 - Find any JMP DWORD PTR calls to CreateFontA (fail safe)
+	let addr = Exe.FindHex( PUSH([CreateFontA]) );
+
+	/// 3.3 - Update the address
+	if (addr > 0)
+		Exe.SetInt32(addr + 2, freeVir);
+
+	return true;
+};
+
+///
+/// \brief Overwrite all entries in the Fontname array with user specified name
+///
+CustomFontName = function()
+{
+	/// 1.1 - Find location of 'Gulim' (Korean language font which serves as the first entry of the array)
+	let gulAddr = Exe.FindText("Gulim", false);
+	if (gulAddr < 0)
+		throw Error("'Gulim' not found");
+
+	/// 1.2 - Find where the address itself is stored (which will be start of the table)
+	///       Usually it is within .data section (but just in case we will look at all offsets after CODE section)
+	let addr = Exe.FindHex( gulAddr.toHex(), Exe.GetSectEnd(CODE), Exe.FileSize);
+	if (addr < 0)
+		throw Error("Font table not found");
+
+	/// 2.1 - Get the Font name from user
+	let varName = '$newFont';
+	let newFont = Exe.GetUserInput(varName, D_FontName, "Font input", "Select the new Font Family", "Arial", {sampleSize: 10});
+	if (newFont === false)
+		Cancel("Font Family", "Arial");
+
+	/// 2.2 - Find the Font name (could be already existing one)
+	let free = Exe.FindText(newFont, PHYSICAL);
+	if (free < 0)
+	{
+		/// 2.3 - Allocate space to add the font since its not already present
+		free = Exe.FindSpace(varName);
+		if (free < 0)
+			throw NO_ALLOC;
+
+		/// 2.4 - Add the Font name there
+		Exe.AddFromVar(free, varName);
+	}
+
+	/// 3.1 - Get the VIRTUAL address (cant use DIFF section since it can be from DATA section as well)
+	let freeVir = Exe.Phy2Vir(free);
+
+	/// 3.2 - Overwrite all entries in the font table with this one (all the entries will be an address in DATA section)
+	for (let dataBegin = Exe.GetSectBegin(DATA); Exe.GetInt32(addr) >= dataBegin; addr += 4)
+	{
+		Exe.SetInt32(addr, freeVir);
+	}
+
+	return true;
+};
+
+/**==================================================================
+//Old procedure
+gulAddr &= 0xFFF00000;
+do
+{
+    Exe.SetInt32(addr, freeVir);
+    addr += 4;
+} while((Exe.GetInt32(addr) & gulAddr) === gulAddr);
+
+NOTE: this might not be entirely fool-proof, but we cannot depend
+on the fact the array ends with 0x00000081 (CHARSET_HANGUL).
+It can change in any client.
+==================================================================**/

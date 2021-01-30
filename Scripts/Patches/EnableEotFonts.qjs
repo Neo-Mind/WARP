@@ -1,0 +1,55 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2020 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Shinryo, Neo-Mind                                      *
+*   Created Date  : 2020-11-10                                             *
+*   Last Modified : 2020-12-07                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief NOP out the conditional jump after Langtype comparison in EOT font checker function
+///
+EnableEotFonts = function()
+{
+	/// 1 - Find the Langtype comparison
+	let code =
+		JNE(0xAE)    //JNE addr - Skips .eot loading
+	+   CALL(ALLWC)  //CALL func
+	+	PUSH(POS3WC) //PUSH OFFSET addr; ASCII <ro url>
+	;
+
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("Langtype comparison not found");
+
+	/// 2 - NOP out the jump
+	Exe.SetNOPs(addr, 6);
+
+	return true;
+}
+
+///
+/// \brief Disable for really old clients
+///
+EnableEotFonts.validate = () => Exe.BuildDate > 20080103;

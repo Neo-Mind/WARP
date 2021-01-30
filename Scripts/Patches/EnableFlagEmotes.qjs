@@ -1,0 +1,128 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2014-2020 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2020-11-11                                             *
+*   Last Modified : 2020-12-07                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the Flag Emote callers inside UIWindowMgr::ProcessPushButton to use different Emote constant as specified by user for each number key.
+///        Callers for Ctrl+1 to Ctrl+9 are modified inside the function and all the Langtype comparisons are skipped.
+///
+EnableFlagEmotes = function()
+{
+	/// 1.1 - Ensure the LANGTYPE is loaded
+	LANGTYPE.load();
+
+	/// 1.2 - Find the switch case selector for all the flag Emote callers
+	let code =
+		ADD(EAX, -0xD2)        //ADD EAX,-D2
+	+   CMP(EAX, 8)            //CMP EAX, 08
+	+   JA(POS2WC)             //JA addr -> skip showing emotes
+	+   JMP([4, EAX, POS3WC])  //JMP DWORD PTR DS:[EAX*4+refAddr]
+	;
+
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+	{
+		code = code.replace( ADD(EAX, -0xD2), ADD(EAX, WC) ); //change ADD EAX, -D2 to ADD EAX, x ; x could be -54 but not sure
+		addr = Exe.FindHex(code);
+	}
+	if (addr < 0)
+		throw Error("Switch not found");
+
+	/// 1.3 - Extract the refAddr
+	let refAddr = Exe.Vir2Phy(Exe.GetInt32(addr + code.byteCount() - 4), CODE);
+
+	/// 2.1 - Get Input file containing the list of Flag Emotes per key
+	let inFile = Exe.GetUserInput('$inpFlag', D_InFile, "Flag Emote Mapping", "Enter the Flag Emoticon mapping file", "Inputs/FlagSpec.yml", {filters: YMLFILTER});
+	if (inFile === false)
+		Cancel("No mapping file specified");
+
+	/// 2.2 - Load the input file which creates the hash table mapping the index to flag constants
+	let FlagSpec = Warp.LoadYaml(inFile);
+	if (FlagSpec === false)
+		return false;
+
+	else if (FlagSpec === true || IsArr(FlagSpec) )
+		throw Error("Need a mapping of flag constants");
+
+	/// 3.1 - Prepare code that is part of each case (common portions that we need)
+	code =
+		MOV(EAX, [LANGTYPE])  //MOV EAX, DWORD PTR DS:[g_serviceType]
+	+   TEST(EAX, EAX)        //TEST EAX, EAX
+	;                         //followed by either JZ SHORT addr or JZ addr
+
+	let code2 =
+		PUSH_0      //PUSH 0
+	+   PUSH_0      //PUSH 0
+	+   PUSH(WC)    //PUSH emoteConstant
+	+   PUSH(0x1F)  //PUSH 1F
+	+   " FF"       //Can be CALL EDX or CALL DWORD PTR DS:[EAX+const]
+	;
+
+	let csize = code.byteCount();
+	let csize2 = code2.byteCount();
+
+	for (let i = 1; i < 10; i++)
+	{
+		/// 3.2 - Get the starting address of the case
+		let addr = Exe.Vir2Phy(Exe.GetInt32(refAddr + (i - 1) * 4), CODE);
+
+		/// 3.3 - Find the first code. Ideally it would be at addr itself unless something changed
+		addr = Exe.FindHex(code, addr, addr + 0x50);
+		if (addr < 0)
+			throw Error(`First code missing for No.${i}`);
+
+		/// 3.4 - Set addr to location after TEST (which should be a JZ)
+		addr += csize;
+
+		/// 3.5 - Change the conditional jump
+		Exe.SetJMP(addr);
+
+		if (IsNum(FlagSpec[i]))
+		{
+			/// 3.6 - Set addr to jumped address
+			if (Exe.GetInt8(addr) === 0x0F)
+				addr = Exe.GetTgtAddr(addr + 2, PHYSICAL, 4);
+			else
+				addr = Exe.GetTgtAddr(addr + 1, PHYSICAL, 1);
+
+			/// 4.1 - Find the second code
+			addr = Exe.FindHex(code2, addr);
+			if (addr < 0)
+				throw Error(`Second code missing for No.${i}`);
+
+			/// 4.2 - Replace the emoteConstant with the one we read from input file.
+			Exe.SetUint8(addr + csize2 - 4, FlagSpec[i]);
+		}
+	}
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients (Pattern is entirely different for 2008 and older hence disabling)
+///
+EnableFlagEmotes.validate = IsPost2010;

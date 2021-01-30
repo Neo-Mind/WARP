@@ -1,0 +1,28 @@
+function ReqShieldName(id)
+  local NameMsg = ShieldNameTable[id]
+  if NameMsg ~= nil then
+    return NameMsg
+  else
+    return ""
+  end
+end
+
+function GetShieldID(itemid)
+  local NameMsg = ShieldMapTable[itemid]
+  if NameMsg ~= nil then
+    return NameMsg
+  else
+    return 0
+  end
+end
+
+Max_Shield = 10
+
+--Need to expand upon this later
+function ValidateShieldID(id, jobID)
+  if id > 0 and id < Max_Shield then
+    return 1
+  else
+    return 0
+  end
+end

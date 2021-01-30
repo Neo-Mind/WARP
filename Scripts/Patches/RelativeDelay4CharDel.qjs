@@ -1,0 +1,150 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020 Functor, Neo-Mind                                   *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Functor, Neo-Mind                                      *
+*   Created Date  : 2020-11-21                                             *
+*   Last Modified : 2020-12-09                                             *
+*                                                                          *
+\**************************************************************************/
+
+/// 
+/// \brief Change the code which shows the deletion delay 
+/// 
+///        Before : date and time when deletion can be done
+///        After  : remaining time after which deletion can be done
+///
+RelativeDelay4CharDel = function() 
+{
+	/// 1.1 - Find the code which prepare character deletion time data
+	let code;
+	if (Exe.Version < 14.0)
+	{
+		code =
+			SUB(ESP, 0x24)        //SUB ESP, 24
+		+	XOR(EAX, EAX)         //XOR EAX, EAX
+		+	PUSH(ESI)             //PUSH ESI
+		+	MOV(ESI, [EBP, 8])    //MOV ESI,DWORD PTR SS:[EBP+8]
+		+	XORPS(XMM0, XMM0)     //XORPS XMM0, XMM0
+		+	MOV([ESI], AX)        //MOV WORD PTR DS:[ESI], AX
+		+	MOVQ([ESI, 2], XMM0)  //MOVQ QWORD PTR DS:[ESI+2], XMM0
+		+	MOV([ESI, 0xA], EAX)  //MOV DWORD PTR DS:[ESI+0A], EAX
+		;
+	}
+	else
+	{
+		code = 
+			SUB(ESP, 0x24)        //SUB ESP, 24
+		+	XORPS(XMM0, XMM0)     //XORPS XMM0, XMM0
+		+	CMP([ECX], 0)         //CMP DWORD PTR DS:[ECX], 0
+		+	PUSH(ESI)             //PUSH ESI
+		+	MOV(ESI, [EBP, 8])    //MOV ESI,DWORD PTR SS:[EBP+8]
+		+	MOVUPS([ESI], XMM0)   //MOVUPS QWORD PTR DS:[ESI], XMM0
+		+	JGE(6)                //JGE SHORT addr
+		+	MOV([ECX], 0)         //MOV DWORD PTR DS:[ECX], 0
+		;
+	}
+
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("Char Del prep missing");
+
+	/// 1.2 - Get "MSVCR110._time32" address
+	let time32Func = Exe.FindFunc("_time32");
+	if (time32Func < 0)
+		throw Error("'_time32' function missing");
+
+	/// 2.1 - Prepare the replacement code
+	code = 
+		PUSH(EBX)             //PUSH EBX
+	+	PUSH(ESI)             //PUSH ESI
+	+	PUSH(ECX)             //PUSH ECX
+	+	MOV(ESI, [EBP, 8])    //MOV ESI, DWORD PTR SS:[EBP+8]
+	+	XOR(EDX, EDX)         //XOR EDX, EDX
+	+	MOV([ESI, 0x6], EDX)  //MOV DWORD PTR DS:[ESI+6], EDX
+	+	MOV([ESI, 0xA], EDX)  //MOV DWORD PTR DS:[ESI+A], EDX
+	+	PUSH_0                //PUSH 0
+	+ 	CALL([time32Func])    //CALL DWORD PTR DS:[<&MSVCR110._time32>]
+	+	ADD(ESP, 4)           //ADD ESP, 4
+	+	POP(ECX)              //POP ECX
+	+	MOV(ECX, [ECX])       //MOV ECX, DWORD PTR DS:[ECX]
+	+	CMP(EAX, ECX)         //CMP EAX, ECX
+	+ 	JNB(0x22)             //JNB SHORT addr1
+	+ 	SUB(ECX, EAX)         //SUB ECX, EAX
+	+	XOR(EDX, EDX)         //XOR EDX, EDX
+	+	MOV(EAX, ECX)         //MOV EAX, ECX
+	+	MOV(EBX, 0x3C)        //MOV EBX, 3C
+	+	DIV(EBX)              //DIV EBX
+	+	MOV([ESI, 0xA], DX)   //MOV WORD PTR DS:[ESI+A], DX
+	+	XOR(EDX, EDX)         //XOR EDX, EDX
+	+	MOV(EBX, 0x3C)        //MOV EBX, 3C
+	+	DIV(EBX)              //DIV EBX
+	+	MOV([ESI, 0x6], AX)   //MOV WORD PTR DS:[ESI+6], AX
+	+	MOV([ESI, 0x8], DX)   //MOV WORD PTR DS:[ESI+8], DX
+	+	POP(ESI)              //POP ESI ; addr1
+	+	POP(EBX)              //POP EBX
+	+	MOV(ESP, EBP)         //MOV ESP, EBP
+	+	POP(EBP)              //POP EBP
+	+	RETN(4)               //RETN 4
+	;
+
+	/// 2.2 - Replace the original with our code
+	Exe.SetHex(addr, code);
+
+	/// 2.3 - Hide the text "X month X day" by changing coords (0x28 to 0x90)
+	Exe.SetUint8(RD4CD_Addr + 2, 0x90); //its not a NOP
+
+	return true;
+};
+
+///
+/// \brief Only works for clients which shows the "X month X day" text
+///
+RelativeDelay4CharDel.validate = function()
+{
+	let parts = [
+		PUSH_R      //PUSH reg32_A
+	+	PUSH(0x28)  //PUSH 28
+	+	PUSH_0      //PUSH 0
+	,
+		PUSH(0xB)   //PUSH 0B
+	+	PUSH_0      //PUSH 0
+	,
+		Exe.Version < 14.0
+	?
+		LEA(ESI, [EBP, WCn])    //LEA ESI, [EBP-const]
+	+	CMOVNB(ESI, [EBP, WC])  //CMOVNB ESI, DWORD PTR DS:[EBP-const] ; previous instruction seems wasteful
+	:
+		''
+	,
+		PUSH_0      //PUSH 0
+	+	PUSH_R      //PUSH reg32_B; ESI for VC11
+	];
+	RD4CD_Addr = Exe.FindHex(parts.join(''));
+
+	if (RD4CD_Addr < 0) //Extra PUSH 0 after PUSH 28 for newer clients.
+	{
+		parts[0] += PUSH_0 
+		RD4CD_Addr = Exe.FindHex(parts.join(''));
+	}
+
+	return (RD4CD_Addr > 0);
+};
