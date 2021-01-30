@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-18                                             #
-#   Last Modified : 2021-01-22                                             #
+#   Last Modified : 2021-01-30                                             #
 #                                                                          #
 ############################################################################
 
@@ -51,7 +51,7 @@
     
 - GenMapEffectPlugin:
     title : Generate MapEffect Plugin [Expt.]
-    tooltip : Generate Curiosity's Mapeffect plugin", "Generates Curiosity's mapeffect plugin for the loaded client (as rdll2_<filename>.asi which needs to be placed in your client area)"
+    tooltip : Generates Curiosity's mapeffect plugin for the loaded client (as rdll2_<filename>.asi which needs to be placed in your client area)
     author : Neo-Mind
  
 # - Trial:
