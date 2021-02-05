@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shakto                                      *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2021-02-05                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -108,7 +108,7 @@ CustomChatColor = function(patchName)
 		throw Error(`'${clrName}' reference missing`);
 
 	/// 2.2 - Retrieve the new color from user
-	let color = Exe.GetUserInput(varName, D_Color, title, "Select the new color", clrVal, {ignoreAlpha: true});
+	let color = Exe.GetUserInput(varName, D_Color, title, "Select the new color", clrVal, {ignoreAlpha: true, keepAlpha: true});
 	if (color === false)
 		Cancel("Color", clrName + " (0x" + clrVal.toHex(3, true) + ")");
 
@@ -149,7 +149,7 @@ CustomGMColor = function()
 
 	/// 2.1 - Get the new color from user
 	let varName = '$gmChatColor';
-	let color = Exe.GetUserInput(varName, D_Color, "GM Chat Color", "Select the new color", 0x00FFFF, {ignoreAlpha: true});
+	let color = Exe.GetUserInput(varName, D_Color, "GM Chat Color", "Select the new color", 0x00FFFF, {ignoreAlpha: true, keepAlpha: true});
 	if (color === false)
 		Cancel("Color", "Cyan (0x00FFFF)");
 
@@ -185,7 +185,7 @@ CustomPublicColorSelf = function ()
 
 	/// 2.1 - Get the new color from user
 	let varName = '$yourChatColor';
-	let color = Exe.GetUserInput(varName, D_Color, "Public Chat Color (Self)", "Select the new color", 0x00FF00, {ignoreAlpha: true});
+	let color = Exe.GetUserInput(varName, D_Color, "Public Chat Color (Self)", "Select the new color", 0x00FF00, {ignoreAlpha: true, keepAlpha: true});
 	if (color === false)
 		Cancel("Color", "Green (0x00FF00)");
 
