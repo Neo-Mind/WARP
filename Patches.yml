@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-01-28                                             #
+#   Last Modified : 2021-02-08                                             #
 #                                                                          #
 ############################################################################
 
@@ -1013,7 +1013,7 @@
             title : Custom Inventory Limit
             recommend : no
             author : CH.C (jchcc) , Neo-Mind
-            desc : Change the Maximum no of items in inventory to user specified value.
+            desc : Change the Maximum no of items displayed in inventory to user specified value (Need to be changed server-side as well).
         
         - InsensitiveStorageSearch:
             title : Case-Insensitive Storage Search
