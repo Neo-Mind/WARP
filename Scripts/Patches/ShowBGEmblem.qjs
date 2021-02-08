@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-01-21                                             *
+*   Last Modified : 2021-02-08                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -69,7 +69,7 @@ ShowBGEmblem = function()
 	let movSession = Exe.GetHex(matchAddr, 5);
 	let IsSiegeMode = Exe.GetTgtAddr(matchAddr + 6);
 
-	/// 1.4 - Extract the needed stuff from inside the function
+	/// 1.4 - Extract the needed stuff from inside the function (always has the same form)
 	let addr = Exe.Vir2Phy(IsSiegeMode, CODE);
 	let movModeMgr = Exe.GetHex(addr, 5);       //MOV ECX, OFFSET g_modeMgr
 	let GetGameMode = Exe.GetTgtAddr(addr + 6); //CALL CModeMgr::GetGameMode
@@ -88,18 +88,27 @@ ShowBGEmblem = function()
 			movSession      //MOV ECX, OFFSET g_session
 		+	CALL(ALLWC)     //CALL CSession::IsSiegeMode
 		+	TEST(EAX, EAX)  //TEST EAX, EAX
-		+	JE(WCp)         //JE SHORT addr
 		;
 
-		addrs = Exe.FindHexN(JMP(WCp) + code).filter(memAddr => Exe.GetTgtAddr(memAddr + 8) === IsSiegeMode);
+		addrs = Exe.FindHexN(JMP(WCp) + code + JE(WCp)).filter(memAddr => Exe.GetTgtAddr(memAddr + 8) === IsSiegeMode);
 		if (addrs.isEmpty())
-			addrs = Exe.FindHexN(JZ(WCp) + code).filter(memAddr => Exe.GetTgtAddr(memAddr + 8) === IsSiegeMode);
+			addrs = Exe.FindHexN(JZ(WCp) + code + JE(WCp)).filter(memAddr => Exe.GetTgtAddr(memAddr + 8) === IsSiegeMode);
 
 		if (addrs.isEmpty())
 			throw Error("Remaining locations missing");
 
 		/// 2.2 - Add to the hookAddrs
-		addrs.forEach(memAddr => {hookAddrs.push(memAddr + 8)});
+		addrs.forEach(memAddr => {
+			if (hookAddrs.indexOf(memAddr + 8) < 0)
+			{
+				hookAddrs.push(memAddr + 8);
+				
+				/// 2.3 - Look for the additional comparison before the current one within the same function.. ugh!
+				addr = Exe.FindHex(code + JE(POS2WC), memAddr - 0x180, memAddr - 0x80);
+				if (addr > 0)
+					hookAddrs.push(addr + 6);
+			}
+		});
 	}
 
 	/// 3.1 - Prep the new code
@@ -126,7 +135,7 @@ ShowBGEmblem = function()
 
 	/// 3.4 - Add at allocated space
 	Exe.AddHex(free, code);
-
+	
 	/// 3.5 - Change the targets of all hookAddrs
 	hookAddrs.forEach( addr =>
 		Exe.SetTgtAddr(addr, freeVir)
