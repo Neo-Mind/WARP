@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-01-20                                             *
+*   Last Modified : 2021-02-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -97,12 +97,34 @@ TranslateClient = function()
 	/// 3.2 - Save the filtered array with successful translations
 	let translated = Translations.filter( (hash, idx) =>
 	{
-		/// 3.3 - Retrieve the 3 parts & verify if we are within the expected date range for the builddate
+		/// 3.3 - Retrieve the 5 parts & verify if we are within the expected date range for the builddate
 		let findPat = hash.find;
 		let replStr = hash.replace;
-		let {startDate, endDate, desc} = hash;
+		let {startDate, endDate, startDateRE, endDateRE, startDate0, endDate0, desc} = hash;
 
-		if ( (IsNum(startDate) && Exe.BuildDate < startDate) || (IsNum(endDate) && Exe.BuildDate > endDate) )
+		if (ROC.IsRenewal)
+		{
+			if (startDateRE === undefined)
+				startDateRE = startDate;
+			
+			if (endDateRE === undefined)
+				endDateRE = endDate;
+			
+			if ( (IsNum(startDateRE) && Exe.BuildDate < startDateRE) || (IsNum(endDateRE) && Exe.BuildDate > endDateRE) )
+				return true; // its not a fail
+		}
+		else if (ROC.IsZero)
+		{
+			if (startDate0 === undefined)
+				startDate0 = startDate;
+			
+			if (endDate0 === undefined)
+				endDate0 = endDate;
+			
+			if ( (IsNum(startDate0) && Exe.BuildDate < startDate0) || (IsNum(endDate0) && Exe.BuildDate > endDate0) )
+				return true; // its not a fail
+		}
+		else if ( (IsNum(startDate) && Exe.BuildDate < startDate) || (IsNum(endDate) && Exe.BuildDate > endDate) )
 			return true; // its not a fail
 
 		/// 3.4 - Ensure description is a valid string/number, defaults to the replacement string
@@ -193,9 +215,12 @@ TranslateClient = function()
 	if (translated.isEmpty())
 		throw Error("All translations had issues");
 
-	/// 4.2 - If any fails were found, show the FailedTranslations.txt for user to cross check if any expected ones got failed (only displays for Main GUI)
+	/// 4.2 - If any fails were found, ask user if they want to see the FailedTranslations.txt to cross check for unexpected failures (only displays for Main GUI)
 	if (!Exe.TestMode && translated.length < Translations.length)
-		Warp.Show(fp.Path);
+	{
+		if (Exe.GetUserInput('$showFailures', D_Bool, "Show Failures", "Some translations failed (not necessarily an error). Would you like to view them?", true))
+			Warp.Show(fp.Path);
+	}
 
 	return true;
 };
