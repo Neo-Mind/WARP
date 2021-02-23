@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-01-28                                             *
+*   Last Modified : 2021-02-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -391,7 +391,7 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 	}
 
 	$$(_ + '2.2 - Use the byte retrieved to extract the case target address (VIRTUAL)')
-	let offset = Exe.Vir2Phy(jmpdpIns.Disp);
+	let offset = Exe.Vir2Phy(jmpDpIns.Disp);
 	if (offset < 0)
 		return -1;
 
@@ -585,7 +585,7 @@ GetInstr = function(current, n)
 	if (typeof(current) === 'number')
 		current = Instr.FromAddr(current);
 
-	while (n > 0)
+	for (; n > 0; n--)
 	{
 		current = Instr.FromAddr(current.NextAddr);
 	}

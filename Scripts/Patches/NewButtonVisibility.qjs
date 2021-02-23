@@ -23,121 +23,500 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-01-14                                             *
+*   Last Modified : 2021-02-23                                             *
 *                                                                          *
 \**************************************************************************/
-
-//TODO - Need to change the code to make a seperate Jump Table (irrespective of how the switch case is like in the client)
 
 ///
 /// \brief Data to be used for the patches.
 ///
-if (typeof NBV_IDs === 'undefined') //avoid redefinition
+if (typeof(NBV) === "undefined")
 {
-	NBV_IDs = 
+	NBV =
 	{
-		HideNewNavBtn     : 0x197,
-		HideNewBgBtn      : 0x161,
-		HideNewBankBtn    : 0x1B6,
-		HideNewBookBtn    : 0x164,
-		ShowNewBookBtn    : 0x164,
-		HideNewRodexBtn   : 0x1C5,
-		HideNewAchieveBtn : 0x1C2,
-		HideNewRecordBtn  : 0x178, //Technically its called Replay now but it does recording.
-		HideNewMapBtn     : 0x0C4,
-		HideNewQuestBtn   : 0x152,
-		HideTipBtn        : 0x1E8,
-		HideNewShopBtn    : 0x1E9,
-		HideSNSBtn        : 0x1EF,
-		ShowSNSBtn        : 0x1EF,
-		HideAttendBtn     : 0x205,
-		HideAdvAgencyBtn  : 0x209,
-		ShowAdvAgencyBtn  : 0x209,
-		HideNewStatusBtn  : 0x0A9,
-		HideNewEquipBtn   : 0x0AC,
-		HideNewInvBtn     : 0x0AB,
-		HideNewSkillBtn   : 0x0AD,
-		HideNewPartyBtn   : 0x0B0,
-		HideNewGuildBtn   : 0x15E,
-		HideNewOptionBtn  : 0x0AA,
-		HideShortcutBtn   : 0x15B,
+		Names :
+		{
+			status      : "Stats",
+			equip       : "Equipment",
+			item        : "Inventory",
+			skill       : "Skill",
+			booking     : "Booking",
+			party       : "Party",
+			guild       : "Guild",
+			battle      : "Battleground",
+			quest       : "Quest",
+			map         : "WorldMap",
+			navigation  : "Navigation",
+			option      : "Options",
+			bank        : "Bank",
+			rec         : "Record",
+			mail        : "Rodex (Mail)",
+			achievement : "Achievement",
+			tip         : "Tip",
+			shop        : "Shop",
+			keyboard    : "Shortcut",
+			sns         : "Twitter (SNS)",
+			attendance  : "Attendance",
+			adventurerAgency : "AdventureAgency",
+			repute      : "Reputation",
+		},
+
+		Patches : [
+			"HideNewButtons",
+			"ShowNewButtons"
+		]
 	};
 }
 
 ///
-/// \brief Modify the mechanism used for fetching images for the New Buttons (2018+ clients).
-///        Most of them use a jump table but some use conditional jumps instead so we need to branch accordingly.
+/// \brief Modify the switch case for displaying the various buttons to display/hide the ones we selected
+///        inside UINewBasicWnd::UINewBasicWnd function
 ///
 NewButtonVis = function(patchName)
-{	
-	/// 1.1 - Find where the reference string is PUSHed
-	let addr = Exe.FindHex(PUSH(ROC.AdvAgencyAddr));
-	if (addr < 0)
-        throw Error("String reference missing");
+{
+	if (!NBV.Loaded)
+	{
+		/// 1.1 - Find the string 'status_doram'
+		let addr = Exe.FindText("status_doram");
+		if (addr < 0)
+			throw Error("Reference string missing");
 
-	/// 1.2 - Find and extract address of button display table
-	let code =
-		MOVZX(EAX, BYTE_PTR, [EAX, POS4WC]) //MOVZX EAX, BYTE PTR DS:[EAX + switchTbl]
-	+	JMP([4, EAX, POS4WC])               //JMP DWORD PTR DS:[4*EAX + jumpTbl]
-	;
-	addr = Exe.FindHex(code, addr + 5, addr + 0xE0);
-	if (addr < 0)
-        throw Error("Button display table not found");
+		/// 1.2 - Find where it is used in a PUSH along with its length (12 characters)
+		let refAddr = Exe.FindHex(PUSH(0xC) + PUSH(addr));
+		if (refAddr < 0)
+			throw Error("Reference string not PUSHed");
 
-    let switchTbl = Exe.Vir2Phy(Exe.GetUint32(addr + 3));
+		/// 1.3 - Find the start of the function
+		let code =
+			PUSH(EBP)     //PUSH EBP
+		+	MOV(EBP, ESP) //MOV EBP, ESP
+		+	PUSH(-1)      //PUSH -1
+		+	PUSH(POS3WC)  //PUSH OFFSET addr
+		;
 
-	/// 2.1 - Point to the offset for the button
-	let valueAddr = switchTbl + NBV_IDs[patchName] - 0x164;
-	if (valueAddr < switchTbl)
-		throw Error("Cannot use IDs lower than 164 yet");
+		let beginAddr = Exe.FindLastHex(code, refAddr, refAddr - 0x800);
+		if (beginAddr < 0)
+			throw Error("Function start missing");
 
-	/// 2.2 - Extract the old value & ensure its not already set to what is required
-	let oldValue = Exe.GetInt8(valueAddr);
-	let newValue = patchName[0] === 'S' ? 1 : 0; //Show => newValue is 1
+		/// 1.4 - Find all the ID assignments & string PUSHes (they will be in same order)
+		let idAssigners, strPushers;
+		if (Exe.Version === 11.0)
+		{
+			idAssigners = Exe.FindHexN(MOV([EBP, WCn], POS2WC), beginAddr, beginAddr + 0x100);  //MOV DWORD PTR SS:[LOCAL.x], <ID>
+			strPushers = Exe.FindHexN(PUSH(POS4WC) + " 8D [..001101]", beginAddr, refAddr);     //PUSH OFFSET name
+			                                                                                    //LEA ECX, [LOCAL.y]
+		}
+		else
+		{
+			idAssigners = [
+				...Exe.FindHexN(MOVAPS(XMM0, [POS4WC]), beginAddr, beginAddr + 0x100),          //MOVAPS XMM0, DQWORD PTR DS:[memaddr]
+				...Exe.FindHexN(MOV([EBP, NEG2WC], POS2WC), beginAddr, beginAddr + 0xE0)        //MOV DWORD PTR SS:[LOCAL.x], <ID>
+			].sort();
 
-	if (oldValue === newValue)
-		Cancel("Button is already " + (newValue === 1 ? "visible" : "hidden"));
+			strPushers = [
+				...Exe.FindHexN(PUSH(POS4WC) + " 0F 28", beginAddr, beginAddr + 0x100),         //PUSH OFFSET name; followed by MOVAPS XMM0, DQWORD PTR DS:[memaddr]
+				...Exe.FindHexN(PUSH(POS4WC) + " C7 [..000101]", beginAddr, refAddr)            //PUSH OFFSET name; followed by MOV DWORD PTR
+			].sort();
+		}
+		if (idAssigners.isEmpty())
+			throw Error("ID assignments missing");
 
-	/// 2.3 - Also ensure it is a boolean (not a false match)	
-	if (oldValue !== 1 && oldValue !== 0)
-		throw Error("Expected boolean but got " + oldValue);
+		if (strPushers.isEmpty())
+			throw Error("String PUSHes missing");
 
-	/// 2.4 - Toggle the status
-	Exe.SetInt8(valueAddr, newValue);
+		/// 1.5 - Extract the ID values
+		let idList = [];
+		idAssigners.forEach(addr =>
+		{
+			let ins = Instr.FromAddr(addr);
+			if (ins.Codes[0] === 0x0F) //MOVAPS
+			{
+				let phy = Exe.Vir2Phy(ins.Disp);
+				idList.push(Exe.GetInt32(phy      ));
+				idList.push(Exe.GetInt32(phy + 0x4));
+				idList.push(Exe.GetInt32(phy + 0x8));
+				idList.push(Exe.GetInt32(phy + 0xC));
+			}
+			else if (ins.Immd > 0x80) //only valid IDs
+			{
+				idList.push(ins.Immd);
+			}
+		});
 
-    return true;
+		/// 1.6 - Map & assign the IDs based on the strings PUSHed
+		strPushers.forEach((addr, idx) =>
+		{
+			let str = Exe.GetText(Exe.Vir2Phy(Exe.GetInt32(addr + 1))); //the string being pushed.
+			let name = NBV.Names[str];
+			NBV.IDs[name] = idList[idx];
+		});
+
+		/// 2.1 - Find the Jump table used for switch
+		let prefix = MOVZX(EAX, BYTE_PTR, [EAX, POS4WC]); //MOVZX EAX, BYTE PTR DS:[EAX + switchTbl]
+		let suffix = JMP([4, EAX, POS4WC]);               //JMP DWORD PTR DS:[4*EAX + jumpTbl]
+
+		addr = Exe.FindHex(prefix + suffix, refAddr + 5, refAddr + 0x60);
+		if (addr > 0)
+		{
+			/// 2.2 - If found then set the type to 1
+			NBV.Type = 1;
+
+			/// 2.3 - Save the VIRTUAL location (serves as the returning address)
+			NBV.RetnAddr = Exe.Phy2Vir(addr, CODE);
+
+			/// 2.4 - Extract the switchTbl address
+			let jmpDpAddr = addr + prefix.byteCount();
+			let switchTbl = Exe.Vir2Phy(Exe.GetInt32(jmpDpAddr - 4), CODE);
+
+			/// 2.5 - Calculate the addresses for Hidden (OFF) & Visible (ON) states
+			NBV.OffAddr = CaseAddr(0, addr, VIRTUAL, jmpDpAddr);
+			NBV.OnAddr  = CaseAddr(1, addr, VIRTUAL, jmpDpAddr);
+
+			/// 2.6 - Now find the limiting comparison before the switch table
+			prefix = LEA(EAX, [EBX, NEG2WC]); //LEA EAX, [EBX - limitL]
+			suffix = CMP(EAX, POS1WC);        //CMP EAX, range
+			NBV.Reg = EBX;
+
+			let addr2 = Exe.FindLastHex(prefix + suffix, addr, addr - 0x30);
+			if (addr2 < 0)
+			{
+				prefix = ADD(EAX, NEG2WC);    //ADD EAX, -limitL
+				addr2 = Exe.FindLastHex(prefix + suffix, addr, addr - 0x30);
+				NBV.Reg = EAX;
+			}
+			if (addr2 < 0)
+				throw Error("Limiting comparison missing");
+
+			/// 2.7 - Save it as our hook address
+			NBV.HookAddr = addr2;
+
+			/// 2.8 - Extract the limits
+			addr2 += prefix.byteCount();
+			NBV.MinLimit = -Exe.GetInt32(addr2 - 4);
+			NBV.Range = Exe.GetInt32(addr2 + 1);
+
+			/// 2.9 - Isolate the visible & hidden button names.
+			///       Also save the table address (PHYSICAL) when applicable for each button
+			NBV.Visible = [];
+			NBV.Hidden = [];
+			NBV.TblAddr = {};
+
+			for (let key in NBV.IDs)
+			{
+				let ID = NBV.IDs[key];
+				if (ID < NBV.MinLimit || ID > (NBV.MinLimit + NBV.Range))
+				{
+					NBV.Visible.push(key);
+				}
+				else
+				{
+					let tblAddr = switchTbl + ID - NBV.MinLimit;
+					NBV.TblAddr[key] = tblAddr;
+
+					let visible = (Exe.GetInt8(tblAddr) === 1);
+					if (visible)
+						NBV.Visible.push(key);
+					else
+						NBV.Hidden.push(key);
+				}
+			}
+		}
+		else
+		{
+			/// 3.1 - Since table is not there set the type.
+			///       The switch gets implemented with direct comparisons.
+			NBV.Type = 2;
+
+			/// 3.2 - Find the comparisons
+			prefix =
+				CMP(EBX, POS2WC) //CMP EBX, 164 or 162
+			;
+			suffix =
+				JE(POS2WC)       //JE offAddr
+			+	CMP(EBX, POS2WC) //CMP EBX, 208 or 204
+			+	JLE(0xC)         //JLE SHORT onAddr
+			+	CMP(EBX, POS2WC) //CMP EBX, 20A or 206
+			+	JLE(POS2WC)      //JLE offAddr
+			;
+			NBV.Reg = EBX;
+
+			addr = Exe.FindHex(prefix + suffix, refAddr + 5, refAddr + 0x60);
+			if (addr > 0)
+			{
+				let first = Exe.GetInt32(addr + 2);
+				let third = Exe.GetInt32(addr + prefix.byteCount() + suffix.byteCount() - 10);
+				NBV.OffIDs = [first, third - 1, third];
+			}
+			else
+			{
+				suffix =
+					JE(POS2WC)       //JE offAddr
+				+	CMP(EBX, POS2WC) //CMP EBX, 1F3 or 205
+				+	JE(POS2WC)       //JE offAddr
+				;
+
+				addr = Exe.FindHex(prefix + suffix, refAddr + 5, refAddr + 0x60);
+				if (addr > 0)
+				{
+					let first = Exe.GetInt32(addr + 2);
+					let second = Exe.GetInt32(addr + prefix.byteCount() + 8); //6 for the JE
+					NBV.OffIDs = [first, second];
+				}
+			}
+			if (addr < 0)
+			{
+				prefix =
+					SUB(EAX, POS2WC) //SUB EAX, 16C or 16B or 1E9
+				;
+				suffix =
+					JZ(POS2WC)       //JZ offAddr
+				+	SUB(EAX, 0x8B)   //SUB EAX, 8B
+				+	JZ(POS2WC)       //JZ offAddr
+				+	SUB(EAX, 0x30)   //SUB EAX, 30
+				+	JZ(POS2WC)       //JZ offAddr
+				;
+				NBV.Reg = EAX;
+
+				addr = Exe.FindHex(prefix + suffix, refAddr + 5, refAddr + 0x60);
+				if (addr > 0)
+				{
+					let first = Exe.GetInt32(addr + 1);
+					NBV.MinLimit = first;
+					NBV.OffIDs = [first, first + 0x8B, first + 0xBB];
+				}
+			}
+			if (addr < 0)
+			{
+				suffix =
+					JZ(POS2WC)       //JZ offAddr
+				+	SUB(EAX, 7)      //SUB EAX, 7
+				+	JZ(POS2WC)       //JZ offAddr
+				;
+
+				addr = Exe.FindHex(prefix + suffix, refAddr + 5, refAddr + 0x60);
+				if (addr > 0)
+				{
+					let first = Exe.GetInt32(addr + 1);
+					NBV.OffIDs = [first, first + 7];
+				}
+			}
+			if (addr < 0)
+				throw Error("Switch case missing");
+
+			/// 3.3 - Save the location as our hook address
+			NBV.HookAddr = addr;
+
+			/// 3.4 - Calculate the addresses for Hidden (OFF) & Visible (ON) states
+			addr += prefix.byteCount();
+			NBV.OffAddr = Exe.GetTgtAddr(addr + 2);
+
+			addr += suffix.byteCount();
+			NBV.OnAddr = Exe.Phy2Vir(addr, CODE);
+
+			/// 3.5 - Isolate the visible & hidden button names.
+			NBV.Visible = [];
+			NBV.Hidden = [];
+			NBV.TblAddr = {};
+
+			for (let key in NBV.IDs)
+			{
+				let ID = NBV.IDs[key];
+				if (NBV.OffIDs.includes(ID))
+					NBV.Hidden.push(key);
+				else
+					NBV.Visible.push(key);
+			}
+		}
+
+		NBV.Loaded = true;
+	}
+
+	/// 4.1 - Setup values based on patchName
+	let varName, title, suffix, btnChoices;
+
+	let index = NBV.Patches.indexOf(patchName);
+	if (index === 0) //Hide New Buttons
+	{
+		varName = '$newHiddenButtons';
+		title = "Hide Buttons";
+		suffix = "hidden";
+		btnChoices = NBV.Visible;
+	}
+	else //Show New Buttons
+	{
+		varName = '$newShownButtons';
+		title = "Show Buttons";
+		suffix = "shown";
+		btnChoices = NBV.Hidden;
+	}
+
+	/// 4.2 - Retrieve the user's selection.
+	let selection = Exe.GetUserInput(varName, D_MultiList, title, "Choose the buttons to be " + suffix, [], {choices: btnChoices});
+	if (selection === false || selection.isEmpty())
+		Cancel("No new buttons are " + suffix);
+
+	/// 4.3 - Save the selection
+	NBV.Selection[index] = selection;
+
+	/// 4.4 - Call the helper to stage the changes
+	_NBV_Stage(index);
+
+	return true;
 };
 
 ///
-/// \brief Disable for unsupported clients (uses the "adventurerAgency" string)
+/// \brief Supporting function to stage the changes for the specified patch
 ///
-NewButtonVis.validate = () => ROC.AdvAgencyAddr > 0;
+_NBV_Stage = function(index)
+{
+	/// 1.1 - Get the  other patch's index
+	let otherIndex = 1 - index;
+
+	/// 1.2 - Retrieve the other patch name
+	let otherPatch = NBV.Patches[otherIndex];
+
+	/// 1.3 - Retrieve the selected names. Clear the other patch if its selected.
+	let selection = NBV.Selection[index];
+
+	let otherSelection = [];
+	if (Exe.IsSelected(otherPatch))
+	{
+		otherSelection = NBV.Selection[otherIndex];
+		Exe.ClearPatch(otherPatch);
+	}
+
+	/// 2.1 - Prepare the array to store IDs of newly visible buttons (Used for Type 2)
+	let onIDs = [];
+
+	/// 2.2 - Iterate through the current selection and change the value in table or add corresponding JE to code.
+	let prefix = '';
+	selection.forEach(key =>
+	{
+		if (NBV.TblAddr[key])
+		{
+			Exe.SetInt8(NBV.TblAddr[key], index);
+		}
+		else
+		{
+			let ID = NBV.IDs[key];
+			prefix +=
+				CMP(NBV.Reg, ID) //CMP reg32, ID
+			+	JE(Filler(1))    //JE onAddr/offAddr
+			;
+
+			if (index === 1 && NBV.Type === 2)
+				onIDs.push(ID);
+		}
+	});
+
+	/// 2.3 - Repeat the process for the other selection
+	let suffix = '';
+	otherSelection.forEach(key =>
+	{
+		if (NBV.TblAddr[key])
+		{
+			Exe.SetInt8(NBV.TblAddr[key], otherIndex);
+		}
+		else
+		{
+			let ID = NBV.IDs[key];
+			suffix +=
+				CMP(NBV.Reg, ID) //CMP reg32, ID
+			+	JE(Filler(2))    //JE offAddr/onAddr
+			;
+
+			if (otherIndex === 1 && NBV.Type === 2)
+				onIDs.push(ID);
+		}
+	});
+
+	if (!prefix.isEmpty() || !suffix.isEmpty())
+	{
+		/// 2.4 - Now combine the parts
+		let code =
+			prefix
+		+	suffix
+		;
+
+		if (NBV.Type === 1)
+		{
+			code +=
+				SUB(NBV.Reg, NBV.MinLimit) //SUB reg32, minLimit
+			+	CMP(NBV.Reg, NBV.Range)    //CMP reg32, range
+			+	JA(Filler(3))              //JA onAddr
+			+	JMP(Filler(4))             //JMP retnAddr; address of the MOVZX
+			;
+		}
+		else
+		{
+			NBV.OffIDs.forEach(ID =>
+			{
+				if (onIDs.includes(ID))
+					return;
+
+				code +=
+					CMP(NBV.Reg, ID)       //CMP reg32, ID
+				+	JZ(Filler(3))          //JZ offAddr
+				;
+			});
+
+			code +=
+				JMP(Filler(4))             //JMP onAddr
+			;
+		}
+
+		/// 2.5 - Find space for the code
+		let free = Exe.FindSpace(code.byteCount());
+		if (free < 0)
+			throw NO_ALLOC;
+
+		let freeVir = Exe.Phy2Vir(free, DIFF);
+
+		/// 2.6 - Fill in the blanks
+		code = SetFillTargets(code, index === 0 ? {1: NBV.OffAddr, 2: NBV.OnAddr} : {1: NBV.OnAddr, 2: NBV.OffAddr}, freeVir);
+
+		if (NBV.Type === 1)
+			code = SetFillTargets(code, {3: NBV.OnAddr, 4: NBV.RetnAddr}, freeVir);
+		else
+			code = SetFillTargets(code, {3: NBV.OffAddr, 4: NBV.OnAddr}, freeVir);
+
+		/// 2.7 - Insert at allocated space
+		Exe.AddHex(free, code);
+
+		/// 2.8 - Set a JMP to the code at HookAddr
+		Exe.SetJMP(NBV.HookAddr, freeVir);
+	}
+};
+
+///
+/// \brief Disable for unsupported clients (uses the "adventurerAgency" string).
+///
+NewButtonVis.validate = function()
+{
+	NBV.Loaded = false;
+	NBV.Selection = [];
+	NBV.IDs = {};
+	return (Exe.BuildDate > 20170000);
+};
+
+///
+/// \brief Shift the patch data to the other patch when current one is deselected.
+///
+NewButtonVis.cleanup = function(patchName)
+{
+	let otherIndex = 1 - NBV.Patches.indexOf(patchName);
+	let otherPatch = NBV.Patches[otherIndex];
+
+	if (Exe.IsSelected(otherPatch))
+	{
+		Exe.SetActivePatch(otherPatch);
+		Exe.ClearPatch(otherPatch);
+		_NBV_Stage(otherIndex);
+	}
+};
 
 ///
 /// \brief Wrappers for individual patches
 ///
-HideNewNavBtn     = NewButtonVis;
-// HideNewBgBtn      = NewButtonVis;
-HideNewBankBtn    = NewButtonVis;
-HideNewBookBtn    = NewButtonVis;
-ShowNewBookBtn    = NewButtonVis;
-HideNewRodexBtn   = NewButtonVis;
-HideNewAchieveBtn = NewButtonVis;
-HideNewRecordBtn  = NewButtonVis;
-// HideNewMapBtn     = NewButtonVis;
-// HideNewQuestBtn   = NewButtonVis;
-HideTipBtn        = NewButtonVis;
-HideNewShopBtn    = NewButtonVis;
-HideSNSBtn        = NewButtonVis;
-ShowSNSBtn        = NewButtonVis;
-HideAttendBtn     = NewButtonVis;
-HideAdvAgencyBtn  = NewButtonVis;
-ShowAdvAgencyBtn  = NewButtonVis;
-// HideNewStatusBtn  = NewButtonVis;
-// HideNewEquipBtn   = NewButtonVis;
-// HideNewInvBtn     = NewButtonVis;
-// HideNewSkillBtn   = NewButtonVis;
-// HideNewPartyBtn   = NewButtonVis;
-// HideNewGuildBtn   = NewButtonVis;
-// HideNewOptionBtn  = NewButtonVis;
-// HideShortcutBtn   = NewButtonVis;
+HideNewButtons = NewButtonVis;
+ShowNewButtons = NewButtonVis;

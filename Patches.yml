@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-02-08                                             #
+#   Last Modified : 2021-02-21                                             #
 #                                                                          #
 ############################################################################
 
@@ -591,66 +591,6 @@
             recommend : no
             author : Neo-Mind
             desc : Makes the client always show register button on Login Window for all Langtypes. Clicking the button will open <registrationweb> from clientinfo and closes the client.
-        
-- HideButton:
-    title : HIDE BUTTON
-    mutex : false
-    color : darkorange
-    
-    patches:
-        - HideNavBtn:
-            title : Hide Nav Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Navigation Button located under the HP/SP Bars.
-        
-        - HideBgBtn:
-            title : Hide BG Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Battleground Button located under the HP/SP Bars.
-        
-        - HideBankBtn:
-            title : Hide Bank Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Bank Button located under the HP/SP Bars.
-        
-        - HideBookBtn:
-            title : Hide Booking Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Booking Button located under the HP/SP Bars.
-        
-        - HideRodexBtn:
-            title : Hide Rodex Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Rodex Button located under the HP/SP Bars.
-        
-        - HideAchieveBtn:
-            title : Hide Achievements Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Achievements Button located under the HP/SP Bars.
-        
-        - HideRecordBtn:
-            title : Hide Record Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Record Button located under the HP/SP Bars.
-        
-        - HideMapBtn:
-            title : Hide Map Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Map Button located under the HP/SP Bars.
-        
-        - HideQuestBtn:
-            title : Hide Quest Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Quest Button located under the HP/SP Bars.
 
 - ReadTxtFile:
     title : READ .txt FILE
@@ -1122,6 +1062,30 @@
             recommend : no
             author : X-EcutiOnner
             desc : Remove equipment preview button on the items description window
+
+- ButtonVis:
+    title : BASIC BUTTON VISIBILITY
+    mutex : false
+    color : orangered
+    
+    patches:
+        - HideOldButtons:
+            title : Hide Buttons (Old UI)
+            recommend : no
+            author : Neo-Mind
+            desc : Hide the various buttons in the Basic Info Window under the HP/SP Bars.
+        
+        - HideNewButtons:
+            title : Hide Buttons (New UI)
+            recommend : no
+            author : Neo-Mind
+            desc : Hide the various buttons in the Basic Info Window under the HP/SP Bars.
+        
+        - ShowNewButtons:
+            title : Show Buttons (New UI)
+            recommend : no
+            author : Neo-Mind
+            desc : Shows some of the various hidden buttons in the Basic Info Window under the HP/SP Bars.
 
 - CustomData:
     title : DATA CUSTOMIZATION
