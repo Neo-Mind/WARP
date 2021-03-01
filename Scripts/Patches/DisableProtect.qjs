@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind, Andrei (4144), X-EcutiOnner       *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -423,6 +423,9 @@ NoCDefender = function()
 	/// 2.2 - Change the 1 to 0 in MOV BYTE PTR
 	Exe.SetUint8(addr + 8, 0);
 
+	/// 2.3 - Ask for copying the DLL
+	NCD_Response = Exe.GetUserInput("$copyNCDdll", D_Bool, "Copy Files", "Do you want the DLL copied as well?", true);
+
 	return true;
 };
 
@@ -430,3 +433,15 @@ NoCDefender = function()
 /// \brief Disable for unsupported clients (Need to have the DLL)
 ///
 NoCDefender.validate = () => Exe.FindText("CDClient.dll", PHYSICAL) > 0;
+
+///
+/// \brief Extra Steps when the patch is applied (Copying the DLL)
+///
+NoCDefender.onApplied = function()
+{
+	if (NCD_Response)
+	{
+		let tgtDir = System.DirPath(Warp.TgtExe);
+		System.Copy(Warp.Path + "Inputs/CDClient.dll", tgtDir);
+	}
+};
