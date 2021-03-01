@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-02-21                                             #
+#   Last Modified : 2021-03-01                                             #
 #                                                                          #
 ############################################################################
 
@@ -1266,6 +1266,12 @@
             recommend : no
             author : Functor, Secret , Neo-Mind
             desc : Remove restriction of guild functionality while being a member of a clan.
+        
+        - Enable65kHairs:
+            title: Enable 65k hair styles
+            recommend : no
+            author : Ai4rei/AN, Neo-Mind
+            desc : Raises the maximum hairstyle limit to 65535 from the default value.
 
 - CustomFriendWin:
     title : FRIEND WINDOW CUSTOMIZATION
