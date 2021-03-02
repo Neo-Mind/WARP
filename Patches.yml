@@ -1206,6 +1206,12 @@
             recommend : yes
             author : Andrei Karas (4144)
             desc : Hide the actual build info in client by 'NULL' ifying all related values.
+         
+        - NoCameraLock:
+            title : Disable Camera Lock
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Disable locking camera viewpoint rotation using ViewPointTable.txt
 
 - CustomChar:
     title : CHARACTER CUSTOMIZATION

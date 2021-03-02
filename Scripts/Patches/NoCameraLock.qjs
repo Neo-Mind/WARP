@@ -1,0 +1,46 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020 X-EcutiOnner                                        *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Andrei (4144), X-EcutiOnner                            *
+*   Created Date  : 2021-03-02                                             *
+*   Last Modified : 2021-03-02                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Zero out the ViewPointTable.txt file strings used for locking camera viewpoint rotation
+///
+NoCameraLock = function()
+{
+	Exe.SetInt8(NCL_Addr, 0);
+    return true;
+};
+
+///
+/// \brief Disable for Unsupported Clients - Check for Reference
+///
+NoCameraLock.validate = function()
+{
+	NCL_Addr = Exe.FindText("ViewPointTable.txt", PHYSICAL);
+	return (NCL_Addr > 0);
+};
