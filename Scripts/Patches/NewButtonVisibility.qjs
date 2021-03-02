@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2018 CH.C (jchcc)                                        *
+*   Copyright (C) 2018-2021 CH.C (jchcc)                                   *
 *   Copyright (C) 2021 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-02-23                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -100,7 +100,7 @@ NewButtonVis = function(patchName)
 
 		/// 1.4 - Find all the ID assignments & string PUSHes (they will be in same order)
 		let idAssigners, strPushers;
-		if (Exe.Version === 11.0)
+		if (Exe.Version === 11)
 		{
 			idAssigners = Exe.FindHexN(MOV([EBP, WCn], POS2WC), beginAddr, beginAddr + 0x100);  //MOV DWORD PTR SS:[LOCAL.x], <ID>
 			strPushers = Exe.FindHexN(PUSH(POS4WC) + " 8D [..001101]", beginAddr, refAddr);     //PUSH OFFSET name

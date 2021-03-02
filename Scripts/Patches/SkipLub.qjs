@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), X-EcutiOnner                            *
 *   Created Date  : 2021-01-23                                             *
-*   Last Modified : 2021-01-23                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,46 +34,46 @@
 SkipSignBoard = function()
 {
     /// 1.1 - Prepare the template to search with
-	let template = 
+	let template =
 		PUSH(Filler(1)) //PUSH prefix
 	+	CALL()          //CALL Lua_Loader
 	;
-	
+
 	/// 1.3 - Find the first reference.
 	let addr = Exe.FindHex(SwapFiller(template, 1, SSBR_Addr));
 	if (addr < 0)
 		throw Error("SignBoardList_F not used");
-	
+
 	/// 1.4 - Find the state PUSH before it
 	let beginAddr1 = Exe.FindLastHex(MOV(ECX, [ESI, POS2WC]), addr, addr - 0x10);
 	if (beginAddr1 < 0)
 		beginAddr1 = Exe.FindLastHex(MOV(ECX, [POS3WC]), addr, addr - 0x10);
-	
+
 	if (beginAddr1 < 0)
 		throw Error("State PUSH missing");
-	
+
 	/// 1.5 - Save the instruction & endAddr1
 	let movECX = Instr.FromAddr(beginAddr1);
 	let endAddr1 = addr + 4; //after the CALL
-	
+
 	/// 2.1 - Find 'Lua Files\SignBoardList'
     let prefAddr = Exe.FindText("Lua Files\\SignBoardList");
 	if (prefAddr < 0)
 		throw Error("SignBoardList not found");
-	
+
 	/// 2.2 - Find it's reference after endAddr1
 	addr = Exe.FindHex(SwapFiller(template, 1, prefAddr), endAddr1, endAddr1 + 0x40);
 	if (addr < 0)
 		throw Error("SignBoardList not used");
-	
+
 	/// 2.3 - Find the state PUSH before it.
 	let beginAddr2 = Exe.FindLastHex(movECX, addr, addr - 0x10);
 	if (beginAddr2 < 0)
 		throw Error("State PUSH missing again");
-	
+
 	/// 2.4 - Save the end address
 	let endAddr2 = addr + 4;
-	
+
 	if (beginAddr2 === endAddr1)
 	{
 		/// 3.1 - We can club it and keep 1 set of NOPs
@@ -109,7 +109,7 @@ SkipTownInfo = function()
         throw Error("Init string missing");
 
     /// 1.2 - Use it to find TownInfo loading code
-	let pushZero = Exe.Version > 10.0 ? PUSH_0 : PUSH(EBX);
+	let pushZero = Exe.Version > 10 ? PUSH_0 : PUSH(EBX);
 	let code =
 		TEST(AL, AL)  //TEST AL, AL ; result of the function which loads the towninfo
 	+	JNZ(WCp)
@@ -121,26 +121,26 @@ SkipTownInfo = function()
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Pattern not found");
-	
+
 	/// 2.1 - Find the CALL before it
 	let callAddr;
 	if (Exe.GetUint8(addr - 6) === 0x8B)
 		callAddr = addr - 11;
 	else
 		callAddr = addr - 5;
-	
+
 	if (Exe.GetUint8(callAddr) !== 0xE8)
 		throw Error("CALL not found");
-	
+
 	/// 2.2 - Change the CALL to make EAX 0
 	Exe.SetHex(callAddr,
 		XOR(EAX, EAX)
 	+	NOP3
 	);
-	
+
 	/// 2.3 - Change the JNZ to JMP
 	Exe.SetJMP(addr + 2);
-	
+
     return true;
 };
 

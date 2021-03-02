@@ -197,7 +197,7 @@ IncrHairs = function(patchName)
 			;
 			switch (Exe.Version)
 			{
-				case 9.0: //Remaining VC9
+				case 9: //Remaining VC9
 				{
 					prefix =
 						MOV(R32, [POS3WC])    //MOV reg32_A, DWORD PTR DS:[addr]
@@ -205,7 +205,7 @@ IncrHairs = function(patchName)
 					;
 					break;
 				}
-				case 10.0: //VC10
+				case 10: //VC10
 				{
 					prefix =
 						MOV(R32, [R32])       //MOV reg32_B, DWORD PTR DS:[reg32_C]
@@ -213,7 +213,7 @@ IncrHairs = function(patchName)
 					;
 					break;
 				}
-				case 11.0: //VC11
+				case 11: //VC11
 				{
 					prefix =
 						MOV(R32, [R32])       //MOV reg32_B, DWORD PTR DS:[reg32_C]
@@ -308,8 +308,8 @@ IncrHairs = function(patchName)
 			;
 			switch (Exe.Version)
 			{
-				case 9.0:  //VC9
-				case 10.0: //VC10
+				case 9:  //VC9
+				case 10: //VC10
 				{
 					suffix =
 						MOV(reg, [sreg, WC])    //MOV reg32_A, DWORD PTR SS:[LOCAL.y] ; y = x*5 + 4
@@ -318,7 +318,7 @@ IncrHairs = function(patchName)
 					;
 					break;
 				}
-				case 11.0: //VC11
+				case 11: //VC11
 				{
 					suffix =
 						LEA(reg, [sreg, WC])    //LEA reg32_A, [LOCAL.y] ; y = x*5 + 4
@@ -340,7 +340,7 @@ IncrHairs = function(patchName)
 				throw Error("Reg assignment missing");
 
 			/// 3.7 - Shift up the PUSH for VC14.16
-			if (Exe.Version > 11.0)
+			if (Exe.Version > 11)
 			{
 				let ins = Instr.FromAddr(addr2 + prefix.byteCount());
 				Exe.SetHex(addr2, ins.toString()); //shift up the PUSH

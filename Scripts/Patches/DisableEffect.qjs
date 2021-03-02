@@ -1,8 +1,8 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Ai4rei/AN, Shinryo                                *
-*   Copyright (C) 2020 Andrei Karas (4144)                                 *
-*   Copyright (C) 2020 X-EcutiOnner (xex.ecutionner@gmail.com)             *
+*   Copyright (C) 2020-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2021 X-EcutiOnner (xex.ecutionner@gmail.com)        *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Andrei (4144), X-EcutiOnner        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -73,15 +73,7 @@ NoEarthQuake = function()
 	code = CALL(ALLWC); //CALL CView::SetQuakeInfo
 
 	let quakeAddr;
-	if (Exe.Version >= 9.0)
-	{
-		code +=
-			XOR(EAX, EAX)   //XOR EAX, EAX
-		+	JMP(POS2WC)     //JMP addr
-		;
-		quakeAddr = Exe.FindHex(code, addr - 0x80, addr);
-	}
-	else
+	if (Exe.Version === 6) //VC6
 	{
 		code +=
 			POP_R           //POP reg32_A
@@ -89,6 +81,14 @@ NoEarthQuake = function()
 		+	XOR(EAX, EAX)   //XOR EAX, EAX
 		;
 		quakeAddr = Exe.FindHex(code, addr - 0x100, addr);
+	}
+	else //newer
+	{
+		code +=
+			XOR(EAX, EAX)   //XOR EAX, EAX
+		+	JMP(POS2WC)     //JMP addr
+		;
+		quakeAddr = Exe.FindHex(code, addr - 0x80, addr);
 	}
 
 	if (quakeAddr < 0)
@@ -106,15 +106,7 @@ NoEarthQuake = function()
 	+	CALL(ALLWC)        //CALL CView::SetQuake
 	;
 
-	if (Exe.Version >= 9.0)
-	{
-		code +=
-			XOR(EAX, EAX)  //XOR EAX, EAX
-		+	JMP(POS2WC)    //JMP addr
-		;
-		quakeAddr = Exe.FindHex(code, addr - 0xA0, addr);
-	}
-	else
+	if (Exe.Version === 6) //VC6
 	{
 		code +=
 			POP_R          //POP reg32_A
@@ -123,6 +115,15 @@ NoEarthQuake = function()
 		;
 		quakeAddr = Exe.FindHex(code, addr - 0x120, addr);
 	}
+	else //newer
+	{
+		code +=
+			XOR(EAX, EAX)  //XOR EAX, EAX
+		+	JMP(POS2WC)    //JMP addr
+		;
+		quakeAddr = Exe.FindHex(code, addr - 0xA0, addr);
+	}
+
 	if (quakeAddr < 0)
 		throw Error("SetQuake CALL not found");
 
@@ -179,7 +180,7 @@ NoWavyScreen = function()
 	let prefix =
 		MOV(ECX, R32)          //MOV ECX, reg32
 	+	CALL(ALLWC)            //CALL addr1
-	+	(Exe.Version > 6.0
+	+	(Exe.Version > 6
 	?
 		CMP([UseEffect], 0)    //CMP DWORD PTR DS:[g_useEffect], 0
 	:
@@ -219,127 +220,135 @@ NoBlindness = function()
 	let LaunchEffectPrimOffset, gPrimOffset = 0, mPrimOffset = 0;
 	*/
 
-	if (Exe.Version < 9.0) //VC6
+	switch (Exe.Version)
 	{
-		code +=
-			SUB(ESP, 0xC)                //SUB ESP, 0C
-		+	MOV(EDX, EBX)                //MOV EDX, EBX
-		+	MOV(ECX, ESP)                //MOV ECX, ESP
-		+	MOV(EAX, EBX)                //MOV EAX, EBX
-		+	PUSH(0x47)                   //PUSH 47 ; ASCII 'G'
-		+	MOV([EBP, WCn], EBX)         //MOV DWORD PTR SS:[EBP - var_C], EBX
-		+	MOV([ECX], EDX)              //MOV DWORD PTR DS:[ECX], EDX
-		+	MOV([EBP, WCn], EBX)         //MOV DWORD PTR SS:[EBP - var_8], EBX
-		+	MOV([EBP, WCn], EBX)         //MOV DWORD PTR SS:[EBP - var_4], EBX
-		+	MOV([ECX, 4], R32)           //MOV DWORD PTR DS:[ECX + 4], reg32_A
-		+	MOV([ECX, 8], R32)           //MOV DWORD PTR DS:[ECX + 8], reg32_B
-		+	MOV(ECX, ESI)                //MOV ECX, ESI
-		+	CALL(ALLWC)                  //CALL CRagEffect::LaunchEffectPrim
-		+	(!ROC.Post2010
-		?
-			MOV([POS3WC], EAX)           //MOV DWORD PTR DS:[g_prim], EAX  or
-		:                                //  or
-			MOV([ESI, POS3WC], EAX)      //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
-		)
-		+	MOV(ECX, [EAX, POS2WC])      //MOV ECX, DWORD PTR DS:[EAX + const]
-		;
-
-		/*
-		LaunchEffectPrimOffset = 37;
-		if (Exe.Version < 6.0)
+		case 6: //VC6
 		{
-			gPrimOffset = 42;
+			code +=
+				SUB(ESP, 0xC)                //SUB ESP, 0C
+			+	MOV(EDX, EBX)                //MOV EDX, EBX
+			+	MOV(ECX, ESP)                //MOV ECX, ESP
+			+	MOV(EAX, EBX)                //MOV EAX, EBX
+			+	PUSH(0x47)                   //PUSH 47 ; ASCII 'G'
+			+	MOV([EBP, WCn], EBX)         //MOV DWORD PTR SS:[EBP - var_C], EBX
+			+	MOV([ECX], EDX)              //MOV DWORD PTR DS:[ECX], EDX
+			+	MOV([EBP, WCn], EBX)         //MOV DWORD PTR SS:[EBP - var_8], EBX
+			+	MOV([EBP, WCn], EBX)         //MOV DWORD PTR SS:[EBP - var_4], EBX
+			+	MOV([ECX, 4], R32)           //MOV DWORD PTR DS:[ECX + 4], reg32_A
+			+	MOV([ECX, 8], R32)           //MOV DWORD PTR DS:[ECX + 8], reg32_B
+			+	MOV(ECX, ESI)                //MOV ECX, ESI
+			+	CALL(ALLWC)                  //CALL CRagEffect::LaunchEffectPrim
+			+	(!ROC.Post2010
+			?
+				MOV([POS3WC], EAX)           //MOV DWORD PTR DS:[g_prim], EAX  or
+			:                                //  or
+				MOV([ESI, POS3WC], EAX)      //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
+			)
+			+	MOV(ECX, [EAX, POS2WC])      //MOV ECX, DWORD PTR DS:[EAX + const]
+			;
+
+			/*
+			LaunchEffectPrimOffset = 37;
+			if (Exe.Version < 6)
+			{
+				gPrimOffset = 42;
+			}
+			else
+			{
+				mPrimOffset = [43, 4];
+			}
+			*/
+			break;
 		}
-		else
+		case 9:  //VC9 &
+		case 10: //VC10
 		{
-			mPrimOffset = [43, 4];
+			let sreg = ROC.HasFP ? EBP : ESP; //StkRef = EBP or ESP + const
+
+			code +=
+				FLDZ                        //FLDZ
+			+	SUB(ESP, 0xC)               //SUB ESP, 0C
+			+	MOV(EAX, ESP)               //MOV EAX, ESP
+			+	FST([sreg, WC])             //FST DWORD PTR SS:[StkRef - var_C]
+			+	MOV(ECX, [sreg, WC])        //MOV ECX, DWORD PTR SS:[StkRef - var_C]
+			+	FST([sreg, WC])             //FST DWORD PTR SS:[StkRef - var_8]
+			+	MOV(EDX, [sreg, WC])        //MOV EDX, DWORD PTR SS:[StkRef - var_8]
+			+	FSTP([sreg, WC])            //FSTP DWORD PTR SS:[StkRef - var_4]
+			+	MOV([EAX], ECX)             //MOV DWORD PTR DS:[EAX], ECX
+			+	MOV(ECX, [sreg, WC])        //MOV ECX, DWORD PTR SS:[StkRef - var_4]
+			+	MOV([EAX, 4], EDX)          //MOV DWORD PTR DS:[EAX + 4], EDX
+			+	MOV([EAX, 8], ECX)          //MOV DWORD PTR DS:[EAX + 8], ECX
+			+	PUSH(0x47)                  //PUSH 47 ; ASCII 'G'
+			+	MOV(ECX, ESI)               //MOV ECX, ESI
+			+	CALL(ALLWC)                 //CALL CRagEffect::LaunchEffectPrim
+			+	MOV([ESI, POS3WC], EAX)     //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
+			+	OR([R32, POS2WC], 0x200)    //OR DWORD PTR DS:[reg32_A + const], 200
+			;
+
+			/*
+			if (ROC.HasFP)
+			{
+				LaunchEffectPrimOffset = 44;
+				mPrimOffset = [50, 4];
+			}
+			else
+			{
+				LaunchEffectPrimOffset = 50;
+				mPrimOffset = [56, 4];
+			}
+			*/
+			break;
 		}
-		*/
-	}
-	else if (Exe.Version < 11.0) //VC9 & VC10
-	{
-		let sreg = ROC.HasFP ? EBP : ESP; //StkRef = EBP or ESP + const
-
-		code +=
-			FLDZ                        //FLDZ
-		+	SUB(ESP, 0xC)               //SUB ESP, 0C
-		+	MOV(EAX, ESP)               //MOV EAX, ESP
-		+	FST([sreg, WC])             //FST DWORD PTR SS:[StkRef - var_C]
-		+	MOV(ECX, [sreg, WC])        //MOV ECX, DWORD PTR SS:[StkRef - var_C]
-		+	FST([sreg, WC])             //FST DWORD PTR SS:[StkRef - var_8]
-		+	MOV(EDX, [sreg, WC])        //MOV EDX, DWORD PTR SS:[StkRef - var_8]
-		+	FSTP([sreg, WC])            //FSTP DWORD PTR SS:[StkRef - var_4]
-		+	MOV([EAX], ECX)             //MOV DWORD PTR DS:[EAX], ECX
-		+	MOV(ECX, [sreg, WC])        //MOV ECX, DWORD PTR SS:[StkRef - var_4]
-		+	MOV([EAX, 4], EDX)          //MOV DWORD PTR DS:[EAX + 4], EDX
-		+	MOV([EAX, 8], ECX)          //MOV DWORD PTR DS:[EAX + 8], ECX
-		+	PUSH(0x47)                  //PUSH 47 ; ASCII 'G'
-		+	MOV(ECX, ESI)               //MOV ECX, ESI
-		+	CALL(ALLWC)                 //CALL CRagEffect::LaunchEffectPrim
-		+	MOV([ESI, POS3WC], EAX)     //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
-		+	OR([R32, POS2WC], 0x200)    //OR DWORD PTR DS:[reg32_A + const], 200
-		;
-
-		/*
-		if (ROC.HasFP)
+		case 11: //VC11
 		{
-			LaunchEffectPrimOffset = 44;
-			mPrimOffset = [50, 4];
+			code +=
+				SUB(ESP, 0xC)                //SUB ESP, 0C
+			+	MOV(ECX, ESP)                //MOV ECX, ESP
+			+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_C], 0
+			+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_8], 0
+			+	MOVQ(XMM0, [EBP, WC])        //MOVQ XMM0, QWORD PTR SS:[EBP - var_C]
+			+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_4], 0
+			+	MOV(EAX, [EBP, WC])          //MOV EAX, DWORD PTR SS:[EBP - var_4]
+			+	MOVQ([ECX], XMM0)            //MOVQ QWORD PTR DS:[ECX], XMM0
+			+	MOV([ECX, 8], EAX)           //MOV DWORD PTR DS:[ECX + 8], EAX
+			+	PUSH(0x47)                   //PUSH 47 ; ASCII 'G'
+			+	MOV(ECX, ESI)                //MOV ECX, ESI
+			+	CALL(ALLWC)                  //CALL CRagEffect::LaunchEffectPrim
+			+	MOV([ESI, POS3WC], EAX)      //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
+			+	OR([EAX, POS2WC], 0x200)     //OR DWORD PTR DS:[EAX + const], 200
+			;
+
+			/*
+			LaunchEffectPrimOffset = 52;
+			mPrimOffset = [58, 4];
+			*/
+			break;
 		}
-		else
+		default: //VC14.16
 		{
-			LaunchEffectPrimOffset = 50;
-			mPrimOffset = [56, 4];
+			code +=
+				SUB(ESP, 0xC)                //SUB ESP, 0C
+			+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_4], 0
+			+	MOV(EAX, [EBP, WC])          //MOV EAX, DWORD PTR SS:[EBP - var_4]
+			+	MOV(ECX, ESP)                //MOV ECX, ESP
+			+	XORPS(XMM0, XMM0)            //XORPS XMM0, XMM0
+			+	UNPCKLPS(XMM0, XMM0)         //UNPCKLPS XMM0, XMM0
+			+	PUSH(0x47)                   //PUSH 47 ; ASCII 'G'
+			+	MOVQ([ECX], XMM0)            //MOVQ QWORD PTR DS:[ECX], XMM0
+			+	MOV([ECX, 8], EAX)           //MOV DWORD PTR DS:[ECX + 8], EAX
+			+	MOV(ECX, ESI)                //MOV ECX, ESI
+			+	CALL(ALLWC)                  //CALL CRagEffect::LaunchEffectPrim
+			+	MOV([ESI, POS3WC], EAX)      //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
+			+	MOV(EDX, 4)                  //MOV EDX, 4
+			+	OR([EAX, POS2WC], 0x200)     //OR DWORD PTR DS:[EAX + const], 200
+			;
+
+			/*
+			LaunchEffectPrimOffset = 39;
+			mPrimOffset = [45, 4];
+			*/
+			break;
 		}
-		*/
-	}
-	else if (Exe.Version === 11.0) //VC11
-	{
-		code +=
-			SUB(ESP, 0xC)                //SUB ESP, 0C
-		+	MOV(ECX, ESP)                //MOV ECX, ESP
-		+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_C], 0
-		+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_8], 0
-		+	MOVQ(XMM0, [EBP, WC])        //MOVQ XMM0, QWORD PTR SS:[EBP - var_C]
-		+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_4], 0
-		+	MOV(EAX, [EBP, WC])          //MOV EAX, DWORD PTR SS:[EBP - var_4]
-		+	MOVQ([ECX], XMM0)            //MOVQ QWORD PTR DS:[ECX], XMM0
-		+	MOV([ECX, 8], EAX)           //MOV DWORD PTR DS:[ECX + 8], EAX
-		+	PUSH(0x47)                   //PUSH 47 ; ASCII 'G'
-		+	MOV(ECX, ESI)                //MOV ECX, ESI
-		+	CALL(ALLWC)                  //CALL CRagEffect::LaunchEffectPrim
-		+	MOV([ESI, POS3WC], EAX)      //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
-		+	OR([EAX, POS2WC], 0x200)     //OR DWORD PTR DS:[EAX + const], 200
-		;
-
-		/*
-		LaunchEffectPrimOffset = 52;
-		mPrimOffset = [58, 4];		
-		*/
-	}
-	else //VC14.16
-	{
-		code +=
-			SUB(ESP, 0xC)                //SUB ESP, 0C
-		+	MOV([EBP, WC], 0)            //MOV DWORD PTR SS:[EBP - var_4], 0
-		+	MOV(EAX, [EBP, WC])          //MOV EAX, DWORD PTR SS:[EBP - var_4]
-		+	MOV(ECX, ESP)                //MOV ECX, ESP
-		+	XORPS(XMM0, XMM0)            //XORPS XMM0, XMM0
-		+	UNPCKLPS(XMM0, XMM0)         //UNPCKLPS XMM0, XMM0
-		+	PUSH(0x47)                   //PUSH 47 ; ASCII 'G'
-		+	MOVQ([ECX], XMM0)            //MOVQ QWORD PTR DS:[ECX], XMM0
-		+	MOV([ECX, 8], EAX)           //MOV DWORD PTR DS:[ECX + 8], EAX
-		+	MOV(ECX, ESI)                //MOV ECX, ESI
-		+	CALL(ALLWC)                  //CALL CRagEffect::LaunchEffectPrim
-		+	MOV([ESI, POS3WC], EAX)      //MOV DWORD PTR DS:[ESI + CRagEffect.m_prim], EAX
-		+	MOV(EDX, 4)                  //MOV EDX, 4
-		+	OR([EAX, POS2WC], 0x200)     //OR DWORD PTR DS:[EAX + const], 200
-		;
-
-		/*
-		LaunchEffectPrimOffset = 39;
-		mPrimOffset = [45, 4];
-		*/
 	}
 
 	let addr = Exe.FindHex(code);

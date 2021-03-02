@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2015 Curiosity                                           *
-*   Copyright (C) 2015-2020 Neo-Mind                                       *
+*   Copyright (C) 2015-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Curiosity, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ RestoreModelCulling = function()
 		JE(WCp)						//JE SHORT addr
 	,
 		Exe.BuildDate < 20150000
-	?	MOV(ECX, [reg, 8])		    //MOV ECX, DWORD PTR SS:[reg+8]  or 
+	?	MOV(ECX, [reg, 8])		    //MOV ECX, DWORD PTR SS:[reg+8]  or
 	:	''                          //Nothing
 	,
 		LEA(EAX, [ESI, 0x130])   	//LEA EAX, [ESI+130h] (eax = &m_oBoundingBox)
@@ -62,7 +62,7 @@ RestoreModelCulling = function()
 		oldStyle = false;
 		addr = Exe.FindHex(parts.join(''));
 	}
-	
+
 	if (addr < 0)
 		throw Error("CullByOBB not found");
 
@@ -72,7 +72,7 @@ RestoreModelCulling = function()
 	if (oldStyle)
 	{
 		/// 2.1 - Find location of C3dNode::SetToAlpha CALL
-		if (Exe.Version < 9.0)
+		if (Exe.Version === 6) //VC6
 			addr = Exe.FindHex( MOV(ECX, [ESI, 8]) + CALL(), addr + 7, addr + 0x40); //MOV ECX, DWORD PTR DS:[ESI+8] and CALL C3dNode::SetToAlpha
 		else
 			addr = Exe.FindHex( MOV(ECX, [ESI]) + CALL(), addr + 7, addr + 0x20); //MOV ECX, DWORD PTR DS:[ESI] and CALL C3dNode::SetToAlpha
@@ -82,8 +82,9 @@ RestoreModelCulling = function()
 
 		/// 2.2 - Change the CALL to m_isHalfAlpha assignment.
 		code = MOV(BYTE_PTR, [ESI, 0x1EC], 1); // MOV BYTE PTR DS:[ESI+1ECh], 1h ; (m_isHalfAlpha = 1)
-		if (Exe.Version < 9.0)
-			code = NOP + code; //extra byte is there so prefix a NOP
+
+		if (Exe.Version === 6) //VC6 has extra byte
+			code = NOP + code; //so prefix a NOP
 
 		Exe.SetHex(addr, code);
 	}
@@ -122,4 +123,3 @@ RestoreModelCulling = function()
  * }
  *
  */
- 

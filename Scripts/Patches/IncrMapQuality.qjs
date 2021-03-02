@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2015 Curiosity                                           *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2015-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Curiosity, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,16 +33,16 @@
 IncrMapQuality = function()
 {
 	/// 1 - Find CTexMgr::CreateTexture CALL
-	let reg = (Exe.Version < 10.0 ? ECX : EAX);
+	let reg = (Exe.Version < 10 ? ECX : EAX);
 	let part1 =
 		PUSH(reg)          //PUSH ECX/EAX ; imgData
 	+	PUSH(0x100)        //PUSH 100 ; h = 256
 	+	PUSH(0x100)        //PUSH 100 ; w = 256
 	;
-	let part2 = 
+	let part2 =
 		MOV(ECX, POS3WC);  //MOV ECX, OFFSET g_texMgr
 
-	let addr = Exe.Version < 14.0 ?
+	let addr = Exe.Version < 14 ?
 		Exe.FindHex(part1 + part2 + CALL()) //CALL CTexMgr::CreateTexture
 	:
 		Exe.FindHex(part2 + part1 + CALL()) //CALL CTexMgr::CreateTexture

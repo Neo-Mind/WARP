@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-01-14                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 // TODO - Need to make changes for VC14.16
 
 ///
-/// \brief Modify the stack allocation and code to account for 10 digits 
+/// \brief Modify the stack allocation and code to account for 10 digits
 ///        instead of 6 in CGameActor::Am_Make_Number.
 ///        To avoid redundant code we will use loop.
 ///
@@ -40,7 +40,7 @@ IncrDigits = function()
 	[
 		CMP(R32, 0xF423F)   //CMP reg32_A, 0F423F ; 999999
 	,
-		Exe.Version < 9.0
+		Exe.Version === 6
 	?
 		PUSH_R				//PUSH_R
 	:
@@ -50,7 +50,7 @@ IncrDigits = function()
 	+	MOV(R32, 0xF423F)   //MOV reg32_A, 0F423F
 	]
 	;
-	
+
 	let refAddr = Exe.FindHex(parts.join(''));
 	if (refAddr < 0 && Exe.BuildDate > 20190000)
 	{
@@ -66,7 +66,7 @@ IncrDigits = function()
 	+	PUSH(POS3WC)        //PUSH addr
 	+	MOV(EAX, FS, [0])   //MOV EAX, DWORD PTR FS:[0]
 	+	PUSH_EAX            //PUSH EAX
-	+	(Exe.Version < 9.0
+	+	(Exe.Version === 6
 	?
 		MOV(FS, [0], ESP)	//MOV DWORD PTR FS:[0], ESP (only for VC6)
 	:
@@ -194,9 +194,9 @@ IncrDigits = function()
 	+	JNE(-0x1E)                   //JNE SHORT addr1
 	+	SUB(ESI, FirstDigLoc)        //SUB ESI, FirstDigLoc; Now ESI has number of digits * 4 bits
 	+	SAR(ESI, 2)                  //SAR ESI, 2
-	+	(IsReg(DigCntLoc) 
-	?	
-		MOV(DigCntLoc, ESI)			 //MOV DigCntLoc, ESI  
+	+	(IsReg(DigCntLoc)
+	?
+		MOV(DigCntLoc, ESI)			 //MOV DigCntLoc, ESI
 	:								 //or
 		MOV([StkReg, DigCntLoc], ESI)//MOV DWORD PTR SS:[StkReg+DigCntLoc], ESI
 	)
@@ -320,13 +320,13 @@ IncrDigits = function()
 };
 
 ///
-/// \brief Helper function which adjusts the addr used w.r.t ESP/EBP 
+/// \brief Helper function which adjusts the addr used w.r.t ESP/EBP
 ///        at the location/Instr provided by 16
 ///
 _ID_UpdateStack = (arg, sign) =>
 {
 	let stackOff = IsNum(sign)? sign * 16
-				: ROC.HasFP ? -16 
+				: ROC.HasFP ? -16
 				: 16
 	;
 
@@ -337,7 +337,7 @@ _ID_UpdateStack = (arg, sign) =>
 	else if (arg.MRM !== undefined && arg.MRM.Mode === 1) //Instr object with ModRM
 	{
 		if  (
-				( (arg.MRM.RegM === 5 || 
+				( (arg.MRM.RegM === 5 ||
 				(arg.MRM.RegM === 4 && arg.SIB.Index == 4 && arg.SIB.Base == 5))
 				&& arg.Disp <= arg.StackLimit //EBP-x (two types are possible)
 				) ||

@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,12 +22,12 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Change the conditional jump for Langtype comparison inside CGameMode::SendMsg function 
+/// \brief Change the conditional jump for Langtype comparison inside CGameMode::SendMsg function
 ///        for /w & /who command as well as inside CGameMode::Zc_User_Count
 ///
 EnableWho = function()
@@ -58,7 +58,7 @@ EnableWho = function()
 
 	/// 2.1 - Find the common pattern to identify Zc_User_Count function
 	code =
-		(Exe.Version < 11.0 ?
+		(Exe.Version < 11 ?
 		PUSH_R           //PUSH reg32_A
 	:
 		PUSH([R32, WCp]) //PUSH DWORD PTR DS:[reg32_A + const]
@@ -74,7 +74,7 @@ EnableWho = function()
 	/// 2.2 - Find the Langtype comparison before the pattern.
 	code =
 		JNE(WCp)            //JNE SHORT addr
-	+	(Exe.Version < 11.0
+	+	(Exe.Version < 11
 	?
 		MOV(EAX, [POS3WC])  //MOV EAX, DWORD PTR DS:[refAddr]
 	+	PUSH_EAX            //PUSH EAX
@@ -94,9 +94,9 @@ EnableWho = function()
 	/// 2.3 - Change the first JNE
 	Exe.SetJMP(cmpAddr);
 
-	if (Exe.Version >= 9.0)
+	if (Exe.Version >= 9) //VC9+ has additional steps
 	{
-		/// 3.1 - Find the last Langtype comparison (started from some VC9 clients onwards)
+		/// 3.1 - Find the last Langtype comparison
 		code =
 			CMP(EAX, 0xF) //CMP EAX, 0F
 		+	JE(5)         //JE SHORT addr
@@ -119,7 +119,7 @@ EnableWho = function()
 };
 
 ///
-/// \brief Change the conditional jump to JMP after Langtype comparison inside 
+/// \brief Change the conditional jump to JMP after Langtype comparison inside
 ///        CSession::SetTextType function when using '/showname'
 ///
 EnableShowName = function()

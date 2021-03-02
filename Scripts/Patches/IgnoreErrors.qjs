@@ -1,9 +1,9 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
-*   Copyright (C) 2017-2020 Andrei Karas (4144)                            *
-*   Copyright (C) 2020 X-EcutiOnner (xex.ecutionner@gmail.com)             *
-*   Copyright (C) 2020 Ai4rei/AN                                           *
+*   Copyright (C) 2017-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2021 X-EcutiOnner (xex.ecutionner@gmail.com)        *
+*   Copyright (C) 2020-2021 Ai4rei/AN                                      *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144), X-EcutiOnner, Ai4rei/AN        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-28                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -130,30 +130,39 @@ IgnorePalErr = function()
 
 	/// 2.4 - Find the location to jump to (based on build version) before the jump address
 	let jmpAddr;
-	if (Exe.Version < 9.0) //VC6
+	switch (Exe.Version)
 	{
-		code =
-			LEA(ECX, [EBP, NEG1WC]) //LEA ECX, [LOCAL.x]
-		+	MOV([EBP, WCn], ESI)    //MOV DWORD PTR SS:[LOCAL.y], ESI
-		+	MOV([EBP, WCn], ESI)    //MOV DWORD PTR SS:[LOCAL.z], ESI
-		;
-		jmpAddr = Exe.FindHex(code, addr - 0x38, addr);
-	}
-	else if (Exe.Version < 11.0) //VC9 & VC10
-	{
-		code =
-			LEA(ECX, ROC.HasFP ? [EBP, NEG2WC] : [ESP, POS2WC]) //LEA ECX, [LOCAL.x]
-		+	CALL(POS3WC)                                        //CALL func
-		+	XOR(AL, AL)                                         //XOR AL, AL
-		;
-		jmpAddr = Exe.FindHex(code, addr - 0x20, addr);
-	}
-	else //VC11 & VC14.16
-	{
-		code =
-			XOR(BL, BL) //XOR BL, BL
-		;
-		jmpAddr = Exe.FindHex(code, addr - 0x10, addr);
+		case 6: //VC6
+		{
+			code =
+				LEA(ECX, [EBP, NEG1WC]) //LEA ECX, [LOCAL.x]
+			+	MOV([EBP, WCn], ESI)    //MOV DWORD PTR SS:[LOCAL.y], ESI
+			+	MOV([EBP, WCn], ESI)    //MOV DWORD PTR SS:[LOCAL.z], ESI
+			;
+			jmpAddr = Exe.FindHex(code, addr - 0x38, addr);
+			break;
+		}
+
+		case 9:  //VC9 &
+		case 10: //VC10
+		{
+			code =
+				LEA(ECX, ROC.HasFP ? [EBP, NEG2WC] : [ESP, POS2WC]) //LEA ECX, [LOCAL.x]
+			+	CALL(POS3WC)                                        //CALL func
+			+	XOR(AL, AL)                                         //XOR AL, AL
+			;
+			jmpAddr = Exe.FindHex(code, addr - 0x20, addr);
+			break;
+		}
+
+		default: //VC11+
+		{
+			code =
+				XOR(BL, BL) //XOR BL, BL
+			;
+			jmpAddr = Exe.FindHex(code, addr - 0x10, addr);
+			break;
+		}
 	}
 
 	if (jmpAddr < 0)
@@ -218,7 +227,7 @@ IgnoreLuaErr = function()
 
 	let parts =
 	[
-		Exe.Version < 9.0
+		Exe.Version === 6
 	?
 			CALL(ALLWC)          //CALL sprintf equivalent
 		+	MOV(R32, [EBP, WCp]) //MOV reg32, DWORD PTR SS:[EBP+x]

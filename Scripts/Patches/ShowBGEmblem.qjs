@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-02-08                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ShowBGEmblem = function()
 {
 	/// 1.1 - Find the Mode checker pattern used in the emblem display function.
-	let plus110 = Exe.Version < 11.0  //(reg32_A is usually ESI)
+	let plus110 = Exe.Version < 11  //(reg32_A is usually ESI)
 	?
 		ADD(R32, 0x110)               //ADD reg32_A, 110 ; for VC9-VC10
 	:                                 //  or
@@ -102,7 +102,7 @@ ShowBGEmblem = function()
 			if (hookAddrs.indexOf(memAddr + 8) < 0)
 			{
 				hookAddrs.push(memAddr + 8);
-				
+
 				/// 2.3 - Look for the additional comparison before the current one within the same function.. ugh!
 				addr = Exe.FindHex(code + JE(POS2WC), memAddr - 0x180, memAddr - 0x80);
 				if (addr > 0)
@@ -135,7 +135,7 @@ ShowBGEmblem = function()
 
 	/// 3.4 - Add at allocated space
 	Exe.AddHex(free, code);
-	
+
 	/// 3.5 - Change the targets of all hookAddrs
 	hookAddrs.forEach( addr =>
 		Exe.SetTgtAddr(addr, freeVir)
@@ -143,8 +143,3 @@ ShowBGEmblem = function()
 
 	return true;
 };
-
-///
-/// \brief Disable for Old clients since they didnt have the BG mode check
-///
-// ShowBGEmblem.validate = () => Exe.BuildDate >= 20130700;

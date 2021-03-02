@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-01-17                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -43,34 +43,46 @@ MultiGRFs = function(patchName)
 	let addr = DGRF.RefAddr;
 
 	/// 2.1 - Find the AddPak CALL after the PUSH
-	let code;
-	if (Exe.Version >= 9.0 && Exe.Version < 14.0) //VC9 - VC11
+	let code, type;
+	switch (Exe.Version)
 	{
-		code =
-			CALL(ALLWC)             //CALL CFileMgr::AddPak
-		+	MOV(R32, [POS3WC])      //MOV reg32, DWORD PTR DS:[addr1]
-		+	MOV(EAX, [POS3WC])      //MOV EAX, DWORD PTR DS:[addr2]
-		;
-	}
-	else if (Exe.Version < 9.0) //VC6
-	{
-		code =
-			CALL(ALLWC)             //CALL CFileMgr::AddPak
-		+	MOV(EDI, POS3WC)        //MOV EDI, OFFSET addr2
-		;
-	}
-	else //VC14.16
-	{
-		code =
-			CALL(ALLWC)             //CALL CFileMgr::AddPak
-		+	MOV(EAX, [POS3WC])      //MOV EAX, DWORD PTR DS:[addr2]
-		;
+		case 6: //VC6
+		{
+			code =
+				CALL(ALLWC)             //CALL CFileMgr::AddPak
+			+	MOV(EDI, POS3WC)        //MOV EDI, OFFSET addr2
+			;
+			type = 1;
+			break;
+		}
+
+		case 9:  //VC9
+		case 10: // to
+		case 11: //VC11
+		{
+			code =
+				CALL(ALLWC)             //CALL CFileMgr::AddPak
+			+	MOV(R32, [POS3WC])      //MOV reg32, DWORD PTR DS:[addr1]
+			+	MOV(EAX, [POS3WC])      //MOV EAX, DWORD PTR DS:[addr2]
+			;
+			type = 2;
+			break;
+		}
+		default: //VC14.16
+		{
+			code =
+				CALL(ALLWC)             //CALL CFileMgr::AddPak
+			+	MOV(EAX, [POS3WC])      //MOV EAX, DWORD PTR DS:[addr2]
+			;
+			type = 3;
+			break;
+		}
 	}
 
 	let callAddr = Exe.FindHex(code, addr + 5, addr + 40);
 	if (callAddr < 0)
 	{
-		if (Exe.Version > 14.0 || !ROC.Post2010)
+		if (type === 3 || !ROC.Post2010) //VC14.16 & Pre-2010
 		{
 			code =
 				CALL(ALLWC)         //CALL CFileMgr::AddPak
@@ -78,7 +90,7 @@ MultiGRFs = function(patchName)
 			;
 			callAddr = Exe.FindHex(code, addr + 5, addr + 40);
 		}
-		else if (Exe.Version >= 9.0 && Exe.Version < 14.0)
+		else if (type === 2) //VC9 - VC11
 		{
 			code = code.replace(MOV(R32, [POS3WC]), "");
 			callAddr = Exe.FindHex(code, addr + 5, addr + 40);

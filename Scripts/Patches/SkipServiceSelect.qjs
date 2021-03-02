@@ -2,6 +2,7 @@
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
 *   Copyright (C) 2017-2020 *Unknown*                                      *
+*   Copyright (C) 2015-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -21,9 +22,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Shinryo                                                *
+*   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -40,7 +41,7 @@ SkipServiceSelect = function()
 
 	/// 2 - Find where it is used in a PUSH
 	let code, repl;
-	if (Exe.Version < 11.0)
+	if (Exe.Version < 11) //VC6 - VC10
 	{
 		code =
 			JZ(0x07)                     //JZ SHORT addr - skip the below code
@@ -54,9 +55,9 @@ SkipServiceSelect = function()
 		code =
 			CMOVNZ(R32, R32)             //CMOVNZ reg32_A, reg32_B
 		+   MOV([POS4WC], R8)            //MOV BYTE PTR DS:[g_hideAccountList], reg8_A
-		+	(Exe.Version > 11.0 ? 
+		+	(Exe.Version > 11.0 ?
 			MOV(R32, R32) 				 //MOV reg32_A, reg32_C
-		: 
+		:
 			"")
 		+   PUSH(addr)                   //PUSH addr ; ASCII "passwordencrypt"
 		;
