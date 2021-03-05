@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-03-02                                             #
+#   Last Modified : 2021-03-06                                             #
 #                                                                          #
 ############################################################################
 
@@ -1062,6 +1062,12 @@
             recommend : no
             author : X-EcutiOnner
             desc : Remove equipment preview button on the items description window
+        
+        - IncrNewCharHairs:
+            title : Increase New Char Hair Limits
+            recommend : no
+            author : Neo-Mind
+            desc : Increase the Hair Style and Color limits used in Make Character Window to user specified values.
 
 - ButtonVis:
     title : BASIC BUTTON VISIBILITY

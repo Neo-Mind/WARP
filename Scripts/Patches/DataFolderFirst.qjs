@@ -97,7 +97,6 @@ DataFolderFirst = function()
 	let ReadFolderFirst = Exe.GetHex(addr2 + gloc, 4);
 	if (Exe.Version === 6)
 	{
-		{
 		/// 2.2 - Find the Comparison for VC6 Clients
 		let addrs = Exe.FindHexN( MOV(AL, [ReadFolderFirst]) ); //MOV AL, BYTE PTR DS:[g_readFolderFirst]
 		if (addrs.isEmpty())
