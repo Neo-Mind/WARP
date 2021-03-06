@@ -1074,6 +1074,12 @@
             recommend : no
             author : Andrei Karas (4144)
             desc : Hide Zero Date (1969-01-01) in guild members window.
+        
+        - CustomSlotHLColor:
+            title : Change Skill Slot Highlight
+            recommend : no
+            author : Hanashi , Andrei Karas (4144)
+            desc : Changes the highlight color for skill slot to user specified value.
 
 - ButtonVis:
     title : BASIC BUTTON VISIBILITY
