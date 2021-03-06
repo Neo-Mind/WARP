@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-02-23                                             *
+*   Last Modified : 2021-03-06                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -350,8 +350,32 @@ BitWidth = function(v)
 /// \brief Calculates the Distance between the given target and source (if not numbers then then target itself is returned)
 ///
 Distance = (tgt, src) =>
-	typeof tgt == 'number' && typeof src === 'number' ? tgt - src : tgt;
+	typeof tgt === 'number' && typeof src === 'number' ? tgt - src : tgt;
 
+
+///
+/// \brief Calculate the addresses for various indices in the array of hex strings (instructions).
+///
+MapAddrs = function(start, arr)
+{
+	if (IsArr(arr))
+	{
+		let offset = 0;
+		return arr.map( hex =>
+		{
+			let addr = start + offset;
+
+			if (typeof hex === 'string')
+				offset += hex.byteCount();
+
+			return addr;
+		});
+	}
+	else
+	{
+		return [];
+	}
+}
 
   //============//
  // Extractors //

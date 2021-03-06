@@ -1069,6 +1069,12 @@
             author : Neo-Mind
             desc : Increase the Hair Style and Color limits used in Make Character Window to user specified values.
 
+        - HideZeroDateInGuildWin:
+            title : Hide Zero Date in Guild Window
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Hide Zero Date (1969-01-01) in guild members window.
+
 - ButtonVis:
     title : BASIC BUTTON VISIBILITY
     mutex : false
@@ -1218,6 +1224,12 @@
             recommend : no
             author : Andrei Karas (4144) , X-EcutiOnner
             desc : Disable locking camera viewpoint rotation using ViewPointTable.txt
+        
+        - NoMapInfo:
+            title : Disable Map Signs
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Disable the use of mapInfo lub file to display map signs when player enters map.
 
 - CustomChar:
     title : CHARACTER CUSTOMIZATION
@@ -1447,6 +1459,12 @@
             recommend : no
             author : jchcc
             desc : Auto mute audio when game window is not active.
+        
+        - NoBGMAudio:
+            title : Disable BGM Audio
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Disable the use of mp3NameTable.txt to pick & play audio files as BGM.
 
 - CustomSpecials:
     title : SPECIAL CUSTOMIZATIONS
