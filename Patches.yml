@@ -629,14 +629,20 @@
         - IgnoreLuaErr:
             title : Ignore Lua Errors
             recommend : no
-            author : Andrei Karas (4144), X-EcutiOnner , Ai4rei/AN
-            desc : Prevents the client from displaying a error messages from lua code like 'attempt to call nil value'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+            author : Andrei Karas (4144), X-EcutiOnner
+            desc : Prevents the client from displaying error messages from lua code like 'attempt to call nil value'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
         
         - IgnoreQuestErr:
             title : Ignore Quest Errors
             recommend : no
-            author : Andrei Karas (4144), X-EcutiOnner , Ai4rei/AN
-            desc : Prevents the client from displaying a error messages like 'Not found Quest Info = XXXX'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+            author : Andrei Karas (4144), X-EcutiOnner
+            desc : Prevents the client from displaying error messages like 'Not found Quest Info = XXXX'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+        
+        - IgnoreEntryQueueErr:
+            title : Ignore Entry Queue Errors
+            recommend : no
+            author : X-EcutiOnner
+            desc : Prevents the client from displaying error messages related to Entry Queue. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
 
 - ClientArgs:
     title : CLIENT ARGUMENTS

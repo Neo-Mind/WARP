@@ -61,13 +61,12 @@ IgnoreRsrcErr = function()
 	addr += 5;
 
 	/// 2.3 - Prep code to replace with (for calling OutputDebugStringA & stack restoration)
-	let OutDbgStrA = Exe.FindFunc("OutputDebugStringA");
-	if (OutDbgStrA < 0)
+	if (ROC.OutDbgStrA < 0)
 		throw Error("'OutputDebugStringA' function missing");
 
 	code =
 		PUSH(ROC.HasFP ? [EBP, 8] : [ESP, 4]) //PUSH DWORD PTR DS:[ARG.1]
-	+	CALL([OutDbgStrA])                    //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
+	+	CALL([ROC.OutDbgStrA])                //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
 	+	XOR(EAX, EAX)                         //XOR EAX, EAX
 	+  	(ROC.HasFP
 	?
@@ -168,35 +167,33 @@ IgnorePalErr = function()
 	if (jmpAddr < 0)
 		throw Error("End code missing");
 
-	/// 3.1 - Get the OutputDebugStringA function address
-	let OutDbgStrA = Exe.FindFunc("OutputDebugStringA");
-	if (OutDbgStrA < 0)
+	/// 3.1 - Prep new code to send the message to OutputDebugStringA function
+	if (ROC.OutDbgStrA < 0)
 		throw Error("'OutputDebugStringA' function missing");
 
-	/// 3.2 - Prep new code to send the message to OutputDebugStringA function
 	code =
-		PUSH(EDX)          //PUSH EDX
-	+	SUB(ESP, 0x100)    //SUB ESP, 100
-	+	MOV(ECX, ESP)      //MOV ECX, ESP
-	+	MOV(EDX, msgAddr)  //MOV EDX, OFFSET addr; ASCII "CPaletteRes :: Cannot find File : "
-	+	MOV(AL, [EDX])     //MOV AL, BYTE PTR DS:[EDX] ;loop1
-	+	MOV([ECX], AL)     //MOV BYTE PTR DS:[ECX], AL
-	+	INC(ECX)           //INC ECX
-	+	INC(EDX)           //INC EDX
-	+	TEST(AL, AL)       //TEST AL, AL
-	+	JNE(-0xA)          //JNE SHORT loop1
-	+	DEC(ECX)           //DEC ECX ; to remove the NULL
-	+	MOV(EDX, ESI)      //MOV EDX, ESI
-	+	MOV(AL, [EDX])     //MOV AL, BYTE PTR DS:[EDX] ;loop2
-	+	MOV([ECX], AL)     //MOV BYTE PTR DS:[ECX], AL
-	+	INC(ECX)           //INC ECX
-	+	INC(EDX)           //INC EDX
-	+	TEST(AL, AL)       //TEST AL, AL
-	+	JNE(-0xA)          //JNE SHORT loop2
-	+	PUSH(ESP)          //PUSH ESP
-	+	CALL([OutDbgStrA]) //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
-	+	ADD(ESP, 0x100)    //ADD ESP, 100
-	+	POP(EDX)           //POP EDX
+		PUSH(EDX)              //PUSH EDX
+	+	SUB(ESP, 0x100)        //SUB ESP, 100
+	+	MOV(ECX, ESP)          //MOV ECX, ESP
+	+	MOV(EDX, msgAddr)      //MOV EDX, OFFSET addr; ASCII "CPaletteRes :: Cannot find File : "
+	+	MOV(AL, [EDX])         //MOV AL, BYTE PTR DS:[EDX] ;loop1
+	+	MOV([ECX], AL)         //MOV BYTE PTR DS:[ECX], AL
+	+	INC(ECX)               //INC ECX
+	+	INC(EDX)               //INC EDX
+	+	TEST(AL, AL)           //TEST AL, AL
+	+	JNE(-0xA)              //JNE SHORT loop1
+	+	DEC(ECX)               //DEC ECX ; to remove the NULL
+	+	MOV(EDX, ESI)          //MOV EDX, ESI
+	+	MOV(AL, [EDX])         //MOV AL, BYTE PTR DS:[EDX] ;loop2
+	+	MOV([ECX], AL)         //MOV BYTE PTR DS:[ECX], AL
+	+	INC(ECX)               //INC ECX
+	+	INC(EDX)               //INC EDX
+	+	TEST(AL, AL)           //TEST AL, AL
+	+	JNE(-0xA)              //JNE SHORT loop2
+	+	PUSH(ESP)              //PUSH ESP
+	+	CALL([ROC.OutDbgStrA]) //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
+	+	ADD(ESP, 0x100)        //ADD ESP, 100
+	+	POP(EDX)               //POP EDX
 	;
 
 	/// 3.2 - Replace at the modAddr
@@ -259,9 +256,8 @@ IgnoreLuaErr = function()
 	if (addr < 0)
 		throw Error("LuaErrorMsg function missing");
 
-	/// 2.1 - Get the OutputDebugStringA function address
-	let OutDbgStrA = Exe.FindFunc("OutputDebugStringA");
-	if (OutDbgStrA < 0)
+	/// 2.1 - Check for the OutputDebugStringA function address
+	if (ROC.OutDbgStrA < 0)
 		throw Error("'OutputDebugStringA' function missing");
 
 	/// 2.2 - Calculate the addresses for each part
@@ -277,12 +273,17 @@ IgnoreLuaErr = function()
 
 	/// 2.5 - Change the MessageBoxA CALL to OutputDebugStringA CALL followed by XOR EAX, EAX
 	Exe.SetHex(partAddrs[4] + 1,
-		CALL([OutDbgStrA])
+		CALL([ROC.OutDbgStrA])
 	+	XOR(EAX, EAX)
 	);
 
 	return true;
 };
+
+///
+/// \brief Disable for unsupported clients - Only 2010+ have Lua
+///
+IgnoreLuaErr.validate = IsPost2010;
 
 ///
 /// \brief Modify QuestErrorMsg function to send the error message to OutputDebugStringA instead of showing it with MessageBoxA
@@ -321,16 +322,15 @@ IgnoreQuestErr = function()
 	/// 2.1 - Set addr to location after prefix
 	addr += prefix.byteCount();
 
-	/// 2.2 - Get the OutputDebugStringA function address
-	let OutDbgStrA = Exe.FindFunc("OutputDebugStringA");
-	if (OutDbgStrA < 0)
+	/// 2.2 - Check the OutputDebugStringA function address
+	if (ROC.OutDbgStrA < 0)
 		throw Error("'OutputDebugStringA' function missing");
 
 	/// 2.3 - Prepare the replacement code (CALLs OutputDebugStringA instead)
 	let code =
-		PUSH_EAX            //PUSH EAX
-	+	CALL([OutDbgStrA])  //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
-	+	XOR(EAX, EAX)       //XOR EAX, EAX
+		PUSH_EAX               //PUSH EAX
+	+	CALL([ROC.OutDbgStrA]) //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
+	+	XOR(EAX, EAX)          //XOR EAX, EAX
 	;
 	code += NOPs(suffix.byteCount() - code.byteCount());
 
@@ -341,15 +341,84 @@ IgnoreQuestErr = function()
 };
 
 ///
-/// \brief Disable for unsupported clients - Only 2010+ have Lua
-///
-IgnoreLuaErr.validate = IsPost2010;
-
-///
 /// \brief Disable for unsupported clients - Need that format string present
 ///
 IgnoreQuestErr.validate = function()
 {
 	IQE_Addr = Exe.FindText("Not found Quest Info = %lu");
 	return (IQE_Addr > 0);
+};
+
+///
+/// \brief Modify EntryQueueErrorMsg function to send the error message to OutputDebugStringA
+///
+IgnoreEntryQueueErr = function()
+{
+	/// 1.1 - Find the location where the file is accessed
+	let parts =
+	[//0
+		PUSH(IEQE_Addr)  //PUSH OFFSET addr; ASCII "Data\Table\EntryQueue.bex"
+	+	CALL([POS3WC])   //CALL DWORD PTR DS:[&CreateFileA]
+	+	MOV(R32, EAX)    //MOV reg32_A, EAX
+	+	CMP(R32, -1)     //CMP reg32_A, -1
+	+	JNZ(WCp)         //JNE SHORT addr
+	,//1
+		PUSH(0x30)       //PUSH 30h ; '0'
+	+	PUSH(POS3WC)     //PUSH OFFSET addr; ASCII "Load Failed"
+	+	PUSH(IEQE_Addr)  //PUSH OFFSET addr; ASCII "Data\Table\EntryQueue.bex"
+	,//2
+		PUSH_R           //PUSH reg32_B
+	,//3
+		CALL([POS3WC])   //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
+	];
+	let addr = Exe.FindHex(parts.join(''));
+	if (addr < 0)
+	{
+		parts[2] = PUSH_0; //PUSH 0
+		addr = Exe.FindHex(parts.join(''));
+	}
+	if (addr < 0)
+		throw Error("Pattern not found");
+
+	/// 1.2 - Calculate the positional addresses
+	let addrs = MapAddrs(addr, parts);
+
+	/// 1.3 - Prepare the error string
+	let str = "EntryQueue Loading Failed\x00";
+
+	/// 1.4 - Allocate space for it
+	let free = Exe.FindSpace(str.length);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	let freeVir = Exe.Phy2Vir(free, VIRTUAL);
+
+	/// 1.5 - Add the string to it
+	Exe.AddText(free, str);
+
+	/// 2.1 - Check the OutputDebugStringA function address
+	if (ROC.OutDbgStrA < 0)
+		throw Error("'OutputDebugStringA' function missing");
+
+	/// 2.2 - Prepare the replacement code (CALLs OutputDebugStringA instead)
+	let code =
+		PUSH(freeVir)           //PUSH OFFSET addr; "EntryQueue Loading Failed"
+	+	CALL([ROC.OutDbgStrA])  //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
+	+	XOR(EAX, EAX)           //XOR EAX, EAX
+	;
+	code += NOPs(addrs[4] - addrs[1] - code.byteCount());
+
+	/// 2.3 - Now Replace it
+	Exe.SetHex(addrs[1], code);
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients - Need the file name
+///
+IgnoreEntryQueueErr.validate = function()
+{
+	IEQE_Addr = Exe.FindText("Data\\Table\\EntryQueue.bex");
+	return (IEQE_Addr > 0);
 };
