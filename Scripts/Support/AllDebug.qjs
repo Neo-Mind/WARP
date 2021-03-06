@@ -404,7 +404,7 @@ ShowAddr = function()
 };
 
 ///
-/// \brief Shows the physical and virtual cntparts of multiple addresses
+/// \brief Shows the physical and virtual counterparts of multiple addresses
 ///
 ShowAddrs = function()
 {

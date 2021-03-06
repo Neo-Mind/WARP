@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144), X-EcutiOnner, Ai4rei/AN        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-03-06                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -226,7 +226,7 @@ IgnoreLuaErr = function()
 	;
 
 	let parts =
-	[
+	[//0
 		Exe.Version === 6
 	?
 			CALL(ALLWC)          //CALL sprintf equivalent
@@ -235,17 +235,17 @@ IgnoreLuaErr = function()
 	:
 			CALL([POS3WC])       //CALL DWORD PTR DS:[<&MSVCR110.vsprintf>] ; can also be different print function
 		+	ADD(ESP, WCp)        //ADD ESP, 0C or 1C
-	,
+	,//1
 			''
-	,
+	,//2
 			cmn                  //LEA reg32_B, [LOCAL.x]
-	,
+	,//3
 			PUSH_0               //PUSH 0
 		+	PUSH_R               //PUSH reg32_A
-	,
+	,//4
 			PUSH_R               //PUSH reg32_B
 		+	PUSH_0               //PUSH 0
-		+	CALL([MBoxA])         //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
+		+	CALL([MBoxA])        //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
 	];
 
 	let addr = Exe.FindHex(parts.join(''));
@@ -264,30 +264,19 @@ IgnoreLuaErr = function()
 	if (OutDbgStrA < 0)
 		throw Error("'OutputDebugStringA' function missing");
 
-	/// 2.2 - Skip over the 1st part
-	addr += parts[0].byteCount();
+	/// 2.2 - Calculate the addresses for each part
+	let partAddrs = MapAddrs(addr, parts);
 
 	/// 2.3 - NOP out any code in 2nd part
 	if (!parts[1].isEmpty())
-	{
-		let count = parts[1].byteCount();
-		Exe.SetNOPs(addr, count);
-		addr += count;
-	}
+		Exe.SetNOPs(partAddrs[1], partAddrs[2] - partAddrs[1]);
 
-	/// 2.4 - Skip over the LEA EAX
-	addr += parts[2].byteCount();
-
-	/// 2.5 - NOP out any code in 4th part
+	/// 2.4 - NOP out any code in 4th part
 	if (!parts[3].isEmpty())
-	{
-		let count = parts[3].byteCount();
-		Exe.SetNOPs(addr, count);
-		addr += count;
-	}
+		Exe.SetNOPs(partAddrs[3], partAddrs[4] - partAddrs[3]);
 
-	/// 2.6 - Change the MessageBoxA CALL to OutputDebugStringA CALL followed by XOR EAX, EAX
-	Exe.SetHex(addr + 1,
+	/// 2.5 - Change the MessageBoxA CALL to OutputDebugStringA CALL followed by XOR EAX, EAX
+	Exe.SetHex(partAddrs[4] + 1,
 		CALL([OutDbgStrA])
 	+	XOR(EAX, EAX)
 	);

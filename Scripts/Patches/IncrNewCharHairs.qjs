@@ -156,33 +156,32 @@ IncrNewCharHairs = function()
 	if (cmpAddr < 0)
 		throw Error("Hair Color comparison missing");
 
-	/// 1.4 - Save the beginning & ending addresses as well as the offset for hair color
-	let hcBegin = cmpAddr + parts[0].byteCount();
+	/// 1.4 - Save the beginning & ending addresses as well as the memory location for hair color
+	let [, hcBegin, hcMid, hcEnd] = MapAddrs(cmpAddr, parts);
 
-	let ins = Instr.FromAddr(hcBegin + parts[1].byteCount());
+	let ins = Instr.FromAddr(hcMid);
+	clrLoc[0] = R32.List[ins.MRM.RegM];
 	clrLoc[1] = ins.Disp;
-	if (clrLoc[0].Index < 0) //unknown reg
-		clrLoc[0] = R32.List[ins.MRM.RegM];
-
-	let hcEnd = ins.Addr + parts[2].byteCount();
 
 	/// 1.5 - Prepare the patterns for style comparison
-	let cmp2, styleLoc;
+	let prefix, suf1, suf2, styleLoc;
 	switch (Exe.Version)
 	{
 		case 6:
 		{
 			styleLoc = [EBX, POS1WC];
-			parts =
-			[
+			prefix =
 				DEC(WORD_PTR, styleLoc)        //DEC WORD PTR DS:[EBX + hsOffset]
-			,	CMP(styleLoc, DI)              //CMP WORD PTR DS:[EBX + hsOffset], DI
+			;
+
+			suf1 =
+				CMP(styleLoc, DI)              //CMP WORD PTR DS:[EBX + hsOffset], DI
 			+	JNE(9)                         //JNE SHORT _skip
 			+	MOV(WORD_PTR, styleLoc, 0x17)  //MOV WORD PTR DS:[EBX + hsOffset], 17
-			];
+			;
 
 			styleLoc[1] = Filler(1);
-			cmp2 =
+			suf2 =
 				INC(WORD_PTR, styleLoc)        //INC WORD PTR DS:[EBX + hsOffset]
 			+	MOV(AX, styleLoc)              //MOV AX, WORD PTR DS:[EBX + hsOffset]
 			+	CMP(AX, 0x18)                  //CMP AX, 18
@@ -196,24 +195,25 @@ IncrNewCharHairs = function()
 			if (Exe.BuildDate <= 20120222 || (!ROC.IsRenewal && Exe.BuildDate <= 20120320))
 			{
 				styleLoc = [Exe.BuildDate <= 20110900 ? EBX : EBP, POS1WC];
-				parts =
-				[
+				prefix =
 					Exe.BuildDate <= 20111102
 				?
 					DEC(WORD_PTR, styleLoc)    //DEC WORD PTR DS:[reg32_B + hsOffset]
-				:
+				:                              // or
 					ADD(styleLoc, SI)          //ADD WORD PTR DS:[reg32_B + hsOffset], SI
-				,
-					MOVZX(EAX, styleLoc)       //MOVZX EAX, WORD PTR DS:[reg32_B + hsOffset] 
+				;
+
+				suf1 =
+					MOVZX(EAX, styleLoc)       //MOVZX EAX, WORD PTR DS:[reg32_B + hsOffset]
 				+	XOR(ECX, ECX)              //XOR ECX, ECX
 				+	CMP(CX, AX)                //CMP CX, AX
 				+	JNE(0xC)                   //JNE SHORT _skip
 				+	MOV(EDX, 0x17)             //MOV EDX, 17
 				+	MOV(styleLoc, DX)          //MOV WORD PTR DS:[reg32_B + hsOffset], DX
-				];
+				;
 
 				styleLoc[1] = Filler(1);
-				cmp2 =
+				suf2 =
 					INC(WORD_PTR, styleLoc)    //INC WORD PTR DS:[reg32_B + hsOffset]
 				+	MOVZX(EAX, styleLoc)       //MOVZX EAX, WORD PTR DS:[reg32_B + hsOffset]
 				+	MOV(ECX, 0x18)             //MOV ECX, 18
@@ -231,36 +231,36 @@ IncrNewCharHairs = function()
 			styleLoc = [EBX, POS2WC];
 			if (Exe.BuildDate <= 20140205)
 			{
-				parts =
-				[
+				prefix =
 					Exe.Version > 9
 				?
 					MOV(styleLoc, EDX)         //MOV DWORD PTR DS:[EBX + hsOffset], EDX
 				+	TEST(EDX, EDX)             //TEST EDX, EDX
 				:
 					''
-				,
+				;
+				suf1 =
 					(Exe.Version === 9
 				?
 					CMP(styleLoc, 0)           //CMP DWORD PTR DS:[EBX + hsOffset], 0
 				:
 					''
 				)
-				+
-					JGE(0xA)                   //JGE SHORT _skip
+				+	JGE(0xA)                   //JGE SHORT _skip
 				+	MOV(styleLoc, 0)           //MOV DWORD PTR DS:[EBX + hsOffset], 0
 				+	MOV(EAX, 0x16)             //MOV EAX, 16
 				+	CMP(styleLoc, EAX)         //CMP DWORD PTR DS:[EBX + hsOffset], EAX
 				+	JLE(6)                     //JLE SHORT _skip2
 				+	MOV(styleLoc, EAX)         //MOV DWORD PTR DS:[EBX + hsOffset], EAX
-				];
+				;
 			}
 			else
 			{
-				parts =
-				[
+				prefix =
 					MOV(styleLoc, R32)         //MOV DWORD PTR DS:[EBX + hsOffset], reg32_A
-				,
+				;
+
+				suf1 =
 					TEST(EAX, EAX)             //TEST EAX, EAX
 				+	JNS(0xC)                   //JNS SHORT _skip
 				+	MOV(styleLoc, 0)           //MOV DWORD PTR DS:[EBX + hsOffset], 0
@@ -268,7 +268,7 @@ IncrNewCharHairs = function()
 				+	CMP(EAX, 0x16)             //CMP EAX, 16
 				+	JLE(0xA)                   //JLE SHORT _skip3
 				+	MOV(styleLoc, 0x16)        //MOV DWORD PTR DS:[EBX + hsOffset], 16
-				];
+				;
 			}
 			break;
 		}
@@ -277,37 +277,32 @@ IncrNewCharHairs = function()
 	}
 
 	///	1.6 - Use the pattern to find the style comparison
-	code = parts.join('');
-
-	cmpAddr = Exe.FindHex(code, hcBegin - 0x300, hcBegin);
+	cmpAddr = Exe.FindHex(prefix + suf1, hcBegin - 0x300, hcBegin);
 	if (cmpAddr < 0)
-		cmpAddr = Exe.FindHex(code, hcEnd, hcEnd + 0x200);
+		cmpAddr = Exe.FindHex(prefix + suf1, hcEnd, hcEnd + 0x200);
 
 	if (cmpAddr < 0)
 		throw Error("Hair Style comparison missing");
 
-	/// 1.7 - Save the addresses & offsets required
-	ins = Instr.FromAddr(cmpAddr);
-	styleLoc[1] = ins.Disp;
+	/// 1.7 - Save the begin & end addresses and the memory location for hair style
+	styleLoc[1] = Instr.FromAddr(cmpAddr).Disp;
 
-	let hsBegin = cmpAddr + parts[0].byteCount();
-	let hsEnd = hsBegin + parts[1].byteCount();
+	let [, hsBegin, hsEnd] = MapAddrs(cmpAddr, [prefix, suf1]);
 	let hsAddon = 1;
 
 	/// 1.8 - Look for an additional comparison for older clients (Left and Right arrows have seperate cases)
 	let hsBegin2, hsEnd2;
-	if (cmp2 !== undefined)
+	if (suf2 !== undefined)
 	{
 		hsAddon = 0;
 
-		cmp2 = SwapFiller(cmp2, 1, styleLoc[1]);
-		cmpAddr = Exe.FindHex(cmp2, hsEnd + 0x50, hsEnd + 0x400);
+		suf2 = SwapFiller(suf2, 1, styleLoc[1]);
+		cmpAddr = Exe.FindHex(prefix + suf2, hsEnd + 0x50, hsEnd + 0x400);
 		if (cmpAddr < 0)
 			throw Error("2nd Style comparison missing");
 
-		/// 1.9 - Save the addresses.
-		hsBegin2 = cmpAddr + parts[0].byteCount();
-		hsEnd2 = cmpAddr + cmp2.byteCount();
+		/// 1.9 - Save the addresses
+		[, hsBegin2, hsEnd2] = MapAddrs(cmpAddr, [prefix, suf2]);
 	}
 
 	/// 2.1 - Get the new limits from user
@@ -326,14 +321,14 @@ IncrNewCharHairs = function()
 		_INCH_JmpCall(hcBegin, hcEnd, freeVir);
 
 		/// 2.4 - Fix the scrollbar for Hair Color
-		if (cmp2 === undefined)
+		if (suf2 === undefined)
 			_INCH_FixScroll('color', hcLimit, hcNewLimit);
 	}
 
 	if (hsNewLimit !== false)
 	{
 		/// 2.5 - Prep & Insert the new Hair Style comparison
-		let freeVir = _INCH_AddCmp(styleLoc, hsAddon, hsNewLimit + hsAddon, cmp2 !== undefined ? 2 : 4);
+		let freeVir = _INCH_AddCmp(styleLoc, hsAddon, hsNewLimit + hsAddon, suf2 !== undefined ? 2 : 4);
 
 		/// 2.6 - Put a JMP at Original Hair Style comparison & a CALL before the End of comparison
 		_INCH_JmpCall(hsBegin, hsEnd, freeVir);

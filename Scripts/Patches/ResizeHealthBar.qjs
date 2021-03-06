@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-03-06                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -216,13 +216,12 @@ ResizeBossBar = function()
 	/// 2.2 - Based on type replace the values
 	if (type === 1)
 	{
-		tgtAddr += parts[0].byteCount();
+		let [,hgtAddr, widAddr] = MapAddrs(tgtAddr, parts);
 		if (hgt !== false)
-			Exe.SetFromVar(tgtAddr + 3, '$mvpHpHeight');
+			Exe.SetFromVar(hgtAddr + 3, '$mvpHpHeight');
 
-		tgtAddr += parts[1].byteCount();
 		if (wid !== false)
-			Exe.SetFromVar(tgtAddr + 3, '$mvpHpWidth');
+			Exe.SetFromVar(widAddr + 3, '$mvpHpWidth');
 	}
 	else
 	{

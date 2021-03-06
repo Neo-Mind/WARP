@@ -361,7 +361,7 @@ MapAddrs = function(start, arr)
 	if (IsArr(arr))
 	{
 		let offset = 0;
-		return arr.map( hex =>
+		let result = arr.map( hex =>
 		{
 			let addr = start + offset;
 
@@ -370,6 +370,8 @@ MapAddrs = function(start, arr)
 
 			return addr;
 		});
+
+		return [...result, start + offset];
 	}
 	else
 	{

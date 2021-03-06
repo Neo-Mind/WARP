@@ -28,50 +28,48 @@
 \**************************************************************************/
 
 ///
-/// \brief Zero out the system\mapInfo*.lub file strings so that it never gets loaded and therefore 
+/// \brief Zero out the system\mapInfo*.lub file strings so that it never gets loaded and therefore
 ///        avoids displaying the map sign inside CMapInfoMgr function when Player enters map.
 ///
 NoMapInfo = function()
 {
 	/// 1 - Zero it out
 	Exe.SetInt8(NMI_Addr, 0);
-	
+
 	/// 2.1 - Find the CMapInfoMgr ErrorMsg function
 	let parts =
 	[
 		JZ(POS1WC)       //JZ _skip
-	,
+	,//1
 		PUSH([EBP, WC])  //PUSH DWORD PTR SS:[EBP + offsetA]
 	+	CALL(ALLWC)      //CALL CLua::OpenLibs
 	+	PUSH_0           //PUSH 0
 	+	PUSH(POS4WC)     //PUSH OFFSET lua_function_sub
-	,
+	,//2
 		PUSH([EBP, WC])  //PUSH DWORD PTR SS:[EBP + offsetA]
 	+	CALL()           //CALL lua_pushCclosure
 	]
 	;
-	
+
 	let addr = Exe.FindHex(parts.join(''));
 	if (addr < 0)
 		throw Error("ErrorMsg function missing");
-	
+
 	/// 2.2 - Ensure the offsets are same
-	let ins1 = Instr.FromAddr(addr + parts[0].byteCount());
-	let ins2 = Instr.FromAddr(ins1.Addr + parts[1].byteCount());
-	
-	if (ins1.Disp !== ins2.Disp)
+	let partAddrs = MapAddrs(addr, parts);
+	if (Instr.FromAddr(partAddrs[1]).Disp !== Instr.FromAddr(partAddrs[2]).Disp)
 		throw Error("False match found");
-	
+
 	/*
 	var openLibsOffset = 10;
     var pushcclosureOffset = 25;
     logRawFunc("luaL_openlibs", addr, openLibsOffset);
     logRawFunc("lua_pushcclosure", addr, pushcclosureOffset);
 	*/
-	
+
 	/// 2.3 - Enforce the JZ
 	Exe.SetJMP(addr);
-	
+
 	return true;
 };
 

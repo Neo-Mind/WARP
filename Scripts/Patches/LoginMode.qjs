@@ -201,7 +201,7 @@ RestoreLoginWindow = function()
 		PUSH(3)                           //PUSH 3
 	+	WINMGR.MovECX                     //MOV ECX, OFFSET g_windowMgr
 	+	CALL(WINMGR.MakeWin, codeVir + 7) //CALL UIWindowMgr::MakeWindow ; 2 + 5 bytes from previous 2 instructions
-	+	JMP(parts[1].byteCount(), 12)     //JMP SHORT addr ; skip over to the MOV DWORD PTR DS:[EBX+0C], 4
+	+	JMP(parts[1].byteCount(), 12)     //JMP SHORT addr ; skip over to the MOV DWORD PTR DS:[reg32_B + 0C], 4
 	;
 
 	/// 2.5 - Overwrite at codeAddr
