@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144), X-EcutiOnner, Ai4rei/AN        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-03-06                                             *
+*   Last Modified : 2021-03-07                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -367,16 +367,15 @@ IgnoreEntryQueueErr = function()
 	+	PUSH(POS3WC)     //PUSH OFFSET addr; ASCII "Load Failed"
 	+	PUSH(IEQE_Addr)  //PUSH OFFSET addr; ASCII "Data\Table\EntryQueue.bex"
 	,//2
+		Exe.Version > 10
+	?
+		PUSH_0           //PUSH 0
+	:
 		PUSH_R           //PUSH reg32_B
 	,//3
 		CALL([POS3WC])   //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
 	];
 	let addr = Exe.FindHex(parts.join(''));
-	if (addr < 0)
-	{
-		parts[2] = PUSH_0; //PUSH 0
-		addr = Exe.FindHex(parts.join(''));
-	}
 	if (addr < 0)
 		throw Error("Pattern not found");
 
