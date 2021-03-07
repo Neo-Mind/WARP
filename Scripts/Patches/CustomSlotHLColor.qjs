@@ -1,10 +1,11 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2021 Hanashi                                        *
+*   Copyright (C) 2020-2021 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
-*   WARP is free software: you can redistribute it and/or modify           *
+*   WARP is free software : you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by   *
 *   the Free Software Foundation, either version 3 of the License, or      *
 *   (at your option) any later version.                                    *
@@ -20,51 +21,66 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Andrei (4144)                                          *
-*   Created Date  : 2020-11-22                                             *
+*   Author(s)     : Hanashi, Andrei (4144)                                 *
+*   Created Date  : 2021-03-06                                             *
 *   Last Modified : 2021-03-06                                             *
 *                                                                          *
 \**************************************************************************/
 
-// TODO - Comparison not there in clients before 2018-06-21 . Need to check if the exp limit is really there in the client
-
 ///
-/// \brief Change the Guild EXP limit from 50 to custom value in UIGuildPositionManageWnd_virt136
+/// \brief Modify the color used for highlight inside UIShortCutWnd::OnDraw function
 ///
-CustomGuildExpLimit = function()
+CustomSlotHLColor = function()
 {
-	/// 1 - Find the comparison
-	let parts =
-	[//0
-		TEST(EAX, EAX)    //TEST EAX, EAX
-	+	JS(' [0000..01]') //JS SHORT addr1 (delta is 5 or 9)
-	,//1
-		CMP(EAX, 0x32)    //CMP EAX, 32
-	,//2
-		JLE(Exe.Version > 11 ? WCp : POS2WC) //JLE SHORT addr2 or JLE addr2
-	,//3
-		PUSH_0            //PUSH 0
-	+	PUSH(0x32)        //PUSH 32
-	+	PUSH(0xD9E)       //PUSH 0D9E
-	+	CALL()            //CALL MsgStr
-	]
-	;
-	let addr = Exe.FindHex(parts.join(''));
+	/// 1.1 - Find the code before the color PUSH
+	let code;
+	if (Exe.Version === 6)
+	{
+		code =
+			CMP(ROC.Post2010 ? ECX : EAX, -1) //CMP reg32, -1 ; reg32 = ECX/EAX
+		+	JE(WCp)                           //JE SHORT addr
+		+	(ROC.Post2010
+		?
+			MOV(EAX, [POS3WC])                //MOV EAX, DWORD PTR DS:[addr]
+		:
+			LEA(ECX, [8, EAX])                //LEA ECX, [8*EAX]
+		)
+		;
+	}
+	else
+	{
+		code =
+			MOVZX(ECX, BYTE_PTR, [POS4WC])    //MOVZX ECX, BYTE PTR DS:[addr]
+		+	IMUL(R32, R32, 0x1D)              //IMUL reg32_A, reg32_B, 1D
+		;
+	}
+	let addrs = Exe.FindHexN(code);
+	if (addrs.isEmpty())
+		throw Error("Prefix code missing");
+
+	let csize = code.byteCount();
+
+	/// 1.2 - Now find the PUSH after it
+	code = PUSH(0xB4FFB4);             //PUSH 00B4FFB4
+
+	let addr;
+	addrs.find(memAddr =>
+	{
+		addr = Exe.FindHex(code, memAddr + csize, memAddr + csize + 0x10);
+		return (addr > 0);
+	});
+
 	if (addr < 0)
-		throw Error("Limit checker missing");
+		throw Error("Light Green PUSH missing");
 
-	/// 2.1 - Get the new value from user
-	let newLimit = Exe.GetUserInput('$guildExpLimit', D_Uint8, "Exp Limit", "Enter new guild exp limit", 50, {max: 120});
-	if (newLimit === false)
-		Cancel("Exp Limit", 50);
+	/// 2.1 - Get the new color from user
+	let varName = '$HSkillSColor';
+	let newColor = Exe.GetUserInput(varName, D_Color, "Highlight Color", "Select the new color", 0x00B4FFB4, {ignoreAlpha: true, keepAlpha: true});
+	if (newColor === false)
+		Cancel("Highlight Color", "Light Green (0xB4FFB4)");
 
-	/// 2.2 - Set the new limit
-	Exe.SetFromVar(addr + parts[0].byteCount() + 2, '$guildExpLimit');
+	/// 2.2 - Replace the color
+	Exe.SetFromVar(addr + 1, varName);
 
 	return true;
 };
-
-///
-/// \brief Disable for older client since comparison isnt there (atleast in the place it was supposed to be)
-///
-CustomGuildExpLimit.validate = () => Exe.BuildDate > 20180600;

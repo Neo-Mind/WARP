@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-01-17                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -48,7 +48,7 @@ ShowRegisterBtn = function()
 
 	/// 2.1 - Look for the Langtype comparison before the PUSH (within 0x30 bytes)
 	let prefix, jnePos; //jnePos indicates position of the JNE opcode w.r.t. end of prefix
-	if (Exe.Version < 9.0) //VC6
+	if (Exe.Version === 6) //VC6
 	{
 		prefix =
 			MOV(EAX, [LANGTYPE])   //MOV EAX, DWORD PTR DS:[g_serviceType]
@@ -110,7 +110,7 @@ ShowRegisterBtn = function()
 		throw Error("'btn_request_b' not found");
 
 	/// 4.2 - Find where it is assigned
-	if (Exe.Version === 9.0) //VC9
+	if (Exe.Version === 9) //VC9
 	{
 		addr = Exe.FindHex( ROC.HasFP ?
 			MOV([EBP, WCp], btnAddr)
@@ -165,10 +165,10 @@ ShowCancelBtn = function()
 
 	/// 1.2 - Find where it is assigned (inside UILoginWnd::OnCreate)
 	let code;
-	if (Exe.Version > 9.0)
-		code = MOV( ROC.HasFP ? [EBP, NEG2WC] : [ESP, WCn], btnAddr);
+	if (Exe.Version === 9) //VC9 didn't use FP
+		code = MOV([ESP, POS2WC], btnAddr);
 	else
-		code = MOV( ROC.HasFP ? [EBP, WCp] : [ESP, POS2WC], btnAddr);
+		code = MOV( ROC.HasFP ? [EBP, NEG2WC] : [ESP, WCn], btnAddr);
 
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
@@ -231,7 +231,7 @@ ShowReplayBtn = function()
 	/// 1.2 - Move Replay Button to visible area
 	let jmpAddr = _SRB_FixupBtnCoords("replay_interface\\btn_replay_a", "Replay - ", " E8", " E8");
 
-	if (Exe.Version <= 11.0)
+	if (Exe.Version <= 11)
 	{
 		/// 2.1 - Service and Server select both use the same Window.
 		///       so look for the mode comparison to distinguish
@@ -251,7 +251,7 @@ ShowReplayBtn = function()
 	let code =
 		PUSH_0           //PUSH 0
 	+	PUSH_0           //PUSH 0
-	+	(Exe.Version > 11.0
+	+	(Exe.Version > 11
 	?
 		MOV(R32, [R32])  //MOV reg32_A, DWORD PTR DS:[reg32_B]
 	:
@@ -286,7 +286,7 @@ ShowReplayBtn = function()
 	}
 	else
 	{
-		if (Exe.Version === 11.0) //VC11 (remaining set)
+		if (Exe.Version === 11) //VC11 (remaining set)
 		{
 			addr2 = Exe.FindHex(parts[1] + parts[3]);
 		}
@@ -372,12 +372,12 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 	/// 2.3 - Find the coordinate assignment for the button we need
 	let reg = (ROC.HasFP ? EBP : ESP);
 	let code, type;
-	if (Exe.Version >= 11.0)//reg will be EBP since client has not done FPO since VC11
+	if (Exe.Version >= 11)//reg will be EBP since client has not done FPO since VC11
 	{
 		code =
 			MOV([reg, WC], -0x64)    //MOV DWORD PTR SS:[reg + x], -64 ; x-coord
 		+	MOV([reg, WC], -0x64)    //MOV DWORD PTR SS:[reg + y], -64 ; y-coord
-		+	(Exe.Version >= 14.0 ? suffix : suffix2)
+		+	(Exe.Version > 11 ? suffix : suffix2)
 		;
 		type = 1; //VC11+
 	}

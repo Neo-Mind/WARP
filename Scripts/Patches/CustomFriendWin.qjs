@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), X-EcutiOnner, CH.C (jchcc)              *
 *   Created Date  : 2021-01-22                                             *
-*   Last Modified : 2021-01-23                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -73,7 +73,7 @@ CustomFriendsLimit = function()
 
     /// 1.2 - Now find the argument push for the max friends limit
 	let prefix = PUSH(0x28);                                    //PUSH 28
-	if (Exe.Version > 10.0)
+	if (Exe.Version > 10) //VC11+
 	{
 		code =
 			PUSH([R32, POS1WC])                                 //PUSH DWORD PTR DS:[reg32_A + const]
@@ -96,7 +96,7 @@ CustomFriendsLimit = function()
 		;
 	}
 	let suffix = PUSH(CFL_Addr);                                 //PUSH OFFSET addr; ASCII "%s(%d/%d)"
-	
+
 	let addr = Exe.FindHex(prefix + code + suffix, refAddr, refAddr + 0xBC);
 	if (addr < 0)
         throw Error("PUSH Pattern missing");
@@ -154,7 +154,7 @@ CustomPartyLimit = function()
 	/// 2.1 - Get new value from user
 	let val = Exe.GetUserInput('$max_party_value', D_Uint8, "Party Limit", "Enter Max Party Value", 12, {min:1, max:127});
 	if (val === false)
-		throw "Cancelled - Value reverted to 12";
+		Cancel("Value", 12);
 
 	/// 2.2 - Replace the value
 	Exe.SetFromVar(addr + 6, '$max_party_value');

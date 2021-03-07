@@ -31,7 +31,7 @@
 ///
 NoSwearFilter = function()
 {
-	/// 1 - Find the location of 'manner.txt'
+	/// 1 - Find the string 'manner.txt'
 	let addr = Exe.FindText("manner.txt", PHYSICAL);
 	if (addr < 0)
 		throw Error("'manner.txt' not found");

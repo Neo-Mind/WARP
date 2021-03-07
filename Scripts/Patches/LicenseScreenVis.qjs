@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo, MS                                       *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, MS, Neo-Mind                                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,21 +50,29 @@ ShowLicense = function()
 	let refAddr = addr + code.byteCount();
 
 	/// 2.1 - Find the Langtype comparisons after the PUSH
-	code =
+	let parts =
+	[
 		CMP(EAX, 4)  //CMP EAX, 4
 	+	JE(WCp)      //JE SHORT addr
-	+	CMP(EAX, 8)  //CMP EAX, 8
+	,
+		''
+	,
+		CMP(EAX, 8)  //CMP EAX, 8
 	+	JE(WCp)      //JE SHORT addr
 	+	CMP(EAX, 9)  //CMP EAX, 9
 	+	JE(WCp)      //JE SHORT addr
 	+	CMP(EAX, 6)  //CMP EAX, 6
+	]
 	;
-	addr = Exe.FindHex(code, refAddr, refAddr + 0x60);
+	addr = Exe.FindHex(parts.join(''), refAddr, refAddr + 0x60);
 
-	if (addr < 0 && Exe.Version == 6.0) //really old clients have a comparison with 1 as well
+	if (addr < 0 && Exe.Version === 6) //really old clients have a comparison with 1 as well
 	{
-		code = code.replace(CMP(EAX, 8), CMP(EAX, 1) + JE(WCp) + CMP(EAX, 8));
-		addr = Exe.FindHex(code, refAddr, refAddr + 0x60);
+		parts[1] =
+			CMP(EAX, 1) //CMP EAX, 1
+		+	JE(WCp)     //JE SHORT addr
+		;
+		addr = Exe.FindHex(parts.join(''), refAddr, refAddr + 0x60);
 	}
 
 	if (addr < 0)
@@ -92,7 +100,7 @@ HideLicense = function()
 		throw Error("'btn_disagree' not PUSHed");
 
 	/// 1.3 - Find the Switch Case JMPer within 0x200 bytes before the PUSH
-	addr = Exe.FindHex( JMP([4, Exe.Version > 6.0 ? EAX : R32, POS4WC]), refAddr - 0x200, refAddr); //JMP DWORD PTR DS:[EAX*4 + jmpTable] ; really old clients use other registers like ECX
+	addr = Exe.FindHex( JMP([4, Exe.Version > 6 ? EAX : R32, POS4WC]), refAddr - 0x200, refAddr); //JMP DWORD PTR DS:[EAX*4 + jmpTable] ; really old clients use other registers like ECX
 	if (addr < 0)
 		throw Error("Switch Case not found");
 

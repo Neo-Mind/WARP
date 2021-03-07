@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
-*   Copyright (C) 2020 Secret                                              *
+*   Copyright (C) 2020-2021 Secret                                         *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,12 +23,12 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Secret                                        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Change the conditional jump after the 1rag1 comparison to 
+/// \brief Change the conditional jump after the 1rag1 comparison to
 ///        JMP over the 1*1 checks
 ///
 No1and1Arg = function()
@@ -42,7 +42,7 @@ No1and1Arg = function()
 	let prefix =
 		PUSH(addr)      //PUSH addr ; ASCII "1rag1"
 	+	PUSH_R          //PUSH reg32_A
-	+	(Exe.Version > 6.0 && Exe.Version < 14.0
+	+	(Exe.Version > 6 && Exe.Version < 14
 	?
 		CALL(R32)       //CALL reg32_B ; strstr function compares reg32_A with "1rag1". reg32_B is ESI in most clients
 	:
@@ -75,7 +75,7 @@ No1and1Arg = function()
 /// \brief Change the JZ to JMP after '/account' argument check
 ///        ignoring it's results
 ///
-IgnoreAccArg = function() 
+IgnoreAccArg = function()
 {
 	/// 1.1 - Find the string '/account:';
 	let addr = Exe.FindText("/account:");

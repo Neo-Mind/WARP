@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2018-2020 CH.C (jchcc)                                   *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2018-2021 CH.C (jchcc)                                   *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,18 +23,18 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Enforce usage of default browser using ShellExecuteA function 
-///       (after URL is parsed) instead of ROWebBrowser 
+/// \brief Enforce usage of default browser using ShellExecuteA function
+///       (after URL is parsed) instead of ROWebBrowser
 ///
 UseDefaultBrowser = function()
 {
 	/// 1.1 - Find the location where client is parsing the <URL>
-	let code = 
+	let code =
 		PUSH_EAX               //PUSH EAX
 	+	CALL(ESI)              //CALL ESI (atoi)
 	+	ADD(ESP, 4)            //ADD ESP,04
@@ -47,7 +47,7 @@ UseDefaultBrowser = function()
 
 	/// 1.2 - Find location where client start parsing first argument of <URL>
 	let memLoc = ROC.HasFP ? [EBP, WC] : [ESP, POS2WC];
-	code = 
+	code =
 		PUSH_0              //PUSH 0
 	+	LEA(R32, memLoc)    //LEA reg32_A, [EBP-z] ; usually EAX
 	+	PUSH_R              //PUSH reg32_A
@@ -66,7 +66,7 @@ UseDefaultBrowser = function()
 	if (addr < 0)
 		throw Error("Function not found");
 
-	/// 1.3 - Save location of the MOV DWORD 
+	/// 1.3 - Save location of the MOV DWORD
 	let jmpAddr = addr + code.byteCount() - 7;
 
 	/// 1.4 - Save original instruction for later use
@@ -94,7 +94,7 @@ UseDefaultBrowser = function()
 	+	PUSH_0           //PUSH 0       ; hwnd
 	+	CALL([ShExec])   //CALL ShellExecuteA
 	+	POP(EAX)         //POP EAX
-	+	saveIns          //MOV DWORD PTR SS:[EBP-z], y 
+	+	saveIns          //MOV DWORD PTR SS:[EBP-z], y
 	+	RETN()           //RETN
 	;
 
@@ -110,28 +110,35 @@ UseDefaultBrowser = function()
 	Exe.SetCALL(jmpAddr, free, PHYSICAL, saveIns.Size - 5); //Extra NOPs at the end
 
 	/// 3.1 - Find offset where ROWebBrowser is CALLed
-	if (Exe.Version === 10.0) //VC10
+	switch (Exe.Version)
 	{
-		code =
-			MOV(R32, [EBP, NEG2WC]) //MOV reg32_A, DWORD PTR SS:[EBP-x]
-		+	PUSH(EBX)               //PUSH EBX
-		+	PUSH_R                  //PUSH reg32_A
-		;
-	}
-	else if (Exe.Version > 10.0) //VC11, VC14.16
-	{
-		code =
-			PUSH(EBX)            //PUSH EBX
-		+	PUSH([EBP, NEG2WC])  //PUSH DWORD PTR SS:[EBP-x]
-		;
-	}
-	else  //VC6 - VC9
-	{
-		code =
-			PUSH(EBP)         //PUSH EBP
-		+	PUSH(EBX)         //PUSH EBX
-		+	MOV(ECX, POS3WC)  //MOV ECX, addr
-		;
+		case 6: //VC6 &
+		case 9: //VC9
+		{
+			code =
+				PUSH(EBP)         //PUSH EBP
+			+	PUSH(EBX)         //PUSH EBX
+			+	MOV(ECX, POS3WC)  //MOV ECX, addr
+			;
+			break;
+		}
+		case 10: //VC10
+		{
+			code =
+				MOV(R32, [EBP, NEG2WC]) //MOV reg32_A, DWORD PTR SS:[EBP-x]
+			+	PUSH(EBX)               //PUSH EBX
+			+	PUSH_R                  //PUSH reg32_A
+			;
+			break;
+		}
+		default: //VC11 & VC14.16
+		{
+			code =
+				PUSH(EBX)            //PUSH EBX
+			+	PUSH([EBP, NEG2WC])  //PUSH DWORD PTR SS:[EBP-x]
+			;
+			break;
+		}
 	}
 
 	let rAddr = Exe.FindHex(code, parseAddr + 8, parseAddr + 0xB0);
@@ -139,7 +146,7 @@ UseDefaultBrowser = function()
 		throw Error("ROWebBrowser pattern missing");
 
 	/// 3.2 - Find the destination when create ROWebBrowser failed after rAddr
-	code = 
+	code =
 		MOV(ESI, EAX)  //MOV ESI, EAX
 	+	TEST(ESI, ESI) //TEST ESI,ESI
 	+	JE(WCp)        //JE SHORT addr

@@ -1,9 +1,9 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Ai4rei/AN                                         *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
-*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
-*   Copyright (C) 2020 X-EcutiOnner                                        *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2021 X-EcutiOnner                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind, Andrei (4144), X-EcutiOnner       *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -150,7 +150,7 @@ NoHShield = function()
 
 	if (addr < 0)
 	{
-		code = code.replace(PUSH_R + PUSH_R, PUSH_R + PUSH_0); //Change PUSH reg32_B to PUSH 0 
+		code = code.replace(PUSH_R + PUSH_R, PUSH_R + PUSH_0); //Change PUSH reg32_B to PUSH 0
 		addr = Exe.FindHex(code);
 	}
 	if (addr > 0)
@@ -187,7 +187,7 @@ NoHShield = function()
 	/// 4.1 - Check whether CustomDLL patch is already ON
 	if (Exe.IsSelected("CustomDLL"))
 	{
-		// Since the patch is ON, the import table will be shifted to new location and now 
+		// Since the patch is ON, the import table will be shifted to new location and now
 		// we need to get & set all the details from / to ROC.ImpInfo hash
 
 		/// 4.2 - Construct the Image Descriptor Pattern (Relative Virtual Address prefixed by 8 zeros) i.e. the import entry
@@ -207,7 +207,7 @@ NoHShield = function()
 		}
 
 		if (newTblData.length < tblData.length) //comes false if HShield was already disabled during custom DLL
-		{            
+		{
 			/// 4.4 - Clear the Custom DLL patch entries
 			Exe.ClearPatch("CustomDLL");
 
@@ -217,7 +217,7 @@ NoHShield = function()
 	}
 	else
 	{
-		/// 5.1 - If Custom DLL is not present then extract the import table 
+		/// 5.1 - If Custom DLL is not present then extract the import table
 		///       while skipping over aossdk.dll entry
 		let impAddr = Exe.GetDirAddr(D_Import, PHYSICAL);
 		let dirEntries = GetImpTable("aossdk.dll", impAddr);
@@ -237,7 +237,7 @@ NoHShield.validate = function()
 	let addr = Exe.FindText("aossdk.dll", Exe.GetSectBegin(DATA), Exe.FileSize);
 	if (addr < 0)
 		return false;
-		
+
 	NHS_Addr = (addr - Exe.ImageBase).toHex();
 	return true;
 };
@@ -258,7 +258,7 @@ NoHShield.cleanup = function()
 };
 
 ///
-/// \brief Skip the call to ProcessFindHack function and the 
+/// \brief Skip the call to ProcessFindHack function and the
 ///        Conditional Jump after it. Also ignore nProtect tests.
 ///
 NoGGuard = function()
@@ -273,7 +273,7 @@ NoGGuard = function()
 		PUSH(EBP)       //PUSH EBP
 	+	MOV(EBP, ESP)   //MOV EBP, ESP
 	;
-	if (Exe.Version >= 10.0) //VC10+
+	if (Exe.Version >= 10) //VC10+
 	{
 		code +=
 			PUSH(-1)    //PUSH -1
@@ -304,7 +304,7 @@ NoGGuard = function()
 	code =
 		PUSH(addr)    //PUSH addr; ASCII "nProtect GameGuard"
 	+	PUSH_R        //PUSH reg32
-	+	(Exe.Version >= 10.0 
+	+	(Exe.Version >= 10
 	?
 		PUSH([])      //PUSH DWORD PTR DS:[addr2]
 	:
@@ -316,7 +316,7 @@ NoGGuard = function()
 		throw Error("'nProtect GameGuard' not used");
 
 	/// 3.3 - Find the conditional jump (JE) before the PUSH (within 0x50 bytes)
-	if (Exe.Version >= 10.0) //VC10+
+	if (Exe.Version >= 10) //VC10+
 	{
 		code =
 			TEST(AL, AL)       //TEST AL, AL
@@ -371,7 +371,7 @@ NoGGuard.validate = function()
 ///
 NoCDefender = function()
 {
-	/// 1.1 - Find the g_CCheatDefenderMgr assignment & CALL to CCheatDefenderMgr_init 
+	/// 1.1 - Find the g_CCheatDefenderMgr assignment & CALL to CCheatDefenderMgr_init
 	let parts = [
 		MOV(ECX, [POS4WC])          //MOV ECX, DWORD PTR DS:[g_CCheatDefenderMgr]
 	+	CALL(ALLWC)                 //CALL CCheatDefenderMgr::init
@@ -388,7 +388,7 @@ NoCDefender = function()
 	+	CALL()                      //CALL CRagConnection::some_func
 	];
 
-	if (Exe.Version > 11.0) //VC14.16
+	if (Exe.Version > 11) //VC14.16
 		[parts[1], parts[2]] = [parts[2], parts[1]]; //Swap SETZ & PUSH
 
 	let addrs = Exe.FindHexN(parts.join(''));
@@ -423,6 +423,9 @@ NoCDefender = function()
 	/// 2.2 - Change the 1 to 0 in MOV BYTE PTR
 	Exe.SetUint8(addr + 8, 0);
 
+	/// 2.3 - Ask for copying the DLL
+	NCD_Response = Exe.GetUserInput("$copyNCDdll", D_Bool, "Copy Files", "Do you want the DLL copied as well?", true);
+
 	return true;
 };
 
@@ -430,3 +433,15 @@ NoCDefender = function()
 /// \brief Disable for unsupported clients (Need to have the DLL)
 ///
 NoCDefender.validate = () => Exe.FindText("CDClient.dll", PHYSICAL) > 0;
+
+///
+/// \brief Extra Steps when the patch is applied (Copying the DLL)
+///
+NoCDefender.onApplied = function()
+{
+	if (NCD_Response)
+	{
+		let tgtDir = System.DirPath(Warp.TgtExe);
+		System.Copy(Warp.Path + "Inputs/CDClient.dll", tgtDir);
+	}
+};
