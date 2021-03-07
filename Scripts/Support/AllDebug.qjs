@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-12-11                                             *
-*   Last Modified : 2021-01-28                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -404,7 +404,7 @@ ShowAddr = function()
 };
 
 ///
-/// \brief Shows the physical and virtual cntparts of multiple addresses
+/// \brief Shows the physical and virtual counterparts of multiple addresses
 ///
 ShowAddrs = function()
 {
@@ -413,6 +413,15 @@ ShowAddrs = function()
 	let prompt = args.take_if('string', 'Addrs');
 
 	let addrs = args.shift();
+	if (!IsArr(addrs))
+	{
+		if (typeof(addrs) === 'object')
+		{
+			prompt = Object.keys(addrs)[0];
+			addrs = addrs[prompt];
+		}
+	}
+
 	if (!IsArr(addrs))
 		return false;
 
