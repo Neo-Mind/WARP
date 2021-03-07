@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind, Andrei (4144), X-EcutiOnner       *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-03-07                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -292,8 +292,12 @@ NoGGuard = function()
 	if (addr < 0)
 		throw Error("ProcessFindHack not found");
 
-	/// 2.2 - Make it Return immediately
-	Exe.SetHex(addr, RETN());
+	/// 2.2 - Set EAX to 1 and return
+	Exe.SetHex(addr,
+		XOR(EAX, EAX) //XOR EAX, EAX
+	+	INC(EAX)      //INC EAX
+	+	RETN()        //RETN
+	);
 
 	/// 3.1 - Find the string 'nProtect GameGuard'
 	addr = Exe.FindText("nProtect GameGuard");
@@ -350,7 +354,6 @@ NoGGuard = function()
 			return false;
 		}
 	});
-
 	if (found.isEmpty())
 		throw Error("JE not found before 'nProtect GameGuard' PUSH");
 
