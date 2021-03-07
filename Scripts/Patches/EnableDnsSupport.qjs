@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,12 +23,12 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Make the client call our DNS resolution function before g_accountAddr is accessed. 
+/// \brief Make the client call our DNS resolution function before g_accountAddr is accessed.
 ///        Function replaces g_accountAddr value
 ///
 EnableDnsSupport = function()
@@ -60,7 +60,7 @@ EnableDnsSupport = function()
 	;
 
 	let suffix = MOV(
-		Exe.Version > 6.0 && Exe.Version < 11.0 ? EAX : R32, //MOV EAX, DWORD PTR DS:[g_accountAddr] or 
+		Exe.Version === 9 || Exe.Version === 10 ? EAX : R32, //MOV EAX, DWORD PTR DS:[g_accountAddr] or
 		[AccountAddr]                                        //MOV reg32_B, DWORD PTR DS:[g_accountAddr]
 	);
 

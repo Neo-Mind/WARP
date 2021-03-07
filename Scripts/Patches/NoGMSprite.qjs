@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -41,7 +41,7 @@ NoGMSprite = function()
 	let code = halfCode + halfCode;
 	let addr = Exe.FindHex(code);
 
-	/* - Seems to be not of any use 
+	/* - Seems to be not of any use
 	if (addr < 0)
 	{
 		code = code.remove( MOV(ECX, R32) ); //Remove the first MOV ECX, reg32_A . It might have been assigned earlier
@@ -62,33 +62,24 @@ NoGMSprite = function()
 	];
 
 	/// 2.1 - Prep code to look for IsNameYellow function call
-	code =
-		CALL(ALLWC) 		//CALL IsNameYellow; Compares accountID against GM IDs
-	+	ADD(ESP, 4) 		//ADD ESP, 4
-	+	TEST(AL, AL)		//TEST AL, AL
+	let prefix =
+		CALL(ALLWC)     //CALL IsNameYellow; Compares accountID against GM IDs
+	+	ADD(ESP, 4)     //ADD ESP, 4
+	+	TEST(AL, AL)    //TEST AL, AL
 	;
-	let jzPos;
-	if (Exe.Version === 9.0) //VC9
-	{
-		code += JZ(WCp);    //JZ SHORT addr2
-		jzPos = -2;
-	}
-	else //VC6, VC10, VC11, VC14.16
-	{
-		code += JZ(POS2WC); //JZ addr2
-		jzPos = -6;
-	}
-	let csize = code.byteCount();
+	let csize = prefix.byteCount();
+
+	let suffix = JZ(Exe.Version === 9 ? WCp : POS2WC);
 
 	funcs.forEach( (fnAddr, i) =>
 	{
 		/// 2.2 - Find the CALL inside the Set*NameList functions
-		let addr = Exe.FindHex(code, fnAddr, fnAddr + 0x80);
+		let addr = Exe.FindHex(prefix + suffix, fnAddr, fnAddr + 0x80);
 		if (addr < 0)
 			throw Error(`CALL not found for No. ${i+1}`);
 
 		/// 2.3 - Change conditional jump
-		Exe.SetJMP(addr + csize + jzPos);
+		Exe.SetJMP(addr + csize);
 	});
 
 	return true;

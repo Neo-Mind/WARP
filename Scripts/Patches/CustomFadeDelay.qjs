@@ -98,78 +98,84 @@ CustomFadeDelay = function()
 		throw Error("2nd pattern not found");
 
 	/// 1.9 - Search for the separate fadeout code in CMode_ProcessFadeIn
-	let patAddr3 = -1;
-	if (Exe.Version > 10.0) //VC11 & VC14.16
+	let patAddr3;
+	switch (Exe.Version)
 	{
-		prefix =
-			CALL([POS4WC])            //CALL DWORD PTR DS:[timeGetTime]
-		+	SUB(EAX, [FadeStart])     //SUB EAX, DWORD PTR DS:[dwFadeStart]
-		+	POP(ESI)                  //POP ESI
-		+	CMP(EAX, 0xFF)            //CMP EAX, 0FF
-		;
-
-		suffix =
-			JNB(WCp)                  //JNB SHORT locret_71FDBC
-		+	MOV(R32, 0xFF)            //MOV reg32_A, FF ; reg32_A is usually ECX
-		+	SUB(R32, EAX)             //SUB reg32_A, EAX
-		+	MOV(EAX, [Renderer])      //MOV EAX, DWORD PTR DS:[g_renderer]
-		+	SHL(R32, 0x18)            //SHL reg32_A, 18
-		+	PUSH_R                    //PUSH reg32_A
-		;
-	}
-	else if (Exe.Version > 6.0) //VC9 & VC10
-	{
-		prefix =
-			CALL(EDI)             //CALL EDI
-		+	SUB(EAX, [FadeStart]) //SUB EAX, DWORD PTR DS:[dwFadeStart]
-		+	POP(EDI)              //POP EDI
-		+	POP(ESI)              //POP ESI
-		+	CMP(EAX, 0xFF)        //CMP EAX, 0FF
-		;
-
-		suffix =
-			JNB(WCp)              //JNB SHORT addr
-		+	MOV(R32, 0xFF)        //MOV reg32_A, FF ; reg32_A can be ECX or EDX
-		+	SUB(R32, EAX)         //SUB reg32_A, EAX
-		+	MOV(EAX, [Renderer]) //MOV EAX, DWORD PTR DS:[g_renderer]
-		+	MOV(R32, [EAX, WCp])  //MOV reg32_B, DWORD PTR DS:[EAX + const]
-		+	SHL(R32, 0x18)        //SHL reg32_A, 18
-		+	PUSH_R                //PUSH reg32_A
-		;
-
-		patAddr3 = Exe.FindHex(prefix + suffix);
-		if (patAddr3 < 0 && Exe.Version === 10.0)
+		case 6: //VC6
 		{
-			suffix = suffix.replace( MOV(R32, [EAX, WCp]),
-				MOV(R32, [EAX, WCp])  //MOV reg32_B, DWORD PTR DS:[EAX + const]
-			+	MOV(EAX, [EAX, WCp])  //MOV EAX, DWORD PTR DS:[EAX + const2]
-			);
+			prefix =
+				CALL(EDI)                 //CALL EDI
+			+	MOV(R32, [FadeStart])     //MOV reg32_A, DWORD PTR DS:[dwFadeStart]
+			+	POP(EDI)                  //POP EDI
+			+	SUB(EAX, R32)             //SUB EAX, reg32_A
+			+	POP(ESI)                  //POP ESI
+			+	CMP(EAX, 0xFF)            //CMP EAX, 0FF
+			;
+			suffix =
+				JNB(WCp)                  //JNB SHORT addr
+			+	INC(EAX)                  //INC EAX
+			+	NEG(EAX)                  //NEG EAX
+			+	SHL(EAX, 0x18)            //SHL EAX, 18
+			+	PUSH_EAX                  //PUSH EAX
+			;
+			patAddr3 = Exe.FindHex(prefix + suffix);
+			break;
+		}
+
+		case 9:  //VC9  &
+		case 10: //VC10
+		{
+			prefix =
+				CALL(EDI)             //CALL EDI
+			+	SUB(EAX, [FadeStart]) //SUB EAX, DWORD PTR DS:[dwFadeStart]
+			+	POP(EDI)              //POP EDI
+			+	POP(ESI)              //POP ESI
+			+	CMP(EAX, 0xFF)        //CMP EAX, 0FF
+			;
+			suffix =
+				JNB(WCp)              //JNB SHORT addr
+			+	MOV(R32, 0xFF)        //MOV reg32_A, FF ; reg32_A can be ECX or EDX
+			+	SUB(R32, EAX)         //SUB reg32_A, EAX
+			+	MOV(EAX, [Renderer]) //MOV EAX, DWORD PTR DS:[g_renderer]
+			+	MOV(R32, [EAX, WCp])  //MOV reg32_B, DWORD PTR DS:[EAX + const]
+			+	SHL(R32, 0x18)        //SHL reg32_A, 18
+			+	PUSH_R                //PUSH reg32_A
+			;
 
 			patAddr3 = Exe.FindHex(prefix + suffix);
+			if (patAddr3 < 0 && Exe.Version === 10)
+			{
+				suffix = suffix.replace( MOV(R32, [EAX, WCp]),
+					MOV(R32, [EAX, WCp])  //MOV reg32_B, DWORD PTR DS:[EAX + const]
+				+	MOV(EAX, [EAX, WCp])  //MOV EAX, DWORD PTR DS:[EAX + const2]
+				);
+
+				patAddr3 = Exe.FindHex(prefix + suffix);
+			}
+			break;
+		}
+
+		default: //VC11 & VC14.16
+		{
+			prefix =
+				CALL([POS4WC])            //CALL DWORD PTR DS:[timeGetTime]
+			+	SUB(EAX, [FadeStart])     //SUB EAX, DWORD PTR DS:[dwFadeStart]
+			+	POP(ESI)                  //POP ESI
+			+	CMP(EAX, 0xFF)            //CMP EAX, 0FF
+			;
+
+			suffix =
+				JNB(WCp)                  //JNB SHORT locret_71FDBC
+			+	MOV(R32, 0xFF)            //MOV reg32_A, FF ; reg32_A is usually ECX
+			+	SUB(R32, EAX)             //SUB reg32_A, EAX
+			+	MOV(EAX, [Renderer])      //MOV EAX, DWORD PTR DS:[g_renderer]
+			+	SHL(R32, 0x18)            //SHL reg32_A, 18
+			+	PUSH_R                    //PUSH reg32_A
+			;
+			patAddr3 = Exe.FindHex(prefix + suffix);
+			break;
 		}
 	}
-	else //VC6
-	{
-		prefix =
-			CALL(EDI)                 //CALL EDI
-		+	MOV(R32, [FadeStart])     //MOV reg32_A, DWORD PTR DS:[dwFadeStart]
-		+	POP(EDI)                  //POP EDI
-		+	SUB(EAX, R32)             //SUB EAX, reg32_A
-		+	POP(ESI)                  //POP ESI
-		+	CMP(EAX, 0xFF)            //CMP EAX, 0FF
-		;
-
-		suffix =
-			JNB(WCp)                  //JNB SHORT addr
-		+	INC(EAX)                  //INC EAX
-		+	NEG(EAX)                  //NEG EAX
-		+	SHL(EAX, 0x18)            //SHL EAX, 18
-		+	PUSH_EAX                  //PUSH EAX
-		;
-	}
-
-	if (patAddr3 < 0) //in the first 2 cases no search is done previously 
-		patAddr3 = Exe.FindHex(prefix + suffix);
 
 	if (patAddr3 < 0)
 		throw Error("3rd pattern missing");

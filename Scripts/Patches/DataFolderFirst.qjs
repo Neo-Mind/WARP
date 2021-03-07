@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,38 +39,46 @@ DataFolderFirst = function()
 
 	/// 1.2 - Find where it is PUSHed (g_readFolderFirst is assigned just above it)
 	let code, repl, gloc, rloc;
-	if (Exe.Version > 11.0) // VC14.16
+	switch (Exe.Version)
 	{
-		code =
-			PUSH(addr)         //PUSH addr ; ASCII "loading"
-		+	CMOVNE(R32, R32)   //CMOVNE reg32_A, reg32_B
-		+	MOV([POS4WC], R8)  //MOV BYTE PTR DS:[g_readFolderFirst], reg8_A
-		;
-		repl = 0x8B90;  //change CMOVNZ to NOP + MOV
-		gloc = code.byteCount() - 4;
-		rloc = 5;
-	}
-	else if (Exe.Version === 11.0) // VC11
-	{
-		code =
-			CMOVNE(R32, R32)   //CMOVNE reg32_A, reg32_B
-		+	MOV([POS4WC], R8)  //MOV BYTE PTR DS:[g_readFolderFirst], reg8_A
-		+	PUSH(addr)         //PUSH addr ; ASCII "loading"
-		;
-		repl = 0x8B90;  //change CMOVNE to NOP + MOV
-		gloc = 5;
-		rloc = 0;
-	}
-	else //VC6-VC10
-	{
-		code =
-			JZ(0x07)                    //JZ SHORT addr - skip the MOV below
-		+	MOV(BYTE_PTR, [POS4WC], 1)  //MOV BYTE PTR DS:[g_readFolderFirst], 1
-		+	PUSH(addr)                  //PUSH addr ; ASCII "loading"
-		;
-		repl = 0x9090;//Change JZ SHORT to NOPs
-		gloc = 4;
-		rloc = 0;
+		case 6:  //VC6
+		case 9:  // to
+		case 10: //VC10
+		{
+			code =
+				JZ(0x07)                    //JZ SHORT addr - skip the MOV below
+			+	MOV(BYTE_PTR, [POS4WC], 1)  //MOV BYTE PTR DS:[g_readFolderFirst], 1
+			+	PUSH(addr)                  //PUSH addr ; ASCII "loading"
+			;
+			repl = 0x9090;//Change JZ SHORT to NOPs
+			gloc = 4;
+			rloc = 0;
+			break;
+		}
+		case 11:
+		{
+			code =
+				CMOVNE(R32, R32)   //CMOVNE reg32_A, reg32_B
+			+	MOV([POS4WC], R8)  //MOV BYTE PTR DS:[g_readFolderFirst], reg8_A
+			+	PUSH(addr)         //PUSH addr ; ASCII "loading"
+			;
+			repl = 0x8B90;  //change CMOVNE to NOP + MOV
+			gloc = 5;
+			rloc = 0;
+			break;
+		}
+		default: // VC14.16
+		{
+			code =
+				PUSH(addr)         //PUSH addr ; ASCII "loading"
+			+	CMOVNE(R32, R32)   //CMOVNE reg32_A, reg32_B
+			+	MOV([POS4WC], R8)  //MOV BYTE PTR DS:[g_readFolderFirst], reg8_A
+			;
+			repl = 0x8B90;  //change CMOVNZ to NOP + MOV
+			gloc = code.byteCount() - 4;
+			rloc = 5;
+			break;
+		}
 	}
 
 	let addr2 = Exe.FindHex(code);
@@ -87,40 +95,40 @@ DataFolderFirst = function()
 
 	/// 2.1 - Extract g_readFolderFirst
 	let ReadFolderFirst = Exe.GetHex(addr2 + gloc, 4);
-	if (Exe.Version >= 9.0)
+	if (Exe.Version === 6)
 	{
-		/// 2.2 - Find the Comparison for VC9+ Clients
-		let addrs = Exe.FindHexN( CMP(BYTE_PTR, [ReadFolderFirst], 0) ); //CMP BYTE PTR DS:[g_readFolderFirst], 0
-		if (addrs.isEmpty())
-			throw Error("Comparisons not found (VC9+)");
-
-		addrs.forEach( (memAddr, idx) =>
-		{
-			/// 2.3 - Find the conditional jump after each comparison
-			addr = Exe.FindHex( JZ(WCp) + CALL(), memAddr + 0x7, memAddr + 0x20);//JZ SHORT addr followed by a CALL
-			if (addr < 0)
-				throw Error(`No jump found for comparison No.${idx + 1} <b>for (VC9+)</b>`);
-
-			/// 2.4 - NOP out the jump
-			Exe.SetNOPs(addr, 2);
-		});
-	}
-	else
-	{
-		/// 3.1 - Find the Comparison for VC6 Clients
+		/// 2.2 - Find the Comparison for VC6 Clients
 		let addrs = Exe.FindHexN( MOV(AL, [ReadFolderFirst]) ); //MOV AL, BYTE PTR DS:[g_readFolderFirst]
 		if (addrs.isEmpty())
 			throw Error("Comparisons not found (VC6)");
 
 		addrs.forEach( (memAddr, idx) =>
 		{
-			/// 3.2 - Find the conditional jump after each comparison
+			/// 2.3 - Find the conditional jump after each comparison
 			addr = Exe.FindHex( JE(POS2WC), memAddr + 0x5, memAddr + 0x20);//JE addr
 			if (addr < 0)
 				throw Error(`No jump found for comparison No.${idx + 1} <b>for (VC6)</b>`);
 
-			/// 3.3 - NOP out the jump
+			/// 2.4 - NOP out the jump
 			Exe.SetNOPs(addr, 6);
+		});
+	}
+	else
+	{
+		/// 3.1 - Find the Comparison for VC9+ Clients
+		let addrs = Exe.FindHexN( CMP(BYTE_PTR, [ReadFolderFirst], 0) ); //CMP BYTE PTR DS:[g_readFolderFirst], 0
+		if (addrs.isEmpty())
+			throw Error("Comparisons not found (VC9+)");
+
+		addrs.forEach( (memAddr, idx) =>
+		{
+			/// 3.2 - Find the conditional jump after each comparison
+			addr = Exe.FindHex( JZ(WCp) + CALL(), memAddr + 0x7, memAddr + 0x20);//JZ SHORT addr followed by a CALL
+			if (addr < 0)
+				throw Error(`No jump found for comparison No.${idx + 1} <b>for (VC9+)</b>`);
+
+			/// 3.3 - NOP out the jump
+			Exe.SetNOPs(addr, 2);
 		});
 	}
 

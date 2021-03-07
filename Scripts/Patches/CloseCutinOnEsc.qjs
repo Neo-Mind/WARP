@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
 *   Copyright (C) 2020-2021 Neo Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
@@ -23,12 +23,12 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-01-12                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Swap out the check for Esc key inside UIWindowMgr::ProcessPushButton 
+/// \brief Swap out the check for Esc key inside UIWindowMgr::ProcessPushButton
 ///        for UIIllustWnd to enable closing the cutin window.
 ///
 CloseCutinOnEsc = function()
@@ -49,13 +49,13 @@ CloseCutinOnEsc = function()
 	addr = Exe.GetTgtAddr(addr + 2, PHYSICAL);
 
 	/// 1.3 - Look for the GetGameMode CALL inside UIIllustWnd::SendMsg
-	let prefix = 
+	let prefix =
 		MOV(ECX, POS3WC)            //MOV ECX, OFFSET g_modeMgr
 	+	CALL(ALLWC)                 //CALL CModeMgr::GetGameMode
 	;
 	code = "";
 
-	if (Exe.Version < 14.0)
+	if (Exe.Version < 14)
 		code += MOV(EDX, [EAX]);    //MOV EDX, DWORD PTR DS:[EAX] ; for VC6 - VC11
 
 	code +=	PUSH_0;                 //PUSH 0
@@ -65,9 +65,9 @@ CloseCutinOnEsc = function()
 
 	code +=	PUSH(-1);               //PUSH -1
 
-	if (Exe.Version > 14.0)
+	if (Exe.Version > 11)
 	{
-		code += 
+		code +=
 			MOV(EDX, [EAX])         //MOV EDX, DWORD PTR DS:[EAX]
 		+	MOV(ECX, EAX)           //MOV ECX, EAX
 		;
@@ -75,7 +75,7 @@ CloseCutinOnEsc = function()
 
 	code += PUSH(POS3WC);           //PUSH OFFSET EmptyStr ; zeros at the location
 
-	if (Exe.Version > 6.0 && Exe.BuildDate < 20150000) //VC9 - VC10 (some of them)
+	if (Exe.Version > 6 && Exe.BuildDate < 20150000) //VC9 - VC10 (some of them)
 	{
 		code +=
 			MOV(ECX, EAX)           //MOV ECX, EAX
@@ -85,9 +85,9 @@ CloseCutinOnEsc = function()
 
 	code += PUSH(' [011.0.0.]');    //PUSH 64 or 71
 
-	if (Exe.Version < 9.0 || Exe.BuildDate > 20150000)
+	if (Exe.Version === 6 || Exe.BuildDate > 20150000)
 	{
-		if (Exe.Version < 14.0)
+		if (Exe.Version < 14)
 			code += MOV(ECX, EAX);  //MOV ECX, EAX
 
 		code += CALL([EDX, ' 1?']); //CALL DWORD PTR DS:[EDX + const] ; const is either 14 or 18
@@ -108,7 +108,7 @@ CloseCutinOnEsc = function()
 	let suffix = Exe.GetHex(addr2 + prefix.byteCount(), code.byteCount());
 
 	/// 2.1 - Construct the common code for new & old clients.
-	let part2 = 
+	let part2 =
 		CMP(R32, -1)   //CMP reg32_A, -1
 	+	((Exe.BuildDate > 20101116 && Exe.BuildDate < 20141020) || Exe.BuildDate > 20200800
 	?
@@ -131,7 +131,7 @@ CloseCutinOnEsc = function()
 
 	/// 2.2 - Search for the Esc Key check inside UIWindowMgr::ProcessPushButton
 	let part1, funcOffset;
-	if (Exe.Version > 11.0) //VC14.16
+	if (Exe.Version > 11) //VC14.16
 	{
 		part1 =
 			PUSH(R32)              //PUSH reg32_A
@@ -156,7 +156,7 @@ CloseCutinOnEsc = function()
 		;
 		funcOffset = part1.byteCount() - 4;
 
-		if (Exe.Version > 6.0)
+		if (Exe.Version > 6)
 		{
 			part1 +=
 				TEST(AL, AL)       //TEST AL, AL
@@ -179,7 +179,7 @@ CloseCutinOnEsc = function()
 	addr += part1.byteCount();
 
 	let jmpVir;
-	if (Exe.Version > 11.0)
+	if (Exe.Version > 11)
 	{
 		/// 2.5 - Find the 2nd part for VC14.16 clients
 		addr = Exe.FindHex(part2, addr, addr + 0x100);
@@ -213,7 +213,7 @@ CloseCutinOnEsc = function()
 	+	MOV(ECX, gModeMgr)  //MOV ECX, OFFSET g_modeMgr
 	+	CALL(Filler(3))     //CALL CModeMgr::GetGameMode
 	+	MOV(EDX, [EAX])     //MOV EDX, DWORD PTR DS:[EAX]
-	+	suffix              //combinations of 
+	+	suffix              //combinations of
 		                    //PUSH 0
 		                    //PUSH 0 or 1 (for newer clients)
 		                    //PUSH -1

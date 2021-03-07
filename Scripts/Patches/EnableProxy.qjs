@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-01-30                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -69,11 +69,24 @@ EnableProxy = function()
 		throw Error("Setup string not found");
 
 	let code, indirectCALL, callAddr;
-	if (Exe.Version >= 9.0)
+	if (Exe.Version === 6) //VC6
 	{
-		/// 2.1 - Find connect call (Indirect) within 0x50 bytes before the PUSH
+		/// 2.1 - Find connect call (Direct) within 0x90 byte before the PUSH
 		code =
-			(Exe.Version > 10.0
+			CALL(ALLWC)          //CALL <&WS2_32.connect>
+		+   CMP(EAX, -1)         //CMP EAX, -1
+		+   JNZ(WCp)             //JNZ SHORT addr
+		+   CALL(ALLWC)          //CALL <&WS2_32.WSAGetLastError>
+		+   CMP(EAX, 0x2733)     //CMP EAX, 2733h
+		;
+		indirectCALL = false;
+		callAddr = Exe.FindHex(code, addr - 0x90, addr);
+	}
+	else //newer
+	{
+		/// 2.2 - Find connect call (Indirect) within 0x50 bytes before the PUSH
+		code =
+			(Exe.Version > 10
 		?
 			PUSH([R32, 4])       //PUSH DWORD PTR DS:[refReg + 4]
 		:                        //  or
@@ -89,22 +102,10 @@ EnableProxy = function()
 		indirectCALL = true;
 		callAddr = Exe.FindHex(code, addr - 0x60, addr);
 	}
-	else
-	{
-		/// 2.2 - Find connect call (Direct) within 0x90 byte before the PUSH
-		code =
-			CALL(ALLWC)          //CALL <&WS2_32.connect>
-		+   CMP(EAX, -1)         //CMP EAX, -1
-		+   JNZ(WCp)             //JNZ SHORT addr
-		+   CALL(ALLWC)          //CALL <&WS2_32.WSAGetLastError>
-		+   CMP(EAX, 0x2733)     //CMP EAX, 2733h
-		;
-		indirectCALL = false;
-		callAddr = Exe.FindHex(code, addr - 0x90, addr);
-	}
+
 	if (callAddr < 0)
 		throw Error("'connect' CALL not found");
-	
+
 	let refReg;
 	if (indirectCALL)
 	{
@@ -112,7 +113,7 @@ EnableProxy = function()
 		let ins = Instr.FromAddr(callAddr);
 		refReg = R32.List[ins.MRM.RegM];
 		callAddr = ins.NextAddr;
-		
+
 		/// 2.4 - Change indirect CALL to direct one before we proceed
 		Exe.SetUint16(callAddr, 0xE890); //NOP + CALL opcodes
 		callAddr++;

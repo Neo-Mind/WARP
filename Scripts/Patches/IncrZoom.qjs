@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
-*   Copyright (C) 2020 Andrei Karas (4144)                                 *
+*   Copyright (C) 2020-2021 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144)                                 *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2021-03-06                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -80,7 +80,7 @@ IncrZoom = function(patchName)
 		/// 2.4 - Change the assigned value to our new distance value
 		addrs.forEach( addr => Exe.SetHex(addr + 6, newDist) );
 
-		/// 2.5 - Search for similar assignment to this address - disabled /zoom 
+		/// 2.5 - Search for similar assignment to this address - disabled /zoom
 		///       (it will be in the same functions as before)
 		let mov2 = MOV([distAddr], (400.0).toIEEE()); //MOV DWORD PTR DS:[distAddr], 0x43C80000 ; 400.0
 
@@ -94,37 +94,34 @@ IncrZoom = function(patchName)
 		/// 3.1 - Find the '/zoom' enabled/disabled load configuration (in CSession_lua_configuration)
 		let parts = [
 			MOVSS(XMM1, [POS4WC])  //MOVSS XMM1, DWORD PTR DS:[zoom_max_load_enabled]
-		,
+		,//1
+			Exe.Version > 11
+		?
+			mov1                   //MOV DWORD PTR DS:[distAddr], 0x43F00000 ; 480.0
+		+	JMP(0x12)              //JMP SHORT addr1
+		:
 			JMP(8)                 //JMP SHORT addr1
-		,
+		,//2
 			MOVSS(XMM1, [POS4WC])  //MOVSS XMM1, DWORD PTR DS:[zoom_max_load_disabled]
-		,
-			MOVSS(XMM0, [POS4WC])  //MOVSS XMM0, DWORD PTR DS:[some_addr]; addr1
+		,//3
+			(Exe.Version > 11
+		?
+			mov2                   //MOV DWORD PTR DS:[distAddr], 0x43C80000 ; 400.0
+		:
+			''
+		)
+		+	MOVSS(XMM0, [POS4WC])  //MOVSS XMM0, DWORD PTR DS:[some_addr]; addr1
 		+	MOVSS(XMM2, [POS4WC])  //MOVSS XMM2, DWORD PTR DS:[g_outdoorViewLatitude]
 		+	COMISS(XMM0, XMM2)	   //COMISS XMM0, XMM2
-		,
+		,//4
+			Exe.Version <= 11
+		?
 			MOVSS([POS4WC], XMM1)  //MOVSS DWORD PTR DS:[zoom2_max_outdoor], XMM1
+		:
+			''
 		];
 
 		addr = Exe.FindHex(parts.join(''));
-		if (addr < 0)
-		{
-			parts[1] =
-				mov1               //MOV DWORD PTR DS:[distAddr], 0x43F00000 ; 480.0
-			+	JMP(0x12)          //JMP SHORT addr1
-			;	                  
-
-			parts[3] =	          
-				mov2               //MOV DWORD PTR DS:[distAddr], 0x43C80000 ; 400.0
-			+	parts[3]           //MOVSS XMM0, DWORD PTR DS:[some_addr]; addr1
-			;                      //MOVSS XMM2, DWORD PTR DS:[g_outdoorViewLatitude]
-			                       //COMISS XMM0, XMM2
-
-			parts[4] = '';
-
-			addr = Exe.FindHex(parts.join(''));
-		}
-		
 		if (addr < 0)
 			throw Error("/zoom configuration missing");
 

@@ -1,8 +1,8 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
-*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
-*   Copyright (C) 2018-2020 CH.C (jchcc)                                   *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2018-2021 CH.C (jchcc)                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144), CH.C (jchcc)                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@
 MoveShopIcon = function()
 {
 	/// 1.1 - Find the XCoord calculation pattern
-	let tgtReg = (Exe.Version < 11.0) ? EDX : EAX;
+	let tgtReg = (Exe.Version < 11) ? EDX : EAX;
 
 	let code =
 		SUB(tgtReg, 0xBB)      //SUB reg, 0BB
@@ -42,7 +42,7 @@ MoveShopIcon = function()
 	;
 
 	let addr = Exe.FindHex(code);
-	if (addr < 0 && Exe.Version >= 11.0)
+	if (addr < 0 && Exe.Version >= 11)
 	{
 		code = code.replace(PUSH_EAX , PUSH(WCp) + PUSH_EAX );//PUSH const before PUSH EAX
 		addr = Exe.FindHex(code);
@@ -65,7 +65,7 @@ MoveShopIcon = function()
 	}
 
 	/// 2.1 - Find the pattern where the Screen Size is picked up (Width is at 0x24, Height is at 0x28) - We need the address of g_ScreenStats
-	code = MOV( Exe.Version >= 11.0 ? EAX : ECX, [POS3WC]);   //MOV EAX or ECX, DWORD PTR DS:[g_ScreenStats]
+	code = MOV( Exe.Version >= 11 ? EAX : ECX, [POS3WC]);     //MOV EAX or ECX, DWORD PTR DS:[g_ScreenStats]
 	let addr2 = Exe.FindHex(code + " 8B", addr - 0x18, addr); //Some MOV follows after the g_ScreenStats MOV
 	if (addr2 < 0)
 		throw Error("Screen size retrieval not found");
@@ -142,20 +142,20 @@ MoveShopIcon = function()
 MoveShopIcon.validate = HasCashShop;
 
 ///
-/// \brief Change the PUSHed argument inside UICashShopWnd_virt68 to always draw 
+/// \brief Change the PUSHed argument inside UICashShopWnd_virt68 to always draw
 ///        '0 C' instead of random number in cash shop
 ///
 ZeroCinShop = function()
 {
 	/// 1 - Find where format string is  PUSHed
-	let part1 =
+	let prefix =
 		MOV(ECX, ESI)       //MOV ECX, ESI
 	+	PUSH_EAX            //PUSH EAX
 	+	PUSH(0x1C2)         //PUSH 1C2
 	+	PUSH(0x226)         //PUSH 226
 	+	CALL(ALLWC)         //CALL UICashShopWnd_sub
 	;
-	let part2 =
+	let suffix =
 		PUSH([ESI, POS2WC]) //PUSH DWORD PTR DS:[ESI + const]
 	+	LEA(EAX, [EBP, WC]) //LEA EAX, [EBP + string_ptr]
 	+	PUSH(ZC_Addr)       //PUSH OFFSET addr ; ASCII "%d C"
@@ -163,29 +163,26 @@ ZeroCinShop = function()
 	+	CALL()              //CALL std::string::sprintf
 	;
 
-	addr = Exe.FindHex(part1 + part2);
+	addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("Format string reference missing");
 
 	/// 2.1 - Set addr to position of PUSH DWORD PTR
-	addr += part1.byteCount();
+	addr += prefix.byteCount();
 
 	/// 2.2 - Change it to a PUSH 0
-	part2 =
+	suffix =
 		PUSH_0  //PUSH 0
-	+	NOP     //NOP
-	+	NOP     //NOP
-	+	NOP     //NOP
-	+	NOP     //NOP
+	+	NOP4    //4 byte NOP
 	;
-	Exe.SetHex(addr, part2);
+	Exe.SetHex(addr, suffix);
 
 	return true;
 };
 
 ///
 /// \brief Disable for unsupported client (need to have cash shop present & the format string as well)
-/// 
+///
 ZeroCinShop.validate = () =>
 {
 	if (ROC.CashShopAddr < 0)
@@ -198,7 +195,7 @@ ZeroCinShop.validate = () =>
 ///
 /// \brief Replace arguments of ShellExecuteA in  order to open URL with default browser
 ///
-DefShopBrowser = function() 
+DefShopBrowser = function()
 {
 	/// 1 - Find locations where "iexplore.exe" is PUSHed
 	let addrs = Exe.FindHexN( PUSH(EAX) + PUSH(SB_Addr) );
@@ -209,9 +206,7 @@ DefShopBrowser = function()
 	code =
 		PUSH_0     //PUSH 0
 	+	PUSH(EAX)  //PUSH EAX
-	+	NOP        //NOP
-	+	NOP        //NOP
-	+	NOP        //NOP
+	+	NOP3       //3 byte NOP
 	;
 
 	/// 3 - Replace the arguments of ShellExecuteA

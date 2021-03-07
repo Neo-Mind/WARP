@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
 *   Copyright (C) 2020-2021 Asheraf                                        *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Asheraf                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-01-15                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,7 +50,7 @@ CustomAdvAgencyLimits = function()
 	+	PUSH(strAddr)                 //PUSH OFFSET addr ; ASCII "%d"
 	+	PUSH(-1)                      //PUSH -1
 	;
-	
+
     let addrsU = Exe.FindHexN(code);
     if (addrsU.isEmpty())
         throw Error("AgencyUpperLevellimit not found");
@@ -58,14 +58,14 @@ CustomAdvAgencyLimits = function()
 	/// 1.3 - Find all locations of the Lower Limit subtraction
 	code =
 		LEA(EAX, [ESI, -5])    //LEA EAX, [ESI-5]
-	+	(Exe.Version > 11.0
+	+	(Exe.Version > 11
 	?
 		XORPS(XMM0, XMM0)      //XORPS XMM0, XMM0
 	:
 		''
 	)
 	+	CMP(EAX, ECX)          //CMP EAX, ECX
-	+	(Exe.Version > 11.0
+	+	(Exe.Version > 11
 	?
 		MOVQ([EBP, WC], XMM0)  //MOVQ DWORD PTR SS:[EBP + var_1C], XMM0
 	:
@@ -76,7 +76,7 @@ CustomAdvAgencyLimits = function()
 	+	PUSH(strAddr)          //PUSH OFFSET addr ; ASCII "%d"
 	+	PUSH(-1)               //PUSH -1
 	;
-	
+
     let offsetsL = Exe.FindHexN(code);
 	if (offsetsL.isEmpty())
         throw Error("AgencyLowerLevellimit not found");
@@ -86,7 +86,7 @@ CustomAdvAgencyLimits = function()
 	let lower = Exe.GetUserInput("$lowlimitVal", D_Int8, "Level limit", "Enter new lower level limit", -5, {max: -1});
 	if (upper === false && lower === false)
 		Cancel("Limits", "(-5, +5)");
-	
+
 	/// 2.2 - Change the upper limit if new value is provided (won't be false then)
 	if (upper !== false)
 	{
@@ -94,7 +94,7 @@ CustomAdvAgencyLimits = function()
 			Exe.SetFromVar(addr + 2, "$upplimitVal")
 		);
 	}
-	
+
 	/// 2.3 - Change the lower limit if new value is provided (won't be false then)
 	if (lower !== false)
 	{
@@ -102,7 +102,7 @@ CustomAdvAgencyLimits = function()
 			Exe.SetFromVar(addr + 2, "$lowlimitVal")
 		);
 	}
-	
+
     return true;
 };
 
