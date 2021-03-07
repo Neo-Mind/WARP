@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
-*   Copyright (C) 2020 Secret                                              *
+*   Copyright (C) 2020-2021 Secret                                         *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Secret                                        *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -66,9 +66,9 @@ CallKoreaClientInfo = function()
 
 	addrs.forEach( (memAddr, index) =>
 	{
-		/// 2.1 - Find the Switch case jump before each PUSH 
+		/// 2.1 - Find the Switch case jump before each PUSH
 		let csize;
-		if (Exe.Version < 9.0) //VC6
+		if (Exe.Version === 6) //VC6
 		{
 			csize = codes[1].byteCount();
 			addr = Exe.FindHex(codes[1], memAddr - 0x50, memAddr);
@@ -104,7 +104,7 @@ CallKoreaClientInfo = function()
 		if (addr2 < 0)
 		{
 			nopLoc = 0;
-			if (Exe.Version > 11.0)
+			if (Exe.Version > 11)
 			{
 				nopCount = 6;
 				addr2 = Exe.FindHex(codes[4], addr, tblAddr);

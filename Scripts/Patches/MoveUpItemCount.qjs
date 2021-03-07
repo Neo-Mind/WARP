@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2015-2020 Neo-Mind                                       *
+*   Copyright (C) 2015-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,92 +22,98 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-10                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Change the "boldtext" comparison JE to JMP inside 
+/// \brief Change the "boldtext" comparison JE to JMP inside
 ///        UIFrameWnd::DrawItemWithCount function
 ///
 MoveUpItemCount = function()
 {
     /// 1 - Find the pattern after the comparison inside DrawItemWithCount function
-	let code, type;
-    if (Exe.Version < 9.0)
-    {
-        code =
-            PUSH(0xFFFFFF)  //PUSH 0FFFFFF
-        +	MOVSX(ECX, SI)  //MOVSX ECX, SI
-        ;
-        type = 1;//VC6
-    }
-	else if (Exe.Version < 11.0)
+	let code;
+	switch (Exe.Version)
 	{
-        code =
-            PUSH(0xFFFFFF)      //PUSH 0FFFFFF
-        +	PUSH(0x0B)          //PUSH 0B
-        +	PUSH_0              //PUSH 0
-        +	MOVSX(R32, R16)     //MOVSX reg32_A, reg16_B
-        ;
-        type = (Exe.Version < 10.0) ? 2 : 3 ;//2 for VC9 and 3 for VC10
-    }
-	else if (Exe.Version < 14.0)
-    {
-        code =
-            PUSH(0xFFFFFF)      //PUSH 0FFFFFF
-        +	MOV(EAX, 0xE)       //MOV EAX, 0E
-        +	CMOVGE(EAX, ECX)    //CMOVGE EAX, ECX
-        +	PUSH(0x0B)          //PUSH 0B
-        +	CWDE                //CWDE
-        ;
-        type = 4; //VC11
-    }
-	else
-	{
-		code =
-			PUSH(0xFFFFFF)      //PUSH 0FFFFFF
-		+	XOR(EAX, EAX)		//XOR EAX, EAX
-		+	ADD(EDI, 0xF)		//ADD EDI, 0F
-		;
-		type = 5; //VC14.16
+		case 6: //VC6
+		{
+			code =
+				PUSH(0xFFFFFF)   //PUSH 0FFFFFF
+			+	MOVSX(ECX, SI)   //MOVSX ECX, SI
+			;
+			break;
+		}
+
+		case 9:  //VC9 &
+		case 10: //VC10
+		{
+			code =
+				PUSH(0xFFFFFF)   //PUSH 0FFFFFF
+			+	PUSH(0x0B)       //PUSH 0B
+			+	PUSH_0           //PUSH 0
+			+	MOVSX(R32, R16)  //MOVSX reg32_A, reg16_B
+			;
+			break;
+		}
+		case 11: //VC11
+		{
+			code =
+				PUSH(0xFFFFFF)   //PUSH 0FFFFFF
+			+	MOV(EAX, 0xE)    //MOV EAX, 0E
+			+	CMOVGE(EAX, ECX) //CMOVGE EAX, ECX
+			+	PUSH(0x0B)       //PUSH 0B
+			+	CWDE             //CWDE
+			;
+			break;
+		}
+
+		default: //VC14.16
+		{
+			code =
+				PUSH(0xFFFFFF)   //PUSH 0FFFFFF
+			+	XOR(EAX, EAX)	 //XOR EAX, EAX
+			+	ADD(EDI, 0xF)	 //ADD EDI, 0F
+			;
+			break;
+		}
 	}
 
 	let addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
         throw Error("No Patterns found");
 
-    /// 2.1 - Prep the code for finding the comparison based on previous match
-    switch (type)
+    /// 2.1 - Prep the code for finding the comparison
+    switch (Exe.Version)
     {
-        case 1: //VC6
+        case 6: //VC6
         {
             code =
-				MOV(AL, [EBP, 0x18])     //MOV AL, BYTE PTR SS:[EBP+18]
-            +	ADD(ESP, 0xC)            //ADD ESP, 0C
-            +	TEST(AL, AL)             //TEST AL, AL
+				MOV(AL, [EBP, 0x18])           //MOV AL, BYTE PTR SS:[EBP+18]
+            +	ADD(ESP, 0xC)                  //ADD ESP, 0C
+            +	TEST(AL, AL)                   //TEST AL, AL
             ;
             break;
         }
-        
-        case 2: //VC9
+
+        case 9: //VC9
         {
-            code = 
+            code =
                 CMP(BYTE_PTR, [ESP, 0x3C], 0)  //CMP BYTE PTR SS:[ESP+3C], 0
             ;
             break;
         }
-        case 3: //VC10
+        case 10: //VC10
         {
-            code = 
+            code =
                 CMP(BYTE_PTR, [EBP, 0x18], 0)  //CMP BYTE PTR SS:[EBP+18], 0
             ;
             break;
         }
-        case 4: //VC11
-		case 5: //VC14.16
+
+        default: //VC11+
         {
-            code = 
+            code =
                 CMP(BYTE_PTR, [EBP, 0x18], 0)  //CMP BYTE PTR SS:[EBP+18], 0
             +	PUSH_0                         //PUSH 0
             ;
@@ -126,7 +132,7 @@ MoveUpItemCount = function()
         cmpAddr = Exe.FindHex(code, addr - 0x50, addr);
         return (cmpAddr > 0);
     });
-	
+
 	if (cmpAddr < 0)
         throw Error("Comparison not found");
 

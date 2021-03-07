@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2020-12-05                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Modifies comparison in the ::IsSameSentence function 
+/// \brief Modifies comparison in the ::IsSameSentence function
 ///
-///        UnlimitedChatRepeat - Enforces a JMP 
+///        UnlimitedChatRepeat - Enforces a JMP
 ///        LimitedChatRepeat - Changes the limit itself
 ///
 ChatRepeat = function(patchName)
@@ -38,7 +38,7 @@ ChatRepeat = function(patchName)
 	LANGTYPE.load();
 
 	/// 1.2 - Find the Langtype comparison to identify ::IsSameSentence
-	let dist = Exe.Version < 9.0 ? POS1WC : WCp;
+	let dist = Exe.Version === 6 ? POS1WC : WCp;
 
 	let prefix =
 		CMP([LANGTYPE], 0xA) //CMP DWORD PTR DS:[g_serviceType], 0A

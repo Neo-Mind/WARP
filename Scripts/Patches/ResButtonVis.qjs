@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -60,37 +60,46 @@ ShowResButton = function()
 
 	/// 2.1 - Find the triple comparisons after the PUSH (unknown param, PVP, GVG)
 	let code;
-	if (Exe.Version < 9.0) //VC6
+	switch (Exe.Version)
 	{
-		code =
-			MOV(ECX, [EAX, WCp])  //MOV ECX, DWORD PTR DS:[EAX + const]
-		+	TEST(ECX, ECX)        //TEST ECX, ECX
-		+	JNE(WCp)              //JNE SHORT addr
-		;
+		case 6: //VC6
+		{
+			code =
+				MOV(ECX, [EAX, WCp])  //MOV ECX, DWORD PTR DS:[EAX + const]
+			+	TEST(ECX, ECX)        //TEST ECX, ECX
+			+	JNE(WCp)              //JNE SHORT addr
+			;
+			break;
+		}
+
+		case 10: //VC10
+		{
+			code =
+				CMP([EAX, WCp], R32)  //CMP DWORD PTR DS:[EAX + const], reg32
+			+	JNE(POS2WC)           //JNE addr
+			;
+			break;
+		}
+
+		default: //VC9 & VC11+
+		{
+			code =
+				CMP([EAX, WCp], 0)    //CMP DWORD PTR DS:[EAX + const], 0
+			+	JNE(WCp)              //JNE SHORT addr
+			;
+			break;
+		}
 	}
-	else if (Exe.Version === 10.0) //VC10
-	{
-		code =
-			CMP([EAX, WCp], R32)  //CMP DWORD PTR DS:[EAX + const], reg32
-		+	JNE(POS2WC)           //JNE addr
-		;
-	}
-	else //VC9, VC11 & VC14.16
-	{
-		code =
-			CMP([EAX, WCp], 0)    //CMP DWORD PTR DS:[EAX + const], 0
-		+	JNE(WCp)              //JNE SHORT addr
-		;
-	}
+
 	let cmpAddr = Exe.FindHex(code.repeat(3), addr, addr + 0x40);
 	if (cmpAddr < 0)
 	{
-		if (Exe.Version === 10.0) //VC10
+		if (Exe.Version === 10) //VC10
 		{
 			code = code.replace( JNE(POS2WC), JNE(WCp) ); //change JNE to SHORT JNE
 			cmpAddr = Exe.FindHex(code.repeat(3), addr, addr + 0x40);
 		}
-		else if (Exe.Version > 9.0) //VC11 & VC14.16
+		else if (Exe.Version >= 11) //VC11+
 		{
 			code = code.replace( JNE(WCp), JNE(POS2WC) ); //change JNE SHORT to JNE
 			cmpAddr = Exe.FindHex(code.repeat(3), addr, addr + 0x40);

@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2017 Secret                                              *
+*   Copyright (C) 2017-2021 Secret                                         *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Secret                                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-01-14                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -40,12 +40,12 @@ LoadClientPlugins = function()
     var refAddr = Exe.FindHex(PUSH(addr));
     if (refAddr < 0)
         throw Error("'SOUNDMODE' not used");
-	
+
 	/// 2.1 - Find the soundMode offset used as argument to RegQueryValueEx CALL before the PUSH
 	let code =
 		PUSH(POS4WC)         //PUSH soundMode
 	+	LEA(R32, [EBP, WC])  //LEA reg32_A, [EBP + Type]
-	+	(Exe.Version > 11.0
+	+	(Exe.Version > 11
 	?
 		MOV([EBP, WC], 4)    //MOV DWORD PTR SS:[EBP + cbData], 4
 	:
@@ -54,45 +54,52 @@ LoadClientPlugins = function()
 	+	PUSH_R               //PUSH reg32_A
 	+	PUSH_0               //PUSH 0
     ;
-	
+
 	addr = Exe.FindLastHex(code, refAddr, refAddr - 0x20);
 	if (addr < 0)
         throw Error("RegQueryValueEx CALL missing");
 
-	/// 2.2 - Extract the offset.
+	/// 2.2 - Extract the offset
 	let soundMode = Exe.GetHex(addr + 1, 4);
 
     /// 3.1 - Find soundMode comparison
-	if (Exe.Version > 11.0) //VC14.16
+	switch (Exe.Version)
 	{
-		code = 
-			LEA(EAX, [EAX, 4])    //LEA EAX, [EAX+4]
-		+	MOV([EAX, -4], 0)     //MOV DWORD PTR DS:[EAX-4], 0
-		+	SUB(ECX, 1)           //SUB ECX, 1
-		+	JNZ(WCn)              //JNZ SHORT _loop
-		+	CMP([soundMode], ECX) //CMP DWORD PTR DS:[soundMode], ECX
-		;
+		case 10: //VC10
+		{
+			code =
+				ADD(EAX, 4)           //ADD EAX, 4
+			+	DEC(ECX)              //DEC ECX
+			+	JNZ(WCn)              //JNZ SHORT _loop
+			+	XOR(EDI, EDI)         //XOR EDI, EDI
+			+	CMP([soundMode], EDI) //CMP DWORD PTR DS:[soundMode], EDI
+			;
+			break;
+		}
+
+		case 11: //VC11
+		{
+			code =
+				LEA(EAX, [EAX, 4])    //LEA EAX, [EAX+4]
+			+	DEC(ECX)              //DEC ECX
+			+	JNZ(WCn)              //JNZ SHORT _loop
+			+	CMP([soundMode], ECX) //CMP DWORD PTR DS:[soundMode], ECX
+			;
+			break;
+		}
+
+		default: //VC14.16
+		{
+			code =
+				LEA(EAX, [EAX, 4])    //LEA EAX, [EAX+4]
+			+	MOV([EAX, -4], 0)     //MOV DWORD PTR DS:[EAX-4], 0
+			+	SUB(ECX, 1)           //SUB ECX, 1
+			+	JNZ(WCn)              //JNZ SHORT _loop
+			+	CMP([soundMode], ECX) //CMP DWORD PTR DS:[soundMode], ECX
+			;
+			break;
+		}
 	}
-	else if (Exe.Version === 11.0) //VC11
-	{
-		code = 
-			LEA(EAX, [EAX, 4])    //LEA EAX, [EAX+4]
-		+	DEC(ECX)              //DEC ECX
-		+	JNZ(WCn)              //JNZ SHORT _loop
-		+	CMP([soundMode], ECX) //CMP DWORD PTR DS:[soundMode], ECX
-		;
-	}
-	else //VC10
-	{
-		code =
-			ADD(EAX, 4)           //ADD EAX, 4 
-		+	DEC(ECX)              //DEC ECX
-		+	JNZ(WCn)              //JNZ SHORT _loop
-		+	XOR(EDI, EDI)         //XOR EDI, EDI
-		+	CMP([soundMode], EDI) //CMP DWORD PTR DS:[soundMode], EDI
-		;
-	}
-	
 	addr = Exe.FindHex(code + JE(POS2WC));
 	if (addr < 0)
         throw Error("soundMode comparison missing");

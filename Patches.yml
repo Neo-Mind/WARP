@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-02-08                                             #
+#   Last Modified : 2021-03-06                                             #
 #                                                                          #
 ############################################################################
 
@@ -591,66 +591,6 @@
             recommend : no
             author : Neo-Mind
             desc : Makes the client always show register button on Login Window for all Langtypes. Clicking the button will open <registrationweb> from clientinfo and closes the client.
-        
-- HideButton:
-    title : HIDE BUTTON
-    mutex : false
-    color : darkorange
-    
-    patches:
-        - HideNavBtn:
-            title : Hide Nav Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Navigation Button located under the HP/SP Bars.
-        
-        - HideBgBtn:
-            title : Hide BG Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Battleground Button located under the HP/SP Bars.
-        
-        - HideBankBtn:
-            title : Hide Bank Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Bank Button located under the HP/SP Bars.
-        
-        - HideBookBtn:
-            title : Hide Booking Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Booking Button located under the HP/SP Bars.
-        
-        - HideRodexBtn:
-            title : Hide Rodex Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Rodex Button located under the HP/SP Bars.
-        
-        - HideAchieveBtn:
-            title : Hide Achievements Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Achievements Button located under the HP/SP Bars.
-        
-        - HideRecordBtn:
-            title : Hide Record Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Record Button located under the HP/SP Bars.
-        
-        - HideMapBtn:
-            title : Hide Map Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Map Button located under the HP/SP Bars.
-        
-        - HideQuestBtn:
-            title : Hide Quest Button
-            recommend : no
-            author : Neo-Mind
-            desc : Hide the Quest Button located under the HP/SP Bars.
 
 - ReadTxtFile:
     title : READ .txt FILE
@@ -689,14 +629,20 @@
         - IgnoreLuaErr:
             title : Ignore Lua Errors
             recommend : no
-            author : Andrei Karas (4144), X-EcutiOnner , Ai4rei/AN
-            desc : Prevents the client from displaying a error messages from lua code like 'attempt to call nil value'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+            author : Andrei Karas (4144), X-EcutiOnner
+            desc : Prevents the client from displaying error messages from lua code like 'attempt to call nil value'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
         
         - IgnoreQuestErr:
             title : Ignore Quest Errors
             recommend : no
-            author : Andrei Karas (4144), X-EcutiOnner , Ai4rei/AN
-            desc : Prevents the client from displaying a error messages like 'Not found Quest Info = XXXX'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+            author : Andrei Karas (4144), X-EcutiOnner
+            desc : Prevents the client from displaying error messages like 'Not found Quest Info = XXXX'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+        
+        - IgnoreEntryQueueErr:
+            title : Ignore Entry Queue Errors
+            recommend : no
+            author : X-EcutiOnner
+            desc : Prevents the client from displaying error messages related to Entry Queue. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
 
 - ClientArgs:
     title : CLIENT ARGUMENTS
@@ -1122,6 +1068,48 @@
             recommend : no
             author : X-EcutiOnner
             desc : Remove equipment preview button on the items description window
+        
+        - IncrNewCharHairs:
+            title : Increase New Char Hair Limits
+            recommend : no
+            author : Neo-Mind
+            desc : Increase the Hair Style and Color limits used in Make Character Window to user specified values.
+
+        - HideZeroDateInGuildWin:
+            title : Hide Zero Date in Guild Window
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Hide Zero Date (1969-01-01) in guild members window.
+        
+        - CustomSlotHLColor:
+            title : Change Skill Slot Highlight
+            recommend : no
+            author : Hanashi , Andrei Karas (4144)
+            desc : Changes the highlight color for skill slot to user specified value.
+
+- ButtonVis:
+    title : BASIC BUTTON VISIBILITY
+    mutex : false
+    color : orangered
+    
+    patches:
+        - HideOldButtons:
+            title : Hide Buttons (Old UI)
+            recommend : no
+            author : Neo-Mind
+            desc : Hide the various buttons in the Basic Info Window under the HP/SP Bars.
+        
+        - HideNewButtons:
+            title : Hide Buttons (New UI)
+            recommend : no
+            author : Neo-Mind
+            desc : Hide the various buttons in the Basic Info Window under the HP/SP Bars.
+        
+        - ShowNewButtons:
+            title : Show Buttons (New UI)
+            recommend : no
+            author : Neo-Mind
+            desc : Shows some of the various hidden buttons in the Basic Info Window under the HP/SP Bars.
 
 - CustomData:
     title : DATA CUSTOMIZATION
@@ -1242,6 +1230,18 @@
             recommend : yes
             author : Andrei Karas (4144)
             desc : Hide the actual build info in client by 'NULL' ifying all related values.
+         
+        - NoCameraLock:
+            title : Disable Camera Lock
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Disable locking camera viewpoint rotation using ViewPointTable.txt
+        
+        - NoMapInfo:
+            title : Disable Map Signs
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Disable the use of mapInfo lub file to display map signs when player enters map.
 
 - CustomChar:
     title : CHARACTER CUSTOMIZATION
@@ -1302,6 +1302,23 @@
             recommend : no
             author : Functor, Secret , Neo-Mind
             desc : Remove restriction of guild functionality while being a member of a clan.
+
+- IncrHairs:
+    title : INCREASE HAIRS
+    mutex : true
+    
+    patches:
+        - Allow65kHairs:
+            title: Allow 65k hair styles
+            recommend : no
+            author : Ai4rei/AN, Neo-Mind
+            desc : Raises the maximum hairstyle limit to 65535 from the default value.
+        
+        - IncrHairStyles:
+            title: Increase hair styles
+            recommend : no
+            author : Ai4rei/AN, Neo-Mind
+            desc : Raises the maximum hairstyle limit to user specified value (upto 65535).
 
 - CustomFriendWin:
     title : FRIEND WINDOW CUSTOMIZATION
@@ -1454,6 +1471,12 @@
             recommend : no
             author : jchcc
             desc : Auto mute audio when game window is not active.
+        
+        - NoBGMAudio:
+            title : Disable BGM Audio
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Disable the use of mp3NameTable.txt to pick & play audio files as BGM.
 
 - CustomSpecials:
     title : SPECIAL CUSTOMIZATIONS

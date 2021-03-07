@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Functor, Neo-Mind                                   *
+*   Copyright (C) 2020-2021 Functor                                        *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,21 +23,21 @@
 *                                                                          *
 *   Author(s)     : Functor, Neo-Mind                                      *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
-/// 
-/// \brief Change the code which shows the deletion delay 
-/// 
+///
+/// \brief Change the code which shows the deletion delay
+///
 ///        Before : date and time when deletion can be done
 ///        After  : remaining time after which deletion can be done
 ///
-RelativeDelay4CharDel = function() 
+RelativeDelay4CharDel = function()
 {
 	/// 1.1 - Find the code which prepare character deletion time data
 	let code;
-	if (Exe.Version < 14.0)
+	if (Exe.Version <= 11)
 	{
 		code =
 			SUB(ESP, 0x24)        //SUB ESP, 24
@@ -51,7 +52,7 @@ RelativeDelay4CharDel = function()
 	}
 	else
 	{
-		code = 
+		code =
 			SUB(ESP, 0x24)        //SUB ESP, 24
 		+	XORPS(XMM0, XMM0)     //XORPS XMM0, XMM0
 		+	CMP([ECX], 0)         //CMP DWORD PTR DS:[ECX], 0
@@ -73,7 +74,7 @@ RelativeDelay4CharDel = function()
 		throw Error("'_time32' function missing");
 
 	/// 2.1 - Prepare the replacement code
-	code = 
+	code =
 		PUSH(EBX)             //PUSH EBX
 	+	PUSH(ESI)             //PUSH ESI
 	+	PUSH(ECX)             //PUSH ECX
@@ -128,7 +129,7 @@ RelativeDelay4CharDel.validate = function()
 		PUSH(0xB)   //PUSH 0B
 	+	PUSH_0      //PUSH 0
 	,
-		Exe.Version < 14.0
+		Exe.Version <= 11
 	?
 		LEA(ESI, [EBP, WCn])    //LEA ESI, [EBP-const]
 	+	CMOVNB(ESI, [EBP, WC])  //CMOVNB ESI, DWORD PTR DS:[EBP-const] ; previous instruction seems wasteful
@@ -142,7 +143,7 @@ RelativeDelay4CharDel.validate = function()
 
 	if (RD4CD_Addr < 0) //Extra PUSH 0 after PUSH 28 for newer clients.
 	{
-		parts[0] += PUSH_0 
+		parts[0] += PUSH_0
 		RD4CD_Addr = Exe.FindHex(parts.join(''));
 	}
 

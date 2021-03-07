@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : MegaByte                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@
 WalkDelay = function(patchName)
 {
 	/// 1.1 - Find the delay addition
-	let reg = (Exe.Version < 9.0 ? EDX : ECX); //VC6 uses EDX
+	let reg = (Exe.Version === 6 ? EDX : ECX); //VC6 uses EDX
 	let code =
 		ADD(reg, 0x258)   //ADD reg32,00000258 ; 600ms
 	+   CMP(EAX, reg)     //CMP EAX, reg32

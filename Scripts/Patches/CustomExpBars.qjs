@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-01-17                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -65,7 +65,7 @@ CustomBarLimits = function()
 
     /// 2.1 - Find the base level assignment/comparison after the CALLs
     code =
-		Exe.Version < 9.0 //VC6
+		Exe.Version === 6   //VC6
     ?
 		MOV(EAX, [POS3WC])  //MOV EAX, DWORD PTR DS:[g_baseLevel]
 	+	MOV(EDI, 0x63)      //MOV EDI, 63
@@ -91,7 +91,7 @@ CustomBarLimits = function()
     /// 2.3 - Find the ESI + const assignment between afterBB & refAddr
     addr = Exe.FindHex( MOV(ECX, [ESI, POS1WC]), afterBB, refAddr);//MOV ECX, DWORD PTR DS:[ESI+const]
 
-    if (addr < 0 && Exe.Version > 11.0) //VC14.16
+    if (addr < 0 && Exe.Version > 11) //VC14.16
 		addr = Exe.FindHex( MOV(EDX, [ESI, POS1WC]), afterBB, refAddr);//MOV EDX, DWORD PTR DS:[ESI+const]
 
     if (addr < 0)
@@ -103,7 +103,7 @@ CustomBarLimits = function()
     /// 2.5 - Calculate remaining constants
     let HideJob  = HideBase + 0x04;
 	let ShowBars, FuncOff;
-    if (Exe.Version < 9.0)
+    if (Exe.Version === 6)
     {
         ShowBars = HideBase + 0x10;
         FuncOff = 0x18; //value added to [ECX] to retrieve the function address
@@ -117,7 +117,7 @@ CustomBarLimits = function()
     /// 3.1 - Find the end of the base exp display code after the ESI movement
     code =
         PUSH(0x55)            //PUSH 55
-    +	(Exe.Version < 9.0 || Exe.Version === 11.0
+    +	(Exe.Version === 6 || Exe.Version === 11
 	?
 		CALL([R32, FuncOff])  //CALL DWORD PTR DS:[reg32 + FuncOff] ;VC6 & VC11
 	:                         // or
@@ -170,11 +170,11 @@ CustomBarLimits = function()
     code =
         PUSH(0x58)           //PUSH 58
     +	PUSH(-0xC8)          //PUSH -0C8
-    +	(Exe.Version < 9.0 || Exe.Version > 10.0
+    +	(Exe.Version === 9 || Exe.Version === 10
 	?
-		CALL([R32, FuncOff]) //CALL DWORD PTR DS:[reg32 + FuncOff] ;//VC6, VC11, VC14.16
+		CALL(R32)			 //CALL reg32 ; for VC9, VC10
 	:
-		CALL(R32)			 //CALL reg32 ;// VC9, VC10
+		CALL([R32, FuncOff]) //CALL DWORD PTR DS:[reg32 + FuncOff] ; for VC6, VC11, VC14.16
 	)
     ;
 
@@ -485,7 +485,7 @@ ShowExpNumbers = function()
     +	MovECX                //MOV ECX, reg32_A
     +	CALL(Filler(5))       //CALL UIWindow::TextOutA ; stdcall => No Stack restore required
     ;
-	
+
 	template = SetFillTarget(template, 3, template.byteCount(), 0, 1, 1); //putting the distance in JE SHORT (this is needed since byteCount can vary)
 
     /// 4.3 - Prepare the full code from the template

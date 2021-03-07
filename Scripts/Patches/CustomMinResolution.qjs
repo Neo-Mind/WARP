@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2019-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2019-2021 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-02                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -53,7 +53,7 @@ CustomMinResolution = function()
 	let newMinW = Exe.GetUserInput('$newScreenWidth',  D_Uint32, "Screen Resolution Limit", "Enter the new Minimum Width",  oldMinW, {min:0, max:10000});
 	let newMinH = Exe.GetUserInput('$newScreenHeight', D_Uint32, "Screen Resolution Limit", "Enter the new Minimum Height", oldMinH, {min:0, max:10000});
 	if (newMinW === false && newMinH === false)
-		return "Cancelled - Min Resolution reverted to 1024x768";
+		Cancel("Min Resolution", "1024x768");
 
 	if (newMinW !== false)
 	{

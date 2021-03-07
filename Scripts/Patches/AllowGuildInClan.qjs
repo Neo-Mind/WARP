@@ -1,6 +1,8 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Functor, Andrei Karas (4144), Neo-Mind              *
+*   Copyright (C) 2020-2021 Functor                                        *
+*   Copyright (C) 2020-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,14 +24,14 @@
 *                                                                          *
 *   Author(s)     : Functor, Andrei (4144), Neo-Mind                       *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2021-03-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Skips the check that requires the player to not be in a clan
 ///
-AllowGuildInClan = function() 
+AllowGuildInClan = function()
 {
 	/// 1.1 - Find the original string (only valid for older VC10 clients before it got moved to msgstringtable)
 	let addr = -1;
@@ -81,9 +83,9 @@ AllowGuildInClan = function()
 	Exe.SetJMP(addr);
 
 	/// 2.1 - Look for JNE followed by EAX assignment to 0x168 after the above
-	let code = 
+	let code =
 		JNZ(NEG3WC)              //JNZ addr
-	+	(Exe.Version < 11.0 
+	+	(Exe.Version < 11
 	?
 		MOV(R32, [EBP, NEG3WC])  //MOV reg32_A, DWORD PTR SS:[EBP - const]
 	+	MOV(EAX, [POS3WC])       //MOV EAX, DWORD PTR DS:[addr]
