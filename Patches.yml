@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-03-06                                             #
+#   Last Modified : 2021-03-09                                             #
 #                                                                          #
 ############################################################################
 
@@ -677,6 +677,12 @@
             recommend : yes
             author : Neo-Mind
             desc : Enables <b>/showname</b> command for all Langtypes
+        
+        - EnableUnknCmds:
+            title : Allow unknown '/command's [Experimental]
+            recommend : no
+            author : Ai4rei/AN
+            desc : Sends all unknown '<b>/command</b>' sequences to server (for allowing server side '<b>/command</b>'s) instead of showing "Invalid command".
 
 - SkipLub:
     title : SKIP LUB

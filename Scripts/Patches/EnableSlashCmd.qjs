@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2013-2021 Neo-Mind                                       *
+*   Copyright (C) 2021 Ai4rei/AN                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,9 +21,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Neo-Mind                                               *
+*   Author(s)     : Neo-Mind, Ai4rei/AN                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-03-09                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -139,6 +140,228 @@ EnableShowName = function()
 
 	/// 2 - Change the conditional jump
 	Exe.SetJMP(addr + 2);
+
+	return true;
+};
+
+///
+/// \brief Turns TT_UNKNOWN return value into TT_NORMAL inside CSession::GetNoParamTalkType and set chatStartOffset
+///        to 0 in caller (CSession::GetTalkType) instead of -1 when the return value was indeed TT_NORMAL.
+///
+EnableUnknCmds = function()
+{
+	/// 1.1 - Prep code to find the ending point of CSession::GetNoParamTalkType function. Also setup the register to be modified
+	let cmn =
+		(ROC.HasFP
+	?
+		MOV(ESP, EBP)     //MOV ESP, EBP
+	+	POP(EBP)          //POP EBP
+	:
+		''
+	)
+	+	RETN(4)           //RETN 4
+	;
+
+	let prefix = MOV(EAX, [R32, 4]); //MOV EAX, DWORD PTR DS:[reg32_A + 4]
+	let suffix = MOV(EAX, 3);        //MOV EAX, 3
+	let movPos, tgtReg;
+
+	switch (Exe.Version)
+	{
+		case 6: //VC6
+		{
+			prefix +=
+				POP(EDI)  //POP EDI
+			+	POP(ESI)  //POP ESI
+			+	POP(EBX)  //POP EBX
+			+	cmn       //stack restore + retn
+			;
+			suffix =
+				POP(EDI)  //POP EDI
+			+	POP(ESI)  //POP ESI
+			+	suffix    //MOV EAX, 3
+			+	POP(EBX)  //POP EBX
+			+	cmn       //stack restore + retn
+			;
+			movPos = 2;
+			tgtReg = ESI;
+			break;
+		}
+		case 9: //VC9
+		{
+			prefix +=
+				POP(EDI)  //POP EDI
+			+	POP(ESI)  //POP ESI
+			+	POP(ECX)  //POP ECX
+			+	cmn       //stack restore + retn
+			;
+			suffix =
+				POP(EDI)  //POP EDI
+			+	suffix    //MOV EAX, 3
+			+	POP(ESI)  //POP ESI
+			+	POP(ECX)  //POP ECX
+			+	cmn       //stack restore + retn
+			;
+			movPos = 1;
+			tgtReg = EBP;
+			break;
+		}
+		case 10: //VC10 &
+		case 11: //VC11
+		{
+			prefix +=
+				cmn       //stack restore + retn
+			;
+			suffix +=
+				cmn       //stack restore + retn
+			;
+			movPos = 0;
+			tgtReg = EDI;
+			break;
+		}
+		default: //VC14.16
+		{
+			prefix +=
+				POP(EDI)  //POP EDI
+			+	POP(ESI)  //POP ESI
+			+	cmn       //stack restore + retn
+			;
+			suffix =
+				POP(EDI)  //POP EDI
+			+	suffix    //MOV EAX, 3
+			+	POP(ESI)  //POP ESI
+			+	cmn       //stack restore + retn
+			;
+			movPos = 1;
+			tgtReg = EDI;
+			break;
+		}
+	}
+
+	let addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+		throw Error("Function end missing");
+
+	/// 1.2 - Modify the MOV statement to unset EAX & increment the target register
+	Exe.SetHex(addr + prefix.byteCount() + movPos,
+		XOR(EAX, EAX)  //XOR EAX, EAX
+	+	ADD(tgtReg, 1) //ADD reg32_A, 1
+	);
+
+	/// 1.3 - Find the beginning of the function
+	prefix =
+		(ROC.HasFP
+	?
+		PUSH(EBP)      //PUSH EBP
+	+	MOV(EBP, ESP)  //MOV EBP, ESP
+	:
+		''
+	)
+	+	(Exe.Version < 9 || Exe.Version > 11
+	?
+		SUB(ESP, 8)    //SUB ESP, 8
+	:
+		PUSH(ECX)      //PUSH ECX
+	+	PUSH(ESI)      //PUSH ESI
+	)
+	;
+	addr = Exe.FindLastHex(prefix, addr, addr - 0x100);
+	if (addr < 0)
+		throw Error("Function start missing");
+
+	/// 1.4 - Save it's VIRTUAL address
+	let funcAddr = Exe.Phy2Vir(addr, CODE);
+
+	/// 2.1 - Find the location where the function is CALLed (the pattern would match multiple locations).
+	if (Exe.Version === 6)
+	{
+		prefix =
+			MOV(EAX, [EAX, 4])                            //MOV EAX, DWORD PTR DS:[EAX + 4]
+		+	TEST(EAX, EAX)                                //TEST EAX, EAX
+		+	JNZ(5)                                        //JNZ SHORT _skip
+		+	MOV(EAX, POS3WC)                              //MOV EAX, addr
+		;
+	}
+	else
+	{
+		prefix =
+			CMP([EAX, ' 1?'], 0x10)                       //CMP DWORD PTR DS:[EAX + const], 10 ; const is either 14 or 18
+		+	JB(WCp)                                       //JB SHORT addr
+		+	MOV(EAX, Exe.Version < 10 ? [EAX, 4] : [EAX]) //MOV EAX, DWORD PTR DS:[memLoc] ; memLoc is either EAX + 4 (for older clients) or EAX
+		;
+	}
+	suffix =
+		MOV(ECX, ROC.HasFP ? [EBP, WCn] : [ESP, WCp])     //MOV ECX, DWORD PTR DS:[LOCAL.x]
+	+	PUSH_EAX                                          //PUSH EAX
+	+	CALL();                                           //CALL CSession::GetNoParamTalkType
+
+	let addrs = Exe.FindHexN(prefix + suffix);
+	if (addrs.isEmpty())
+		throw Error("Function CALL missing");
+
+	let csize = prefix.byteCount() + suffix.byteCount();
+
+	/// 2.2 - Find the correct one by checking the function being called.
+	addr = addrs.find(memAddr => Exe.GetTgtAddr(memAddr + csize) === funcAddr);
+	if (addr === undefined)
+		throw Error("Only False matches found");
+
+	/// 2.3 - Find the long JMP after the CALL (occurs twice for VC9). NOP away any OR reg32_A, -1 instructions in between
+	let hookAddrs = [];
+	let ins = Instr.FromAddr(addr + csize + 4);
+	let count = Exe.Version === 9 ? 2 : 1;
+	for ( ; count > 0; )
+	{
+		if (ins.Codes[0] === 0xE9)
+		{
+			count--;
+			hookAddrs.push(ins.Addr + 1);
+		}
+		else if (ins.Codes[0] === 0x83 && ins.Immd === -1 )
+		{
+			let {Mode, RgOp, RegM} = ins.MRM;
+			if (Mode === 3 && RgOp === 1 && RegM === tgtReg.Index) //OR tgtReg, -1
+				Exe.SetNOPs(ins.Addr, 3);
+		}
+
+		ins = Instr.FromAddr(ins.NextAddr);
+	}
+
+	/// 2.4 - Extract the jump target
+	let retnAddr = Exe.GetTgtAddr(hookAddrs[0]);
+
+	/// 2.5 - Check if the instruction at the target is OR reg32_A, -1
+	ins = Instr.FromAddr(Exe.Vir2Phy(retnAddr, CODE));
+	if (ins.Codes[0] === 0x83 && ins.Immd === -1)
+	{
+		let {Mode, RgOp, RegM} = ins.MRM;
+		if (Mode === 3 && RgOp === 1 && RegM === tgtReg.Index) //Skip over if it is OR tgtReg, -1
+			retnAddr += 3;
+	}
+
+	/// 3.1 - Prep new code to setup TT_NORMAL & chatStartOffset
+	let code =
+		DEC(tgtReg)    //DEC reg32_A ; for TT_NORMAL reg value becomes 0
+	+	JZ(3)          //JZ SHORT _skip
+	+	OR(tgtReg, -1) //OR reg32_A, -1 ; for all others reg value is -1
+	+	JMP(Filler(1)) //JMP retnAddr
+	;
+
+	/// 3.2 - Allocate space for it
+	let free = Exe.FindSpace(code.byteCount());
+	if (free < 0)
+		throw NO_ALLOC;
+
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+
+	/// 3.3 - Fill in the blanks
+	code = SetFillTarget(code, 1, retnAddr, freeVir);
+
+	/// 3.4 - Add to allocated space
+	Exe.AddHex(free, code);
+
+	/// 3.5 - Update the JMP targets
+	hookAddrs.forEach(addr => Exe.SetTgtAddr(addr, freeVir));
 
 	return true;
 };
