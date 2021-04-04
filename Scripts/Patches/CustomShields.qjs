@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -109,10 +109,10 @@ CustomShields = function()
 		parts[1]                       //LUA Function CALL code ; _loop
 	+	MOV(CL, [EAX])                 //MOV CL, BYTE PTR DS:[EAX]
 	+	TEST(CL, CL)                   //TEST CL, CL
-	+	JE(7)                          //JE SHORT addrInc
-	+	MOV(ECX, [ESP, 0x24])          //MOV ECX, DWORD PTR SS:[ESP+20] ; 20 = 8 registers * 4 due to PUSHAD, starting memory address is PUSHed before the PUSHAD
+	+	JE(7)                          //JE SHORT idxInc
+	+	MOV(ECX, [ESP, 0x24])          //MOV ECX, DWORD PTR SS:[ESP+24] ; 20 = 8 registers * 4 due to PUSHAD + 4 for the starting memory address which was PUSHed before the PUSHAD
 	+	MOV([4, EDI, ECX], EAX)        //MOV DWORD PTR DS:[EDI*4+ECX],EAX
-	+	INC(EDI)                       //INC EDI; addrInc
+	+	INC(EDI)                       //INC EDI; idxInc
 	+	CMP(EDI, EBX)                  //CMP EDI,EBX
 	;
 
@@ -153,8 +153,8 @@ CustomShields = function()
 	//=========================//
 	LUA.addLoaders(
 		[
-		"Lua Files\\DataInfo\\ShieldTable",
-		"Lua Files\\DataInfo\\ShieldTable_F"
+			"Lua Files\\DataInfo\\ShieldTable",
+			"Lua Files\\DataInfo\\ShieldTable_F"
 		],
 		"Lua Files\\DataInfo\\jobName"
 	);

@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind, Andrei (4144), X-EcutiOnner       *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-03-07                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -394,7 +394,7 @@ NoCDefender = function()
 	if (Exe.Version > 11) //VC14.16
 		[parts[1], parts[2]] = [parts[2], parts[1]]; //Swap SETZ & PUSH
 
-	let addrs = Exe.FindHexN(parts.join(''));
+	let addrs = Exe.FindHexN(parts);
 	if (addrs.length !== 2)
 		throw Error("Incorrect no of CD references");
 

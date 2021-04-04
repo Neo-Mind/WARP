@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-01-14                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,7 +35,7 @@
 CustomDLL = function()
 {
 	/// 1.1 - Extract the import table (if HShield patch is enabled then skip aossdk entry while extracting)
-	let dirEntries = GetImpTable(Exe.IsSelected("NoHShield") ? "aossdk.dll" : undefined);
+	let dirEntries = GetImpTable(Exe.IsSelected("NoHShield") ? "aossdk.dll" : null);
 
 	/// 1.2 - Get the list file containing the dlls and functions to add
 	let inFile = Exe.GetUserInput('$customDLL', D_InFile, "DLL Spec", "Enter the DLL specification file", "Inputs/DLLSpec.yml", {filters: YMLFILTER});
@@ -55,7 +55,7 @@ CustomDLL = function()
 
 	let found = dllSpec.filter( hash =>
 	{
-		if (hash.Name === undefined || !Array.isArray(hash.Funcs))
+		if ('Name' in hash === false || !Array.isArray(hash.Funcs))
 			return false;
 
 		hash.Offset = strSize;
@@ -66,11 +66,11 @@ CustomDLL = function()
 
 		let found = hash.Funcs.filter( (func, idx) =>
 		{
-			if (func.Ordinal !== undefined)
+			if ('Ordinal' in func)
 			{
 				func.Offset = 0x80000000 | func.Ordinal;
 			}
-			else if (IsStr(func.Name))
+			else if (('Name' in func) && IsStr(func.Name))
 			{
 				func.Offset = strSize;
 				strData += idx.toHex(2) + func.Name.toHex() + " 00"; //Append function name
@@ -93,10 +93,9 @@ CustomDLL = function()
 
 		dirSize += 4; //Last Value is 00 00 00 00 after Thunks
 
-		return (found !== undefined);
+		return (!found.isEmpty());
 	});
-
-	if (found === undefined)
+	if (found.isEmpty())
 		Cancel("No usable entries in specified file");
 
 	dirSize += 20; //Accomodate for IAT End Entry
@@ -118,7 +117,7 @@ CustomDLL = function()
 	dllSpec.forEach( hash =>
 	{	
 		/// 5.2.1 - Sanity check (skip empty function names - shouldnt happen but still)
-		if (hash.Offset === undefined || hash.Funcs.isEmpty())
+		if ('Offset' in hash === false || hash.Funcs.isEmpty())
 			return;
 
 		/// 5.2.2 - Append the 12 byte prefix along with the offset of the dllname & its entry 
@@ -126,9 +125,9 @@ CustomDLL = function()
 
 		hash.Funcs.forEach( func =>
 		{
-			if (func.Ordinal !== undefined)
+			if ('Ordinal' in func)
 				dirEntryData += func.Offset.toHex();
-			else if (func.Offset !== undefined)
+			else if ('Offset' in func)
 				dirEntryData += (strRVA + func.Offset).toHex();
 			else
 				return;
@@ -199,7 +198,7 @@ _CDLL_SetupImports = function(tblData)
 		ROC.ImpInfo.Addr, 
 		ROC.ImpInfo.Strings + 
 		ROC.ImpInfo.Entries + 
-		(tblData === undefined ? ROC.ImpInfo.TblData : tblData)
+		(tblData ?? ROC.ImpInfo.TblData)
 	);
 
 	/// 2 - Update the PE Table Import Data Directory Address

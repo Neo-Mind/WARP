@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2013 Shakto                                              *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-03-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -101,7 +101,7 @@ CustomEncKeys.validate = HasPktKeys;
 CustomEncKeys.cleanup = function(patchName)
 {
 	/// 1.1 - Check if the 4th element is defined. Skip if not defined
-	if (PACKET.PatchData.isEmpty() || PACKET.PatchData[3] === undefined)
+	if (PACKET.PatchData.isEmpty() || !PACKET.PatchData[3])
 		return;
 
 	/// 1.2 - Get the index
@@ -197,7 +197,7 @@ _CEK_SetupObfuscate = function(index)
 
 	/// 2.1 - Check if 4th element (insertion address) is already defined,
 	///       if so clear the other patches.
-	if (PACKET.PatchData[3] !== undefined)
+	if (PACKET.PatchData[3] ?? false)
 	{
 		PktKeyPatches.forEach( (name, i) =>
 		{

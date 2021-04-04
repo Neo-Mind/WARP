@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-03-06                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -49,7 +49,7 @@ CustomGuildExpLimit = function()
 	+	CALL()            //CALL MsgStr
 	]
 	;
-	let addr = Exe.FindHex(parts.join(''));
+	let addr = Exe.FindHex(parts);
 	if (addr < 0)
 		throw Error("Limit checker missing");
 
