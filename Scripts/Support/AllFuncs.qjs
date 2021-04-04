@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-03-06                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,7 +36,7 @@
 IsNum  = v => typeof v === 'number';
 IsStr  = v => typeof v === 'string';
 IsBool = v => typeof v === 'boolean';
-IsArr = v => v !== undefined && v.join !== undefined;
+IsArr = v => v != undefined && v.join != undefined;
 
 IsNumOrStr = v =>
 	typeof v === 'number' || typeof v === 'string';
@@ -99,7 +99,7 @@ Filler = (idx, bc = 4) =>
 ///
 _swap_ = function(str, find, repl, cnt, bc)
 {
-	if (repl === undefined)
+	if (repl == undefined)
 		return str;
 
 	let data, dataSet;
@@ -117,7 +117,7 @@ _swap_ = function(str, find, repl, cnt, bc)
 
 	if (typeof data === 'number')
 		data = data.toHex(bc);
-	else if (data !== undefined) //can be undefined to skip a match in an array
+	else if (data != undefined) //can be undefined to skip a match in an array
 		data = data.toString();
 
 	for (let pos = 0; cnt != 0; cnt--)
@@ -126,7 +126,7 @@ _swap_ = function(str, find, repl, cnt, bc)
 		if (pos < 0)
 			break;
 
-		if (data === undefined)
+		if (data == undefined)
 			pos += find.length;
 		else
 			str = str.replaceAt(pos, data, find.length);
@@ -137,13 +137,13 @@ _swap_ = function(str, find, repl, cnt, bc)
 
 			if (typeof data === 'number')
 				data = data.toHex(bc);
-			else if (data !== undefined)
+			else if (data != undefined)
 				data = data.toString();
 		}
 	}
 
 	return str;
-}
+};
 
 ///
 /// \brief Swaps out the filler hex string with the actual data
@@ -207,7 +207,7 @@ _settgt_ = function(strParts, pat, target, start, cnt, bc)
 	let pos = 0;
 	while (pos <= strParts.length - patParts.length && cnt != 0)
 	{
-		if (patParts.find( (elem, i) => elem !== strParts[pos + i] ) === undefined)
+		if (patParts.find( (elem, i) => elem !== strParts[pos + i] ) == undefined)
 		{
 			swapped = true;
 
@@ -224,7 +224,7 @@ _settgt_ = function(strParts, pat, target, start, cnt, bc)
 	}
 
 	return swapped;
-}
+};
 
 ///
 /// \brief Swaps out the filler hex string with delta values (after JMPs & CALLs) for a target address
@@ -305,7 +305,9 @@ SetFillTargets = function(str, idMap, start, cnt = -1, bc = 4)
 /// \brief Wraps the given value into an array unless its already one.
 ///
 Wrap = v =>
-	Array.isArray(v) ? v : (v === undefined ? [] : [v]);
+	v == undefined      ? [ ] :
+	v.join != undefined ?  v  :
+	                      [v] ;
 
 
   //=============//
@@ -394,7 +396,7 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 	let movzxIns = movzxAddr > 0 ? Instr.FromAddr(movzxAddr) : '';
 
 	$$(_ + '1.2 - Ensure the address for JMP DWORD PTR is valid')
-	if (jmpDpAddr !== undefined)
+	if (!jmpDpAddr)
 	{
 		if (movzxIns === '')
 			return -1;
@@ -440,7 +442,7 @@ ParseData = function(data, scaled)
 	let _ = `ParseData (${data}, ${scaled}) : `;
 
 	$$(_ + '1 - Initialize the parts')
-	let parts = [];
+	let parts = [null, null, null, -1];
 
 	$$(_ + '2 - If the data is an array then process differently')
 	if (Array.isArray(data))
@@ -588,8 +590,7 @@ FindInstr = function(testFn, from, to)
 	if (typeof testFn !== 'function' || typeof from !== 'number')
 		return false;
 
-	if (to === undefined)
-		to = Exe.GetSectEnd(CODE);
+	to = to ?? Exe.GetSectEnd(CODE);
 
 	while (from < to)
 	{
@@ -601,7 +602,7 @@ FindInstr = function(testFn, from, to)
 	}
 
 	return false;
-}
+};
 
 ///
 /// \brief Get the 'nth' instruction after the specified one. You can specify either the address or the Instr object itself
@@ -623,9 +624,9 @@ GetInstr = function(current, n)
 /// \brief Throws a cancellation warning with the specified argument.
 ///        If default value is specified then a 'reverted' message is thrown.
 ///
-Cancel = (arg, defVal = undefined) =>
+Cancel = (arg, defVal) =>
 {
-	if (defVal === undefined)
+	if (defVal == undefined)
 		throw `Cancelled - ${arg}`;
 	else
 		throw `Cancelled - <b>'${arg}'</b> reverted to <b><i>${defVal}</i></b>`;
@@ -659,7 +660,7 @@ IdentifyClass = (type, props = []) =>
 ///
 IdentifyObj = objName =>
 {
-	if (eval("typeof " + objName) !== undefined)
+	if (eval("typeof " + objName) != undefined)
 		Warp.identify(objName, Object.getOwnPropertyNames(eval(objName)) );
 };
 

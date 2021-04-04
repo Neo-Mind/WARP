@@ -22,7 +22,11 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-12-11                                             *
+<<<<<<< HEAD
 *   Last Modified : 2021-03-02                                             *
+=======
+*   Last Modified : 2021-04-04                                             *
+>>>>>>> base
 *                                                                          *
 \**************************************************************************/
 
@@ -37,13 +41,12 @@ if (typeof Log == 'undefined')
 	{
 		Tee : false,
 
-		start : function(file = '')
+		start : function(file)
 		{
-			if (this.Handle !== undefined)
+			if ('Handle' in this)
 				return true;
 
-			if (file.isEmpty())
-				file = "Comment_Log_" + System.LocalTime.toISOString().replace(/:/g, '_') + ".txt";
+			file = file ?? "Comment_Log_" + System.LocalTime.toISOString().replace(/:/g, '_') + ".txt";
 
 			let fp = new TextFile(OUTDIR + file, "w");
 			if (fp.Valid)
@@ -59,19 +62,20 @@ if (typeof Log == 'undefined')
 
 		stop : function()
 		{
-			if (this.Handle !== undefined)
+			if ('Handle' in this)
 			{
 				this.Handle.Close();
 				Warp.Show(this.Handle.Path);
 			}
 
-			this.Handle = undefined;
+			delete this.Handle;
+
 			return true;
 		},
 
 		show : function()
 		{
-			if (this.Handle !== undefined)
+			if ('Handle' in this)
 			{
 				Warp.Show(this.Handle.Path);
 			}
@@ -90,9 +94,9 @@ if (typeof Log == 'undefined')
 ///
 $$ = function(txt)
 {
-	if (txt !== undefined)
+	if (txt != undefined)
 	{
-		if (Log.Handle !== undefined)
+		if ('Handle' in Log)
 			Log.Handle.WriteLine(txt);
 
 		if (Log.Tee)
@@ -105,9 +109,9 @@ $$ = function(txt)
 ///
 $$$ = function(txt)
 {
-	if (txt !== undefined)
+	if (txt != undefined)
 	{
-		if (Log.Handle !== undefined)
+		if ('Handle' in Log)
 			Log.Handle.WriteLine(txt);
 
 		console.info(txt);
@@ -136,7 +140,7 @@ $_ = function()
 		case 'string':
 			len = msg.length;
 
-			if (Log.Handle !== undefined)
+			if ('Handle' in Log)
 				Log.Handle.WriteLine(msg);
 
 			if (tee)
@@ -152,7 +156,7 @@ $_ = function()
 	if (len > 0)
 	{
 		let line = chr.repeat(len);
-		if (Log.Handle !== undefined)
+		if ('Handle' in Log)
 			Log.Handle.WriteLine(line);
 
 		if (tee)
@@ -234,7 +238,7 @@ NewLine = () => console.info('') || true;
 ///
 Dump = function(name, obj)
 {
-	if (obj === undefined)
+	if (obj == undefined) //can be 0 or false so cant use !obj
 	{
 		obj = name;
 		name = obj.constructor.name;
@@ -255,7 +259,7 @@ Dump = function(name, obj)
 		name = obj.constructor.name;
 	}
 
-	if (obj === undefined)
+	if (obj == undefined) //can be 0 or false so cant use !obj
 		return false;
 
 	console.log(name, "=>");
@@ -331,8 +335,8 @@ ShowVar = function()
 	if (typeof obj !== 'object')
 		return false;
 
-	let varName = Object.keys(obj)[0];
-	if (varName === undefined)
+	let [varName] = Object.keys(obj);
+	if (!varName)
 		return false;
 
 	let prefix = args.take_if('string', '');
@@ -421,7 +425,11 @@ ShowAddrs = function()
 			addrs = addrs[prompt];
 		}
 	}
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> base
 	if (!IsArr(addrs))
 		return false;
 
@@ -470,6 +478,6 @@ ResetC = () => (console.cnt = 0) || true;
 IncrC = () => (console.cnt = (console.cnt || 0) + 1) || true;
 
 ///
-/// \brief Display the current count along with version & build date
+/// \brief Display the current count along with version & build date.
 ///
-ShowC = () => console.log(console.cnt, Exe.Version, Exe.BuildDate) || true;
+ShowC = () => console.log('cnt' in console ? console.cnt : 'Counter not set', Exe.Version, Exe.BuildDate) || true;
