@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-03-09                                             #
+#   Last Modified : 2021-04-04                                             #
 #                                                                          #
 ############################################################################
 
@@ -911,8 +911,14 @@
             title : Translate Client
             recommend : yes
             author : Ai4rei/AN , Neo-Mind
-            desc : Translates some of the Hard-coded Korean phrases using a user specified mapping file (defaults to <b>Translations_EN.yml</b>). It also fixes the Korean Job name issue with Langtype.
+            desc : Translates some of the Hard-coded Korean phrases using a user specified mapping file (defaults to <b>Translations_EN.yml</b>).
         
+        - TranslateTaekwon:
+            title : Translate Taekwon names
+            recommend : yes
+            author : Ai4rei/AN , Neo-Mind
+            desc : Translates the korean names of the Taekwon branch to English.
+            
         - GuildBrackets:
             title : Use Normal Guild Brackets
             recommend : yes

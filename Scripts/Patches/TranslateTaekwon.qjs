@@ -1,0 +1,79 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) ?-2015 Ai4rei/AN                                         *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
+*   Created Date  : 2021-04-04                                             *
+*   Last Modified : 2021-04-04                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Translate TaeKwon branch Job names to english
+///
+TranslateTaekwon = function()
+{
+	/// 1.1 - Ensure Custom Job Patch isn't ON
+	if (!Exe.TestMode && Exe.IsSelected("CustomJobs"))
+		Cancel("cannot be used with Custom Job patch");
+
+	[
+		["\xC5\xC2\xB1\xC7\xBC\xD2\xB3\xE0", "TaeKwon Girl"],
+		["\xC5\xC2\xB1\xC7\xBC\xD2\xB3\xE2", "TaeKwon Boy"]
+	].forEach( arr =>
+	{
+		let [kor, eng] = arr;
+		
+		/// 1.2 - Find the korean string.
+		let nameAddr = Exe.FindText(kor);
+		if (nameAddr < 0)
+			throw Error(`Korean name missing for ${eng}`);
+
+		/// 1.3 - Find where it is assigned for being used as job name (can be in multiple places)
+		let addrs = [
+			[R32, 0x3F38],
+			[EAX, 0x3F38],
+			R32,
+			[EBP, WCn]
+		].reduce( (acc, assgn) =>
+			acc.concat( Exe.FindHexN( MOV(assgn, nameAddr)) ), []  //All possible combo of MOVs seen so far in clients.
+		);
+		if (addrs.isEmpty())
+			throw Error(`Korean name reference missing for ${eng}`);
+
+		/// 1.4 - Find the replacement english string
+		let tgtAddr = Exe.FindText(eng);
+		if (tgtAddr < 0)
+			throw Error(`'${eng}' not found`);
+
+		addrs.forEach( addr =>
+		{
+			/// 2.1 - Extract the instruction of the original to get its size
+			let ins = Instr.FromAddr(addr);
+
+			/// 2.2 - Replace the immediate value (i.e. the last 4 bytes)
+			Exe.SetInt32(addr + ins.Size - 4, tgtAddr);
+		});
+	});
+	
+	return true;
+};
