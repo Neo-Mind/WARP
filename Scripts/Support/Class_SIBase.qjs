@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-15                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,42 +36,31 @@ if (typeof SIBase === 'undefined') //avoid redefinition
 		///
 		/// \brief Constructor
 		///
-		constructor(data)
+		constructor(scale, index, base)
 		{
-			let parts = ParseData(data, true);
-			if (parts.length === 4)
-			{
-				this.Scale = parts[0];
-				this.Index = parts[1];
-				this.Base  = parts[2];
+			let data =
+				IsStr(index)          ? index :                // Check for WildCard + direct hex strings in Index
+				IsStr(base)           ? base  :                // Check for WildCard + direct hex strings in Base
+				arguments.length == 3 ? [scale, index, base] : // All 3 args provided
+				IsNum(scale)          ? scale :                // The SIB byte itself provided (used in Instr class when extracting instructions)
+				                        0 ;                    // Empty SIB
 
-				this.Data  = parts[3];
-			}
-			else
-			{
-				this.Data = -1;
-			}
+			[this.Scale, this.Index, this.Base, this.Data] = ParseData(data, true);
 		}
 
 		///
-		/// \brief 'Static' method to create a 'SIBase' object from its components
+		/// \brief Method to update the data based on the members. Use null for members which dont change
+		///        (used when modifying extracted instructions)
 		///
-		static FromParts(scale, index, base)
+		update(s, i, b)
 		{
-			/// 1.1 - Check for hex strings in Index
-			if (IsStr(index)) //WildCard + Direct Hex
-				return new this(index);
+			let parts = ParseData([
+				s ?? this.Scale,
+				i ?? this.Index,
+				b ?? this.Base
+			], true);
 
-			/// 1.2 - Check for hex strings in Base
-			if (IsStr(base)) //WildCard + Direct Hex
-				return new this(base);
-
-			/// 2.1 - If all the arguments are provided then create Instance with them
-			if (arguments.length === 3)
-				return new this([scale, index, base]);
-
-			/// 2.2 - Return an empty one otherwise
-			return new this(0);
+			[this.Scale, this.Index, this.Base, this.Data] = parts; //we can combine this with above line but this is cleaner
 		}
 
 		///
@@ -80,7 +69,7 @@ if (typeof SIBase === 'undefined') //avoid redefinition
 		toString()
 		{
 			return `Data = ${this.Data} {Scale = ${this.Scale} , Index = ${this.Index} , Base = ${this.Base}}`;
-		}		
+		}
 	};
 
 	IdentifyClass(SIBase, ["Scale", "Index", "Base", "Data"]);
