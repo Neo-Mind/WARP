@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Neo-Mind                                      *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -139,12 +139,12 @@ RelativeDelay4CharDel.validate = function()
 		PUSH_0      //PUSH 0
 	+	PUSH_R      //PUSH reg32_B; ESI for VC11
 	];
-	RD4CD_Addr = Exe.FindHex(parts.join(''));
+	RD4CD_Addr = Exe.FindHex(parts);
 
 	if (RD4CD_Addr < 0) //Extra PUSH 0 after PUSH 28 for newer clients.
 	{
 		parts[0] += PUSH_0
-		RD4CD_Addr = Exe.FindHex(parts.join(''));
+		RD4CD_Addr = Exe.FindHex(parts);
 	}
 
 	return (RD4CD_Addr > 0);

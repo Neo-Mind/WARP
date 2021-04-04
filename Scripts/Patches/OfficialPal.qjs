@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,7 +36,7 @@ OfficialPal = function()
 {
 	/// 1.1 - Check if Custom Job patch is being used (unless test mode is ON)
 	if (!Exe.TestMode && Exe.IsSelected("CustomJobs"))
-		Cancel("Custom Job patch should not be ON");
+		Cancel("cannot be used with Custom Job patch");
 
 	/// 1.2 - Find the location of 'Å©·ç'
 	///       (Palette prefix for Knight - Same string is used for job path as well as imf)

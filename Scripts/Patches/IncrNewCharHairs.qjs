@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-02                                             *
-*   Last Modified : 2021-03-06                                             *
+*   Last Modified : 2021-03-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -292,7 +292,7 @@ IncrNewCharHairs = function()
 
 	/// 1.8 - Look for an additional comparison for older clients (Left and Right arrows have seperate cases)
 	let hsBegin2, hsEnd2;
-	if (suf2 !== undefined)
+	if (suf2 ?? false)
 	{
 		hsAddon = 0;
 
@@ -321,18 +321,18 @@ IncrNewCharHairs = function()
 		_INCH_JmpCall(hcBegin, hcEnd, freeVir);
 
 		/// 2.4 - Fix the scrollbar for Hair Color
-		if (suf2 === undefined)
+		if (!hsBegin2)
 			_INCH_FixScroll('color', hcLimit, hcNewLimit);
 	}
 
 	if (hsNewLimit !== false)
 	{
 		/// 2.5 - Prep & Insert the new Hair Style comparison
-		let freeVir = _INCH_AddCmp(styleLoc, hsAddon, hsNewLimit + hsAddon, suf2 !== undefined ? 2 : 4);
+		let freeVir = _INCH_AddCmp(styleLoc, hsAddon, hsNewLimit + hsAddon, (suf2 ?? false) ? 2 : 4);
 
 		/// 2.6 - Put a JMP at Original Hair Style comparison & a CALL before the End of comparison
 		_INCH_JmpCall(hsBegin, hsEnd, freeVir);
-		if (hsBegin2 !== undefined)
+		if (hsBegin2)
 		{
 			_INCH_JmpCall(hsBegin2, hsEnd2, freeVir);
 		}
