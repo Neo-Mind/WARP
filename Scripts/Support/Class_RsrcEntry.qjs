@@ -1,0 +1,84 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2021 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2021-04-04                                             *
+*   Last Modified : 2021-04-04                                             *
+*                                                                          *
+\**************************************************************************/
+
+if (typeof RsrcEntry === 'undefined') //avoid redefinition
+{
+	///
+	/// \brief Class representing a Resource Directory Entry in the Exe.
+	///
+	RsrcEntry = class
+	{
+		constructor(id, rootAddr, offset, isFile = false)
+		{
+			this.ID = id;
+			this.Addr = rootAddr + offset;
+			this.IsFile = (isFile === true);
+	
+			if (this.IsFile)
+			{
+				this.DataAddr = Exe.Rva2Phy(Exe.GetInt32(this.Addr));
+				this.DataSize = Exe.GetInt32(this.Addr + 4);
+			}
+			else
+			{
+				this.Entries = [];
+	
+				let count = Exe.GetInt16(this.Addr + 12) + Exe.GetInt16(this.Addr + 14);
+				let pos = this.Addr + 16;
+				for (let i = 0; i < count; i++, pos += 8)
+				{
+					id = Exe.GetInt32(pos);
+					offset = Exe.GetInt32(pos + 4);
+					this.Entries[i] = new RsrcEntry(id, rootAddr, offset & 0x7FFFFFFF, offset >= 0);
+					this.Entries[i].Pos = pos;
+				}
+			}
+		}
+	
+		traverse(hierarchy) 
+		{
+			if (Array.isArray(hierarchy) && hierarchy.isEmpty())
+			{
+				return this;
+			}
+			else if (!this.IsFile)
+			{
+				let id = Array.isArray(hierarchy) ? hierarchy[0] : hierarchy;
+				let entry = this.Entries.find(e => e.ID === id);
+				if (entry != undefined)
+				{
+					if (Array.isArray(hierarchy))
+						return entry.traverse(hierarchy.slice(1));
+					else
+						return entry;
+				}
+			}
+			return false;
+		}
+	};
+}
