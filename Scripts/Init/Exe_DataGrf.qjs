@@ -22,11 +22,11 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-16                                             *
-*   Last Modified : 2021-01-17                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
-if (typeof DGRF === 'undefined')
+if (typeof DGRF === 'undefined') //avoid redefinition
 {
 	///
 	/// \brief Hash that stores info about Data.grf
@@ -38,13 +38,13 @@ if (typeof DGRF === 'undefined')
 		///
 		init : function()
 		{
-			this.Name    = '';        //'data.grf' or 'sdata.grf'
-			this.Addr    = -1;        //The VIRTUAL address of name
-			this.RefAddr = -1;        //The address where it is referenced
-			this.MovFMgr = '';        //The MOV ECX, g_FileMgr code
+			this.Name    = '';  //'data.grf' or 'sdata.grf'
+			this.Addr    = -1;  //The VIRTUAL address of name
+			this.RefAddr = -1;  //The address where it is referenced
+			this.MovFMgr = '';  //The MOV ECX, g_FileMgr code
 
-			this.Valid   = undefined; //True or False indicating extraction status
-			this.Error   = undefined; //Error Object containing a message about the issue encountered during extraction if any
+			delete this.Valid;  //Will be true or false indicating extraction status
+			delete this.Error;  //Error Object containing a message about the issue encountered during extraction if any
 
 			IdentifyObj("DGRF");
 		},
@@ -57,7 +57,7 @@ if (typeof DGRF === 'undefined')
 			let _ = "DGRF.load : ";
 			
 			$$(_ + '1.1 - Check if load was already called')
-			if (this.Valid !== undefined)
+			if ('Valid' in this)
 			{
 				/// 1.2 - If we got error previously then report it again')
 				if (!this.Valid)

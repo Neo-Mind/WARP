@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-01-19                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,24 +50,23 @@ if (typeof LUA === 'undefined') // avoid redefinition
 		///
 		init : function()
 		{
+			this.ReqJN     = -1;   //The VIRTUAL address of "ReqJobName"
+			this.PushRJN   = '';   //The code for PUSH OFFSET addr; ASCII "ReqJobName"
+			this.PushState = '';   //The code for PUSH DWORD PTR DS:[GlobLuaState]
+			this.StkConst  = 0;    //The constant value used in SUB ESP, const which gets executed before Lua Function name is PUSHed
+			this.Allocator = -1;   //The VIRTUAL address of the function which allocates space to store the Lua function name
 
-			this.ReqJN     = -1;    //The VIRTUAL address of "ReqJobName"
-			this.PushRJN   = '';    //The code for PUSH OFFSET addr; ASCII "ReqJobName"
-			this.PushState = '';    //The code for PUSH DWORD PTR DS:[GlobLuaState]
-			this.StkConst  = 0;     //The constant value used in SUB ESP, const which gets executed before Lua Function name is PUSHed
-			this.Allocator = -1;    //The VIRTUAL address of the function which allocates space to store the Lua function name
-
-			this.Pushers = undefined; //Map of various PUSH codes for formats like "d>s"
 			this.Al_Mode = FnMode.Unknown; //The mode of the allocator function above
 
-			this.FnInvoker  = -1;   //The VIRTUAL address of the function which invokes the "Lua function" already PUSHed as argument
-			this.FileLoader = -1;   //The VIRTUAL address of the function which loads the Lua file already PUSHed as argument
+			this.FnInvoker  = -1;  //The VIRTUAL address of the function which invokes the "Lua function" already PUSHed as argument
+			this.FileLoader = -1;  //The VIRTUAL address of the function which loads the Lua file already PUSHed as argument
 
-			this.FL_movECX  = '';   //The code for MOV ECX, DWORD PTR DS:[addr] ; where addr evaluates to GlobLuaState
-									//Used before CALLs to FileLoader
+			this.FL_movECX  = '';  //The code for MOV ECX, DWORD PTR DS:[addr] ; where addr evaluates to GlobLuaState
+			                       //Used before CALLs to FileLoader
 
-			this.Valid = undefined; //True or False indicating extraction status
-			this.Error = undefined;	//Error Object containing a message about the issue encountered during extraction if any
+			delete this.Pushers;   //Map of various PUSH codes for formats like "d>s"
+			delete this.Valid;     //Will be true or false indicating extraction status
+			delete this.Error;     //Error Object containing a message about the issue encountered during extraction if any
 
 			IdentifyObj("LUA");
 		},
@@ -80,7 +79,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			let _ = "LUA.load : ";
 
 			$$(_ + '1.1 - Check if load was already called')
-			if (this.Valid !== undefined)
+			if ('Valid' in this)
 			{
 				$$(_ + '1.2 - If we got error previously then report it again.')
 				if (!this.Valid)
@@ -94,7 +93,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			this.Valid = false;
 			this.Pushers = new Map();
 
-			["d>s", "d>d", "dd>d"].forEach( fmt =>
+			["d>s", "d>d", "dd>d", "dd>s"].forEach( fmt =>
 			{
 				$$(_ + '1.5 - Find "' + fmt + '" & save PUSH "' + fmt + '" instruction')
 				let addr = Exe.FindText(fmt, false);
@@ -153,7 +152,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				case 0xFF:
 					$$(_ + '3.2 - For INDIRECT call (seen in VC9). Save the pointer address as \'Allocator\' & set the type to Ptr')
 
-					if (ins.MRM.RgOp !== 2) //ensuring its a CALL DWORD PTR
+					if (ins.MRM.RegO !== 2) //ensuring its a CALL DWORD PTR
 					{
 						this.Error = new Error("LUA - 0xFF seen after PUSH 'ReqJobName', but not a CALL");
 						throw this.Error;
@@ -258,17 +257,26 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			let _ = "LUA.createCaller : ";
 
 			$$(_ + '1.1 - Sanity Check (Ensure we have a valid object)')
-			if (this.Valid === undefined)
+			if ('Valid' in this === false)
 				throw Error("LUA not loaded");
 
 			if (!this.Valid)
 				throw this.Error;
 
 			$$(_ + '1.2 - Select the appropriate PUSH instruction based on the format')
-			if (!this.Pushers.has(format))
+			let PUSH_fmt;
+			if (IsArr(format)) //format is provided as [string, stringAddr]
+			{
+				PUSH_fmt = PUSH(format[1]);
+				format = format[0];
+			}
+			else if (this.Pushers.has(format))
+			{
+				PUSH_fmt = this.Pushers.get(format);
+			}
+			else
 				throw Error("LUA - Unknown format specified");
 
-			let PUSH_fmt = this.Pushers.get(format);
 
 			$$(_ + '1.3 - Calculate the number of arguments for input & output')
 			let [icnt, ocnt] = format.split(">").map(e => e.length);
@@ -379,15 +387,19 @@ if (typeof LUA === 'undefined') // avoid redefinition
 		///
 		finalize(code, at, nameAddr)
 		{
+			if (IsArr(code))
+				code = code.join('');
+
 			if (IsStr(nameAddr))
 				nameAddr = Exe.FindText(nameAddr, false);
 
-			code = SwapFiller(code, 50, nameAddr, 1);
+			if (nameAddr)
+				code = SwapFiller(code, 50, nameAddr, 1);
 
 			code = SetFillTargets(code, {
 				51 : this.Allocator,
 				52 : this.FnInvoker
-			}, at, 1);
+			}, at);
 
 			return code;
 		},
@@ -400,7 +412,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			let _ = "LUA.addLoaders : ";
 
 			$$(_ + '1.1 - Sanity Check (Ensure we have a valid object)')
-			if (this.Valid === undefined)
+			if ('Valid' in this === false)
 				throw Error("LUA not loaded");
 
 			if (!this.Valid)
@@ -440,7 +452,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			let csize = tsize * (files.length + 1) + 7; //5 for the JMP at the end and 2 NULL bytes for seperation
 
 			$$(_ + '2.3 - Prepare the strings to be appended at the end of the code')
-			let strings = files.join('\x00').toHex();
+			let strings = files.join('\x00').toHex() + ' 00';
 			let ssize = strings.byteCount();
 
 			$$(_ + '2.4 - If no address is specified then allocate space for it')

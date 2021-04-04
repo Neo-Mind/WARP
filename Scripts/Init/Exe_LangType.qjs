@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-01-17                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,11 +38,11 @@ if (typeof LANGTYPE === 'undefined') // avoid redefinition
 		///
 		init : function()
 		{
-			this.Value = -1;        //The g_serviceType VIRTUAL Address
-			this.Hex   = '';        //It's hex in Little Endian form
+			this.Value   = -1;  //The g_serviceType VIRTUAL Address
+			this.Hex     = '';  //It's hex in Little Endian form
 
-			this.Valid = undefined; //True or False indicating extraction status
-			this.Error = undefined;	//Error Object containing a message about the issue encountered during extraction if any
+			delete this.Valid;  //Will be true or false indicating extraction status
+			delete this.Error;  //Error Object containing a message about the issue encountered during extraction if any
 
 			IdentifyObj("LANGTYPE");
 		},
@@ -55,7 +55,7 @@ if (typeof LANGTYPE === 'undefined') // avoid redefinition
 			let _ = "LANGTYPE.load : ";
 			
 			$$(_ + '1.1 - Check if load was already called')
-			if (this.Valid !== undefined)
+			if ('Valid' in this)
 			{
 				$$(_ + '1.2 - If we got error previously then report it again')
 				if (!this.Valid)
