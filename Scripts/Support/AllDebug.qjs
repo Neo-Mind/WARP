@@ -22,11 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-12-11                                             *
-<<<<<<< HEAD
-*   Last Modified : 2021-03-02                                             *
-=======
 *   Last Modified : 2021-04-04                                             *
->>>>>>> base
 *                                                                          *
 \**************************************************************************/
 
@@ -425,11 +421,6 @@ ShowAddrs = function()
 			addrs = addrs[prompt];
 		}
 	}
-<<<<<<< HEAD
-	
-=======
-
->>>>>>> base
 	if (!IsArr(addrs))
 		return false;
 
