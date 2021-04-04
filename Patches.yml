@@ -1501,3 +1501,9 @@
             recommend : no
             author : Neo-Mind
             desc : Enables the use of Custom Shield Types (using Lua Files similar to Xray)
+        
+        - CustomJobs:
+            title : Enable Custom Jobs
+            recommend : no
+            author : Neo-Mind
+            desc : Enables the use of Custom Jobs (using Lua Files similar to Xray)

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-06                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -54,12 +54,11 @@ IsPost2010 = () =>
 /// \brief Extract the import table from the exe as a hex string.
 ///        Can also skip over specific DLL as required
 ///
-GetImpTable = (skipDLL, impAddr = -1) =>
+GetImpTable = (skipDLL, impAddr) =>
 {
-	if (impAddr < 0)
-		impAddr = Exe.GetDirAddr(D_Import, PHYSICAL);
+	impAddr = impAddr ?? Exe.GetDirAddr(D_Import, PHYSICAL);
 
-	let lastEntry = ' 00'.repeat(20);	
+	let lastEntry = ' 00'.repeat(20);
 	let dirEntries = '';
 	for (let curEntry, addr = impAddr; (curEntry = Exe.GetHex(addr, 20)) !== lastEntry; addr += 20)
 	{
@@ -75,4 +74,142 @@ GetImpTable = (skipDLL, impAddr = -1) =>
 		dirEntries += curEntry;
 	}
 	return dirEntries;
+};
+
+///
+/// \brief Extract all the instructions not related to table loading until the ending checker satisfies
+///
+FetchTillEnd = (hookAddr, format, movIns, tgtReg, fetcher, endTester) =>
+{
+	let regAssigns = [];
+	let codes = [];
+	let count = 0; // limiting to approx 1000 instructions for now (avoiding an infinite loop).
+
+	let ins = Instr.FromAddr(hookAddr);
+	for (;count < 1000; count++, ins.moveToNext())
+	{
+		/// 1.1 - First test if end of table has been reached
+		if (endTester(ins))
+			break;
+
+		if (format === 0)
+		{
+			/// 1.2 - Check for the sequence of instructions for old clients.
+			///       The index is used as argument to a function to get the memory location
+			if ((ins.Codes[0] === 0x6A || ins.Codes[0] === 0x68) && Exe.GetUint16(ins.NextAddr) === 0xCE8B) //PUSH index followed by MOV ECX, ESI
+			{
+				let nextIns = ins.getNext(2); //third instruction
+				if (nextIns.Codes[0] === 0xC7 && nextIns.MRM.Data === 0) //MOV DWORD PTR DS:[EAX], stringAddr
+					nextIns.moveToNext();
+
+				if (nextIns.Codes[0] === 0xE8 && Exe.GetTgtAddr(nextIns.Addr + 1) === fetcher) //CALL fetcher
+				{
+					ins = nextIns; //skip over all the instructions
+					continue;
+				}
+			}
+		}
+
+		/// 1.3 - For newer clients check for the MOV instruction used to get the table's starting address into the target Reg
+		else if (movIns && ins.Codes[0] === movIns.Codes[0] && ins.MRM.Mode === movIns.MRM.Mode && ins.MRM.RegM === movIns.MRM.RegM && ins.Disp === movIns.Disp)
+		{
+			tgtReg = R32.List[ins.MRM.RegO];
+			continue;
+		}
+
+		/// 1.4 - Parse based on the opcode
+		else
+		{
+			let skip = false;
+			switch (ins.Codes[0])
+			{
+				case 0xC7: // MOV DWORD PTR DS:[reg32_A + offset], OFFSET addr
+				case 0x89: // MOV DWORD PTR DS:[reg32_A + const], reg32_C
+				{
+					if (ins.MRM.Mode !== 3 && ins.MRM.RegM === tgtReg.Index) //reg32_A is the target reg which was calculated previously
+					{
+						skip = true;
+
+						let idx = regAssigns[ins.MRM.RegO];
+						if (ins.Codes[0] === 0x89 && idx) //remove the assignment since it's only purpose was to temporarily hold the string address
+							codes[idx] = '';
+					}
+
+					break;
+				}
+
+				case 0xB8: // MOV reg32_B, OFFSET addr
+				case 0xB9:
+				case 0xBA:
+				case 0xBB:
+				case 0xBC:
+				case 0xBD:
+				case 0xBE:
+				case 0xBF:
+				{
+					regAssigns[ins.Codes[0] - 0xB8] = codes.length; //save the index where the assignment is kept
+					break;
+				}
+
+				case 0x8B: // MOV reg32_B, DWORD PTR DS:[reg32_A + offset]
+				{
+					skip = ins.MRM.Mode !== 3 && ins.MRM.RegM === tgtReg.Index;
+					break;
+				}
+
+				case 0x0F: // All Jumps
+				case 0x70:
+				case 0x71:
+				case 0x72:
+				case 0x73:
+				case 0x74:
+				case 0x75:
+				case 0x76:
+				case 0x77:
+				case 0x78:
+				case 0x79:
+				case 0x7A:
+				case 0x7B:
+				case 0x7C:
+				case 0x7D:
+				case 0x7E:
+				case 0x7F:
+				case 0xE9:
+				case 0xEB:
+				{
+					skip = ins.Codes[0] !== 0x0F || (ins.Codes[1] >= 0x80 && ins.Codes[1] <= 0x8F); //conditional long jumps
+					if (skip)
+						ins.NextAddr += ins.Immd; //little trick to perform the jump while getting the next instruction
+
+					break;
+				}
+
+				case 0x39: // <multi op> [addr], reg
+				case 0x83: // <multi op> [addr], imm8
+				case 0x81: // <multi op> [addr], imm32
+				{
+					skip = (ins.Disp === LANGTYPE.Value); //Operation would be CMP if its LANGTYPE so no need to check that.
+					break;
+				}
+
+				case 0xE8: // CALL func
+				{
+					if (fetcher > 0 && Exe.GetTgtAddr(ins.Addr + 1) === fetcher)
+					{
+						skip = true;
+						codes.push(ADD(ESP, 4)); //stack restoration
+					}
+					break;
+				}
+
+				default:
+					break;
+			}
+			if (skip)
+				continue;
+		}
+		codes.push(ins.toString());
+	}
+
+	return [ins, codes.join(''), count >= 1000];
 };
