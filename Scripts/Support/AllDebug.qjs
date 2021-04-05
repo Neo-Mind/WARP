@@ -421,6 +421,7 @@ ShowAddrs = function()
 			addrs = addrs[prompt];
 		}
 	}
+
 	if (!IsArr(addrs))
 		return false;
 
