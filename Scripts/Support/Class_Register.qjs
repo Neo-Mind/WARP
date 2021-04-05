@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2020-12-11                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,8 +50,8 @@ if (typeof Register === 'undefined') //avoid redefinition
 
 		///
 		/// \brief Method to compare 'Register' objects
-		///	
-		equals(tgt)
+		///
+		is(tgt)
 		{
 			return (
 				(tgt instanceof Register)
@@ -148,7 +148,7 @@ if (typeof Register === 'undefined') //avoid redefinition
 	XMM$.List = indices.map( index => _createR_('XMM' + index, 128, index) );
 
 	ST = i =>
-		i >= 0 && i <= 7 ? eval("ST" + i) : undefined;
+		i >= 0 && i <= 7 ? eval("ST" + i) : null;
 
 	IdentifyObj("ST");
 
