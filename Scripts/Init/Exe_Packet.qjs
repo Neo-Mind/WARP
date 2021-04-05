@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-01-17                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -51,18 +51,19 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 		///
 		init : function()
 		{
-			this.KeySetter = -1;              //The VIRTUAL address of the function which sets the keys and/or does the obfuscation
+			this.KeySetter = -1;       //The VIRTUAL address of the function which sets the keys and/or does the obfuscation
+
 			this.KS_Mode   = KeyMode.Unknown; //The mode of the function above
 
-			this.MovECX    = "";              //The code for MOV ECX, DWORD PTR DS:[KeyAddr]
-			this.Keys      = [0,0,0];         //The set of Packet Keys that were extracted/mapped out
+			this.MovECX    = "";       //The code for MOV ECX, DWORD PTR DS:[KeyAddr]
+			this.Keys      = [0,0,0];  //The set of Packet Keys that were extracted/mapped out
 
-			this.RefAddr   = -1;              //Reference Location from where we started
-			this.Assigner  = -1;              //Location where the keys are assigned inside ObfuscateOrInit function
-			this.PatchData = [];              //Data saved by packet key patches
+			this.RefAddr   = -1;       //Reference Location from where we started
+			this.Assigner  = -1;       //Location where the keys are assigned inside ObfuscateOrInit function
+			this.PatchData = [];       //Data saved by packet key patches
 
-			this.Valid     = undefined;       //True or False indicating extraction status
-			this.Error     = undefined;	      //Error Object containing a message about the issue encountered during extraction if any
+			delete this.Valid;         //Will be true or false indicating extraction status
+			delete this.Error;         //Error Object containing a message about the issue encountered during extraction if any
 
 			IdentifyObj("PACKET");
 		},
@@ -73,9 +74,9 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 		load : function()
 		{
 			let _ = "PACKET.load : ";
-			
+
 			$$(_ + '1.1 - Check if load was already called')
-			if (this.Valid !== undefined)
+			if ('Valid' in this)
 			{
 				$$(_ + '1.2 - If we got error previously then report it again.')
 				if (!this.Valid)
@@ -167,12 +168,12 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			if (callAddr > 0)
 			{
 				$$(_ + '2.2 - If found then set the KS_Mode and extract the MOV statement')
-				
+
 				this.KS_Mode = KeyMode.Push;
 				this.MovECX = Exe.GetHex(callAddr, 6);
 
 				$$(_ + '2.3 - Extract the KeySetter address and the keys themselves')
-				
+
 				callAddr += code.byteCount();
 				this.KeySetter = Exe.GetTgtAddr(callAddr);
 				this.Keys[0] = Exe.GetInt32(callAddr -  5);
@@ -280,16 +281,18 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			$$(_ + '6.2 - For older clients we will try to look in the PktKeyMap')
 			if (Exe.BuildDate <= 20180308)
 			{
-				if (typeof(PktKeyMap) === 'undefined' || PktKeyMap === false) //avoid redefinition
+				if (typeof PktKeyMap === 'undefined' || !PktKeyMap) //avoid redefinition & only load when required
 				{
 					PktKeyMap = Warp.LoadYaml("Inputs/PacketKeyMap.yml");
+					if (!PktKeyMap)
+						throw Error("PKT - Packet Key Map file is invalid");
 				}
 
 				$$(_ + '6.3 - Retrieve the keys based on the date')
 				let arr = PktKeyMap[Exe.BuildDate];
 
 				$$(_ + '6.4 - Ensure we have a valid array')
-				this.Valid = Array.isArray(arr) && arr.length === 3;			
+				this.Valid = IsArr(arr) && arr.length === 3;
 				if (this.Valid)
 				{
 					this.Keys = arr;

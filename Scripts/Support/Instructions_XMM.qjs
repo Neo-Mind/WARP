@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2020-12-11                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -172,7 +172,7 @@ _define_with(''  ,
 ].forEach( pair =>
 	Assign(
 		pair[0],
-		"function() { return _xmm_cmd_OO(" + pair[1] + ", arguments)}"
+		`function() { return _xmm_cmd_OO(${pair[1]}, arguments)}`
 	)
 );
 
@@ -303,20 +303,20 @@ _xmm_cmd = (ocRP, ocPR, ocRR, args, pre) =>
 	{
 		case OpTypes.R_P:
 		case OpTypes.A_D:
-			if (ocRP !== undefined)
+			if (ocRP != undefined)
 				opCode = [0x0F, ocRP];
 
 			break;
 
 		case OpTypes.P_R:
 		case OpTypes.D_A:
-			if (ocPR !== undefined)
+			if (ocPR != undefined)
 				opCode = [0x0F, ocPR];
 
 			break;
 
 		case OpTypes.R_R:
-			if (ocRR !== undefined)
+			if (ocRR != undefined)
 				opCode = [0x0F, ocRR];
 
 			break;
@@ -325,7 +325,7 @@ _xmm_cmd = (ocRP, ocPR, ocRR, args, pre) =>
 			break;
 	}
 
-	if (opCode !== undefined)
+	if (opCode != undefined)
 	{
 		if (pre instanceof IPrefix)
 			data.Prefix.push(pre);
@@ -334,7 +334,7 @@ _xmm_cmd = (ocRP, ocPR, ocRR, args, pre) =>
 	}
 	else
 	{
-		return "";
+		return '';
 	}
 };
 
@@ -355,7 +355,7 @@ _xmm_cmd_OO = (ocS, args) =>
 			return Instr.FromParts(data, [0x0F, ocS]).toString();
 	}
 
-	return "";
+	return '';
 };
 
 ///
@@ -382,7 +382,7 @@ _xmm_cmd_Mux = (index, args, pre) =>
 			return Instr.FromParts(data, [0x0F, 0xC2]).toString();
 	}
 
-	return "";
+	return '';
 };
 
   //========//
@@ -414,7 +414,7 @@ MOVD = function()
 			break;
 
 		default:
-			return "";
+			return '';
 	}
 	if (data.OpSize === 128)
 		data.Prefix.push(OPCH);
@@ -462,7 +462,7 @@ MOVQ = function()
 			break;
 
 		default:
-			return "";
+			return '';
 	}
 
 	return Instr.FromParts(data, opCode).toString();

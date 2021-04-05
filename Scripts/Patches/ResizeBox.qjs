@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2021-03-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -83,8 +83,7 @@ ResizeBox = function(patchName)
 		Cancel("Box Length", 70);
 
 	/// 3 - Find the correct address based on the arguments being PUSHed before it and set the value to boxLen
-	if (arg2 === undefined)
-		arg2 = arg1;
+	arg2 = arg2 ?? arg1;
 
 	let pattern =
 		PUSH(arg1)  //PUSH arg1
@@ -104,8 +103,7 @@ ResizeBox = function(patchName)
 			return false;
 		}
 	});
-
-	if (found === undefined)
+	if (!found)
 		throw Error("No matches found for Arg PUSHes");
 
 	return true;
@@ -143,7 +141,7 @@ ResizeNpcBox = function()
 		return (subAddr > 0);
 	});
 
-	if (refAddr === undefined)
+	if (!refAddr)
 		throw Error("Zc_Say_Dialog not found");
 
 	/// 1.4 - Extract the allocated byte count (x in SUB ESP, x)

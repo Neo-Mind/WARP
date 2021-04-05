@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-03-06                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -86,8 +86,8 @@ if (typeof ROC === 'undefined')
 			this.BaseName = System.BaseName(Exe.FilePath);
 
 			$$(_ + '2.5 - Keep other members undefined')
-			this.ImpInfo = undefined; //will be used & loaded only by Custom DLL & HShield patches
-			this.RsrcTree = undefined; //will be used & loaded only by Custom Icon patches
+			delete this.ImpInfo ; //will be used & loaded only by Custom DLL & HShield patches
+			delete this.RsrcTree; //will be used & loaded only by Custom Icon patches (for now).
 
 			IdentifyObj("ROC");
 		},

@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Neo-Mind, Andrei (4144)            *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -142,7 +142,7 @@ UseOldLogin = function()
 
 	/// 2.2 - Ensure the instruction after the code is not another comparison. If so update the nopCount
 	let ins = Instr.FromAddr(addr + nopCount);
-	if (ins.Codes[0] === 0x83 && ins.MRM.RgOp === 7)
+	if (ins.Codes[0] === 0x83 && ins.MRM.RegO === 7)
 		nopCount += 9; //3 for CMP, 6 for JZ
 
 	/// 2.3 - Now NOP it (technically it will just become a JMP inside)
@@ -186,7 +186,7 @@ RestoreLoginWindow = function()
 		JMP()                       //JMP addr2
 	];
 
-	let codeAddr = Exe.FindHex(parts.join(''));
+	let codeAddr = Exe.FindHex(parts);
 	if (codeAddr < 0)
 		throw Error("g_Tparam comparison missing");
 

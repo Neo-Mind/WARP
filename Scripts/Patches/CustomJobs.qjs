@@ -1,0 +1,1246 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2021-03-19                                             *
+*   Last Modified : 2021-04-05                                             *
+*                                                                          *
+\**************************************************************************/
+
+MaxJob = 4400;
+
+///
+/// \brief: Change the Hardcoded loading & retrieval of Job strings (Name, Path prefix,
+///         Hand prefix, Palette prefix & Imf Prefix?) to use Lua functions.
+///         Similarly update the sprite size checker & Mount retrieval functions as well.
+///
+CustomJobs = function()
+{
+	/// 1.1 - Ensure Translate Taekwon patch isn't ON
+	if (!Exe.TestMode && Exe.IsSelected("TranslateTaekwon"))
+		Cancel("cannot be used with Translate Taekwon patch");
+
+	/// 1.2 - Ensure LUA object & LANGTYPE are loaded
+	LUA.load();
+	LANGTYPE.load();
+
+	//=====================================================//
+	// Find the table loading area (references to strings) //
+	//=====================================================//
+	let refs = [];
+
+	/// 1.3 - Find the spr/act path suffix for Santa costume
+	let strAddr = Exe.FindText("\xBB\xEA\xC5\xB8");
+	if (strAddr < 0)
+		throw Error("Santa is missing");
+
+	/// 1.4 - Find it's references (there should only be 1) and add to 'refs' array
+	let addrs = Exe.FindHexN(MOV([R32, 0x68], strAddr));
+	if (ROC.IsZero && addrs.length > 1)
+	{
+		let addr = addrs.find( memAddr => Exe.FindLastHex(PUSH(0x10AA) + MOV(ECX, ESI), memAddr, memAddr - 0x800) < 0 );
+		if (!addr)
+			throw Error("Santa reference missing");
+
+		refs[0] = addr;
+	}
+	else if (addrs.length === 1)
+	{
+		refs[0] = addrs[0];
+	}
+	else
+	{
+		throw Error("Unexpected no of Santa references");
+	}
+
+	/// 1.5 - Find the imf suffix for Groom/Bride (used for Santa as well) and add to 'refs' array
+	strAddr = Exe.FindText("\xB0\xE1\xC8\xA5");
+	if (strAddr < 0)
+		throw Error("Groom/Bride is missing");
+
+	addrs = Exe.FindHexN(MOV([R32, 0x68], strAddr));
+	if (addrs.length !== 1)
+		throw Error("Unexpected no of Wedding references");
+
+	refs[1] = addrs[0];
+
+	/// 1.6 - Find the palette suffix for Archer
+	strAddr = Exe.FindText("\xB1\xC3\xBC\xF6");
+	if (strAddr < 0)
+		throw Error("Archer is missing");
+
+	if (Exe.Version === 6)
+	{
+		/// 1.7 - For VC6 find it's reference after a PUSH 4
+		addrs = Exe.FindHexN(MOV([EAX], strAddr) + CALL()); //MOV DWORD PTR DS:[EAX], OFFSET strAddr ; followed by CALL fetcher
+
+		let code2 = PUSH(4); //PUSH 4 should be present before
+		refs[2] = addrs.find(memAddr => Exe.FindLastHex(code2, memAddr, memAddr - 0x6) > 0);
+		if (!refs[2])
+			throw Error("Archer reference missing (VC6)");
+	}
+	else
+	{
+		/// 1.8 - For VC9+ find all references with direct movement to table
+		addrs = Exe.FindHexN(MOV([R32, 0xC], strAddr));
+		let addr = addrs.find(memAddr =>
+			!refs.some(refAddr => memAddr >= (refAddr - 0x300) && memAddr <= (refAddr + 0x300))
+		);
+		if (!addr)
+			throw Error("Archer reference missing (VC9+)");
+
+		refs[2] = addr;
+	}
+
+	/// 1.9 - Find the hand prefix for Archer
+	strAddr = Exe.FindText("\xB1\xC3\xBC\xF6\\\xB1\xC3\xBC\xF6"); // 궁수\궁수 for Archer
+	if (strAddr < 0)
+		throw Error("Hand prefix missing");
+
+	/// 1.10 - Find it's reference
+	refs[3] = Exe.FindHex(MOV([R32, 0xC], strAddr));
+	if (refs[3] < 0)
+		throw Error("Hand reference missing");
+
+	/// 1.11 - Find the name for Acolyte (ok that sounds weird)
+	strAddr = Exe.FindText("Acolyte"); //We use Acolyte here because Archer has a MOV ECX, OFFSET statement before it in Older clients
+	if (strAddr < 0)
+		throw Error("Acolyte is missing");
+
+	/// 1.12 - Find it's reference
+	refs[4] = Exe.FindHex(MOV([R32, 0x10], strAddr));
+	if (refs[4] < 0)
+		throw Error("Acolyte reference missing");
+
+	//==========================================================================================//
+	// Find the hook & end address for table loading & extract all non-related codes in between //
+	//==========================================================================================//
+
+	let limits = Exe.BuildDate >= 20170700
+	?
+	[
+		0x6D93,
+		0x6D93,
+		0x6D93,
+		0x6D93,
+		0x7D01
+	]
+	:
+	[
+		0x524C,
+		0x524C,
+		0x524C,
+		0x524C,
+		0x61BA
+	];
+	let fetcher = -1;
+	let infos = refs.map( (addr, idx) =>
+	{
+		/// 2.1 - Prep variables for required info
+		let hookAddr, movIns, baseReg, format; //baseReg contains address for index 0 of the table, movIns will contain the MOV to baseReg
+
+		/// 2.2 - Find the limit usage before it
+		let limitAddr = Exe.FindLastHex(limits[idx].toHex(), addr, addr - 0x800);
+		if (limitAddr < 0)
+			throw Error(`Limit missing for no.${idx + 1}`);
+
+		/// 2.3 - Extract the instruction after the reference
+		let ins = Instr.FromAddr(addr).moveToNext();
+		if (ins.Codes[0] === 0xE8) //VC6
+		{
+			/// 2.4 - Since there is no MOV unset movIns
+			movIns = null;
+
+			/// 2.5 - Calculate the CALL's address if not already found
+			if (fetcher < 0)
+				fetcher = Exe.Phy2Vir(ins.NextAddr, CODE) + ins.Immd; //the target VIRTUAL address
+
+			/// 2.6 - Find the address for the first table assignment
+			let code = PUSH_0 + MOV(ECX, ESI) + CALL(ALLWC);
+			let firstAddr = Exe.FindHex(code, limitAddr + 4, limitAddr + 0x60);
+			if (firstAddr < 0)
+				throw Error(`First index assignment missing for no.${idx + 1}`);
+
+			/// 2.7 - Set the hook address after the CALL & set the base register
+			hookAddr = firstAddr + code.byteCount();
+			baseReg = EAX;
+			format = 0;
+		}
+		else if (ins.Codes[0] === 0x8B && ins.MRM.Mode !== 3) //VC9+
+		{
+			/// 2.8 - Set it as the MOV instruction
+			movIns = ins;
+
+			/// 2.9 - Extract the register used as source in MOV tgtReg, DWORD PTR DS:[srcReg + Disp]
+			let srcReg = R32.List[ins.MRM.RegM];
+
+			/// 2.10 - Use it to construct the table assignment pattern & look for it after the limitAddr
+			let prefix = MOV(R32, ins.Disp ? [srcReg, ins.Disp] : [srcReg]);
+			let addrs = [
+				...Exe.FindHexN(1, prefix + MOV([R32], POS3WC), limitAddr + 4, limitAddr + 0x60),
+				...Exe.FindHexN(1, prefix + MOV([R32, WCp], POS3WC), limitAddr + 4, limitAddr + 0x60),
+				...Exe.FindHexN(1, prefix + MOV([R32, POS2WC], POS3WC), limitAddr + 4, limitAddr + 0x60)
+			].sort();
+
+			if (addrs.isEmpty())
+				throw Error(`Starting index assignment missing for no.${idx + 1}`);
+
+			/// 2.11 - Hook at the location after the smallest
+			hookAddr = addrs[0] + movIns.Size;
+
+			/// 2.12 - Use the next byte to calculate the base register
+			baseReg = R32.List[Exe.GetInt8(hookAddr + 1) & 0x7];
+			format = 1;
+		}
+		else
+			throw Error(`Unexpected opcode for no.${idx + 1}`);
+
+		/// 3.1 - Now find the ending instruction while extracting all relevant instructions (not related to table loading) in between
+		let [endIns, retainer, overflow] = FetchTillEnd(hookAddr, format, movIns, baseReg, fetcher, (ins) =>
+		{
+			if (Exe.Version === 6) //VC6
+			{
+				switch (ins.Codes[0])
+				{
+					case 0x8D:
+						if (ins.MRM.Mode === 2) //LEA reg, [reg + const]
+						{
+							return (Exe.GetUint16(ins.NextAddr) === 0x45C7); //followed by MOV DWORD PTR SS:[LOCAL.x], OFFSET addr
+						}
+						else if (ins.MRM.Mode === 1) //LEA reg, [LOCAL.y]
+						{
+							let bytes = Exe.GetUint16(ins.NextAddr);
+							return (bytes === 0xB38D || bytes === 0xC381 || bytes === 0x5588); //followed by ADD reg32, const or LEA reg, [reg + const] or MOV BYTE PTR SS:[LOCAL.x], DL
+						}
+						break;
+
+					case 0x8B: //MOV EAX, DWORD PTR DS:[EDI+4]
+						return (ins.MRM.Data === 0x47 && ins.Disp === 4);
+				}
+			}
+			else if (Exe.Version <= 10) //VC9 & VC10
+			{
+				switch (ins.Codes[0])
+				{
+					case 0x2B: //SUB reg32_A, reg32_B
+						return (ins.MRM.Mode === 3 && (Exe.GetInt32(ins.Addr + 2) & 0xFFF8FF) === 0x02F8C1); //followed by SAR reg32_A, 2
+
+					case 0x83: //OR reg32_A, -1
+						return (ins.MRM.RegO === 1 && ins.Immd === -1);
+
+					case 0xFF: //CALL DWORD PTR DS:[addr] //hopefully wont conflict later
+						return (ins.MRM.Data === 0x15);
+				}
+			}
+			else //VC11+
+			{
+				switch (ins.Codes[0])
+				{
+					case 0x8D:
+						if (ins.MRM.Mode === 1 && ins.MRM.RegO === 0 && Exe.GetUint8(ins.NextAddr) === 0x50) //LEA EAX, [LOCAL.x] followed by EAX
+						{
+							let opcode = Exe.GetUint8(ins.NextAddr + 1);
+							return (opcode === 0x6A || opcode === 0x68 || opcode === 0x56); //followed by PUSH offset or PUSH ESI
+						}
+						break;
+
+					case 0x8B:
+						if (ins.MRM.Mode === 0 && ins.MRM.RegO === 0) //MOV EAX, DWORD PTR DS:[reg32_A]
+						{
+							return (Exe.GetUint16(ins.NextAddr) === 0x048D); //followed by LEA EAX, [reg32_B*4 + EAX]
+						}
+						break;
+
+					case 0xE8: //stop at the CALL
+						return true;
+				}
+			}
+			return false;
+		});
+		if (overflow)
+			throw Error(`Table end missing for no.${idx+1}`);
+
+		/// 3.2 - Return the set
+		return [hookAddr, baseReg, endIns, retainer];
+	});
+
+	//====================================//
+	// Add the Function Names into client //
+	//====================================//
+
+	/// 4.1 - Insert the Lua function names into the client (Since we wont be using the hardcoded JobNames we will overwrite suitable ones and use their addresses)
+	let ReqFuncs =
+	[
+		_CJ_Overwrite("Professor",     "ReqPCPath"    ),
+		_CJ_Overwrite("Swordman",      "ReqPCImf"     ),
+		_CJ_Overwrite("Magician",      "ReqPCPal"     ),
+		_CJ_Overwrite("Swordman High", "ReqPCHandPath"),
+		_CJ_Overwrite("Baby Acolyte",  "ReqPCJobName" ),
+	];
+	let MapFuncs =
+	[
+		_CJ_Overwrite("Whitesmith",    "MapPCPath"    ),
+		_CJ_Overwrite("Assassin",      "MapPCImf"     ),
+		_CJ_Overwrite("Crusader",      "MapPCPal"     ),
+		_CJ_Overwrite("Magician High", "MapPCHandPath"),
+		_CJ_Overwrite("High Wizard_W", "MapPCJobName" ),
+	];
+	let AltFuncs =
+	[
+		_CJ_Overwrite("High Priest_W", "GetPCNameOvrd"),
+		_CJ_Overwrite("Alchemist",     "GetHalter"    ),
+		_CJ_Overwrite("Acolyte",       "IsDwarf"      ),
+		_CJ_Overwrite("High Wizard",   "GetSprScale"  ),
+	];
+
+	//=======================================//
+	// Add Table Loaders using LUA functions //
+	//=======================================//
+
+	let fileHookAddr, //location where the file loading code will be placed
+	    ddd2sAddr;    //location for the "ddd>s" format string
+	[
+		"PCPath",
+		"PCImf",
+		"PCPal",
+		"PCHandPath",
+		"PCJobName"
+	].forEach( (fnSuffix, index) =>
+	{
+		/// 4.2 - Setup the limits
+		let reductor = (index === 4) ? 0 : 3950;
+		let limits =
+		[
+			[0, 0x2C],
+			[0xFA1 - reductor, MaxJob - reductor]
+		];
+
+		/// 4.3 - Generate the templates first
+		let templates = _CJ_Generate(
+			[ReqFuncs[index], "Req" + fnSuffix, "dd>s", EDI, [LANGTYPE], EAX],
+			index === 4 //PCJobName
+		?
+			null //dont call Map for JobName since it is done later anyways (avoid redundancy)
+		:
+			[MapFuncs[index], "Map" + fnSuffix, "dd>d", EDI, [LANGTYPE], EAX]
+		,
+			[ESP, 0x24]
+		);
+
+		/// 4.4 - Retrieve the info for this index
+		let [hookAddr, baseReg, endIns, retainer] = infos[index];
+
+		/// 4.5 - Combine & construct the replacement code in parts
+		let parts =
+		[
+			PUSH(baseReg)  //PUSH baseReg ; contains address of first index in table
+		+	PUSHAD         //PUSHAD
+		];
+
+		templates.forEach( template =>
+		{
+			limits.forEach( pair =>
+			{
+				parts.push( SwapFillers(template,
+				{
+					1: pair[0],
+					2: pair[1]
+				}));
+			});
+		});
+
+		parts.push(
+			POPAD            //POPAD
+		+	ADD(ESP, 4)      //ADD ESP, 4
+		);
+
+		if (retainer)
+			parts.push(retainer); //codes to be retained from original
+
+		if (endIns)
+			parts.push(JMP(Filler(3))); //JMP endAddr
+
+		/// 4.6 - Fill in the blanks
+		let code = LUA.finalize(parts, Exe.Phy2Vir(hookAddr, CODE));
+		if (endIns)
+			code = SetFillTarget(code, 3, endIns.Addr, hookAddr); //no VIRTUAL conversion needed since both are in CODE section
+
+		/// 4.7 - Replace at hook address
+		ShowAddr({hookAddr});
+		Exe.SetHex(hookAddr, code);
+
+		/// 4.8 - Add the format string "ddd>s" for later (we will use the first table loading space)
+		if (index === 0)
+		{
+			ddd2sAddr = hookAddr + code.byteCount();
+			Exe.SetText(ddd2sAddr, "ddd>s\x00");
+		}
+
+		/// 4.9 - Save the location afterwards to use for file loading (picked name table loader since it is the largest)
+		else if (index === 4)
+		{
+			fileHookAddr = hookAddr + code.byteCount();
+		}
+	});
+
+	//=========================//
+	// Inject Lua file loading //
+	//=========================//
+
+	/// 4.9 - Use the address found earlier to add code for loading the files
+	LUA.addLoaders(
+		[
+			"Lua Files\\JobInfo\\PCIds",
+			"Lua Files\\JobInfo\\PCPaths",
+			"Lua Files\\JobInfo\\PCImfs",
+			"Lua Files\\JobInfo\\PCHands",
+			"Lua Files\\JobInfo\\PCPals",
+			"Lua Files\\JobInfo\\PCNames",
+			"Lua Files\\JobInfo\\PCFuncs"
+		],
+		"Lua Files\\DataInfo\\NPCIdentity",
+		fileHookAddr
+	);
+
+	//============================================================================//
+    // Find Gender based Name assignment & Setup extra table assignment for names //
+    //============================================================================//
+
+	limits =
+	[
+		[0, 0x2C],
+		[0xFA1, MaxJob]
+	];
+
+	/// 5.1 - Find the string "TaeKwon Girl"
+	let tgAddr = Exe.FindText("TaeKwon Girl");
+	if (tgAddr < 0)
+		throw Error("'TaeKwon Girl' not found");
+
+	if (Exe.BuildDate < 20190800 || (!ROC.IsRenewal && Exe.BuildDate < 20190810)) //Older form - Seperate function is called each time the character selection changes
+	{
+		/// 5.2 - Find where it's referenced
+		let parts;
+		if (Exe.Version < 11)
+		{
+			parts =
+			[
+				TEST(EAX, EAX)              //TEST EAX, EAX
+			+	JNZ(WCp)                    //JNZ SHORT _skip
+			,
+				MOV(Exe.Version === 9 && Exe.BuildDate < 20110300 ? R32 : EAX, [POS4WC]) //MOV reg32_A, DWORD PTR DS:[g_jobName]
+			,
+				MOV([R32, 0x3F38], tgAddr)  //MOV DWORD PTR DS:[reg32_A + 3F38], OFFSET addr; ASCII "TaeKwon Girl"
+			];
+		}
+		else if (Exe.BuildDate < 20170000)
+		{
+			parts =
+			[
+				''
+			,
+				MOV(EAX, [POS4WC])      //MOV EAX, DWORD PTR DS:[g_jobName]
+			,
+				MOV(R32, tgAddr)        //MOV reg32_B, OFFSET addr; ASCII "TaeKwon Girl"
+			+	MOV(R32, POS4WC)        //MOV reg32_C, OFFSET addr; ASCII "TaeKwon Boy"
+			+	CMOVNZ(R32, R32)        //CMOVNZ reg32_C, reg32_B
+			+	MOV([EAX, 0x3F38], R32) //MOV DWORD PTR DS:[EAX + 3F38], reg32_C
+			];
+		}
+		else
+		{
+			parts =
+			[
+				TEST(R32, R32)          //TEST reg32_A, reg32_A
+			+	(Exe.Version > 11
+			?
+				MOV(R32, POS4WC)        //MOV reg32_C, OFFSET addr; ASCII "TaeKwon Boy"
+			:
+				''
+			)
+			+	MOV(R32, tgAddr)        //MOV reg32_B, OFFSET addr; ASCII "TaeKwon Girl"
+
+			+	CMOVNZ(R32, R32)        //CMOVNZ reg32_C, reg32_B
+			,
+				MOV(EAX, [POS4WC])      //MOV EAX, DWORD PTR DS:[g_jobName]
+			,
+				POP_R                   //POP reg32_D
+			+	MOV([EAX, 0x3F38], R32)	//MOV DWORD PTR DS:[EAX + 3F38], reg32_C
+			];
+		}
+
+		let addr = Exe.FindHex(parts);
+		if (addr < 0)
+			throw Error("'TaeKwon Girl' not referenced");
+
+		/// 5.3 - Extract the g_jobName address
+		let JobName = Instr.FromAddr(addr + parts[0].byteCount()).Disp;
+
+		/// 5.4 - Look for the LANGTYPE comparison before it (in fact the JNZ should jump to a call after which we do the above TEST)
+		///       (These steps are also done in TranslateClient but we will keep it anyways as a failsafe)
+		let code;
+		if (Exe.Version >= 9 && Exe.BuildDate < 20170000)
+		{
+			code =
+				CMP([LANGTYPE], 0)     //CMP DWORD PTR DS:[g_serviceType], 0
+			+	MOV(ECX, POS3WC)       //MOV ECX, OFFSET addr
+			+	JNE(WCp)               //JNE SHORT _skip
+			;
+		}
+		else
+		{
+			code =
+				MOV(EAX, [LANGTYPE])   //MOV EAX, DWORD PTR DS:[g_serviceType]
+			+	(Exe.Version === 6
+			?
+				MOV(ECX, POS3WC)       //MOV ECX, OFFSET addr
+			:
+				''
+			)
+			+	TEST(EAX, EAX)         //TEST EAX, EAX
+			+	JNZ(WCp)               //JNZ SHORT _skip
+			;
+		}
+		addr = Exe.FindHex(code, addr - 0xA0, addr);
+		if (addr < 0)
+			throw Error("Langtype Comparison missing");
+
+		/// 5.5 - Enforce the conditional jump
+		addr += code.byteCount();
+		Exe.SetJMP(addr - 2);
+
+		/// 5.6 - Go to the target address of the jump (serves as the hookAddr)
+		let hookAddr = addr + Exe.GetInt8(addr - 1);
+
+		/// 5.7 - Extract the instruction there & check the opcode to extract info for the next step
+		let genderReg, endAddr, pushes;
+		let ins = Instr.FromAddr(hookAddr);
+		if (ins.Codes[0] === 0xE8)
+		{
+			/// 5.8 - If the instruction at the address is CALL CSession::GetSex then EAX will have the gender value.
+			genderReg = EAX;
+			hookAddr += 5;
+
+			/// 5.9 - Find the LANGTYPE comparison after the address
+			code =
+				CMP(EAX, 0xC) //CMP EAX, 0C
+			+	JE(WCp)       //JE SHORT _skip2
+			+	CMP(EAX, 5)   //CMP EAX, 5
+			+	JE(WCp)       //JE SHORT _skip2
+			+	(Exe.Version > 11.0
+			?
+				CMP(EAX, 0xE) //CMP EAX, 0E
+			+	JE(WCp)       //JE SHORT _skip2
+			:
+				''
+			)
+			+	CMP(EAX, 6)   //CMP EAX, 6
+			;
+
+			addr = Exe.FindHex(code, hookAddr + 0x10, hookAddr + 0x100);
+			if (addr < 0)
+				throw Error("2nd Langtype Comparison missing");
+
+			/// 5.10 - Extract the previous 2 bytes and test for PUSH reg instructions
+			pushes = Exe.GetBytes(addr - 2, 2);
+
+			if (pushes[0] < 0x50 || pushes[0] > 0x57)
+				pushes[0] = 0x90;
+
+			if (pushes[1] < 0x50 || pushes[1] > 0x57)
+				pushes[1] = pushes[0] === 0x90 ? 0x56 : 0x90;
+
+			/// 5.11 - Goto the address after the last comparison (should be a JNE)
+			addr += code.byteCount();
+
+			/// 5.12 - Goto the target address of the JNE
+			ins = Instr.FromAddr(addr);
+			if (ins.Codes[0] === 0x75 || ins.Codes[1] === 0x85)
+				addr = ins.NextAddr + ins.Immd;
+			else
+				throw Error("Expected JNE but it's missing");
+
+			/// 5.14 - Check for the second JNE after 3 bytes (CMP EAX, 0A) and retrieve it's target PHYSICAL address
+			if (Exe.GetUint16(addr + 3) === 0x850F)
+				endAddr = Exe.GetTgtAddr(addr + 5);
+			else
+				throw Error("2nd JNE missing");
+		}
+		else if (ins.Codes[0] === 0x83 && ins.MRM.Data === 0xF8) //newer clients (2017+)
+		{
+			/// 5.15 - The comparison is at the address itself, which means the gender was provided as argument and assigned to EDI earlier
+			genderReg = EDI;
+			pushes = [];
+		}
+		else
+		{
+			throw Error("Unexpected instruction found");
+		}
+
+		/// 5.16 - Generate the templates to be used
+		let templates = _CJ_Generate(
+			[AltFuncs[0], "GetPCNameOvrd", ["ddd>s", Exe.Phy2Vir(ddd2sAddr, CODE)], EDI, ESI, [LANGTYPE], EAX],
+			[MapFuncs[4], "MapPCJobName", "dd>d", EDI, [LANGTYPE], EAX],
+			[JobName]
+		);
+
+		/// 5.17 - Construct the code in parts
+		parts = pushes.map(opcode => opcode.toHex(1)); //set of PUSH reg32 which need to be retained since they are POPed out later
+
+		parts.push(
+			PUSHAD
+		+	MOV(ESI, genderReg)
+		);
+
+		templates.forEach( template =>
+		{
+			limits.forEach( pair =>
+			{
+				parts.push(SwapFillers(template,
+				{
+					1: pair[0],
+					2: pair[1]
+				}));
+			});
+		});
+
+		parts.push(
+			POPAD                //POPAD
+		);
+
+		if (endAddr)
+		{
+			parts.push(JMP(Filler(3))); //JMP endAddr
+		}
+		else
+		{
+			parts.push(
+				POP(EDI)         //POP EDI
+			+	POP(EBP)         //POP EBP
+			+	RETN(4)          //RETN 4
+			);
+		}
+
+		/// 5.18 - Fill in the blanks
+		let hookVir = Exe.Phy2Vir(hookAddr, CODE);
+		code = LUA.finalize(parts, hookVir);
+		if (endAddr)
+			code = SetFillTarget(code, 3, endAddr, hookVir);
+
+		/// 5.19 - Replace at hook address
+		ShowAddr({hookAddr});
+		Exe.SetHex(hookAddr, code);
+	}
+	else //Newer form - Name overrides are setup along with the regular loading and it uses a seperate function for it
+	{
+		/// 6.1 - Retrieve the address after the ending instruction for the name table loading (ideally would be a CALL)
+		let endIns = infos[4][2];
+		let hookAddr = endIns.NextAddr;
+
+		/// 6.2 - Find the ECX assignment after it
+		let addr = Exe.FindHex(LEA(ECX, [EBX, POS2WC]), hookAddr, hookAddr + 0x30); //LEA ECX, [EBX + offset]
+		if (addr < 0)
+			throw Error("Object assignment missing");
+
+		/// 6.3 - Save the instruction
+		let leaECX = Instr.FromAddr(addr);
+
+		/// 6.4 - Find the string assignment to stack location
+		addr = Exe.FindHex(MOV([EBP, WCn], tgAddr), hookAddr, hookAddr + 0x30);  //MOV DWORD PTR SS:[LOCAL.x], OFFSET addr; ASCII "TaeKwon Girl"
+		if (addr < 0)
+			throw Error("Taekwon girl not referenced");
+
+		/// 6.5 - Save the stack location used
+		let strLoc = [EBP, Instr.FromAddr(addr).Disp];
+
+		/// 6.6 - Find the index assignment to stack location
+		addr = Exe.FindHex(MOV([EBP, WCn], 0xFD2), hookAddr, hookAddr + 0x30); //MOV DWORD PTR SS:[LOCAL.x], 0FD2
+		if (addr < 0)
+			throw Error("Index PUSH missing");
+
+		/// 6.7 - Save the stack location used
+		let idxLoc = [EBP, Instr.FromAddr(addr).Disp];
+
+		/// 6.8 - Find the additional stack location PUSH after it (not sure why it is needed)
+		let code =
+			LEA(EAX, [EBP, WCn]) //LEA EAX, [LOCAL.y]
+		+	PUSH_EAX             //PUSH EAX
+		;
+		let csize = code.byteCount();
+
+		addr = Exe.FindHex(code, addr + 8, hookAddr + 0x30);
+		if (addr > 0)
+		{
+			let disp = Instr.FromAddr(addr).Disp;
+			if (disp === idxLoc[1] || disp === strLoc[1]) //this is the wrong PUSH, so search again
+				addr = Exe.FindHex(code, addr + csize, hookAddr + 0x30);
+		}
+
+		if (addr < 0)
+			throw Error("Mem PUSH missing");
+
+		/// 6.9 - Save the 2 instructions
+		let pushMEM = Exe.GetHex(addr, csize);
+
+		/// 6.10 - Look for the function CALL after the PUSH (either its directly after or the LEA is in between)
+		addr += csize;
+		if (addr === leaECX.Addr)
+			addr = leaECX.NextAddr;
+
+		let ins = Instr.FromAddr(addr);
+		if (ins.Codes[0] !== 0xE8) //a MOV DWORD PTR instruction can also come in between
+			ins.moveToNext();
+
+		if (ins.Codes[0] !== 0xE8)
+			throw Error("Function CALL missing");
+
+		/// 6.11 - Retrieve the target VIRTUAL address
+		let Overrider = Exe.GetTgtAddr(ins.Addr + 1);
+
+		/// 6.12 - Find the ending address of the table
+		addr = Exe.FindHex(MOV(R32, 0x2D), addr + 0x200, addr + 0x400);
+		if (addr < 0)
+			throw Error("Ending address missing for new overrides");
+
+		let endVir = Exe.Phy2Vir(addr, CODE);
+
+		/// 6.14 - Construct the template (the first one need to be done manually since the way we code is different)
+		let templates = _CJ_Generate(
+			null,
+			[MapFuncs[4], "MapPCJobName", "dd>d", EDI, [LANGTYPE], EAX],
+			[ESP, 0x24]
+		);
+
+		let [, mainM,] = LUA.createCaller("GetPCNameOvrd", ["ddd>s", Exe.Phy2Vir(ddd2sAddr, CODE)], EDI, 1, [LANGTYPE], EAX);
+		let [prep, mainF, restore] = LUA.createCaller("GetPCNameOvrd", ["ddd>s", Exe.Phy2Vir(ddd2sAddr, CODE)], EDI, 0, [LANGTYPE], EAX);
+
+		let prefix =
+			MOV(EDI, Filler(1))      //MOV EDI, startingValue ; serves as idx
+		+	MOV(ESI, Filler(2))      //MOV ESI, endingValue
+		+	prep                     //Stack Prep
+		;
+
+		let infix =
+		[
+			SwapFiller(mainM, 50, AltFuncs[0], 1) //LUA function caller for Male ; _loop
+		+	MOV(CL, [EAX])                        //MOV CL, DWORD PTR DS:[EAX]
+		+	TEST(CL, CL)                          //TEST CL, CL
+		+	JE(7)                                 //JE SHORT _skip
+		+	MOV(ECX, [ESP, 0x24])                 //MOV ECX, DWORD PTR DS:[ESP + 24]
+		+	MOV([4, EDI, ECX], EAX)               //MOV DWORD PTR DS:[4*EDI + ECX], EAX
+		+	SwapFiller(mainF, 50, AltFuncs[0], 1) //LUA function caller for Female ; _skip
+		+	MOV(CL, [EAX])                        //MOV CL, DWORD PTR DS:[EAX]
+		+	TEST(CL, CL)                          //TEST CL, CL
+		+	JE(Filler(5, 1))                      //JE SHORT _skip2
+		,
+			MOV(strLoc, EAX)                      //MOV DWORD PTR SS:[LOCAL.z], EAX
+		+	PUSH_EAX                              //PUSH EAX   ; the name
+		+	LEA(EAX, idxLoc)                      //LEA EAX, [LOCAL.x]
+		+	MOV([EAX], EDI)                       //MOV DWORD PTR DS:[EAX], EDI
+		+	PUSH_EAX                              //PUSH EAX   ; the index location
+		+	PUSH_0                                //PUSH 0
+		+	pushMEM                               //LEA EAX, [LOCAL.y]
+			                                      //PUSH EAX   ; the mem location
+		+	leaECX                                //LEA ECX, [EBX + offset]
+		+	CALL(Filler(4))                       //CALL Overrider
+		,
+			INC(EDI)                              //INC EDI ; _skip2
+		+	CMP(EDI, ESI)                         //CMP EDI, ESI
+		];
+
+		infix[0] = SwapFiller(infix[0], 5, infix[1].byteCount(), 1, 1);
+		csize = infix.byteCount();
+
+		let suffix =
+			JLE(-csize, 0)                       //JLE SHORT _loop or JLE _loop ; to start of the first 'main' code
+		+	restore                              //Stack restore
+		;
+
+		templates[0] = prefix + infix.join('') + suffix;
+
+		/// 6.15 - Construct the code in parts
+		let parts =
+		[
+			PUSH([EDI]) //PUSH DWORD PTR DS:[EDI] ; currently the starting address is inside [EDI] but it may change in future
+		+	PUSHAD      //PUSHAD
+		];
+
+		templates.forEach( template =>
+		{
+			limits.forEach( pair =>
+			{
+				parts.push( SwapFillers(template,
+				{
+					1: pair[0],
+					2: pair[1]
+				}));
+			});
+		});
+
+		parts.push(
+			POPAD            //POPAD
+		+	ADD(ESP, 4)      //ADD ESP, 4
+		+	JMP(Filler(3))   //JMP endVir
+		);
+
+		/// 6.16 - Fill in the blanks
+		let hookVir = Exe.Phy2Vir(hookAddr, CODE);
+		code = SetFillTargets(
+			LUA.finalize(parts, hookVir),
+			{
+				3: endVir,
+				4: Overrider
+			},
+			hookVir
+		);
+
+		/// 6.17 - Replace at hook address
+		Exe.SetHex(hookAddr, code);
+	}
+
+	//============================//
+    // Special Mod 1 : Cash Mount //
+    //============================//
+
+	if (Exe.BuildDate > 20101214)
+	{
+		/// 7.1 - Find the function whre the Mount ID is assigned
+		let code =
+			CMP(EAX, 0x19)
+		+	JNE(WCp)
+		+	MOV(EAX, 0x1012)
+		;
+		let addr = Exe.FindHex(code);
+		if (addr < 0)
+			throw Error("Mount assignment missing");
+
+		/// 7.2 - Construct the LUA caller code
+		let [prep, main, restore] = LUA.createCaller("GetHalter", "d>d", EAX, EAX);
+
+		/// 7.3 - Replace at the address
+		Exe.SetHex( addr
+		,
+			LUA.finalize(
+				PUSH(EDX)  //Backup EDX
+			+	prep       //Stack Prep
+			+	main       //LUA function CALL
+			+	restore    //Stack Restore
+			+	POP(EDX)   //Restore EDX
+			+	(ROC.HasFP
+			?
+				POP(EBP)   //POP EBP
+			:
+				''
+			)
+			+	RETN(4)    //RETN 4
+			,
+				Exe.Phy2Vir(addr, CODE), AltFuncs[1]
+			)
+		);
+	}
+
+    //================================================//
+    // Special Mod 2 : Baby Jobs (Tester & Shrink) //
+    //================================================//
+
+	/// 8.1 - Identify the style based on dates
+	let style =
+		         Exe.Version > 11 ? 1:
+		Exe.BuildDate >= 20180314 ? 2:
+		Exe.BuildDate >= 20110600 ? 3:
+		                            4;
+
+	let shrinkAddrs;
+	if (style < 4)
+	{
+		/// 8.2 - Find the common signature
+		let reg = Exe.Version > 10 ? R32 : EAX;
+		let prefix = MOV(reg, ROC.HasFP ? [EBP, 8] : [ESP, 4]); //MOV reg32_A, DWORD PTR SS:[ARG.1]
+		let csize = prefix.byteCount();
+
+		let suffix =
+			CMP(reg, 0xFB7)  //CMP reg32_A, FB7
+		+	JL(WCp)          //JL SHORT _nextcheck
+		+	CMP(reg, 0xFBD)  //CMP reg32_A, FBD
+		;
+
+		let addrs = Exe.FindHexN(prefix + suffix);
+		if (addrs.length > 3)
+			throw Error("Unexpected no of matches");
+
+		let testerAddr;
+		if (style === 1)
+		{
+			if (addrs.length < 2)
+				throw Error("Not enough matches for new client");
+
+			/// 8.3 - Identify each based on whether RETN 4 followed by same suffix is there within same function
+			addrs.forEach(memAddr =>
+			{
+				if (Exe.FindHex(RETN(4) + suffix, memAddr + 0x10, memAddr + 0x100) > 0)
+					shrinkAddrs = [memAddr + csize];
+				else
+					testerAddr = memAddr + csize;
+			});
+		}
+		else //style 2 or 3
+		{
+			/// 8.4 - For 2nd form only one match would be there for the tester function
+			if (addrs.length !== 1)
+				throw Error("Expected single match for pattern");
+
+			testerAddr = addrs[0] + csize;
+		}
+
+		/// 8.5 - If the register isnt EAX find the one that was used
+		if (reg.isPlaceHolder())
+			reg = R32.List[Exe.GetInt8(testerAddr + 1) & 0x7];
+
+		/// 8.6 - Construct the LUA caller code for Dwarf test
+		let [prep, main, restore] = LUA.createCaller("IsDwarf", "d>d", reg, EAX);
+
+		/// 8.7 - Replace at the address
+		Exe.SetHex( testerAddr
+		,
+			LUA.finalize(
+				PUSH(EDX)  //PUSH EDX ; Backup
+			+	prep       //Stack Prep
+			+	main       //LUA function CALL
+			+	restore    //Stack Restore
+			+	POP(EDX)   //POP EDX ; Restore it
+			+	(ROC.HasFP
+			?
+				POP(EBP)   //POP EBP
+			:
+				''
+			)
+			+	RETN(4)    //RETN 4
+			,
+				Exe.Phy2Vir(testerAddr, CODE), AltFuncs[2])
+		);
+	}
+
+	if (!shrinkAddrs)
+	{
+		if (style > 2)
+		{
+			/// 8.8 - Find the older form of the patterns
+			let code =
+				CMP(EAX, 0xFB7)  //CMP EAX, FB7
+			+	JL(WCp)          //JL SHORT _nextcheck
+			+	MOV(ECX, R32)    //MOV ECX, reg32_B
+			+	CALL(ALLWC)      //CALL CSession::GetJobID
+			+	CMP(EAX, 0xFBD)  //CMP EAX, FBD
+			;
+			shrinkAddrs = Exe.FindHexN(code);
+			if (shrinkAddrs.isEmpty())
+				throw Error("Shrinking code missing");
+
+			if (shrinkAddrs.length > 3)
+				throw Error("Unexpected no of matches for shrinking");
+		}
+		else if (style === 2)
+		{
+			/// 8.9 - For 2nd style use the RETN to find the correct function
+			let code =
+				RETN(4)          //RETN 4
+			+	CMP(R32, 0xFB7)  //CMP reg32_A, FB7
+			+	JL(WCp)          //JL SHORT _nextcheck
+			+	CMP(R32, 0xFBD)  //CMP reg32_A, FBD
+			;
+			let addr = Exe.FindHex(code);
+			if (addr < 0)
+				throw Error("Reference pattern missing");
+
+			/// 8.10 - Now trace back to the beginning where the Dwarf test function is called
+			code =
+				PUSH(ESI)     //PUSH ESI
+			+	CALL(ALLWC)   //CALL IsDwarf
+			+	TEST(AL, AL)  //TEST AL, AL
+			+	JZ(WCp)       //JZ SHORT _proceed
+			;
+			addr = Exe.FindLastHex(code, addr, addr - 0x100);
+			if (addr < 0)
+				throw Error("Shrinking function missing");
+
+			shrinkAddrs = [addr];
+		}
+	}
+
+	/// 8.11 - Setup space to store the scale value
+	let free = Exe.FindSpace(4);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	Exe.AddHex(free, ALL00);
+	let scaleAddr = Exe.Phy2Vir(free, DIFF);
+
+	let found = shrinkAddrs.filter( shrinkAddr =>
+	{
+		/// 9.1 - Deduce the register containing the Job id
+		let reg =
+			style > 2   ? EAX :
+			style === 2 ? ESI :
+			              R32.List[Exe.GetUint8(shrinkAddr + 1) & 0x7];
+
+		/// 9.2 - Use it to create the LUA function Calling code
+		let luaCaller = LUA.createCaller("GetSprScale", "d>d", reg, [scaleAddr]).join('');
+
+		if (style > 2) //Individual comparisons
+		{
+			/// 9.3 - Ensure there is a JLE after comparison with FBD
+			let addr = Exe.FindHex(CMP(EAX, 0xFBD), shrinkAddr);
+			let ins = Instr.FromAddr(addr + 5);
+			if (ins.Codes[0] !== 0x7E && ins.Codes[1] !== 0x8E)
+				return false;
+
+			/// 9.4 - Extract the instruction at the address. It would be either an FLD DWORD PTR or MOVSS XMM0, DWORD PTR
+			let tgtLoader = ins.getNext(ins.Immd);
+
+			/// 9.5 - Extract the instruction after it. Would be a FMUL DWORD PTR or MULSS XMM0, DWORD PTR
+			let multiplier = tgtLoader.getNext();
+
+			/// 9.6 - Save the next address (if it's a JMP go to it's target instead)
+			let endAddr = multiplier.NextAddr;
+			if (Exe.GetUint8(endAddr) === 0xEB)
+				endAddr += Exe.GetInt8(endAddr + 1) + 2;
+
+			/// 9.7 - Modify the multiplier code to ensure DWORD PTR is used and use the scaleAddr as displacement
+			if (multiplier.Codes[0] === 0xDC)
+				multiplier.Codes[0] = 0xD8;
+
+			multiplier.Disp = scaleAddr;
+
+			/// 9.8 - Construct the code to replace with
+			let code =
+				PUSHAD                //PUSHAD ; backup registers
+			+	luaCaller             //code which calls the lua function to get the scale
+			+	POPAD                 //POPAD  ; restore registers
+			+	tgtLoader             //FLD or MOVSS XMM0, DWORD PTR SS:[LOCAL.0]
+			+	MOV(EAX, [scaleAddr]) //MOV EAX, DWORD PTR DS:[scaleAddr]
+			+	TEST(EAX, EAX)        //TEST EAX, EAX
+			+	JZ(multiplier.Size)   //JZ SHORT _skipover
+			+	multiplier            //FMUL or MULSS XMM0, DWORD PTR DS:[EAX]
+			;
+			let csize = code.byteCount();
+
+			/// 9.9 - Ensure there is enough space for the code
+			if ((endAddr - shrinkAddr) > (csize + 2))
+			{
+				/// 9.10 - Append the NOPs/Short JMP to the end of the code
+				let delta = endAddr - shrinkAddr - csize;
+				code +=
+					delta > 0x12
+				?
+					JMP(delta, 0)    //JMP SHORT endAddr
+				:
+					NOPs(delta)      //set of multibyte NOPs
+				;
+
+				/// 9.11 - Replace at the address
+				Exe.SetHex(shrinkAddr, LUA.finalize(code, Exe.Phy2Vir(shrinkAddr, CODE), AltFuncs[3]));
+			}
+			else
+			{
+				/// 9.12 - If space aint there then allocate space for it
+				let free = Exe.FindSpace(csize + 5)
+				if (free < 0)
+					throw NO_ALLOC;
+
+				/// 9.13 - Append the JMP
+				code +=
+					JMP(Filler(1)) //JMP endAddr
+				;
+
+				/// 9.14 - Fill in the blanks
+				let freeVir = Exe.Phy2Vir(free, DIFF);
+
+				code = SetFillTarget(
+					LUA.finalize(code, freeVir, AltFuncs[3])
+				,	1, Exe.Phy2Vir(endAddr, CODE)
+				,	freeVir
+				);
+
+				/// 9.15 - Add at allocated space
+				Exe.AddHex(free, code);
+
+				/// 9.16 - Create JMP to the code
+				Exe.SetJMP(shrinkAddr, freeVir);
+			}
+		}
+		else //seperate function return after FLD
+		{
+			/// 9.17 - Construct the new function
+			let code =
+				PUSHAD                //PUSHAD ; backup registers
+			+	luaCaller             //code which calls the lua function to get the scale
+			+	POPAD                 //POPAD  ; restore registers
+			+	MOV(EAX, [scaleAddr]) //MOV EAX, DWORD PTR DS:[scaleAddr]
+			+	TEST(EAX, EAX)        //TEST EAX, EAX
+			+	JNZ(7)                //JNZ SHORT _skip2
+			+	FLD1                  //FLD1
+			+	POP(reg)              //POP reg32_A
+			+	POP(EBP)              //POP EBP
+			+	RETN(4)               //RETN 4
+			+	FLD([scaleAddr])      //FLD DWORD PTR DS:[scaleAddr]
+			+	POP(reg)              //POP reg32_A
+			+	POP(EBP)              //POP EBP
+			+	RETN(4)               //RETN 4
+			;
+
+			/// 9.18 - Replace at shrinkAddr
+			Exe.SetHex(shrinkAddr, LUA.finalize(code, Exe.Phy2Vir(shrinkAddr, CODE), AltFuncs[3]));
+		}
+		return true;
+	});
+	if (found.isEmpty())
+		throw Error("Shrinking address not found");
+
+	/// 10 - Check with user if they want to copy the supporting files to the target area's data folder
+	CJ_Response = Exe.GetUserInput("$copyCJLub", D_Bool, "Copy Files", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients
+///
+CustomJobs.validate = IsPost2010;
+
+///
+/// \brief Extra steps when the patch is applied (Copy the Lua files if requested)
+///
+CustomJobs.onApplied = function()
+{
+	if (CJ_Response)
+	{
+		/// 1.1 - Prepare the directory paths
+		let suffix = "/Luafiles514/Lua Files/JobInfo";
+		let srcDir = Warp.Path + "Inputs" + suffix;
+		let tgtDir = System.DirPath(Warp.TgtExe) + "/data" + suffix;
+
+		/// 1.2 - For old clients the version prefix is not there
+		if (Exe.BuildDate < 20120000)
+			tgtDir = tgtDir.replace("LuaFiles514/", '');
+
+		/// 1.3 - Create the target directory
+		let ready = System.MkDir(tgtDir);
+		if (!ready)
+			return;
+
+		/// 2 - Copy all the lua files to the target directory
+		[
+			"PCIds",
+			"PCPaths",
+			"PCImfs",
+			"PCHands",
+			"PCPals",
+			"PCNames",
+			"PCFuncs"
+		].forEach(prefix => System.Copy(srcDir + "/" + prefix + ".lub", tgtDir));
+	}
+};
+
+///
+/// \brief Helper function to replace the string with new function name and return it's VIRTUAL address
+///
+_CJ_Overwrite = function(oldStr, newStr)
+{
+	/// 1 - Find the old string
+	let addr = Exe.FindText(oldStr, PHYSICAL);
+	if (addr < 0)
+		throw Error(`${oldStr} not found`);
+
+	/// 2 - Replace with the new one
+	Exe.SetText(addr, newStr  + "\x00");
+
+	/// 3 - Return it's VIRTUAL address
+	return Exe.Phy2Vir(addr);
+};
+
+///
+/// \brief Helper function to generate the templates for Req/Get function & Map function
+///
+_CJ_Generate = function(firstSet, secondSet, memPtr)
+{
+	/// 1 - Prepare the common parts
+	let cmnPre =
+		MOV(EDI, Filler(1))      //MOV EDI, startingValue ; serves as idx
+	+	MOV(EBX, Filler(2))      //MOV EBX, endingValue
+	;
+
+	let cmnSuf =
+		(memPtr.length > 1 ? NOP2 : '') //add extra NOPs to accomodate for [ESP + 24] mem location
+	+	MOV([4, EDI, ECX], EAX)  //MOV DWORD PTR DS:[EDI*4 + ECX], EAX
+	+	INC(EDI)                 //INC EDI; idxInc
+	+	CMP(EDI, EBX)            //CMP EDI, EBX
+	;
+
+	/// 2 - Construct the templates in parts
+	let templates = [
+		firstSet,
+		secondSet
+	].map( (set, idx) =>
+	{
+		if (!set)
+			return '';
+
+		let [fnameAddr, ...args] = set; //each set has the first element as the VIRTUAL address of the function name
+		let [prep, main, restore] = LUA.createCaller(...args); ///remaining are the arguments to be fed to createCaller
+
+		let prefix =
+			cmnPre                    //EDI & EBX assignment
+		+	prep                      //Stack Prep
+		;
+
+		let infix =
+			SwapFiller(main, 50, fnameAddr, 1) //LUA caller code with string address properly set
+		+	(idx === 0
+
+		? //for Req/Get
+			MOV(CL, [EAX])            //MOV CL, BYTE PTR DS:[EAX]
+		+	TEST(CL, CL)              //TEST CL, CL
+		+	JE(9)                     //JE SHORT idxInc
+		+	MOV(ECX, memPtr)          //MOV ECX, DWORD PTR SS:[memPtr]; //either direct address or ESP+24 ; 20 = 8 registers * 4 due to PUSHAD + 4 for the starting memory address which was PUSHed before the PUSHAD
+
+		: //for Map
+			TEST(EAX, EAX)            //TEST EAX, EAX
+		+	JS(0xC)                   //JS SHORT idxInc
+		+	MOV(ECX, memPtr)          //MOV ECX, DWORD PTR SS:[memPtr] ;
+		+	MOV(EAX, [4, EAX, ECX])   //MOV EAX, DWORD PTR DS:[EAX*4 + ECX]
+		)
+		+	cmnSuf                    //table assignment, EDI increment & comparison for loop
+		;
+
+		let csize = infix.byteCount();
+
+		let suffix =
+			JLE(-csize, 0)            //JLE SHORT _loop or JLE _loop ; to start of the 'main' code
+		+	restore                   //Stack Restore
+		;
+
+		return (prefix + infix + suffix);
+	});
+
+	/// 3 - Return the array
+	return templates;
+};

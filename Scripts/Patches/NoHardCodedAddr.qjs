@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei Karas (4144)                                    *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -170,7 +170,7 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 			''
 		:
 			PUSH_EAX                 //PUSH EAX
-		].join('');
+		];
 
 		addr = Exe.FindHex(code);
 		if (addr < 0)
