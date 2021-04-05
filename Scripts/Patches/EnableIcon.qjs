@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-01-15                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,8 +36,8 @@ EnableIcon = function(patchName)
 	/// 1.1 - Get the Root Resource Directory address
 	let addr = Exe.GetDirAddr(D_Res, PHYSICAL);
 
-	/// 1.2 - Load the Resource tree
-	if (ROC.RsrcTree === undefined)
+	/// 1.2 - Load the Resource tree if not done already
+	if ('RsrcTree' in ROC === false)
 		ROC.RsrcTree = new RsrcEntry(0, addr, 0);
 
 	/// 2.1 - Get the Resource entry for RT_GROUP_ICON (0xE) 
@@ -83,7 +83,7 @@ EnableIcon = function(patchName)
 		let imgEntry = iconObj.Entries.find( e => 
 			(e.bHeight === 32 && e.bWidth === 32 && e.wBitCount === 8 && e.bColorCount === 0)
 		);
-		if (imgEntry === undefined)
+		if (!imgEntry)
 			throw Error("No images in the icon file satisfies the specifications");
 
 		/// 3.5 - Find a valid RT_ICON with same spec.
@@ -138,12 +138,11 @@ EnableIcon = function(patchName)
 RestoreIcon = EnableIcon;
 CustomIcon  = EnableIcon;
 
-if (typeof(Icon) === 'undefined') //avoid redefinition
+if (typeof Icon === 'undefined') //avoid redefinition
 {
 	///
-	/// \brief Object representing an icon
+	/// \brief Class representing an icon
 	///
-
 	Icon = class
 	{
 		constructor(name)
@@ -181,60 +180,6 @@ if (typeof(Icon) === 'undefined') //avoid redefinition
 
 			/// 2.2 - Close the file
 			handle.Close();
-		}
-	};
-
-	///
-	/// \brief Object representing an Resource Directory Entry
-	///
-	RsrcEntry = class
-	{
-		constructor(id, rootAddr, offset, isFile = false)
-		{
-			this.ID = id;
-			this.Addr = rootAddr + offset;
-			this.IsFile = (isFile === true);
-
-			if (this.IsFile)
-			{
-				this.DataAddr = Exe.Rva2Phy(Exe.GetInt32(this.Addr));
-				this.DataSize = Exe.GetInt32(this.Addr + 4);
-			}
-			else
-			{
-				this.Entries = [];
-
-				let count = Exe.GetInt16(this.Addr + 12) + Exe.GetInt16(this.Addr + 14);
-				let pos = this.Addr + 16;
-				for (let i = 0; i < count; i++, pos += 8)
-				{
-					id = Exe.GetInt32(pos);
-					offset = Exe.GetInt32(pos + 4);
-					this.Entries[i] = new RsrcEntry(id, rootAddr, offset & 0x7FFFFFFF, offset >= 0);
-					this.Entries[i].Pos = pos;
-				}
-			}
-		}
-
-		traverse(hierarchy) 
-		{
-			if (Array.isArray(hierarchy) && hierarchy.isEmpty())
-			{
-				return this;
-			}
-			else if (!this.IsFile)
-			{
-				let id = Array.isArray(hierarchy) ? hierarchy[0] : hierarchy;
-				let entry = this.Entries.find(e => e.ID === id);
-				if (entry !== undefined)
-				{
-					if (Array.isArray(hierarchy))
-						return entry.traverse(hierarchy.slice(1));
-					else
-						return entry;
-				}
-			}
-			return false;
 		}
 	};
 }

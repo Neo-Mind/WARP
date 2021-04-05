@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Curiosity, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,7 +50,7 @@ RestoreModelCulling = function()
 	];
 
 	let oldStyle = true;
-	let addr = Exe.FindHex(parts.join(''));
+	let addr = Exe.FindHex(parts);
 
 	if (addr < 0 && Exe.BuildDate > 20190000)
 	{
@@ -60,7 +60,7 @@ RestoreModelCulling = function()
 		+   PUSH_EAX                //PUSH EAX
 		;
 		oldStyle = false;
-		addr = Exe.FindHex(parts.join(''));
+		addr = Exe.FindHex(parts);
 	}
 
 	if (addr < 0)

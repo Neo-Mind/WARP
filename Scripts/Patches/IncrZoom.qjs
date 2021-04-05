@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144)                                 *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-03-06                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -121,7 +121,7 @@ IncrZoom = function(patchName)
 			''
 		];
 
-		addr = Exe.FindHex(parts.join(''));
+		addr = Exe.FindHex(parts);
 		if (addr < 0)
 			throw Error("/zoom configuration missing");
 

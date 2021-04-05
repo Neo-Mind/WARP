@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2021-02-24                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -186,7 +186,7 @@ IncrHairs = function(patchName)
 			/// 2.18 - Change the default value to 2 instead of 0D or 6
 			let ins = Instr.FromAddr(addr + 7);
 			ins.Immd = 2;
-			Exe.SetHex(ins.Addr, ins.toString());
+			Exe.SetHex(ins.Addr, ins);
 		});
 
 		if (strAddrs.length === 1) //unified format string
@@ -240,10 +240,10 @@ IncrHairs = function(patchName)
 			addrs.forEach( addr =>
 			{
 				let ins = Instr.FromAddr(addr + csize);
-				ins.MRM = ModRM.FromParts(ins.MRM.Mode, ins.MRM.RgOp, ins.SIB.Base);
+				ins.MRM.update(null, null, ins.SIB.Base);
 				ins.SIB.Data = 0x90; //quick hack to set a NOP at end.
 
-				Exe.SetHex(ins.Addr, ins.toString());
+				Exe.SetHex(ins.Addr, ins);
 			});
 
 			/// 3.3 - Calculate stack offset for 5th argument
@@ -343,7 +343,7 @@ IncrHairs = function(patchName)
 			if (Exe.Version > 11)
 			{
 				let ins = Instr.FromAddr(addr2 + prefix.byteCount());
-				Exe.SetHex(addr2, ins.toString()); //shift up the PUSH
+				Exe.SetHex(addr2, ins); //shift up the PUSH
 
 				addr2 += ins.Size;
 			}
@@ -396,21 +396,21 @@ IncrHairs = function(patchName)
 			addrs.forEach(addr =>
 			{
 				let ins = Instr.FromAddr(addr + csize);
-				ins.MRM = ModRM.FromParts(3, ins.MRM.RgOp, ins.SIB.Index);
+				ins.MRM.update(3, null, ins.SIB.Index);
 				ins.SIB.Data = 0x90; //quick hack to put NOP afterward
-				Exe.SetHex(ins.Addr, ins.toString());
+				Exe.SetHex(ins.Addr, ins);
 
 				if (type === 1)
 				{
 					/// 4.3 - Find the MOV DWORD PTR after it
-					let srcReg = R32.List[ins.MRM.RgOp];
+					let srcReg = R32.List[ins.MRM.RegO];
 					let addr2 = Exe.FindHex(MOV(R32, [srcReg]), ins.NextAddr, ins.NextAddr + 0x18); //MOV reg32, DWORD PTR DS:[srcReg]
 					if (addr2 < 0)
 						throw Error("Register assignment missing (Old Style)");
 
 					ins = Instr.FromAddr(addr2);
-					ins.MRM = ModRM.FromParts(3, ins.MRM.RgOp, ins.MRM.RegM);
-					Exe.SetHex(ins.Addr, ins.toString());
+					ins.MRM.update(3, null, null);
+					Exe.SetHex(ins.Addr, ins);
 				}
 			});
 		}

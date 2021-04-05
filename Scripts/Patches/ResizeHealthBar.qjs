@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-06                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -120,7 +120,7 @@ ResizePlayerBar = function()
 /// \brief Testing function for finding the SUB reg32, 1E instruction
 ///
 _RPB_SubTest = (ins) =>
-	ins.Codes[0] === 0x83 && ins.Immd === 0x1E && ins.MRM.RgOp === 5;
+	ins.Codes[0] === 0x83 && ins.Immd === 0x1E && ins.MRM.RegO === 5;
 
 
 // TODO - No matching code found for clients before 2012-04-10RE . Looks like its using PUSH 5 & PUSH 3C again
@@ -149,7 +149,7 @@ ResizeBossBar = function()
 		;
 		type = 1;
 
-		tgtAddr = Exe.FindHex(parts.join(''));
+		tgtAddr = Exe.FindHex(parts);
 		if (tgtAddr < 0)
 			throw Error("Size assignment missing");
 	}
@@ -168,13 +168,13 @@ ResizeBossBar = function()
 		;
 		type = 2;
 
-		let addrs = Exe.FindHexN(parts.join(''));
+		let addrs = Exe.FindHexN(parts);
 		if (addrs.isEmpty())
 		{
 			[parts[1], parts[0]] = [parts[0], parts[1]]; //swap the first 2 parts (MOV need to be before PUSHes)
 
 			type = 3;
-			addrs = Exe.FindHexN(parts.join(''));
+			addrs = Exe.FindHexN(parts);
 		}
 		if (addrs.isEmpty())
 			throw Error("PUSH pattern missing");
@@ -202,7 +202,7 @@ ResizeBossBar = function()
 			}
 			return (addr > 0);
 		});
-		if (tgtAddr === undefined)
+		if (!tgtAddr)
 			throw Error("No proper size PUSHes found");
 	}
 

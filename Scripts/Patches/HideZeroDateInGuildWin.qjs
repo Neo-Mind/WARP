@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-03-06                                             *
-*   Last Modified : 2021-03-06                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -58,8 +58,7 @@ HideZeroDateInGuildWin = function()
 		CALL(ALLWC)              //CALL MsgStr
 	];
 
-	let code = parts.join('');
-	let addr = Exe.FindHex(code);
+	let addr = Exe.FindHex(parts);
 	if (addr < 0)
 		throw Error("Function not found");
 
@@ -78,7 +77,7 @@ HideZeroDateInGuildWin = function()
 	let localTime32 = Exe.GetInt32(addr + 2);
 
 	/// 2.1 - Prepare the new code
-	code =
+	let code =
 		CMP([EAX], 0)       //CMP DWORD PTR DS:[EAX], 0
 	+	JZ(0xB)             //JZ SHORT _skip
 	+	CALL([localTime32]) //CALL DWORD PTR DS:[&MSVCR#._localtime32]

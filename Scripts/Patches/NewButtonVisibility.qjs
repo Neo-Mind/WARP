@@ -23,14 +23,14 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-03-12                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Data to be used for the patches.
 ///
-if (typeof(NBV) === "undefined")
+if (typeof NBV === 'undefined') //avoid redefinition
 {
 	NBV =
 	{

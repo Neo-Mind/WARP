@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-22                                             *
-*   Last Modified : 2021-01-30                                             *
+*   Last Modified : 2021-03-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -132,7 +132,7 @@ GenMapEffectPlugin = function()
 	/// 3.4 - Extract the instruction at the JZ target & save its Displacement value (g_useEffect)
 	let ins = Instr.FromAddr(Exe.GetTgtAddr(addr + 2, PHYSICAL));
 	let UseEffect = ins.Disp;
-	if (UseEffect === undefined)
+	if (!UseEffect)
 		throw Error("g_useEffect not found");
 	
 	/// 3.5 - Find the call to LaunchCloud after it
@@ -165,13 +165,13 @@ GenMapEffectPlugin = function()
 	/// 4.2 - Extract the instruction at the JZ target & save its Displacement value (g_renderer)
 	ins = Instr.FromAddr(Exe.GetTgtAddr(addr + 2, PHYSICAL));
 	let Renderer = ins.Disp;
-	if (Renderer === undefined)
+	if (!Renderer)
 		throw Error("g_renderer not referenced");
 	
 	/// 4.3 - Goto the next instruction & save its Displacement (clearColor offset)
 	ins = Instr.FromAddr(ins.NextAddr);
 	let clearColor = ins.Disp;
-	if (clearColor === undefined)
+	if (!clearColor)
 		throw Error("clearColor assignment missing");
 		
 	if (clearColor > 0x7F)

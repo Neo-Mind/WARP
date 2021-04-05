@@ -354,6 +354,7 @@ BitWidth = function(v)
 Distance = (tgt, src) =>
 	typeof tgt === 'number' && typeof src === 'number' ? tgt - src : tgt;
 
+
 ///
 /// \brief Calculate the addresses for various indices in the array of hex strings (instructions).
 ///
@@ -378,7 +379,7 @@ MapAddrs = function(start, arr)
 	{
 		return [];
 	}
-}
+};
 
   //============//
  // Extractors //

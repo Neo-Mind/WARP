@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 CH.C (jchcc)                                        *
+*   Copyright (C) 2020-2021 CH.C (jchcc)                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-01-17                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -175,7 +175,7 @@ AutoMute = function()
 	+	PUSH_0               //PUSH 0
 	+	CALL([EAX, POS2WC])  //CALL DWORD PTR DS:[EAX + UIReplayControlWnd_vtable.UIReplayControlWnd_SendMsg]
 	];
-	addr = Exe.FindHex(parts.join(''));
+	addr = Exe.FindHex(parts);
 
 	/*
     let UIReplayControlWndOffset = [6, 4];
@@ -185,7 +185,7 @@ AutoMute = function()
 	if (addr < 0) //try shifting the MOV EAX instruction upwards.
 	{
 		[parts[1], parts[2]] = [parts[2], parts[1]];
-		addr = Exe.FindHex(parts.join(''));
+		addr = Exe.FindHex(parts);
 	}
 	if (addr < 0)
 		throw Error("OnUpdate function missing");

@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2014-2020 Neo-Mind                                       *
+*   Copyright (C) 2014-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2021-03-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,8 +32,7 @@
 CustomVendingLimit = function()
 {
 	/// 1.1 - Find where 1,000,000,000 is PUSHed
-	if (CVL_Vir === undefined)
-		CVL_Vir = Exe.Phy2Vir(CVL_Phy);
+	CVL_Vir = CVL_Vir ?? Exe.Phy2Vir(CVL_Phy);
 
 	let addr = Exe.FindHex( PUSH(CVL_Vir) );
 	if (addr < 0)
@@ -124,7 +123,7 @@ CustomVendingLimit = function()
 CustomVendingLimit.validate = function()
 {
 	CVL_Phy = Exe.FindText("1,000,000,000", PHYSICAL);
-	CVL_Vir = undefined;
+	delete CVL_Vir;
 
     return (CVL_Phy > 0);
 };

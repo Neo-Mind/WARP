@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Functor, CH.C (jchcc), Andrei (4144), X-EcutiOnner     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-03-06                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -52,7 +52,7 @@ NoEquipSwap = function()
 	,//3
 		PUSH_EAX                // PUSH EAX
 	];
-	let addr = Exe.FindHex(parts.join(''));
+	let addr = Exe.FindHex(parts);
 	if (addr < 0)
 		throw Error("Equip Function CALL missing");
 
