@@ -1,28 +1,86 @@
-function ReqShieldName(id)
-  local NameMsg = ShieldNameTable[id]
-  if NameMsg ~= nil then
-    return NameMsg
-  else
-    return ""
-  end
-end
-
-function GetShieldID(itemid)
-  local NameMsg = ShieldMapTable[itemid]
-  if NameMsg ~= nil then
-    return NameMsg
-  else
-    return 0
-  end
-end
+--[[
+****************************************************************************
+*                                                                          *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2021-01-15                                             *
+*   Last Modified : 2021-04-05                                             *
+*                                                                          *
+****************************************************************************
+]]--
 
 Max_Shield = 10
 
---Need to expand upon this later
-function ValidateShieldID(id, jobID)
-  if id > 0 and id < Max_Shield then
-    return 1
-  else
-    return 0
-  end
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.·´¯)
+( \                                                   / )
+ ( ) Retrieves the suffix for the provided shield id ( )
+  (/                                                 \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯)
+
+]]--
+
+function ReqShieldName(id)
+	local suffix = ShieldNameTable[id]
+	if suffix ~= nil then
+		return suffix
+	else
+		return ""
+	end
+end
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´·´¯)
+( \                                                        / )
+ ( ) Retrieves the type number for the provided shield id ( )
+  (/                                                      \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸)
+]]--
+
+function GetShieldID(itemid)
+	local typeid = ShieldMapTable[itemid]
+	if typeid ~= nil then
+		return typeid
+	else
+		return 0
+	end
+end
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸·´¯)
+( \                                                                      / )
+ ( ) Tests if the provided shield id can be used by the specified class ( )
+  (/                                                                    \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`)
+
+]]--
+
+function ValidateShieldID(id, jobID) --Need to expand upon this later
+	if id > 0 and id < Max_Shield then
+		return 1
+	else
+		return 0
+	end
 end

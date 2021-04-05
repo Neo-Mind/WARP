@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-04-05                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -466,7 +466,9 @@ CustomShields = function()
 	Exe.SetHex(addr, code);
 
 	/// 7.6 - Check with user if they want to copy the supporting files to the target area's data folder
-	CS_Response = Exe.GetUserInput("$copyCSLub", D_Bool, "Copy Files", "Do you want the supporting Lub files copied to <b>'data'</b> folder?", true);
+	CS_Response = Exe.GetUserInput("$copyCSLub", D_Bool, "Copy Files", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
+	if (CS_Response)
+		CS_Limiter = MaxShield;
 
 	return true;
 };
@@ -483,15 +485,43 @@ CustomShields.onApplied = function()
 {
 	if (CS_Response)
 	{
-		let suffix = "/Luafiles514/Lua Files/DataInfo";
+		/// 1.1 - Prepare the directory paths
+		let suffix = "/LuaFiles514/Lua Files/DataInfo";
+		let srcDir = Warp.Path + "Inputs" + suffix;
 		let tgtDir = System.DirPath(Warp.TgtExe) + "/data" + suffix;
 
+		/// 1.2 - For old clients the version prefix is not there
+		if (Exe.BuildDate < 20120000)
+			tgtDir = tgtDir.replace("LuaFiles514/", '');
+
+		/// 1.3 - Create the target directory
 		let ready = System.MkDir(tgtDir);
 		if (!ready)
 			return;
 
-		let srcDir = Warp.Path + "Inputs" + suffix;
+		/// 2.1 - Copy the lua file containing the tables
 		System.Copy(srcDir + "/ShieldTable.lub", tgtDir);
-		System.Copy(srcDir + "/ShieldTable_F.lub", tgtDir);
+
+		if (CS_Limiter != 10)
+		{
+			/// 2.2 - If the limit is different read the lua file containing functions
+			let fp = new TextFile(srcDir + "/ShieldTable_F.lub", ASCII, "r");
+			let contents = fp.Read(fp.Size);
+
+			/// 2.3 - Change the limit inside
+			contents = contents.replace("Max_Shield = 10", `Max_Shield = ${CS_Limiter}`);
+
+			/// 2.4 - Write to the target folder
+			if (fp.Open(tgtDir + "/ShieldTable_F.lub", 'w')) //encoding is already ASCII
+			{
+				fp.Write(contents);
+				fp.Close();
+			}
+		}
+		else
+		{
+			/// 2.5 - If limit is 10 then just copy the lua file containing functions
+			System.Copy(srcDir + "/ShieldTable_F.lub", tgtDir, true);
+		}
 	}
 };

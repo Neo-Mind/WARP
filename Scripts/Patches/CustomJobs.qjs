@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-04-05                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ CustomJobs = function()
 	/// 1.1 - Ensure Translate Taekwon patch isn't ON
 	if (!Exe.TestMode && Exe.IsSelected("TranslateTaekwon"))
 		Cancel("cannot be used with Translate Taekwon patch");
-	
+
 	/// 1.2 - Ensure LUA object & LANGTYPE are loaded
 	LUA.load();
 	LANGTYPE.load();
@@ -324,7 +324,7 @@ CustomJobs = function()
 		"PCPal",
 		"PCHandPath",
 		"PCJobName"
-	].forEach( (fnSuffix, index) => 
+	].forEach( (fnSuffix, index) =>
 	{
 		/// 4.2 - Setup the limits
 		let reductor = (index === 4) ? 0 : 3950;
@@ -430,14 +430,14 @@ CustomJobs = function()
 		[0, 0x2C],
 		[0xFA1, MaxJob]
 	];
-	
+
 	/// 5.1 - Find the string "TaeKwon Girl"
 	let tgAddr = Exe.FindText("TaeKwon Girl");
 	if (tgAddr < 0)
 		throw Error("'TaeKwon Girl' not found");
 
 	if (Exe.BuildDate < 20190800 || (!ROC.IsRenewal && Exe.BuildDate < 20190810)) //Older form - Seperate function is called each time the character selection changes
-	{		
+	{
 		/// 5.2 - Find where it's referenced
 		let parts;
 		if (Exe.Version < 11)
@@ -668,10 +668,10 @@ CustomJobs = function()
 		addr = Exe.FindHex(MOV([EBP, WCn], tgAddr), hookAddr, hookAddr + 0x30);  //MOV DWORD PTR SS:[LOCAL.x], OFFSET addr; ASCII "TaeKwon Girl"
 		if (addr < 0)
 			throw Error("Taekwon girl not referenced");
-		
+
 		/// 6.5 - Save the stack location used
 		let strLoc = [EBP, Instr.FromAddr(addr).Disp];
-		
+
 		/// 6.6 - Find the index assignment to stack location
 		addr = Exe.FindHex(MOV([EBP, WCn], 0xFD2), hookAddr, hookAddr + 0x30); //MOV DWORD PTR SS:[LOCAL.x], 0FD2
 		if (addr < 0)
@@ -679,7 +679,7 @@ CustomJobs = function()
 
 		/// 6.7 - Save the stack location used
 		let idxLoc = [EBP, Instr.FromAddr(addr).Disp];
-		
+
 		/// 6.8 - Find the additional stack location PUSH after it (not sure why it is needed)
 		let code =
 			LEA(EAX, [EBP, WCn]) //LEA EAX, [LOCAL.y]
@@ -812,7 +812,7 @@ CustomJobs = function()
 			},
 			hookVir
 		);
-		
+
 		/// 6.17 - Replace at hook address
 		Exe.SetHex(hookAddr, code);
 	}
@@ -1018,18 +1018,18 @@ CustomJobs = function()
 
 			/// 9.5 - Extract the instruction after it. Would be a FMUL DWORD PTR or MULSS XMM0, DWORD PTR
 			let multiplier = tgtLoader.getNext();
-			
+
 			/// 9.6 - Save the next address (if it's a JMP go to it's target instead)
 			let endAddr = multiplier.NextAddr;
 			if (Exe.GetUint8(endAddr) === 0xEB)
 				endAddr += Exe.GetInt8(endAddr + 1) + 2;
-				
+
 			/// 9.7 - Modify the multiplier code to ensure DWORD PTR is used and use the scaleAddr as displacement
 			if (multiplier.Codes[0] === 0xDC)
 				multiplier.Codes[0] = 0xD8;
-			
+
 			multiplier.Disp = scaleAddr;
-			
+
 			/// 9.8 - Construct the code to replace with
 			let code =
 				PUSHAD                //PUSHAD ; backup registers
@@ -1115,6 +1115,9 @@ CustomJobs = function()
 	if (found.isEmpty())
 		throw Error("Shrinking address not found");
 
+	/// 10 - Check with user if they want to copy the supporting files to the target area's data folder
+	CJ_Response = Exe.GetUserInput("$copyCJLub", D_Bool, "Copy Files", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
+
 	return true;
 };
 
@@ -1122,6 +1125,40 @@ CustomJobs = function()
 /// \brief Disable for unsupported clients
 ///
 CustomJobs.validate = IsPost2010;
+
+///
+/// \brief Extra steps when the patch is applied (Copy the Lua files if requested)
+///
+CustomJobs.onApplied = function()
+{
+	if (CJ_Response)
+	{
+		/// 1.1 - Prepare the directory paths
+		let suffix = "/Luafiles514/Lua Files/JobInfo";
+		let srcDir = Warp.Path + "Inputs" + suffix;
+		let tgtDir = System.DirPath(Warp.TgtExe) + "/data" + suffix;
+
+		/// 1.2 - For old clients the version prefix is not there
+		if (Exe.BuildDate < 20120000)
+			tgtDir = tgtDir.replace("LuaFiles514/", '');
+
+		/// 1.3 - Create the target directory
+		let ready = System.MkDir(tgtDir);
+		if (!ready)
+			return;
+
+		/// 2 - Copy all the lua files to the target directory
+		[
+			"PCIds",
+			"PCPaths",
+			"PCImfs",
+			"PCHands",
+			"PCPals",
+			"PCNames",
+			"PCFuncs"
+		].forEach(prefix => System.Copy(srcDir + "/" + prefix + ".lub", tgtDir));
+	}
+};
 
 ///
 /// \brief Helper function to replace the string with new function name and return it's VIRTUAL address
