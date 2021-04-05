@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-01-28                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 		///
 		constructor(addr)
 		{
-			this.Addr     = addr; //The address where this instruction was picked from can be undefined too
+			this.Addr     = addr; //The address where this instruction was picked from can be undefined/null too
 			this.Prefixes = [];   //List of prefix bytes
 			this.Codes    = [];   //List of opcode bytes. Length can be 1, 2 (0F ##) or 3 (0F 38 ## or 0F 3A ##)
 			//this.MRM            //ModRM object - not defined right now
@@ -85,7 +85,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 				this.Codes = o;
 
 			/// 2 - Otherwise push to existing Codes array
-			else if (o !== undefined)
+			else if (o != undefined)
 				this.Codes.push(o);
 		}
 
@@ -95,7 +95,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 		needModRM()
 		{
 			return (OpCodeList.WithModRM.includes(this.Codes[0]) ||
-				(this.Codes[1] !== undefined && !OpCodeList.SecWithoutModRM.includes(this.Codes[1]))
+				(this.Codes[1] != undefined && !OpCodeList.SecWithoutModRM.includes(this.Codes[1]))
 			);
 		}
 
@@ -105,7 +105,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 		isReversed()
 		{
 			return (OpCodeList.Reverse.includes(this.Codes[0]) ||
-				(this.Codes[1] !== undefined && !OpCodeList.SecNonReverse.includes(this.Codes[1]))
+				(this.Codes[1] != undefined && !OpCodeList.SecNonReverse.includes(this.Codes[1]))
 			);
 		}
 
@@ -132,15 +132,15 @@ if (typeof Instr === 'undefined') //avoid redefinition
 		{
 			/// 1 - Check the 1 byte imm lists
 			if (OpCodeList.WithImm8.includes(this.Codes[0]) ||
-				(this.Codes[1] !== undefined && OpCodeList.SecWithImm8.includes(this.Codes[1])) ||
-				(this.Codes[2] !== undefined && OpCodeList.TerWithImm8.includes(this.Codes[2]))
+				(this.Codes[1] != undefined && OpCodeList.SecWithImm8.includes(this.Codes[1])) ||
+				(this.Codes[2] != undefined && OpCodeList.TerWithImm8.includes(this.Codes[2]))
 			)
 			{
 				this.BC_Immd = 1;
 			}
 			/// 2 - Check the 4 byte imm lists
 			else if (OpCodeList.WithImm32.includes(this.Codes[0]) ||
-				(this.Codes[1] !== undefined && OpCodeList.SecWithImm32.includes(this.Codes[1]))
+				(this.Codes[1] != undefined && OpCodeList.SecWithImm32.includes(this.Codes[1]))
 			)
 			{
 				this.BC_Immd = (this.Prefixes.includes(OPCH.Value) ? 2 : 4);
@@ -176,17 +176,46 @@ if (typeof Instr === 'undefined') //avoid redefinition
 		///
 		/// \brief 'Static' Method to extract all the instruction bytes at addr into an 'Instr' object
 		///
-		static FromAddr(addr)
+		static FromAddr(addr, type, result)
 		{
-			/// 1.1 - Create the 'Instr' object
-			let result = new this(addr);
+			/// 1.1 - Convert the address if VIRTUAL
+			if (type === VIRTUAL)
+				addr = Exe.Vir2Phy(addr, CODE); //has to be code section for instructions
+
+			/// 1.2 - Prepare the result object
+			if (result instanceof Instr) //need to reset the members
+			{
+				result.Addr = addr;
+				result.Prefixes = [];
+				result.Codes = [];
+				delete result.MRM;
+				delete result.SIB;
+
+				delete result.Disp;
+				result.BC_Disp = 0;
+
+				delete result.Immd;
+				result.BC_Immd  = 0;
+
+				delete result.SegNum;
+				delete result.NestLvl;
+
+				result.Size     = -1;
+				result.NextAddr = -1;
+			}
+			else
+			{
+				result = new this(addr);
+			}
+
+			/// 1.3 - For non-valid addresses return the blank object
 			if (addr < 0 || addr > Exe.FileSize)
 				return result;
 
-			/// 1.2 - Extract the first byte
+			/// 1.4 - Extract the first byte
 			let b = Exe.GetUint8(addr++);
 
-			/// 1.3 - Iterate over valid Prefixes till we reach an opcode byte
+			/// 1.5 - Iterate over valid Prefixes till we reach an opcode byte
 			while (IPrefix.List.includes(b))
 			{
 				result.addPrefix(b);
@@ -226,7 +255,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 				}
 				else if ( result.MRM.Mode === 2 ||
 						(result.MRM.Mode === 0 && result.MRM.RegM === EBP.Index) ||
-						(result.SIB !== undefined && result.SIB.Base === EBP.Index)
+						('SIB' in result && result.SIB.Base === EBP.Index)
 				)
 				{
 					if (result.Prefixes.includes(AD16.Value)) //Address override
@@ -302,7 +331,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 			let type = (data instanceof OpData) ? data.OpType : OpTypes.ERR;
 
 			/// 1.3 - Ensure valid operation type and opcode(s) to proceed
-			if (type === OpTypes.ERR || codes === undefined)
+			if (type === OpTypes.ERR || codes == undefined)
 				return result;
 
 			/// 1.4 - Assign all the prefixes
@@ -320,7 +349,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 			result.Immd = data.Immd;
 
 			/// 1.8 - Save the displacement if available along with its size in bytes
-			if (data.Disp !== undefined)
+			if ('Disp' in data)
 			{
 				result.Disp = data.Disp;
 				result.BC_Disp = data.DpSize / 8;
@@ -375,17 +404,17 @@ if (typeof Instr === 'undefined') //avoid redefinition
 				}
 
 				/// 2.2 - Check for ptr arguments on either target or source
-				if (data.Index !== undefined || data.Disp !== undefined) // only true for ptrs
+				if ('Index' in data || 'Disp' in data) // only true for ptrs
 				{
 					/// 2.3 - Set mod & rm for [Displacement] ptrs
-					if (data.Index === undefined)
+					if ('Index' in data === false )
 					{
 						mod = 0;
 						rm = 5;
 					}
 
 					/// 2.4 - Set mod & rm for [Reg] & [Reg + Disp] ptrs
-					else if (data.Scale === 1 && data.Base === undefined)
+					else if (data.Scale === 1 && 'Base' in data === false )
 					{
 						/// 2.4.1 - Set the mod value based on Displacement size (0 if no disp present)
 						mod = result.BC_Disp > 0 ? (result.BC_Disp === 1 ? 1 : 2) : 0;
@@ -396,11 +425,11 @@ if (typeof Instr === 'undefined') //avoid redefinition
 						/// 2.4.5 - Override rm for 16 bit addressing
 						if (data.Index.Width === 16)
 						{
-							rm = rm.equals(BX) ? 7
-							: rm.equals(BP) ? 6
-							: rm.equals(DI) ? 5
-							: rm.equals(SI) ? 4
-							: rm ;
+							rm = rm.is(BX) ? 7
+							   : rm.is(BP) ? 6
+							   : rm.is(DI) ? 5
+							   : rm.is(SI) ? 4
+							               : rm ;
 						}
 					}
 
@@ -415,14 +444,14 @@ if (typeof Instr === 'undefined') //avoid redefinition
 						{
 							if (data.Index.Width === 16)
 							{
-								rm = data.Index.equals(BX) ? 0
-								: data.Index.equals(BP) ? 2
-								: rm;
+								rm = data.Index.is(BX) ? 0
+								   : data.Index.is(BP) ? 2
+								                       : rm;
 
-								if (data.Base.equals(DI))
+								if (data.Base.is(DI))
 									rm |= 1;
 
-								data.Base = undefined;
+								delete data.Base;
 							}
 						}
 
@@ -434,16 +463,32 @@ if (typeof Instr === 'undefined') //avoid redefinition
 				}
 
 				/// 2.6 - Construct the ModRM object if mod is valid
-				if (mod !== undefined)
-					result.MRM = ModRM.FromParts(mod, ro, rm);
+				if (mod != undefined)
+					result.MRM = new ModRM(mod, ro, rm);
 
 				/// 2.7 - Construct the SIBase object if base is valid
-				if (data.Base !== undefined)
-					result.SIB = SIBase.FromParts(data.Scale, data.Index, data.Base);
+				if ('Base' in data)
+					result.SIB = new SIBase(data.Scale, data.Index, data.Base);
 			}
 
 			/// 3 - Return the created object
 			return result;
+		}
+
+		///
+		///\brief Method to extract the instruction from the next address into a new object (just a wrapper)
+		///
+		getNext(offset = 0)
+		{
+			return Instr.FromAddr(this.NextAddr + offset);
+		}
+
+		///
+		///\brief Similar to above but updates the current object instead
+		///
+		moveToNext(offset = 0)
+		{
+			return Instr.FromAddr(this.NextAddr + offset, PHYSICAL, this);
 		}
 
 		///

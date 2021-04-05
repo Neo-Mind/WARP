@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020-2021 Neo-Mind                                       *
+*   Copyright (C) 2021 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -21,56 +21,64 @@
 |**************************************************************************|
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
-*   Created Date  : 2020-10-30                                             *
+*   Created Date  : 2021-04-04                                             *
 *   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
-///
-/// \brief Convenience class for representing a SIB byte
-///
-if (typeof SIBase === 'undefined') //avoid redefinition
+if (typeof RsrcEntry === 'undefined') //avoid redefinition
 {
-	SIBase = class
+	///
+	/// \brief Class representing a Resource Directory Entry in the Exe.
+	///
+	RsrcEntry = class
 	{
-		///
-		/// \brief Constructor
-		///
-		constructor(scale, index, base)
+		constructor(id, rootAddr, offset, isFile = false)
 		{
-			let data =
-				IsStr(index)          ? index :                // Check for WildCard + direct hex strings in Index
-				IsStr(base)           ? base  :                // Check for WildCard + direct hex strings in Base
-				arguments.length == 3 ? [scale, index, base] : // All 3 args provided
-				IsNum(scale)          ? scale :                // The SIB byte itself provided (used in Instr class when extracting instructions)
-				                        0 ;                    // Empty SIB
-
-			[this.Scale, this.Index, this.Base, this.Data] = ParseData(data, true);
+			this.ID = id;
+			this.Addr = rootAddr + offset;
+			this.IsFile = (isFile === true);
+	
+			if (this.IsFile)
+			{
+				this.DataAddr = Exe.Rva2Phy(Exe.GetInt32(this.Addr));
+				this.DataSize = Exe.GetInt32(this.Addr + 4);
+			}
+			else
+			{
+				this.Entries = [];
+	
+				let count = Exe.GetInt16(this.Addr + 12) + Exe.GetInt16(this.Addr + 14);
+				let pos = this.Addr + 16;
+				for (let i = 0; i < count; i++, pos += 8)
+				{
+					id = Exe.GetInt32(pos);
+					offset = Exe.GetInt32(pos + 4);
+					this.Entries[i] = new RsrcEntry(id, rootAddr, offset & 0x7FFFFFFF, offset >= 0);
+					this.Entries[i].Pos = pos;
+				}
+			}
 		}
-
-		///
-		/// \brief Method to update the data based on the members. Use null for members which dont change
-		///        (used when modifying extracted instructions)
-		///
-		update(s, i, b)
+	
+		traverse(hierarchy) 
 		{
-			let parts = ParseData([
-				s ?? this.Scale,
-				i ?? this.Index,
-				b ?? this.Base
-			], true);
-
-			[this.Scale, this.Index, this.Base, this.Data] = parts; //we can combine this with above line but this is cleaner
-		}
-
-		///
-		/// \brief toString override
-		///
-		toString()
-		{
-			return `Data = ${this.Data} {Scale = ${this.Scale} , Index = ${this.Index} , Base = ${this.Base}}`;
+			if (Array.isArray(hierarchy) && hierarchy.isEmpty())
+			{
+				return this;
+			}
+			else if (!this.IsFile)
+			{
+				let id = Array.isArray(hierarchy) ? hierarchy[0] : hierarchy;
+				let entry = this.Entries.find(e => e.ID === id);
+				if (entry != undefined)
+				{
+					if (Array.isArray(hierarchy))
+						return entry.traverse(hierarchy.slice(1));
+					else
+						return entry;
+				}
+			}
+			return false;
 		}
 	};
-
-	IdentifyClass(SIBase, ["Scale", "Index", "Base", "Data"]);
 }
