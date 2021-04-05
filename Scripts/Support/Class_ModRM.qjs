@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-03-01                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,22 +35,17 @@ if (typeof ModRM === 'undefined') //avoid redefinition
 	{
 		///
 		/// \brief Constructor
-		///	
-		constructor(data)
+		///
+		constructor(mod, ro, rm)
 		{
-			let parts = ParseData(data, false);
-			if (parts.length === 4)
-			{
-				this.Mode = parts[0];
-				this.RgOp = parts[1];
-				this.RegM = parts[2];
+			let data =
+				IsStr(ro)             ? ro :            // Check for WildCard + direct hex strings in RegOp
+				IsStr(rm)             ? rm :            // Check for WildCard + direct hex strings in RegM
+				arguments.length == 3 ? [mod, ro, rm] : // All 3 args provided
+				IsNum(mod)            ? mod :           // The ModRM byte itself is provided (used in Instr class when extracting instructions)
+				                        0 ;             // Empty modrm
 
-				this.Data = parts[3];
-			}
-			else
-			{
-				this.Data = -1;
-			}
+			[this.Mode, this.RegO, this.RegM, this.Data] = ParseData(data, false);
 		}
 
 		///
@@ -70,24 +65,18 @@ if (typeof ModRM === 'undefined') //avoid redefinition
 		}
 
 		///
-		/// \brief 'Static' Method to create a 'ModRM' object from its components
+		/// \brief Method to update the data based on the members. Use null for members which dont change
+		///        (used when modifying extracted instructions)
 		///
-		static FromParts(mode, ro, rm)
+		update(mod, ro, rm)
 		{
-			/// 1.1 - Check for hex strings in RegOp
-			if (IsStr(ro)) //WildCard + Direct Hex
-				return new this(ro);
+			let parts = ParseData([
+				mod ?? this.Mode,
+				ro  ?? this.RegO,
+				rm  ?? this.RegM
+			], false);
 
-			/// 1.2 - Check for hex strings in RegM
-			if (IsStr(rm)) //WildCard + Direct Hex
-				return new this(rm);
-
-			/// 2.1 - If all the arguments are provided then create Instance with them
-			if (arguments.length === 3)
-				return new this([mode, ro, rm]);
-
-			/// 2.2 - Otherwise return an empty modrm
-			return new this(0);
+			[this.Mode, this.RegO, this.RegM, this.Data] = parts; //we can combine this with above line but this is cleaner
 		}
 
 		///
@@ -95,9 +84,9 @@ if (typeof ModRM === 'undefined') //avoid redefinition
 		///
 		toString()
 		{
-			return `Data = ${this.Data} {Mode = ${this.Mode}, RegOp = ${this.RgOp}, RegM = ${this.RegM}}`;
+			return `Data = ${this.Data} {Mode = ${this.Mode}, Reg/Oper = ${this.RegO}, Reg/Mem = ${this.RegM}}`;
 		}
 	};
 
-	IdentifyClass(ModRM, ["Mode", "RgOp", "RegM", "Data"]);
+	IdentifyClass(ModRM, ["Mode", "RegO", "RegM", "Data"]);
 }

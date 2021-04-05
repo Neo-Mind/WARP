@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2020-12-11                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -121,7 +121,7 @@ _st_arith_cmp = (oper, args) =>
 			break;
 	}
 
-	return (opCode === undefined) ? "" : Instr.FromParts(data, opCode, oper).toString();
+	return (opCode == undefined) ? '' : Instr.FromParts(data, opCode, oper).toString();
 };
 
   //===========================//
@@ -180,10 +180,10 @@ _st_lod_sto = (oper, args) =>
 			if (oper < 4)
 				opCode = 0xDD;
 
-			break;	
+			break;
 	}
 
-	return (opCode === undefined) ? "" : Instr.FromParts(data, opCode, oper).toString();
+	return (opCode == undefined) ? '' : Instr.FromParts(data, opCode, oper).toString();
 };
 
   //=========================================//
@@ -214,7 +214,7 @@ _st_cmd_int = (ocD, ocW, oper, args) =>
 	let data = new OpData(args, false, true);
 
 	if (data.OpType === OpTypes.P)
-	{		
+	{
 		if (data.OpSize === 16)
 		{
 			opCode = ocW;
@@ -240,7 +240,7 @@ _st_cmd_int = (ocD, ocW, oper, args) =>
 	}
 	else
 	{
-		return "";
+		return '';
 	}
 };
 
@@ -270,7 +270,7 @@ _st_cond_mov = (opCode, oper, args) =>
 	}
 	else
 	{
-		return "";
+		return '';
 	}
 };
 
@@ -290,17 +290,17 @@ _st_arith_pop = (oper, args) =>
 {
 	if (args.length === 0)
 	{
-		return " DE" + (0xC0 | (oper << 3) | 1).toHex(1);
+		return ' DE' + (0xC0 | (oper << 3) | 1).toHex(1);
 	}
 	else
 	{
 		let data = new OpData(args, false, true);
 
 		if (data.OpType === OpTypes.R_R && data.SrcReg.Index === 0)
-			return " DE" + (0xC0 | (oper << 3) | data.TgtReg.Index).toHex(1);
+			return ' DE' + (0xC0 | (oper << 3) | data.TgtReg.Index).toHex(1);
 	}
 
-	return "";
+	return '';
 };
 
   //==============================================//
@@ -316,11 +316,11 @@ FFREEP = function()
 
 	if (data.OpType === OpTypes.R && data.TgtReg.Width === 80)
 	{
-		return " DF" + (0xC0 | data.TgtReg.Index).toHex(1);
+		return ' DF' + (0xC0 | data.TgtReg.Index).toHex(1);
 	}
 	else
 	{
-		return "";
+		return '';
 	}
 };
 
@@ -339,10 +339,10 @@ FSTSW = function()
 			return Instr.FromParts(data, 0xDD, 7).toString();
 
 		case OpTypes.R:
-			if (data.TgtReg.equals(AX))
-				return " DF E0";
+			if (data.TgtReg.is(AX))
+				return ' DF E0';
 	}
-	return "";
+	return '';
 };
 
 IdentifyObj('FSTSW');
@@ -376,7 +376,7 @@ _st_ord_cmp = (oper, args) =>
 	}
 	else
 	{
-		return "";
+		return '';
 	}
 };
 
