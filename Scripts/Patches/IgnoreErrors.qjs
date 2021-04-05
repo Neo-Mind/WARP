@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144), X-EcutiOnner, Ai4rei/AN        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-03-07                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -245,12 +245,12 @@ IgnoreLuaErr = function()
 		+	CALL([MBoxA])        //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
 	];
 
-	let addr = Exe.FindHex(parts.join(''));
+	let addr = Exe.FindHex(parts);
 	if (addr < 0)
 	{
 		[parts[1], parts[3]] = [parts[3], parts[1]];
 
-		addr = Exe.FindHex(parts.join(''));
+		addr = Exe.FindHex(parts);
 	}
 
 	if (addr < 0)
@@ -375,7 +375,7 @@ IgnoreEntryQueueErr = function()
 	,//3
 		CALL([POS3WC])   //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
 	];
-	let addr = Exe.FindHex(parts.join(''));
+	let addr = Exe.FindHex(parts);
 	if (addr < 0)
 		throw Error("Pattern not found");
 

@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2021-03-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -97,7 +97,7 @@ EnableSysMenu = function()
 		return (styleAddr > 0);
 	});
 
-	if (found === undefined)
+	if (!found)
 		throw Error("Style not PUSHed");
 
 	/// 2.2 - Change 0x02C2 => 0x02C2 | WS_SYSMENU = 0x02CA

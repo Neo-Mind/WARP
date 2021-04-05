@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Ai4rei/AN                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-03-09                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -303,7 +303,7 @@ EnableUnknCmds = function()
 
 	/// 2.2 - Find the correct one by checking the function being called.
 	addr = addrs.find(memAddr => Exe.GetTgtAddr(memAddr + csize) === funcAddr);
-	if (addr === undefined)
+	if (!addr)
 		throw Error("Only False matches found");
 
 	/// 2.3 - Find the long JMP after the CALL (occurs twice for VC9). NOP away any OR reg32_A, -1 instructions in between
@@ -319,23 +319,23 @@ EnableUnknCmds = function()
 		}
 		else if (ins.Codes[0] === 0x83 && ins.Immd === -1 )
 		{
-			let {Mode, RgOp, RegM} = ins.MRM;
-			if (Mode === 3 && RgOp === 1 && RegM === tgtReg.Index) //OR tgtReg, -1
+			let {Mode, RegO, RegM} = ins.MRM;
+			if (Mode === 3 && RegO === 1 && RegM === tgtReg.Index) //OR tgtReg, -1
 				Exe.SetNOPs(ins.Addr, 3);
 		}
 
-		ins = Instr.FromAddr(ins.NextAddr);
+		ins.moveToNext(); //move to next instruction
 	}
 
 	/// 2.4 - Extract the jump target
 	let retnAddr = Exe.GetTgtAddr(hookAddrs[0]);
 
 	/// 2.5 - Check if the instruction at the target is OR reg32_A, -1
-	ins = Instr.FromAddr(Exe.Vir2Phy(retnAddr, CODE));
+	ins = Instr.FromAddr(retnAddr, VIRTUAL);
 	if (ins.Codes[0] === 0x83 && ins.Immd === -1)
 	{
-		let {Mode, RgOp, RegM} = ins.MRM;
-		if (Mode === 3 && RgOp === 1 && RegM === tgtReg.Index) //Skip over if it is OR tgtReg, -1
+		let {Mode, RegO, RegM} = ins.MRM;
+		if (Mode === 3 && RegO === 1 && RegM === tgtReg.Index) //Skip over if it is OR tgtReg, -1
 			retnAddr += 3;
 	}
 

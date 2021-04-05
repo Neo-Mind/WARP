@@ -1,0 +1,213 @@
+--[[
+****************************************************************************
+*                                                                          *
+*   Copyright (C) 2021 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2021-03-21                                             *
+*   Last Modified : 2021-04-05                                             *
+*                                                                          *
+****************************************************************************
+]]--
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.··´¯)
+( \                                                       / )
+ ( ) Base function for retrieving values from the tables ( )
+  (/                                                     \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸)
+
+]]--
+
+GetValFromTbl = function(tbl, jobid, lt, isNum, isName)
+
+	-- Snap to correct values
+	if jobid > 50 and not isName
+	then
+		jobid = jobid + 3950
+	end
+
+	-- Retrieve Langtype override if present
+	local val
+	local ltKey = "LT_" .. lt
+	if tbl[ltKey] ~= nil
+	then
+		val = tbl[ltKey][jobid]
+	end
+
+	-- If not then retrieve the default value
+	if val == nil
+	then
+		val = tbl[jobid]
+	end
+
+	-- If the jobid was not found in the table, then return empty string / -1 (depending on the type expected)
+	if val == nil
+	then
+		return (isNum and -1 or "")
+
+	-- If numeric value then ensure we subtract the 3950 if the value exceeds that (unless its from the name tables)
+	elseif isNum and not isName and val > 3950
+	then
+		return val - 3950
+	else
+		return val
+	end
+end
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸·´¯)
+( \                         / )
+ ( ) All the Req functions ( )
+  (/                       \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`)
+
+]]--
+
+ReqPCPath = function(jobid, lt)
+	return GetValFromTbl(PCPaths, jobid, lt)
+end
+
+ReqPCImf = function(jobid, lt)
+	return GetValFromTbl(PCImfs, jobid, lt)
+end
+
+ReqPCPal = function(jobid, lt)
+	return GetValFromTbl(PCPals, jobid, lt)
+end
+
+ReqPCHandPath = function(jobid, lt)
+	return GetValFromTbl(PCHands, jobid, lt)
+end
+
+ReqPCJobName = function(jobid, lt)
+	return GetValFromTbl(PCNames, jobid, lt, false, true)
+end
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸·´¯)
+( \                         / )
+ ( ) All the Map functions ( )
+  (/                       \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`)
+
+]]--
+
+MapPCPath = function(jobid, lt)
+	return GetValFromTbl(PCPathInheritTbl, jobid, lt, true)
+end
+
+MapPCImf = function(jobid, lt)
+	return GetValFromTbl(PCImfInheritTbl, jobid, lt, true)
+end
+
+MapPCPal = function(jobid, lt)
+	return GetValFromTbl(PCPalInheritTbl, jobid, lt, true)
+end
+
+MapPCHandPath = function(jobid, lt)
+	return GetValFromTbl(PCHandInheritTbl, jobid, lt, true)
+end
+
+MapPCJobName = function(jobid, lt)
+	return GetValFromTbl(PCNameInheritTbl, jobid, lt, true, true)
+end
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯)
+( \                                                      / )
+ ( ) Function to pick up the gender based name override ( )
+  (/                                                    \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.)
+
+]]--
+
+GetPCNameOvrd = function(jobid, gender, lt)
+	local ovrdtbl = (gender == 0 and PCNames_F or PCNames_M)
+	local val = GetValFromTbl(ovrdtbl, jobid, lt, false, true)
+	
+	if val == nil
+	then
+		jobid = MapPCJobName(jobid, lt)
+		if jobid >= 0 
+		then
+			val = GetValFromTbl(ovrdtbl, jobid, lt, false, true)
+		end
+	end
+	
+	return val
+end
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`··´¯)
+( \                                                           / )
+ ( ) Function to pick up the cash mount id for specified job ( ) 
+  (/                                                         \)  
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´) 
+]]--
+
+GetHalter = function(jobid)
+	return Halter_Table[jobid] or jobid
+end
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·´¯)
+( \                                                          / )
+ ( ) Function to test whether the specified job is shrunken ( ) 
+  (/                                                        \)  
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·)   
+   
+]]--
+
+IsDwarf = function(jobid)
+	if Shrink_Map[jobid]
+	then
+		return 1
+	else
+		return 0
+	end
+end
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`··´¯)
+( \                                                                    / )
+ ( ) Function to retrieve the sprite scaling factor for specified job ( ) 
+  (/                                                                  \)  
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´)
+
+]]--
+
+GetSprScale = function(jobid)
+	local scale = Shrink_Map[jobid]
+	if scale == 0 or scale == nil
+	then
+		return 0
+	else
+		return tonumber(scale, 16)
+	end
+end

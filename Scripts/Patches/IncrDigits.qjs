@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -51,11 +51,11 @@ IncrDigits = function()
 	]
 	;
 
-	let refAddr = Exe.FindHex(parts.join(''));
+	let refAddr = Exe.FindHex(parts);
 	if (refAddr < 0 && Exe.BuildDate > 20190000)
 	{
 		parts[1] = PUSH_R + parts[1];  //PUSH reg32 before JLE
-		refAddr = Exe.FindHex(parts.join(''));
+		refAddr = Exe.FindHex(parts);
 	}
 	if (refAddr < 0)
 		throw Error("999999 comparison not found");
@@ -243,7 +243,7 @@ IncrDigits = function()
 			case 0xFF:
 			case 0x83:
 			{
-				if (ins.Codes[0] === 0xFF && !ROC.HasFP && ins.MRM.RgOp === 2) //CALL reg or CALL DWORD PTR DS:[reg+x]
+				if (ins.Codes[0] === 0xFF && !ROC.HasFP && ins.MRM.RegO === 2) //CALL reg or CALL DWORD PTR DS:[reg+x]
 					stackOff = 24; //resetting back to 24
 
 				ins.StackLimit = FirstDigLoc + stackOff;
@@ -334,7 +334,7 @@ _ID_UpdateStack = (arg, sign) =>
 	{
 		Exe.SetInt8(arg, Exe.GetInt8(arg) + stackOff);
 	}
-	else if (arg.MRM !== undefined && arg.MRM.Mode === 1) //Instr object with ModRM
+	else if (('MRM' in arg) && arg.MRM.Mode === 1) //Instr object with ModRM
 	{
 		if  (
 				( (arg.MRM.RegM === 5 ||

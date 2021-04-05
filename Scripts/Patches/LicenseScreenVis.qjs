@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, MS, Neo-Mind                                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -64,7 +64,7 @@ ShowLicense = function()
 	+	CMP(EAX, 6)  //CMP EAX, 6
 	]
 	;
-	addr = Exe.FindHex(parts.join(''), refAddr, refAddr + 0x60);
+	addr = Exe.FindHex(parts, refAddr, refAddr + 0x60);
 
 	if (addr < 0 && Exe.Version === 6) //really old clients have a comparison with 1 as well
 	{
@@ -72,7 +72,7 @@ ShowLicense = function()
 			CMP(EAX, 1) //CMP EAX, 1
 		+	JE(WCp)     //JE SHORT addr
 		;
-		addr = Exe.FindHex(parts.join(''), refAddr, refAddr + 0x60);
+		addr = Exe.FindHex(parts, refAddr, refAddr + 0x60);
 	}
 
 	if (addr < 0)

@@ -1,10 +1,10 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2013-2021 Neo-Mind                                       *
-*   Copyright (C) 2018-2020 Jian                                           *
+*   Copyright (C) 2018-2021 Jian                                           *
 *   Copyright (C) 2017 Secret                                              *
-*   Copyright (C) 2017-2020 Andrei Karas (4144)                            *
-*   Copyright (C) 2020 X-EcutiOnner                                        *
+*   Copyright (C) 2017-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2021 X-EcutiOnner                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -26,7 +26,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144), X-EcutiOnner    *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-01-20                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -178,18 +178,7 @@ CustomPath.validate = (patchName) =>
 {
 	let data = CP_Data[patchName];
 
-	if (data.parts === undefined) //name is provided directly
-	{
-		let {name} = CP_Data[patchName];
-		let addr = Exe.FindText(name);
-
-		if (addr > 0)
-		{
-			CP_Data[patchName].addr = addr;
-			return true;
-		}	
-	}
-	else //need to derive the name from parts and then find its address.
+	if ('parts' in data) //need to derive the name from parts and then find its address.
 	{
 		let [pref, sakSuf, truSuf, suf] = data.parts;
 
@@ -206,6 +195,17 @@ CustomPath.validate = (patchName) =>
 		{
 			data.addr = addr;
 			data.name = name;
+			return true;
+		}
+	}
+	else //name is provided directly
+	{
+		let {name} = CP_Data[patchName];
+		let addr = Exe.FindText(name);
+
+		if (addr > 0)
+		{
+			CP_Data[patchName].addr = addr;
 			return true;
 		}
 	}
@@ -433,7 +433,7 @@ CustomClientInfo = function()
 
 			if (addr < 0)
 			{
-				addr = Exe.FindHex(MOV(R8, [CCI_Addr + 0xE]), fromAddr, toAddr);	
+				addr = Exe.FindHex(MOV(R8, [CCI_Addr + 0xE]), fromAddr, toAddr);
 				offset = 2;
 			}
 			if (addr < 0)

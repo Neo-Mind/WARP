@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-03-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -171,7 +171,7 @@ CloseCutinOnEsc = function()
 
 	/// 2.3 - Extract the necessary stuff
 	let FirstFunc = Exe.GetTgtAddr(addr + funcOffset); //VIRTUAL address of the first function (check_close or unknownFunc)
-	let MovECX    = Instr.FromAddr(addr + 1).toString(); //MOV ECX, *
+	let MovECX    = Instr.FromAddr(addr + 1); //MOV ECX, *
 	let hookLoc   = addr + funcOffset - 1; //CALL location
 	let retnVir   = Exe.Phy2Vir(addr + funcOffset + 4); //VIRTUAL address of location after the CALL
 

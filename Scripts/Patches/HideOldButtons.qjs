@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-02-23                                             *
+*   Last Modified : 2021-03-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,7 @@
 ///
 /// \brief Data to be used in patches
 ///
-if (typeof HOB_Data === 'undefined')
+if (typeof HOB_Data === 'undefined') //avoid redefinition
 {
 	HOB_Data =
 	{	
@@ -187,7 +187,7 @@ HideOldButtons = function()
 			// First we need to find that location
 			////////////////////////////////////////////////
 
-			if (typeof(HOB_AssignSkill) === 'undefined') //to avoid redundancy
+			if (typeof HOB_AssignSkill === 'undefined') //to avoid redundancy
 			{
 				/// 2.3 - Find the string 'skill' (needed since some prefixes are matching multiple areas)
 				let refAddr = Exe.FindText("skill");
@@ -241,8 +241,8 @@ HideOldButtons.validate = function()
 	if (Exe.BuildDate > 20170000)
 		return false;
 
-	/// 1.2 - Reset HOB_AssignSkill
-	HOB_AssignSkill = undefined;
+	/// 1.2 - Undefine HOB_AssignSkill
+	delete HOB_AssignSkill;
 	
 	/// 2 - Iterate and test for string existence and keep the keys only for valid ones.
 	HOB_Keys = [];

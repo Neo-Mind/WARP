@@ -1,5 +1,6 @@
 /**************************************************************************\
 *                                                                          *
+*   Copyright (C) ?-2015 Ai4rei/AN                                         *
 *   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
@@ -20,53 +21,59 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Neo-Mind                                               *
-*   Created Date  : 2020-11-11                                             *
+*   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
+*   Created Date  : 2021-04-04                                             *
 *   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
-// NOTE - Pattern missing in 2008-01-02 and older. May fix the issue in future.
-
 ///
-/// \brief NOPs out the conditional jump after Langtype comparison when loading Palette prefixes
-///        The prefixes are loaded into Palette Table in CSession::InitJobTable
+/// \brief Translate TaeKwon branch Job names to english
 ///
-OfficialPal = function()
+TranslateTaekwon = function()
 {
-	/// 1.1 - Check if Custom Job patch is being used (unless test mode is ON)
+	/// 1.1 - Ensure Custom Job Patch isn't ON
 	if (!Exe.TestMode && Exe.IsSelected("CustomJobs"))
 		Cancel("cannot be used with Custom Job patch");
 
-	/// 1.2 - Find the location of 'Å©·ç'
-	///       (Palette prefix for Knight - Same string is used for job path as well as imf)
-	///
-	let knightAddr = Exe.FindText("\xC5\xA9\xB7\xE7");
-	if (knightAddr < 0)
-		throw Error("Palette prefix not found");
-
-	/// 1.3 - Find all locations where it is assigned
-	let code = Exe.Version === 6 //VC6
-	?
-		MOV([EAX], knightAddr) + CALL() //MOV DWORD PTR DS:[EAX], knightAddr followed by CALL
-	:
-		MOV([R32, 0x38], knightAddr)    //MOV DWORD PTR DS:[reg32_A + 38], knightAddr
-	;
-	let addrs = Exe.FindHexN(code);
-
-	/// 2.1 - Find the conditional jump (JNE) before one of the assignments - only 1 will have it
-	let jneAddr = -1;
-	addrs.find( addr =>
+	[
+		["\xC5\xC2\xB1\xC7\xBC\xD2\xB3\xE0", "TaeKwon Girl"],
+		["\xC5\xC2\xB1\xC7\xBC\xD2\xB3\xE2", "TaeKwon Boy"]
+	].forEach( arr =>
 	{
-		jneAddr = Exe.FindHex(JNE(POS2WC), addr - 0x20, addr);
-		return (jneAddr > 0);
+		let [kor, eng] = arr;
+		
+		/// 1.2 - Find the korean string.
+		let nameAddr = Exe.FindText(kor);
+		if (nameAddr < 0)
+			throw Error(`Korean name missing for ${eng}`);
+
+		/// 1.3 - Find where it is assigned for being used as job name (can be in multiple places)
+		let addrs = [
+			[R32, 0x3F38],
+			[EAX, 0x3F38],
+			R32,
+			[EBP, WCn]
+		].reduce( (acc, assgn) =>
+			acc.concat( Exe.FindHexN( MOV(assgn, nameAddr)) ), []  //All possible combo of MOVs seen so far in clients.
+		);
+		if (addrs.isEmpty())
+			throw Error(`Korean name reference missing for ${eng}`);
+
+		/// 1.4 - Find the replacement english string
+		let tgtAddr = Exe.FindText(eng);
+		if (tgtAddr < 0)
+			throw Error(`'${eng}' not found`);
+
+		addrs.forEach( addr =>
+		{
+			/// 2.1 - Extract the instruction of the original to get its size
+			let ins = Instr.FromAddr(addr);
+
+			/// 2.2 - Replace the immediate value (i.e. the last 4 bytes)
+			Exe.SetInt32(addr + ins.Size - 4, tgtAddr);
+		});
 	});
-
-	if (jneAddr < 0)
-		throw Error("Prefix reference not found");
-
-	/// 2.2 - NOP out the conditional jump
-	Exe.SetNOPs(jneAddr, 6);
-
+	
 	return true;
 };

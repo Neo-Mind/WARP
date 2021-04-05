@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-04-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -139,7 +139,7 @@ CustomAuraSprites = function()
 
 		});
 
-		if (found === undefined)
+		if (!found)
 			throw Error("Second PUSHes not found");
 
 		/// 4.3 - Update the string addrs
@@ -263,11 +263,11 @@ CustomAuraLimits = function()
 		+	' FF'               //Can be CALL reg32 or CALL DWORD PTR DS:[reg32 + 8]
 		];
 
-		addr = Exe.FindHex(parts.join(''), cmpBegin, cmpBegin + 0x80);
+		addr = Exe.FindHex(parts, cmpBegin, cmpBegin + 0x80);
 		if (addr < 0 && Exe.BuildDate > 20120700)
 		{
 			parts[2] = JMP(0x20); //JMP SHORT addr ;  to location where the CALL is done
-			addr = Exe.FindHex(parts.join(''), cmpBegin, cmpBegin + 0x80);
+			addr = Exe.FindHex(parts, cmpBegin, cmpBegin + 0x80);
 
 			AuraConsts[2] = ' 92';
 		}
@@ -361,7 +361,7 @@ CustomAuraLimits = function()
 			throw Error("Zero assignment missing");
 
 		/// 3.10 - Save it as AssgnZero
-		AssgnZero = Instr.FromAddr(addr).toString();
+		AssgnZero = Instr.FromAddr(addr);
 
 		/// 3.11 - Setup AuraConsts & PUSH0s
 		AuraConsts = [' 7D', ' 93', ' 92', ' 96'];
@@ -519,7 +519,6 @@ CustomAuraLimits = function()
 
 		return (!found.isEmpty());
 	});
-
 	if (found.isEmpty())
 		Cancel("No complete elements found");
 

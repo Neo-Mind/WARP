@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-03-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -283,7 +283,7 @@ _MG_EMB = (callAddr, AddPak) =>
 		grfNames[0] = DGRF.Name;
 
 	/// 1.4 - Remove empty indices
-	grfNames = grfNames.filter( name => name !== undefined );
+	grfNames = grfNames.filter( name => name ?? false );
 
 	/// 2.1 - Prepare template for load 1 GRF (same needs to be repeated for all GRF files)
 	let template =
