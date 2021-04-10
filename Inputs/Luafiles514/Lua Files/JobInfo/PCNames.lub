@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-21                                             *
-*   Last Modified : 2021-04-05                                             *
+*   Last Modified : 2021-04-10                                             *
 *                                                                          *
 ****************************************************************************
 ]]--
@@ -359,6 +359,53 @@ PCNames.LT_7 =
 
 (¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`··´¯)
 ( \                                         / )
+ ( ) Unisex name overrides for Langtype 12 ( )
+  (/                                       \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´)
+
+]]--
+
+PCNames.LT_12 =
+{
+	----------------------
+	-- Baby 1st Classes --
+	----------------------
+	[PCIds.NOVICE]    = "Aprendiz",
+	[PCIds.SWORDMAN]  = "Espadachim",
+	--[PCIds.ACOLYTE] = "Novi?", //doesnt sound right
+
+	----------------------
+	-- Baby 1st Classes --
+	----------------------
+	[PCIds.NOVICE_B]    = "Mini Aprendiz",
+	[PCIds.SWORDMAN_B]  = "Mini Espadachim",
+	--[PCIds.ACOLYTE_B] = "Mini Novi?", //doesnt sound right
+
+	--------------------------
+	-- Extended 1st Classes --
+	--------------------------
+	[PCIds.SUPERNOVICE] = "S.Aprendiz",
+
+	-------------------------------
+	-- Baby Extended 1st Classes --
+	-------------------------------
+	[PCIds.SUPERNOVICE_B] = "S.Aprendiz - Jr.",
+
+	-----------------
+	-- 2nd Classes --
+	-----------------
+	[PCIds.ALCHEMIST] = "Alquimista",
+
+	----------------------
+	-- Baby 2nd Classes --
+	----------------------
+	[PCIds.ALCHEMIST_B] = "Mini Alquimista",
+}
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`··´¯)
+( \                                         / )
  ( ) Unisex name overrides for Langtype 19 ( )
   (/                                       \)
    (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´)
@@ -376,193 +423,6 @@ PCNames.LT_19 =
 	-- Baby 1st Classes --
 	----------------------
 	[PCIds.ACOLYTE_B]  = "Baby Healer",
-}
-
---[[
-
-(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸·´¯)
-( \                                   / )
- ( ) Default set of job names - male ( )
-  (/                                 \)
-   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·)
-
-]]--
-
-PCNames_M =
-{
-	-----------------
-	-- 1st Classes --
-	-----------------
-	[PCIds.SWORDMAN] = "Swordsman",
-
-	------------------------------
-	-- Transcendent 1st Classes --
-	------------------------------
-	[PCIds.SWORDMAN_H] = "Swordsman High",
-
-	--------------------------
-	-- Extended 1st Classes --
-	--------------------------
-	[PCIds.TAEKWON]  = "Taekwon Boy",
-
-	-----------------
-	-- 2nd Classes --
-	-----------------
-	[PCIds.PRIEST]   = "Priest",
-	[PCIds.WIZARD]   = "Wizard",
-	[PCIds.HUNTER]   = "Hunter",
-
-	[PCIds.BARD]     = "Bard",
-
-	----------------------
-	-- Baby 2nd Classes --
-	----------------------
-	[PCIds.PRIEST_B] = "Baby Priest",
-	[PCIds.WIZARD_B] = "Baby Wizard",
-	[PCIds.HUNTER_B] = "Baby Hunter",
-
-	[PCIds.BARD_B]   = "Baby Bard",
-
-	------------------------------
-	-- Transcendent 2nd Classes --
-	------------------------------
-	[PCIds.HIGH_PRIEST] = "High Priest",
-	[PCIds.HIGH_WIZARD] = "High Wizard",
-
-	[PCIds.CLOWN]       = "Clown",
-
-	--------------------------
-	-- Extended 2nd Classes --
-	--------------------------
-	[PCIds.KAGEROU]     = "Kagerou",
-
-	-------------------------------
-	-- Baby Extended 2nd Classes --
-	-------------------------------
-	[PCIds.KAGEROU_B]   = "Baby Kagerou",
-
-	-----------------
-	-- 3rd Classes --
-	-----------------
-	[PCIds.WARLOCK]        = "Warlock",
-
-	[PCIds.SORCERER]       = "Sorcerer",
-	[PCIds.MINSTREL]       = "Minstrel",
-
-	----------------------
-	-- Baby 3rd Classes --
-	----------------------
-	[PCIds.WARLOCK_B]       = "Baby Warlock",
-
-	[PCIds.SORCERER_B]      = "Baby Sorcerer",
-	[PCIds.MINSTREL_B]      = "Baby Minstrel",
-
-	--------------------------
-	-- Extended 3rd Classes --
-	--------------------------
-	[PCIds.STAR_EMPEROR]   = "Star Emperor",
-
-	-------------------------------
-	-- Baby Extended 3rd Classes --
-	-------------------------------
-	[PCIds.STAR_EMPEROR_B]   = "Baby Star Emperor",
-
-	-----------------
-	-- 4th Classes --
-	-----------------
-	[PCIds.MEISTER]         = "Meister",
-
-	[PCIds.ELEMENT_MASTER]  = "Elemental Master",
-	[PCIds.TROUBADOUR]      = "Troubadour",
-
-	---------------------
-	-- Unused classes? --
-	---------------------
-	[PCIds.GANGSI]      = "Munak",
-}
-
---[[
-
-(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´·´¯)
-( \                                      / )
- ( ) Male name overrides for Langtype 0 ( )
-  (/                                    \)
-   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸)
-
-]]--
-
-PCNames_M.LT_0 =
-{
-	--------------------------
-	-- Extended 1st Classes --
-	--------------------------
-	[PCIds.TAEKWON]  = "ÅÂ±Ç¼Ò³â",
-
-	--------------------------
-	-- Extended 3rd Classes --
-	--------------------------
-	[PCIds.STAR_EMPEROR]   = "½ºÅ¸È²Á¦",
-
-	-------------------------------
-	-- Baby Extended 3rd Classes --
-	-------------------------------
-	[PCIds.STAR_EMPEROR_B] = "½ºÅ¸È²Á¦ÈÄ¹è",
-}
-
---[[
-
-(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´·´¯)
-( \                                      / )
- ( ) Male name overrides for Langtype 1 ( )
-  (/                                    \)
-   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸)
-
-]]--
-
-PCNames_M.LT_1 =
-{
-	------------------------------
-	-- Transcendent 1st Classes --
-	------------------------------
-	[PCIds.SWORDMAN_H] = "High Swordsman",
-
-	------------------------------
-	-- Transcendent 2nd Classes --
-	------------------------------
-	[PCIds.CLOWN]       = "Minstrel",
-
-	-----------------
-	-- 3rd Classes --
-	-----------------
-	[PCIds.MINSTREL]    = "Maestro",
-
-	----------------------
-	-- Baby 3rd Classes --
-	----------------------
-	[PCIds.MINSTREL_B]  = "Baby Maestro",
-}
-
---[[
-
-(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯·´¯)
-( \                                       / )
- ( ) Male name overrides for Langtype 19 ( )
-  (/                                     \)
-   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.)
-
-]]--
-
-PCNames_M.LT_19 =
-{
-	-----------------
-	-- 2nd Classes --
-	-----------------
-	[PCIds.PRIEST]   = "Shaman",
-
-	----------------------
-	-- Baby 2nd Classes --
-	----------------------
-	[PCIds.PRIEST_B] = "Baby Shaman",
 }
 
 --[[
@@ -700,6 +560,75 @@ PCNames_F.LT_0 =
 
 (¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`··´¯)
 ( \                                         / )
+ ( ) Female name overrides for Langtype 12 ( )
+  (/                                       \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´)
+
+]]--
+
+PCNames_F.LT_12 =
+{
+	-----------------
+	-- 1st Classes --
+	-----------------
+	[PCIds.MAGICIAN] = "Maga",
+	[PCIds.ARCHER]   = "Arqueira",
+	[PCIds.MERCHANT] = "Mercadora",
+	[PCIds.THIEF]    = "Gatuna",
+
+	----------------------
+	-- Baby 1st Classes --
+	----------------------
+	[PCIds.MAGICIAN_B] = "Mini Maga",
+	[PCIds.ARCHER_B]   = "Mini Arqueira",
+	[PCIds.MERCHANT_B] = "Mini Mercadora",
+	[PCIds.THIEF_B]    = "Mini Gatuna",
+
+	--------------------------
+	-- Extended 1st Classes --
+	--------------------------
+	[PCIds.GUNSLINGER] = "Justiceira",
+
+	-------------------------------
+	-- Baby Extended 1st Classes --
+	-------------------------------
+	[PCIds.GUNSLINGER_B] = "Mini Justiceira",
+
+	-----------------
+	-- 2nd Classes --
+	-----------------
+	[PCIds.KNIGHT]     = "Cavaleira",
+	[PCIds.PRIEST]     = "Sacerdotisa",
+	[PCIds.WIZARD]     = "Bruxa",
+	[PCIds.BLACKSMITH] = "Ferreira",
+	[PCIds.HUNTER]     = "Caçadora",
+	[PCIds.ASSASSIN]   = "Mercenária",
+	[PCIds.CRUSADER]   = "Templária",
+	[PCIds.MONK]       = "Monja",
+	[PCIds.SAGE]       = "Sábia",
+	[PCIds.ROGUE]      = "Arruaceira",
+	[PCIds.DANCER]     = "Odalisca",
+
+	----------------------
+	-- Baby 2nd Classes --
+	----------------------
+	[PCIds.KNIGHT_B]     = "Mini Cavaleira",
+	[PCIds.PRIEST_B]     = "Mini Sacerdotisa",
+	[PCIds.WIZARD_B]     = "Mini Bruxa",
+	[PCIds.BLACKSMITH_B] = "Mini Ferreira",
+	[PCIds.HUNTER_B]     = "Mini Caçadora",
+	[PCIds.ASSASSIN_B]   = "Mini Mercenária",
+	[PCIds.CRUSADER_B]   = "Mini Templária",
+	[PCIds.MONK_B]       = "Mini Monja",
+	[PCIds.SAGE_B]       = "Mini Sábia",
+	[PCIds.ROGUE_B]      = "Mini Arruaceira",
+	[PCIds.DANCER_B]     = "Mini Odalisca",
+}
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`··´¯)
+( \                                         / )
  ( ) Female name overrides for Langtype 19 ( )
   (/                                       \)
    (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´)
@@ -717,6 +646,262 @@ PCNames_F.LT_19 =
 	-- Baby 2nd Classes --
 	----------------------
 	[PCIds.PRIEST_B] = "Baby Shamanka",
+}
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸·´¯)
+( \                                   / )
+ ( ) Default set of job names - male ( )
+  (/                                 \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·)
+
+]]--
+
+PCNames_M =
+{
+	-----------------
+	-- 1st Classes --
+	-----------------
+	[PCIds.SWORDMAN] = "Swordsman",
+
+	------------------------------
+	-- Transcendent 1st Classes --
+	------------------------------
+	[PCIds.SWORDMAN_H] = "Swordsman High",
+
+	--------------------------
+	-- Extended 1st Classes --
+	--------------------------
+	[PCIds.TAEKWON]  = "Taekwon Boy",
+
+	-----------------
+	-- 2nd Classes --
+	-----------------
+	[PCIds.PRIEST]   = "Priest",
+	[PCIds.WIZARD]   = "Wizard",
+	[PCIds.HUNTER]   = "Hunter",
+
+	[PCIds.BARD]     = "Bard",
+
+	----------------------
+	-- Baby 2nd Classes --
+	----------------------
+	[PCIds.PRIEST_B] = "Baby Priest",
+	[PCIds.WIZARD_B] = "Baby Wizard",
+	[PCIds.HUNTER_B] = "Baby Hunter",
+
+	[PCIds.BARD_B]   = "Baby Bard",
+
+	------------------------------
+	-- Transcendent 2nd Classes --
+	------------------------------
+	[PCIds.HIGH_PRIEST] = "High Priest",
+	[PCIds.HIGH_WIZARD] = "High Wizard",
+
+	[PCIds.CLOWN]       = "Clown",
+
+	--------------------------
+	-- Extended 2nd Classes --
+	--------------------------
+	[PCIds.KAGEROU]     = "Kagerou",
+
+	-------------------------------
+	-- Baby Extended 2nd Classes --
+	-------------------------------
+	[PCIds.KAGEROU_B]   = "Baby Kagerou",
+
+	-----------------
+	-- 3rd Classes --
+	-----------------
+	[PCIds.WARLOCK]        = "Warlock",
+
+	[PCIds.SORCERER]       = "Sorcerer",
+	[PCIds.MINSTREL]       = "Minstrel",
+
+	----------------------
+	-- Baby 3rd Classes --
+	----------------------
+	[PCIds.WARLOCK_B]       = "Baby Warlock",
+
+	[PCIds.SORCERER_B]      = "Baby Sorcerer",
+	[PCIds.MINSTREL_B]      = "Baby Minstrel",
+
+	--------------------------
+	-- Extended 3rd Classes --
+	--------------------------
+	[PCIds.STAR_EMPEROR]    = "Star Emperor",
+
+	-------------------------------
+	-- Baby Extended 3rd Classes --
+	-------------------------------
+	[PCIds.STAR_EMPEROR_B]  = "Baby Star Emperor",
+
+	-----------------
+	-- 4th Classes --
+	-----------------
+	[PCIds.MEISTER]         = "Meister",
+
+	[PCIds.ELEMENT_MASTER]  = "Elemental Master",
+	[PCIds.TROUBADOUR]      = "Troubadour",
+
+	---------------------
+	-- Unused classes? --
+	---------------------
+	[PCIds.GANGSI]      = "Munak",
+}
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´·´¯)
+( \                                      / )
+ ( ) Male name overrides for Langtype 0 ( )
+  (/                                    \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸)
+
+]]--
+
+PCNames_M.LT_0 =
+{
+	--------------------------
+	-- Extended 1st Classes --
+	--------------------------
+	[PCIds.TAEKWON]  = "ÅÂ±Ç¼Ò³â",
+
+	--------------------------
+	-- Extended 3rd Classes --
+	--------------------------
+	[PCIds.STAR_EMPEROR]   = "½ºÅ¸È²Á¦",
+
+	-------------------------------
+	-- Baby Extended 3rd Classes --
+	-------------------------------
+	[PCIds.STAR_EMPEROR_B] = "½ºÅ¸È²Á¦ÈÄ¹è",
+}
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´·´¯)
+( \                                      / )
+ ( ) Male name overrides for Langtype 1 ( )
+  (/                                    \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸)
+
+]]--
+
+PCNames_M.LT_1 =
+{
+	------------------------------
+	-- Transcendent 1st Classes --
+	------------------------------
+	[PCIds.SWORDMAN_H] = "High Swordsman",
+
+	------------------------------
+	-- Transcendent 2nd Classes --
+	------------------------------
+	[PCIds.CLOWN]       = "Minstrel",
+
+	-----------------
+	-- 3rd Classes --
+	-----------------
+	[PCIds.MINSTREL]    = "Maestro",
+
+	----------------------
+	-- Baby 3rd Classes --
+	----------------------
+	[PCIds.MINSTREL_B]  = "Baby Maestro",
+}
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯·´¯)
+( \                                       / )
+ ( ) Male name overrides for Langtype 12 ( )
+  (/                                     \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.)
+
+]]--
+
+PCNames_M.LT_12 =
+{
+	-----------------
+	-- 1st Classes --
+	-----------------
+	[PCIds.MAGICIAN] = "Mago",
+	[PCIds.ARCHER]   = "Arqueiro",
+	[PCIds.MERCHANT] = "Mercador",
+	[PCIds.THIEF]    = "Gatuno",
+
+	----------------------
+	-- Baby 1st Classes --
+	----------------------
+	[PCIds.MAGICIAN_B] = "Mini Mago",
+	[PCIds.ARCHER_B]   = "Mini Arqueiro",
+	[PCIds.MERCHANT_B] = "Mini Mercador",
+	[PCIds.THIEF_B]    = "Mini Gatuno",
+
+	--------------------------
+	-- Extended 1st Classes --
+	--------------------------
+	[PCIds.GUNSLINGER] = "Justiceiro",
+
+	-------------------------------
+	-- Baby Extended 1st Classes --
+	-------------------------------
+	[PCIds.GUNSLINGER_B] = "Mini Justiceiro",
+
+	----------------------
+	-- Baby 2nd Classes --
+	----------------------
+	[PCIds.KNIGHT]     = "Cavaleiro",
+	[PCIds.PRIEST]     = "Sacerdote",
+	[PCIds.WIZARD]     = "Bruxo",
+	[PCIds.BLACKSMITH] = "Ferreiro",
+	[PCIds.HUNTER]     = "Caçador",
+	[PCIds.ASSASSIN]   = "Mercenário",
+	[PCIds.CRUSADER]   = "Templário",
+	[PCIds.MONK]       = "Monge",
+	[PCIds.SAGE]       = "Sábio",
+	[PCIds.ROGUE]      = "Arruaceiro",
+	[PCIds.BARD]       = "Bardo",
+
+	----------------------
+	-- Baby 2nd Classes --
+	----------------------
+	[PCIds.KNIGHT_B]     = "Mini Cavaleiro",
+	[PCIds.PRIEST_B]     = "Mini Sacerdote",
+	[PCIds.WIZARD_B]     = "Mini Bruxo",
+	[PCIds.BLACKSMITH_B] = "Mini Ferreiro",
+	[PCIds.HUNTER_B]     = "Mini Caçador",
+	[PCIds.ASSASSIN_B]   = "Mini Mercenário",
+	[PCIds.CRUSADER_B]   = "Mini Templário",
+	[PCIds.MONK_B]       = "Mini Monge",
+	[PCIds.SAGE_B]       = "Mini Sábio",
+	[PCIds.ROGUE_B]      = "Mini Arruaceiro",
+	[PCIds.BARD_B]       = "Mini Bardo",
+}
+
+--[[
+
+(¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯·´¯)
+( \                                       / )
+ ( ) Male name overrides for Langtype 19 ( )
+  (/                                     \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.)
+
+]]--
+
+PCNames_M.LT_19 =
+{
+	-----------------
+	-- 2nd Classes --
+	-----------------
+	[PCIds.PRIEST]   = "Shaman",
+
+	----------------------
+	-- Baby 2nd Classes --
+	----------------------
+	[PCIds.PRIEST_B] = "Baby Shaman",
 }
 
 --[[
