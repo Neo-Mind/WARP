@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-21                                             *
-*   Last Modified : 2021-04-05                                             *
+*   Last Modified : 2021-04-10                                             *
 *                                                                          *
 ****************************************************************************
 ]]--
@@ -145,28 +145,60 @@ end
 ]]--
 
 GetPCNameOvrd = function(jobid, gender, lt)
+
+	-- Prepare the key for Langtype override
+	local ltKey = "LT_" .. lt
+
+	-- Add 3950 to Job id to get the proper value
+	local jobid_final = (jobid > 50 and jobid + 3950 or jobid)
+
+	-- Check if langtype override exists for the base table
+	local need_lang = (PCNames[ltKey] ~= nil and PCNames[ltKey][jobid_final] ~= nil)
+
+	-- Retrieve the gender override table
 	local ovrdtbl = (gender == 0 and PCNames_F or PCNames_M)
-	local val = GetValFromTbl(ovrdtbl, jobid, lt, false, true)
-	
+
+	-- Retrieve the gender override value for the langtype
+	local val
+	if ovrdtbl[ltKey] ~= nil
+	then
+		val = ovrdtbl[ltKey][jobid_final]
+	end
+
+	-- If not present & base didn't have any langtype overrides,
+	-- retrieve the generic gender override value
+	if val == nil and not need_lang
+	then
+		val = ovrdtbl[jobid_final]
+	end
+
+	-- If no value was found, then check for any inheritance mapping
+	-- and rerun the function for the mapped id
 	if val == nil
 	then
 		jobid = MapPCJobName(jobid, lt)
-		if jobid >= 0 
+		if jobid >= 0
 		then
-			val = GetValFromTbl(ovrdtbl, jobid, lt, false, true)
+			GetPCNameOvrd(jobid, gender, lt)
 		end
 	end
-	
-	return val
+
+	-- If a valid string was found return it otherwise return empty string
+	if val ~= nil
+	then
+		return val
+	else
+		return ""
+	end
 end
 
 --[[
 
 (¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`··´¯)
 ( \                                                           / )
- ( ) Function to pick up the cash mount id for specified job ( ) 
-  (/                                                         \)  
-   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´) 
+ ( ) Function to pick up the cash mount id for specified job ( )
+  (/                                                         \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´)
 ]]--
 
 GetHalter = function(jobid)
@@ -177,10 +209,10 @@ end
 
 (¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·´¯)
 ( \                                                          / )
- ( ) Function to test whether the specified job is shrunken ( ) 
-  (/                                                        \)  
-   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·)   
-   
+ ( ) Function to test whether the specified job is shrunken ( )
+  (/                                                        \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·)
+
 ]]--
 
 IsDwarf = function(jobid)
@@ -196,8 +228,8 @@ end
 
 (¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`··´¯)
 ( \                                                                    / )
- ( ) Function to retrieve the sprite scaling factor for specified job ( ) 
-  (/                                                                  \)  
+ ( ) Function to retrieve the sprite scaling factor for specified job ( )
+  (/                                                                  \)
    (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´)
 
 ]]--
