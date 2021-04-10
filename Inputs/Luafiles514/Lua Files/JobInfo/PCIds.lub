@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-21                                             *
-*   Last Modified : 2021-04-05                                             *
+*   Last Modified : 2021-04-10                                             *
 *                                                                          *
 ****************************************************************************
 ]]--
@@ -662,7 +662,7 @@ Halter_Table =
 	[PCIds.ARCHBISHOP]    = PCMounts.SHEEP_BISHOP,
 	[PCIds.MECHANIC]      = PCMounts.PIG_MECHANIC,
 	[PCIds.GUILLOTINE_X]  = PCMounts.HYENA_G_CROSS,
-	
+
 	[PCIds.ROYAL_GUARD]   = PCMounts.LION_ROYAL_GUARD,
 	[PCIds.SORCERER]      = PCMounts.FOX_SORCERER,
 	[PCIds.MINSTREL]      = PCMounts.OSTRICH_MINSTREL,
@@ -744,10 +744,10 @@ Halter_Table =
 
 (¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯)
 ( \                           / )
- ( ) List of scaling factors ( ) 
-  (/                         \)  
-   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.)   
-   
+ ( ) List of scaling factors ( )
+  (/                         \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.)
+
 ]]--
 
 Scales =
@@ -762,9 +762,9 @@ DefScale = 0    --Default (no scaling or not applicable)
 
 (¯`·¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.··´¯)
 ( \                                              / )
- ( ) Mapping of Baby Jobs to Spr scaling factor ( ) 
-  (/                                            \)  
-   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸)   
+ ( ) Mapping of Baby Jobs to Spr scaling factor ( )
+  (/                                            \)
+   (.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸¸.·´¯`·.¸)
 
 ]]--
 
@@ -781,87 +781,87 @@ Shrink_Map =
 	----------------------
 	-- Baby 1st Classes --
 	----------------------
-	[PCIds.NOVICE_B]   = Scales[0],
-	[PCIds.SWORDMAN_B] = Scales[0],
-	[PCIds.MAGICIAN_B] = Scales[0],
-	[PCIds.ARCHER_B]   = Scales[0],
-	[PCIds.ACOLYTE_B]  = Scales[0],
-	[PCIds.MERCHANT_B] = Scales[0],
-	[PCIds.THIEF_B]    = Scales[0],
+	[PCIds.NOVICE_B]   = Scales[1],
+	[PCIds.SWORDMAN_B] = Scales[1],
+	[PCIds.MAGICIAN_B] = Scales[1],
+	[PCIds.ARCHER_B]   = Scales[1],
+	[PCIds.ACOLYTE_B]  = Scales[1],
+	[PCIds.MERCHANT_B] = Scales[1],
+	[PCIds.THIEF_B]    = Scales[1],
 
 	-------------------------------
 	-- Baby Extended 1st Classes --
 	-------------------------------
-	[PCIds.SUPERNOVICE_B]  = Scales[0],
-	[PCIds.SUPERNOVICE2_B] = Scales[0],
-	[PCIds.GUNSLINGER_B]   = Scales[1],
-	[PCIds.NINJA_B]        = Scales[1],
-	[PCIds.TAEKWON_B]      = Scales[1],
+	[PCIds.SUPERNOVICE_B]  = Scales[1],
+	[PCIds.SUPERNOVICE2_B] = Scales[1],
+	[PCIds.GUNSLINGER_B]   = Scales[2],
+	[PCIds.NINJA_B]        = Scales[2],
+	[PCIds.TAEKWON_B]      = Scales[2],
 
 	----------------------
 	-- Baby 2nd Classes --
 	----------------------
-	[PCIds.KNIGHT_B]       = Scales[1],
-	[PCIds.KNIGHT_MOUNT_B] = Scales[1],
-	[PCIds.PRIEST_B]       = Scales[1],
-	[PCIds.WIZARD_B]       = Scales[1],
-	[PCIds.BLACKSMITH_B]   = Scales[1],
-	[PCIds.HUNTER_B]       = Scales[1],
-	[PCIds.ASSASSIN_B]     = Scales[1],
+	[PCIds.KNIGHT_B]       = Scales[2],
+	[PCIds.KNIGHT_MOUNT_B] = Scales[2],
+	[PCIds.PRIEST_B]       = Scales[2],
+	[PCIds.WIZARD_B]       = Scales[2],
+	[PCIds.BLACKSMITH_B]   = Scales[2],
+	[PCIds.HUNTER_B]       = Scales[2],
+	[PCIds.ASSASSIN_B]     = Scales[2],
 
-	[PCIds.CRUSADER_B]     = Scales[1],
-	[PCIds.CRUS_MOUNT_B]   = Scales[1],
-	[PCIds.MONK_B]         = Scales[1],
-	[PCIds.SAGE_B]         = Scales[1],
-	[PCIds.ROGUE_B]        = Scales[1],
-	[PCIds.ALCHEMIST_B]    = Scales[1],
-	[PCIds.BARD_B]         = Scales[1],
-	[PCIds.DANCER_B]       = Scales[1],
+	[PCIds.CRUSADER_B]     = Scales[2],
+	[PCIds.CRUS_MOUNT_B]   = Scales[2],
+	[PCIds.MONK_B]         = Scales[2],
+	[PCIds.SAGE_B]         = Scales[2],
+	[PCIds.ROGUE_B]        = Scales[2],
+	[PCIds.ALCHEMIST_B]    = Scales[2],
+	[PCIds.BARD_B]         = Scales[2],
+	[PCIds.DANCER_B]       = Scales[2],
 
 	-------------------------------
 	-- Baby Extended 2nd Classes --
 	-------------------------------
-	[PCIds.REBELLION_B]   = Scales[1],
-	[PCIds.KAGEROU_B]     = Scales[1],
-	[PCIds.OBORO_B]       = Scales[1],
-	[PCIds.STAR_GLAD_B]   = Scales[1],
-	[PCIds.STAR_GLAD_F_B] = Scales[1],
-	[PCIds.SOUL_LINKER_B] = Scales[1],
+	[PCIds.REBELLION_B]   = Scales[2],
+	[PCIds.KAGEROU_B]     = Scales[2],
+	[PCIds.OBORO_B]       = Scales[2],
+	[PCIds.STAR_GLAD_B]   = Scales[2],
+	[PCIds.STAR_GLAD_F_B] = Scales[2],
+	[PCIds.SOUL_LINKER_B] = Scales[2],
 
 	----------------------
 	-- Baby 3rd Classes --
 	----------------------
-	[PCIds.RUNE_KNIGHT_B]   = Scales[1],
-	[PCIds.RUNE_MOUNT_B]    = Scales[1],
-	[PCIds.WARLOCK_B]       = Scales[1],
-	[PCIds.RANGER_B]        = Scales[1],
-	[PCIds.RANGER_MOUNT_B]  = Scales[1],
-	[PCIds.ARCHBISHOP_B]    = Scales[1],
-	[PCIds.MECHANIC_B]      = Scales[1],
-	[PCIds.MADOGEAR_B]      = Scales[1],
-	[PCIds.GUILLOTINE_X_B]  = Scales[1],
+	[PCIds.RUNE_KNIGHT_B]   = Scales[2],
+	[PCIds.RUNE_MOUNT_B]    = Scales[2],
+	[PCIds.WARLOCK_B]       = Scales[2],
+	[PCIds.RANGER_B]        = Scales[2],
+	[PCIds.RANGER_MOUNT_B]  = Scales[2],
+	[PCIds.ARCHBISHOP_B]    = Scales[2],
+	[PCIds.MECHANIC_B]      = Scales[2],
+	[PCIds.MADOGEAR_B]      = Scales[2],
+	[PCIds.GUILLOTINE_X_B]  = Scales[2],
 
-	[PCIds.ROYAL_GUARD_B]   = Scales[1],
-	[PCIds.ROYAL_MOUNT_B]   = Scales[1],
-	[PCIds.SORCERER_B]      = Scales[1],
-	[PCIds.MINSTREL_B]      = Scales[1],
-	[PCIds.WANDERER_B]      = Scales[1],
-	[PCIds.SURA_B]          = Scales[1],
-	[PCIds.GENETIC_B]       = Scales[1],
-	[PCIds.SHADOW_CHASER_B] = Scales[1],
+	[PCIds.ROYAL_GUARD_B]   = Scales[2],
+	[PCIds.ROYAL_MOUNT_B]   = Scales[2],
+	[PCIds.SORCERER_B]      = Scales[2],
+	[PCIds.MINSTREL_B]      = Scales[2],
+	[PCIds.WANDERER_B]      = Scales[2],
+	[PCIds.SURA_B]          = Scales[2],
+	[PCIds.GENETIC_B]       = Scales[2],
+	[PCIds.SHADOW_CHASER_B] = Scales[2],
 
 	-------------------------------
 	-- Baby Extended 3rd Classes --
 	-------------------------------
-	[PCIds.STAR_EMPEROR_B]   = Scales[1],
-	[PCIds.STAR_EMPEROR_F_B] = Scales[1],
-	[PCIds.SOUL_REAPER_B]    = Scales[1],
+	[PCIds.STAR_EMPEROR_B]   = Scales[2],
+	[PCIds.STAR_EMPEROR_F_B] = Scales[2],
+	[PCIds.SOUL_REAPER_B]    = Scales[2],
 
 	------------------------
 	-- Baby Doram Classes --
 	------------------------
-	[PCIds.SUMMONER_B]   = Scales[2],
-	[PCIds.SUMM_MOUNT_B] = Scales[2],
+	[PCIds.SUMMONER_B]   = Scales[3],
+	[PCIds.SUMM_MOUNT_B] = Scales[3],
 
 	--[[
 	 __  __   ___   _   _  _  _  _____     ___  ___   ___
