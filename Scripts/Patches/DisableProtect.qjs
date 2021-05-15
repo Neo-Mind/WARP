@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind, Andrei (4144), X-EcutiOnner       *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-05-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -427,7 +427,7 @@ NoCDefender = function()
 	Exe.SetUint8(addr + 8, 0);
 
 	/// 2.3 - Ask for copying the DLL
-	NCD_Response = Exe.GetUserInput("$copyNCDdll", D_Bool, "Copy Files", "Do you want the DLL copied as well?", true);
+	NCD_Response = Exe.GetUserInput("$copyNCDdll", D_Bool, "Copy Files", "Do you want the CDClient DLL copied as well?", true);
 
 	return true;
 };

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-05-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -65,11 +65,16 @@ ShowBGEmblem = function()
 	/// 1.2 - Save the address to be hookAddrs
 	let hookAddrs = [matchAddr + 6];
 
-	/// 1.3 - Save the values needed to find the 2nd pattern
+	/// 1.3 - Skip the 2nd CALL if present (same pattern as before except there is a JNZ at end)
+	let csize = code.byteCount();
+	if (Exe.GetUint8(matchAddr + csize) === 0xB9)
+		Exe.SetNOPs(matchAddr + csize, csize);
+
+	/// 1.4 - Save the values needed to find the 2nd pattern
 	let movSession = Exe.GetHex(matchAddr, 5);
 	let IsSiegeMode = Exe.GetTgtAddr(matchAddr + 6);
 
-	/// 1.4 - Extract the needed stuff from inside the function (always has the same form)
+	/// 1.5 - Extract the needed stuff from inside the function (always has the same form)
 	let addr = Exe.Vir2Phy(IsSiegeMode, CODE);
 	let movModeMgr = Exe.GetHex(addr, 5);       //MOV ECX, OFFSET g_modeMgr
 	let GetGameMode = Exe.GetTgtAddr(addr + 6); //CALL CModeMgr::GetGameMode
@@ -95,20 +100,40 @@ ShowBGEmblem = function()
 			addrs = Exe.FindHexN(JZ(WCp) + code + JE(WCp)).filter(memAddr => Exe.GetTgtAddr(memAddr + 8) === IsSiegeMode);
 
 		if (addrs.isEmpty())
-			throw Error("Remaining locations missing");
+			throw Error("2nd pattern missing");
 
-		/// 2.2 - Add to the hookAddrs
-		addrs.forEach(memAddr => {
-			if (hookAddrs.indexOf(memAddr + 8) < 0)
-			{
-				hookAddrs.push(memAddr + 8);
+		/// 2.2 - Add the last entry to the hookAddrs
+		let memAddr = addrs.last();
+		if (hookAddrs.indexOf(memAddr + 8) < 0)
+		{
+			hookAddrs.push(memAddr + 8);
 
-				/// 2.3 - Look for the additional comparison before the current one within the same function.. ugh!
-				addr = Exe.FindHex(code + JE(POS2WC), memAddr - 0x180, memAddr - 0x80);
-				if (addr > 0)
-					hookAddrs.push(addr + 6);
-			}
-		});
+			/// 2.3 - Look for the additional comparison before the current one within the same function.. ugh!
+			let	addr = Exe.FindLastHex(code + JE(POS2WC), memAddr - 0x80, memAddr - 0x180);
+			if (addr > 0)
+				hookAddrs.push(addr + 6);
+
+			else if (Exe.Version < 9)
+				throw Error("Additional pattern missing");
+		}
+
+		/// 2.4 - Find the 3rd pattern for VC9 (to fix the stagnant icon issue)
+		if (Exe.Version === 9)
+		{
+			code =
+				movSession      //MOV ECX, OFFSET g_session
+			+	CALL(ALLWC)     //CALL CSession::IsSiegeMode
+			+	POP_R           //POP reg32_A
+			+	TEST(EAX, EAX)  //TEST EAX, EAX
+			+	JZ(WCp)         //JZ SHORT addr
+			;
+
+			addrs = Exe.FindHexN(code).filter(memAddr => Exe.GetTgtAddr(memAddr + 6) === IsSiegeMode);
+			if (addrs.length !== 1)
+				throw Error("3rd pattern missing or too many matches");
+
+			hookAddrs.push(addrs[0] + 6);
+		}
 	}
 
 	/// 3.1 - Prep the new code

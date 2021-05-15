@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2021-02-24                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-05-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -339,23 +339,25 @@ IncrHairs = function(patchName)
 			if (addr2 < 0)
 				throw Error("Reg assignment missing");
 
-			/// 3.7 - Shift up the PUSH for VC14.16
+			/// 3.7 - Save the total size of code
+			csize = prefix.byteCount() + suffix.byteCount();
+
+			/// 3.8 - Shift up the PUSH for VC14.16
 			if (Exe.Version > 11)
 			{
 				let ins = Instr.FromAddr(addr2 + prefix.byteCount());
 				Exe.SetHex(addr2, ins); //shift up the PUSH
 
 				addr2 += ins.Size;
+				csize -= ins.Size; //need to decrement since the PUSH got moved out
 			}
-
-			/// 3.8 - Save the total size of code
-			csize = prefix.byteCount() + suffix.byteCount();
 
 			/// 3.9 - Prep code to change the register assignment
 			code =
 				MOV(reg, [sreg, arg5Off]) //MOV reg32_A, DWORD PTR SS:[Arg.5]
 			+	MOV(reg, [reg])           //MOV reg32_A, DWORD PTR DS:[reg32_A]
 			;
+
 			code +=
 				NOPs(csize - code.byteCount())
 			;
@@ -398,6 +400,7 @@ IncrHairs = function(patchName)
 				let ins = Instr.FromAddr(addr + csize);
 				ins.MRM.update(3, null, ins.SIB.Index);
 				ins.SIB.Data = 0x90; //quick hack to put NOP afterward
+
 				Exe.SetHex(ins.Addr, ins);
 
 				if (type === 1)
@@ -410,6 +413,7 @@ IncrHairs = function(patchName)
 
 					ins = Instr.FromAddr(addr2);
 					ins.MRM.update(3, null, null);
+
 					Exe.SetHex(ins.Addr, ins);
 				}
 			});
