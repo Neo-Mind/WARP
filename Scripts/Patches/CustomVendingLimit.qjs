@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-12                                             *
+*   Last Modified : 2021-05-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,8 @@
 CustomVendingLimit = function()
 {
 	/// 1.1 - Find where 1,000,000,000 is PUSHed
-	CVL_Vir = CVL_Vir ?? Exe.Phy2Vir(CVL_Phy);
+	if (typeof CVL_Vir === 'undefined')
+		CVL_Vir = Exe.Phy2Vir(CVL_Phy);
 
 	let addr = Exe.FindHex( PUSH(CVL_Vir) );
 	if (addr < 0)

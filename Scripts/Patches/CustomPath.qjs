@@ -26,7 +26,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144), X-EcutiOnner    *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-05-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -148,9 +148,10 @@ CustomPath = function(patchName)
 		throw Error(`'${name} not used`);
 
 	/// 1.2 - Get the new file name from user
+	let suf = strType === "Prefix" ? "without .lub" : "";
 	let newStr = Exe.GetUserInput(
 		varName, D_Text, `File ${strType}`,
-		`Enter the new <b>${prefix} ${strType}</b> (relative to RO folder)`,
+		`Enter the new <b>${prefix} ${strType}</b> (relative to RO folder) ${suf}`,
 		name, {minLen: 1, maxLen: 100}
 	);
 
