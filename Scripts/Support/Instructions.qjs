@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-05-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -694,7 +694,7 @@ _bit_move = (oper, args) =>
 			if (IsStr(imm))
 				imm = imm.toInt();
 
-			if (imm ?? 1 === 1)
+			if ((imm ?? 1) === 1)
 			{
 				delete data.Immd;
 				data.ImSize = -1;

@@ -22,11 +22,9 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-05-14                                             *
 *                                                                          *
 \**************************************************************************/
-
-// TODO - Need to make changes for VC14.16
 
 ///
 /// \brief Modify the stack allocation and code to account for 10 digits
@@ -35,32 +33,59 @@
 ///
 IncrDigits = function()
 {
-	/// 1.1 - Find the location where 999999 is checked
-	let parts =
-	[
-		CMP(R32, 0xF423F)   //CMP reg32_A, 0F423F ; 999999
-	,
-		Exe.Version === 6
-	?
-		PUSH_R				//PUSH_R
-	:
-		''
-	,
-		JLE(7)              //JLE SHORT addr
-	+	MOV(R32, 0xF423F)   //MOV reg32_A, 0F423F
-	]
-	;
-
-	let refAddr = Exe.FindHex(parts);
-	if (refAddr < 0 && Exe.BuildDate > 20190000)
+	/// 1.1 - Find the location where 999999 is checked &
+	///       extract the register containing the value
+	let refAddr, refReg;
+	if (Exe.Version > 11)
 	{
-		parts[1] = PUSH_R + parts[1];  //PUSH reg32 before JLE
-		refAddr = Exe.FindHex(parts);
-	}
-	if (refAddr < 0)
-		throw Error("999999 comparison not found");
+		let code =
+			MOV(R32, 0xF423F)
+		+	MOV(R32, 1)
+		+	CMP([EBP, 0xC], EDX)
+		+	CMOVLE(EDX, [EBP, 0xC])
+		;
 
-	/// 1.2 - Find the start of the function (Am_Make_Number)
+		refAddr = Exe.FindHex(code);
+		if (refAddr < 0)
+			throw Error("999999 comparison not found (VC14.16)");
+
+		refReg = EDX;
+
+		/// 1.2 - Retrieve the 2nd argument into EDX
+		Exe.SetHex(refAddr, MOV(EDX, [EBP, 0xC]));
+		refAddr += 3;
+	}
+	else
+	{
+		let parts =
+		[
+			CMP(R32, 0xF423F)   //CMP reg32_A, 0F423F ; 999999
+		,
+			Exe.Version === 6
+		?
+			PUSH_R				//PUSH_R
+		:
+			''
+		,
+			JLE(7)              //JLE SHORT addr
+		+	MOV(R32, 0xF423F)   //MOV reg32_A, 0F423F
+		]
+		;
+
+		refAddr = Exe.FindHex(parts);
+		if (refAddr < 0 && Exe.BuildDate > 20190000)
+		{
+			parts[1] = PUSH_R + parts[1];  //PUSH reg32 before JLE
+			refAddr = Exe.FindHex(parts);
+		}
+
+		if (refAddr < 0)
+			throw Error("999999 comparison not found");
+
+		refReg = R32.List[Instr.FromAddr(refAddr).MRM.RegM];
+	}
+
+	/// 1.3 - Find the start of the function (Am_Make_Number)
 	code =
 		PUSH(-1)            //PUSH -1
 	+	PUSH(POS3WC)        //PUSH addr
@@ -80,7 +105,7 @@ IncrDigits = function()
 		throw Error("Function start not found");
 
 
-	/// 1.3 - Set addr to location after the SUB ESP
+	/// 1.4 - Set addr to location after the SUB ESP
 	addr += code.byteCount();
 
 	/// 2.1 - Update the stack allocation 'const' to hold 4 more nibbles(16 bits) - increase the const value
@@ -89,7 +114,7 @@ IncrDigits = function()
 	/// 2.2 - Find the location of digit counter
 	let StkReg = ROC.HasFP ? EBP : ESP;
 
-	code = MOV([StkReg, WC], 1); //MOV DWORD PTR SS:[StkReg+x], 1; x is negative for StkReg == EBP
+	code = MOV([StkReg, WC], Exe.Version > 11 ? 6 : 1); //MOV DWORD PTR SS:[StkReg+x], 1; x is negative for StkReg == EBP
 	addr = Exe.FindHex(code, refAddr + 0x10, refAddr + 0x28);
 	let stackAssign = true;
 
@@ -132,11 +157,14 @@ IncrDigits = function()
 
 	/// 4.2 - Find the first digit movement to stack location
 	code = MOV([StkReg, WC], R32); //MOV DWORD PTR SS:[StkReg+x], reg32_C
-
 	let addr2 = Exe.FindHex(code + " 8B", addr + 0x5, addr + 0x38); //followed by another MOV
 	if (addr2 < 0)
 	{
 		addr2 = Exe.FindHex(code + " F7", addr + 0x5, addr + 0x38); //followed by an IMUL
+	}
+	if (addr2 < 0)
+	{
+		addr2 = Exe.FindHex(code + " C1", addr + 0x5, addr + 0x38); //followed by an SAR
 	}
 
 	if (addr2 < 0)
@@ -176,23 +204,23 @@ IncrDigits = function()
 	}
 
 	/// 5.2 - Prepare our digit splitter + counter code to put at refAddr
-	let refReg = R32.List[Instr.FromAddr(refAddr).MRM.RegM];
-	code =
+	let parts = [
 		MOV(ECX, refReg)             //MOV ECX, refReg
 	+	MOV(ESI, FirstDigLoc)        //MOV ESI, FirstDigLoc
-	+	MOV(EAX, 0x66666667)         //MOV EAX, 66666667 ; addr1
+	,
+		MOV(EAX, 0x66666667)         //MOV EAX, 66666667 ; addr1
 	+	IMUL(ECX)                    //IMUL ECX
 	+	SAR(EDX, 2)                  //SAR EDX, 2
 	+	LEA(EAX, [4, EDX, EDX])      //LEA EAX, [EDX*4+EDX]
 	+	SHL(EAX, 1)                  //SHL EAX,1
 	+	SUB(ECX, EAX)                //SUB ECX, EAX
 	+	MOV([ESI, StkReg], ECX)      //MOV DWORD PTR SS:[ESI + StkReg], ECX
-	+	(ROC.HasFP ? NOP : '')      //NOP to fill gap when StkReg is EBP
 	+	ADD(ESI, 4)                  //ADD ESI, 4
 	+	MOV(ECX, EDX)                //MOV ECX, EDX
 	+	TEST(ECX, ECX)               //TEST ECX, ECX
-	+	JNE(-0x1E)                   //JNE SHORT addr1
-	+	SUB(ESI, FirstDigLoc)        //SUB ESI, FirstDigLoc; Now ESI has number of digits * 4 bits
+	,
+		JNE(Filler(1,1))             //JNE SHORT addr1
+	+	SUB(ESI, FirstDigLoc)        //SUB ESI, FirstDigLoc; Now ESI has number of digits * 4 bytes each
 	+	SAR(ESI, 2)                  //SAR ESI, 2
 	+	(IsReg(DigCntLoc)
 	?
@@ -201,11 +229,12 @@ IncrDigits = function()
 		MOV([StkReg, DigCntLoc], ESI)//MOV DWORD PTR SS:[StkReg+DigCntLoc], ESI
 	)
 	+	MovModeMgr                   //MOV ECX, g_modeMgr
-	;
+	,
+		JMP(Filler(2))               //JMP ggmAddr
+	];
 
-	code +=
-		JMP(ggmAddr, refAddr + code.byteCount()) //JMP ggmAddr
-	;
+	code = SetFillTarget(parts.join(''), 1, parts[0].byteCount(), 0, 1, 1);
+	code = SetFillTarget(code, 2, ggmAddr, refAddr, 1);
 
 	/// 5.3 - Put the code at refAddr
 	Exe.SetHex(refAddr, code);
@@ -277,7 +306,7 @@ IncrDigits = function()
 	/// 7 - Extra steps for some clients
 	if (ROC.HasFP)
 	{
-		if (IsNum(DigCntLoc)) //VC10+ only has this combo
+		if (IsNum(DigCntLoc) && Exe.Version < 14) //VC10 & VC11 essentially
 		{
 			/// 7.1 - Look for MOV instruction to stack before refAddr
 			code = MOV([EBP, WCn], R32); //MOV DWORD PTR SS:[EBP-x], reg32_E
@@ -320,6 +349,11 @@ IncrDigits = function()
 };
 
 ///
+/// \brief Disable for Unsupported Clients
+///
+IncrDigits.validate = () => Exe.BuildDate < 20190500;
+
+///
 /// \brief Helper function which adjusts the addr used w.r.t ESP/EBP
 ///        at the location/Instr provided by 16
 ///
@@ -338,10 +372,10 @@ _ID_UpdateStack = (arg, sign) =>
 	{
 		if  (
 				( (arg.MRM.RegM === 5 ||
-				(arg.MRM.RegM === 4 && arg.SIB.Index == 4 && arg.SIB.Base == 5))
+				(arg.MRM.RegM === 4 && arg.SIB.Base == 5))
 				&& arg.Disp <= arg.StackLimit //EBP-x (two types are possible)
 				) ||
-				( (arg.MRM.RegM === 4 && arg.SIB.Index == 4 && arg.SIB.Base === 4)
+				( (arg.MRM.RegM === 4 && arg.SIB.Base === 4)
 				&& arg.Disp >= arg.StackLimit //ESP+x
 				)
 			)
