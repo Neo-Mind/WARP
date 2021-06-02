@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-01-30                                             *
+*   Last Modified : 2021-06-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,10 +35,7 @@ GetPacketKeys = function()
 	if (Exe.FileSize == 0)
 		throw NO_EXE;
 
-	/// 1.2 - Ensure PACKET Object is loaded
-	PACKET.load();
-
-	/// 2.1 - Open the output file for writing.
+	/// 1.2 - Open the output file for writing.
 	let fileName = Exe.GetUserInput("$$keyOutput", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "PacketKeys_" + ROC.BaseName + ".txt");
 	if (fileName === false)
 		return true;
@@ -47,24 +44,57 @@ GetPacketKeys = function()
 	if (!fp.Valid)
 		throw NO_OUTPUT;
 
-	/// 2.2 - Retrieve the packet keys found and convert to hex
-	let keys = [];
-	PACKET.Keys.forEach( (val, idx) =>
+	/// 2.1 - Ensure PACKET Object is loaded
+	PACKET.load();
+
+	let keys;
+	if (PACKET.KS_Mode === KeyMode.Virtual)
 	{
-		keys[idx] = "0x" + val.toHex(true)
+		/// 2.2 - Check if it's a patched client
+		let addr = Exe.FindHex(JMP(POS4WC), PACKET.Assigner, PACKET.Assigner + 6);
+		if (addr > 0)
+		{
+			/// 2.3 - Goto the JMP address
+			addr = Exe.GetTgtAddr(addr + 1, PHYSICAL);
+
+			/// 2.4 - Now find the position where the assignment is done
+			addr = Exe.FindHex(MOV([R32, ' 0?'], ALLWC).repeat(3), addr, addr + 0x50);
+		}
+		if (addr > 0)
+		{
+			/// 2.5 - Extract the assigned keys
+			keys = [];
+			for (let i = 0; i < 3; i++)
+			{
+				let ins = Instr.FromAddr(addr);
+				keys[ins.Disp/4 - 1] = ins.Immd; //order can be any so this mechanism is needed
+				addr = ins.NextAddr;
+			}
+		}
+	}
+
+	/// 2.6 - Otherwise retrieve the packet keys found
+	if (keys === undefined)
+		keys = PACKET.Keys;
+
+	/// 2.7 - Convert to hex
+	let hexKeys = [];
+	keys.forEach( (val, idx) =>
+	{
+		hexKeys[idx] = "0x" + val.toHex(true)
 	});
 
-	/// 2.3 - Write the essentials & the keys in hex to the file.
+	/// 3.1 - Write the essentials & the keys in hex to the file.
 	fp.WriteLine("Extracted with WARP")
 	fp.WriteLine("===================")
 	fp.WriteLine("Client: " + Exe.FilePath);
 	fp.WriteLine("BuildDate: " + Exe.BuildDate);
-	fp.WriteLine("Packet Keys : (" + keys.join(', ') + ")");
+	fp.WriteLine("Packet Keys : (" + hexKeys.join(', ') + ")");
 
-	/// 2.4 - Close the file
+	/// 3.2 - Close the file
 	fp.Close();
 
-	/// 3 - Show the success message or display the file requested
+	/// 3.3 - Show the success message or display the file requested
 	if (!Exe.TestMode && Exe.GetUserInput('$$showFile', D_Bool, "Show File", "Display the generated file?", true))
 	{
 		Warp.Show(fp.Path);

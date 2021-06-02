@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-12                                             *
+*   Last Modified : 2021-06-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -195,17 +195,15 @@ CloseCutinOnEsc = function()
 		jmpVir = retnVir;
 	}
 
-	/// 2.8 - Extract the necessary stuff
+	/// 2.8 - Extract the DeleteWindow function address
 	let DeleteWindow = Exe.GetTgtAddr(addr + dwinOffset); //VIRTUAL address of DeleteWindow
-	let MovECX_dw = Exe.GetHex(addr + dwinOffset - 3, 2); //The MOV ECX statement before the CALL
 
 	/// 3.1 - Prepare our code
 	code =
 		PUSH(78)            //PUSH 78 ; window id
-	+	MovECX_dw           //MOV ECX, reg32_B
 	+	CALL(Filler(1))     //CALL UIWindowMgr::DeleteWindow
 	+	CMP(AL, 0)          //CMP AL, 0
-	+	JNZ(0xF)            //JNZ SHORT _skip
+	+	JNZ(MovECX.Size + 10) //JNZ SHORT _skip
 	+	MovECX              //MOV ECX, reg32_A or MOV ECX, OFFSET addr
 	+	PUSH(retnVir)       //PUSH retnVir
 	+	JMP(Filler(2))      //JMP UIWindowMgr::check_close or unknownFunc; equivalent to CALL intended for return to retnVir
@@ -223,7 +221,6 @@ CloseCutinOnEsc = function()
 		                    //CALL DWORD PTR DS:[EDX + const] or MOV reg32_A, DWORD PTR DS:[EDX + const] ; const is either 14 or 18
 		                    //CALL reg32_A
 	+	POP(EDX)            //POP EDX
-	+	POP(ECX)            //POP ECX
 	+	POP(EAX)            //POP EAX
 	+	JMP(Filler(4))      //JMP jmpVir
 	;
