@@ -1,0 +1,88 @@
+/**************************************************************************\
+*                                                                          *
+*    Copyright (C) 2021 Andrei Karas (4144)                                *
+*    Copyright (C) 2021 X-EcutiOnner (xex.ecutionner@gmail.com)            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Andrei, X-EcutiOnner                                   *
+*   Created Date  : 2021-06-01                                             *
+*   Last Modified : 2021-06-01                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Replace Arrows Keys offset to fix wrong display Font Charset after comparison
+///        in Hotkey Setting UI for ASCII Langtype inside UIHotkeyGuideWnd_virt6B function.
+///
+FixArrowsCharset = function()
+{
+	/// 1.1 - Find the Up, Right & Down arrow strings (they are always together)
+	let code =
+		" A1 E8 00" // 00 asc_D14AF0 db '↑',0
+    +   " 00 "      // 03 db 0
+    +   " A1 E6 00" // 04 asc_D14AF4 db '→',0
+    +   " 00 "      // 07 db 0
+    +   " A1 E9 00" // 08 asc_D14AF8 db '↓',0
+    +   " 00 "      // 11 db 0
+	;
+	
+	let addr = Exe.FindHex(code, Exe.GetSectBegin(DATA), Exe.GetSectEnd(DATA));
+	if (addr < 0)
+		throw Error("First set of arrows missing");
+	
+	/// 1.2 - Find the left arrow before this one
+	code =
+		" A1 E7 00" // asc_D14AEC db '←',0
+    +   " 00 "      // db 0
+	;
+	
+	let addrL = Exe.FindLastHex(code, addr, Exe.GetSectBegin(DATA));
+	if (addrL < 0)
+		throw Error("Left arrow missing");
+	
+	/// 1.3 - Find the square key after it 
+	code = 
+		" A2 C7 00" // asc_D14AFC db '▤',0
+    +   " 00 "      // db 0
+	;
+	
+	let addrM = Exe.FindHex(code, addr, Exe.GetSectEnd(DATA));
+	if (addrM < 0)
+		throw Error("Square missing");
+	
+	/// 2 - Replace the strings
+	[
+		[addrL   , " 20 1B"],
+		[addr    , " 20 18"],
+		[addr + 8, " 20 1A"],
+		[addr + 8, " 20 95"],
+		[addrM   , " 20 0F"]
+	].forEach(
+		pair => Exe.SetHex(pair[0], pair[1])
+	);
+	
+    return true;
+};
+
+///
+/// \brief Disable for unsupported client
+///
+FixArrowsCharset.validate = () =>
+	Exe.BuildDate >= 20170000;

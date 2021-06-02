@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2015 MegaByte                                            *
-*   Copyright (C) 2021 X-EcutiOnner  (xex.ecutionner@gmail.com)            *
+*   Copyright (C) 2021 Andrei Karas (4144)                                 *
+*   Copyright (C) 2018-2021 X-EcutiOnner (xex.ecutionner@gmail.com)        *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -21,70 +21,57 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : MegaByte, X-EcutiOnner                                 *
-*   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-06-03                                             *
+*   Author(s)     : Andrei, X-EcutiOnner                                   *
+*   Created Date  : 2021-06-01                                             *
+*   Last Modified : 2021-06-01                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Find the walk delay addition and
-///        NoWalkDelay - NOP it out
-///        CustomWalkDelay - Change it to user specified value
+/// \brief NOPs out the JZ following TEST EAX, EAX after Comparison
+///        to Show Damage on GvG Maps during the Guild War.
 ///
-WalkDelay = function(patchName)
+ShowGvGDamage = function(patchName)
 {
-	/// 1.1 - Find the delay addition
-	let reg = (Exe.Version === 6 ? EDX : ECX); //VC6 uses EDX
-	let code =
-		ADD(reg, 0x258)   //ADD reg32, 258 ; 600ms
-	+   CMP(EAX, reg)     //CMP EAX, reg32
+    /// 1 - Find the code responsible for checking GvG mapflag before showing Damage values
+	let mct =
+		MOV(ECX, POS4WC)
+	+	CALL(ALLWC)
+	+	TEST(EAX, EAX)
 	;
-
+	let code =
+		mct         //  0 mov ecx, offset g_session
+	                //  5 call CSession_IsSiegeMode
+	                // 10 test eax, eax
+	+	JNZ(0xE)    // 12 jnz short loc_99A826
+	+	mct         // 14 mov ecx, offset g_session
+	                // 19 call CSession_IsBattleFieldMode
+	                // 24 test eax, eax
+	+	JZ(0x14)    // 26 jz short loc_99A83A
+	+	PUSH(7)     // 28 push 7
+	+	mct         // 30 mov ecx, offset g_session
+	                // 35 call CSession_IsMasterAid
+	                // 40 test eax, eax
+	+	JZ(POS2WC)  // 42 jz loc_9A1A84
+	;
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
-		throw Error("Delay addition missing");
+		throw Error("Pattern missing");
 
-	/// 1.2 - Save it to array
-	let tgtAddrs = [addr];
+	/// 2 - NOP it all out
+	Exe.SetNOPs(addr, code.byteCount());
+	
+    /* Keeping it around for reference later
+	let nopsStart = 0;
+    let nopsEnd = 48;
+    let IsSiegeModeOffset = 6;
+    let IsBattleFieldModeOffset = 20;
+    let isMasterAid = 36;
 
-	if (Exe.BuildDate > 20170329)
-	{
-		/// 1.3 - For newer clients look for the 2nd delay addition
-		code =
-			ADD(ECX, 0x15E)  //ADD ECX, 15E ; 350ms
-		+	CMP(EAX, ECX)    //CMP EAX, ECX
-		;
+    logRawFunc("CSession_IsSiegeMode", offset, IsSiegeModeOffset);
+    logRawFunc("CSession_IsBattleFieldMode", offset, IsBattleFieldModeOffset);
+    logRawFunc("CSession_IsMasterAid", offset, isMasterAid);
+	*/
 
-		addr = Exe.FindHex(code);
-		if (addr < 0)
-			throw Error("2nd Delay addition missing");
-
-		/// 1.4 - Add to array
-		tgtAddrs.push(addr);
-	}
-
-	if (patchName === "NoWalkDelay")
-	{
-		/// 2.1 - NOP out the addition if no walk delay is desired
-		tgtAddrs.forEach(addr => Exe.SetNOPs(addr, 6));
-	}
-	else
-	{
-		/// 2.2 - Get the new delay value from user
-		let result = Exe.GetUserInput('$walkDelay', D_Uint16, "Walk Delay", "Enter the new walk delay (snaps to closest valid value)", 600, {min: 0, max: 1000});
-		if (result === false)
-			Cancel("Delay", 600);
-
-		/// 2.3 - Replace the value
-		tgtAddrs.forEach(addr => Exe.SetFromVar(addr + 2, '$walkDelay'));
-	}
-
-	return true;
+    return true;
 };
-
-///
-/// \brief Wrappers for individual patches
-///
-NoWalkDelay     = WalkDelay;
-CustomWalkDelay = WalkDelay;
