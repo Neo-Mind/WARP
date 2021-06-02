@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-04-04                                             #
+#   Last Modified : 2021-06-03                                             #
 #                                                                          #
 ############################################################################
 
@@ -72,6 +72,7 @@
 
     patches:
         - Zoom150Percent:
+            title : Increase Zoom Out (150%)
             title : Increase Zoom Out (150%)
             recommend : no
             author : Shinryo , Andrei Karas (4144)
@@ -325,13 +326,13 @@
         - NoWalkDelay:
             title : No Walk Delay
             recommend : no
-            author : MegaByte
+            author : MegaByte , X-EcutiOnner
             desc : Add no delay to walking clicks. But client may likely send more/duplicated packets.
         
         - CustomWalkDelay:
             title : Custom Walk Delay
             recommend : no
-            author : MegaByte
+            author : MegaByte , X-EcutiOnner
             desc : Change the delay for walking clicks to user specified value. But client may likely send more/duplicated packets.
 
 
@@ -1027,6 +1028,12 @@
             author : Neo-Mind
             desc : Increases the limit of digits displayed while attacking from 6 to 10.
 
+        - ShowGvGDamage:
+            title : Show Damage for GvG
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Enables the display of damage digits on GvG maps.
+        
         - CustomFadeDelay:
             title : Custom fade in/out delay
             recommend : no
@@ -1254,6 +1261,12 @@
             recommend : no
             author : Andrei Karas (4144) , X-EcutiOnner
             desc : Disable the use of mapInfo lub file to display map signs when player enters map.
+        
+        - FixArrowsCharset:
+            title : Translate arrows to English
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Translate arrows buttons in hotkey setting UI from korean to english
 
 - CustomChar:
     title : CHARACTER CUSTOMIZATION

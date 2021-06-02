@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-06-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -206,31 +206,23 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			this.KeySetter = Exe.GetTgtAddr(callAddr);
 
 			$$(_ + '3.4 - Go inside the function')
-			let fnAddr = Exe.Vir2Phy(this.KeySetter);
-
-			$$(_ + '3.5 - Prep the common prefix for searching')
-			let prefix =
-				CMP(EAX, 1) //CMP EAX, 1
-			+	JNE(WCp)    //JNE SHORT addr
-			;
+			let fnAddr = Exe.Vir2Phy(this.KeySetter, CODE);
 
 			$$(_ + '4.1 - First look for the individual key assignment pattern')
-			code =
-				prefix
-			+	MOV([ECX, WCp], ALLWC)   //MOV DWORD PTR DS:[ECX+x], <Key A> ;the keys could be assigned in any order
-			+	MOV([ECX, WCp], ALLWC)   //MOV DWORD PTR DS:[ECX+y], <Key B>
-			+	MOV([ECX, WCp], ALLWC)   //MOV DWORD PTR DS:[ECX+z], <Key C>
+			let reg = Exe.Version > 11 ? EAX : ECX;
+			code = MOV([reg, ' 0?'], ALLWC).repeat(3) //MOV DWORD PTR DS:[ECX+x], <Key A> ;the keys could be assigned in any order
+			                                          //MOV DWORD PTR DS:[ECX+y], <Key B>
+			                                          //MOV DWORD PTR DS:[ECX+z], <Key C>
 			;
 
 			addr = Exe.FindHex(code, fnAddr, fnAddr + 0x60);
 			if (addr > 0)
 			{
 				$$(_ + '4.2 - If found then set the mode to \'Move\' and save the location of the first MOV as the Assigner')
-				this.Assigner = addr + prefix.byteCount();
+				this.Assigner = addr;
 				this.KS_Mode = KeyMode.Move;
 
 				$$(_ + '4.3 - Extract the keys being assigned')
-				addr = this.Assigner;
 				for (let i = 0; i < 3; i++)
 				{
 					let ins = Instr.FromAddr(addr);
@@ -244,12 +236,16 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			}
 
 			$$(_ + '5.1 - Next look for the shared key pattern')
+			let prefix =
+				CMP(EAX, 1) //CMP EAX, 1
+			+	JNE(WCp)    //JNE SHORT addr
+			;
 			code =
 				prefix
 			+	MOV(EAX, ALLWC)        //MOV EAX, <Key A> ; shared key
-			+	MOV([ECX, WCp], EAX)   //MOV DWORD PTR DS:[ECX+x], EAX
-			+	MOV([ECX, WCp], EAX)   //MOV DWORD PTR DS:[ECX+y], EAX
-			+	MOV([ECX, WCp], ALLWC) //MOV DWORD PTR DS:[ECX+z], <Key B>
+			+	MOV([ECX, ' 0?'], EAX)   //MOV DWORD PTR DS:[ECX+x], EAX
+			+	MOV([ECX, ' 0?'], EAX)   //MOV DWORD PTR DS:[ECX+y], EAX
+			+	MOV([ECX, ' 0?'], ALLWC) //MOV DWORD PTR DS:[ECX+z], <Key B>
 			;
 
 			addr = Exe.FindHex(code, fnAddr, fnAddr + 0x60);
@@ -278,7 +274,10 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			$$(_ + '6.1 - Since neither pattern matched we need to use explicit mapping')
 			this.KS_Mode = KeyMode.Virtual;
 
-			$$(_ + '6.2 - For older clients we will try to look in the PktKeyMap')
+			$$(_ + '6.2 - Set the Assigner');
+			this.Assigner = fnAddr + (ROC.HasFP ? 3 : 0);
+
+			$$(_ + '6.3 - For older clients we will try to look in the PktKeyMap')
 			if (Exe.BuildDate <= 20180308)
 			{
 				if (typeof PktKeyMap === 'undefined' || !PktKeyMap) //avoid redefinition & only load when required
@@ -288,10 +287,10 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 						throw Error("PKT - Packet Key Map file is invalid");
 				}
 
-				$$(_ + '6.3 - Retrieve the keys based on the date')
+				$$(_ + '6.4 - Retrieve the keys based on the date')
 				let arr = PktKeyMap[Exe.BuildDate];
 
-				$$(_ + '6.4 - Ensure we have a valid array')
+				$$(_ + '6.5 - Ensure we have a valid array')
 				this.Valid = IsArr(arr) && arr.length === 3;
 				if (this.Valid)
 				{
@@ -305,7 +304,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				}
 			}
 
-			$$(_ + '6.5 - For newer clients, the keys are 0 by default.')
+			$$(_ + '6.6 - For newer clients, the keys are 0 by default.')
 			this.Valid = true;
 		},
 	};

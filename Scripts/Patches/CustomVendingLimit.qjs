@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-05-14                                             *
+*   Last Modified : 2021-06-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -51,11 +51,14 @@ CustomVendingLimit = function()
 		JL(WCp)  //JL SHORT addr
 	);
 
-	let cmp1Addr = Exe.FindHex(code, addr - 0x10, addr);
-	if (cmp1Addr < 0)
+	addr = Exe.FindHex(code, addr - 0x10, addr);
+	if (addr < 0)
 		throw Error("First Comparison not found");
 
-	/// 1.5 - Find the MsgString CALL that gets the 0 zeny message
+	/// 1.3 - Add to comparison address set
+	let limitAddrs = [addr];
+
+	/// 1.4 - Find the MsgString CALL that gets the 0 zeny message
 	code =
 		PUSH_1       //PUSH 1
 	+	PUSH_2       //PUSH 2
@@ -65,7 +68,7 @@ CustomVendingLimit = function()
 	if (addr < 0)
 		throw Error("MsgBox CALL not found");
 
-	/// 1.6 - Find the 2nd 1B or 1B+1 comparison before the PUSHes
+	/// 1.5 - Find the 2nd 1B or 1B+1 comparison before the PUSHes
 	code =
 		limiter  //CMP reg32_A, 3B9ACA00 or 3B9ACA01 ; easier to do without opcode since it changes when reg32_A is EAX
 	+	(newStyle
@@ -75,24 +78,56 @@ CustomVendingLimit = function()
 		JGE(WCp) //JGE SHORT addr
 	);
 
-	let cmp2Addr = Exe.FindHex(code, addr - 0x80, addr);
-	if (cmp2Addr < 0 && newStyle)
+	let addr2 = Exe.FindHex(code, addr - 0x80, addr);
+	if (addr2 < 0 && newStyle)
 	{
 		code = code.replace(JLE(WCp), JBE(WCp));//Recent clients use JBE instead of JLE
-		cmp2Addr = Exe.FindHex(code, addr - 0x80, addr);
+		addr2 = Exe.FindHex(code, addr - 0x80, addr);
 	}
-	if (cmp2Addr < 0)
+	if (addr2 < 0)
 		throw Error("Second Comparison not found");
 
-	/// 1.7 - Find the 3rd extra comparison for oldstyle clients
-	if (!newStyle)
+	/// 1.6 - Add to comparison address set
+	limitAddrs.push(addr2);
+
+	if (newStyle)
 	{
+		/// 1.7 - For new style look for the additional comparisons (can range from 0 to 3)
+		let code1 = CMP(R32, limiter);
+
+		let code2 =
+			PUSH_1      //PUSH 1
+		+	PUSH_2      //PUSH 2
+		+	PUSH(0x9A3) //PUSH 9A3 ; Line no. 2468
+		;
+
+		let code3 = MOV(R32, limiter);
+
+		let addrs = Exe.FindHexN(code2);
+		addrs.forEach( memAddr =>
+		{
+			let addr = Exe.FindLastHex(code1, memAddr - 9, memAddr - 0x20);
+			if (addr > 0)
+			{
+				limitAddrs.push(addr + 2);
+
+				addr = Exe.FindHex(code3, memAddr, memAddr + 0x70);
+				if (addr < 0)
+					throw Error("Unable to find the limit assignment");
+
+				limitAddrs.push(addr + 1);
+			}
+		});
+	}
+	else
+	{
+		/// 1.8 - Find the 3rd extra comparison for oldstyle clients
 		code = code.replace(JGE(WCp), JNE(WCp));//JNE instead of JGE
 		addr = Exe.FindHex(code, addr - 0x60, addr);
 		if (addr < 0)
 			throw Error("Extra Comparison not found");
 
-		/// 1.8 - Change the JNE to JMP
+		/// 1.9 - Change the JNE to JMP
 		Exe.SetJMP(addr + 4);
 	}
 
@@ -111,9 +146,8 @@ CustomVendingLimit = function()
 	if (!newStyle)
 		newLimit++;
 
-	/// 2.5 - Replace the limit at both the comparison locations
-	Exe.SetInt32(cmp1Addr, newLimit);
-	Exe.SetInt32(cmp2Addr, newLimit);
+	/// 2.5 - Replace the limit at all the comparison locations
+	limitAddrs.forEach(addr => Exe.SetInt32(addr, newLimit));
 
 	return true;
 };

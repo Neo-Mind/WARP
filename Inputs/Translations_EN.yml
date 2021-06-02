@@ -1,6 +1,7 @@
 ############################################################################
 #                                                                          #
 #   Copyright (C) 2020-2021 Neo-Mind                                       #
+#   Copyright (C) 2021 Everade                                             #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
@@ -20,9 +21,9 @@
 #                                                                          #
 ############################################################################
 #                                                                          #
-#   Author(s)     : Neo-Mind                                               #
+#   Author(s)     : Neo-Mind, Everade                                      #
 #   Created Date  : 2020-11-10                                             #
-#   Last Modified : 2021-02-11                                             #
+#   Last Modified : 2021-06-03                                             #
 #                                                                          #
 ############################################################################
 -
@@ -1692,7 +1693,7 @@
   desc : Tip box - Part 1
   ##############################
   find : <BD C3 C0 DB C7 D2 20 B6 A7 20 BF AD B1 E2>
-  replace : "Save Tip?"
+  replace : "Open on start"
   startDate : 20171018
 
 -
@@ -1700,7 +1701,7 @@
   desc : Tip box - Part 2
   ##############################
   find : <B4 DD B1 E2>
-  replace : "Done"
+  replace : "Exit"
 
 -
   ##############################
@@ -1721,3 +1722,11 @@
   replace : "%d"
   startDate : 20171208
   endDate : 20191105
+
+-
+  #################################
+  desc : Equipment - Dismount Cart
+  #################################
+  find : <C4 AB C6 AE 20 C7 D8 C1 A6>
+  replace : "Cart Off"
+  startDate : 20190904

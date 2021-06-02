@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-03-12                                             *
+*   Last Modified : 2021-06-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -51,7 +51,7 @@ CustomEncKeys = function(patchName)
 	let oldKey = PACKET.Keys[index].toHex(4, true); //need in BE format
 	let newKey = Exe.GetUserInput(varName, D_Hex, "Packet Keys", "Enter the new packet key", oldKey, {minLen: 4, maxLen: 4});
 
-	if (newKey === false)
+	if (newKey === false || newKey === oldKey)
 		Cancel("No new key specified");
 
 	if (PACKET.KS_Mode === KeyMode.Push) //Direct PUSHes
@@ -125,14 +125,14 @@ CustomEncKeys.cleanup = function(patchName)
 	}
 
 	/// 2.3 - Otherwise set the patch for the different index as the current one and
-	///       rerun _PK_SetupObfuscate function	
+	///       rerun _PK_SetupObfuscate function
 	if (!PACKET.PatchData.isEmpty() && PACKET.PatchData[4] !== index)
 	{
 		Exe.ClearPatch(patchName);
 		Exe.SetActivePatch(patchName);
 
 		// no need to run the entire PacketKeys function, since we have all relevant data saved
-		_CEK_SetupObfuscate(PACKET.PatchData[4]);	
+		_CEK_SetupObfuscate(PACKET.PatchData[4]);
 	}
 }
 
