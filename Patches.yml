@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-06-03                                             #
+#   Last Modified : 2021-06-04                                             #
 #                                                                          #
 ############################################################################
 
@@ -72,7 +72,6 @@
 
     patches:
         - Zoom150Percent:
-            title : Increase Zoom Out (150%)
             title : Increase Zoom Out (150%)
             recommend : no
             author : Shinryo , Andrei Karas (4144)

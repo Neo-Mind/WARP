@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-06-02                                             *
+*   Last Modified : 2021-06-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -94,6 +94,7 @@ CustomVendingLimit = function()
 	{
 		/// 1.7 - For new style look for the additional comparisons (can range from 0 to 3)
 		let code1 = CMP(R32, limiter);
+		let code1a = CMP(EAX, limiter);
 
 		let code2 =
 			PUSH_1      //PUSH 1
@@ -107,9 +108,15 @@ CustomVendingLimit = function()
 		addrs.forEach( memAddr =>
 		{
 			let addr = Exe.FindLastHex(code1, memAddr - 9, memAddr - 0x20);
+			let offset = 2;
+			if (addr < 0)
+			{
+				addr = Exe.FindLastHex(code1a, memAddr - 9, memAddr - 0x20);
+				offset = 1;
+			}
 			if (addr > 0)
 			{
-				limitAddrs.push(addr + 2);
+				limitAddrs.push(addr + offset);
 
 				addr = Exe.FindHex(code3, memAddr, memAddr + 0x70);
 				if (addr < 0)

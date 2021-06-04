@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-03-12                                             *
+*   Last Modified : 2021-06-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,20 +38,23 @@ if (typeof RB_Data === 'undefined')
 		ResizeChatBox :
 		{
 			varName : '$chatBoxLen', 
-			arg1 : 0xF0
+			arg1 : 0xF0,
+			prefix : 'Chat'
 		},
 
 		ResizeChatRoomBox :
 		{
 			varName : '$chatRoomBoxLen',
-			arg1 : 0xF2
+			arg1 : 0xF2,
+			prefix : 'Chat Room'
 		},
 
 		ResizePMBox :
 		{
 			varName : '$pmBoxLen',
 			arg1 : 0xFF,
-			arg2 : 0x00
+			arg2 : 0x00,
+			prefix : 'PM'
 		}
 	};
 }
@@ -63,7 +66,7 @@ if (typeof RB_Data === 'undefined')
 ResizeBox = function(patchName)
 {
 	/// 1.1 - Retrieve the data corresponding to the patchName
-	let {varName, arg1, arg2} = RB_Data[patchName];
+	let {varName, arg1, arg2, prefix} = RB_Data[patchName];
 
 	/// 1.2 - Find the limit setter (there will be atleast 4 matches)
 	let addrs = Exe.FindHexN( MOV([EAX, WCp], 0x46) ); //MOV DWORD PTR DS:[EAX+byte], 46 (46h = 70d)
@@ -78,7 +81,7 @@ ResizeBox = function(patchName)
 		throw Error("Not enough MOVes found");
 
 	/// 2 - Get the new box length from user
-	let boxLen = Exe.GetUserInput(varName, D_Uint32, "Box Length", "Enter the new box length in no of chars", 0x46, {min:1, max:255});
+	let boxLen = Exe.GetUserInput(varName, D_Uint32, prefix + " Box Length", "Enter the new box length in no of chars", 0x46, {min:1, max:255});
 	if (boxLen === false)
 		Cancel("Box Length", 70);
 
