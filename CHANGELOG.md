@@ -1,3 +1,15 @@
+# 2021-06-10 Changes
+
+## Patch Updates
+- Made the higher limit of Custom Jobs patch a user input (restricted to max of 5000).
+- Fixed the [arrow translations](https://github.com/Neo-Mind/WARP/issues/24). Since we are restricted to ASCII table, the best resembling values were picked from them.
+- Fixed remaining [bugs in Increase Hairstyle patches](https://github.com/Neo-Mind/WARP/issues/16) (hopefully I have covered all the missed tables now)
+- Updated Shared Head palettes to work well with Increase Hairstyle patches. 
+- Fixed the Shared Body Palette patches for costume palettes and doram palettes. 
+- Corrected descriptions for Shared Head palette patches & Arrow translation patch.
+- Updated `addLoaders` function of `LUA` object with option to load the reference lua file either before or after the new ones. You can also completely skip it.
+
+
 # 2021-06-05 Changes
 
 ## Patch Updates

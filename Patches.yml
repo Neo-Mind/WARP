@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-06-04                                             #
+#   Last Modified : 2021-06-10                                             #
 #                                                                          #
 ############################################################################
 
@@ -149,13 +149,13 @@
             title : Shared Head Palettes Male & Female
             recommend : no
             author : Ai4rei/AN , Neo-Mind
-            desc : Makes the client use a single hair palette set (head_%s_%d.pal) for all job classes but separate for both genders.
+            desc : Makes the client use a single hair palette set (head_%s_%d.pal) for all hair styles but separate for both genders.
         
         - HeadPalUnisex:
             title : Shared Head Palettes Unisex
             recommend : no
             author : Ai4rei/AN , Neo-Mind
-            desc : Makes the client use a single hair palette set (head_%d.pal) for all job classes and genders.
+            desc : Makes the client use a single hair palette set (head_%d.pal) for all hair styles and genders.
 
 - SelectLoginBG:
     title : LOGIN BACKGROUND
@@ -1264,8 +1264,8 @@
         - FixArrowsCharset:
             title : Translate arrows to English
             recommend : no
-            author : Andrei Karas (4144) , X-EcutiOnner
-            desc : Translate arrows buttons in hotkey setting UI from korean to english
+            author : Andrei Karas (4144) , X-EcutiOnner , Neo-Mind
+            desc : Translate arrows & menu button texts in hotkey setting UI from korean to english
 
 - CustomChar:
     title : CHARACTER CUSTOMIZATION
