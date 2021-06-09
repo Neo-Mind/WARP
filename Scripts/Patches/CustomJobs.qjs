@@ -22,11 +22,9 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-04-05                                             *
+*   Last Modified : 2021-06-10                                             *
 *                                                                          *
 \**************************************************************************/
-
-MaxJob = 4400;
 
 ///
 /// \brief: Change the Hardcoded loading & retrieval of Job strings (Name, Path prefix,
@@ -283,6 +281,11 @@ CustomJobs = function()
 		return [hookAddr, baseReg, endIns, retainer];
 	});
 
+	/// 3.3 - Get the new max limit from user
+	let maxJob = Exe.GetUserInput('$maxJob', D_Uint16, "Limit Input", "Enter the maximum no of Job IDs", 4400, {min: 4400, max: 5000, saveDefault: true});
+	if (maxJob === false)
+		Cancel();
+
 	//====================================//
 	// Add the Function Names into client //
 	//====================================//
@@ -331,7 +334,7 @@ CustomJobs = function()
 		let limits =
 		[
 			[0, 0x2C],
-			[0xFA1 - reductor, MaxJob - reductor]
+			[0xFA1 - reductor, maxJob - reductor]
 		];
 
 		/// 4.3 - Generate the templates first
@@ -428,7 +431,7 @@ CustomJobs = function()
 	limits =
 	[
 		[0, 0x2C],
-		[0xFA1, MaxJob]
+		[0xFA1, maxJob]
 	];
 
 	/// 5.1 - Find the string "TaeKwon Girl"
