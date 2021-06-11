@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-06-10                                             #
+#   Last Modified : 2021-06-11                                             #
 #                                                                          #
 ############################################################################
 
@@ -129,13 +129,13 @@
     
     patches:
         - BodyPalMF:
-            title : Shared Body Palettes Male & Female
+            title : Shared Body Palettes - Male & Female
             recommend : no
             author : Ai4rei/AN , Neo-Mind
             desc : Makes the client use a single cloth palette set (body_%s_%d.pal) for all job classes but separate for both genders.
         
         - BodyPalUnisex:
-            title : Shared Body Palettes Unisex
+            title : Shared Body Palettes - Unisex
             recommend : no
             author : Ai4rei/AN , Neo-Mind
             desc : Makes the client use a single cloth palette set (body_%d.pal) for all job classes & genders.
@@ -146,13 +146,13 @@
     
     patches:
         - HeadPalMF:
-            title : Shared Head Palettes Male & Female
+            title : Shared Head Palettes - Male & Female
             recommend : no
             author : Ai4rei/AN , Neo-Mind
             desc : Makes the client use a single hair palette set (head_%s_%d.pal) for all hair styles but separate for both genders.
         
         - HeadPalUnisex:
-            title : Shared Head Palettes Unisex
+            title : Shared Head Palettes - Unisex
             recommend : no
             author : Ai4rei/AN , Neo-Mind
             desc : Makes the client use a single hair palette set (head_%d.pal) for all hair styles and genders.
@@ -210,7 +210,7 @@
             desc : Circumvents Gravity's new token-based login system and restores the normal login window.
         
         - UseSSOLogin:
-            title : Use SSO Login
+            title : Use SSO Login Packet
             recommend : no
             author : Ai4rei/AN
             desc : Enable using SSO packet on all Langtype (to use login and pass with a launcher).
@@ -533,37 +533,37 @@
     
     patches:
         - CustomGMColor:
-            title : Change Chat Color (GM)
+            title : Custom Chat Color (GM)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the GM Chat color to the specified value. Default value is ffff00 (Yellow).
     
         - CustomGuildColor:
-            title : Change Chat Color (Guild)
+            title : Custom Chat Color (Guild)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the Guild Chat color to the specified value. Default Value is b4ffb4 (Light Green).
         
         - CustomPartyColor:
-            title : Change Chat Color (Party - Others)
+            title : Custom Chat Color (Party - Others)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the Party Chat color for other members to the specified value. Default value is ffc8c8 (Pinkish).
         
         - CustomPartyColorSelf:
-            title : Change Chat Color (Party - Self)
+            title : Custom Chat Color (Party - Self)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the Party Chat color for the playing character to the specified value. Default value is ffc800 (Orange).
         
         - CustomPublicColor:
-            title : Change Chat Color (Public - Others)
+            title : Custom Chat Color (Public - Others)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the Public Chat color for other players to the specified value. Default value is ffffff (White).
         
         - CustomPublicColorSelf:
-            title : Change Chat Color (Public - Self)
+            title : Custom Chat Color (Public - Self)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the Public Chat color for the playing character to the specified value. Default value is 00ff00 (Green).
@@ -1070,19 +1070,19 @@
             desc : Fix item description '[' bug
 
         - CustomGuildExpLimit:
-            title : Change guild exp limit
+            title : Custom guild exp limit
             recommend : no
             author : Andrei Karas (4144)
             desc : Change guild exp limit percent. Default value is 50%.
         
         - CustomAdvAgencyLimits:
-            title : Change adventurer agency levels
+            title : Custom adventurer agency levels
             recommend : no
             author : Andrei Karas (4144), Asheraf
             desc : Changes the default level range on the Adventure Agency.
         
         - CustomNewCharNameHeight:
-            title : Change new Char Name field height
+            title : Custom new Char Name field height
             recommend : no
             author : Andrei Karas (4144)
             desc : Changes the height in input field of the new char creation dialog to user specified value.
@@ -1106,7 +1106,7 @@
             desc : Hide Zero Date (1969-01-01) in guild members window.
         
         - CustomSlotHLColor:
-            title : Change Skill Slot Highlight
+            title : Custom Skill Slot Highlight
             recommend : no
             author : Hanashi , Andrei Karas (4144)
             desc : Changes the highlight color for skill slot to user specified value.
@@ -1356,13 +1356,13 @@
     
     patches:
         - CustomFriendsLimit:
-            title : Change Max Friends
+            title : Custom Max Friends
             recommend : no
             author : Andrei Karas (4144) ,  X-EcutiOnner
             desc : Change the Maximum no of friends displayed on Alt+H to user specified value
             
         - CustomPartyLimit:
-            title : Change Party Limit
+            title : Custom Party Limit
             recommend : no
             author : CH.C (jchcc)
             desc : Change the Maximum no of party members displayed on Alt+Z to user specified value.
@@ -1405,7 +1405,7 @@
             title : Custom minimum screen resolution
             recommend : no
             author : Andrei Karas (4144)
-            desc : Change minimum client resolution (width & height) to user specified values from default of 1024x768.
+            desc : Change minimum client resolution (width & height) to user specified values from (default of 1024x768).
 
         - UseDefaultBrowser:
             title : Use Default Browser for &lt;URL&gt;
@@ -1513,7 +1513,31 @@
             recommend : no
             author : CH.C (jchcc)
             desc : Restore ground effects of Bard/Dancer songs on latest clients.
-            
+
+- CustomSkills:
+    title : SKILL CUSTOMIZATIONS
+    mutex : false
+    color : deeppink
+    
+    patches:
+        - CustomPlayerSkills:
+            title : Enable Custom Player Skills [Experimental]
+            recommend : no
+            author : Unknown
+            desc : Enables the use of custom skills castable on players (using Lua Files).
+        
+        - CustomHomunSkills:
+            title : Enable Custom Homunculus Skills [Experimental]
+            recommend : no
+            author : Unknown
+            desc : Enables the use of custom skills for Homunculus (using Lua Files).
+        
+        - CustomMerceSkills:
+            title : Enable Custom Mercenary Skills [Experimental]
+            recommend : no
+            author : Unknown
+            desc : Enables the use of custom skills for Mercenaries (using Lua Files).
+
 - CustomSpecials:
     title : SPECIAL CUSTOMIZATIONS
     mutex : false
@@ -1524,10 +1548,10 @@
             title : Enable Custom Shields
             recommend : no
             author : Neo-Mind
-            desc : Enables the use of Custom Shield Types (using Lua Files similar to Xray)
+            desc : Enables the use of Custom Shield Types (using Lua Files similar to Xray).
         
         - CustomJobs:
             title : Enable Custom Jobs
             recommend : no
             author : Neo-Mind
-            desc : Enables the use of Custom Jobs (using Lua Files similar to Xray)
+            desc : Enables the use of Custom Jobs (using Lua Files similar to Xray).

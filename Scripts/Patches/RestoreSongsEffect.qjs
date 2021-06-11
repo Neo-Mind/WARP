@@ -81,7 +81,7 @@ RestoreSongsEffect = function()
 		;
 	}
 
-	suffix =             
+	suffix =       
 		PUSH(0xF2)            //26 push F2 ;patch offset
 	+	JMP()                 //31 jmp addr
 	;

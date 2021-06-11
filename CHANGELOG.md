@@ -1,3 +1,9 @@
+# 2021-06-12 Changes
+
+## Patch Updates
+- Added patch to [Enable Custom Player Skills](https://github.com/Neo-Mind/WARP/issues/25).
+
+
 # 2021-06-11 Changes
 
 ## Patch Updates

@@ -1,0 +1,236 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2018-2021 Unknown                                        *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Unknown                                                *
+*   Created Date  : 2021-06-11                                             *
+*   Last Modified : 2021-06-11                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Data to be used for the patches.
+///
+if (typeof CSk_Data === 'undefined') //avoid redefinition
+{
+	CSk_Data =
+	{
+		loader: null,
+
+		CustomPlayerSkills:
+		{
+			6:
+				CMP(EAX, 0x27D)  //CMP EAX, 27D
+			+	JG(POS2WC)       //JG skip
+			+	CMP(EAX, 0x27C)  //CMP EAX, 27C
+			,
+
+			default:
+				CMP(EAX, 0x106)  //CMP EAX, 106
+			+	JG(WC)           //JG SHORT skip
+			+	JE(POS2WC)       //JE valid
+			,
+
+			funcName: "IsPlayerSkill"
+		},
+
+		CustomHomunSkills:
+		{
+			6:
+				CMP(EAX, 0x1F40)
+			+	JL(WC)
+			+	CMP(EAX, 0x1F51)
+			,
+
+			14:
+				MOV(ECX, 0x2C)
+			+	ADD(EAX, -0x1F40)
+			,
+
+			default:
+				ADD(EAX, -0x1F40)
+			+	MOV(ECX, 0x2C)
+			,
+
+			funcName: "IsHomunSkill"
+		},
+
+		CustomMerceSkills:
+		{
+			6:
+				CMP(EAX, 0x2008)
+			+	JL(WC)
+			+	CMP(EAX, 0x2031)
+			,
+
+			default:
+				LEA(R32, [R32, -0x2008])
+			+	CMP(R32, ' [0010100.]') //28 or 29
+			,
+
+			funcName: "IsMercenarySkill"
+		}
+	};
+}
+
+///
+/// \brief Modify the respective Skill ID checker function (returns 1)
+///        to use Custom Lua functions instead of hardcoded checks
+///
+CustomSkills = function(patchName)
+{
+	/// 1.1 - Retrieve the data corresponding to the patch
+	let data = CSk_Data[patchName];
+
+
+	/// 1.2 - Find the skill id checker function
+	let prefix = ROC.HasFP
+	?
+		PUSH(EBP)          //push ebp
+	+	MOV(EBP, ESP)      //mov ebp, esp
+	+	MOV(R32, [EBP, 8]) //mov reg32_A, [ebp+8] ; arg.1
+	:
+		MOV(R32, [ESP, 4]) //mov reg32_A, [esp+4] ; arg.1
+	;
+
+	let suffix = Exe.Version in data ? data[Exe.Version] : data.default;
+	if (IsNum(suffix))
+		suffix = data[suffix]; //option to inherit from another version
+
+	let fnBegin = Exe.FindHex(prefix + suffix);
+	if (fnBegin < 0)
+		throw Error("ID Checker missing");
+
+	/// 1.3 - Load the LUA object
+	LUA.load();
+
+	/// 1.4 - Construct the code to call the lua function & place the function name after it with a 4 byte gap
+	let [prep, main, restore] = LUA.createCaller(data.funcName, "d>d", EAX, EAX);
+	prefix =
+		MOV(EAX, [ESP, 4]) //mov eax, [esp+4] ; arg.1
+	+	prep               //Stack Prep
+	+	main               //Lua function call & result retrieval to 'eax'
+	+	restore            //Stack Restoration
+	+	RETN()             //retn
+	+	ALL00              //4 NULLs to seperate
+	;
+	suffix =
+		data.funcName.toHex() //ASCII <funcName>
+	+	ALL00                 //1 NULL for termination + 3 as a gap
+	;
+
+	/// 2 - Diverge based on the patch name
+	let nameOffset = prefix.byteCount();
+
+	let luaLoadAddr; //address where the lua file loading code need to be placed
+	if (patchName === "CustomPlayerSkills")
+	{
+		/// 2.1 - Since this function is big we can place everything here itself.
+		///       Fill the blanks with current values
+		let fnVir = Exe.Phy2Vir(fnBegin, CODE);
+		let code = LUA.finalize(prefix + suffix, fnVir, fnVir + nameOffset);
+
+		/// 2.2 - Replace the original
+		Exe.SetHex(fnBegin, code);
+
+		/// 2.3 - Set luaLoadAddr to address after the suffix
+		luaLoadAddr = fnBegin + nameOffset + suffix.byteCount();
+	}
+	else
+	{
+		/// 2.4 - For others there is not enough space, so we need to allocate space for it
+		let free = Exe.FindSpace(nameOffset + suffix.byteCount());
+		if (free < 0)
+			throw NO_ALLOC;
+
+		let freeVir = Exe.Phy2Vir(free, DIFF);
+
+		/// 2.5 - Fill in the blanks
+		let code = LUA.finalize(prefix + suffix, freeVir, freeVir + nameOffset);
+
+		/// 2.6 - Add at allocated space
+		Exe.AddHex(free, code);
+
+		/// 2.7 - Create a JMP to it from fnBegin
+		Exe.SetJMP(fnBegin, freeVir);
+
+		/// 2.8 -  Set luaLoadAddr to -1 (function will allocate space on it's own)
+		luaLoadAddr = -1;
+	}
+
+	if (!CSk_Data.loader)
+	{
+		/// 3.1 - Add code to load the lua files
+		prefix = "Lua Files\\SkillInfo" + (Exe.BuildDate > 20100400 ? 'z\\' : '\\');
+		LUA.addLoaders(
+			prefix + "SkillInfo_F",
+			[
+				prefix + "SkillType",
+				prefix + "SkillType_F"
+			],
+			luaLoadAddr
+		);
+
+		/// 3.2 - Assign the loader member
+		CSk_Data.loader = patchName;
+	}
+	return true;
+};
+
+///
+/// \brief Reset the loader member in the validator function . Need to check support for older clients
+///
+CustomSkills.validate = function()
+{
+	CSk_Data.loader = null;
+	return true;
+};
+
+///
+/// \brief Shift the Lua file loading mechanism to another active patch, when the current 'loader' is deselected.
+///
+CustomSkills.cleanup = function(patchName)
+{
+	if (CSk_Data.loader === patchName)
+	{
+		CSk_Data.loader = null;
+
+		for (name in CSk_Data)
+		{
+			if (name === 'loader' || name === patchName)
+				continue;
+
+			if (Exe.IsSelected(name))
+			{
+				Exe.ClearPatch(name);
+				Exe.SetActivePatch(name);
+				CustomSkills(name);
+			}
+		}
+	}
+};
+
+///
+/// \brief Wrappers for individual patches
+///
+CustomPlayerSkills = CustomSkills;
+CustomHomunSkills  = CustomSkills;
+CustomMerceSkills  = CustomSkills;
