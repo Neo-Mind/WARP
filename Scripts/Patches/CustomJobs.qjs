@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-06-10                                             *
+*   Last Modified : 2021-06-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -770,7 +770,7 @@ CustomJobs = function()
 		+	CMP(EDI, ESI)                         //CMP EDI, ESI
 		];
 
-		infix[0] = SwapFiller(infix[0], 5, infix[1].byteCount(), 1, 1);
+		infix[0] = SwapFiller(infix[0], [5, 1], infix[1].byteCount(), 1); //setting target of JE SHORT
 		csize = infix.byteCount();
 
 		let suffix =
@@ -1069,19 +1069,16 @@ CustomJobs = function()
 				if (free < 0)
 					throw NO_ALLOC;
 
+				let freeVir = Exe.Phy2Vir(free, DIFF);
+
 				/// 9.13 - Append the JMP
 				code +=
 					JMP(Filler(1)) //JMP endAddr
 				;
 
 				/// 9.14 - Fill in the blanks
-				let freeVir = Exe.Phy2Vir(free, DIFF);
-
-				code = SetFillTarget(
-					LUA.finalize(code, freeVir, AltFuncs[3])
-				,	1, Exe.Phy2Vir(endAddr, CODE)
-				,	freeVir
-				);
+				code = LUA.finalize(code, freeVir, AltFuncs[3]);
+				code = SetFillTarget(code, 1, Exe.Phy2Vir(endAddr, CODE), freeVir, 1);
 
 				/// 9.15 - Add at allocated space
 				Exe.AddHex(free, code);

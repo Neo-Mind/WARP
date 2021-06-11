@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2021-06-10                                             *
-*   Last Modified : 2021-06-10                                             *
+*   Last Modified : 2021-06-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -140,7 +140,7 @@ RestoreSongsEffect = function()
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 
 	/// 3.3 - Fill in the blanks
-	ins = SwapFiller(ins, 1, freeVir + case1Offset + effectIDs.length * tsize);
+	ins = SwapFiller(ins, 1, freeVir + case1Offset + effectIDs.length * tsize, 1);
 
 	/// 3.4 - Construct the new switch cases & jump table
 	let caseCodes = "";
@@ -149,7 +149,7 @@ RestoreSongsEffect = function()
 
 	effectIDs.forEach( id =>
 	{
-		caseCodes += SwapFiller(template, 2, id);
+		caseCodes += SwapFiller(template, 2, id, 1);
 
 		newJmpAddrs += caseAddr.toHex(4);
 		caseAddr += tsize;

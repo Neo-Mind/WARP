@@ -2,7 +2,7 @@
 
 ## Patch Updates
 - Added patch to [Enable Custom Player Skills](https://github.com/Neo-Mind/WARP/issues/25).
-
+- Updated signature of SwapFiller & SetFillTarget functions to accept index & bytecount together as a tuple (2 element array).
 
 # 2021-06-11 Changes
 
