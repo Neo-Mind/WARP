@@ -907,6 +907,12 @@
             author : Shinryo
             desc : Jumps directly to the login interface without asking to select a service.
         
+        - OpenToServiceSelect:
+            title : Open to Service Selection
+            recommend : yes
+            author : CH.C (jchcc)
+            desc : Enables the 'Opening' button in the new login screen to open the service selection screen again.
+        
         - TranslateClient:
             title : Translate Client
             recommend : yes
@@ -1487,13 +1493,13 @@
         - Enable44kHzAudio:
             title : Enable 44.1 kHz Audio Sampling Frequency
             recommend : no
-            author : jchcc
+            author : CH.C (jchcc)
             desc : Boosts the audio sampling frequency to 44.1 kHz, improving the audio quality in the game.
         
         - AutoMute:
             title : Auto Mute Audio [Experimental]
             recommend : no
-            author : jchcc
+            author : CH.C (jchcc)
             desc : Auto mute audio when game window is not active.
         
         - NoBGMAudio:
@@ -1502,6 +1508,12 @@
             author : Andrei Karas (4144) , X-EcutiOnner
             desc : Disable the use of mp3NameTable.txt to pick & play audio files as BGM.
 
+        - RestoreSongsEffect:
+            title : Restore Songs effect
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Restore ground effects of Bard/Dancer songs on latest clients.
+            
 - CustomSpecials:
     title : SPECIAL CUSTOMIZATIONS
     mutex : false

@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2020-2021 CH.C (jchcc)                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,50 +20,44 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Shinryo                                                *
-*   Created Date  : 2020-11-08                                             *
+*   Author(s)     : CH.C (jchcc)                                           *
+*   Created Date  : 2021-06-10                                             *
 *   Last Modified : 2021-06-10                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Change one of the Login Background format strings (str1) to the other (str2) //
+/// \brief Find the indirect table for switch statement inside UILoginWnd::SendMsg,
+///        Make Opening button work as return Service Selection
 ///
-SelectLoginBG = function(patchName)
+OpenToServiceSelect = function()
 {
-	/// 1 - Prepare Strings to Find and Replace
-	let prefix = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\T";
-	let src, tgt;
-	if (patchName === "OnlyFirstBG")
-	{
-		src = "2_\xB9\xE8\xB0\xE6" + "%d-%d.bmp";
-		tgt = "_\xB9\xE8\xB0\xE6" + "%d-%d.bmp\x00";
-	}
-	else
-	{
-		src = "_\xB9\xE8\xB0\xE6" + "%d-%d.bmp\x00";
-		tgt = "2_\xB9\xE8\xB0\xE6" + "%d-%d.bmp";
-	}
-
-	/// 2 - Find the src string
-	let addr = Exe.FindText(prefix + src, PHYSICAL, false);
+	/// 1.1 - Find the MsgString ID reference of "Please enter at least %d characters. If you don't have account,"
+	let addr = Exe.FindHex(PUSH(0xBD5) + CALL()); //PUSH 0BD5 followed by CALL
 	if (addr < 0)
-		throw Error("Source string not found");
+		throw Error("MsgString ID Missing");
 
-	/// 3 - Modify the string after the dir prefix (16 bytes later) with the tgt string
-	Exe.SetText(addr + prefix.length, tgt);
+	/// 1.2 - Find the switch table inside UILoginWnd::SendMsg before it
+	let code =
+		MOVZX(EAX, BYTE_PTR, [EAX, POS4WC])  //MOVZX EAX, BYTE PTR DS:[EAX + idxTbl]
+	+	JMP([4, EAX, POS4WC])                //JMP DWORD PTR DS:[EAX*4 + jmpTbl]
+	;
+
+	addr = Exe.FindHex(code, addr - 0x300, addr);
+	if (addr < 0)
+		throw Error("Switch table missing");
+
+	/// 2.1 - Extract the idxTbl
+	let idxTbl = Exe.GetInt32(addr + 3);
+
+	/// 2.2 - Change the index for the 100th entry to 0
+	Exe.SetInt8(Exe.Vir2Phy(idxTbl + 100, CODE), 0);
 
 	return true;
 };
 
 ///
-/// \brief Disable for latest clients (there is no two variants anymore)
+/// \brief Disable for Old Clients - Only Clients with new login window need it
 ///
-SelectLoginBG.validate = () =>
-	ROC.IsZero || Exe.BuildDate < 20200600;
-
-///
-/// \brief Wrappers for individual patches
-///
-OnlyFirstBG  = SelectLoginBG;
-OnlySecondBG = SelectLoginBG;
+OpenToServiceSelect.validate = () =>
+	!ROC.HasLWhidden && Exe.Version > 10;
