@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-04-05                                             *
+*   Last Modified : 2021-06-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -135,8 +135,7 @@ CustomShields = function()
 
 	/// 2.3 - Fill in the blanks
 	code = LUA.finalize(code, freeVir, freeVir + csize);
-
-	code = SetFillTarget(code, 1, retReq, freeVir);
+	code = SetFillTarget(code, 1, retReq, freeVir, 1);
 
 	/// 2.5 - Insert the code
 	Exe.AddHex(free, code + funcName.toHex());
@@ -402,16 +401,18 @@ CustomShields = function()
 	+	PUSH(ESI)                             //PUSH ESI
 	+	CALL(ALLWC)                           //CALL func
 	;
+	let dispLoc = 2; //position of the displacement after the CALL
 
 	switch (Exe.Version)
 	{
-		case 6:  //VC6
+		case 6:  //VC6 ; this is probably not needed
 		case 9:  // to
 		case 10: //VC10
 		{
 			code =
-				MOV(EAX, [EAX, WCp])              //MOV EAX, DWORD PTR DS:[EAX + const]
-			+	ADD(ESI, -0x835)                  //ADD ESI, -835
+				MOV(EAX, [EAX, WCp])          //MOV EAX, DWORD PTR DS:[EAX + disp]
+			+	ADD(ESI, -0x835)              //ADD ESI, -835
+			+	ADD(ESP, 4)                   //ADD ESP, 4
 			;
 			break;
 		}
@@ -419,9 +420,9 @@ CustomShields = function()
 		case 11: //VC11
 		{
 			code =
-				MOV(R32, [EAX, WCp])              //MOV reg32_A, DWORD PTR DS:[EAX + const]
-			+	ADD(ESP, 4)                       //ADD ESP, 4
-			+	CMP(ESI, 0x834)                   //CMP ESI, 834
+				MOV(R32, [EAX, WCp])          //MOV reg32_A, DWORD PTR DS:[EAX + disp]
+			+	ADD(ESP, 4)                   //ADD ESP, 4
+			+	CMP(ESI, 0x834)               //CMP ESI, 834
 			;
 			break;
 		}
@@ -429,10 +430,11 @@ CustomShields = function()
 		default: //VC14.16
 		{
 			code =
-				ADD(ESP, 4)                       //ADD ESP, 4
-			+	MOV(EAX, [EAX, WCp])              //MOV EAX, DWORD PTR DS:[EAX + const]
-			+	CMP(ESI, 0x834)                   //CMP ESI, 834
+				ADD(ESP, 4)                   //ADD ESP, 4
+			+	MOV(EAX, [EAX, WCp])          //MOV EAX, DWORD PTR DS:[EAX + disp]
+			+	CMP(ESI, 0x834)               //CMP ESI, 834
 			;
+			dispLoc = 5;
 			break;
 		}
 	}
@@ -444,32 +446,57 @@ CustomShields = function()
 	/// 7.2 - Move to the position after the CALL (all the code till that point is relevant)
 	addr += prefix.byteCount();
 
-	/// 7.3 - Create our replacement code (Calls the earlier hookMap function to retrieve shield id corresponding to item id & turns the result to -1 if valid id.
-	code =
-		TEST(EAX, EAX)  //TEST EAX, EAX
-	+	JZ(3)           //JZ _skip_OR
-	+	OR(EAX, -1)     //OR EAX, FFFFFFFF
-	+	POP(ESI)        //POP ESI
+	/// 7.3 - Retrieve the displacement wrt EAX
+	let disp = Exe.GetInt8(addr + dispLoc);
+
+	/// 7.4 - Retrieve the target address (this retrieve the weapon ID)
+	funcAddr = Exe.GetTgtAddr(addr - 4);
+
+	/// 7.5 - Create our replacement code (At this point the earlier hookMap function has been called to retrieve the shield id)
+	parts = [
+		TEST(EAX, EAX)         //TEST EAX, EAX
+	+	JZ(Filler(1,1))        //JZ _skip_OR
+	+	OR(EAX, -1)            //OR EAX, FFFFFFFF
+	+	POP(ESI)               //POP ESI
 	+	(ROC.HasFP
 	?
-		POP(EBP)        //POP EBP
+		POP(EBP)               //POP EBP
 	:
 		''
 	)
-	+	RETN(4)         //RETN 4
-	;
+	+	RETN(4)                //RETN 4
+	,
+		PUSH(ESI)              //PUSH ESI ; _skip_OR
+	+	CALL(Filler(2))        //CALL funcAddr
+	+	ADD(ESP, 4)            //ADD ESP, 4
+	+	MOV(EAX, [EAX, disp])  //MOV(EAX, [EAX, disp])
+	+	POP(ESI)               //POP ESI
+	+	(ROC.HasFP
+	?
+		POP(EBP)               //POP EBP
+	:
+		''
+	)
+	+	RETN(4)                //RETN 4
+	];
 
-	/// 7.4 - Replace the function being CALLed
+	/// 7.6 - Fill the blanks
+	code = SetFillTarget(parts.join(''), [1, 1], parts[0].byteCount(), 0, 1);
+	code = SetFillTarget(code, 2, funcAddr, Exe.Phy2Vir(addr, CODE), 1);
+
+	/// 7.7 - Replace the function being CALLed
 	Exe.SetTgtAddr(addr - 4, newMapVir);
 
-	/// 7.5 - Append our code after the CALL
+	/// 7.8 - Append our code after the CALL
 	Exe.SetHex(addr, code);
 
-	/// 7.6 - Check with user if they want to copy the supporting files to the target area's data folder
-	CS_Response = Exe.GetUserInput("$copyCSLub", D_Bool, "Copy Files", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
-	if (CS_Response)
-		CS_Limiter = MaxShield;
-
+	/// 7.9 - Check with user if they want to copy the supporting files to the target area's data folder
+	if (!Exe.TestMode)
+	{
+		CS_Response = Exe.GetUserInput("$copyCSLub", D_Bool, "Copy Files", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
+		if (CS_Response)
+			CS_Limiter = MaxShield;
+	}
 	return true;
 };
 

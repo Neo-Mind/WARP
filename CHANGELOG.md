@@ -1,3 +1,21 @@
+# 2021-06-12 Changes
+
+## Patch Updates
+- Added patch to [Enable Custom Player Skills](https://github.com/Neo-Mind/WARP/issues/25).
+- Updated signature of SwapFiller & SetFillTarget functions to accept index & bytecount together as a tuple (2 element array).
+
+# 2021-06-11 Changes
+
+## Patch Updates
+- Added patch for [Opening to Service Select from login screen](https://github.com/Neo-Mind/WARP/issues/35) in latest clients.
+- Added patch for [Restoring Songs Effects](https://github.com/Neo-Mind/WARP/issues/36)
+- Fixed bug in [Selected Login Background](https://github.com/Neo-Mind/WARP/issues/33) patch.
+- Slight update to `addLoaders` function to report the reference lua file name (in case it fails)
+- Fixed bug in [Hide Buttons patch for new UI](https://github.com/Neo-Mind/WARP/issues/32).
+- Fixed bug in [Custom Shields patch](https://github.com/Neo-Mind/WARP/issues/37) related to showing two handed weapons.
+- Fixed bugs in Show Exp Numbers patch. Thanks [@Haziel](https://github.com/SirHaziel) for pointing it out.
+
+
 # 2021-06-10 Changes
 
 ## Patch Updates
