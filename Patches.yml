@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-06-11                                             #
+#   Last Modified : 2021-06-14                                             #
 #                                                                          #
 ############################################################################
 
@@ -71,20 +71,26 @@
     mutex : true
 
     patches:
-        - Zoom150Percent:
-            title : Increase Zoom Out (150%)
+        - Zoom25Percent:
+            title : Decrease Zoom Out (to 25%)
             recommend : no
             author : Shinryo , Andrei Karas (4144)
-            desc : Increases the zoom-out range by 50 percent.
+            desc : Decreases the zoom-out range to approx. 25% of maximum.
         
-        - Zoom175Percent:
-            title : Increase Zoom Out (175%)
+        - Zoom50Percent:
+            title : Increase Zoom Out (to 50%)
             recommend : no
             author : Shinryo , Andrei Karas (4144)
-            desc : Increases the zoom-out range by 75 percent.
+            desc : Increases the zoom-out range to approx. 50% of Maximum.
+        
+        - Zoom75Percent:
+            title : Increase Zoom Out (to 75%)
+            recommend : no
+            author : Shinryo , Andrei Karas (4144)
+            desc : Increases the zoom-out range to approx. 75% of Maximum.
         
         - ZoomMax:
-            title : Increase Zoom Out (Maximum)
+            title : Increase Zoom Out (to Max)
             recommend : no
             author : Shinryo , Andrei Karas (4144)
             desc : Maximizes the zoom-out range.
@@ -228,13 +234,13 @@
     
     patches:
         - HideCashShop:
-            title : Hide Cash Shop Icon
+            title : Hide Cash Shop icon
             recommend : no
             author : Neo-Mind
             desc : Hide Cash Shop Icon in clients that already show them.
             
         - ShowCashShop:
-            title : Show Cash Shop Icon
+            title : Show Cash Shop icon
             recommend : no
             author : Neo-Mind
             desc : Restores the Cash Shop Icon in clients that can have them. (Primarily RE clients hide them).
@@ -245,7 +251,7 @@
     
     patches:
         - MoveShopIcon:
-            title : Move Cash Shop Icon
+            title : Move Cash Shop icon
             recommend : no
             author : Neo-Mind
             desc : Move the Cash Shop icon to user specified co-ordinates. Positive values are relative to left and top, Negative values are relative to right and bottom.
@@ -257,11 +263,16 @@
             desc : Enforce the <b>C</b> field to use 0 instead of random values in cash shop.
         
         - DefShopBrowser:
-            title : Use Default Web Browser In Cash Shop
+            title : Use default web browser in Cash Shop
             recommend : no
             author : CH.C (jchcc)
             desc : Open URL in the cashshop window with default web browser instead of IExplore.
-
+        
+        - PreviewInShop:
+            title : Enable item preview in Cash Shop
+            recommend : no
+            author : Andrei Karas (4144)
+            desc: Add support for preview button in cash shop (right click the items to see the button)
 
 - RouletteVis:
     title : ROULETTE VISIBILITY

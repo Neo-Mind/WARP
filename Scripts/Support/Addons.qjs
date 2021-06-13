@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-01-16                                             *
+*   Last Modified : 2021-06-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -110,10 +110,10 @@ Number.prototype.toIEEE = function(bigEndian = false)
 		for (; num < 1; num *= 2.0, exp--);
 	}
 
-	else if (num > 2)
+	else if (num >= 2)
 	{
-		$$(_ + '2.2 - For numbers > 2 , increment the exponent')
-		for (; num > 2; num /= 2.0, exp++);
+		$$(_ + '2.2 - For numbers >= 2 , increment the exponent')
+		for (; num >= 2; num /= 2.0, exp++);
 	}
 
 	$$(_ + '2.3 - Suffix the exponent + 127 to the binary (ensure 8 bits)')

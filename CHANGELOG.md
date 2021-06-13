@@ -1,3 +1,11 @@
+# 2021-06-14 Changes
+
+## Patch Updates
+- Added patch to [Enable item preview in Cash Shop](https://github.com/Neo-Mind/WARP/issues/17).
+- Added patch to Decrease the zoom to 25% of Maximum.
+- Fixed 1 remaining bug with Hide Buttons patch for new UI for slightly older clients.
+- Fixed 1 bug in conversion of float to IEEE hex string.
+
 # 2021-06-12 Changes
 
 ## Patch Updates

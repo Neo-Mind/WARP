@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-06-10                                             *
+*   Last Modified : 2021-06-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -444,10 +444,10 @@ _NBV_Stage = function(index)
 		if (NBV.Type === 1)
 		{
 			code +=
-				SUB(NBV.Reg, NBV.MinLimit) //SUB reg32, minLimit
-			+	CMP(NBV.Reg, NBV.Range)    //CMP reg32, range
-			+	JA(Filler(3))              //JA onAddr
-			+	JMP(Filler(4))             //JMP retnAddr; address of the MOVZX
+				LEA(EAX, [NBV.Reg, -NBV.MinLimit]) //LEA EAX, [reg32 - minLimit]
+			+	CMP(EAX, NBV.Range)                //CMP EAX, range
+			+	JA(Filler(3))                      //JA onAddr
+			+	JMP(Filler(4))                     //JMP retnAddr; address of the MOVZX
 			;
 		}
 		else
