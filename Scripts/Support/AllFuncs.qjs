@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-06-12                                             *
+*   Last Modified : 2021-06-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -91,7 +91,8 @@ IsByte = function(v, signed = true)
 /// \brief Creates a filler hex string with the given index and byte count
 ///
 Filler = (idx, bc = 4) =>
-	(ALLWC + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.min(bc, 4));
+	(' ??'.repeat(Math.abs(bc)) + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.trunc(Math.abs(bc)));
+	// (ALLWC + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.trunc(bc));
 
 
 ///
@@ -164,9 +165,6 @@ SwapFiller = function(str, idx, dataSet, cnt = -1)
 	if (typeof idx !== 'number' || typeof bc !== 'number')
 		return str;
 
-	$$(_ + '1.2 - Limit the byte count')
-	bc = Math.min(bc, 4);
-
 	$$(_ + '2.1 - Create the filler string to search')
 	let find = Filler(idx, bc);
 
@@ -181,17 +179,14 @@ SwapFillers = function(str, idMap, cnt = -1, bc = 4)
 {
 	let _ = 'SwapFillers : ';
 
-	$$(_ + '1.1 - Limit the byte count')
-	bc = Math.min(bc, 4);
-
 	for (key in idMap)
 	{
-		$$(_ + '1.2 - Get the idx and ensure it is a proper integer')
+		$$(_ + '1.1 - Get the idx and ensure it is a proper integer')
 		let idx = parseInt(key);
 		if (Object.is(idx, NaN))
 			continue;
 
-		$$(_ + '1.3 - Get the dataSet corresponding to the id')
+		$$(_ + '1.2 - Get the dataSet corresponding to the id')
 		let dataSet = idMap[idx];
 
 		$$(_ + '2.1 - Create the filler string to search')

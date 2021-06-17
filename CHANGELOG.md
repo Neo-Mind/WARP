@@ -1,3 +1,21 @@
+# 2021-06-17 Changes
+
+## Patch Updates
+- Added patches to
+	- Enable Custom Homunculi
+	- [Fix homunculus attack AI](https://github.com/Neo-Mind/WARP/issues/38)
+	- Send client flags
+	- Allow all items in Shortcut
+	- Remove Adventurer Agency from Party
+	- Fix Charset for Fonts
+	- Customize Merchant store URL
+	- Hide packets from PEEK
+	- Use 'identified' drops for Boss (MVP) mob
+	
+- Added cleanup function to PreviewInShop to work with Send Client Flags patch
+- Started fine tuning & comment fixes in scripts
+- Updated some of the entries in Patch list (Patches.yml)
+
 # 2021-06-14 Changes
 
 ## Patch Updates

@@ -1,0 +1,105 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2018-2021 CH.C (jchcc)                                   *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CH.C (jchcc)                                           *
+*   Created Date  : 2021-06-14                                             *
+*   Last Modified : 2021-06-17                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Bypass the homunculi target select checking
+///
+FixHomunAI = function()
+{
+	/// 1 - Find the homunculi's target select checker function
+	let isNewType = Exe.BuildDate > 20200715;
+
+	let disp = isNewType ? 0xE4 : 0xE0;
+
+	let prefix =
+		PUSH(EBP)             //push ebp
+	+	MOV(EBP, ESP)         //mov ebp, esp
+	+	MOV(ECX, [ECX, disp]) //mov ecx, dword ptr [ecx + 0E0h] OR [ecx + 0E4h]
+	+	MOV(EAX, [ECX])       //mov eax, dword ptr [eax]
+	+	CMP(EAX, ECX)         //cmp eax, dword ptr [ecx]
+	+	JE(WCp)               //je short _zero
+	+	MOV(EDX, [EBP, 8])    //mov edx, dword ptr [ARG.1]
+	+	CMP([EAX, 8], EDX)    //cmp dword ptr [eax+8], edx ; _loop
+	+	(isNewType
+	?
+		JNE(6)                //jne short _next
+	+	CMP([EAX, 0xC], 0)    //cmp dword ptr [eax+0Ch], 0
+	:
+		''
+	)
+	+	JE(0xC)               //je short _one
+	+	MOV(EAX, [EAX])       //mov eax, dword ptr [eax]
+	+	CMP(EAX, ECX)         //cmp eax, ecx
+	+	JNE(WCn)              //jne short _loop
+	;
+
+	let suffix =
+		XOR(AL, AL)           //xor al, al ; _zero
+	+	POP(EBP)              //pop ebp
+	+	RETN(4)               //retn 4
+	+	MOV(AL, 1)            //mov al, 1  ; _one
+	+	POP(EBP)              //pop ebp
+	+	RETN(4)               //retn 4
+	;
+
+	let addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+		throw Error("Checker function missing");
+
+	/// 2 - Change the XOR to MOV AL, 1 as well.
+	Exe.SetHex(addr + prefix.byteCount(), MOV(AL, 1));
+
+	/// 3 - Find the target cursor push for all targets
+	prefix = PUSH_0.repeat(Exe.BuildDate >= 20191020 ? 9 : 4); // 9 x push 0 OR 4 x push 0 depending on the client date
+	suffix = PUSH(0x86);
+
+	let count = isNewType ? 1 : 2; //latest clients only have 1 of these
+
+	let addrs = Exe.FindHexN(prefix + suffix);
+	if (addrs.length !== count)
+		throw Error("Cursor code missing");
+
+	/// 4 - Enforce the conditional jump before it to skip it
+	let pat = isNewType ? JNZ(WCp) : JZ(WCp); //newer clients have jnz
+	addrs.forEach( memAddr =>
+	{
+		let addr = Exe.FindLastHex(pat, memAddr, memAddr - 6);
+		if (addr < 0)
+			throw Error("Found false match");
+
+		Exe.SetJMP(addr);
+	});
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients
+///
+FixHomunAI.validate = () =>
+	Exe.BuildDate > 20170920;
