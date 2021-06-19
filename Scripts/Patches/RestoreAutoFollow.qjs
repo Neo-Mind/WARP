@@ -1,0 +1,126 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2021 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Andrei, Neo-Mind                                       *
+*   Created Date  : 2021-06-16                                             *
+*   Last Modified : 2021-06-19                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Modify the CGameMode::OnUpdate function to call CGameMode::ProcessAutoFollow
+///        after calling CGameMode::ProcessInput like the regular client (and older clients did)
+///
+RestoreAutoFollow = function()
+{
+	/// 1.1 - Find the CGameMode::ProcessAutoFollow function
+	let code =
+		PUSH(EBP)           //push ebp
+	+	MOV(EBP, ESP)       //mov ebp, esp
+	+	MOV(EAX, [POS4WC])  //mov eax, dword ptr [addr#1]
+	+	SUB(ESP, 8)         //sub esp, 8
+	+	PUSH(ESI)           //push esi
+	+	MOV(ESI, ECX)       //mov esi, ecx
+	+	TEST(EAX, EAX)      //test eax, eax
+	+	JZ(POS2WC)          //jz addr#2
+	+	CMP([POS3WC], 0)    //cmp dword ptr [addr#3], 0
+	;
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("ProcessAutoFollow not found");
+
+	/// 1.2 - Save it's VIRTUAL address
+	let ProcessAutoFollow = Exe.Phy2Vir(addr, CODE);
+
+	/// 1.3 - Next find the common pattern inside CGameMode::OnUpdate function
+	code =
+		MOV(ECX, EAX)        //mov ecx, eax
+	+	CALL(NEG3WC)         //call func#1
+	+	TEST(EAX, EAX)       //test eax, eax
+	+	JNZ(WCp)             //jnz short _skip
+	+	MOV(ECX, [POS4WC])   //mov ecx, dword ptr [addr#4]
+	+	PUSH_0               //push 0
+	;
+	let addrs = Exe.FindHexN(code);
+	if (addrs.length !== 1)
+		throw Error("Unexpected number of matches");
+
+	/// 1.4 - Find the call to CGameMode::ProcessInput after the pattern (still inside the function)
+	let parts =
+	[
+		PUSH(0x3E8)         //push 3E8h
+	+	MOV(EAX, [ECX])     //mov eax, dword ptr [ecx]
+	+	CALL([EAX])         //call dword ptr [eax]
+	,
+		MOV(ECX, R32)       //mov ecx, regA ; can be esi or ebx
+	,
+		CALL()              //call CGameMode::ProcessInput
+	];
+	addr = Exe.FindHex(parts, addrs[0], addrs[0] + 0x80);
+	if (addr < 0)
+		throw Error("ProcessInput not called");
+
+	/// 1.5 - Save the MOV ECX instruction
+	let movIns = Instr.FromAddr(addr + parts.byteCount(0));
+
+	/// 1.6 - Save the hook position & the ProcessInput function address
+	let hookAddr = movIns.NextAddr;
+	let ProcessInput = Exe.GetTgtAddr(hookAddr + 1);
+
+	/// 2.1 - Construct our new code
+	code =
+		CALL(Filler(1))  //call CGameMode::ProcessInput
+	+	movIns           //mov ecx, regA; esi or ebx
+	+	PUSH(Filler(2))  //push retnAddr
+	+	JMP(Filler(3))   //jmp CGameMode::ProcessAutoFollow
+	;
+
+	/// 2.2 - Allocate space for it
+	let free = Exe.FindSpace(code.byteCount(), 0x10);
+	if (free < 0)
+		throw NO_ALLOC;
+
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+
+	/// 2.3 - Fill in the blanks
+	code = SwapFiller(code, 2, Exe.Phy2Vir(hookAddr + 5, CODE), 1);
+	code = SetFillTargets(code,
+	{
+		1: ProcessInput,
+		3: ProcessAutoFollow
+	}, freeVir, 1);
+
+	/// 2.4 - Add at allocated space
+	Exe.AddHex(free, code);
+
+	/// 2.5 - Setup a JMP to it from hookAddr
+	Exe.SetJMP(hookAddr, freeVir);
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients (Only an issue for zero clients post 2017)
+///
+RestoreAutoFollow.validate = () =>
+	ROC.IsZero && Exe.BuildDate > 20180000;

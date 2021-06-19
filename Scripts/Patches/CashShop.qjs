@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144), CH.C (jchcc)                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-06-19                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,14 +37,15 @@ MoveShopIcon = function()
 	let tgtReg = (Exe.Version < 11) ? EDX : EAX;
 
 	let code =
-		SUB(tgtReg, 0xBB)      //SUB reg, 0BB
-	+	PUSH(tgtReg)           //PUSH reg
+		SUB(tgtReg, 0xBB) //sub regA, 0BBh
+	+	PUSH(tgtReg)      //push regA
 	;
 
 	let addr = Exe.FindHex(code);
 	if (addr < 0 && Exe.Version >= 11)
 	{
-		code = code.replace(PUSH_EAX , PUSH(WCp) + PUSH_EAX );//PUSH const before PUSH EAX
+		code = code.replace(PUSH_EAX , PUSH(WCp) + PUSH_EAX );//push immA
+		                                                      //push eax
 		addr = Exe.FindHex(code);
 
 		/// 1.2 - If this pattern matches then move up the PUSH and increment addr by 2
@@ -65,8 +66,8 @@ MoveShopIcon = function()
 	}
 
 	/// 2.1 - Find the pattern where the Screen Size is picked up (Width is at 0x24, Height is at 0x28) - We need the address of g_ScreenStats
-	code = MOV( Exe.Version >= 11 ? EAX : ECX, [POS3WC]);     //MOV EAX or ECX, DWORD PTR DS:[g_ScreenStats]
-	let addr2 = Exe.FindHex(code + " 8B", addr - 0x18, addr); //Some MOV follows after the g_ScreenStats MOV
+	code = MOV( Exe.Version >= 11 ? EAX : ECX, [POS3WC]);     //mov eax/ecx, dword ptr [g_ScreenStats]
+	let addr2 = Exe.FindHex(code + ' 8B', addr - 0x18, addr); //Some MOV follows after the g_ScreenStats MOV
 	if (addr2 < 0)
 		throw Error("Screen size retrieval not found");
 
@@ -74,8 +75,8 @@ MoveShopIcon = function()
 	let ScreenStats = Exe.GetHex(addr2 + code.byteCount() - 6, 4);
 
 	/// 3.1 - Get new Coordinates from user
-	let xCoord = Exe.GetUserInput('$cashShopX', D_Int16, "CashShop Position", "Enter new X coordinate:", -0xBB, {min: -1366, max: 1366});
-	let yCoord = Exe.GetUserInput('$cashShopY', D_Int16, "CashShop Position", "Enter new Y coordinate:", 0x10, {min: -768, max: 768});
+	let xCoord = Exe.GetUserInput('$cashShopX', D_Int16, "CashShop Icon Coordinate", "Enter new X coordinate (negative values are relative to right side)", -0xBB, {min: -1366, max: 1366});
+	let yCoord = Exe.GetUserInput('$cashShopY', D_Int16, "CashShop Icon Coordinate", "Enter new Y coordinate (negative values are relative to top side)", 0x10, {min: -768, max: 768});
 
 	if (xCoord === false && yCoord === false)
 		Cancel("Coordinates", "(-187,16)");
@@ -92,32 +93,32 @@ MoveShopIcon = function()
 	if (yCoord < 0)
 	{
 		code +=
-			MOV(ECX, [ScreenStats])  //MOV ECX, DWORD PTR DS:[g_ScreenStats]
-		+	MOV(ECX, [ECX, 0x28])    //MOV ECX, DWORD PTR DS:[ECX+28]
-		+	ADD(ECX, yCoord)         //ADD ECX, yCoord; yCoord is negative
+			MOV(ECX, [ScreenStats])  //mov ecx, dword ptr [g_screenstats]
+		+	MOV(ECX, [ECX, 0x28])    //mov ecx, dword ptr [ecx + 28h]
+		+	ADD(ECX, yCoord)         //add ecx, <yCoord>; where yCoord is negative
 		;
 	}
 	else
 	{
-		code += MOV(ECX, yCoord);    //MOV ECX, yCoord
+		code += MOV(ECX, yCoord);    //mov ecx, <yCoord>
 	}
-	code += MOV([ESP, 4], ECX);      //MOV DWORD PTR DS:[ESP+4], ECX
+	code += MOV([ESP, 4], ECX);      //mov dword ptr [esp+4], ecx
 
 	if (xCoord < 0)
 	{
 		code +=
-			MOV(ECX, [ScreenStats])  //MOV ECX, DWORD PTR DS:[g_ScreenStats]
-		+	MOV(ECX, [ECX, 0x24])    //MOV ECX, DWORD PTR DS:[ECX+24]
-		+	ADD(ECX, xCoord)         //ADD ECX, xCoord; xCoord is negative
+			MOV(ECX, [ScreenStats])  //mov ecx, dword ptr [g_ScreenStats]
+		+	MOV(ECX, [ECX, 0x24])    //mov ecx, dword ptr [ecx + 24h]
+		+	ADD(ECX, xCoord)         //add ecx, <xCoord>; where xCoord is negative
 		;
 	}
 	else
 	{
-		code += MOV(ECX, xCoord);    //MOV ECX, xCoord
+		code += MOV(ECX, xCoord);    //mov ecx, <xCoord>
 	}
 	code +=
-		MOV(tgtReg, ECX)             //MOV tgtReg, ECX
-	+	RETN()                       //RETN
+		MOV(tgtReg, ECX)             //mov <tgtReg>, ecx
+	+	RETN()                       //retn
 	;
 
 	let csize = code.byteCount();
@@ -149,18 +150,18 @@ ZeroCinShop = function()
 {
 	/// 1 - Find where format string is  PUSHed
 	let prefix =
-		MOV(ECX, ESI)       //MOV ECX, ESI
-	+	PUSH_EAX            //PUSH EAX
-	+	PUSH(0x1C2)         //PUSH 1C2
-	+	PUSH(0x226)         //PUSH 226
-	+	CALL(ALLWC)         //CALL UICashShopWnd_sub
+		MOV(ECX, ESI)       //mov ecx, esi
+	+	PUSH_EAX            //push eax
+	+	PUSH(0x1C2)         //push 1C2h
+	+	PUSH(0x226)         //push 226h
+	+	CALL(ALLWC)         //call UICashShopWnd::virt68 ; dunno the name
 	;
 	let suffix =
-		PUSH([ESI, POS2WC]) //PUSH DWORD PTR DS:[ESI + const]
-	+	LEA(EAX, [EBP, WC]) //LEA EAX, [EBP + string_ptr]
-	+	PUSH(ZC_Addr)       //PUSH OFFSET addr ; ASCII "%d C"
-	+	PUSH_EAX            //PUSH EAX
-	+	CALL()              //CALL std::string::sprintf
+		PUSH([ESI, POS2WC]) //push dword ptr [esi + dispA]
+	+	LEA(EAX, [EBP, WC]) //lea eax, [ebp + string_ptr]
+	+	PUSH(ZC_Addr)       //push offset "%d C"
+	+	PUSH_EAX            //push eax
+	+	CALL()              //call std::string::sprintf
 	;
 
 	addr = Exe.FindHex(prefix + suffix);
@@ -172,7 +173,7 @@ ZeroCinShop = function()
 
 	/// 2.2 - Change it to a PUSH 0
 	suffix =
-		PUSH_0  //PUSH 0
+		PUSH_0  //push 0
 	+	NOP4    //4 byte NOP
 	;
 	Exe.SetHex(addr, suffix);
@@ -198,14 +199,15 @@ ZeroCinShop.validate = () =>
 DefShopBrowser = function()
 {
 	/// 1 - Find locations where "iexplore.exe" is PUSHed
-	let addrs = Exe.FindHexN( PUSH(EAX) + PUSH(SB_Addr) );
+	let addrs = Exe.FindHexN( PUSH(EAX) + PUSH(SB_Addr) ); //push eax
+	                                                       //push offset "iexplore.exe"
 	if (addrs.isEmpty())
 		throw Error("String references missing");
 
 	/// 2 - Prep code to change arguments of ShellExecuteA
 	code =
-		PUSH_0     //PUSH 0
-	+	PUSH(EAX)  //PUSH EAX
+		PUSH_0     //push 0
+	+	PUSH(EAX)  //push eax
 	+	NOP3       //3 byte NOP
 	;
 
@@ -225,4 +227,171 @@ DefShopBrowser.validate = () =>
 
 	SB_Addr = Exe.FindText("iexplore.exe");
 	return SB_Addr > 0;
+};
+
+///
+/// \brief Update the function handling ZC_ACK_SCHEDULER_CASHITEM packet to incorporate the location & view sprite fields
+///
+PreviewInShop = function()
+{
+	/// 1.1 - Calculate essential values
+	let isNewType = Exe.Version > 11 && Exe.BuildDate > 20191220 && (ROC.IsZero || ROC.IsRenewal); //Newer function format for latest clients
+	let srcLoc = isNewType ? [POS4WC] : [R32, ' [000001.0]']; //displacement is 6 or 4 . Source Location is direct memory address for newer clients
+
+	/// 1.2 - Find the location inside the function handling the packet where we need to place the JMP
+	let code =
+		LEA(ECX, [EBP, NEG2WC])     //lea ecx, [LOCAL.x] ; iteminfo location
+	+	CALL(ALLWC)                 //call func
+	+	MOVSX(EAX, srcLoc)          //movsx eax, word ptr [<srcLoc>]
+	+	(Exe.Version === 11
+	?
+		MOV([EBP, NEG2WC], EAX)     //mov dword ptr [LOCAL.y], eax
+	:
+		''
+	)
+	+	CMP(EAX, ' [000010..]')     //cmp eax, 09h or 0Ah
+	+	JA(WCp)                     //ja short _skip
+	;
+
+	let hookAddr = Exe.FindHex(code);
+	if (hookAddr < 0)
+		throw Error("Hook pattern missing");
+
+	/// 1.3 - Next find the block size addition after it
+	let parts =
+	[
+		ADD(R32, WCp)               //add regA, immA ; block size addition
+	,
+		MOVSX(EAX, srcLoc)          //movsx eax, word ptr [<srcLoc>] ; different from earlier code but same pattern
+	,
+		INC(R32)                    //inc regB ; loop increment
+	];
+
+	let prefix, suffix;
+	if (isNewType) //VC14.16 newer
+	{
+		prefix = parts[2] + parts[1];
+		suffix = parts[0];
+	}
+	else if (Exe.Version > 11) //VC14.16 older
+	{
+		prefix = '';
+		suffix = parts.join('');
+	}
+	else //VC11
+	{
+		prefix = parts[1] + parts[2];
+		suffix = parts[0];
+	}
+	let addr = Exe.FindHex(prefix + suffix, hookAddr + code.byteCount(), hookAddr + 0x100);
+	if (addr < 0)
+		throw Error("Loop increment missing");
+
+	/// 1.4 - Extract the addition instruction & the block size value (immediate argument)
+	let sizeAdd = Instr.FromAddr(addr + prefix.byteCount());
+	let blockSize = sizeAdd.Immd;
+
+	/// 1.5 - Setup the register to be used with the block size
+	let blockReg = isNewType ? ECX : R32.List[sizeAdd.MRM.RegM];
+
+	/// 1.6 - Extract the original instruction at the hook address & the displacement
+	let leaIns = Instr.FromAddr(hookAddr);
+	let iiOffset = leaIns.Disp;
+
+	/// 2.1 - Construct the function code in parts which varies based on isNewType
+	let viewOffset = (isNewType || Exe.BuildDate) < 20171000 ? 112 : 116;
+	let locOffset = isNewType ? 8 : 4;
+	parts = [
+		leaIns          //lea ecx, [ebp + <iiOffset>]
+	+	PUSH_EAX        //push eax
+	,
+		''
+	,
+		MOVZX(EAX, [blockReg, blockSize])      //movzx eax, dword ptr [<blockReg> + <blockSize>]
+	+	MOV([EBP, iiOffset + viewOffset], EAX) //mov dword ptr [ebp + <iiOffset> + <viewOffset>], eax
+	+	MOV(EAX, [blockReg, blockSize + 2])    //mov eax, dword ptr [<blockReg> + <blockSize> + 2]
+	+	MOV([EBP, iiOffset + locOffset], EAX)  //mov dword ptr [ebp + <iiOffset> + <locOffset>], eax
+	,
+		''
+	,
+		POP(EAX)        //pop eax
+	+	JMP(Filler(1))  //jmp retnAddr ; after the original LEA
+	];
+
+	if (isNewType)
+	{
+		/// 2.2 - For newer formats, find the end of the loop (the conditional jump)
+		addr = sizeAdd.Addr + suffix.byteCount();
+		code =
+			CMP(R32, R32)  //cmp regA, regB ; loop var < final value
+		+	JL(NEG2WC)     //jl _loop
+		;
+
+		let endAddr = Exe.FindHex(code, addr, addr + 0x30);
+		if (endAddr < 0)
+			throw Error("End of Loop missing");
+
+		endAddr += code.byteCount();
+
+		/// 2.3 - Goto the JL's target
+		addr = Exe.GetTgtAddr(endAddr - 4, PHYSICAL);
+
+		/// 2.4 - Find the assignment to stack location from ECX before it.
+		let beginAddr = Exe.FindLastHex(MOV([EBP, NEG2WC], ECX), addr, addr - 0x30);
+		if (beginAddr < 0)
+			throw Error("Starting point missing");
+
+		/// 2.5 - Extract the offset/displacement used in the instruction
+		let offset = Exe.GetInt32(beginAddr + 2);
+
+		/// 2.6 - Now fill the gaps
+		parts[1] =
+			PUSH(ECX)                //push ecx
+		+	MOV(ECX, [EBP, offset])  //mov ecx, dword ptr [ebp + offset]
+		;
+		parts[3] =
+			POP(ECX)                 //pop ecx
+		;
+	}
+
+	/// 3.1 - Allocate space for the code
+	let free = Exe.FindSpace(parts.byteCount());
+	if (free < 0)
+		throw NO_ALLOC;
+
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+
+	/// 3.2 - Fill in the blanks
+	code = SetFillTarget(parts, 1, Exe.Phy2Vir(leaIns.NextAddr, CODE), freeVir, 1);
+
+	/// 3.3 - Add at allocated space
+	Exe.AddHex(free, code);
+
+	/// 3.4 - Setup the jump to it
+	Exe.SetJMP(hookAddr, freeVir, 1); //1 NOP afterwards to keep it clean.
+
+	/// 3.5 - Update the block size (4 bytes for the location & 2 for viewSprite)
+	Exe.SetInt8(sizeAdd.NextAddr - 1, sizeAdd.Immd + 6);
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients
+///
+PreviewInShop.validate = () =>
+	Exe.BuildDate > 20151000;
+
+///
+/// \brief Rerun SendClientFlags if it was selected
+///
+PreviewInShop.cleanup = function()
+{
+	let patchName = "SendClientFlags";
+	if (Exe.IsSelected(patchName))
+	{
+		Exe.ClearPatch(patchName);
+		Exe.SetActivePatch(patchName);
+		SendClientFlags();
+	}
 };

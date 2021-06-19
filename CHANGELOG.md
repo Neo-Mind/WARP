@@ -1,3 +1,41 @@
+# 2021-06-20 Changes
+
+## Patch Updates
+- Updated SwapFiller & SetFillTarget functions to accept array of strings.
+- Added IsMain member to ROC object
+- Slightly hanged the title of OpenToServiceSelect patch.
+- Added patches to
+	- Restore Auto Follow
+	- Hide Ingame Windows
+	- Draw Shield on Top
+	- Fix Achievement Counters
+
+# 2021-06-17 Changes
+
+## Patch Updates
+- Added patches to
+	- Enable Custom Homunculi
+	- [Fix homunculus attack AI](https://github.com/Neo-Mind/WARP/issues/38)
+	- Send client flags
+	- Allow all items in Shortcut
+	- Remove Adventurer Agency from Party
+	- Fix Charset for Fonts
+	- Customize Merchant store URL
+	- Hide packets from PEEK
+	- Use 'identified' drops for Boss (MVP) mob
+	
+- Added cleanup function to PreviewInShop to work with Send Client Flags patch
+- Started fine tuning & comment fixes in scripts
+- Updated some of the entries in Patch list (Patches.yml)
+
+# 2021-06-14 Changes
+
+## Patch Updates
+- Added patch to [Enable item preview in Cash Shop](https://github.com/Neo-Mind/WARP/issues/17).
+- Added patch to Decrease the zoom to 25% of Maximum.
+- Fixed 1 remaining bug with Hide Buttons patch for new UI for slightly older clients.
+- Fixed 1 bug in conversion of float to IEEE hex string.
+
 # 2021-06-12 Changes
 
 ## Patch Updates

@@ -1,0 +1,146 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2021 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Andrei, Neo-Mind                                       *
+*   Created Date  : 2021-06-16                                             *
+*   Last Modified : 2021-06-18                                             *
+*                                                                          *
+\**************************************************************************/
+
+//TODO - might need to split up the hair limit change to a separate patch
+
+///
+/// \brief Modify the Job ID used in Character create Window creation code.
+///        Also modifies the hair limit used in new clients (since it shows the head sprites)
+///
+CustomCharCreateSecond = function()
+{
+	/// 1.1 - Search for doram character job id
+	let code =
+		SUB(EAX, 0)         //sub eax, 0
+	+	JZ(WCp)             //jz short _skip
+	+	(Exe.Version > 11
+	?
+		SUB(EAX, 1)         //sub eax, 1
+	:                       //  OR
+		DEC(EAX)            //dec eax
+	)
+	+	JNZ(WCp)            //jnz short _skip2
+	+	MOV(EAX, 0x107A)    //mov eax, 107Ah
+	;
+
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("Pattern not found");
+
+	/// 1.2 - Save the address where the job id is assigned.
+	let doramAddr = addr + code.byteCount() - 4;
+
+	let doramIconAddr = -1, doramHairAddr = -1;
+	if ((ROC.IsZero && Exe.BuildDate > 20171200) || Exe.BuildDate > 20180300)
+	{
+		/// 1.3 - For newer clients, look for the icon setting for doram
+		let parts =
+		[
+			Exe.Version === 11
+		?
+			XOR(EBX, EBX)           //xor ebx, ebx
+		+	CMP([EDI, POS3WC], 1)   //cmp dword ptr [edi + UIDescriptRace.is_doram], 1
+		:
+			XOR(EAX, EAX)           //xor eax, eax
+		,
+			Exe.Version === 11
+		?
+			MOV(EAX, 0x107A)        //mov eax, 107Ah
+		+	CMOVZ(EBX, EAX)         //cmovz ebx, eax
+		+	XOR(EAX, EAX)           //xor eax, eax
+		:
+			MOV(ESI, 0x107A)        //mov esi, 107Ah
+		+	CMP([EDI, POS3WC], 1)   //cmp dword ptr [edi + UIDescriptRace.is_doram], 1
+		+	CMOVNZ(ESI, EAX)        //cmovnz esi, eax
+		,
+			CMP([EDI, POS3WC], AL)  //cmp dword [edi + UIDescriptRace.is_not_doram], al
+		+	MOV([EBP, NEG3WC], R32) //mov [ebp + dispA], esi/ebx
+		+	SETNZ(AL)               //setnz al
+		];
+
+		addr = Exe.FindHex(parts);
+		if (addr < 0)
+			throw Error("Icon pattern not found");
+
+		/// 1.4 - Save the address where the job id is assigned
+		doramIconAddr = addr + parts.byteCount(0) + 1;
+
+		// let gAddr = Exe.FindText("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\make_character_ver2\\img_hairStyle_doramGirl%02d.bmp");
+		// if (gAddr < 0)
+			// throw Error("Doram girl's string missing");
+
+		/// 1.5 - Finally look for the hair limit
+		parts =
+		[
+			CMP(EAX, 1)             //cmp eax, 1
+		+	JNZ(WCp)                //jnz short _skip
+		+	CMP([ESI, POS2WC], 5)   //cmp dword ptr [esi + UIHairStyleButton.selected_hair_id], 5
+		,
+			MOV(ECX, [ESI, POS2WC]) //mov ecx, dword ptr [esi + UIHairStyleButton.hair_style_button]
+		+	JG(WCn)                 //jg short _skip2
+		];
+		addr = Exe.FindHex(parts);
+		if (addr < 0)
+			throw Error("Hair pattern not found");
+
+		/// 1.6 - Save the address where the limit is assigned
+		doramHairAddr = addr + parts.byteCount(0) - 1;
+	}
+
+	/// 2.1 - Get the new job id from user
+	let varName = '$secondJob';
+	let newJob = Exe.GetUserInput(varName, D_Uint32, "Job ID input", "Enter the new second job id for char creation (character):", 0x107A, {max: 5000});
+	if (newJob === false)
+		Cancel('Job ID', 0x107A);
+
+	/// 2.2 - Replace at the saved addresses
+	Exe.SetFromVar(doramAddr, varName);
+	if (doramIconAddr > 0)
+		Exe.SetFromVar(doramIconAddr, varName);
+
+	if (doramHairAddr > 0)
+	{
+		/// 2.2 - Get the new hair limit from user
+		varName = '$secondHairLimit';
+		newHairLimit = Exe.GetUserInput(varName, D_Uint8, "Hair Limit", "Enter the new hair limit for the second job", 6, {min: 1, max: 30, saveDefault: true});
+
+		/// 2.3 - If it has been changed, then replace at the saved address
+		if (newHairLimit !== 6)
+			Exe.SetFromVar(doramHairAddr, newHairLimit);
+	}
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients (Need to have doram)
+///
+CustomCharCreateSecond.validate = () =>
+	Exe.BuildDate > 20151000
+;

@@ -1,0 +1,159 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020-2021 CH.C (jchcc)                                   *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CH.C (jchcc)                                           *
+*   Created Date  : 2021-06-14                                             *
+*   Last Modified : 2021-06-19                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Use a custom table to apply the correct charset for Official Custom Fonts on all Langtypes
+///
+FixFontsCharset = function()
+{
+	/// 1.1 - Find the g_fontCharSet assignment inside DrawDC::SetFont function
+	let parts;
+	
+	switch (Exe.Version)
+	{
+		case 6:
+		case 9:
+			if (Exe.BuildDate < 20130000)
+			{
+				parts = 
+				[
+					TEST(ESI, ESI)       // test esi, esi
+				+	POP(ESI)             // pop esi
+				+	JNZ(WCp)             // jnz short _skip
+				+	CMP(EAX, 0x14)       // cmp eax, 14h
+				+	JL(WCp)              // jl short _skip
+				+	MOV([ECX, WCp], EAX) // mov dword ptr [ecx + DrawDC.m_fontType], eax
+				+	MOV(EAX, ROC.HasFP ? [EBP, 0xC] : [ESP, 0x8]) // mov eax, dword ptr [ARG.2]
+				+	MOV([ECX, WCp], EAX) // mov dword ptr [ecx + DrawDC.m_fontHeight], eax
+				,
+					MOV(EDX, [POS4WC])   // mov dword ptr edx, [g_fontCharSet]
+				];
+				break;
+			}
+			
+		case 10:
+			parts =
+			[
+				TEST(EDI, EDI)       // test edi, edi
+			+	POP(EDI)             // pop edi	
+			+	POP(ESI)             // pop esi
+			+	JNZ(POS1WC)          // jnz _skip
+			+	CMP(EAX, 0x14)       // cmp eax, 14h
+			+	JL(POS1WC)           // jl _skip
+			+	MOV([ECX, WCp], EDX) // mov dword ptr [ecx + DrawDC.m_fontHeight], edx
+			+	MOV(DL, ROC.HasFP ? [EBP, 0x10] : [ESP, 0xC]) //mov dl, byte ptr [ARG.3]
+			+	MOV([ECX, WCp], EAX) // mov dword ptr [ecx + DrawDC.m_fontType], eax
+			,
+				MOV(EAX, [POS4WC])   // mov dword ptr edx, [g_fontCharSet]
+			];
+			break;
+		
+		case 11:
+			parts = 
+			[
+				TEST(EDI, EDI)       // test edi, edi
+			+	JNZ(POS1WC)          // jnz _skip
+			+	CMP(EDX, 0x14)       // cmp edx, 14h
+			+	JL(POS1WC)           // jl _skip
+			+	MOV([ESI, WCp], EDX) // mov dword ptr [esi + DrawDC.m_fontType], edx
+			+	MOV([ESI, WCp], ECX) // mov dword ptr [esi + DrawDC.m_fontHeight], ecx
+			,
+				MOV(EAX, [POS4WC])   // mov dword ptr eax, [g_fontCharSet]
+			];
+			break;
+		
+		default: //VC14.16
+			parts =
+			[
+				MOV([ESI, WCp], EDX) // mov dword ptr [esi + DrawDC.m_fontType], edx
+			+	MOV([ESI, WCp], ECX) // mov dword ptr [esi + DrawDC.m_fontHeight], ecx
+			+	TEST(EDI, EDI)       // test edi, edi
+			+	JNZ(0xA)             // jnz short _skip
+			,
+				MOV(EAX, [POS4WC])   // mov dword ptr eax, [g_fontCharSet]
+			+	CMP(EDX, 0x14)       // cmp edx, 14h
+			+	JGE(7)               // jge short _next
+			];
+			break;
+	}
+	
+	let addr = Exe.FindHex(parts);
+	if (addr < 0)
+		throw Error("Function not found");
+	
+	/// 1.2 - Extract the g_fontCharSet assignment instruction
+	let movIns = Instr.FromAddr(addr + parts.byteCount(0));
+	
+	/// 1.3 - Find the table value retrieval using g_fontCharSet
+	addr = Exe.FindHex(MOV(EAX, [4, R32, movIns.Disp])); // mov eax, dword ptr [reg32_A * 4 + g_fontCharSet]
+	if (addr < 0)
+		throw Error("Table value retrieval missing");
+	
+	/// 1.4 - Extract the instruction
+	movIns = Instr.FromAddr(addr);
+	
+	/// 2.1 - Load the LANGTYPE object
+	LANGTYPE.load();
+	
+	/// 2.2 - Construct our own code in parts
+	parts =
+	[
+		CMP(R32.List[movIns.SIB.Index], 0x14)  // cmp dword ptr reg32_A, 14h
+	+	JGE(Filler(1, 1))                      // jge short _next
+	+	movIns                                 // mov eax, dword ptr [regA*4 + g_fontCharSet]
+	+	JMP(Filler(2))                         // jmp <retnAddr>
+	,                                             
+		MOV(EDI, [LANGTYPE])                   // mov edi, dword ptr [g_serviceType]
+	+	MOVZX(EAX, BYTE_PTR, [EDI, Filler(3)]) // movzx eax, byte ptr [edi + newCharsetTbl]
+	+	JMP(Filler(2))                         // jmp <retnAddr>
+	];
+	let csize = parts.byteCount();
+	
+	/// 2.3 - Construct our new charset table
+	let csTbl = " 81 00 80 86 88 DE 00 00 00 00 00 00 00 00 CC A3 00 00 00 B2 00";
+	
+	/// 2.4 - Allocate space for both
+	let free = Exe.FindSpace(csize + csTbl.byteCount());
+	if (free < 0)
+		throw NO_ALLOC;
+	
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+	
+	/// 2.5 - Fill in the blanks
+	let code = SetFillTarget(parts, [1, 1], parts.byteCount(0), 0, 1);
+	code = SetFillTarget(code, 2, Exe.Phy2Vir(movIns.NextAddr, CODE), 2);
+	code = SwapFiller(code, 3, freeVir + csize, 1);
+	
+	/// 2.6 - Add at allocated space
+	Exe.AddHex(free, code + csTbl);
+	
+	/// 2.7 - Create a JMP to our code at the assignment location (NOPs appended at end for clean replacement)
+	Exe.SetJMP(movIns.Addr, freeVir, movIns.size - 5);
+	
+	return true;
+};

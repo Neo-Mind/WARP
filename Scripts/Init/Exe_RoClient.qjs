@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-06-19                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -47,10 +47,13 @@ if (typeof ROC === 'undefined')
 			$$(_ + '1.2 - Zero clients will have the RenewSetup Zero string')
 			this.IsZero = (Exe.FindText("Software\\Gravity Soft\\RenewSetup Zero", PHYSICAL, false) > 0);
 
-			$$(_ + '1.3 - Check for clients with 2010+ build date')
+			$$(_ + '1.3 - If neither then it is a main client')
+			this.IsMain = !this.IsRenewal && !this.IsZero;
+
+			$$(_ + '1.4 - Check for clients with 2010+ build date')
 			this.Post2010 = Exe.BuildDate > 20100000;
 
-			$$(_ + '1.4 - Check for Frame Pointer by searching for the characteristic PUSH EBP & MOV EBP, ESP as the first statement of a function')
+			$$(_ + '1.5 - Check for Frame Pointer by searching for the characteristic PUSH EBP & MOV EBP, ESP as the first statement of a function')
 			$$(_ + '      To avoid false match we will prefix sequence of INTs (some clients have NOPs instead)')
 			let fromAddr = Exe.GetSectBegin(CODE);
 			let toAddr = fromAddr + 0x500;
@@ -61,10 +64,10 @@ if (typeof ROC === 'undefined')
 
 			this.HasFP = (addr > 0);
 
-			$$(_ + '1.5 - Check the build date & Zero status for Hidden Login Window')
+			$$(_ + '1.6 - Check the build date & Zero status for Hidden Login Window')
 			this.HasLWhidden = Exe.BuildDate > 20100803 && (Exe.BuildDate < 20171018 || (Exe.BuildDate < 20181114 && !this.IsZero));
 
-			$$(_ + '1.6 - Check for packet key presence')
+			$$(_ + '1.7 - Check for packet key presence')
 			this.HasPktKeys = Exe.BuildDate >= 20110817;
 
 			$$(_ + '2.1 - Get the address of "NC_CashShop", Roulette bmp string & "adventurerAgency"')

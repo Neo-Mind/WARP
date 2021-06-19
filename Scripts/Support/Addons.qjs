@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-01-16                                             *
+*   Last Modified : 2021-06-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -110,10 +110,10 @@ Number.prototype.toIEEE = function(bigEndian = false)
 		for (; num < 1; num *= 2.0, exp--);
 	}
 
-	else if (num > 2)
+	else if (num >= 2)
 	{
-		$$(_ + '2.2 - For numbers > 2 , increment the exponent')
-		for (; num > 2; num /= 2.0, exp++);
+		$$(_ + '2.2 - For numbers >= 2 , increment the exponent')
+		for (; num >= 2; num /= 2.0, exp++);
 	}
 
 	$$(_ + '2.3 - Suffix the exponent + 127 to the binary (ensure 8 bits)')
@@ -377,15 +377,26 @@ String.prototype.byteCount = function()
 };
 
 ///
-/// \brief Same as above but calculates the total byte count of all the hex strings inside. Returns -1 if none of them are hex strings
+/// \brief Same as above but calculates the total byte count of all the hex strings inside.
+///        If indices are provided then only those set of strings are used in the calculation.
+///        Returns -1 for out of bounds index and 0 for empty/invalid array
 ///
-Array.prototype.byteCount = function()
+Array.prototype.byteCount = function(idx, endIdx)
 {
-	let hexList = this.filter( val => IsStr(val) && val.isHex() );
-	if (hexList.isEmpty())
-		return -1;
+	if (typeof idx === 'number' && idx >= 0)
+	{
+		if (idx >= this.length)
+			return -1;
+
+		if (typeof endIdx !== 'number' || endIdx < idx)
+			endIdx = idx;
+
+		return this.reduce( (acc, val, i) => (i >= idx && i <= endIdx && typeof val === 'string' && val.isHex()) ? acc + val.byteCount() : acc, 0 );
+	}
 	else
-		return hexList.reduce( (acc, str) => acc + str.byteCount(), 0 );
+	{
+		return this.reduce( (acc, val) => (typeof val === 'string' && val.isHex()) ? acc + val.byteCount() : acc, 0 );
+	}
 };
 
   //===========//

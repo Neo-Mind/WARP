@@ -1,0 +1,82 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020-2021 CH.C (jchcc)                                   *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CH.C (jchcc)                                           *
+*   Created Date  : 2021-06-16                                             *
+*   Last Modified : 2021-06-18                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Fix for 2012 and older.
+//        Ensure IDs are valid. Maybe make it a D_MultiList instead of D_InFile
+
+///
+/// \brief Modify the switch table in UIWindowMgr::MakeWindow to 
+///        make specified windows go to default case.
+///
+HideGameWindows = function()
+{
+	/// 1.1 - Ensure WINMGR is loaded
+	WINMGR.load();
+	
+	/// 1.2 - Get the PHYSICAL address of UIWindowMgr::MakeWindow function
+	let makeWnd = Exe.Vir2Phy(WINMGR.MakeWin, CODE);
+
+	/// 1.3 - Find the switch table inside 
+	let code =
+		MOVZX(EAX, BYTE_PTR, [R32, POS3WC]) //movzx eax, byte ptr [eax + idxTbl]
+	+	JMP([4, EAX, POS3WC])               //jmp dword ptr [eax*4 + jmpTbl]
+	;
+	
+	let addr = Exe.FindHex(code, makeWnd, makeWnd + 0x200);
+	if (addr < 0)
+		throw Error("Switch table missing");
+	
+	/// 1.4 - Extract the base address of the idxTbl
+	let idxTblAddr = Exe.GetInt32(addr + 3);
+	let itPhy = Exe.Vir2Phy(idxTblAddr, CODE);
+	
+	/// 1.5 - Extract the index for the default case (id = 54 would have it) and 
+	///       ensure id #67 also has the same one (testing for false positive)
+	///
+	let dfCase = Exe.GetInt8(itPhy + 54);
+	if (dfCase !== Exe.GetInt8(itPhy + 67))
+		throw Error("False match found");
+	
+	/// 2.1 - Get the list file from user
+	let inFile = Exe.GetUserInput('$disableWindows', D_InFile, "Window List", "Enter the file containing the list of window ids", "Inputs/WindowIDs.yml",  {filters: YMLFILTER});
+	if (inFile === false)
+		Cancel("No List file specified");
+	
+	/// 2.2 - Load the YAML file
+	let WinIDs = Warp.LoadYaml(inFile);
+	if (WinIDs === false) //some error occured while loading
+		return false;
+		
+	else if (!IsArr(WinIDs))
+		throw Error("Need a list of Window IDs");
+
+	/// 2.3 - Change the index for all the ids specified.
+	WinIDs.forEach( id => Exe.SetInt8(idxTblAddr + id, dfCase) );
+	
+	return true;
+};
