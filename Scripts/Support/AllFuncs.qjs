@@ -92,8 +92,6 @@ IsByte = function(v, signed = true)
 ///
 Filler = (idx, bc = 4) =>
 	(' ??'.repeat(Math.abs(bc)) + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.trunc(Math.abs(bc)));
-	// (ALLWC + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.trunc(bc));
-
 
 ///
 /// \brief Background function for performing multiple swaps
