@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-06-17                                             *
+*   Last Modified : 2021-06-19                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -477,7 +477,7 @@ CustomShields = function()
 	];
 
 	/// 7.6 - Fill the blanks
-	code = SetFillTarget(parts.join(''), [1, 1], parts.byteCount(0), 0, 1); //for jz _skip_OR
+	code = SetFillTarget(parts, [1, 1], parts.byteCount(0), 0, 1); //for jz _skip_OR
 	code = SetFillTarget(code, 2, funcAddr, Exe.Phy2Vir(addr, CODE), 1);
 
 	/// 7.7 - Replace the function being CALLed

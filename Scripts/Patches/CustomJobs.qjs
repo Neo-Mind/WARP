@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-06-17                                             *
+*   Last Modified : 2021-06-19                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -262,7 +262,7 @@ CustomJobs = function()
 				switch (ins.Codes[0])
 				{
 					case 0x8D:
-						if (ins.MRM.Mode === 1 && ins.MRM.RegO === 0 && Exe.GetUint8(ins.NextAddr) === 0x50) //lea eax, [LOCAL.x] 
+						if (ins.MRM.Mode === 1 && ins.MRM.RegO === 0 && Exe.GetUint8(ins.NextAddr) === 0x50) //lea eax, [LOCAL.x]
 						{                                                                                    //push eax
 							let opcode = Exe.GetUint8(ins.NextAddr + 1);
 
@@ -763,7 +763,7 @@ CustomJobs = function()
 		+	MOV(CL, [EAX])                        //mov cl, dword ptr [eax]
 		+	TEST(CL, CL)                          //test cl, cl
 		+	JE(Filler(6, 1))                      //je short _idxInc
-		
+
 		,//2
 			MOV(strLoc, EAX)                      //mov dword ptr [LOCAL.z], eax
 		+	PUSH_EAX                              //push eax   ; the name
@@ -786,7 +786,7 @@ CustomJobs = function()
 		];
 
 		let loff = parts.byteCount(0);
-		code = SetFillTarget(parts.join(''), 5, loff, 0, 1); //for jle _loop 
+		code = SetFillTarget(parts, 5, loff, 0, 1); //for jle _loop
 
 		let ioff = loff + parts.byteCount(1, 2);
 		templates[0] = SetFillTarget(code, [6, 1], ioff, 0, 1); //for je short _idxInc
@@ -818,7 +818,7 @@ CustomJobs = function()
 
 		/// 6.16 - Fill in the blanks
 		let hookVir = Exe.Phy2Vir(hookAddr, CODE);
-		
+
 		code = LUA.finalize(parts, hookVir);
 		code = SetFillTargets(code,
 			{

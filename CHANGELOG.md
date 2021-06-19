@@ -1,3 +1,15 @@
+# 2021-06-20 Changes
+
+## Patch Updates
+- Updated SwapFiller & SetFillTarget functions to accept array of strings.
+- Added IsMain member to ROC object
+- Slightly hanged the title of OpenToServiceSelect patch.
+- Added patches to
+	- Restore Auto Follow
+	- Hide Ingame Windows
+	- Draw Shield on Top
+	- Fix Achievement Counters
+
 # 2021-06-17 Changes
 
 ## Patch Updates

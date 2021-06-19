@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-03-12                                             *
+*   Last Modified : 2021-06-19                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,18 +39,18 @@ MultiGRFs = function(patchName)
 	/// 1.1 - Ensure the DGRF object is loaded
 	DGRF.load();
 
-	/// 1.2 - Retrieve the refAddr (PUSH location)
+	/// 1.2 - Retrieve the refAddr (push location)
 	let addr = DGRF.RefAddr;
 
-	/// 2.1 - Find the AddPak CALL after the PUSH
+	/// 2.1 - Find the AddPak call after the PUSH
 	let code, type;
 	switch (Exe.Version)
 	{
 		case 6: //VC6
 		{
 			code =
-				CALL(ALLWC)             //CALL CFileMgr::AddPak
-			+	MOV(EDI, POS3WC)        //MOV EDI, OFFSET addr2
+				CALL(ALLWC)             //call CFileMgr::AddPak
+			+	MOV(EDI, POS3WC)        //mov edi, offset#1
 			;
 			type = 1;
 			break;
@@ -61,9 +61,9 @@ MultiGRFs = function(patchName)
 		case 11: //VC11
 		{
 			code =
-				CALL(ALLWC)             //CALL CFileMgr::AddPak
-			+	MOV(R32, [POS3WC])      //MOV reg32, DWORD PTR DS:[addr1]
-			+	MOV(EAX, [POS3WC])      //MOV EAX, DWORD PTR DS:[addr2]
+				CALL(ALLWC)             //call CFileMgr::AddPak
+			+	MOV(R32, [POS3WC])      //mov regA, dword ptr [addr#1]
+			+	MOV(EAX, [POS3WC])      //mov eax, dword ptr [addr#2]
 			;
 			type = 2;
 			break;
@@ -71,8 +71,8 @@ MultiGRFs = function(patchName)
 		default: //VC14.16
 		{
 			code =
-				CALL(ALLWC)             //CALL CFileMgr::AddPak
-			+	MOV(EAX, [POS3WC])      //MOV EAX, DWORD PTR DS:[addr2]
+				CALL(ALLWC)             //call CFileMgr::AddPak
+			+	MOV(EAX, [POS3WC])      //mov eax, dword ptr [addr#2]
 			;
 			type = 3;
 			break;
@@ -85,24 +85,24 @@ MultiGRFs = function(patchName)
 		if (type === 3 || !ROC.Post2010) //VC14.16 & Pre-2010
 		{
 			code =
-				CALL(ALLWC)         //CALL CFileMgr::AddPak
-			+	PUSH(POS3WC)        //PUSH OFFSET addr; ASCII "rdata.grf" or ASCII "1pvpsak1"
+				CALL(ALLWC)         //call CFileMgr::AddPak
+			+	PUSH(POS3WC)        //push offset "rdata.grf" OR "1pvpsak1"
 			;
 			callAddr = Exe.FindHex(code, addr + 5, addr + 40);
 		}
 		else if (type === 2) //VC9 - VC11
 		{
-			code = code.replace(MOV(R32, [POS3WC]), "");
+			code = code.remove(MOV(R32, [POS3WC]));
 			callAddr = Exe.FindHex(code, addr + 5, addr + 40);
 		}
 	}
 	if (callAddr < 0)
-		throw Error("AddPak CALL not found");
+		throw Error("AddPak call not found");
 
 	/// 2.2 - Extract AddPak function address
 	let AddPak = Exe.Phy2Vir(callAddr + 5, CODE) + Exe.GetInt32(callAddr + 1);
 
-	/// 2.3 - Little trick to avoid changing 10 bytes (change the PUSH to MOV ECX, addr)
+	/// 2.3 - Little trick to avoid changing 10 bytes (change the push to MOV ECX, addr)
 	Exe.SetUint8(addr, 0xB9);
 
 	/// 3.1 - Run one of the helper functions below based on the patch name.
@@ -128,7 +128,7 @@ GRFsFromIni  = MultiGRFs;
 GRFsEmbedded = MultiGRFs;
 
 ///
-/// \brief Adds the function to read INI and hacks AddPak CALL which loads data.grf to use it
+/// \brief Adds the function to read INI and hacks AddPak call which loads data.grf to use it
 ///
 _MG_INI = (callAddr, AddPak) =>
 {
@@ -143,71 +143,89 @@ _MG_INI = (callAddr, AddPak) =>
 		throw Error("'KERNEL32.dll' not found");
 
 	/// 1.2 - Create the function code
-	let code =
-		ENTER(0x80, 0)                  //ENTER 80, 0
-	+	PUSHAD                          //PUSHAD
-	+	PUSH(ROC.Kernel32)              //PUSH addr1 ; ASCII "KERNEL32"
-	+	CALL([ROC.GetModHandle])        //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
-	+	TEST(EAX, EAX)                  //TEST EAX, EAX
-	+	JZ(0x23)                        //JZ SHORT addr2
-	+	MOV(EDI, [ROC.GetProcAddr])     //MOV EDI,DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
-	+	PUSH(Filler(1))                 //PUSH addr3 ; ASCII "GetPrivateProfileStringA"
-	+	MOV(EBX, EAX)                   //MOV EBX, EAX
-	+	PUSH_EAX                        //PUSH EAX ; hModule
-	+	CALL(EDI)                       //CALL EDI ; GetProcAddress()
-	+	TEST(EAX, EAX)                  //TEST EAX, EAX
-	+	JZ(0x0F)                        //JZ SHORT addr2
-	+	MOV([EBP, -0xA], EAX)           //MOV DWORD PTR SS:[EBP-0A], EAX
-	+	PUSH(Filler(2))                 //PUSH addr4 ; ASCII "WritePrivateProfileStringA"
-	+	MOV(EAX, EBX)                   //MOV EAX, EBX
-	+	PUSH_EAX                        //PUSH EAX ; hModule
-	+	CALL(EDI)                       //CALL EDI ; GetProcAddress()
-	+	TEST(EAX, EAX)                  //TEST EAX, EAX
-	+	JZ(0x6E)                        //JZ SHORT loc_735E71
-	+	MOV([EBP, -6], EAX)             //MOV DWORD PTR SS:[EBP-6], EAX
-	+	XOR(EDX, EDX)                   //XOR EDX, EDX
-	+	MOV(WORD_PTR, [EBP, -2], 0x39)  //MOV WORD PTR SS:[EBP-2], 39 ; char 9
-	+	PUSH(EDX)                       //PUSH EDX
-	+	PUSH(Filler(4))                 //PUSH addr5 ; INI filename
-	+	PUSH(0x74)                      //PUSH 74
-	+	LEA(EBX, [EBP, -0x7F])          //LEA EBX, [EBP-7F]
-	+	PUSH(EBX)                       //PUSH EBX
-	+	LEA(EAX, [EBP, -2])             //LEA EAX, [EBP-2]
-	+	PUSH_EAX                        //PUSH EAX
-	+	PUSH_EAX                        //PUSH EAX
-	+	PUSH(Filler(3))                 //PUSH addr6 ; ASCII "Data"
-	+	CALL([EBP, -0xA])               //CALL DWORD PTR SS:[EBP-0A]
-	+	LEA(ECX, [EBP, -2])             //LEA ECX, [EBP-2]
-	+	MOV(CX, [ECX])                  //MOV CX, WORD PTR DS:[ECX]
-	+	LEA(EBX, [EBP, -0x7F])          //LEA EBX, [EBP-7F]
-	+	CMP(CX, [EBX])                  //CMP CX, WORD PTR DS:[EBX]
-	+	POP(EDX)                        //POP EDX
-	+	JZ(0xE)                         //JZ SHORT addr7
-	+	PUSH(EDX)                       //PUSH EDX
-	+	PUSH(EBX)                       //PUSH EBX
-	+	DGRF.MovFMgr                    //MOV ECX, g_fileMgr
-	+	CALL(Filler(5))                 //CALL CFileMgr::AddPak()
-	+	POP(EDX)                        //POP EDX
-	+	INC(EDX)                        //INC EDX
-	+	DEC(BYTE_PTR, [EBP, -2])        //DEC BYTE PTR SS:[EBP-2]
-	+	CMP(BYTE_PTR, [EBP, -2], 0x30)  //CMP BYTE PTR SS:[EBP-2], 30
-	+	JNB(-0x3F)                      //JNB SHORT addr8
-	+	TEST(EDX, EDX)                  //TEST EDX, EDX
-	+	JNZ(0x20)                       //JNZ SHORT addr9
-	+	PUSH(Filler(4))                 //PUSH addr5 ; INI filename
-	+	PUSH(DGRF.Addr)                 //PUSH OFFSET addr ; "data.grf"
-	+	MOV(WORD_PTR, [EBP, -2], 0x32)  //MOV WORD PTR SS:[EBP-2], 32
-	+	LEA(EAX, [EBP, -2])             //LEA EAX, [EBP-2]
-	+	PUSH_EAX                        //PUSH EAX
-	+	PUSH(Filler(3))                 //PUSH addr6 ; ASCII "Data"
-	+	CALL([EBP, -6])                 //CALL DWORD PTR SS:[EBP-6]
-	+	TEST(EAX, EAX)                  //TEST EAX, EAX
-	+	JNZ(-0x69)                      //JNZ SHORT
-	+	POPAD                           //POPAD
-	+	LEAVE                           //LEAVE
-	+	RETN() + " 00"                  //RETN and a gap before strings begin
-	;
-
+	let parts = 
+	[	
+		ENTER(0x80, 0)                  //enter 80h, 0
+	+	PUSHAD                          //pushad
+	+	PUSH(ROC.Kernel32)              //push offset "KERNEL32"
+	+	CALL([ROC.GetModHandle])        //call dword ptr [<&KERNEL32.GetModuleHandleA>]
+	+	TEST(EAX, EAX)                  //test eax, eax
+	+	JZ(Filler(1))                   //jz _codeOver
+	
+	,//1
+		MOV(EDI, [ROC.GetProcAddr])     //mov edi, dword ptr [<&KERNEL32.GetProcAddress>]
+	+	PUSH(Filler(10))                //push offset "GetPrivateProfileStringA"
+	+	MOV(EBX, EAX)                   //mov ebx, eax
+	+	PUSH_EAX                        //push eax ; hModule
+	+	CALL(EDI)                       //call edi ; GetProcAddress()
+	+	TEST(EAX, EAX)                  //test eax, eax
+	+	JZ(Filler(1))                   //jz _codeOver
+	
+	,//2
+		MOV([EBP, -0xA], EAX)           //mov dword ptr [ebp-0Ah], eax
+	+	PUSH(Filler(11))                //push offset "WritePrivateProfileStringA"
+	+	MOV(EAX, EBX)                   //mov eax, EBX
+	+	PUSH_EAX                        //push eax ; hModule
+	+	CALL(EDI)                       //call edi ; GetProcAddress()
+	+	TEST(EAX, EAX)                  //test eax, eax
+	+	JZ(Filler(1, 1))                //jz short _codeOver
+	
+	,//3
+		MOV([EBP, -6], EAX)             //mov dword ptr [ebp-6], eax
+	+	XOR(EDX, EDX)                   //xor edx, edx
+	
+	,//4
+		MOV(WORD_PTR, [EBP, -2], 0x39)  //mov word ptr [ebp-2], '9' ; _loopOuter
+	
+	,//5
+		PUSH(EDX)                       //push edx ; _loopInner
+	+	PUSH(Filler(13))                //push offset <INI filename>
+	+	PUSH(0x74)                      //push 74h
+	+	LEA(EBX, [EBP, -0x7F])          //lea ebx, [ebp-7Fh]
+	+	PUSH(EBX)                       //push ebx
+	+	LEA(EAX, [EBP, -2])             //lea eax, [ebp-2]
+	+	PUSH_EAX                        //push eax
+	+	PUSH_EAX                        //push eax
+	+	PUSH(Filler(12))                //push offset "Data"
+	+	CALL([EBP, -0xA])               //call dword ptr [ebp-0Ah]
+	+	LEA(ECX, [EBP, -2])             //lea ecx, [ebp-2]
+	+	MOV(CX, [ECX])                  //mov cx, word ptr [ecx]
+	+	LEA(EBX, [EBP, -0x7F])          //lea ebx, [ebp-7Fh]
+	+	CMP(CX, [EBX])                  //cmp cx, word ptr [ebx]
+	+	POP(EDX)                        //pop edx
+	+	JZ(0xE)                         //jz short _next
+	+	PUSH(EDX)                       //push edx
+	+	PUSH(EBX)                       //push ebx
+	+	DGRF.MovFMgr                    //mov ecx, offset <g_fileMgr>
+	+	CALL(Filler(14))                 //call CFileMgr::AddPak()
+	+	POP(EDX)                        //pop edx
+	+	INC(EDX)                        //inc edx
+	+	DEC(BYTE_PTR, [EBP, -2])        //dec byte ptr [ebp-2] ; _next
+	+	CMP(BYTE_PTR, [EBP, -2], 0x30)  //cmp byte ptr [ebp-2], 30h
+	+	JNB(Filler(2, 1))               //jnb short _loopInner
+	
+	,//6
+		TEST(EDX, EDX)                  //test edx, edx
+	+	JNZ(Filler(1, 1))               //jnz short _codeOver
+	
+	,//7
+		PUSH(Filler(13))                //push offset <INI filename>
+	+	PUSH(DGRF.Addr)                 //push offset "data.grf"
+	+	MOV(WORD_PTR, [EBP, -2], 0x32)  //mov word ptr [ebp-2], 32h
+	+	LEA(EAX, [EBP, -2])             //lea eax, [ebp-2]
+	+	PUSH_EAX                        //push eax
+	+	PUSH(Filler(12))                //push offset "Data"
+	+	CALL([EBP, -6])                 //call dword ptr [EBP-6]
+	+	TEST(EAX, EAX)                  //test eax, eax
+	+	JNZ(Filler(3, 1))               //jnz short _loopOuter
+	
+	,//8
+		POPAD                           //popad ; _codeOver
+	+	LEAVE                           //leave
+	+	RETN() + ' 00'                  //retn ; followed by 1 byte gap before strings begin
+	];
+	let csize = parts.byteCount();
+	
 	/// 2.1 - Get the INI file name from user
 	let iniFile = Exe.GetUserInput('$dataINI', D_Text, "INI File path", "Enter the name of the INI file", "DATA.INI", {minLen: 1, maxLen: 20, saveDefault: true});
 	if (iniFile === false || iniFile.trim().isEmpty())
@@ -222,37 +240,56 @@ _MG_INI = (callAddr, AddPak) =>
 	let strings = strList.join("\x00").toHex() + " 00";
 
 	/// 2.4 - Allocate space to add our function
-	let free = Exe.FindSpace(code.byteCount() + strings.byteCount(), 0x10);
+	
+	let free = Exe.FindSpace(csize + strings.byteCount(), 0x10);
 	if (free < 0)
 		throw NO_ALLOC;
 
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 
 	/// 2.5 - Fill in the blanks
-	let strPos = freeVir + code.byteCount();
-	strList.forEach( (str, idx) =>  //the strings
+	
+	// First the jumps
+	let outerOff = parts.byteCount(0, 3);         //offset for _loopOuter
+	let innerOff = outerOff + parts.byteCount(4); //offset for _loopInner
+	let overOff = csize - parts.byteCount(8);     //offset for _codeOver
+	
+	let code = SetFillTarget(parts, 1, overOff, 0);
+	code = SetFillTargets(code,
 	{
-		code = SwapFiller(code, idx + 1, strPos, 2);
+		1: overOff,
+		2: innerOff,
+		3: outerOff,
+	}, 
+	0, -1, 1); //-1 for variable count & 1 for byte count
+	
+	// Next the strings
+	let strPos = freeVir + csize;
+	strList.forEach( (str, idx) =>
+	{
+		code = SwapFiller(code, idx + 10, strPos, 2);
 		strPos += str.length + 1;     //1 for null
 	});
-	code = SetFillTarget(code, 5, AddPak, freeVir, 1);//AddPak function
+	
+	// Finally the AddPak function
+	code = SetFillTarget(code, 14, AddPak, freeVir, 1);
 
 	/// 3.1 - Add the function at the allocated space
 	Exe.AddHex(free, code + strings);
 
-	/// 3.2 - Change the AddPak CALL to use our function
+	/// 3.2 - Change the AddPak call to use our function
 	Exe.SetTgtAddr(callAddr + 1, freeVir);
 };
 
 ///
-/// \brief Prepares the function to load grf files, adds it to the client and hacks AddPak CALL which loads data.grf to use it
+/// \brief Prepares the function to load grf files, adds it to the client and hacks AddPak call which loads data.grf to use it
 ///
 /// The grf file names are retrieved in order from user specified ini file
 ///
 _MG_EMB = (callAddr, AddPak) =>
 {
 	/// 1.1 - Get the INI file from user to read
-	let file = Exe.GetUserInput('$inpMultGRF', D_InFile, "File Input", "Enter your INI file", "Inputs/Sample_DATA.INI");
+	let file = Exe.GetUserInput('$inpMultGRF', D_InFile, "GRF List file", "Enter your INI file (containing GRF names) to embed", "Inputs/Sample_DATA.INI");
 	if (file === false)
 		Cancel("No input file received");
 
@@ -287,9 +324,9 @@ _MG_EMB = (callAddr, AddPak) =>
 
 	/// 2.1 - Prepare template for load 1 GRF (same needs to be repeated for all GRF files)
 	let template =
-		PUSH(Filler(1))  //PUSH OFFSET addr; GRF name
-	+	DGRF.MovFMgr     //MOV ECX, OFFSET g_fileMgr
-	+	CALL(Filler(2))  //CALL CFileMgr::AddPak()
+		PUSH(Filler(1))  //push offset <GRF name>
+	+	DGRF.MovFMgr     //mov ecx, offset <g_fileMgr>
+	+	CALL(Filler(2))  //call CFileMgr::AddPak
 	;
 	let tsize = template.byteCount();
 
@@ -306,7 +343,7 @@ _MG_EMB = (callAddr, AddPak) =>
 
 	/// 2.4 - Prepare the full code using the template with proper values
 	let strAddr = freeVir + grfNames.length * tsize + 2;    //Address of first string
-	let funAddr = AddPak - (strAddr - 2);                   //Difference value for Last AddPak CALL location (first string needs to be loaded last)
+	let funAddr = AddPak - (strAddr - 2);                   //Difference value for Last AddPak call location (first string needs to be loaded last)
 
 	let code = "";
 	grfNames.forEach( name =>
@@ -318,15 +355,15 @@ _MG_EMB = (callAddr, AddPak) =>
 		+ code;
 
 		strAddr += name.length + 1;  //Extra 1 for NULL byte
-		funAddr += tsize;            //Increasing the difference => CALL location is closer/lesser
+		funAddr += tsize;            //Increasing the difference => call location is closer/lesser
 	});
 
-	code += RETN() + " 00";//RETN and 1 extra NULL
+	code += RETN() + ' 00';//retn and 1 extra NULL byte
 
 	/// 2.5 - Add the function at the gap
 	Exe.AddHex(free, code + strings);
 
-	/// 2.6 - Change the AddPak CALL to use our function
+	/// 2.6 - Change the AddPak call to use our function
 	Exe.SetTgtAddr(callAddr + 1, freeVir);
 };
 

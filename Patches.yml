@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-06-14                                             #
+#   Last Modified : 2021-06-20                                             #
 #                                                                          #
 ############################################################################
 
@@ -271,7 +271,7 @@
         - PreviewInShop:
             title : Enable item preview in Cash Shop
             recommend : no
-            author : Andrei Karas (4144)
+            author : Andrei Karas (4144) , Neo-Mind
             desc: Add support for preview button in cash shop (right click the items to see the button)
 
 - RouletteVis:
@@ -893,12 +893,6 @@
             recommend : no
             author : CH.C (jchcc)
             desc : Decrease the auto follow delay to user specified value.
-        
-        # - RestoreAutoFollow:
-            # title : Restore auto follow
-            # recommend : no
-            # author : Andrei Karas (4144)
-            # desc : Restore the auto follow functionality in RO-zero clients.
 
 - CustomUI:
     title : UI CUSTOMIZATION
@@ -925,7 +919,7 @@
             desc : Jumps directly to the login interface without asking to select a service.
         
         - OpenToServiceSelect:
-            title : 'Opening' to service selection screen
+            title : Use 'Opening' for service selection
             recommend : yes
             author : CH.C (jchcc)
             desc : Enables the 'Opening' button in the new login screen to open the service selection screen again.
@@ -984,12 +978,6 @@
             author : Shakto
             desc : Allow player to create a guild with space in the name (<b>/guild "Spaced Name"</b>).
 
-        - NoDoramCreation:
-            title : Disable Doram character creation UI [Experimental]
-            recommend : no
-            author : Ai4rei/AN , Secret
-            desc : Disable Doram race in the character creation UI. Server-side disabling is also recommended.
-        
         - CustomInventoryLimit:
             title : Custom inventory limit
             recommend : no
@@ -1122,17 +1110,17 @@
             author : CH.C (jchcc)
             desc : Allow players to put all type of items on the shortcut window (makes it easy to trace).
         
-        # - FixAchieveCounters:
-            # title : Fix Achievement counters
-            # recommend : no
-            # author : Andrei Karas (4144)
-            # desc : Fix achievement counters for each type of achievement
+        - FixAchieveCounters:
+            title : Fix Achievement counters
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Fix achievement counters for each type of achievement
         
-        # - HideGameWindows:
-            # title : Hide in-game windows
-            # recommend : no
-            # author : CH.C (jchcc)
-            # desc : Allows user to hide specific in-game windows. User needs to provide a YAML file containing the list of Window IDs to be hidden.
+        - HideGameWindows:
+            title : Hide in-game windows
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Allows user to hide specific in-game windows. User needs to provide a YAML file containing the list of Window IDs to be hidden.
 
 - ButtonVis:
     title : BASIC BUTTON VISIBILITY
@@ -1374,11 +1362,17 @@
             author : Functor, Secret , Neo-Mind
             desc : Remove restriction of guild functionality while being a member of a clan.
         
-        # - DrawShieldOnTop:
-            # title : Draw Shield on top
-            # recommend : no
-            # author : Andrei Karas (4144)
-            # desc : Moves the shield sprite closer to camera for drawing on top of other player sprites.
+        - RestoreAutoFollow:
+            title : Restore auto follow
+            recommend : no
+            author : Andrei Karas (4144) , Neo-Mind
+            desc : Restore the auto follow functionality in RO-zero clients.
+            
+        - DrawShieldOnTop:
+            title : Draw Shield on top
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Moves the shield sprite closer to camera for drawing on top of other player sprites.
 
 - CharCreation:
     title : CHARACTER CREATION
@@ -1403,11 +1397,22 @@
             author : Andrei Karas (4144)
             desc : Override selected job id in character creation packet with user specified value.
 
-        # - CustomCharCreateSecond:
-            # title : Customize second job id in char create dialog
-            # recommend : no
-            # author : Andrei Karas (4144)
-            # desc : Change doram to user specified job id in character creation window.
+- DoramCharCreation:
+    title: CHARACTER CREATION (DORAM)
+    mutex: true
+    
+    patches:
+        - CustomCharCreateSecond:
+            title : Customize second job id in char create dialog
+            recommend : no
+            author : Andrei Karas (4144) , Neo-Mind
+            desc : Change doram to user specified job id in character creation window.
+        
+        - NoDoramCreation:
+            title : Disable Doram character creation UI [Experimental]
+            recommend : no
+            author : Ai4rei/AN , Secret
+            desc : Disable Doram race in the character creation UI. Server-side disabling is also recommended.
 
 - IncrHairs:
     title : INCREASE HAIRS
