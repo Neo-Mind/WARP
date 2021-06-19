@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144)                                 *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-06-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,9 +34,10 @@ if (typeof IZ_Data === 'undefined') //avoid redefinition
 {
 	IZ_Data =
 	{
-		Zoom150Percent : ( 510.0 .toIEEE()), //0x43FF0000
-		Zoom175Percent : ( 816.0 .toIEEE()), //0x444C0000
-		ZoomMax        : (1224.0 .toIEEE()), //0x44990000
+		Zoom25Percent : ( 256.0 .toIEEE()), //0x43800000
+		Zoom50Percent : ( 510.0 .toIEEE()), //0x43FF0000
+		Zoom75Percent : ( 816.0 .toIEEE()), //0x444C0000
+		ZoomMax       : (1224.0 .toIEEE()), //0x44990000
 	};
 }
 
@@ -63,7 +64,7 @@ IncrZoom = function(patchName)
 	Exe.SetHex(addr + 4, newDist);
 
 	/// 2.1 - Find the string '/zoom'
-	if (Exe.FindText("/zoom") > 0)
+	if (Exe.FindText("/zoom", PHYSICAL) > 0)
 	{
 		// If present, then we need some additional patching done - 4144
 
@@ -94,6 +95,7 @@ IncrZoom = function(patchName)
 		/// 3.1 - Find the '/zoom' enabled/disabled load configuration (in CSession_lua_configuration)
 		let parts = [
 			MOVSS(XMM1, [POS4WC])  //MOVSS XMM1, DWORD PTR DS:[zoom_max_load_enabled]
+
 		,//1
 			Exe.Version > 11
 		?
@@ -101,8 +103,10 @@ IncrZoom = function(patchName)
 		+	JMP(0x12)              //JMP SHORT addr1
 		:
 			JMP(8)                 //JMP SHORT addr1
+
 		,//2
 			MOVSS(XMM1, [POS4WC])  //MOVSS XMM1, DWORD PTR DS:[zoom_max_load_disabled]
+
 		,//3
 			(Exe.Version > 11
 		?
@@ -113,6 +117,7 @@ IncrZoom = function(patchName)
 		+	MOVSS(XMM0, [POS4WC])  //MOVSS XMM0, DWORD PTR DS:[some_addr]; addr1
 		+	MOVSS(XMM2, [POS4WC])  //MOVSS XMM2, DWORD PTR DS:[g_outdoorViewLatitude]
 		+	COMISS(XMM0, XMM2)	   //COMISS XMM0, XMM2
+
 		,//4
 			Exe.Version <= 11
 		?
@@ -140,6 +145,7 @@ IncrZoom = function(patchName)
 ///
 /// \brief Wrappers for individual patches
 ///
-Zoom150Percent = IncrZoom;
-Zoom175Percent = IncrZoom;
+Zoom25Percent = IncrZoom;
+Zoom50Percent = IncrZoom;
+Zoom75Percent = IncrZoom;
 ZoomMax        = IncrZoom;

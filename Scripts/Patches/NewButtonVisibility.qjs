@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-03-12                                             *
+*   Last Modified : 2021-06-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -115,7 +115,8 @@ NewButtonVis = function(patchName)
 
 			strPushers = [
 				...Exe.FindHexN(PUSH(POS4WC) + " 0F 28", beginAddr, beginAddr + 0x100),         //PUSH OFFSET name; followed by MOVAPS XMM0, DQWORD PTR DS:[memaddr]
-				...Exe.FindHexN(PUSH(POS4WC) + " C7 [..000101]", beginAddr, refAddr)            //PUSH OFFSET name; followed by MOV DWORD PTR
+				...Exe.FindHexN(PUSH(POS4WC) + " C7 [..000101]", beginAddr, refAddr),           //PUSH OFFSET name; followed by MOV DWORD PTR
+				...Exe.FindHexN(PUSH(POS4WC) + " 8D [10...101]", beginAddr, refAddr)            //PUSH OFFSET name; followed by LEA reg32, [LOCAL.x]
 			].sort();
 		}
 		if (idAssigners.isEmpty())
@@ -142,6 +143,8 @@ NewButtonVis = function(patchName)
 				idList.push(ins.Immd);
 			}
 		});
+		if (idList.length !== strPushers.length)
+			throw Error("Either String or ID missing");
 
 		/// 1.6 - Map & assign the IDs based on the strings PUSHed
 		strPushers.forEach((addr, idx) =>
@@ -441,10 +444,10 @@ _NBV_Stage = function(index)
 		if (NBV.Type === 1)
 		{
 			code +=
-				SUB(NBV.Reg, NBV.MinLimit) //SUB reg32, minLimit
-			+	CMP(NBV.Reg, NBV.Range)    //CMP reg32, range
-			+	JA(Filler(3))              //JA onAddr
-			+	JMP(Filler(4))             //JMP retnAddr; address of the MOVZX
+				LEA(EAX, [NBV.Reg, -NBV.MinLimit]) //LEA EAX, [reg32 - minLimit]
+			+	CMP(EAX, NBV.Range)                //CMP EAX, range
+			+	JA(Filler(3))                      //JA onAddr
+			+	JMP(Filler(4))                     //JMP retnAddr; address of the MOVZX
 			;
 		}
 		else

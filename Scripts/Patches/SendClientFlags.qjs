@@ -1,0 +1,94 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Andrei                                                 *
+*   Created Date  : 2021-06-15                                             *
+*   Last Modified : 2021-06-17                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the 'version' address being used and set up our own flag at the new address
+///
+SendClientFlags = function()
+{
+	if (typeof SCF_Addrs === 'undefined')
+	{
+		/// 1.1 - Find the string 'langtype'
+		let addr = Exe.FindText("langtype");
+		if (addr < 0)
+			throw Error("'langtype' not found");
+		
+		/// 1.2 - Find where it is PUSHed
+		addr = Exe.FindHex(PUSH(addr) + MOV(ECX, R32)); //push offset 'langtype'
+		                                                //mov ecx, regA
+		if (addr < 0)
+			throw Error("'langtype' not PUSHed");
+		
+		/// 1.3 - Find the assignment to g_clientAddr before it
+		addr = Exe.FindLastHex(MOV([POS4WC], EAX), addr, addr - 10); //mov dword ptr [g_clientAddr], eax
+		if (addr < 0)
+			throw Error("version address not assigned");
+		
+		/// 1.4 - Extract the address.
+		let clientAddr = Exe.GetInt32(addr + 1);
+		
+		/// 1.5 - Find all the register assignment using it's value as source. 6 occurences expected
+		let tgtAddrs = [];
+		[EAX, ECX, EDX].forEach(reg => 
+			tgtAddrs.push(...Exe.FindHexN(MOV(reg, [clientAddr])))
+		);
+		if (tgtAddrs.length !== 6)
+			throw Error("Unexpected no of version address references");
+		
+		/// 1.6 - Save the addresses
+		SCF_Addrs = tgtAddrs;
+	}
+	
+	/// 2.1 - Allocate space for our new version address
+	let free = Exe.FindSpace(4);
+	if (free < 0)
+		throw NO_ALLOC;
+	
+	let freeVir = Exe.Phy2Vir(free, DIFF);
+	
+	/// 2.2 - Setup the flag there.
+	Exe.SetInt32(free, 0x80000000 | (Exe.IsSelected("PreviewInShop") ? 1 : 0));
+	
+	/// 2.3 - Change the address used in all the 6 assignments
+	SCF_Addrs.forEach(addr =>
+	{
+		let ins = Instr.FromAddr(addr);
+		Exe.SetInt32(ins.NextAddr - 4, freeVir);
+	});
+	
+	return true;
+};
+
+///
+/// \brief Delete the global variable used when client loads. Patch is always valid.
+///
+SendClientFlags.validate = () =>
+{
+	delete SCF_Addrs;
+	return true;
+};

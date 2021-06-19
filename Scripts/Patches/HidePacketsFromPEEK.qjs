@@ -1,8 +1,9 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2021 X-EcutiOnner (xex.ecutionner@gmail.com)        *
 *                                                                          *
-*   This file is a part of WARP project (specific to RO clients)           *
+*   This file is a part of WARP project                                    *
 *                                                                          *
 *   WARP is free software: you can redistribute it and/or modify           *
 *   it under the terms of the GNU General Public License as published by   *
@@ -20,50 +21,27 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Shinryo                                                *
-*   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-06-10                                             *
+*   Author(s)     : Andrei, X-EcutiOnner                                   *
+*   Created Date  : 2021-06-16                                             *
+*   Last Modified : 2021-06-17                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Change one of the Login Background format strings (str1) to the other (str2) //
+/// \brief Fix up the pattern searched by PEEK
 ///
-SelectLoginBG = function(patchName)
+HidePacketsFromPEEK = function()
 {
-	/// 1 - Prepare Strings to Find and Replace
-	let prefix = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\T";
-	let src, tgt;
-	if (patchName === "OnlyFirstBG")
-	{
-		src = "2_\xB9\xE8\xB0\xE6" + "%d-%d.bmp";
-		tgt = "_\xB9\xE8\xB0\xE6" + "%d-%d.bmp\x00";
-	}
-	else
-	{
-		src = "_\xB9\xE8\xB0\xE6" + "%d-%d.bmp\x00";
-		tgt = "2_\xB9\xE8\xB0\xE6" + "%d-%d.bmp";
-	}
-
-	/// 2 - Find the src string
-	let addr = Exe.FindText(prefix + src, PHYSICAL, false);
-	if (addr < 0)
-		throw Error("Source string not found");
-
-	/// 3 - Modify the string after the dir prefix (16 bytes later) with the tgt string
-	Exe.SetText(addr + prefix.length, tgt);
-
+	let parts = ["E8????????8BC8E8????????50E8????????8BC8E8????????", "6A01E8????????8BC8E8????????6A06"];
+	if (Exe.BuildDate >= 20200900)
+		parts[0] += "6A006A016A11B9????????E8????????";
+		
+	let addrs = Exe.FindHexN(parts);
+	if (addrs.length < 1 || addrs.length > 2)
+		throw Error("Unexpected no of patterns");
+	
+	let offset = parts.byteCount(0);
+	addrs.forEach(addr => Exe.SetHex(addr + offset, 'E8' + (Exe.GetInt32(addr + offset + 3) + 2).toHex() + '6A01'));
+	
 	return true;
 };
-
-///
-/// \brief Disable for latest clients (there is no two variants anymore)
-///
-SelectLoginBG.validate = () =>
-	ROC.IsZero || Exe.BuildDate < 20200600;
-
-///
-/// \brief Wrappers for individual patches
-///
-OnlyFirstBG  = SelectLoginBG;
-OnlySecondBG = SelectLoginBG;

@@ -22,11 +22,9 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-04-05                                             *
+*   Last Modified : 2021-06-19                                             *
 *                                                                          *
 \**************************************************************************/
-
-MaxJob = 4400;
 
 ///
 /// \brief: Change the Hardcoded loading & retrieval of Job strings (Name, Path prefix,
@@ -54,7 +52,7 @@ CustomJobs = function()
 		throw Error("Santa is missing");
 
 	/// 1.4 - Find it's references (there should only be 1) and add to 'refs' array
-	let addrs = Exe.FindHexN(MOV([R32, 0x68], strAddr));
+	let addrs = Exe.FindHexN(MOV([R32, 0x68], strAddr)); //mov dword ptr [regA + 68h], offset "»êÅ¸"
 	if (ROC.IsZero && addrs.length > 1)
 	{
 		let addr = addrs.find( memAddr => Exe.FindLastHex(PUSH(0x10AA) + MOV(ECX, ESI), memAddr, memAddr - 0x800) < 0 );
@@ -73,25 +71,26 @@ CustomJobs = function()
 	}
 
 	/// 1.5 - Find the imf suffix for Groom/Bride (used for Santa as well) and add to 'refs' array
-	strAddr = Exe.FindText("\xB0\xE1\xC8\xA5");
+	strAddr = Exe.FindText("\xB0\xE1\xC8\xA5"); //"°áÈ¥"
 	if (strAddr < 0)
 		throw Error("Groom/Bride is missing");
 
-	addrs = Exe.FindHexN(MOV([R32, 0x68], strAddr));
+	addrs = Exe.FindHexN(MOV([R32, 0x68], strAddr)); //mov dword ptr [regA + 68h], offset "°áÈ¥"
 	if (addrs.length !== 1)
 		throw Error("Unexpected no of Wedding references");
 
 	refs[1] = addrs[0];
 
 	/// 1.6 - Find the palette suffix for Archer
-	strAddr = Exe.FindText("\xB1\xC3\xBC\xF6");
+	strAddr = Exe.FindText("\xB1\xC3\xBC\xF6"); //"±Ã¼ö"
 	if (strAddr < 0)
 		throw Error("Archer is missing");
 
 	if (Exe.Version === 6)
 	{
 		/// 1.7 - For VC6 find it's reference after a PUSH 4
-		addrs = Exe.FindHexN(MOV([EAX], strAddr) + CALL()); //MOV DWORD PTR DS:[EAX], OFFSET strAddr ; followed by CALL fetcher
+		addrs = Exe.FindHexN(MOV([EAX], strAddr) + CALL()); // mov dword ptr [eax], offset "±Ã¼ö"
+		                                                    // call <fetcher>
 
 		let code2 = PUSH(4); //PUSH 4 should be present before
 		refs[2] = addrs.find(memAddr => Exe.FindLastHex(code2, memAddr, memAddr - 0x6) > 0);
@@ -101,7 +100,7 @@ CustomJobs = function()
 	else
 	{
 		/// 1.8 - For VC9+ find all references with direct movement to table
-		addrs = Exe.FindHexN(MOV([R32, 0xC], strAddr));
+		addrs = Exe.FindHexN(MOV([R32, 0xC], strAddr)); //mov dword ptr [regA + 0Ch], offset "±Ã¼ö"
 		let addr = addrs.find(memAddr =>
 			!refs.some(refAddr => memAddr >= (refAddr - 0x300) && memAddr <= (refAddr + 0x300))
 		);
@@ -112,22 +111,22 @@ CustomJobs = function()
 	}
 
 	/// 1.9 - Find the hand prefix for Archer
-	strAddr = Exe.FindText("\xB1\xC3\xBC\xF6\\\xB1\xC3\xBC\xF6"); // 궁수\궁수 for Archer
+	strAddr = Exe.FindText("\xB1\xC3\xBC\xF6\\\xB1\xC3\xBC\xF6"); // ±Ã¼ö\±Ã¼ö for Archer
 	if (strAddr < 0)
 		throw Error("Hand prefix missing");
 
 	/// 1.10 - Find it's reference
-	refs[3] = Exe.FindHex(MOV([R32, 0xC], strAddr));
+	refs[3] = Exe.FindHex(MOV([R32, 0xC], strAddr)); //mov dword ptr [regA + 0Ch], offset "±Ã¼ö\±Ã¼ö"
 	if (refs[3] < 0)
 		throw Error("Hand reference missing");
 
 	/// 1.11 - Find the name for Acolyte (ok that sounds weird)
-	strAddr = Exe.FindText("Acolyte"); //We use Acolyte here because Archer has a MOV ECX, OFFSET statement before it in Older clients
+	strAddr = Exe.FindText("Acolyte"); //We use Acolyte here because Archer has a ( mov ecx, offset ) instruction before it in Older clients
 	if (strAddr < 0)
 		throw Error("Acolyte is missing");
 
 	/// 1.12 - Find it's reference
-	refs[4] = Exe.FindHex(MOV([R32, 0x10], strAddr));
+	refs[4] = Exe.FindHex(MOV([R32, 0x10], strAddr)); //mov dword ptr [regA + 10h], offset "Acolyte"
 	if (refs[4] < 0)
 		throw Error("Acolyte reference missing");
 
@@ -156,7 +155,7 @@ CustomJobs = function()
 	let infos = refs.map( (addr, idx) =>
 	{
 		/// 2.1 - Prep variables for required info
-		let hookAddr, movIns, baseReg, format; //baseReg contains address for index 0 of the table, movIns will contain the MOV to baseReg
+		let hookAddr, movIns, baseReg, format; //baseReg contains address for index 0 of the table, movIns will contain the mov to baseReg
 
 		/// 2.2 - Find the limit usage before it
 		let limitAddr = Exe.FindLastHex(limits[idx].toHex(), addr, addr - 0x800);
@@ -167,7 +166,7 @@ CustomJobs = function()
 		let ins = Instr.FromAddr(addr).moveToNext();
 		if (ins.Codes[0] === 0xE8) //VC6
 		{
-			/// 2.4 - Since there is no MOV unset movIns
+			/// 2.4 - Since there is no mov unset movIns
 			movIns = null;
 
 			/// 2.5 - Calculate the CALL's address if not already found
@@ -175,7 +174,11 @@ CustomJobs = function()
 				fetcher = Exe.Phy2Vir(ins.NextAddr, CODE) + ins.Immd; //the target VIRTUAL address
 
 			/// 2.6 - Find the address for the first table assignment
-			let code = PUSH_0 + MOV(ECX, ESI) + CALL(ALLWC);
+			let code =
+				PUSH_0         //push 0
+			+	MOV(ECX, ESI)  //mov ecx, esi
+			+	CALL(ALLWC)    //call func#1
+			;
 			let firstAddr = Exe.FindHex(code, limitAddr + 4, limitAddr + 0x60);
 			if (firstAddr < 0)
 				throw Error(`First index assignment missing for no.${idx + 1}`);
@@ -187,18 +190,18 @@ CustomJobs = function()
 		}
 		else if (ins.Codes[0] === 0x8B && ins.MRM.Mode !== 3) //VC9+
 		{
-			/// 2.8 - Set it as the MOV instruction
+			/// 2.8 - Set it as the mov instruction
 			movIns = ins;
 
-			/// 2.9 - Extract the register used as source in MOV tgtReg, DWORD PTR DS:[srcReg + Disp]
+			/// 2.9 - Extract the register used as source in mov tgtReg, dword ptr [srcReg + Disp]
 			let srcReg = R32.List[ins.MRM.RegM];
 
 			/// 2.10 - Use it to construct the table assignment pattern & look for it after the limitAddr
 			let prefix = MOV(R32, ins.Disp ? [srcReg, ins.Disp] : [srcReg]);
 			let addrs = [
-				...Exe.FindHexN(1, prefix + MOV([R32], POS3WC), limitAddr + 4, limitAddr + 0x60),
-				...Exe.FindHexN(1, prefix + MOV([R32, WCp], POS3WC), limitAddr + 4, limitAddr + 0x60),
-				...Exe.FindHexN(1, prefix + MOV([R32, POS2WC], POS3WC), limitAddr + 4, limitAddr + 0x60)
+				...Exe.FindHexN(1, prefix + MOV([R32], POS3WC), limitAddr + 4, limitAddr + 0x60),        //mov dword ptr [regA], offset#1
+				...Exe.FindHexN(1, prefix + MOV([R32, WCp], POS3WC), limitAddr + 4, limitAddr + 0x60),   //mov dword ptr [regA + disp8], offset#1
+				...Exe.FindHexN(1, prefix + MOV([R32, POS2WC], POS3WC), limitAddr + 4, limitAddr + 0x60) //mov dword ptr [regA + disp32], offset#1
 			].sort();
 
 			if (addrs.isEmpty())
@@ -222,18 +225,21 @@ CustomJobs = function()
 				switch (ins.Codes[0])
 				{
 					case 0x8D:
-						if (ins.MRM.Mode === 2) //LEA reg, [reg + const]
+						if (ins.MRM.Mode === 2) //lea regA, [regB + dispB]
 						{
-							return (Exe.GetUint16(ins.NextAddr) === 0x45C7); //followed by MOV DWORD PTR SS:[LOCAL.x], OFFSET addr
+							return (Exe.GetUint16(ins.NextAddr) === 0x45C7); //followed by ( mov dword ptr [LOCAL.x], offset#1 )
 						}
-						else if (ins.MRM.Mode === 1) //LEA reg, [LOCAL.y]
+						else if (ins.MRM.Mode === 1) //lea regA, [LOCAL.y]
 						{
 							let bytes = Exe.GetUint16(ins.NextAddr);
-							return (bytes === 0xB38D || bytes === 0xC381 || bytes === 0x5588); //followed by ADD reg32, const or LEA reg, [reg + const] or MOV BYTE PTR SS:[LOCAL.x], DL
+
+							return (bytes === 0xB38D || //followed by ( add regA, immA )
+								    bytes === 0xC381 || //or by       ( lea regA, [regB + dispB] )
+									bytes === 0x5588 ); //or by       ( mov byte ptr [LOCAL.x], dl )
 						}
 						break;
 
-					case 0x8B: //MOV EAX, DWORD PTR DS:[EDI+4]
+					case 0x8B: //mov eax, dword ptr [edi+4]
 						return (ins.MRM.Data === 0x47 && ins.Disp === 4);
 				}
 			}
@@ -241,13 +247,13 @@ CustomJobs = function()
 			{
 				switch (ins.Codes[0])
 				{
-					case 0x2B: //SUB reg32_A, reg32_B
-						return (ins.MRM.Mode === 3 && (Exe.GetInt32(ins.Addr + 2) & 0xFFF8FF) === 0x02F8C1); //followed by SAR reg32_A, 2
+					case 0x2B: //sub regA, regB
+						return (ins.MRM.Mode === 3 && (Exe.GetInt32(ins.Addr + 2) & 0xFFF8FF) === 0x02F8C1); //followed by ( sar regA, 2 )
 
-					case 0x83: //OR reg32_A, -1
+					case 0x83: //or regA, -1
 						return (ins.MRM.RegO === 1 && ins.Immd === -1);
 
-					case 0xFF: //CALL DWORD PTR DS:[addr] //hopefully wont conflict later
+					case 0xFF: //call dword ptr [funcPtr#1] //hopefully wont conflict later
 						return (ins.MRM.Data === 0x15);
 				}
 			}
@@ -256,17 +262,20 @@ CustomJobs = function()
 				switch (ins.Codes[0])
 				{
 					case 0x8D:
-						if (ins.MRM.Mode === 1 && ins.MRM.RegO === 0 && Exe.GetUint8(ins.NextAddr) === 0x50) //LEA EAX, [LOCAL.x] followed by EAX
-						{
+						if (ins.MRM.Mode === 1 && ins.MRM.RegO === 0 && Exe.GetUint8(ins.NextAddr) === 0x50) //lea eax, [LOCAL.x]
+						{                                                                                    //push eax
 							let opcode = Exe.GetUint8(ins.NextAddr + 1);
-							return (opcode === 0x6A || opcode === 0x68 || opcode === 0x56); //followed by PUSH offset or PUSH ESI
+
+							return (opcode === 0x6A || //followed by ( push immA )
+							        opcode === 0x68 ||
+									opcode === 0x56 ); //or by ( push esi )
 						}
 						break;
 
 					case 0x8B:
-						if (ins.MRM.Mode === 0 && ins.MRM.RegO === 0) //MOV EAX, DWORD PTR DS:[reg32_A]
+						if (ins.MRM.Mode === 0 && ins.MRM.RegO === 0) //mov eax, dword ptr [regA]
 						{
-							return (Exe.GetUint16(ins.NextAddr) === 0x048D); //followed by LEA EAX, [reg32_B*4 + EAX]
+							return (Exe.GetUint16(ins.NextAddr) === 0x048D); //followed by ( lea eax, [regB*4 + eax] )
 						}
 						break;
 
@@ -282,6 +291,11 @@ CustomJobs = function()
 		/// 3.2 - Return the set
 		return [hookAddr, baseReg, endIns, retainer];
 	});
+
+	/// 3.3 - Get the new max limit from user
+	let maxJob = Exe.GetUserInput('$maxJob', D_Uint16, "Limit Input", "Enter the maximum no of Job IDs", 4400, {min: 4400, max: 5000, saveDefault: true});
+	if (maxJob === false)
+		Cancel("No Max Limit specified");
 
 	//====================================//
 	// Add the Function Names into client //
@@ -331,7 +345,7 @@ CustomJobs = function()
 		let limits =
 		[
 			[0, 0x2C],
-			[0xFA1 - reductor, MaxJob - reductor]
+			[0xFA1 - reductor, maxJob - reductor]
 		];
 
 		/// 4.3 - Generate the templates first
@@ -352,8 +366,8 @@ CustomJobs = function()
 		/// 4.5 - Combine & construct the replacement code in parts
 		let parts =
 		[
-			PUSH(baseReg)  //PUSH baseReg ; contains address of first index in table
-		+	PUSHAD         //PUSHAD
+			PUSH(baseReg)  //push <baseReg> ; contains address of first index in table
+		+	PUSHAD         //pushad
 		];
 
 		templates.forEach( template =>
@@ -369,23 +383,22 @@ CustomJobs = function()
 		});
 
 		parts.push(
-			POPAD            //POPAD
-		+	ADD(ESP, 4)      //ADD ESP, 4
+			POPAD            //popad
+		+	ADD(ESP, 4)      //add esp, 4
 		);
 
 		if (retainer)
 			parts.push(retainer); //codes to be retained from original
 
 		if (endIns)
-			parts.push(JMP(Filler(3))); //JMP endAddr
+			parts.push(JMP(Filler(3))); //jmp endAddr ; address of endIns
 
 		/// 4.6 - Fill in the blanks
 		let code = LUA.finalize(parts, Exe.Phy2Vir(hookAddr, CODE));
 		if (endIns)
-			code = SetFillTarget(code, 3, endIns.Addr, hookAddr); //no VIRTUAL conversion needed since both are in CODE section
+			code = SetFillTarget(code, 3, endIns.Addr, hookAddr, 1); //no VIRTUAL conversion needed since both are in CODE section
 
 		/// 4.7 - Replace at hook address
-		ShowAddr({hookAddr});
 		Exe.SetHex(hookAddr, code);
 
 		/// 4.8 - Add the format string "ddd>s" for later (we will use the first table loading space)
@@ -428,7 +441,7 @@ CustomJobs = function()
 	limits =
 	[
 		[0, 0x2C],
-		[0xFA1, MaxJob]
+		[0xFA1, maxJob]
 	];
 
 	/// 5.1 - Find the string "TaeKwon Girl"
@@ -444,12 +457,12 @@ CustomJobs = function()
 		{
 			parts =
 			[
-				TEST(EAX, EAX)              //TEST EAX, EAX
-			+	JNZ(WCp)                    //JNZ SHORT _skip
+				TEST(EAX, EAX)              //test eax, eax
+			+	JNZ(WCp)                    //jnz short _skip
 			,
-				MOV(Exe.Version === 9 && Exe.BuildDate < 20110300 ? R32 : EAX, [POS4WC]) //MOV reg32_A, DWORD PTR DS:[g_jobName]
+				MOV(Exe.Version === 9 && Exe.BuildDate < 20110300 ? R32 : EAX, [POS4WC]) //mov regA, dword ptr [g_jobName]
 			,
-				MOV([R32, 0x3F38], tgAddr)  //MOV DWORD PTR DS:[reg32_A + 3F38], OFFSET addr; ASCII "TaeKwon Girl"
+				MOV([R32, 0x3F38], tgAddr)  //mov dword ptr [regA + 3F38h], offset "TaeKwon Girl"
 			];
 		}
 		else if (Exe.BuildDate < 20170000)
@@ -458,42 +471,42 @@ CustomJobs = function()
 			[
 				''
 			,
-				MOV(EAX, [POS4WC])      //MOV EAX, DWORD PTR DS:[g_jobName]
+				MOV(EAX, [POS4WC])      //mov eax, dword ptr [g_jobName]
 			,
-				MOV(R32, tgAddr)        //MOV reg32_B, OFFSET addr; ASCII "TaeKwon Girl"
-			+	MOV(R32, POS4WC)        //MOV reg32_C, OFFSET addr; ASCII "TaeKwon Boy"
-			+	CMOVNZ(R32, R32)        //CMOVNZ reg32_C, reg32_B
-			+	MOV([EAX, 0x3F38], R32) //MOV DWORD PTR DS:[EAX + 3F38], reg32_C
+				MOV(R32, tgAddr)        //mov regB, offset "TaeKwon Girl"
+			+	MOV(R32, POS4WC)        //mov regC, offset "TaeKwon Boy"
+			+	CMOVNZ(R32, R32)        //cmovnz regC, regB
+			+	MOV([EAX, 0x3F38], R32) //mov dword ptr [eax + 3F38h], regC
 			];
 		}
 		else
 		{
 			parts =
 			[
-				TEST(R32, R32)          //TEST reg32_A, reg32_A
+				TEST(R32, R32)          //test regA, regA
 			+	(Exe.Version > 11
 			?
-				MOV(R32, POS4WC)        //MOV reg32_C, OFFSET addr; ASCII "TaeKwon Boy"
+				MOV(R32, POS4WC)        //mov regC, offset "TaeKwon Boy"
 			:
 				''
 			)
-			+	MOV(R32, tgAddr)        //MOV reg32_B, OFFSET addr; ASCII "TaeKwon Girl"
+			+	MOV(R32, tgAddr)        //mov regB, offset "TaeKwon Girl"
 
-			+	CMOVNZ(R32, R32)        //CMOVNZ reg32_C, reg32_B
+			+	CMOVNZ(R32, R32)        //cmovnz regC, regB
 			,
-				MOV(EAX, [POS4WC])      //MOV EAX, DWORD PTR DS:[g_jobName]
+				MOV(EAX, [POS4WC])      //mov eax, dword ptr [g_jobName]
 			,
-				POP_R                   //POP reg32_D
-			+	MOV([EAX, 0x3F38], R32)	//MOV DWORD PTR DS:[EAX + 3F38], reg32_C
+				POP_R                   //pop regD
+			+	MOV([EAX, 0x3F38], R32)	//mov dword ptr [eax + 3F38h], regC
 			];
 		}
 
 		let addr = Exe.FindHex(parts);
 		if (addr < 0)
-			throw Error("'TaeKwon Girl' not referenced");
+			throw Error("'TaeKwon Girl' not assigned");
 
 		/// 5.3 - Extract the g_jobName address
-		let JobName = Instr.FromAddr(addr + parts[0].byteCount()).Disp;
+		let JobName = Instr.FromAddr(addr + parts.byteCount(0)).Disp;
 
 		/// 5.4 - Look for the LANGTYPE comparison before it (in fact the JNZ should jump to a call after which we do the above TEST)
 		///       (These steps are also done in TranslateClient but we will keep it anyways as a failsafe)
@@ -501,23 +514,23 @@ CustomJobs = function()
 		if (Exe.Version >= 9 && Exe.BuildDate < 20170000)
 		{
 			code =
-				CMP([LANGTYPE], 0)     //CMP DWORD PTR DS:[g_serviceType], 0
-			+	MOV(ECX, POS3WC)       //MOV ECX, OFFSET addr
-			+	JNE(WCp)               //JNE SHORT _skip
+				CMP([LANGTYPE], 0)     //cmp dword ptr [g_serviceType], 0
+			+	MOV(ECX, POS3WC)       //mov ecx, offset#1
+			+	JNE(WCp)               //jne short _skip
 			;
 		}
 		else
 		{
 			code =
-				MOV(EAX, [LANGTYPE])   //MOV EAX, DWORD PTR DS:[g_serviceType]
+				MOV(EAX, [LANGTYPE])   //mov eax, dword ptr [g_serviceType]
 			+	(Exe.Version === 6
 			?
-				MOV(ECX, POS3WC)       //MOV ECX, OFFSET addr
+				MOV(ECX, POS3WC)       //mov ecx, offset#1
 			:
 				''
 			)
-			+	TEST(EAX, EAX)         //TEST EAX, EAX
-			+	JNZ(WCp)               //JNZ SHORT _skip
+			+	TEST(EAX, EAX)         //test eax, eax
+			+	JNZ(WCp)               //jnz short _skip
 			;
 		}
 		addr = Exe.FindHex(code, addr - 0xA0, addr);
@@ -542,18 +555,18 @@ CustomJobs = function()
 
 			/// 5.9 - Find the LANGTYPE comparison after the address
 			code =
-				CMP(EAX, 0xC) //CMP EAX, 0C
-			+	JE(WCp)       //JE SHORT _skip2
-			+	CMP(EAX, 5)   //CMP EAX, 5
-			+	JE(WCp)       //JE SHORT _skip2
+				CMP(EAX, 0xC) //cmp eax, 0Ch
+			+	JE(WCp)       //je short _idxInc
+			+	CMP(EAX, 5)   //cmp eax, 5
+			+	JE(WCp)       //je short _idxInc
 			+	(Exe.Version > 11.0
 			?
-				CMP(EAX, 0xE) //CMP EAX, 0E
-			+	JE(WCp)       //JE SHORT _skip2
+				CMP(EAX, 0xE) //cmp eax, 0Eh
+			+	JE(WCp)       //je short _idxInc
 			:
 				''
 			)
-			+	CMP(EAX, 6)   //CMP EAX, 6
+			+	CMP(EAX, 6)   //cmp eax, 6
 			;
 
 			addr = Exe.FindHex(code, hookAddr + 0x10, hookAddr + 0x100);
@@ -624,19 +637,19 @@ CustomJobs = function()
 		});
 
 		parts.push(
-			POPAD                //POPAD
+			POPAD                //popad
 		);
 
 		if (endAddr)
 		{
-			parts.push(JMP(Filler(3))); //JMP endAddr
+			parts.push(JMP(Filler(3))); //jmp <endAddr>
 		}
 		else
 		{
 			parts.push(
-				POP(EDI)         //POP EDI
-			+	POP(EBP)         //POP EBP
-			+	RETN(4)          //RETN 4
+				POP(EDI)         //pop edi
+			+	POP(EBP)         //pop ebp
+			+	RETN(4)          //retn 4
 			);
 		}
 
@@ -657,7 +670,7 @@ CustomJobs = function()
 		let hookAddr = endIns.NextAddr;
 
 		/// 6.2 - Find the ECX assignment after it
-		let addr = Exe.FindHex(LEA(ECX, [EBX, POS2WC]), hookAddr, hookAddr + 0x30); //LEA ECX, [EBX + offset]
+		let addr = Exe.FindHex(LEA(ECX, [EBX, POS2WC]), hookAddr, hookAddr + 0x30); //lea ecx, [ebx + dispA]
 		if (addr < 0)
 			throw Error("Object assignment missing");
 
@@ -665,7 +678,7 @@ CustomJobs = function()
 		let leaECX = Instr.FromAddr(addr);
 
 		/// 6.4 - Find the string assignment to stack location
-		addr = Exe.FindHex(MOV([EBP, WCn], tgAddr), hookAddr, hookAddr + 0x30);  //MOV DWORD PTR SS:[LOCAL.x], OFFSET addr; ASCII "TaeKwon Girl"
+		addr = Exe.FindHex(MOV([EBP, WCn], tgAddr), hookAddr, hookAddr + 0x30);  //mov dword ptr [LOCAL.x], offset "TaeKwon Girl"
 		if (addr < 0)
 			throw Error("Taekwon girl not referenced");
 
@@ -673,7 +686,7 @@ CustomJobs = function()
 		let strLoc = [EBP, Instr.FromAddr(addr).Disp];
 
 		/// 6.6 - Find the index assignment to stack location
-		addr = Exe.FindHex(MOV([EBP, WCn], 0xFD2), hookAddr, hookAddr + 0x30); //MOV DWORD PTR SS:[LOCAL.x], 0FD2
+		addr = Exe.FindHex(MOV([EBP, WCn], 0xFD2), hookAddr, hookAddr + 0x30); //mov dword ptr [LOCAL.x], 0FD2h
 		if (addr < 0)
 			throw Error("Index PUSH missing");
 
@@ -682,8 +695,8 @@ CustomJobs = function()
 
 		/// 6.8 - Find the additional stack location PUSH after it (not sure why it is needed)
 		let code =
-			LEA(EAX, [EBP, WCn]) //LEA EAX, [LOCAL.y]
-		+	PUSH_EAX             //PUSH EAX
+			LEA(EAX, [EBP, WCn]) //lea eax, [LOCAL.y]
+		+	PUSH_EAX             //push eax
 		;
 		let csize = code.byteCount();
 
@@ -707,7 +720,7 @@ CustomJobs = function()
 			addr = leaECX.NextAddr;
 
 		let ins = Instr.FromAddr(addr);
-		if (ins.Codes[0] !== 0xE8) //a MOV DWORD PTR instruction can also come in between
+		if (ins.Codes[0] !== 0xE8) //a mov dword ptr instruction can also come in between
 			ins.moveToNext();
 
 		if (ins.Codes[0] !== 0xE8)
@@ -733,55 +746,56 @@ CustomJobs = function()
 		let [, mainM,] = LUA.createCaller("GetPCNameOvrd", ["ddd>s", Exe.Phy2Vir(ddd2sAddr, CODE)], EDI, 1, [LANGTYPE], EAX);
 		let [prep, mainF, restore] = LUA.createCaller("GetPCNameOvrd", ["ddd>s", Exe.Phy2Vir(ddd2sAddr, CODE)], EDI, 0, [LANGTYPE], EAX);
 
-		let prefix =
-			MOV(EDI, Filler(1))      //MOV EDI, startingValue ; serves as idx
-		+	MOV(ESI, Filler(2))      //MOV ESI, endingValue
-		+	prep                     //Stack Prep
-		;
-
-		let infix =
-		[
-			SwapFiller(mainM, 50, AltFuncs[0], 1) //LUA function caller for Male ; _loop
-		+	MOV(CL, [EAX])                        //MOV CL, DWORD PTR DS:[EAX]
-		+	TEST(CL, CL)                          //TEST CL, CL
-		+	JE(7)                                 //JE SHORT _skip
-		+	MOV(ECX, [ESP, 0x24])                 //MOV ECX, DWORD PTR DS:[ESP + 24]
-		+	MOV([4, EDI, ECX], EAX)               //MOV DWORD PTR DS:[4*EDI + ECX], EAX
-		+	SwapFiller(mainF, 50, AltFuncs[0], 1) //LUA function caller for Female ; _skip
-		+	MOV(CL, [EAX])                        //MOV CL, DWORD PTR DS:[EAX]
-		+	TEST(CL, CL)                          //TEST CL, CL
-		+	JE(Filler(5, 1))                      //JE SHORT _skip2
-		,
-			MOV(strLoc, EAX)                      //MOV DWORD PTR SS:[LOCAL.z], EAX
-		+	PUSH_EAX                              //PUSH EAX   ; the name
-		+	LEA(EAX, idxLoc)                      //LEA EAX, [LOCAL.x]
-		+	MOV([EAX], EDI)                       //MOV DWORD PTR DS:[EAX], EDI
-		+	PUSH_EAX                              //PUSH EAX   ; the index location
-		+	PUSH_0                                //PUSH 0
-		+	pushMEM                               //LEA EAX, [LOCAL.y]
-			                                      //PUSH EAX   ; the mem location
-		+	leaECX                                //LEA ECX, [EBX + offset]
-		+	CALL(Filler(4))                       //CALL Overrider
-		,
-			INC(EDI)                              //INC EDI ; _skip2
-		+	CMP(EDI, ESI)                         //CMP EDI, ESI
-		];
-
-		infix[0] = SwapFiller(infix[0], 5, infix[1].byteCount(), 1, 1);
-		csize = infix.byteCount();
-
-		let suffix =
-			JLE(-csize, 0)                       //JLE SHORT _loop or JLE _loop ; to start of the first 'main' code
-		+	restore                              //Stack restore
-		;
-
-		templates[0] = prefix + infix.join('') + suffix;
-
-		/// 6.15 - Construct the code in parts
 		let parts =
 		[
-			PUSH([EDI]) //PUSH DWORD PTR DS:[EDI] ; currently the starting address is inside [EDI] but it may change in future
-		+	PUSHAD      //PUSHAD
+			MOV(EDI, Filler(1))                   //mov edi, <startingValue> ; serves as idx
+		+	MOV(ESI, Filler(2))                   //mov esi, <endingValue>
+		+	prep                                  //Stack Prep
+
+		,//1
+			SwapFiller(mainM, 50, AltFuncs[0], 1) //LUA function caller for Male ; _loop
+		+	MOV(CL, [EAX])                        //mov cl, dword ptr [EAX]
+		+	TEST(CL, CL)                          //test cl, cl
+		+	JE(7)                                 //je short _skip
+		+	MOV(ECX, [ESP, 0x24])                 //mov ecx, dword ptr [esp + 24h]
+		+	MOV([4, EDI, ECX], EAX)               //mov dword ptr [4*edi + ecx], eax
+		+	SwapFiller(mainF, 50, AltFuncs[0], 1) //LUA function caller for Female ; _skip
+		+	MOV(CL, [EAX])                        //mov cl, dword ptr [eax]
+		+	TEST(CL, CL)                          //test cl, cl
+		+	JE(Filler(6, 1))                      //je short _idxInc
+
+		,//2
+			MOV(strLoc, EAX)                      //mov dword ptr [LOCAL.z], eax
+		+	PUSH_EAX                              //push eax   ; the name
+		+	LEA(EAX, idxLoc)                      //lea eax, [LOCAL.x]
+		+	MOV([EAX], EDI)                       //mov dword ptr [eax], edi
+		+	PUSH_EAX                              //push eax   ; the index location
+		+	PUSH_0                                //push 0
+		+	pushMEM                               //lea eax, [LOCAL.y]
+			                                      //push eax   ; the mem location
+		+	leaECX                                //lea ecx, [ebx + dispA]
+		+	CALL(Filler(4))                       //call <Overrider>
+
+		,//3
+			INC(EDI)                              //inc edi ; _idxInc
+		+	CMP(EDI, ESI)                         //cmp edi, esi
+
+		,//4
+			JLE(Filler(5))                        //jle _loop ; to start of the first 'main' code i.e. mainM
+		+	restore                               //Stack restore
+		];
+
+		let loff = parts.byteCount(0);
+		code = SetFillTarget(parts, 5, loff, 0, 1); //for jle _loop
+
+		let ioff = loff + parts.byteCount(1, 2);
+		templates[0] = SetFillTarget(code, [6, 1], ioff, 0, 1); //for je short _idxInc
+
+		/// 6.15 - Construct the code in parts
+		parts =
+		[
+			PUSH([EDI]) //push dword ptr [EDI] ; currently the starting address is inside [EDI] but it may change in future
+		+	PUSHAD      //pushad
 		];
 
 		templates.forEach( template =>
@@ -797,15 +811,16 @@ CustomJobs = function()
 		});
 
 		parts.push(
-			POPAD            //POPAD
-		+	ADD(ESP, 4)      //ADD ESP, 4
-		+	JMP(Filler(3))   //JMP endVir
+			POPAD            //popad
+		+	ADD(ESP, 4)      //add esp, 4
+		+	JMP(Filler(3))   //jmp <endVir>
 		);
 
 		/// 6.16 - Fill in the blanks
 		let hookVir = Exe.Phy2Vir(hookAddr, CODE);
-		code = SetFillTargets(
-			LUA.finalize(parts, hookVir),
+
+		code = LUA.finalize(parts, hookVir);
+		code = SetFillTargets(code,
 			{
 				3: endVir,
 				4: Overrider
@@ -825,9 +840,9 @@ CustomJobs = function()
 	{
 		/// 7.1 - Find the function whre the Mount ID is assigned
 		let code =
-			CMP(EAX, 0x19)
-		+	JNE(WCp)
-		+	MOV(EAX, 0x1012)
+			CMP(EAX, 0x19)   //cmp eax, 19h
+		+	JNE(WCp)         //jne short _skip
+		+	MOV(EAX, 0x1012) //mov eax, 1012h
 		;
 		let addr = Exe.FindHex(code);
 		if (addr < 0)
@@ -847,11 +862,11 @@ CustomJobs = function()
 			+	POP(EDX)   //Restore EDX
 			+	(ROC.HasFP
 			?
-				POP(EBP)   //POP EBP
+				POP(EBP)   //pop ebp
 			:
 				''
 			)
-			+	RETN(4)    //RETN 4
+			+	RETN(4)    //retn 4
 			,
 				Exe.Phy2Vir(addr, CODE), AltFuncs[1]
 			)
@@ -874,13 +889,13 @@ CustomJobs = function()
 	{
 		/// 8.2 - Find the common signature
 		let reg = Exe.Version > 10 ? R32 : EAX;
-		let prefix = MOV(reg, ROC.HasFP ? [EBP, 8] : [ESP, 4]); //MOV reg32_A, DWORD PTR SS:[ARG.1]
+		let prefix = MOV(reg, ROC.HasFP ? [EBP, 8] : [ESP, 4]); //mov regA, dword ptr [ARG.1]
 		let csize = prefix.byteCount();
 
 		let suffix =
-			CMP(reg, 0xFB7)  //CMP reg32_A, FB7
-		+	JL(WCp)          //JL SHORT _nextcheck
-		+	CMP(reg, 0xFBD)  //CMP reg32_A, FBD
+			CMP(reg, 0xFB7)  //cmp regA, 0FB7h
+		+	JL(WCp)          //jl short _nextcheck
+		+	CMP(reg, 0xFBD)  //cmp regA, 0FBDh
 		;
 
 		let addrs = Exe.FindHexN(prefix + suffix);
@@ -893,7 +908,7 @@ CustomJobs = function()
 			if (addrs.length < 2)
 				throw Error("Not enough matches for new client");
 
-			/// 8.3 - Identify each based on whether RETN 4 followed by same suffix is there within same function
+			/// 8.3 - Identify each based on whether retn 4 followed by same suffix is there within same function
 			addrs.forEach(memAddr =>
 			{
 				if (Exe.FindHex(RETN(4) + suffix, memAddr + 0x10, memAddr + 0x100) > 0)
@@ -922,18 +937,18 @@ CustomJobs = function()
 		Exe.SetHex( testerAddr
 		,
 			LUA.finalize(
-				PUSH(EDX)  //PUSH EDX ; Backup
+				PUSH(EDX)  //push edx ; Backup
 			+	prep       //Stack Prep
 			+	main       //LUA function CALL
 			+	restore    //Stack Restore
-			+	POP(EDX)   //POP EDX ; Restore it
+			+	POP(EDX)   //pop edx ; Restore it
 			+	(ROC.HasFP
 			?
-				POP(EBP)   //POP EBP
+				POP(EBP)   //pop ebp
 			:
 				''
 			)
-			+	RETN(4)    //RETN 4
+			+	RETN(4)    //retn 4
 			,
 				Exe.Phy2Vir(testerAddr, CODE), AltFuncs[2])
 		);
@@ -945,11 +960,11 @@ CustomJobs = function()
 		{
 			/// 8.8 - Find the older form of the patterns
 			let code =
-				CMP(EAX, 0xFB7)  //CMP EAX, FB7
-			+	JL(WCp)          //JL SHORT _nextcheck
-			+	MOV(ECX, R32)    //MOV ECX, reg32_B
-			+	CALL(ALLWC)      //CALL CSession::GetJobID
-			+	CMP(EAX, 0xFBD)  //CMP EAX, FBD
+				CMP(EAX, 0xFB7)  //cmp eax, 0FB7h
+			+	JL(WCp)          //jl short _nextcheck
+			+	MOV(ECX, R32)    //mov ecx, regB
+			+	CALL(ALLWC)      //call CSession::GetJobID
+			+	CMP(EAX, 0xFBD)  //cmp eax, 0FBDh
 			;
 			shrinkAddrs = Exe.FindHexN(code);
 			if (shrinkAddrs.isEmpty())
@@ -960,12 +975,12 @@ CustomJobs = function()
 		}
 		else if (style === 2)
 		{
-			/// 8.9 - For 2nd style use the RETN to find the correct function
+			/// 8.9 - For 2nd style use the retn to find the correct function
 			let code =
-				RETN(4)          //RETN 4
-			+	CMP(R32, 0xFB7)  //CMP reg32_A, FB7
-			+	JL(WCp)          //JL SHORT _nextcheck
-			+	CMP(R32, 0xFBD)  //CMP reg32_A, FBD
+				RETN(4)          //retn 4
+			+	CMP(R32, 0xFB7)  //cmp regA, 0FB7h
+			+	JL(WCp)          //jl short _nextcheck
+			+	CMP(R32, 0xFBD)  //cmp regA, 0FBDh
 			;
 			let addr = Exe.FindHex(code);
 			if (addr < 0)
@@ -973,10 +988,10 @@ CustomJobs = function()
 
 			/// 8.10 - Now trace back to the beginning where the Dwarf test function is called
 			code =
-				PUSH(ESI)     //PUSH ESI
-			+	CALL(ALLWC)   //CALL IsDwarf
-			+	TEST(AL, AL)  //TEST AL, AL
-			+	JZ(WCp)       //JZ SHORT _proceed
+				PUSH(ESI)     //push esi
+			+	CALL(ALLWC)   //call IsDwarf
+			+	TEST(AL, AL)  //test al, al
+			+	JZ(WCp)       //jz short _proceed
 			;
 			addr = Exe.FindLastHex(code, addr, addr - 0x100);
 			if (addr < 0)
@@ -1013,10 +1028,10 @@ CustomJobs = function()
 			if (ins.Codes[0] !== 0x7E && ins.Codes[1] !== 0x8E)
 				return false;
 
-			/// 9.4 - Extract the instruction at the address. It would be either an FLD DWORD PTR or MOVSS XMM0, DWORD PTR
+			/// 9.4 - Extract the instruction at the address. It would be either an fld dword ptr or MOVSS XMM0, dword ptr
 			let tgtLoader = ins.getNext(ins.Immd);
 
-			/// 9.5 - Extract the instruction after it. Would be a FMUL DWORD PTR or MULSS XMM0, DWORD PTR
+			/// 9.5 - Extract the instruction after it. Would be a FMUL dword ptr or MULSS XMM0, dword ptr
 			let multiplier = tgtLoader.getNext();
 
 			/// 9.6 - Save the next address (if it's a JMP go to it's target instead)
@@ -1024,7 +1039,7 @@ CustomJobs = function()
 			if (Exe.GetUint8(endAddr) === 0xEB)
 				endAddr += Exe.GetInt8(endAddr + 1) + 2;
 
-			/// 9.7 - Modify the multiplier code to ensure DWORD PTR is used and use the scaleAddr as displacement
+			/// 9.7 - Modify the multiplier code to ensure dword ptr is used and use the scaleAddr as displacement
 			if (multiplier.Codes[0] === 0xDC)
 				multiplier.Codes[0] = 0xD8;
 
@@ -1032,14 +1047,15 @@ CustomJobs = function()
 
 			/// 9.8 - Construct the code to replace with
 			let code =
-				PUSHAD                //PUSHAD ; backup registers
-			+	luaCaller             //code which calls the lua function to get the scale
-			+	POPAD                 //POPAD  ; restore registers
-			+	tgtLoader             //FLD or MOVSS XMM0, DWORD PTR SS:[LOCAL.0]
-			+	MOV(EAX, [scaleAddr]) //MOV EAX, DWORD PTR DS:[scaleAddr]
-			+	TEST(EAX, EAX)        //TEST EAX, EAX
-			+	JZ(multiplier.Size)   //JZ SHORT _skipover
-			+	multiplier            //FMUL or MULSS XMM0, DWORD PTR DS:[EAX]
+				PUSHAD                //pushad ; backup registers
+			+	luaCaller             //Code which calls the lua function to get the scale
+			+	POPAD                 //popad  ; restore registers
+
+			+	tgtLoader             //fld/movss xmm0, dword ptr [LOCAL.x]
+			+	MOV(EAX, [scaleAddr]) //mov eax, dword ptr [scaleAddr]
+			+	TEST(EAX, EAX)        //test eax, eax
+			+	JZ(multiplier.Size)   //jz short _skipover
+			+	multiplier            //fmul/mulss xmm0, dword ptr [eax]
 			;
 			let csize = code.byteCount();
 
@@ -1051,7 +1067,7 @@ CustomJobs = function()
 				code +=
 					delta > 0x12
 				?
-					JMP(delta, 0)    //JMP SHORT endAddr
+					JMP(delta, 0)    //jmp short <endAddr>
 				:
 					NOPs(delta)      //set of multibyte NOPs
 				;
@@ -1066,19 +1082,16 @@ CustomJobs = function()
 				if (free < 0)
 					throw NO_ALLOC;
 
+				let freeVir = Exe.Phy2Vir(free, DIFF);
+
 				/// 9.13 - Append the JMP
 				code +=
-					JMP(Filler(1)) //JMP endAddr
+					JMP(Filler(1)) //jmp <endAddr>
 				;
 
 				/// 9.14 - Fill in the blanks
-				let freeVir = Exe.Phy2Vir(free, DIFF);
-
-				code = SetFillTarget(
-					LUA.finalize(code, freeVir, AltFuncs[3])
-				,	1, Exe.Phy2Vir(endAddr, CODE)
-				,	freeVir
-				);
+				code = LUA.finalize(code, freeVir, AltFuncs[3]);
+				code = SetFillTarget(code, 1, Exe.Phy2Vir(endAddr, CODE), freeVir, 1);
 
 				/// 9.15 - Add at allocated space
 				Exe.AddHex(free, code);
@@ -1091,20 +1104,21 @@ CustomJobs = function()
 		{
 			/// 9.17 - Construct the new function
 			let code =
-				PUSHAD                //PUSHAD ; backup registers
-			+	luaCaller             //code which calls the lua function to get the scale
-			+	POPAD                 //POPAD  ; restore registers
-			+	MOV(EAX, [scaleAddr]) //MOV EAX, DWORD PTR DS:[scaleAddr]
-			+	TEST(EAX, EAX)        //TEST EAX, EAX
-			+	JNZ(7)                //JNZ SHORT _skip2
-			+	FLD1                  //FLD1
-			+	POP(reg)              //POP reg32_A
-			+	POP(EBP)              //POP EBP
-			+	RETN(4)               //RETN 4
-			+	FLD([scaleAddr])      //FLD DWORD PTR DS:[scaleAddr]
-			+	POP(reg)              //POP reg32_A
-			+	POP(EBP)              //POP EBP
-			+	RETN(4)               //RETN 4
+				PUSHAD                //pushad ; backup registers
+			+	luaCaller             //Code which calls the lua function to get the scale
+			+	POPAD                 //popad  ; restore registers
+
+			+	MOV(EAX, [scaleAddr]) //mov eax, dword ptr [scaleAddr]
+			+	TEST(EAX, EAX)        //test eax, eax
+			+	JNZ(7)                //jnz short _idxInc
+			+	FLD1                  //fld1
+			+	POP(reg)              //pop regA
+			+	POP(EBP)              //pop ebp
+			+	RETN(4)               //retn 4
+			+	FLD([scaleAddr])      //fld dword ptr [scaleAddr]
+			+	POP(reg)              //pop regA
+			+	POP(EBP)              //pop ebp
+			+	RETN(4)               //retn 4
 			;
 
 			/// 9.18 - Replace at shrinkAddr
@@ -1116,7 +1130,7 @@ CustomJobs = function()
 		throw Error("Shrinking address not found");
 
 	/// 10 - Check with user if they want to copy the supporting files to the target area's data folder
-	CJ_Response = Exe.GetUserInput("$copyCJLub", D_Bool, "Copy Files", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
+	CJ_Response = Exe.GetUserInput("$copyCJLub", D_Bool, "Copy Custom Job Lua", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
 
 	return true;
 };
@@ -1184,15 +1198,15 @@ _CJ_Generate = function(firstSet, secondSet, memPtr)
 {
 	/// 1 - Prepare the common parts
 	let cmnPre =
-		MOV(EDI, Filler(1))      //MOV EDI, startingValue ; serves as idx
-	+	MOV(EBX, Filler(2))      //MOV EBX, endingValue
+		MOV(EDI, Filler(1))      //mov edi, startingValue ; serves as idx
+	+	MOV(EBX, Filler(2))      //mov ebx, endingValue
 	;
 
 	let cmnSuf =
-		(memPtr.length > 1 ? NOP2 : '') //add extra NOPs to accomodate for [ESP + 24] mem location
-	+	MOV([4, EDI, ECX], EAX)  //MOV DWORD PTR DS:[EDI*4 + ECX], EAX
-	+	INC(EDI)                 //INC EDI; idxInc
-	+	CMP(EDI, EBX)            //CMP EDI, EBX
+		(memPtr.length > 1 ? NOP2 : '') //add extra NOPs to accomodate for [esp + 24h] mem location
+	+	MOV([4, EDI, ECX], EAX)  //mov dword ptr [edi*4 + ecx], eax
+	+	INC(EDI)                 //inc edi; _idxInc
+	+	CMP(EDI, EBX)            //cmp edi, ebx
 	;
 
 	/// 2 - Construct the templates in parts
@@ -1208,7 +1222,7 @@ _CJ_Generate = function(firstSet, secondSet, memPtr)
 		let [prep, main, restore] = LUA.createCaller(...args); ///remaining are the arguments to be fed to createCaller
 
 		let prefix =
-			cmnPre                    //EDI & EBX assignment
+			cmnPre                    //edi & ebx assignment
 		+	prep                      //Stack Prep
 		;
 
@@ -1217,16 +1231,16 @@ _CJ_Generate = function(firstSet, secondSet, memPtr)
 		+	(idx === 0
 
 		? //for Req/Get
-			MOV(CL, [EAX])            //MOV CL, BYTE PTR DS:[EAX]
-		+	TEST(CL, CL)              //TEST CL, CL
-		+	JE(9)                     //JE SHORT idxInc
-		+	MOV(ECX, memPtr)          //MOV ECX, DWORD PTR SS:[memPtr]; //either direct address or ESP+24 ; 20 = 8 registers * 4 due to PUSHAD + 4 for the starting memory address which was PUSHed before the PUSHAD
+			MOV(CL, [EAX])            //mov cl, byte ptr [EAX]
+		+	TEST(CL, CL)              //test cl, cl
+		+	JE(9)                     //je short _idxInc
+		+	MOV(ECX, memPtr)          //mov ecx, dword ptr [memPtr]; //either direct address or ESP+24 ; 20 = 8 registers * 4 due to PUSHAD + 4 for the starting memory address which was PUSHed before the PUSHAD
 
 		: //for Map
-			TEST(EAX, EAX)            //TEST EAX, EAX
-		+	JS(0xC)                   //JS SHORT idxInc
-		+	MOV(ECX, memPtr)          //MOV ECX, DWORD PTR SS:[memPtr] ;
-		+	MOV(EAX, [4, EAX, ECX])   //MOV EAX, DWORD PTR DS:[EAX*4 + ECX]
+			TEST(EAX, EAX)            //test eax, eax
+		+	JS(0xC)                   //js short _idxInc
+		+	MOV(ECX, memPtr)          //mov ecx, dword ptr [memPtr] ;
+		+	MOV(EAX, [4, EAX, ECX])   //mov eax, dword ptr [eax*4 + ecx]
 		)
 		+	cmnSuf                    //table assignment, EDI increment & comparison for loop
 		;
@@ -1234,7 +1248,7 @@ _CJ_Generate = function(firstSet, secondSet, memPtr)
 		let csize = infix.byteCount();
 
 		let suffix =
-			JLE(-csize, 0)            //JLE SHORT _loop or JLE _loop ; to start of the 'main' code
+			JLE(-csize, 0)            //jle short _loop OR jle _loop ; to start of the 'main' code
 		+	restore                   //Stack Restore
 		;
 

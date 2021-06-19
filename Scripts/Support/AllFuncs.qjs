@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-06-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -91,8 +91,7 @@ IsByte = function(v, signed = true)
 /// \brief Creates a filler hex string with the given index and byte count
 ///
 Filler = (idx, bc = 4) =>
-	(ALLWC + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.min(bc, 4));
-
+	(' ??'.repeat(Math.abs(bc)) + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.trunc(Math.abs(bc)));
 
 ///
 /// \brief Background function for performing multiple swaps
@@ -146,18 +145,31 @@ _swap_ = function(str, find, repl, cnt, bc)
 };
 
 ///
-/// \brief Swaps out the filler hex string with the actual data
+/// \brief Swaps out the filler hex string with the actual data. Input can be single hex string or split up into parts
 ///
-SwapFiller = function(str, idx, dataSet, cnt = -1, bc = 4)
+SwapFiller = function(str, idx, dataSet, cnt = -1)
 {
 	let _ = 'SwapFiller : ';
 
-	$$(_ + '1.1 - Ensure the idx is integer')
-	if (typeof idx !== 'number')
+	$$(_ + '1.1 - If specified as an array, then concatenate it')
+	if (IsArr(str))
+		str = str.join('');
+
+	$$(_ + '1.2 - Ensure we actually have a string')
+	if (!IsStr(str))
 		return str;
 
-	$$(_ + '1.2 - Limit the byte count')
-	bc = Math.min(bc, 4);
+	$$(_ + '1.3 - If idx is specified in the form [index, bytecount] then extract them')
+	let bc = 4;
+	if (IsArr(idx))
+	{
+		bc = idx[1];
+		idx = idx[0];
+	}
+
+	$$(_ + '1.4 - Ensure that idx & bc are integers')
+	if (typeof idx !== 'number' || typeof bc !== 'number')
+		return str;
 
 	$$(_ + '2.1 - Create the filler string to search')
 	let find = Filler(idx, bc);
@@ -173,23 +185,28 @@ SwapFillers = function(str, idMap, cnt = -1, bc = 4)
 {
 	let _ = 'SwapFillers : ';
 
-	$$(_ + '1.1 - Limit the byte count')
-	bc = Math.min(bc, 4);
+	$$(_ + '1.1 - If specified as an array, then concatenate it')
+	if (IsArr(str))
+		str = str.join('');
+
+	$$(_ + '1.2 - Ensure we actually have a string')
+	if (!IsStr(str))
+		return str;
 
 	for (key in idMap)
 	{
-		$$(_ + '1.2 - Get the idx and ensure it is a proper integer')
+		$$(_ + '2.1 - Get the idx and ensure it is a proper integer')
 		let idx = parseInt(key);
 		if (Object.is(idx, NaN))
 			continue;
 
-		$$(_ + '1.3 - Get the dataSet corresponding to the id')
+		$$(_ + '2.2 - Get the dataSet corresponding to the id')
 		let dataSet = idMap[idx];
 
-		$$(_ + '2.1 - Create the filler string to search')
+		$$(_ + '2.3 - Create the filler string to search')
 		let find = Filler(idx, bc);
 
-		$$(_ + '2.2 - Make the substitution')
+		$$(_ + '2.4 - Make the substitution')
 		str = _swap_(str, find, dataSet, cnt, bc);
 	}
 
@@ -229,15 +246,31 @@ _settgt_ = function(strParts, pat, target, start, cnt, bc)
 ///
 /// \brief Swaps out the filler hex string with delta values (after JMPs & CALLs) for a target address
 ///
-SetFillTarget = function(str, idx, target, start, cnt = -1, bc = 4)
+SetFillTarget = function(str, idx, target, start, cnt = -1)
 {
 	let _ = 'SetFillTarget : ';
 
-	$$(_ + '1.1 - Ensure the idx, target and start are integers')
-	if (typeof idx !== 'number' || typeof target !== 'number' || typeof start !== 'number')
+	$$(_ + '1.1 - If specified as an array, then concatenate it')
+	if (IsArr(str))
+		str = str.join('');
+
+	$$(_ + '1.2 - Ensure we actually have a string')
+	if (!IsStr(str))
 		return str;
 
-	$$(_ + '1.2 - Limit the byte count')
+	$$(_ + '1.3 - If idx is specified in the form [index, bytecount] then extract them')
+	let bc = 4;
+	if (IsArr(idx))
+	{
+		bc = idx[1];
+		idx = idx[0];
+	}
+
+	$$(_ + '1.4 - Ensure that idx, bc, target and start are integers')
+	if (typeof idx !== 'number' || typeof bc !== 'number' || typeof target !== 'number' || typeof start !== 'number')
+		return str;
+
+	$$(_ + '1.5 - Limit the byte count')
 	bc = Math.min(bc, 4);
 
 	$$(_ + '2.1 - Create the filler string to search')
@@ -264,29 +297,37 @@ SetFillTargets = function(str, idMap, start, cnt = -1, bc = 4)
 {
 	let _ = 'SetFillTargets : ';
 
-	$$(_ + '1.1 - Limit the byte count')
+	$$(_ + '1.1 - If specified as an array, then concatenate it')
+	if (IsArr(str))
+		str = str.join('');
+
+	$$(_ + '1.2 - Ensure we actually have a string')
+	if (!IsStr(str))
+		return str;
+
+	$$(_ + '1.3 - Limit the byte count')
 	bc = Math.min(bc, 4);
 
-	$$(_ + '1.2 - Split the string into parts based on spacing')
+	$$(_ + '1.4 - Split the string into parts based on spacing')
 	let strParts = str.trim().split(/ +/g);
 
 	let swapped = false;
 	for (key in idMap)
 	{
-		$$(_ + '1.3 - Get the idx and ensure it is a proper integer . Key = ' + key)
+		$$(_ + '2.1 - Get the idx and ensure it is a proper integer . Key = ' + key)
 		let idx = parseInt(key);
 		if (Object.is(idx, NaN))
 			continue;
 
-		$$(_ + '1.4 - Get the target corresponding to the id & ensure its an integer')
+		$$(_ + '2.2 - Get the target corresponding to the id & ensure its an integer')
 		let target = idMap[idx];
 		if (typeof target !== 'number')
 			continue;
 
-		$$(_ + '2.1 - Create the filler string to search')
+		$$(_ + '2.3 - Create the filler string to search')
 		let find = Filler(idx, bc);
 
-		$$(_ + '2.2 - Update the array')
+		$$(_ + '2.4 - Update the array')
 		swapped = _settgt_(strParts, find, target, start, cnt, bc) || swapped;
 	}
 
@@ -626,7 +667,9 @@ GetInstr = function(current, n)
 ///
 Cancel = (arg, defVal) =>
 {
-	if (defVal == undefined)
+	if (arg == undefined)
+		throw `Cancelled`;
+	else if (defVal == undefined)
 		throw `Cancelled - ${arg}`;
 	else
 		throw `Cancelled - <b>'${arg}'</b> reverted to <b><i>${defVal}</i></b>`;

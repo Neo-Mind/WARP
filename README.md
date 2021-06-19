@@ -11,7 +11,7 @@
 WARP is a package of tools for Querying and Revamping a 32 bit Windows Application by means of JS (ECMA-262) Scripts.<br>
 The core tools were written in C++ utilizing the versatile Qt Framework, while the tools themselves provide APIs extending traditional JS for writing the scripts.
 
-[Wiki](https://github.com/Neo-Mind/WARP/wiki) | [Discord](https://discord.gg/WGeB4wZZgS) | [Issues](https://github.com/Neo-Mind/WARP/issues/new?template=bug_report.md) | [Feature Requests](https://github.com/Neo-Mind/WARP/issues/new?template=feature_request.md)
+[Wiki](https://github.com/Neo-Mind/WARP/wiki) | [Discord](https://discord.gg/WGeB4wZZgS) | [Issues](https://github.com/Neo-Mind/WARP/issues/new?template=bug_report.md) | [Feature Requests](https://github.com/Neo-Mind/WARP/issues/new?template=feature_request.md) | [Changelog](CHANGELOG.md)
 ---|---|---|---
 
 ## What's included

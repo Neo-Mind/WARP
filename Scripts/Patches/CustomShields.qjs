@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-04-05                                             *
+*   Last Modified : 2021-06-19                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,7 +39,7 @@ CustomShields = function()
 	//===========================================================//
 
 	/// 1.2 - Find address of _가드 (Guard's suffix)
-	let sufAddr = Exe.FindText("_\xB0\xA1\xB5\xE5");
+	let sufAddr = Exe.FindText("_\xB0\xA1\xB5\xE5"); //"_°¡µå"
 	if (sufAddr < 0)
 		throw Error("Guard suffix not found");
 
@@ -48,38 +48,38 @@ CustomShields = function()
 	if (Exe.Version === 6) //VC6
 	{
 		code =
-			PUSH(3)              //PUSH 3
-		+	MOV(ECX, R32)        //MOV ECX, reg32_A
-		+	MOV([EAX], sufAddr)  //MOV DWORD PTR DS:[EAX], addr <guard suffix>
+			PUSH(3)              //push 3
+		+	MOV(ECX, R32)        //mov ecx, regA
+		+	MOV([EAX], sufAddr)  //mov dword ptr [eax], offset "_°¡µå"
 		;
 
 		argSetup =
-			SUB(EAX, 4)  //SUB EAX, 4
-		+	PUSH_EAX     //PUSH EAX
+			SUB(EAX, 4)          //sub eax, 4
+		+	PUSH_EAX             //push eax
 		;
 	}
 	else //VC9+
 	{
 		code =
-			MOV([R32, 4], sufAddr); //MOV DWORD PTR DS:[reg32_A + 4], addr <guard suffix>
+			MOV([R32, 4], sufAddr); //mov dword ptr [regA + 4], offset "_°¡µå"
 	}
 
 	let hookReq = Exe.FindHex(code);
 	if (hookReq < 0)
 		throw Error("Guard suffix not used");
 
-	/// 1.4 - Extract the register that points to the location to store the suffix & PUSH it (for VC9+)
+	/// 1.4 - Extract the register that points to the location to store the suffix & push it (for VC9+)
 	if (Exe.Version >= 9)
-		argSetup = PUSH(R32.List[Instr.FromAddr(hookReq).MRM.RegM]); //PUSH reg32_A
+		argSetup = PUSH(R32.List[Instr.FromAddr(hookReq).MRM.RegM]); //push regA
 
 	/// 1.5 - Find the address of _버클러 (Buckler's suffix)
-	sufAddr = Exe.FindText("_\xB9\xF6\xC5\xAC\xB7\xAF");
+	sufAddr = Exe.FindText("_\xB9\xF6\xC5\xAC\xB7\xAF"); //"_¹öÅ¬·¯"
 	if (sufAddr < 0)
 		throw Error("Buckler suffix not found");
 
 	/// 1.6 - Find where it gets loaded to the table (Return location)
-	code = MOV(Exe.Version === 6 ? [EAX] : [R32, 8], sufAddr); //MOV DWORD PTR DS:[EAX], addr <buckler suffix> or
-	                                                           //MOV DWORD PTR DS:[reg32_A + 8], addr <buckler suffix>
+	code = MOV(Exe.Version === 6 ? [EAX] : [R32, 8], sufAddr); //mov dword ptr [eax], offset "_¹öÅ¬·¯"       OR
+	                                                           //mov dword ptr [regA + 8], offset "_¹öÅ¬·¯"
 
 	let addr = Exe.FindHex(code, hookReq, hookReq + 0x38);
 	if (addr < 0)
@@ -89,42 +89,38 @@ CustomShields = function()
 	let retReq = Exe.Phy2Vir(addr + code.byteCount(), CODE);
 
 	/// 1.8 - Obtain the new Max Shield count from the user.
-	let MaxShield = Exe.GetUserInput('$maxShield', D_Int8, "Shield Limit", "Enter the maximum number of shield types required", 10, {min: 5, saveDefault: true});
+	let MaxShield = Exe.GetUserInput('$maxShield', D_Int8, "Shield Limit", "Enter the maximum number of shield types required", 10, {min: 6, saveDefault: true});
 	if (MaxShield === false)
 		Cancel("Limit reverted to default");
 
 	/// 2.1 - Construct the code to be injected.
 	let funcName = "ReqShieldName";
-	let parts = LUA.createCaller(funcName, "d>s", EDI, EAX);
+	let [prep, main, restore] = LUA.createCaller(funcName, "d>s", EDI, EAX);
 
-	code =
-		PUSHAD                         //PUSHAD
-	+	MOV(EBX, MaxShield)            //MOV EBX, finalValue
-	+	MOV(EDI, 1)                    //MOV EDI, 1
-	+	parts[0]                       //Stack Prep
-	;
-	let presize = code.byteCount();
+	let parts =
+	[
+		PUSHAD                         //pushad
+	+	MOV(EBX, MaxShield)            //mov ebx, <MaxShield>
+	+	MOV(EDI, 1)                    //mov edi, 1
+	+	prep                           //Stack Prep
+	,
+		main                           //LUA Function call code ; _loop
+	+	MOV(CL, [EAX])                 //mov cl, byte ptr [eax]
+	+	TEST(CL, CL)                   //test cl, cl
+	+	JE(7)                          //je short _idxInc
+	+	MOV(ECX, [ESP, 0x24])          //mov ecx, dword ptr [esp+24] ; 20 = 8 registers * 4 due to PUSHAD + 4 for the starting memory address which was PUSHed before the PUSHAD
+	+	MOV([4, EDI, ECX], EAX)        //mov dword ptr [edi*4 + ecx], eax
+	+	INC(EDI)                       //inc edi ; _idxInc
+	+	CMP(EDI, EBX)                  //cmp edi, ebx
+	,
+		JLE(Filler(1, 1))              //jle short _loop; to start of the calling code
+	+	restore                        //Stack Restore
+	+	POPAD                          //popad
+	+	ADD(ESP, 4)                    //add esp, 4
+	+	JMP(Filler(2))                 //jmp <retReq>
+	];
 
-	code +=
-		parts[1]                       //LUA Function CALL code ; _loop
-	+	MOV(CL, [EAX])                 //MOV CL, BYTE PTR DS:[EAX]
-	+	TEST(CL, CL)                   //TEST CL, CL
-	+	JE(7)                          //JE SHORT idxInc
-	+	MOV(ECX, [ESP, 0x24])          //MOV ECX, DWORD PTR SS:[ESP+24] ; 20 = 8 registers * 4 due to PUSHAD + 4 for the starting memory address which was PUSHed before the PUSHAD
-	+	MOV([4, EDI, ECX], EAX)        //MOV DWORD PTR DS:[EDI*4+ECX],EAX
-	+	INC(EDI)                       //INC EDI; idxInc
-	+	CMP(EDI, EBX)                  //CMP EDI,EBX
-	;
-
-	code +=
-		JLE(presize, code.byteCount()) //JLE SHORT _loop; to start of the parts[1]
-	+	parts[2]                       //Stack Restore
-	+	POPAD                          //POPAD
-	+	ADD(ESP, 4)                    //ADD ESP, 4
-	+	JMP(Filler(1))                 //JMP retReq
-	;
-
-	let csize = code.byteCount();
+	let csize = parts.byteCount();
 
 	/// 2.2 - Allocate space for the code
 	let free = Exe.FindSpace(csize + funcName.length + 1, 0x10); //extra 1 for a NULL suffix
@@ -134,17 +130,18 @@ CustomShields = function()
 	let freeVir = Exe.Phy2Vir(free, DIFF);
 
 	/// 2.3 - Fill in the blanks
-	code = LUA.finalize(code, freeVir, freeVir + csize);
+	code = LUA.finalize(parts, freeVir, freeVir + csize);
 
-	code = SetFillTarget(code, 1, retReq, freeVir);
+	code = SetFillTarget(code, [1, 1], parts.byteCount(0), 0, 1); //for jle short _loop
+	code = SetFillTarget(code, 2, retReq, freeVir, 1);
 
 	/// 2.5 - Insert the code
 	Exe.AddHex(free, code + funcName.toHex());
 
 	/// 2.6 - Setup a JMP to our code at hookReq
 	code =
-		argSetup //PUSHes the starting memory address
-	+	JMP(freeVir, Exe.Phy2Vir(hookReq + argSetup.byteCount(), CODE))
+		argSetup                                                         //push the base address of the table
+	+	JMP(freeVir, Exe.Phy2Vir(hookReq + argSetup.byteCount(), CODE))  //jmp <freeVir>
 	;
 	Exe.SetHex(hookReq, code);
 
@@ -168,16 +165,16 @@ CustomShields = function()
 	{
 		/// 3.1 - Find location where the GetShieldType is called - there are multiple matches but all of them are same
 		code =
-			CMP(EAX, 0x7D0)  //CMP EAX, 7D0
-		+	JLE(WCp)         //JLE SHORT addr1
-		+	PUSH(EAX)        //PUSH EAX
-		+	MOV(ECX, POS4WC) //MOV ECX, g_session; Note: this is the reference value for all the tables
-		+	CALL()           //CALL CSession::GetShieldType
+			CMP(EAX, 0x7D0)  //cmp eax, 7D0h
+		+	JLE(WCp)         //jle short addr1
+		+	PUSH(EAX)        //push eax
+		+	MOV(ECX, POS4WC) //mov ecx, offset <g_session> ; Note: this is the reference value for all the tables
+		+	CALL()           //call CSession::GetShieldType
 		;
 
 		let addrs = Exe.FindHexN(code);
 		if (addrs.isEmpty())
-			throw Error("GetShieldType CALL missing");
+			throw Error("GetShieldType call missing");
 
 		/// 3.2 - Save the address of the CALL
 		refAddr = addrs[0] + code.byteCount() - 1;
@@ -186,35 +183,35 @@ CustomShields = function()
 	{
 		/// 3.3 - Find location where the GetShieldType is called (Only 1 match now)
 		code =
-			MOV(BYTE_PTR, [EBP, WCn], 3) //MOV BYTE PTR SS:[LOCAL.x], 3
+			MOV(BYTE_PTR, [EBP, WCn], 3) //mov byte ptr [LOCAL.x], 3
 		+	(Exe.Version === 11
 		?
-			PUSH(EBX)                    //PUSH EBX
+			PUSH(EBX)                    //push ebx
 		:
 			''
 		)
-		+	MOV(ECX, POS4WC)             //MOV ECX, OFFSET g_session
+		+	MOV(ECX, POS4WC)             //mov ecx, offset <g_session>
 		+	(Exe.Version > 11
 		?
-			PUSH([EBP, NEG2WC])          //PUSH DWORD PTR SS:[LOCAL.y]
+			PUSH([EBP, NEG2WC])          //push dword ptr [LOCAL.y]
 		:
 			''
 		)
 		;
 
 		let suffix =
-			CALL(ALLWC)                  //CALL CSession::GetShieldType
+			CALL(ALLWC)                  //call CSession::GetShieldType
 		+	(Exe.Version === 11
 		?
-			MOV(ECX, [EBP, NEG2WC])      //MOV ECX, DWORD PTR SS:[LOCAL.z]
+			MOV(ECX, [EBP, NEG2WC])      //mov ecx, dword ptr [LOCAL.z]
 		:                                // or
-			MOV([EBP, NEG2WC], EAX)      //MOV DWORD PTR SS:[LOCAL.z], EAX
+			MOV([EBP, NEG2WC], EAX)      //mov dword ptr [LOCAL.z], eax
 		)
 		;
 
 		addr = Exe.FindHex(code + suffix);
 		if (addr < 0)
-			throw Error("GetShieldType CALL missing (New)");
+			throw Error("GetShieldType call missing (New)");
 
 		/// 3.4 - Save the location of the CALL
 		refAddr = addr += code.byteCount();
@@ -228,11 +225,11 @@ CustomShields = function()
 	parts = LUA.createCaller(funcName, "d>d", EDX, EAX);
 
 	code =
-		PUSH(EDX)            //PUSH EDX
-	+	MOV(EDX, [ESP, 8])   //MOV EDX, [ARG.1]
-	+	parts.join('')       //Function caller (result saved to EAX)
-	+	POP(EDX)             //POP EDX
-	+	RETN(4)              //RETN 4
+		PUSH(EDX)            //push edx
+	+	MOV(EDX, [ESP, 8])   //mov edx, dword ptr [ARG.1]
+	+	parts.join('')       //Function caller (result saved to eax)
+	+	POP(EDX)             //pop edx
+	+	RETN(4)              //retn 4
 	;
 	csize = code.byteCount();
 
@@ -241,7 +238,7 @@ CustomShields = function()
 	if (free < 0)
 		throw NO_ALLOC;
 
-	let newMapVir = Exe.Phy2Vir(free, VIRTUAL); //save for later too
+	let newMapVir = Exe.Phy2Vir(free, DIFF); //save for later too
 
 	/// 4.3 - Fill in the blanks
 	code = LUA.finalize(code, newMapVir, newMapVir + csize);
@@ -252,55 +249,53 @@ CustomShields = function()
 	/// 4.5 - Create a JMP to the code at hookMap
 	Exe.SetJMP(hookMap, newMapVir);
 
-	if (MaxShield !== 5)
+	if (Exe.Version === 9 || Exe.Version === 10)
 	{
-		if (Exe.Version === 9 || Exe.Version === 10)
-		{
-			/// 5.1 - Find Register assignment to 5 and replace with MaxShield
-			code =
-				MOV(R32, 5)   //MOV reg32_A, 5
-			+	SUB(R32, R32) //SUB reg32_A, reg32_B
-			;
+		/// 5.1 - Find Register assignment to 5 and replace with MaxShield
+		code =
+			MOV(R32, 5)   //mov regA, 5
+		+	SUB(R32, R32) //sub regA, regB
+		;
 
-			addr = Exe.FindHex(code, hookReq - 0x60, hookReq);
-			if (addr < 0)
-				throw Error("No Allocator MOVes found");
+		addr = Exe.FindHex(code, hookReq - 0x60, hookReq);
+		if (addr < 0)
+			throw Error("No Allocator MOVes found");
 
-			Exe.SetInt32(addr + 1, MaxShield);
+		Exe.SetInt32(addr + 1, MaxShield);
 
-			/// 5.2 - Find EAX comparison with 5 before assignment and replace with MaxShield
-			code =
-				CMP(EAX, 5) //CMP EAX, 5
-			+	JAE(WC)     //JAE SHORT addr
-			;
+		/// 5.2 - Find EAX comparison with 5 before assignment and replace with MaxShield
+		code =
+			CMP(EAX, 5) //cmp eax, 5
+		+	JAE(WC)     //jae short addr
+		;
 
-			addr = Exe.FindHex(code, addr - 0x10, addr);
-			if (addr < 0)
-				throw Error("Shield Limit comparison missing");
+		addr = Exe.FindHex(code, addr - 0x10, addr);
+		if (addr < 0)
+			throw Error("Shield Limit comparison missing");
 
-			Exe.SetInt8(addr + 2, MaxShield)
-		}
-		else
-		{
-			/// 5.3 - Find PUSH 5 before hookReq and replace with MaxShield if its there
-			code =
-				PUSH_EAX      //PUSH EAX
-			+	PUSH(5)       //PUSH 5
-			+ 	(Exe.Version > 11 && (!ROC.IsZero || Exe.BuildDate > 20190910)
-			?
-				CALL(POS3WC)  //CALL allocator
-			:
-				MOV(ECX, R32) //MOV ECX, reg32_A
-			)
-			;
-
-			addr = Exe.FindHex(code, hookReq - 0x30, hookReq);
-			if (addr < 0)
-				throw Error("No Allocator PUSHes found");
-
-			Exe.SetInt8(addr + 2, MaxShield);
-		}
+		Exe.SetInt8(addr + 2, MaxShield)
 	}
+	else
+	{
+		/// 5.3 - Find push 5 before hookReq and replace with MaxShield if its there
+		code =
+			PUSH_EAX      //push eax
+		+	PUSH(5)       //push 5
+		+ 	(Exe.Version > 11 && (!ROC.IsZero || Exe.BuildDate > 20190910)
+		?
+			CALL(POS3WC)  //call <allocator>
+		:
+			MOV(ECX, R32) //mov ecx, regA
+		)
+		;
+
+		addr = Exe.FindHex(code, hookReq - 0x30, hookReq);
+		if (addr < 0)
+			throw Error("No Allocator PUSHes found");
+
+		Exe.SetInt8(addr + 2, MaxShield);
+	}
+
 
 	let funcAddr;
 	if (Exe.BuildDate < 20170700)
@@ -309,31 +304,31 @@ CustomShields = function()
 		if (ROC.HasFP)
 		{
 			code =
-				PUSH(EBP)               //PUSH EBP
-			+	MOV(EBP, ESP)           //MOV EBP, ESP
+				PUSH(EBP)               //push ebp
+			+	MOV(EBP, ESP)           //mov ebp, esp
 			+	(Exe.Version === 11
 			?
-				MOV(EAX, ECX)           //MOV EAX, ECX
-			+	MOV(ECX, [EBP, 0xC])    //MOV ECX, DWORD PTR SS:[ARG.2]
-			:                           //  or
-				MOV(EAX, [EBP, 0xC])    //MOV ECX, DWORD PTR SS:[ARG.2]
+				MOV(EAX, ECX)           //mov eax, ecx
+			+	MOV(ECX, [EBP, 0xC])    //mov ecx, dword ptr [ARG.2]
+			:                           //  OR
+				MOV(EAX, [EBP, 0xC])    //mov ecx, dword ptr [ARG.2]
 			)
 			;
 		}
 		else
 		{
 			code =
-				MOV(EAX, [ESP, 0x8])    //MOV EAX, DWORD PTR SS:[ARG.2]
+				MOV(EAX, [ESP, 0x8])    //mov eax, dword ptr [ARG.2]
 		}
 
 		code +=
-			PUSH(ESI)                   //PUSH ESI
-		+	XOR(ESI, ESI)               //XOR ESI, ESI
+			PUSH(ESI)                   //push esi
+		+	XOR(ESI, ESI)               //xor esi, esi
 		+	(Exe.Version === 11
 		?
-			CMP(ECX, 0x88D)             //CMP ECX, 88D
-		:                               //  or
-			CMP(EAX, 0x7D0)             //CMP EAX, 7D0
+			CMP(ECX, 0x88D)             //cmp ecx, 88Dh
+		:                               //  OR
+			CMP(EAX, 0x7D0)             //cmp eax, 7D0h
 		)
 		;
 
@@ -345,17 +340,17 @@ CustomShields = function()
 	{
 		/// 6.2 - For later clients, its CALLed after the GetShieldType CALL.
 		code =
-			CMP(R32, 5)             //CMP reg32_A, 5
-		+	JL(POS2WC)              //JL addr
-		+	PUSH_R                  //PUSH reg32_A
+			CMP(R32, 5)             //cmp regA, 5
+		+	JL(POS2WC)              //jl _skip
+		+	PUSH_R                  //push regA
 		+	(Exe.Version === 11
 		?
-			PUSH_R                  //PUSH reg32_B
+			PUSH_R                  //push regB
 		:                           // or
-			PUSH([EBP, 0x10])       //PUSH DWORD PTR SS:[ARG.3]
+			PUSH([EBP, 0x10])       //push dword ptr [ARG.3]
 		)
-		+	MOV(ECX, POS4WC)        //MOV ECX, OFFSET addr2
-		+	CALL()                  //CALL validator
+		+	MOV(ECX, POS4WC)        //mov ecx, offset#1
+		+	CALL()                  //call validator
 		;
 
 		addr = Exe.FindHex(code, refAddr + 5, refAddr + 0x80);
@@ -374,11 +369,11 @@ CustomShields = function()
 	parts = LUA.createCaller(funcName, "dd>d", [EBP, 0xC], [EBP, 8], EAX); //dd>b would have been more apt but its not present in older clients.
 
 	code =
-		PUSH(EBP)      //PUSH EBP
-	+	MOV(EBP, ESP)  //MOV EBP, ESP
+		PUSH(EBP)      //push ebp
+	+	MOV(EBP, ESP)  //mov ebp, esp
 	+	parts.join('') //Function caller code
-	+	POP(EBP)       //POP EBP
-	+	RETN(8)        //RETN 8
+	+	POP(EBP)       //pop ebp
+	+	RETN(8)        //retn 8
 	+	ALL00          //Null bytes for gap
 	;
 
@@ -392,26 +387,28 @@ CustomShields = function()
 	let prefix =
 		(ROC.HasFP
 	?
-		PUSH(EBP)                             //PUSH EBP
-	+	MOV(EBP, ESP)                         //MOV EBP, ESP
+		PUSH(EBP)                             //push ebp
+	+	MOV(EBP, ESP)                         //mov ebp, esp
 	:
 		''
 	)
-	+	PUSH(ESI)                             //PUSH ESI
-	+	MOV(ESI, [ROC.HasFP ? EBP : ESP, 8])  //MOV ESI, DWORD PTR SS:[ARG.1]
-	+	PUSH(ESI)                             //PUSH ESI
-	+	CALL(ALLWC)                           //CALL func
+	+	PUSH(ESI)                             //push esi
+	+	MOV(ESI, [ROC.HasFP ? EBP : ESP, 8])  //mov esi, dword ptr [ARG.1]
+	+	PUSH(ESI)                             //push esi
+	+	CALL(ALLWC)                           //call func#1
 	;
+	let dispLoc = 2; //position of the displacement after the CALL
 
 	switch (Exe.Version)
 	{
-		case 6:  //VC6
+		case 6:  //VC6 ; this is probably not needed
 		case 9:  // to
 		case 10: //VC10
 		{
 			code =
-				MOV(EAX, [EAX, WCp])              //MOV EAX, DWORD PTR DS:[EAX + const]
-			+	ADD(ESI, -0x835)                  //ADD ESI, -835
+				MOV(EAX, [EAX, WCp])          //mov eax, dword ptr [eax + dispA]
+			+	ADD(ESI, -0x835)              //add esi, -835h
+			+	ADD(ESP, 4)                   //add esp, 4
 			;
 			break;
 		}
@@ -419,9 +416,9 @@ CustomShields = function()
 		case 11: //VC11
 		{
 			code =
-				MOV(R32, [EAX, WCp])              //MOV reg32_A, DWORD PTR DS:[EAX + const]
-			+	ADD(ESP, 4)                       //ADD ESP, 4
-			+	CMP(ESI, 0x834)                   //CMP ESI, 834
+				MOV(R32, [EAX, WCp])          //mov regA, dword ptr [eax + dispA]
+			+	ADD(ESP, 4)                   //add esp, 4
+			+	CMP(ESI, 0x834)               //cmp esi, 834h
 			;
 			break;
 		}
@@ -429,10 +426,11 @@ CustomShields = function()
 		default: //VC14.16
 		{
 			code =
-				ADD(ESP, 4)                       //ADD ESP, 4
-			+	MOV(EAX, [EAX, WCp])              //MOV EAX, DWORD PTR DS:[EAX + const]
-			+	CMP(ESI, 0x834)                   //CMP ESI, 834
+				ADD(ESP, 4)                   //add esp, 4
+			+	MOV(EAX, [EAX, WCp])          //mov eax, dword ptr [eax + dispA]
+			+	CMP(ESI, 0x834)               //cmp esi, 834h
 			;
+			dispLoc = 5;
 			break;
 		}
 	}
@@ -441,35 +439,60 @@ CustomShields = function()
 	if (addr < 0 && Exe.BuildDate > 20130000) //Mandatory for 2013+
 		throw Error("Extra Limiter missing");
 
-	/// 7.2 - Move to the position after the CALL (all the code till that point is relevant)
+	/// 7.2 - Move to the position after the call (all the code till that point is relevant)
 	addr += prefix.byteCount();
 
-	/// 7.3 - Create our replacement code (Calls the earlier hookMap function to retrieve shield id corresponding to item id & turns the result to -1 if valid id.
-	code =
-		TEST(EAX, EAX)  //TEST EAX, EAX
-	+	JZ(3)           //JZ _skip_OR
-	+	OR(EAX, -1)     //OR EAX, FFFFFFFF
-	+	POP(ESI)        //POP ESI
+	/// 7.3 - Retrieve the displacement wrt EAX
+	let disp = Exe.GetInt8(addr + dispLoc);
+
+	/// 7.4 - Retrieve the target address (this retrieve the weapon ID)
+	funcAddr = Exe.GetTgtAddr(addr - 4);
+
+	/// 7.5 - Create our replacement code (At this point the earlier hookMap function has been called to retrieve the shield id)
+	parts = [
+		TEST(EAX, EAX)         //test eax, eax
+	+	JZ(Filler(1,1))        //jz _skip_OR
+	+	OR(EAX, -1)            //or eax, FFFFFFFFh
+	+	POP(ESI)               //pop esi
 	+	(ROC.HasFP
 	?
-		POP(EBP)        //POP EBP
+		POP(EBP)               //pop ebp
 	:
 		''
 	)
-	+	RETN(4)         //RETN 4
-	;
+	+	RETN(4)                //retn 4
+	,
+		PUSH(ESI)              //push esi ; _skip_OR
+	+	CALL(Filler(2))        //call <funcAddr>
+	+	ADD(ESP, 4)            //add esp, 4
+	+	MOV(EAX, [EAX, disp])  //mov eax, dword ptr [eax + dispB]
+	+	POP(ESI)               //pop esi
+	+	(ROC.HasFP
+	?
+		POP(EBP)               //pop ebp
+	:
+		''
+	)
+	+	RETN(4)                //retn 4
+	];
 
-	/// 7.4 - Replace the function being CALLed
+	/// 7.6 - Fill the blanks
+	code = SetFillTarget(parts, [1, 1], parts.byteCount(0), 0, 1); //for jz _skip_OR
+	code = SetFillTarget(code, 2, funcAddr, Exe.Phy2Vir(addr, CODE), 1);
+
+	/// 7.7 - Replace the function being CALLed
 	Exe.SetTgtAddr(addr - 4, newMapVir);
 
-	/// 7.5 - Append our code after the CALL
+	/// 7.8 - Append our code after the CALL
 	Exe.SetHex(addr, code);
 
-	/// 7.6 - Check with user if they want to copy the supporting files to the target area's data folder
-	CS_Response = Exe.GetUserInput("$copyCSLub", D_Bool, "Copy Files", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
-	if (CS_Response)
-		CS_Limiter = MaxShield;
-
+	/// 7.9 - Check with user if they want to copy the supporting files to the target area's data folder
+	if (!Exe.TestMode)
+	{
+		CS_Response = Exe.GetUserInput("$copyCSLub", D_Bool, "Copy Custom Shield Lua", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
+		if (CS_Response)
+			CS_Limiter = MaxShield;
+	}
 	return true;
 };
 
