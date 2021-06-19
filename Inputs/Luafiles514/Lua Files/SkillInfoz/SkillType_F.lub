@@ -1,0 +1,20 @@
+IsPlayerSkill = function(skillid)
+    return CheckSkillID(skillid, PLAYER_SKILLS)
+end
+
+IsHomunSkill =  function(skillid)
+    return CheckSkillID(skillid, HOMUN_SKILLS)
+end
+
+IsMercenarySkill = function(skillid)
+    return CheckSkillID(skillid, MERCENARY_SKILLS)
+end
+
+CheckSkillID = function(skillid, tblname)
+    for _, id in ipairs(tblname) do
+        if id == skillid then
+            return 1
+        end
+    end
+    return 0
+end

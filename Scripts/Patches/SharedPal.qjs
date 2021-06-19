@@ -23,25 +23,37 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-06-17                                             *
 *                                                                          *
 \**************************************************************************/
 
 /// \brief Change the format string used, to skip some arguments.
 ///        The format string is used in CSession::GetBodyPaletteName (for Body) or CSession::GetHeadPaletteName (for Head)
 ///
-SharedPal = function(oldPrefix, newFormat)
+SharedPal = function(oldPrefix, newFormat, optional)
 {
 	/// 1.1 - Find the original format string
 	let addr = -1;
-	if (Exe.Version <= 9) //VC6 & VC9
-		addr = Exe.FindText(oldPrefix + "%s%s_%d.pal"); //Old style used for VC6 and some initial VC9 clients
+	if (oldPrefix.includes("costume"))
+	{
+		addr = Exe.FindText(oldPrefix + "%s_%s_%d_%d.pal"); //Costume specific 
+	}
+	else
+	{
+		if (Exe.Version <= 9) //VC6 & VC9
+			addr = Exe.FindText(oldPrefix + "%s%s_%d.pal"); //Old style used for VC6 and some initial VC9 clients
+
+		if (addr < 0)
+			addr = Exe.FindText(oldPrefix + "%s_%s_%d.pal"); //New style
+	}
 
 	if (addr < 0)
-		addr = Exe.FindText(oldPrefix + "%s_%s_%d.pal"); //New style
-
-	if (addr < 0)
-		throw Error("Format string not found");
+	{
+		if (optional)
+			return true;
+		else
+			throw Error("Format string not found");
+	}
 
 	/// 1.2 - Find where it is used in a PUSH
 	addr = Exe.FindHex( PUSH(addr) );
@@ -63,28 +75,75 @@ SharedPal = function(oldPrefix, newFormat)
 };
 
 ///
+/// \brief Common sub function for reloading IncrHairStyles / Allow65kHairs patches
+///
+SHP_reloadIH = function()
+{
+	let patchName = null;
+	if (Exe.IsSelected("IncrHairStyles"))
+		patchName = "IncrHairStyles";
+
+	else if (Exe.IsSelected("Allow65kHairs"))
+		patchName = "Allow65kHairs";
+
+	if (patchName)
+	{
+		Exe.ClearPatch(patchName);
+		Exe.SetActivePatch(patchName);
+		IncrHairs();
+	}
+};
+
+///
 /// \brief Common function for Head Palette patches
 ///        Changes "赣府\赣府%s_%s_%d.pal" => "赣府\head%.s_%s_%d.pal" or "赣府\head%.s%.s_%d.pal"
 ///
 SharedHeadPal = patchName =>
 	SharedPal("\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE",
 		patchName === "HeadPalUnisex" ?
-			"\xB8\xD3\xB8\xAE\\head%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
+			"\xB8\xD3\xB8\xAE\\head%.s%.s_%d.pal\x00" // %.s is required. Skips hairnum & gender
 		:
-			"\xB8\xD3\xB8\xAE\\head%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
+			"\xB8\xD3\xB8\xAE\\head%.s_%s_%d.pal\x00" // %.s is required. Skips hairnum
 	);
+
+///
+/// \brief Setup IncrHairs reloading when selection changes
+///
+SharedHeadPal.onSelected = SHP_reloadIH;
+SharedHeadPal.onDeselected = SHP_reloadIH; //cleanup will work just as well but this looks more homogenous?
 
 ///
 /// \brief Common function for Body Palette patches
 ///        Changes "个\%s_%s_%d.pal" => "个\body%.s_%s_%d.pal" or "个\body%.s%.s_%d.pal"
 ///
 SharedBodyPal = patchName =>
-	SharedPal("\xB8\xF6\\",
+	SharedPal("\xB8\xF6\\", //for regular clothes
 		patchName === "BodyPalUnisex" ?
 			"\xB8\xF6\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
 			"\xB8\xF6\\body%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
-	);
+	) &&
+
+	SharedPal("\xB8\xF6\\costume_%d\\", //for costumes
+		patchName === "BodyPalUnisex" ?
+			"\xB8\xF6\\costume_%d\\body%.s%.s_%d_%d.pal\x00" // %.s is required. Skips jobname & gender
+		:
+			"\xB8\xF6\\costume_%d\\body%.s_%s_%d_%d.pal\x00" // %.s is required. Skips jobname
+	, true) &&
+
+	SharedPal("%s\\body\\costume_%d\\", //for costumes - part 2
+		patchName === "BodyPalUnisex" ?
+			"%s\\costume_%d\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
+		:
+			"%s\\costume_%d\\body%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
+	, true) &&
+
+	SharedPal("%s\\body\\", //for doram races
+		patchName === "BodyPalUnisex" ?
+			"%s\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
+		:
+			"%s\\body%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
+	, true) ;
 
 ///
 /// \brief Wrappers for individual patches

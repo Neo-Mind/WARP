@@ -1,0 +1,233 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2021 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2021-06-14                                             *
+*   Last Modified : 2021-06-17                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Modify the table loading for Homunculi using 'ReqJobName' lua function (same one used for mobs).
+///        Also modifies the id testing codes for homunculus.
+///
+CustomHomuns = function()
+{
+	/// 1.1 - Ensure LUA object & LANGTYPE are loaded
+	LUA.load();
+	LANGTYPE.load();
+
+	/// 1.2 - Find the string 'LIF'
+	let addr = Exe.FindText("LIF");
+	if (addr < 0)
+		throw Error("'LIF' not found");
+
+	/// 1.3 - Find where it gets assigned. Serves as the hook address
+	let hookAddr = Exe.FindHex(MOV([R32, 0x5DC4], addr)); //mov dword ptr [regA + 5DC4h], offset "LIF"
+	if (hookAddr < 0)
+		throw Error("'LIF' not used");
+
+	/// 1.4 - Extract the assignment instruction
+	let ins = Instr.FromAddr(hookAddr);
+
+	/// 1.5 - Get the register containing the base address
+	let refReg = R32.List[ins.MRM.RegM];
+
+	/// 2.1 - Now find the ending instruction while extracting all relevant instructions (not related to table loading) in between
+	let [endIns, retainer, overflow] = FetchTillEnd(hookAddr, 1, ins.getNext(), refReg, -1, (ins) =>
+	{
+		if (Exe.Version === 6) //VC6
+		{
+			if (ins.Codes[0] === 0x85 && ins.MRM.RegO === ins.MRM.RegM) //test regA, regA
+			{
+				return (Exe.GetUint8(ins.NextAddr) === 0x74); //followed by ( jz short addr#1 )
+			}
+		}
+		else if (Exe.Version <= 11) //VC9 to VC11
+		{
+			if (ins.Codes[0] === 0x2B) //sub regA, regB
+			{
+				return (ins.MRM.Mode === 3 && (Exe.GetInt32(ins.Addr + 2) & 0xFFF8FF) === 0x02F8C1); //followed by ( sar regA, 2 )
+			}
+		}
+		else //VC14.16
+		{
+			if (ins.Codes[0] === 0x8D && ins.MRM.Mode === 1 && ins.MRM.RegO === 0 && Exe.GetUint8(ins.NextAddr) === 0x50) //lea eax, [LOCAL.x]
+			{                                                                                                             //push eax
+				let opcode = Exe.GetUint8(ins.NextAddr + 1);
+				return (opcode === 0x6A || //followed by ( push immA )
+				        opcode === 0x68 ||
+				        opcode === 0x56 ); //or by       ( push esi )
+			}
+		}
+		return false;
+	});
+	if (overflow)
+		throw Error("Unable to find end of assignments");
+
+	/// 2.2 - Get the max homunculi limit from user
+	let MaxHomun = Exe.GetUserInput('$maxHomun', D_Int16, "Limit Input", "Enter the maximum homunculus ID required", 6080, {min: 6080, max: 7000, saveDefault: true});
+	if (MaxHomun === false)
+		Cancel("No Max Limit specified");
+
+	/// 2.3 - Prepare the code to call LUA function for loading tables
+	let funcName = "ReqJobName";
+	let [prep, main, restore] = LUA.createCaller(funcName, "d>s", EDI, EAX);
+
+	let parts =
+	[
+		PUSH(refReg)             //push regA ; it contains the starting table address
+	+	PUSHAD                   //pushad
+	+	MOV(EBX, MaxHomun)       //mov ebx, <MaxHomun>
+	+	MOV(EDI, 6001)           //mov edi, 1771h
+	+	prep                     //Stack Prep
+	,
+		main                     //Lua fn calling code ; _loop
+	+	MOV(CL, [EAX])           //mov cl, byte ptr [eax]
+	+	TEST(CL, CL)             //test cl, cl
+	+	JE(7)                    //je short _idxInc
+	+	MOV(ECX, [ESP, 0x24])    //mov ecx, dword ptr [esp + 24h] ; 20 = 8 registers * 4 due to PUSHAD + 4 for the starting memory address which was PUSHed before the PUSHAD
+	+	MOV([4, EDI, ECX], EAX)  //mov dword ptr [edi*4 + ecx], eax
+	+	INC(EDI)                 //inc edi; _idxInc
+	+	CMP(EDI, EBX)            //cmp edi, ebx
+	+	JLE(Filler(1, 1))        //jle short _loop
+	,
+		restore                  //Stack restoration
+	+	POPAD                    //popad
+	+	ADD(ESP, 4)              //add esp, 4 ; for the initial push
+	,
+		retainer                 //Codes which were retrieved earlier
+	,
+		JMP(Filler(2))           //jmp endAddr; address of <endIns>
+	];
+
+	/// 2.4 - Fill in the blanks
+	let code = LUA.finalize(parts, Exe.Phy2Vir(hookAddr, CODE), LUA.ReqJN);
+
+	code = SetFillTarget(code, [1, 1], parts.byteCount(0), 0, 1);
+	code = SetFillTarget(code, 2, endIns.Addr, hookAddr, 1); //no VIRTUAL conversion needed since both are in CODE section
+
+	/// 2.5 - Replace at the hook address.
+	Exe.SetHex(hookAddr, code);
+
+	if (Exe.Version > 6)
+	{
+		/// 3.1 - Find the id checker function for VC9+
+		parts =
+		[
+			ADD(EAX, -0x1771) //add eax, -1771h
+		,
+			MOV(ECX, 0x33)    //mov ecx, 33h ; need to change this one
+		];
+		let offset = 6;
+
+		if (Exe.Version > 11) //for VC14.16 the order is reverse
+		{
+			parts = parts.reverse();
+			offset = 1;
+		}
+
+		addr = Exe.FindHex(parts);
+		if (addr < 0)
+			throw Error("Limiter not found");
+
+		/// 3.2 - Adjust the delta value
+		Exe.SetInt32(addr + offset, (MaxHomun - 6001));
+	}
+	else
+	{
+		/// 3.3 - Find the id checker function for VC6
+		code =
+			CMP(EAX, 0x1770)  //cmp eax, 1770h
+		+	JLE(0x10)         //jle short _skip
+		+	CMP(EAX, 0x17A5)  //cmp eax, 17A5h ; need to change this one
+		;
+
+		addr = Exe.FindHex(code);
+		if (addr < 0)
+			throw Error("Limiter not found");
+
+		/// 3.4 - Adjust the max id
+		Exe.SetInt32(addr + code.byteCount() - 4, MaxHomun);
+	}
+
+	/// 3.5 - Find the additional checker before retrieval from table
+	if (Exe.Version > 6)
+	{
+		code =
+			LEA(R32, [R32, -0x1771]) //lea regA, [regB - 1771h]
+		+	CMP(R32, 0x33)           //cmp regA, 33h ; need to change this one
+		;
+		addr = Exe.FindHex(code);
+		if (addr < 0)
+			throw Error("Table check missing");
+
+		let delta = MaxHomun - 6001;
+		if (delta <= 0x7F)
+		{
+			/// 3.6 - If the delta is 1 byte long, simply replace it
+			Exe.SetInt8(addr + code.byteCount() - 1, delta);
+		}
+		else
+		{
+			/// 3.7 - If it's more than a byte then we need to jump and do the change.
+			///       first extract both the instructions
+			let ins1 = Instr.FromAddr(addr);
+			let ins2 = ins1.getNext();
+
+			/// 3.8 - Adjust the delta value & the opcode (81 instead of 83 for dword)
+			ins2.Immd = delta;
+			ins2.BC_Immd = 4;
+			ins2.Codes[0] = 0x81;
+
+			/// 3.9 - Construct the new code (updated instructions + a return jump)
+			code =
+				ins1           //lea regA, [regB - 1771h]
+			+	ins2           //cmp regA, <delta> ; where delta = MaxHomun - 1771h
+			+	JMP(Filler(1)) //jmp retnAddr
+			;
+
+			/// 3.10 - Allocate space for it
+			let free = Exe.FindSpace(code.byteCount());
+			if (free < 0)
+				throw NO_ALLOC;
+
+			let freeVir = Exe.Phy2Vir(free, DIFF);
+
+			/// 3.10 - Fill in the blanks
+			code = SetFillTarget(code, 1, Exe.Phy2Vir(ins2.NextAddr, CODE), freeVir, 1);
+
+			/// 3.11 - Add at allocated space
+			Exe.AddHex(free, code);
+
+			/// 3.12 - Change the code at the found location to a JMP (add NOPs afterwards for a clean edit).
+			Exe.SetJMP(ins1.Addr, freeVir, ins2.NextAddr - ins1.Addr - 5);
+		}
+	}
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients
+///
+CustomHomuns.validate = IsPost2010;

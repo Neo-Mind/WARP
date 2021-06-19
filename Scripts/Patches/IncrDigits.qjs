@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-05-14                                             *
+*   Last Modified : 2021-06-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -233,7 +233,7 @@ IncrDigits = function()
 		JMP(Filler(2))               //JMP ggmAddr
 	];
 
-	code = SetFillTarget(parts.join(''), 1, parts[0].byteCount(), 0, 1, 1);
+	code = SetFillTarget(parts.join(''), [1, 1], parts[0].byteCount(), 0, 1); //setting the JNE SHORT target
 	code = SetFillTarget(code, 2, ggmAddr, refAddr, 1);
 
 	/// 5.3 - Put the code at refAddr

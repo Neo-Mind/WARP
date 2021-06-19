@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-06-03                                             #
+#   Last Modified : 2021-06-20                                             #
 #                                                                          #
 ############################################################################
 
@@ -38,7 +38,7 @@
             desc : Remove the clientside limitation for maximum repeated lines.
         
         - LimitedChatRepeat:
-            title : Custom chat repeat limit
+            title : Customize chat repeat limit
             recommend : no
             author : Shinryo
             desc : Change the clientside limit for maximum repeated lines in chat box from 2 to user specified value.
@@ -71,21 +71,26 @@
     mutex : true
 
     patches:
-        - Zoom150Percent:
-            title : Increase Zoom Out (150%)
-            title : Increase Zoom Out (150%)
+        - Zoom25Percent:
+            title : Decrease Zoom Out (to 25%)
             recommend : no
             author : Shinryo , Andrei Karas (4144)
-            desc : Increases the zoom-out range by 50 percent.
+            desc : Decreases the zoom-out range to approx. 25% of maximum.
         
-        - Zoom175Percent:
-            title : Increase Zoom Out (175%)
+        - Zoom50Percent:
+            title : Increase Zoom Out (to 50%)
             recommend : no
             author : Shinryo , Andrei Karas (4144)
-            desc : Increases the zoom-out range by 75 percent.
+            desc : Increases the zoom-out range to approx. 50% of Maximum.
+        
+        - Zoom75Percent:
+            title : Increase Zoom Out (to 75%)
+            recommend : no
+            author : Shinryo , Andrei Karas (4144)
+            desc : Increases the zoom-out range to approx. 75% of Maximum.
         
         - ZoomMax:
-            title : Increase Zoom Out (Maximum)
+            title : Increase Zoom Out (to Max)
             recommend : no
             author : Shinryo , Andrei Karas (4144)
             desc : Maximizes the zoom-out range.
@@ -96,13 +101,13 @@
     
     patches:
         - RestoreIcon:
-            title : Restore Inbuilt Icon
+            title : Restore Inbuilt App icon
             recommend : yes
             author : Neo-Mind
             desc : Makes the client use the inbuilt icon instead of the generic Win32 app icon.
         
         - CustomIcon:
-            title : Use Custom Icon
+            title : Customize App icon
             recommend : no
             author : Neo-Mind
             desc : Makes the client use the User specified icon. The icon file should have an 8bpp (256 color) 32x32 image.
@@ -130,13 +135,13 @@
     
     patches:
         - BodyPalMF:
-            title : Shared Body Palettes Male & Female
+            title : Enable shared body palettes - Male & Female
             recommend : no
             author : Ai4rei/AN , Neo-Mind
             desc : Makes the client use a single cloth palette set (body_%s_%d.pal) for all job classes but separate for both genders.
         
         - BodyPalUnisex:
-            title : Shared Body Palettes Unisex
+            title : Enable shared body palettes - Unisex
             recommend : no
             author : Ai4rei/AN , Neo-Mind
             desc : Makes the client use a single cloth palette set (body_%d.pal) for all job classes & genders.
@@ -147,16 +152,16 @@
     
     patches:
         - HeadPalMF:
-            title : Shared Head Palettes Male & Female
+            title : Enable shared head palettes - Male & Female
             recommend : no
             author : Ai4rei/AN , Neo-Mind
-            desc : Makes the client use a single hair palette set (head_%s_%d.pal) for all job classes but separate for both genders.
+            desc : Makes the client use a single hair palette set (head_%s_%d.pal) for all hair styles but separate for both genders.
         
         - HeadPalUnisex:
-            title : Shared Head Palettes Unisex
+            title : Enable shared head palettes - Unisex
             recommend : no
             author : Ai4rei/AN , Neo-Mind
-            desc : Makes the client use a single hair palette set (head_%d.pal) for all job classes and genders.
+            desc : Makes the client use a single hair palette set (head_%d.pal) for all hair styles and genders.
 
 - SelectLoginBG:
     title : LOGIN BACKGROUND
@@ -164,13 +169,13 @@
 
     patches:
         - OnlyFirstBG:
-            title : Only First Login Background
+            title : Use only first login BG
             recommend : no
             author : Shinryo
             desc : Always display only the first login background.
         
         - OnlySecondBG:
-            title : Only Second Login Background
+            title : Use only second login BG
             recommend : no
             author : Shinryo
             desc : Always display only the second login background.
@@ -182,19 +187,19 @@
 
     patches:
         - CustomFirstKey:
-            title : Custom Packet Encryption Key (1st)
+            title : Customize Packet Key (1st)
             recommend : no
             author : Shakto , Neo-Mind
             desc : Change the 1st key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
         
         - CustomSecondKey:
-            title : Custom Packet Encryption Key (2nd)
+            title : Customize Packet Key (2nd)
             recommend : no
             author : Shakto , Neo-Mind
             desc : Change the 2nd key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
         
         - CustomThirdKey:
-            title : Custom Packet Encryption Key (3rd)
+            title : Customize Packet Key (3rd)
             recommend : no
             author : Shakto , Neo-Mind
             desc : Change the 3rd key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
@@ -211,7 +216,7 @@
             desc : Circumvents Gravity's new token-based login system and restores the normal login window.
         
         - UseSSOLogin:
-            title : Use SSO Login
+            title : Use SSO Login Packet
             recommend : no
             author : Ai4rei/AN
             desc : Enable using SSO packet on all Langtype (to use login and pass with a launcher).
@@ -229,13 +234,13 @@
     
     patches:
         - HideCashShop:
-            title : Hide Cash Shop Icon
+            title : Hide Cash Shop icon
             recommend : no
             author : Neo-Mind
             desc : Hide Cash Shop Icon in clients that already show them.
             
         - ShowCashShop:
-            title : Show Cash Shop Icon
+            title : Show Cash Shop icon
             recommend : no
             author : Neo-Mind
             desc : Restores the Cash Shop Icon in clients that can have them. (Primarily RE clients hide them).
@@ -246,7 +251,7 @@
     
     patches:
         - MoveShopIcon:
-            title : Move Cash Shop Icon
+            title : Move Cash Shop icon
             recommend : no
             author : Neo-Mind
             desc : Move the Cash Shop icon to user specified co-ordinates. Positive values are relative to left and top, Negative values are relative to right and bottom.
@@ -258,11 +263,16 @@
             desc : Enforce the <b>C</b> field to use 0 instead of random values in cash shop.
         
         - DefShopBrowser:
-            title : Use Default Web Browser In Cash Shop
+            title : Use default web browser in Cash Shop
             recommend : no
             author : CH.C (jchcc)
             desc : Open URL in the cashshop window with default web browser instead of IExplore.
-
+        
+        - PreviewInShop:
+            title : Enable item preview in Cash Shop
+            recommend : no
+            author : Andrei Karas (4144) , Neo-Mind
+            desc: Add support for preview button in cash shop (right click the items to see the button)
 
 - RouletteVis:
     title : ROULETTE VISIBILITY
@@ -271,13 +281,13 @@
     
     patches:
         - HideRoulette:
-            title : Hide Roulette Icon
+            title : Hide Roulette icon
             recommend : no
             author : Neo-Mind
             desc : Hide Roulette Icon that is present in some clients.
         
         - ShowRoulette:
-            title : Show Roulette Icon
+            title : Show Roulette icon
             recommend : no
             author : Neo-Mind
             desc : Restores the Roulette Icon that was removed in new clients.
@@ -289,13 +299,13 @@
     
     patches:
         - HideLicense:
-            title : Always Hide License Screen
+            title : Always hide License Screen
             recommend : no
             author : Shinryo , MS
             desc : Make the client skip the license screen and go directly to the Service Select screen.
         
         - ShowLicense:
-            title : Always Show License Screen
+            title : Always show License Screen
             recommend : no
             author : Neo-Mind
             desc : Makes the client always show the license for all langtypes.
@@ -307,13 +317,13 @@
     
     patches:
         - HideResButton:
-            title : Skip Resurrection Button
+            title : Skip Resurrection button
             recommend : no
             author : Shinryo
             desc : Skip showing resurrection button when you die with Token of Ziegfried in inventory.
         
         - ShowResButton:
-            title : Always Show Resurrection Button
+            title : Always show Resurrection button
             recommend : no
             author : Neo-Mind
             desc : Make the client always show Resurrection button with Token of Ziegfried in inventory irrespective of map type.
@@ -324,13 +334,13 @@
     
     patches:
         - NoWalkDelay:
-            title : No Walk Delay
+            title : Remove Walk Delay
             recommend : no
             author : MegaByte , X-EcutiOnner
             desc : Add no delay to walking clicks. But client may likely send more/duplicated packets.
         
         - CustomWalkDelay:
-            title : Custom Walk Delay
+            title : Customize Walk Delay
             recommend : no
             author : MegaByte , X-EcutiOnner
             desc : Change the delay for walking clicks to user specified value. But client may likely send more/duplicated packets.
@@ -342,85 +352,85 @@
     
     patches:
         - CustomDefaultBGM:
-            title : Custom Default BGM file
+            title : Customize Default BGM file
             recommend : no
             author : Jian
             desc : Make the client load user specified MP3 file as default BGM used upon login to account instead of <b>bgm\01.mp3</b>.
         
         - CustomItemInfoLub:
-            title : Custom ItemInfo lub
+            title : Customize Iteminfo lub
             recommend : yes
             author : Neo-Mind
             desc : Make the client load user specified lua file instead of <b>Iteminfo*.lub</b>.
         
         - CustomAchieveLub:
-            title : Custom AchievementList lub
+            title : Customize AchievementList lub
             recommend : no
             author : Jian
             desc : Make the client load user specified lua file instead of <b>AchievementList*.lub</b>.
         
         - CustomMonSizeEffLub:
-            title : Custom MonsterSizeEffect lub
+            title : Customize MonsterSizeEffect lub
             recommend : no
             author : Jian
             desc : Make the client load user specified lua file instead of <b>MonsterSizeEffect*.lub</b>.
 
         - CustomTownInfoLub:
-            title : Custom Towninfo lub
+            title : Customize Towninfo lub
             recommend : no
             author : Jian
             desc : Make the client load user specified lua file instead of <b>Towninfo*.lub</b>.
 
         - CustomPetEvoClnLub:
-            title : Custom PetEvolutionCln lub
+            title : Customize PetEvolutionCln lub
             recommend : no
             author : Jian
             desc : Make the client load user specified lua file instead of <b>PetEvolutionCln*.lub</b>.
         
         - CustomTipboxLub:
-            title : Custom Tipbox lub
+            title : Customize Tipbox lub
             recommend : no
             author : Jian
             desc : Make the client load user specified lua file instead of <b>Tipbox*.lub</b>.
         
         - CustomCheckAttLub:
-            title : Custom CheckAttendance lub
+            title : Customize CheckAttendance lub
             recommend : no
             author : Jian
             desc : Make the client load user specified lua file instead of <b>CheckAttendance*.lub</b>.
         
         - CustomPrivAirplaneLub:
-            title : Custom PrivateAirplane lub
+            title : Customize PrivateAirplane lub
             recommend : no
             author : Jian
             desc : Make the client load user specified lua file instead of <b>PrivateAirplane*.lub</b>.
         
         - CustomMapInfoLub:
-            title : Custom MapInfo lub
+            title : Customize MapInfo lub
             recommend : no
             author : X-EcutiOnner
             desc : Make the client load user specified lua file instead of <b>MapInfo*.lub</b>.
         
         - CustomOngQuestInfoLub:
-            title : Custom OngoingQuestInfoList lub
+            title : Customize OngoingQuestInfoList lub
             recommend : no
             author : Jian
             desc : Make the client load user specified lua file instead of <b>OngoingQuestInfoList*.lub</b>.
 
         - CustomRcmdQuestInfoLub:
-            title : Custom RecommendedQuestInfoList lub
+            title : Customize RecommendedQuestInfoList lub
             recommend : no
             author : Jian
             desc : Make the client load user specified lua file instead of <b>RecommendedQuestInfoList*.lub</b>.
 
         - CustomLicenseTxt:
-            title : Custom License File
+            title : Customize License File
             recommend : no
             author : Neo-Mind
             desc : Change the filename used for EULA from <b>..\licence.txt</b> to user specified name (Path is relative to Data folder).
 
         - CustomClientInfo:
-            title : Custom ClientInfo file
+            title : Customize ClientInfo file
             recommend : no
             author : Secret
             desc : Change the clientinfo XML file loaded from *clientinfo.xml to user specified name.
@@ -431,19 +441,19 @@
     
     patches:
         - NoCharnameLimit:
-            title : Remove 4 Letter Character Name Limit
+            title : Remove 4 letter Character Name limit
             recommend : no
             author : Shinryo
             desc : Will allow people to use character names shorter than 4 letters.
         
         - NoUsernameLimit:
-            title : Remove 4 Letter User Name Limit
+            title : Remove 4 letter User Name limit
             recommend : no
             author : Shinryo
             desc : Will allow people to use account names shorter than 4 letters.
         
         - NoPasswordLimit:
-            title : Remove 4 Letter Password Limit
+            title : Remove 4 letter Password limit
             recommend : no
             author : Shinryo
             desc : Will allow people to use passwords shorter than 4 letters.
@@ -483,16 +493,16 @@
     
     patches:
         - NoGravityAds:
-            title : Remove Gravity Ads
+            title : Remove gravity ads
             recommend : yes
             author : Shinryo
-            desc : Removes Gravity ads on the login background.
+            desc : Avoids displaying Gravity ads on the login background.
         
         - NoGravityLogo:
-            title : Remove Gravity Logo
+            title : Remove gravity logo
             recommend : yes
             author : Shinryo
-            desc : Removes Gravity Logo on the login background.
+            desc : Avoids displaying Gravity logo on the login background.
 
 - NoSkillChatter:
     title : SKILL CHATTER REMOVAL
@@ -517,13 +527,13 @@
     
     patches:
         - SkipInFriendList:
-            title : Skip Friend list Cheat Check
+            title : Skip Friend list cheat check
             recommend : no
             author : Ai4rei/AN
             desc : Prevents warnings during PM's when the sender has similar name to one of your friends.
         
         - SkipInGuildList:
-            title : Skip Guild Member Cheat Check
+            title : Skip Guild Member cheat check
             recommend : no
             author : Ai4rei/AN
             desc : Prevents warnings during PMs when the sender has similar name to one of your guild members.
@@ -534,37 +544,37 @@
     
     patches:
         - CustomGMColor:
-            title : Change Chat Color (GM)
+            title : Customize chat color (GM)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the GM Chat color to the specified value. Default value is ffff00 (Yellow).
     
         - CustomGuildColor:
-            title : Change Chat Color (Guild)
+            title : Customize chat color (Guild)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the Guild Chat color to the specified value. Default Value is b4ffb4 (Light Green).
         
         - CustomPartyColor:
-            title : Change Chat Color (Party - Others)
+            title : Customize chat color (Party - Others)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the Party Chat color for other members to the specified value. Default value is ffc8c8 (Pinkish).
         
         - CustomPartyColorSelf:
-            title : Change Chat Color (Party - Self)
+            title : Customize chat color (Party - Self)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the Party Chat color for the playing character to the specified value. Default value is ffc800 (Orange).
         
         - CustomPublicColor:
-            title : Change Chat Color (Public - Others)
+            title : Customize chat color (Public - Others)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the Public Chat color for other players to the specified value. Default value is ffffff (White).
         
         - CustomPublicColorSelf:
-            title : Change Chat Color (Public - Self)
+            title : Customize chat color (Public - Self)
             recommend : no
             author : Ai4rei/AN , Shakto
             desc : Changes the Public Chat color for the playing character to the specified value. Default value is 00ff00 (Green).
@@ -576,19 +586,19 @@
     
     patches:
         - ShowReplayBtn:
-            title : Always show Replay Button in Service Select
+            title : Always show Replay button in Service Select
             recommend : no
             author : Neo-Mind
             desc : Makes the client show Replay button on Service Select screen that opens the Replay File List window.
         
         - ShowCancelBtn:
-            title : Always show Cancel Button in Login
+            title : Always show Cancel button in Login
             recommend : no
             author : Neo-Mind
             desc : Restores the Cancel button in Login Window for switching back to Service Select Window. The button will be placed in between Login and Exit buttons.
         
         - ShowRegisterBtn:
-            title : Always show Register Button in Login
+            title : Always show Register button in Login
             recommend : no
             author : Neo-Mind
             desc : Makes the client always show register button on Login Window for all Langtypes. Clicking the button will open <registrationweb> from clientinfo and closes the client.
@@ -616,31 +626,31 @@
     
     patches:
         - IgnoreRsrcErr:
-            title : Ignore Resource Errors
+            title : Ignore Resource errors
             recommend : no
             author : Shinryo, Andrei Karas (4144) , Ai4rei/AN
             desc : Prevents the client from displaying a variety of Error messages (but not all of them) including missing files. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of missing files.
         
         - IgnorePalErr:
-            title : Ignore Palette Errors
+            title : Ignore Palette errors
             recommend : no
             author : Shinryo , Ai4rei/AN
             desc : Prevents the client from displaying error messages about missing palettes. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of missing files.
         
         - IgnoreLuaErr:
-            title : Ignore Lua Errors
+            title : Ignore Lua errors
             recommend : no
             author : Andrei Karas (4144), X-EcutiOnner
             desc : Prevents the client from displaying error messages from lua code like 'attempt to call nil value'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
         
         - IgnoreQuestErr:
-            title : Ignore Quest Errors
+            title : Ignore Quest errors
             recommend : no
             author : Andrei Karas (4144), X-EcutiOnner
             desc : Prevents the client from displaying error messages like 'Not found Quest Info = XXXX'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
         
         - IgnoreEntryQueueErr:
-            title : Ignore Entry Queue Errors
+            title : Ignore Entry Queue errors
             recommend : no
             author : X-EcutiOnner
             desc : Prevents the client from displaying error messages related to Entry Queue. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
@@ -708,13 +718,13 @@
     
     patches:
         - EnableSysMenu:
-            title : Enable Title Bar Menu
+            title : Enable Title bar menu
             recommend : yes
             author : Shinryo
             desc : Enable Title Bar Menu (Reduce, Maximize, Close button) and the window icon.
     
         - CustomWinTitle:
-            title : Custom Window Title
+            title : Customize Window title
             recommend : yes
             author : Shinryo
             desc : Changes the window title to user specified string.
@@ -725,13 +735,13 @@
     
     patches:
         - CustomFontName:
-            title : Custom Font Name
+            title : Customize Font name
             recommend : no
             author : Ai4rei/AN
             desc : Makes the client use the user specified font for all Langtypes. The Langtype specific charset is still being enforced, so if the selected font does not support it, the system falls back to a font that does.
         
         - CustomFontHeight:
-            title : Custom Font height
+            title : Customize Font height
             recommend : no
             author : Yommy , Neo-Mind
             desc : Resizes the height of the font used to the user specified value.
@@ -742,16 +752,16 @@
     
     patches:
         - NoLoginEncr:
-            title : Disable Login Encryption
+            title : Disable Login encryption
             recommend : true
             author : Neo-Mind
-            desc : Disable Encryption in Login Packet 0x2b0.
+            desc : Disable encryption in Login Packet 0x2b0.
         
         - NoPacketEncr:
-            title : Disable Packet Encryption
+            title : Disable Packet encryption
             recommended : false
             author : Ai4rei/AN
-            desc : Disable kRO Packet ID Encryption. Also known as Skip Packet Obfuscation.
+            desc : Disable kRO Packet ID encryption. Patch is also known as Skip Packet Obfuscation.
             
 - DisableProtect:
     title : DISABLE PROTECTION
@@ -805,7 +815,7 @@
             desc :  Disables the Earthquake skill effect.
         
         - NoWavyScreen:
-            title : Disable Hallucination Wavy Screen
+            title : Disable Hallucination wavy screen
             recommend : yes
             author : Shinryo
             desc : Disables the Hallucination effect (screen becomes wavy and lags the client), used by baphomet, horongs, and such.
@@ -822,13 +832,13 @@
     
     patches:
         - CustomAuraSprites:
-            title : Custom Aura Sprites
+            title : Customize Aura sprites
             recommend : no
             author : Shinryo
             desc : This option will make it so your warp portals will not be affected by your aura sprites. For this you will have to make aurafloat.tga and auraring.bmp and place them in your 'data\\texture\\effect' folder.
         
         - CustomAuraLimits:
-            title : Custom Aura Display Limits
+            title : Customize Aura display limits
             recommend : no
             author : Neo-Mind
             desc : Allows the client to display standard auras within user specified limits for Classes and Levels.
@@ -839,13 +849,13 @@
     
     patches:
         - CustomBarLimits:
-            title : Custom Experience Bar Limits
+            title : Customize Experience bar limits
             recommend : no
             author : Neo-Mind
             desc : Allows client to use custom limits for Base and Job experience bars as per user specified input file.
         
         - ShowExpNumbers:
-            title : Show Experience Numbers
+            title : Show Experience numbers
             recommend : no
             author : Neo-Mind
             desc : Show Base and Job Experience numbers on top of the respective exp bars in Basic Info Window.
@@ -856,13 +866,13 @@
     
     patches:
         - ResizePlayerBar:
-            title : Resize Player HP/SP Bar
+            title : Resize Player HP/SP bar
             recommend : no
             author : CH.C (jchcc) , Neo-Mind
             desc : Resize the HP/SP bar drawn under playing character as per user specified value.
         
         - ResizeBossBar:
-            title : Resize Boss Monster HP Bar
+            title : Resize Boss (MVP) mob HP bar
             recommend : no
             author : CH.C (jchcc) , Neo-Mind
             desc : Resize the HP bar drawed under Boss monsters as per user specified value.
@@ -873,13 +883,13 @@
     
     patches:
         - NoAutoFollow:
-            title : Disable Auto Follow
+            title : Disable auto follow
             recommend : no
             author : Functor , Neo-Mind
-            desc : Disables player auto-follow on Shift + Right click.
+            desc : Disables player auto follow on Shift + Right click.
         
         - DecrAFDelay:
-            title : Decrease Auto Follow delay
+            title : Decrease auto follow delay
             recommend : no
             author : CH.C (jchcc)
             desc : Decrease the auto follow delay to user specified value.
@@ -903,55 +913,61 @@
             desc : Will allow people to chat using swear words ignoring the contents of <b>manner.txt</b>.
         
         - SkipServiceSelect:
-            title : Skip Service Selection Screen
+            title : Skip service selection screen
             recommend : no
             author : Shinryo
             desc : Jumps directly to the login interface without asking to select a service.
         
+        - OpenToServiceSelect:
+            title : Use 'Opening' for service selection
+            recommend : yes
+            author : CH.C (jchcc)
+            desc : Enables the 'Opening' button in the new login screen to open the service selection screen again.
+        
         - TranslateClient:
-            title : Translate Client
+            title : Translate client
             recommend : yes
             author : Ai4rei/AN , Neo-Mind
             desc : Translates some of the Hard-coded Korean phrases using a user specified mapping file (defaults to <b>Translations_EN.yml</b>).
         
         - TranslateTaekwon:
-            title : Translate Taekwon names
+            title : Translate taekwon names
             recommend : yes
             author : Ai4rei/AN , Neo-Mind
             desc : Translates the korean names of the Taekwon branch to English.
             
         - GuildBrackets:
-            title : Use Normal Guild Brackets
+            title : Use normal guild brackets
             recommend : yes
             author : Shinryo
             desc : On Langtype 0, instead of square-brackets, japanese style brackets are used, this option reverts that behaviour to the normal square brackets i.e. '[ ]'.
         
         - FixChatAt:
-            title : '@ Bug Fix'
+            title : '@ Bug fix'
             recommend : yes
             author : Shinryo
             desc : Fixes the bug which prevents writing @ in chat window.
         
         - AlwaysOfficialBG:
-            title : Use Official Login Background
+            title : Use official login BG
             recommend : no
             author : Shinryo
-            desc : Use Official Login Background for all Langtypes.
+            desc : Use Official login background for all Langtypes.
         
         - NoHourly:
-            title : Remove Hourly Announcement
+            title : Remove Hourly announcement
             recommend : yes
             author : Ai4rei/AN
             desc : Remove hourly game grade and hourly play time minder announcements.
 
         - EnableFlagEmotes:
-            title : Enable Flag Emoticons
+            title : Enable flag emoticons
             recommend : no
             author : Neo-Mind
             desc : Enable Selected Flag Emoticons for all Langtypes. You need to specify a txt file as input with the flag constants assigned to 1-9.
 
         - NoSerialDisplay:
-            title : Remove Serial Display
+            title : Remove serial display
             recommend : yes
             author : Shinryo , Neo-Mind
             desc : Removes the display of the client serial number in the login window (bottom right corner).
@@ -962,20 +978,14 @@
             author : Shakto
             desc : Allow player to create a guild with space in the name (<b>/guild "Spaced Name"</b>).
 
-        - NoDoramCreation:
-            title : Disable Doram Character Creation UI [Experimental]
-            recommend : no
-            author : Ai4rei/AN , Secret
-            desc : Disable Doram race in the character creation UI. Server-side disabling is also recommended.
-        
         - CustomInventoryLimit:
-            title : Custom Inventory Limit
+            title : Custom inventory limit
             recommend : no
             author : CH.C (jchcc) , Neo-Mind
             desc : Change the Maximum no of items displayed in inventory to user specified value (Need to be changed server-side as well).
         
         - InsensitiveStorageSearch:
-            title : Case-Insensitive Storage Search
+            title : Case-Insensitive storage search
             recommend : no
             author : CH.C (jchcc)
             desc : Make the search in storage UI, case-insensitive.
@@ -987,7 +997,7 @@
             desc : Makes the Client use email as deletion password for all Langtypes.
         
         - CustomVendingLimit:
-            title : Custom Vending Limit
+            title : Customize vending limit
             recommend : no
             author : Neo-Mind
             desc : Change the Vending Limit of 1 Billion zeny to user specified value.
@@ -1035,7 +1045,7 @@
             desc : Enables the display of damage digits on GvG maps.
         
         - CustomFadeDelay:
-            title : Custom fade in/out delay
+            title : Customize fade in/out delay
             recommend : no
             author : Andrei Karas (4144) , Neo-Mind
             desc : Change fade in/out time in warps on same map.
@@ -1065,35 +1075,23 @@
             desc : Fix item description '[' bug
 
         - CustomGuildExpLimit:
-            title : Change guild exp limit
+            title : Customize guild exp limit
             recommend : no
             author : Andrei Karas (4144)
             desc : Change guild exp limit percent. Default value is 50%.
         
         - CustomAdvAgencyLimits:
-            title : Change adventurer agency levels
+            title : Customize adventurer agency levels
             recommend : no
             author : Andrei Karas (4144), Asheraf
             desc : Changes the default level range on the Adventure Agency.
         
-        - CustomNewCharNameHeight:
-            title : Change new Char Name field height
-            recommend : no
-            author : Andrei Karas (4144)
-            desc : Changes the height in input field of the new char creation dialog to user specified value.
-        
         - NoEquipPreview:
-            title : Disable Equipment Preview
+            title : Disable equipment preview
             recommend : no
             author : X-EcutiOnner
             desc : Remove equipment preview button on the items description window
         
-        - IncrNewCharHairs:
-            title : Increase New Char Hair Limits
-            recommend : no
-            author : Neo-Mind
-            desc : Increase the Hair Style and Color limits used in Make Character Window to user specified values.
-
         - HideZeroDateInGuildWin:
             title : Hide Zero Date in Guild Window
             recommend : no
@@ -1101,10 +1099,28 @@
             desc : Hide Zero Date (1969-01-01) in guild members window.
         
         - CustomSlotHLColor:
-            title : Change Skill Slot Highlight
+            title : Customize skill slot highlight
             recommend : no
             author : Hanashi , Andrei Karas (4144)
             desc : Changes the highlight color for skill slot to user specified value.
+        
+        - ShortcutForAll:
+            title : Allow all items in Shortcut
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Allow players to put all type of items on the shortcut window (makes it easy to trace).
+        
+        - FixAchieveCounters:
+            title : Fix Achievement counters
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Fix achievement counters for each type of achievement
+        
+        - HideGameWindows:
+            title : Hide in-game windows
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Allows user to hide specific in-game windows. User needs to provide a YAML file containing the list of Window IDs to be hidden.
 
 - ButtonVis:
     title : BASIC BUTTON VISIBILITY
@@ -1137,10 +1153,16 @@
     
     patches:
         - EnableEotFonts:
-            title : Enable Official Custom .eot Fonts
+            title : Enable Official custom .eot Fonts
             recommend : no
             author : Shinryo
             desc : This option enables use of Official Custom Fonts (EOT fonts in data folder) for all Langtypes.
+        
+        - FixFontsCharset:
+            title : Fix charset for Fonts
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Make the client use correct charset for Official Custom Fonts (EOT & OTF fonts) on all Langtypes.
         
         - AlwaysAscii:
             title : Use Ascii on All
@@ -1149,73 +1171,73 @@
             desc : Makes the client Enable ASCII irrespective of Font or Langtypes.
         
         - CustomSSQuality:
-            title : Custom Screenshot Quality
+            title : Customize screenshot quality
             recommend : no
             author : Ai4rei/AN
             desc : Changes the JPEG quality parameter for screenshots to user specified value.
           
         - EnableDnsSupport:
-            title : Enable DNS Support
+            title : Enable DNS support
             recommend : yes
             author : Shinryo
             desc : Enable DNS support for URL specified in <b>clientinfo.xml</b>.
         
         - NoMultiWindow:
-            title : Disable Multiple Windows
+            title : Disable multiple windows
             recommend : no
             author : Shinryo , Ai4rei/AN
             desc : Prevents the client from creating more than one Client Window on all Langtypes.
 
         - CallKoreaClientInfo:
-            title : Always Call SelectKoreaClientInfo()
+            title : Always call SelectKoreaClientInfo()
             recommend : yes
             author : Shinryo , Secret
             desc : Ensures SelectKoreaClientInfo() is called along with SelectClientInfo() allowing you to use features that would be only visible on Korean Service Type.
         
         - DataFolderFirst:
-            title : Read Data Folder First
+            title : Read data folder first
             recommend : no
             author : Shinryo
             desc : Gives the 'data' directory contents priority over GRF contents.
         
         - PlainTextDesc:
-            title : Use Plain Text Descriptions
+            title : Use plain text descriptions
             recommend : yes
             author : Shinryo , Neo-Mind
             desc : Enforces client to treat txt file contents as ASCII, not encoded.
         
         - LoadKrExtSettings:
-            title : Always load Korea ExternalSettings lua file
+            title : Always load korea ExternalSettings lua file
             recommend : no
             author : Secret , Andrei Karas (4144) , X-EcutiOnner
             desc : Makes the client load Korea server's ExternalSettings file for all langtypes.
         
         - IncrViewID:
-            title : Increase Headgear ViewID Limit
+            title : Increase headgear viewID limit
             recommend : no
             author : Shinryo
             desc : Changes the limit for the headgear ViewIDs from default (1000-3000 depending on client) to User Defined value (max 64000).
         
         - No3DBoneLimit:
-            title : Remove 3D Bones Limit
+            title : Remove 3D bones limit
             recommend : no
             author : Ai4rei/AN , Neo-Mind
             desc : Enables the use of custom 3D monsters (Granny) by removing the Hard-coded ID limit.
 
         - CustomQuestLua:
-            title : Load Custom Quest Lua/Lub files
+            title : Load custom Quest Lua/Lub files
             recommend : no
             author : Neo-Mind
             desc : Enables loading of custom lua files used for quests. You need to specify the list of files via a YAML file. All the files need to be inside 'lua files\\quest' folder.
         
         - IncrMapQuality:
-            title : Increase Map Quality
+            title : Increase map quality
             recommend : no
             author : Curiosity , Neo-Mind
             desc : Makes client use 32 bit color maps for Map Textures.
         
         - EnableEffectTool:
-            title : Enable Effect for all Maps
+            title : Enable effect for all maps
             recommend : no
             author : Neo-Mind
             desc : Make the client load the corresponding file in EffectTool folder for all maps.
@@ -1227,37 +1249,37 @@
             desc : Load ItemInfo file and call main function with selected char server name as argument.
         
         - UseStateLubIcon:
-            title : Use Icons from stateiconimginfo.lub
+            title : Use icons from stateiconimginfo.lub
             recommend : no
             author : CH.C (jchcc)
             desc : Disable hardcoded status icons and read them only from stateiconimginfo.lub.
         
         - FixActDelay:
-            title : Fix Act Delay
+            title : Fix act delay
             recommend : no
             author : Functor , Andrei Karas (4144)
             desc : Fix act delay for act files with big amount of frames.
         
         - CustomDLL:
-            title : Add Custom DLLs
+            title : Add custom DLLs
             recommend : no
             author : Neo-Mind
             desc : Makes the hexed client load the specified DLL and functions.
         
         - HideBuildInfo:
-            title : Hide Build Info
+            title : Hide build info
             recommend : yes
             author : Andrei Karas (4144)
             desc : Hide the actual build info in client by 'NULL' ifying all related values.
          
         - NoCameraLock:
-            title : Disable Camera Lock
+            title : Disable camera lock
             recommend : no
             author : Andrei Karas (4144) , X-EcutiOnner
-            desc : Disable locking camera viewpoint rotation using ViewPointTable.txt
+            desc : Disable locking of camera viewpoint rotation using ViewPointTable.txt
         
         - NoMapInfo:
-            title : Disable Map Signs
+            title : Disable map signs
             recommend : no
             author : Andrei Karas (4144) , X-EcutiOnner
             desc : Disable the use of mapInfo lub file to display map signs when player enters map.
@@ -1265,9 +1287,21 @@
         - FixArrowsCharset:
             title : Translate arrows to English
             recommend : no
-            author : Andrei Karas (4144) , X-EcutiOnner
-            desc : Translate arrows buttons in hotkey setting UI from korean to english
-
+            author : Andrei Karas (4144) , X-EcutiOnner , Neo-Mind
+            desc : Translate arrows & menu button texts in hotkey setting UI from korean to english
+            
+        - FixHomunAI:
+            title : Fix homunculus attack AI
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Fix issue in homunculus AI which prevents automatic attacks (present in clients 20170920 clients and newer).
+        
+        - BossDropIdentified:
+            title : Use 'identified' drops for Boss (MVP) mob
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Enforce MVP to drop item with the identified names.
+            
 - CustomChar:
     title : CHARACTER CUSTOMIZATION
     mutex : false
@@ -1275,13 +1309,13 @@
     
     patches:
         - OfficialPal:
-            title : Use Official Cloth Palettes
+            title : Use official cloth palettes
             recommend : no
             author : Neo-Mind
             desc : Use Official Cloth Palette on all Langtypes. Cannot use this if you are using the <b>Enable Custom Jobs</b> patch.
         
         - NoGMSprite:
-            title : Disable GM Sprite
+            title : Disable GM sprite
             recommend : no
             author : Neo-Mind
             desc : Disable GM sprites whilst keeping all the functionality intact like Yellow name and Admin right click menu.
@@ -1293,7 +1327,7 @@
             desc : Makes the client show the Emblem on top of the character for Battleground mode as well along with GvG.
         
         - RestoreModelCulling:
-            title : Restore Model Culling
+            title : Restore model culling
             recommend: no
             author : Curiosity , Neo-Mind
             desc : Culls models in front of player by turning them transparent.
@@ -1305,13 +1339,13 @@
             desc : Always see black silhouette of hidden objects as if the player has intravision status.
         
         - CustomQSDelay:
-            title : Custom Quick Switch Delay
+            title : Customize Quick Switch delay
             recommend : no
             author : mrjnumber1
             desc : Change quick item switch delay ticks with user specified value.
         
         - AllowPL2Leave:
-            title : Allow Party Leader to leave
+            title : Allow party leader to leave
             recommend : no
             author : Andrei Karas (4144) , Neo-Mind
             desc : Allow leader to leave the party if no members are on map.
@@ -1327,6 +1361,58 @@
             recommend : no
             author : Functor, Secret , Neo-Mind
             desc : Remove restriction of guild functionality while being a member of a clan.
+        
+        - RestoreAutoFollow:
+            title : Restore auto follow
+            recommend : no
+            author : Andrei Karas (4144) , Neo-Mind
+            desc : Restore the auto follow functionality in RO-zero clients.
+            
+        - DrawShieldOnTop:
+            title : Draw Shield on top
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Moves the shield sprite closer to camera for drawing on top of other player sprites.
+
+- CharCreation:
+    title : CHARACTER CREATION
+    mutex : false
+    
+    patches:
+        - CustomNewCharNameHeight:
+            title : Customize new Char Name field height
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Changes the height in input field of the new char creation dialog to user specified value.
+        
+        - IncrNewCharHairs:
+            title : Increase char create Hair limits
+            recommend : no
+            author : Neo-Mind
+            desc : Increase the Hair Style and Color limits used in Make Character Window to user specified values.
+        
+        - CustomCharCreateId:
+            title : Customize job id in char create dialog
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Override selected job id in character creation packet with user specified value.
+
+- DoramCharCreation:
+    title: CHARACTER CREATION (DORAM)
+    mutex: true
+    
+    patches:
+        - CustomCharCreateSecond:
+            title : Customize second job id in char create dialog
+            recommend : no
+            author : Andrei Karas (4144) , Neo-Mind
+            desc : Change doram to user specified job id in character creation window.
+        
+        - NoDoramCreation:
+            title : Disable Doram character creation UI [Experimental]
+            recommend : no
+            author : Ai4rei/AN , Secret
+            desc : Disable Doram race in the character creation UI. Server-side disabling is also recommended.
 
 - IncrHairs:
     title : INCREASE HAIRS
@@ -1346,35 +1432,41 @@
             desc : Raises the maximum hairstyle limit to user specified value (upto 65535).
 
 - CustomFriendWin:
-    title : FRIEND WINDOW CUSTOMIZATION
+    title : FRIEND/PARTY WINDOW CUSTOMIZATION
     mutex : false
     
     patches:
         - CustomFriendsLimit:
-            title : Change Max Friends
+            title : Customize max friends
             recommend : no
             author : Andrei Karas (4144) ,  X-EcutiOnner
-            desc : Change the Maximum no of friends displayed on Alt+H to user specified value
+            desc : Change the maximum no of friends displayed on Alt+H to user specified value
             
         - CustomPartyLimit:
-            title : Change Party Limit
+            title : Customize party limit
             recommend : no
             author : CH.C (jchcc)
-            desc : Change the Maximum no of party members displayed on Alt+Z to user specified value.
-
+            desc : Change the maximum no of party members displayed on Alt+Z to user specified value.
+        
+        - NoAdvAgencyInParty:
+            title : Remove Adventurer Agency from Party
+            recommend : no
+            author : Andrei Karas (4144) ,  X-EcutiOnner
+            desc : Remove the Adventurer Agency button from the party window.
+            
 - CustomEquipWin:
     title : EQUIP WINDOW CUSTOMIZATION
     mutex : false
     
     patches:
         - NoEquipSwap:
-            title : Remove Swap button
+            title : Remove Eq Swap button
             recommend : no
             author : Functor , Andrei Karas (4144) ,  X-EcutiOnner
             desc : Remove equipment swap button on the equipment window.
         
         - NoEquipWinTitle:
-            title : Remove Window title
+            title : Remove Eq Window title
             recommend : no
             author : CH.C (jchcc), Andrei Karas (4144) , X-EcutiOnner
             desc : Remove equipment UI title on the equipment window.
@@ -1385,7 +1477,7 @@
     
     patches:
         - NoFilenameCheck:
-            title : Disable Filename Check
+            title : Disable filename check
             recommend : yes
             author : Shinryo , Neo-Mind
             desc : Disables the check that forces the client to quit if not called an official name like ragexe.exe for all Langtypes.
@@ -1397,29 +1489,29 @@
             desc : This makes the client use HK_CURRENT_USER registry entries instead of HK_LOCAL_MACHINE. Necessary for users who have no admin privileges on their computer.
             
         - CustomMinResolution:
-            title : Custom minimum screen resolution
+            title : Customize minimum screen resolution
             recommend : no
             author : Andrei Karas (4144)
-            desc : Change minimum client resolution (width & height) to user specified values from default of 1024x768.
+            desc : Change minimum client resolution (width & height) to user specified values from (default of 1024x768).
 
         - UseDefaultBrowser:
-            title : Use Default Browser for &lt;URL&gt;
+            title : Use default browser for &lt;URL&gt;
             recommend : no
             author : CH.C (jchcc)
             desc : Use default web browser to open &lt;URL&gt; instead of built-in ROWebBrowser.
         
         - NoAdminNeeded:
-            title : Remove Admin privilege requirement
+            title : Remove admin privilege requirement
             recommend : no
             author : X-EcutiOnner
             desc : Removes the explicit requirement for user access elevation (i.e. Admin privileges) from the client
         
         - LoadClientPlugins:
-            title : Always Load Client Plugins [Experimental]
+            title : Always load client plugins [Experimental]
             recommend : no
             author : Secret
             desc : Makes the client load client plug-ins regardless of its sound settings.
-
+   
 - CustomNW:
     title : NETWORK CUSTOMIZATION
     mutex : false
@@ -1427,37 +1519,31 @@
     
     patches:
         - SendMD5Hash:
-            title : Send MD5 Hash Packet
+            title : Send MD5 hash packet
             recommend : no
             author : GreenBox , Neo-Mind
             desc : Makes the client send a packet with it's MD5 hash for all LangTypes. Only use if you have enabled it in your server.
         
         - NoNagle:
-            title : Disable Nagle Algorithm
+            title : Disable nagle algorithm
             recommend : yes
             author : Shinryo
             desc : Disables the Nagle Algorithm which queues packets before they are sent in order to minimize protocol overhead. Disabling the algorithm will slightly increase network traffic, but it will decrease latency as well.
         
         - NoLoginOTP:
-            title : Disable OTP Login Packet
+            title : Disable OTP login packet
             recommend : no
             author : CH.C (jchcc)
             desc : Disable OTP Login Packet, which causes connection issue after disconnect.
             
         - EnableProxy:
-            title : Enable Proxy Support
+            title : Enable proxy support
             recommend : no
             author : Ai4rei/AN , Neo-Mind
             desc : Ignores server-provided IP addresses when changing servers.
-        
-        - CustomCharCreateId:
-            title : Custom job id in char create dialog
-            recommend : no
-            author : Andrei Karas (4144)
-            desc : Override selected job id in char creation packet with user specified value.
-        
+                
         - NoHardCodedIP:
-            title : Remove Hardcoded HTTP IP
+            title : Remove hardcoded HTTP IP
             recommend : no
             author : CH.C (jchcc)
             desc : Remove hardcoded HTTP service ip address to prevent client from sending HTTP request to official server.
@@ -1469,39 +1555,87 @@
             desc : Remove hardcoded connection addresses and ports.
         
         - EnableHttpEmblem:
-            title : Enable HTTP Emblem in Client
+            title : Enable HTTP emblem in client
             recommend : no
             author : CH.C (jchcc)
-            desc : Enable HTTP Emblem on RO client, HTTP service is required.
+            desc : Enable HTTP Emblem on RO client (HTTP service is required).
             
         - NoGNJoyLaunch:
-            title : Disable kRO Site Launch
+            title : Disable kRO site launch
             recommend : no
             author : mrjnumber1
             desc : Disable <b>ro.gnjoy.com</b> launching after in-game settings change.
-
+        
+        - CustomMerchantURL:
+            title : Customize Merchant store URLs
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Change the hardcoded URL used for MerchantStore save and load (HTTP service required).
+        
+        - SendClientFlags :
+            title : Send client flags
+            recommend : yes
+            author : Andrei Karas (4144)
+            desc : Update the version to send the clients flag to server. Helps to avoid flag incongruency between client & server.
+            
+        - HidePacketsFromPEEK:
+            title : Hide packets from PEEK & BPE
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Disable PEEK & BPE tools from discovering the essentials needed to track/extract packets.
+        
 - CustomSound:
     title : SOUND CUSTOMIZATION
     mutex : false
     
     patches:
         - Enable44kHzAudio:
-            title : Enable 44.1 kHz Audio Sampling Frequency
+            title : Enable 44.1 kHz audio sampling frequency
             recommend : no
-            author : jchcc
+            author : CH.C (jchcc)
             desc : Boosts the audio sampling frequency to 44.1 kHz, improving the audio quality in the game.
         
         - AutoMute:
-            title : Auto Mute Audio [Experimental]
+            title : Auto mute audio [Experimental]
             recommend : no
-            author : jchcc
+            author : CH.C (jchcc)
             desc : Auto mute audio when game window is not active.
         
         - NoBGMAudio:
-            title : Disable BGM Audio
+            title : Disable BGM audio
             recommend : no
             author : Andrei Karas (4144) , X-EcutiOnner
             desc : Disable the use of mp3NameTable.txt to pick & play audio files as BGM.
+
+        - RestoreSongsEffect:
+            title : Restore songs effect
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Restore ground effects of Bard/Dancer songs on latest clients.
+
+- CustomSkills:
+    title : SKILL CUSTOMIZATIONS
+    mutex : false
+    color : deeppink
+    
+    patches:
+        - CustomPlayerSkills:
+            title : Enable Custom Player skills [Experimental]
+            recommend : no
+            author : Unknown
+            desc : Enables the use of custom skills castable on players (using Lua Files).
+        
+        - CustomHomunSkills:
+            title : Enable Custom Homunculus skills [Experimental]
+            recommend : no
+            author : Unknown
+            desc : Enables the use of custom skills for Homunculus (using Lua Files).
+        
+        - CustomMerceSkills:
+            title : Enable Custom Mercenary skills [Experimental]
+            recommend : no
+            author : Unknown
+            desc : Enables the use of custom skills for Mercenaries (using Lua Files).
 
 - CustomSpecials:
     title : SPECIAL CUSTOMIZATIONS
@@ -1513,10 +1647,16 @@
             title : Enable Custom Shields
             recommend : no
             author : Neo-Mind
-            desc : Enables the use of Custom Shield Types (using Lua Files similar to Xray)
+            desc : Enables the use of Custom Shield Types (using Lua Files similar to Xray).
         
         - CustomJobs:
             title : Enable Custom Jobs
             recommend : no
             author : Neo-Mind
-            desc : Enables the use of Custom Jobs (using Lua Files similar to Xray)
+            desc : Enables the use of Custom Jobs (using Lua Files similar to Xray).
+
+        - CustomHomuns:
+            title : Enable Custom Homunculi
+            recommend : no
+            author : Neo-Mind
+            desc : Enables the use of Custom Homunculus (using Lua Files). The <b>'ReqJobName'</b> function is used for homunculus as well, so no extra files needed.

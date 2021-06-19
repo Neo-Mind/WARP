@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-06-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -394,7 +394,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				nameAddr = Exe.FindText(nameAddr, false);
 
 			if (nameAddr)
-				code = SwapFiller(code, 50, nameAddr, 1);
+				code = SwapFiller(code, 50, nameAddr);
 
 			code = SetFillTargets(code, {
 				51 : this.Allocator,
@@ -407,8 +407,35 @@ if (typeof LUA === 'undefined') // avoid redefinition
 		///
 		/// \brief Adds code for loading lua files at specified target address
 		///
-		addLoaders : function(files, refName, tgt = -1)
+		addLoaders : function(arg1, arg2, arg3, arg4)
 		{
+			/// 0 - Parse the arguments
+			let files, refName, tgt, skipOrig = false;
+
+			let loadNewFirst = IsArr(arg1);
+			if (loadNewFirst)
+			{
+				files = arg1;
+				refName = arg2;
+			}
+			else
+			{
+				files = arg2;
+				refName = arg1;
+			}
+
+			if (IsBool(arg3))
+			{
+				skipOrig = arg3;
+				tgt = arg4;
+			}
+			else
+			{
+				tgt = arg3;
+			}
+			if (!IsNum(tgt))
+				tgt = -1;
+
 			let _ = "LUA.addLoaders : ";
 
 			$$(_ + '1.1 - Sanity Check (Ensure we have a valid object)')
@@ -421,7 +448,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			$$(_ + '1.2 - Find the string inside refName')
 			let refAddr = Exe.FindText(refName);
 			if (refAddr < 0)
-				throw Error("LUA.addLoaders - Reference file missing");
+				throw Error("LUA.addLoaders - Reference file (" + refName + ") missing");
 
 			$$(_ + '1.3 - Find where its used in a PUSH (it should be immediately followed by a CALL)')
 			let addr = Exe.FindHex( PUSH(refAddr) + CALL() );
@@ -449,7 +476,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			let tsize = template.byteCount();
 
 			$$(_ + '2.2 - Calculate total code size')
-			let csize = tsize * (files.length + 1) + 7; //5 for the JMP at the end and 2 NULL bytes for seperation
+			let csize = tsize * (files.length + (skipOrig ? 0 : 1)) + 7; //5 for the JMP at the end and 2 NULL bytes for seperation between code and strings
 
 			$$(_ + '2.3 - Prepare the strings to be appended at the end of the code')
 			let strings = files.join('\x00').toHex() + ' 00';
@@ -471,28 +498,42 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			let dist = this.FileLoader - (tgtVir + tsize);
 			let strAddr = tgtVir + csize;
 
+			$$(_ + '3.2 - If the original file needs to be loaded first then first add the entry for that using the template')
+			if (!skipOrig && !loadNewFirst)
+			{
+				code += SwapFillers(template, {
+					1 : refAddr,
+					2 : dist,
+				}, 1);
+
+				dist -= tsize;
+			}
+
 			files.forEach( file =>
 			{
-				$$(_ + '3.2 - Fill the template with the string address & distance and append to the code (' + file + ')')
+				$$(_ + '3.3 - Fill the template with the string address & distance and append to the code (' + file + ')')
 				code += SwapFillers(template, {
 					1 : strAddr,
 					2 : dist,
 				}, 1);
 
-				$$(_ + '3.3 - Update the strAddr to the next string location')
+				$$(_ + '3.4 - Update the strAddr to the next string location')
 				strAddr += file.length + 1;
 
-				$$(_ + '3.4 - Update the distance for the next CALL')
+				$$(_ + '3.5 - Update the distance for the next CALL')
 				dist -= tsize;
 			});
 
-			$$(_ + '3.5 - Append the final entry (for the reference string).')
-			code += SwapFillers(template, {
-				1 : refAddr,
-				2 : dist,
-			}, 1);
+			$$(_ + '3.6 - If the original file needs to be loaded last then add the entry for that using the template')
+			if (!skipOrig && loadNewFirst)
+			{
+				code += SwapFillers(template, {
+					1 : refAddr,
+					2 : dist,
+				}, 1);
+			}
 
-			$$(_ + '3.6 - Append the JMP at the end along with the 2 NULLs')
+			$$(_ + '3.7 - Append the JMP at the end along with the 2 NULLs')
 			code += JMP(retnVir, tgtVir + csize - 7) + " 00 00";
 
 			$$(_ + '4.1 - Add the code & strings to the executable')

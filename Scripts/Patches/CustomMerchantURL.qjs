@@ -1,0 +1,166 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020-2021 CH.C (jchcc)                                   *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CH.C (jchcc)                                           *
+*   Created Date  : 2021-06-14                                             *
+*   Last Modified : 2021-06-17                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - 2020-03 (VC11) client has failure
+
+///
+/// \brief Change the url for MerchantStore save and load
+///
+if (typeof CMURL_Data === 'undefined')
+{
+	CMURL_Data = 
+	{
+		Saver: {
+			oldURL: "http://112.175.128.140:3000/MerchantStore/save",
+			varName: '$saveURL',
+			prefix: 'Save'
+		},
+		Loader: {
+			oldURL: "http://112.175.128.140:3000/MerchantStore/load",
+			varName: '$loadURL',
+			prefix: 'Load'
+		}
+	};
+}
+
+CustomMerchantURL = function()
+{
+	/// 1.1 - Extract the data objects
+	let {Saver, Loader} = CMURL_Data;
+
+	Saver.lenRefs = [];
+	Saver.urlRefs = [];
+	Loader.lenRefs = [];
+	Loader.urlRefs = [];
+
+	ShowAddr("LoaderAddr", Loader.addr, VIRTUAL);
+	/// 1.2 - Find where the URLs are PUSHed along with their lengths
+	let parts =
+	[
+		PUSH(0x2E)              // push 2Eh ; length of the url
+	+	PUSH(Saver.addr)        // push offset <save url>
+	+	CALL(ALLWC)             // call memcpy
+	,
+		PUSH(0x2E)              // push 2Eh
+	+	PUSH(Loader.addr)       // push offset <load url>
+	+	LEA(ECX, [EDI, 0x24])   // lea ecx, [edi + 24h]
+	+	CALL()                  // call memcpy
+	];
+
+	let addr = Exe.FindHex(parts);
+	ShowAddr(addr);
+	
+	if (addr > 0)
+	{
+		/// 1.3 - Save the locations where the values are PUSHed
+		let csize = parts.byteCount(0);
+
+		Saver.lenRefs.push(addr + 1);
+		Saver.urlRefs.push(addr + 3);
+
+		Loader.lenRefs.push(addr + csize + 1);
+		Loader.urlRefs.push(addr + csize + 3);
+
+	} else if (!ROC.IsZero) //mandatory for others
+		throw Error("1st URL references missing");
+
+	/// 1.4 - Find where they are assigned to registers (there should be 2 such references)
+	parts =
+	[
+		MOV(EDI, Loader.addr)  // mov edi, offset <load url>
+	,
+		MOV(ESI, 0x2E)         // mov esi, 2Eh ; length of save url
+	+	MOV(EAX, Saver.addr)   // mov eax, offset <save url>
+	];
+
+	let addrs = Exe.FindHexN(parts);
+	let csize = parts.byteCount(0);
+	
+	addrs.forEach(addr =>
+	{
+		/// 1.5 - Save the locations from the 2nd reference.
+		Loader.urlRefs.push(addr + 1);
+
+		Saver.lenRefs.push(addr + csize + 1);
+		Saver.urlRefs.push(addr + csize + 3);
+	});
+
+	/// 2 - Next set of actions is common for both Saver & Loader
+	let result = [Saver, Loader].filter( obj =>
+	{
+		/// 2.1 - Get the new URL from user
+		let newURL = Exe.GetUserInput(obj.varName, D_Text, "MerchantStore URLs", "Enter the new " + obj.prefix + " URL", "http://", {minLen: 9, maxLen: 255, saveDefault: true});
+		if (newURL === false)
+			return false;
+
+		/// 2.2 - Allocate space for it
+		let free = Exe.FindSpace(obj.varName);
+		if (free < 0)
+			throw NO_ALLOC;
+
+		let urlAddr = Exe.Phy2Vir(free, DIFF);
+
+		/// 2.3 - Get the length
+		let len = newURL.length;
+
+		/// 2.4 - Replace all the lengths
+		if (len !== 0x2E)
+			obj.lenRefs.forEach(addr => Exe.SetUint8(addr, len));
+
+		/// 2.5 - Replace the string addresses
+		obj.urlRefs.forEach(addr => Exe.SetInt32(addr, urlAddr));
+		return true;
+	});
+
+	if (result.isEmpty())
+		Cancel('No New URLs entered');
+
+	/// 3 - Remove all the official ip addresses
+	let find = "http://112.175.128.140:3000";
+	let repl = "http://0.0.0.0/\x00";
+
+	Exe.FindTextN(find, false, false).forEach(addr =>
+		Exe.SetText(addr, repl)
+	);
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients
+///
+CustomMerchantURL.validate = function()
+{
+	let {Saver, Loader} = CMURL_Data;
+	Saver.addr = Exe.FindText(Saver.oldURL, true, false);
+
+	if (Saver.addr > 0)
+		Loader.addr = Exe.FindText(Loader.oldURL, true, false);
+
+	return (Saver.addr > 0 && Loader.addr > 0);
+};

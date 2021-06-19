@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2021-02-24                                             *
-*   Last Modified : 2021-05-14                                             *
+*   Last Modified : 2021-06-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -43,47 +43,156 @@ IncrHairs = function(patchName)
 	/// 1.3 - Detect newer clients with Doram
 	let doramOn = addrs[0] == strAddrs[0];
 
-	let maxHairs = 65535;
+	/// 1.4 - Find the format string for the palette (unless shared head palette is ON)
+	let addr = -1;
+	let prefix = "\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE";
+	if (Exe.Version <= 9) //VC6 & VC9
+		addr = Exe.FindText(prefix + "%s%s_%d.pal", PHYSICAL); //Old style used for VC6 and some initial VC9 clients
+
+	if (addr < 0)
+		addr = Exe.FindText(prefix + "%s_%s_%d.pal", PHYSICAL); //New style
+
+	if (addr < 0)
+		throw Error("Palette format string missing");
+
+	/// 1.5 - Add to the strAddrs
+	strAddrs.push(addr);
+
+	/// 1.6 - Get the limit from user or set it to 65k based on the patch
+	let isPalShared = Exe.IsSelected("HeadPalMF") || Exe.IsSelected("HeadPalUnisex");
 	if (patchName === "IncrHairStyles")
 	{
-		maxHairs = Exe.GetUserInput('$maxHairs', D_Uint16, "Limit input", "Enter the maximum no of hairstyles", 100, {saveDefault: true});
-		if (maxHairs === false)
+		IH_Max = Exe.GetUserInput('$maxHairs', D_Uint16, "Limit input", "Enter the maximum no of hairstyles", 100, {saveDefault: true});
+		if (IH_Max === false)
 			Cancel("Limit reverted to default");
 	}
-
-	strAddrs.forEach( memAddr =>
+	else if (patchName === "Allow65kHairs")
 	{
-		/// 2.1 - Retrieve the string & get the position of the 2nd %s
-		let fmt = Exe.GetText(memAddr);
-		let pos = fmt.indexOf("%s", fmt.indexOf("%s") + 1);
+		IH_Max = 65535;
+	}
 
-		/// 2.2 - Change the s to u
-		Exe.SetInt8(memAddr + pos + 1, 0x75);
-
-		/// 2.3 - Find where the string is used in a PUSH
-		let refAddr = Exe.FindHex(PUSH(Exe.Phy2Vir(memAddr)));
-		if (refAddr < 0)
-			throw Error("Format string not used");
-
-		/// 2.4 - Setup the stack register
-		let sreg = ROC.HasFP ? EBP : ESP;
-
-		/// 2.5 - Find the start of the function
-		let code, addr = -1;
-		if (Exe.BuildDate < 20111000)
+	/// 2 - Prep the lambda function for fixing comparisons
+	const fixCmp = (addr) =>
+	{
+		/// 2.1 - For highest limit just enforce the conditional jump after the CMP
+		if (IH_Max === 65535)
 		{
+			Exe.SetJMP(addr + 3);
+		}
+
+		/// 2.2 - For 1 byte limits directly alter the limit value used
+		else if (IH_Max <= 0x7F)
+		{
+			Exe.SetInt16(addr + 2, IH_Max | 0x7C00); //7C to make it JLE in case it isnt.
+		}
+
+		else
+		{
+			/// 2.3 - For multi byte limits, extract the register used
+			let reg = R32.List[Exe.GetUint8(addr + 1) & 0x7];
+
+			/// 2.4 - Prep code to compare
 			code =
-				(ROC.HasFP
-			?	PUSH(EBP)               //PUSH EBP
-			+	MOV(EBP, ESP)           //MOV EBP, ESP
-			:
-				PUSH_R                  //PUSH reg32
-			)
-			+	MOV(R32, [sreg, 0xC])   //MOV reg32_A, DWORD PTR SS:[ARG.2]
-			+	MOV(EAX, [R32])         //MOV reg32_B, DWORD PTR DS:[reg32_A]
+				CMP(reg, IH_Max) //CMP reg, maxHairs
+			+	JA(Filler(1))    //JA defAddr
+			+	JMP(Filler(2))   //JMP validAddr
 			;
 
-			addr = Exe.FindLastHex(code, refAddr, refAddr - 0x200);
+			/// 2.5 - Find space for the code
+			let free = Exe.FindSpace(code.byteCount());
+			if (free < 0)
+				throw NO_ALLOC;
+
+			let freeVir = Exe.Phy2Vir(free, DIFF);
+
+			/// 2.6 - Fill in the blanks
+			code = SetFillTargets( code,
+			{
+				1: Exe.Phy2Vir(addr + 5, CODE),
+				2: Exe.GetTgtAddr(addr + 4, 1)
+			},
+				freeVir
+			);
+
+			/// 2.7 - Add to allocated space
+			Exe.AddHex(free, code);
+
+			/// 2.8 - Setup a JMP to the allocated space
+			Exe.SetJMP(addr, freeVir);
+		}
+
+		/// 2.9 - Change the default value to 2 instead of 0D or 6
+		let ins = Instr.FromAddr(addr + 5);
+		ins.Immd = 2;
+		Exe.SetHex(ins.Addr, ins);
+	};
+
+	/// 3 - Prep the lambda function for table fixes
+	const fixTbl = (addr) =>
+	{
+		/// 3.1 - Extract the instruction
+		let ins = Instr.FromAddr(addr);
+
+		/// 3.2 - Update the ModRM to not use the 4*reg part
+		ins.MRM.update(null, null, ins.SIB.Base);
+
+		/// 3.3 - Change the SIB to 90h (quick hack to set a NOP at end).
+		ins.SIB.Data = 0x90;
+
+		/// 3.4 - Replace the instruction
+		Exe.SetHex(ins.Addr, ins);
+	};
+
+	strAddrs.forEach( (memAddr, idx) =>
+	{
+		let isLast = idx === strAddrs.length-1;
+
+		if (!isLast || !isPalShared)
+		{
+			/// 4.1 - Retrieve the string & get the position of the 2nd %s
+			let fmt = Exe.GetText(memAddr);
+			let pos = fmt.indexOf("%s", isLast ? 0 : fmt.indexOf("%s") + 1);
+
+			/// 4.2 - Change the s to u
+			Exe.SetInt8(memAddr + pos + 1, 0x75);
+		}
+
+		/// 4.3 - Find where the string is used in a PUSH
+		let strVir = Exe.Phy2Vir(memAddr);
+		let hookAddr = Exe.FindHex(PUSH(strVir));
+		if (hookAddr < 0)
+			throw Error("Format string not used");
+
+		/// 4.4 - Setup the stack register
+		let sreg = ROC.HasFP ? EBP : ESP;
+
+		/// 4.5 - Find the start of the function
+		let code, addr = -1, type; //type is used to find the stack offset later
+		if (Exe.BuildDate < 20111000)
+		{
+			code = '';
+			if (ROC.HasFP)
+			{
+				code +=
+					PUSH(EBP)               //PUSH EBP
+				+	MOV(EBP, ESP)           //MOV EBP, ESP
+				;
+			}
+			else
+			{
+				code +=
+					isLast
+				?	' CC'                   //INT3 or
+				:	PUSH_R                  //PUSH reg32
+				;
+			}
+
+			code +=
+				MOV(R32, [sreg, ' 0?']) //MOV reg32_A, DWORD PTR SS:[ARG.2] or SS:[ARG.1]
+			;
+
+			addr = Exe.FindLastHex(code, hookAddr, hookAddr - 0x200);
+			type = 1;
 		}
 		if (addr < 0)
 		{
@@ -94,329 +203,179 @@ IncrHairs = function(patchName)
 			+	PUSH_EAX                //PUSH EAX
 			;
 
-			addr = Exe.FindLastHex(code, refAddr, refAddr - 0x400);
+			addr = Exe.FindLastHex(code, hookAddr, hookAddr - 0x400);
+			type = 2;
 		}
 		if (addr < 0)
 			throw Error("Function start missing");
 
-		/// 2.6 - Save the address after the code
+		/// 4.6 - Save the address after the code
 		let beginAddr = addr + code.byteCount();
 
-		/// 2.7 - Find the limiting comparison for hairstyle
+		/// 4.7 - Find the limiting comparison for hairstyle
 		let prefix =
 			" [01111.00] 05" //JL or JS SHORT _skip
 		+	CMP(R32, WCp)    //CMP reg32_A, limit
 		;
+
 		let suffix =
 			" [011111.0] 0?" //JL or JLE SHORT _skip2
-		+	MOV([])          //MOV DWORD PTR [reg], 0D or 06
-		;
 
 		addr = Exe.FindHex(prefix + suffix, beginAddr, beginAddr + 0x50);
 		if (addr < 0 && doramOn)
 		{
 			addr = Exe.FindHex(prefix + suffix, beginAddr + 0x100, beginAddr + 0x200);
 		}
-		if (addr < 0)
+		if (addr < 0 && !isLast)
 			throw Error("Limit checker missing");
 
-		/// 2.8 - Save it for processing.
-		let limiters = [addr];
+		/// 4.8 - Fix the CMP
+		fixCmp(addr + 2);
 
-		/// 2.9 - Repeat for Doram (should be within certain range after the above)
-		if (doramOn)
+		/// 4.9 - Repeat when doram specific section is present (only for the spr & act)
+		if (idx === 0 && doramOn)
 		{
 			addr = Exe.FindHex(prefix + suffix, addr + 5, addr + 0xB0);
-			if (addr < 0 && Exe.BuildDate > 20160000)
-				throw Error("Doram limit checker missing");
-
-			limiters.push(addr);
+			if (addr > 0)
+				fixCmp(addr + 2);
 		}
 
-		limiters.forEach(addr =>
-		{
-			/// 2.10 - For highest limit just enforce the 2nd conditional jump
-			if (maxHairs === 65535)
-			{
-				Exe.SetJMP(addr + 5);
-			}
-
-			/// 2.11 - For 1 byte limits directly alter the limit value used
-			else if (maxHairs <= 0x7F)
-			{
-				Exe.SetInt8(addr + 4, Exe.GetInt8(addr + 5) === 0x7C ? maxHairs : maxHairs - 1); //JL or JLE
-			}
-
-			else
-			{
-				/// 2.12 - For multi byte limits, extract the register used
-				let ins = Instr.FromAddr(addr + 2);
-				let reg = R32.List[ins.MRM.RegM];
-
-				/// 2.13 - Prep code to compare
-				code =
-					CMP(reg, maxHairs) //CMP reg, maxHairs
-				+	JA(Filler(1))      //JA defAddr
-				+	JMP(Filler(2))     //JMP validAddr
-				;
-
-				/// 2.14 - Find space for the code
-				let free = Exe.FindSpace(code.byteCount());
-				if (free < 0)
-					throw NO_ALLOC;
-
-				let freeVir = Exe.Phy2Vir(free, DIFF);
-
-				/// 2.15 - Fill in the blanks
-				code = SetFillTargets( code,
-					{
-						1: Exe.Phy2Vir(addr + 7, CODE),
-						2: Exe.GetTgtAddr(addr + 6, 1)
-					},
-					freeVir
-				);
-
-				/// 2.16 - Add to allocated space
-				Exe.AddHex(free, code);
-
-				/// 2.17 - Setup a JMP to the allocated space
-				Exe.SetJMP(addr, freeVir);
-			}
-
-			/// 2.18 - Change the default value to 2 instead of 0D or 6
-			let ins = Instr.FromAddr(addr + 7);
-			ins.Immd = 2;
-			Exe.SetHex(ins.Addr, ins);
-		});
-
-		if (strAddrs.length === 1) //unified format string
-		{
-			/// 3.1 - Find the string table fetchers
-			suffix =
-				MOV(EDX, [4, R32, R32])   //MOV EDX, DWORD PTR DS:[reg32_B * 4 + reg32_A]
+		/// 4.10 - Find the table assignments (MOV or LEA reg32_A, [reg32_B*4 + reg32_C])
+		let isLEA = !isLast && strAddrs.length == 3 && Exe.BuildDate > 20111000;
+		code = isLEA
+			? LEA(R32, [4, R32, R32])
+			: MOV(R32, [4, R32, R32])
 			;
-			switch (Exe.Version)
+
+		/// 4.11 - Filter out the false matches
+		let addrs = Exe.FindHexN(code, beginAddr, hookAddr).filter(addr =>
+		{
+			let ins = Instr.FromAddr(addr);
+			if (ins.BC_Disp > 0)
+				return false;
+
+			if (isLEA || strAddrs.length < 3)
+				return true;
+
+			let ins2 = ins.getNext();
+			let ins3 = ins2.getNext();
+
+			if (!isLast && ins2.Codes[0] === 0x52 && ins3.Codes[0] === 0x8B && ins3.SIB !== undefined && ins3.SIB.Scale === 2) //PUSH EDX followed by MOV r32, [r32*4 + r32]
+				return true;
+
+			if (ins2.Codes[0] === 0x8B && ins2.BC_Disp > 0) //MOV r32, [r32 + offset] followed by
 			{
-				case 9: //Remaining VC9
-				{
-					prefix =
-						MOV(R32, [POS3WC])    //MOV reg32_A, DWORD PTR DS:[addr]
-					+	MOV(R32, [EBP])       //MOV reg32_B, DWORD PTR DS:[EBP]
-					;
-					break;
-				}
-				case 10: //VC10
-				{
-					prefix =
-						MOV(R32, [R32])       //MOV reg32_B, DWORD PTR DS:[reg32_C]
-					+	MOV(R32, [POS3WC])    //MOV reg32_A, DWORD PTR DS:[addr]
-					;
-					break;
-				}
-				case 11: //VC11
-				{
-					prefix =
-						MOV(R32, [R32])       //MOV reg32_B, DWORD PTR DS:[reg32_C]
-					+	MOV(EAX, [POS4WC])    //MOV EAX, DWORD PTR DS:[addr]
-					;
-					break;
-				}
-				default: //VC14.16
-				{
-					prefix =
-						JNE(WCp)              //JNE SHORT _skip
-					+	MOV(EAX, [POS4WC])    //MOV EAX, DWORD PTR DS:[addr]
-					;
-					break;
-				}
+				if (ins3.Codes[0] === 0x52) //PUSH EDX
+					return true;
+
+				if (ins3.Codes[0] === 0x8B && ins3.BC_Disp === 1 && ins3.SIB === undefined) //or MOV r32, [r32_B + disp8] where r32_B is not ESP
+					return true;
 			}
 
-			addrs = Exe.FindHexN(prefix + suffix, beginAddr, refAddr);
-			if (addrs.isEmpty())
-				throw Error("Table fetcher missing");
+			if (ins2.Codes[0] >= 0x50 && ins2.Codes[0] <= 0x57 && ins3.Codes[0] === 0x68) //PUSH EAX followed by PUSH OFFSET format
+				return true;
 
-			/// 3.2 - Remove the 4*reg part in the MOV/LEA
-			let csize = prefix.byteCount();
-			addrs.forEach( addr =>
-			{
-				let ins = Instr.FromAddr(addr + csize);
-				ins.MRM.update(null, null, ins.SIB.Base);
-				ins.SIB.Data = 0x90; //quick hack to set a NOP at end.
+			return false;
+		});
+		if (addrs.isEmpty())
+			throw Error("Table fetchers not found");
 
-				Exe.SetHex(ins.Addr, ins);
-			});
+		/// 4.12 - Fix the tables
+		addrs.forEach(fixTbl);
 
-			/// 3.3 - Calculate stack offset for 5th argument
-			let arg5Off = 5*4; //5 PUSHes
+		if (!isLast || !isPalShared)
+		{
+			/// 5.1 - Calculate the base stack offset for retrieving the argument.
+			let offset;
 			if (ROC.HasFP)
 			{
-				arg5Off += 4; //Account for PUSH EBP in the beginning
+				offset = 4; //for the PUSH EBP
 			}
-			else
+			else if (type === 1) //Older VC9 function signature
 			{
-				arg5Off += 3*4; //Account for PUSH -1 , PUSH addr and PUSH EAX
-
-				addr = Exe.FindHex(SUB(ESP, POS2WC), beginAddr, beginAddr + 0x30); // Account for Stack adjustment
-				if (addr < 0)
-					addr = Exe.FindHex(SUB(ESP, WCp), beginAddr, beginAddr + 0x30);
-
-				if (addr > 0)
-				{
-					let ins = Instr.FromAddr(addr);
-					arg5Off += ins.Immd;
-				}
-
-				if (Exe.FindHex(PUSH_R.repeat(4), beginAddr, beginAddr + 0x30) > 0) // Account for extra PUSHes
-					arg5Off += 4*4;
+				offset = 4 * 4; //there are 4 PUSHes in total. We could calculate it but seems like a waste.
+			}
+			else //Newer VC9 function signature
+			{
+				offset = 4 * 3; //for PUSH -1, PUSH offset and PUSH EAX
+				offset += Exe.GetInt8(beginAddr + 2); //from SUB ESP, <const>
 
 				code =
-					MOV(EAX, [POS3WC]) //MOV EAX, DWORD PTR DS:[addr]
+					PUSH_R.repeat(3)   //PUSH reg32 x3
+				+	MOV(EAX, [POS3WC]) //MOV EAX, DWORD PTR DS:[addr]
 				+	XOR(EAX, ESP)      //XOR EAX, ESP
 				+	PUSH_EAX           //PUSH EAX
 				;
-				addr = Exe.FindHex(code, beginAddr, beginAddr + 0x30);
-				if (addr > 0)
+				addr = Exe.FindHex(code, beginAddr + 3, beginAddr + 0x20);
+				if (addr < 0)
+					throw Error("Register PUSHes missing");
+
+				offset += 4 * 4; //4 PUSHes from that
+
+				code = Exe.GetUint8(addr - 1);
+				if (code >= 0x50 && code <= 0x57) //if additional PUSH reg is there before it
+					offset += 4;
+
+				if (Exe.BuildDate > 20111105)
 				{
-					arg5Off += 4;
-					beginAddr = addr + code.byteCount();
+					addr = Exe.FindLastHex(PUSH_R.repeat(3) + LEA(R32, [sreg, WCp]), hookAddr, hookAddr - 0x20);
+					if (addr < 0)
+						throw Error("Final Reg PUSHes missing");
+
+					offset += 4 * 3; //3 PUSHes from that
+
+					code = Exe.GetUint8(addr - 1);
+					if (code >= 0x50 && code <= 0x57) //if additional PUSH reg is there before it
+						offset += 4;
+				}
+				else
+				{
+					offset += 4 * 3; //It's always 3 arguments going into the function before the format
 				}
 			}
 
-			/// 3.4 - Find the argument PUSHes before the format string is PUSHed
-			prefix =
-				PUSH_R  //PUSH reg32_A
-			+	PUSH_R  //PUSH reg32_B
-			;
-			suffix = LEA(R32, ROC.HasFP ? [EBP, WCn] : [ESP, WCp]); //LEA reg32_C, [LOCAL.x]
-			addr = Exe.FindLastHex(prefix + suffix, refAddr, refAddr - 0x10);
+			/// 5.2 - Construct the function argument required (which contains the hairstyle number or a pointer to it - in the case of spr/act)
+			let arg;
+			if (Exe.BuildDate < 20111108)
+				arg = [sreg, offset + 4 * (isLast ? 1 : 2)];
+			else
+				arg = [sreg, offset + 4 * (isLast ? 2 : 5)];
 
-			if (addr < 0)
-			{
-				suffix = LEA(R32, ROC.HasFP ? [EBP, NEG2WC] : [ESP, POS2WC]); //LEA reg32_C, [LOCAL.x]
-				addr = Exe.FindLastHex(prefix + suffix, refAddr, refAddr - 0x10);
-			}
+			offset = isLast ? 4 : 8;
 
-			if (addr < 0)
-				throw Error("Arg PUSHes missing");
-
-			/// 3.5 - Extract the register
-			let reg = R32.List[Exe.GetInt8(addr) - 0x50];
-
-			/// 3.6 - Find where the register is assigned before it
-			prefix =
-				CMP([sreg, WC], 0x10) //CMP DWORD PTR SS:[LOCAL.x], 10
-			;
-			switch (Exe.Version)
-			{
-				case 9:  //VC9
-				case 10: //VC10
-				{
-					suffix =
-						MOV(reg, [sreg, WC])    //MOV reg32_A, DWORD PTR SS:[LOCAL.y] ; y = x*5 + 4
-					+	JAE(WCp)                //JAE SHORT _skip
-					+	LEA(reg, [sreg, WC])    //LEA reg32_A, [LOCAL.y]
-					;
-					break;
-				}
-				case 11: //VC11
-				{
-					suffix =
-						LEA(reg, [sreg, WC])    //LEA reg32_A, [LOCAL.y] ; y = x*5 + 4
-					+	CMOVAE(reg, [sreg, WC]) //CMOVAE reg32, DWORD PTR SS:[LOCAL.y]
-					;
-					break;
-				}
-				default: //VC14.16
-				{
-					suffix =
-						PUSH([4, R32, POS3WC])  //PUSH DWORD PTR DS:[4*reg + addr]
-					+	CMOVAE(reg, [sreg, WC]) //CMOVAE reg32, DWORD PTR SS:[LOCAL.y]
-					;
-					break;
-				}
-			}
-			let addr2 = Exe.FindHex(prefix + suffix, addr - 0x50, addr); //VC14.16
-			if (addr2 < 0)
-				throw Error("Reg assignment missing");
-
-			/// 3.7 - Save the total size of code
-			csize = prefix.byteCount() + suffix.byteCount();
-
-			/// 3.8 - Shift up the PUSH for VC14.16
-			if (Exe.Version > 11)
-			{
-				let ins = Instr.FromAddr(addr2 + prefix.byteCount());
-				Exe.SetHex(addr2, ins); //shift up the PUSH
-
-				addr2 += ins.Size;
-				csize -= ins.Size; //need to decrement since the PUSH got moved out
-			}
-
-			/// 3.9 - Prep code to change the register assignment
+			/// 5.3 - Prep the hook code
 			code =
-				MOV(reg, [sreg, arg5Off]) //MOV reg32_A, DWORD PTR SS:[Arg.5]
-			+	MOV(reg, [reg])           //MOV reg32_A, DWORD PTR DS:[reg32_A]
+				PUSH_EAX          //PUSH EAX
+			+	ADD(ESP, offset)  //ADD ESP, 4 or 8
+			+	MOV(EAX, arg)     //MOV EAX, [ARG.5/ARG.2 or ARG.2/ARG.1] ; latter for palette
+			+	(!isLast
+			?
+				MOV(EAX, [EAX])   //MOV EAX, DWORD PTR DS:[EAX]
+			:
+				''
+			)
+			+	MOV([ESP], EAX)   //MOV DWORD PTR SS:[ESP], EAX
+			+	SUB(ESP, offset)  //SUB ESP, 4 or 8
+			+	POP(EAX)          //POP EAX
+			+	PUSH(strVir)      //PUSH addr ; ASCII <format string>
+			+	JMP(Filler(1))    //JMP retnAddr ; Return Address is after the PUSH
 			;
 
-			code +=
-				NOPs(csize - code.byteCount())
-			;
+			/// 3.4 - Allocate space for it
+			let free = Exe.FindSpace(code.byteCount(), 0x10);
+			if (free < 0)
+				throw NO_ALLOC;
 
-			/// 3.10 - Replace the original
-			Exe.SetHex(addr2, code);
-		}
-		else
-		{
-			/// 4.1 - Find the table fetchers
-			prefix =
-				MOV(R32, [R32, POS2WC]) //MOV reg32_C, DWORD PTR DS:[reg32_D + const]
-			+	MOV(R32, [R32])         //MOV reg32_D, DWORD PTR DS:[reg32_C]
-			;
-			suffix =
-				LEA(EAX, [4, R32, R32]) //LEA EAX, [reg32_B * 4 + reg32_A]
-			;
-			addrs = Exe.FindHexN(prefix + suffix, beginAddr, refAddr);
-			let type = 1;
+			let freeVir = Exe.Phy2Vir(free, DIFF);
 
-			if (addrs.isEmpty())
-			{
-				prefix =
-					MOV(R32, [R32, POS2WC]) //MOV reg32_F, DWORD PTR DS:[reg32_G + const]
-				;
-				suffix =
-					MOV(R32, [4, R32, R32]) //MOV reg32_C, DWORD PTR DS:[reg32_B * 4 + reg32_A]
-				+	MOV(R32, [R32, POS2WC]) //MOV reg32_E, DWORD PTR DS:[reg32_C + const]
-				;
-				addrs = Exe.FindHexN(prefix + suffix, beginAddr, refAddr);
-				type = 2;
-			}
-			if (addrs.isEmpty())
-				throw Error("Table fetcher missing (Old Style)");
+			/// 3.5 - Fill in the blanks
+			code = SetFillTarget(code, 1, Exe.Phy2Vir(hookAddr + 5, CODE), freeVir, 1);
 
-			/// 4.2 - Make it move the value itself instead of value*4 + base reg
-			let csize = prefix.byteCount();
-			addrs.forEach(addr =>
-			{
-				let ins = Instr.FromAddr(addr + csize);
-				ins.MRM.update(3, null, ins.SIB.Index);
-				ins.SIB.Data = 0x90; //quick hack to put NOP afterward
+			/// 3.6 - Add at allocated space
+			Exe.AddHex(free, code);
 
-				Exe.SetHex(ins.Addr, ins);
-
-				if (type === 1)
-				{
-					/// 4.3 - Find the MOV DWORD PTR after it
-					let srcReg = R32.List[ins.MRM.RegO];
-					let addr2 = Exe.FindHex(MOV(R32, [srcReg]), ins.NextAddr, ins.NextAddr + 0x18); //MOV reg32, DWORD PTR DS:[srcReg]
-					if (addr2 < 0)
-						throw Error("Register assignment missing (Old Style)");
-
-					ins = Instr.FromAddr(addr2);
-					ins.MRM.update(3, null, null);
-
-					Exe.SetHex(ins.Addr, ins);
-				}
-			});
+			/// 3.7 - Create a JMP to our code
+			Exe.SetJMP(hookAddr, freeVir);
 		}
 	});
 

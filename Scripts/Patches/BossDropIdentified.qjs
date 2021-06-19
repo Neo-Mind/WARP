@@ -1,0 +1,120 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020-2021 CH.C (jchcc)                                   *
+*   Copyright (C) 2021 Andrei Karas (4144)                                 *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CH.C (jchcc), Andrei                                   *
+*   Created Date  : 2021-06-14                                             *
+*   Last Modified : 2021-06-17                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Fix for clients before 20120200
+
+///
+/// \brief Set the 'identified' status to 1 in the function handling ZC_MVP_GETTING_ITEM packet
+///
+BossDropIdentified = function()
+{
+	/// 1.1 - Load the WINMGR object
+	WINMGR.load();
+
+	/// 1.2 - Prepare the code to find the function (and the assignment to 'identified')
+	let zeroArg = Exe.Version > 10 ? 0 : EBX;
+	let zeroArg8 = Exe.Version > 10 ? 0 : BL;
+
+	let stkLoc;
+	if (ROC.HasFP)
+		stkLoc = [EBP, Exe.BuildDate > 20131200 ? NEG1WC : WCn];
+	else
+		stkLoc = [ESP, POS1WC];
+
+	let parts =
+	[
+		PUSH(zeroArg).repeat(4)         // push 0 or ebx
+		                                // push 0 or ebx
+		                                // push 0 or ebx
+		                                // push 0 or ebx
+	+	PUSH(3)                         // push 3
+	+	WINMGR.MovECX                   // mov ecx, offset g_windowMgr
+	+	MOV(stkLoc, zeroArg)            // mov dword ptr [ebp/esp + item.refine_level], 0 or ebx
+	,
+		MOV(BYTE_PTR, stkLoc, zeroArg8) // mov byte ptr [ebp/esp + item.identified], 0 or bl
+	,
+		CALL()                          // call UIWindowMgr::SendMsg
+	];
+
+	let addr = Exe.FindHex(parts);
+	if (addr < 0)
+		throw Error("'Identified' assignment missing");
+
+	if (Exe.Version > 10)
+	{
+		/// 2.1 - For newer versions we can just change the 0 to 1
+		Exe.SetInt8(addr + parts.byteCount(0, 1) - 1, 1);
+	}
+	else
+	{
+		/// 2.2 - For older versions, Extract the assignment instruction
+		let ins = Instr.FromAddr(addr + parts.byteCount(0));
+
+		/// 2.3 - Change it to use 0 as the source (immediate) argument instead of BL
+		ins.Codes[0] = 0xC6;
+		ins.MRM.update(null, 0, null);
+		ins.Immd = 0;
+		ins.BC_Immd = 1;
+
+		/// 2.4 - Adjust for ESP decrement (when FPO is not there)
+		if (!ROC.HasFP)
+			ins.Disp += 4;
+
+		/// 2.5 - Prepare the new code to be added
+		let code =
+			ins             //mov dword ptr [ebp/esp + item.identified], 0
+		+	JMP(Filler(1))  //jmp UIWindowMgr::SendMsg
+		;
+
+		/// 2.6 - Allocate space for it
+		let free = Exe.FindSpace(code.byteCount());
+		if (free < 0)
+			throw NO_ALLOC;
+
+		let freeVir = Exe.Phy2Vir(free, DIFF);
+
+		/// 2.7 - Fill in the blanks
+		let sendMsg = Exe.GetTgtAddr(ins.NextAddr + 1);
+		code = SetFillTarget(code, 1, sendMsg, freeVir, 1);
+
+		/// 2.8 - Add at allocated space
+		Exe.AddHex(free, code);
+
+		/// 2.9 - Hijack the CALL to target our code instead.
+		Exe.SetTgtAddr(ins.NextAddr + 1, freeVir);
+	}
+
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients (atleast for now)
+///
+BossDropIdentified.validate = () =>
+	Exe.BuildDate > 20120200;

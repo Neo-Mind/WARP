@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) 2018-2021 CH.C (jchcc)                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,50 +20,42 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Shinryo                                                *
-*   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-06-10                                             *
+*   Author(s)     : CH.C (jchcc)                                           *
+*   Created Date  : 2021-06-14                                             *
+*   Last Modified : 2021-06-17                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Change one of the Login Background format strings (str1) to the other (str2) //
+/// \brief Update all switches related to item type and make it go to the same case
 ///
-SelectLoginBG = function(patchName)
+ShortcutForAll = function()
 {
-	/// 1 - Prepare Strings to Find and Replace
-	let prefix = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\T";
-	let src, tgt;
-	if (patchName === "OnlyFirstBG")
-	{
-		src = "2_\xB9\xE8\xB0\xE6" + "%d-%d.bmp";
-		tgt = "_\xB9\xE8\xB0\xE6" + "%d-%d.bmp\x00";
-	}
-	else
-	{
-		src = "_\xB9\xE8\xB0\xE6" + "%d-%d.bmp\x00";
-		tgt = "2_\xB9\xE8\xB0\xE6" + "%d-%d.bmp";
-	}
+	/// 1 - Find all the item type switches (there should be 2 locations in total)
+	let parts = [
+		MOVZX(R32, BYTE_PTR, [EAX, POS3WC]) //movzx eax, byte ptr [eax + idxTbl]
+	,
+		JMP([4, R32, POS3WC])               //jmp dword ptr [eax*4 + jmpTbl]
+	,
+		''
+	,
+		JE(Exe.BuildDate > 20120700 ? POS2WC : WCp) //jmp _skip ; older clients have short jump
+	];
 
-	/// 2 - Find the src string
-	let addr = Exe.FindText(prefix + src, PHYSICAL, false);
-	if (addr < 0)
-		throw Error("Source string not found");
+	parts[2] = CMP(ROC.HasFP ? [EBP, NEG3WC] : [ESP, POS3WC], 0); //cmp dword ptr [LOCAL.x], 0 ; bigger displacement
+	let addrs = Exe.FindHexN(parts);
 
-	/// 3 - Modify the string after the dir prefix (16 bytes later) with the tgt string
-	Exe.SetText(addr + prefix.length, tgt);
+	parts[2] = CMP(ROC.HasFP ? [EBP, WCn] : [ESP, WCp], 0);       //cmp dword ptr [LOCAL.x], 0
+	addrs = addrs.concat(...Exe.FindHexN(parts));
+
+	if (addrs.length !== 2)
+		throw Error("Expected 2 matches for switch");
+
+	/// 2 - Remove eax*4 for all of them
+	let repl = NOP + " FF 25";  //nop + jmp dword ptr [jmpTbl]
+	let offset = parts.byteCount(0);
+
+	addrs.forEach(addr => Exe.SetHex(addr + offset, repl));
 
 	return true;
 };
-
-///
-/// \brief Disable for latest clients (there is no two variants anymore)
-///
-SelectLoginBG.validate = () =>
-	ROC.IsZero || Exe.BuildDate < 20200600;
-
-///
-/// \brief Wrappers for individual patches
-///
-OnlyFirstBG  = SelectLoginBG;
-OnlySecondBG = SelectLoginBG;
