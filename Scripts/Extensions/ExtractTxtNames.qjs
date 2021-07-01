@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : -, Neo-Mind                                            *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-01-30                                             *
+*   Last Modified : 2021-07-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,7 +37,7 @@ ExtractTxtNames = function()
 		throw NO_EXE;
 
 	/// 1.2 - Open output file for writing (Need ASCII encoding).
-	let fileName = Exe.GetUserInput("$$txtNames", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "loaded_Txt_files_" + ROC.BaseName + ".txt");
+	let fileName = Exe.GetUserInput("$txtNames", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "loaded_Txt_files_" + ROC.BaseName + ".txt");
 	if (fileName === false)
 		return true;
 
@@ -54,7 +54,7 @@ ExtractTxtNames = function()
 	fp.WriteLine("Txt Files:");
 
 	/// 2.2 - Find all locations of .txt
-	let addrs = Exe.FindTextN(".txt", PHYSICAL, false);
+	let addrs = Exe.FindTextN(".txt", CaseInsensitive, PHYSICAL, false);
 	addrs.forEach( addr =>
 	{
 		/// 2.3 - Retrieve the starting location of each string (prepending each character along the way)
@@ -77,7 +77,7 @@ ExtractTxtNames = function()
 	fp.Close();
 
 	/// 3 - Show the success message or display the file if requested
-	if (!Exe.TestMode && Exe.GetUserInput('$$showFile', D_Bool, "Show File", "Display the generated file?", true))
+	if (!Exe.TestMode && UserChoice("Show File", "Display the generated file?"))
 	{
 		Warp.Show(fp.Path);
 		return true;

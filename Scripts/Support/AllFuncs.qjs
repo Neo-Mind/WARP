@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-06-17                                             *
+*   Last Modified : 2021-07-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -674,6 +674,13 @@ Cancel = (arg, defVal) =>
 	else
 		throw `Cancelled - <b>'${arg}'</b> reverted to <b><i>${defVal}</i></b>`;
 };
+
+///
+/// \brief Simple wrapper to ask Yes/No questions to user (the variable is irrelevant)
+///        Primarily used in extensions
+///
+UserChoice = (title, prompt) =>
+	Exe.GetUserInput('#choice', D_Bool, title, prompt, true);
 
   //====================//
  // Syntax Identifiers //

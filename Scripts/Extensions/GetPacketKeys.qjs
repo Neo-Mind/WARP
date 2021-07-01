@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-06-02                                             *
+*   Last Modified : 2021-07-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,7 +39,8 @@ GetPacketKeys = function()
 	let fileName = Exe.GetUserInput("$$keyOutput", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "PacketKeys_" + ROC.BaseName + ".txt");
 	if (fileName === false)
 		return true;
-
+	Debug("FILENAME IS ", fileName);
+	
 	let fp = new TextFile(fileName, 'w');
 	if (!fp.Valid)
 		throw NO_OUTPUT;
@@ -95,7 +96,7 @@ GetPacketKeys = function()
 	fp.Close();
 
 	/// 3.3 - Show the success message or display the file requested
-	if (!Exe.TestMode && Exe.GetUserInput('$$showFile', D_Bool, "Show File", "Display the generated file?", true))
+	if (!Exe.TestMode && UserChoice("Show File", "Display the generated file?"))
 	{
 		Warp.Show(fp.Path);
 		return true;

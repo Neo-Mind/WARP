@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-06-17                                             *
+*   Last Modified : 2021-07-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -102,7 +102,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			});
 
 			$$(_ + '1.6 - Find the string "ReqJobName"')
-			addr = Exe.FindText("ReqJobName");
+			addr = Exe.FindText("ReqJobName", CaseInsensitive);
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'ReqJobName' not found");
@@ -213,7 +213,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			this.FnInvoker = Exe.GetTgtAddr(addr + 1);
 
 			$$(_ + '5.1 - Find the string "Lua Files\\DataInfo\\jobName"')
-			addr = Exe.FindText("Lua Files\\DataInfo\\jobName");
+			addr = Exe.FindText("Lua Files\\DataInfo\\jobName", CaseInsensitive);
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - jobName string missing");
@@ -391,7 +391,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				code = code.join('');
 
 			if (IsStr(nameAddr))
-				nameAddr = Exe.FindText(nameAddr, false);
+				nameAddr = Exe.FindText(nameAddr, CaseInsensitive, false);
 
 			if (nameAddr)
 				code = SwapFiller(code, 50, nameAddr);
@@ -446,7 +446,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 
 			$$(_ + '1.2 - Find the string inside refName')
-			let refAddr = Exe.FindText(refName);
+			let refAddr = Exe.FindText(refName, CaseInsensitive);
 			if (refAddr < 0)
 				throw Error("LUA.addLoaders - Reference file (" + refName + ") missing");
 
@@ -482,16 +482,12 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			let strings = files.join('\x00').toHex() + ' 00';
 			let ssize = strings.byteCount();
 
-			$$(_ + '2.4 - If no address is specified then allocate space for it')
-			if (tgt < 0)
-			{
-				tgt = Exe.FindSpace(csize + ssize, 0x10); //snapping to 0x10 since its going to be like a function
-				if (tgt < 0)
-					throw NO_ALLOC;
-			}
-
-			$$(_ + '2.5 - Save the target\'s VIRTUAL address')
-			let tgtVir = Exe.Phy2Vir(tgt);
+			$$(_ + '2.4 - Save the VIRTUAL address (If no address is specified then allocate space for it)')
+			let tgtVir;
+			if (tgt > 0)
+				tgtVir = Exe.Phy2Vir(tgt);
+			else
+				[tgt, tgtVir] = Exe.FindSpace(csize + ssize, 0x10); //snapping to 0x10 since its going to be like a function
 
 			$$(_ + '3.1 - Initialize the code variable, set the initial CALL distance and address of first string')
 			let code = "";

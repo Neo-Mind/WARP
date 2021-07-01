@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-06-19                                             *
+*   Last Modified : 2021-07-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -72,7 +72,7 @@ if (typeof ROC === 'undefined')
 
 			$$(_ + '2.1 - Get the address of "NC_CashShop", Roulette bmp string & "adventurerAgency"')
 			this.CashShopAddr = Exe.FindText("NC_CashShop");
-			this.RouletteAddr = Exe.FindText("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\roullette\\RoulletteIcon.bmp");
+			this.RouletteAddr = Exe.FindText("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\roullette\\RoulletteIcon.bmp", CaseInsensitive);
 			this.AdvAgencyAddr = Exe.FindText("adventurerAgency");
 
 			$$(_ + '2.2 - Get the addresses of the respective imported functions (used commonly in various patches)')
@@ -81,9 +81,10 @@ if (typeof ROC === 'undefined')
 			this.OutDbgStrA   = Exe.FindFunc("OutputDebugStringA");
 
 			$$(_ + '2.3 - Get the address of "KERNEL32.dll"')
-			this.Kernel32 = Exe.FindText("KERNEL32.dll");
+			this.Kernel32 = Exe.FindText("KERNEL32.dll", CaseInsensitive);
 			if (this.Kernel32 < 0)
-				this.Kernel32 = Exe.FindText("kernel32.dll", false); // new clients have it in small letters and not necessarily seperated from previous string with a NULL
+				this.Kernel32 = Exe.FindText("KERNEL32.dll", CaseInsensitive, false); // new clients have it in small letters (but we will search insensitively)
+			                                                                          // and not necessarily seperated from previous string with a NULL
 
 			$$(_ + '2.4 - Set the base name')
 			this.BaseName = System.BaseName(Exe.FilePath);

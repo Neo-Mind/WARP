@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-22                                             *
-*   Last Modified : 2021-03-12                                             *
+*   Last Modified : 2021-07-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -41,7 +41,7 @@ GenMapEffectPlugin = function()
 		throw Error("Template file is inaccessible");
 	
 	/// 1.2 - Find 'xmas_fild01.rsw'
-	let addr = Exe.FindText("xmas_fild01.rsw");
+	let addr = Exe.FindText("xmas_fild01.rsw", CaseInsensitive);
 	if (addr < 0)
 		throw Error("'xmas_fild01.rsw' not found");
 	
@@ -62,7 +62,7 @@ GenMapEffectPlugin = function()
 		throw Error("'xmas_fild01.rsw' not used");
 
 	/// 1.4 - Find 'gef_fild07.rsw'
-	addr = Exe.FindText("gef_fild07.rsw");
+	addr = Exe.FindText("gef_fild07.rsw", CaseInsensitive);
 	if (addr < 0)
 		throw Error("'gef_fild07.rsw' not found");
 	
@@ -100,7 +100,7 @@ GenMapEffectPlugin = function()
 	let CI_Exit = addr + 4;
 	
 	/// 3.1 - Find 'yuno.rsw'
-	let yunoAddr = Exe.FindText("yuno.rsw");
+	let yunoAddr = Exe.FindText("yuno.rsw", CaseInsensitive);
 	if (yunoAddr < 0)
 		throw Error("'yuno.rsw' not found");
 	
@@ -363,7 +363,7 @@ GenMapEffectPlugin = function()
 	/// 7.5 - Copy the related text file to 'data' folder inside if user wants to.
 	if (!Exe.TestMode)
 	{
-		let response = Exe.GetUserInput('$$copyFile', D_Bool, "Copy File", "Would you like the <b>'mapeffecttable.txt'</b> file copied to <b>'data'</b> sub folder inside?", true);
+		let response = UserChoice("Copy File", "Would you like the <b>'mapeffecttable.txt'</b> file copied to <b>'data'</b> sub folder inside?");
 		if (response)
 		{
 			let tgtDir = dir + "/data";
@@ -371,7 +371,7 @@ GenMapEffectPlugin = function()
 				System.Copy("Inputs/mapeffecttable.txt", tgtDir);
 		}
 		
-		response = Exe.GetUserInput('$$showFolder', D_Bool, "Show Folder", "Display the folder with generated file?", true);
+		response = UserChoice("Show Folder", "Display the folder with the generated file?");
 		if (response)
 		{
 			Warp.ShowInDir(dir + "/rdll2_" + ROC.BaseName + ".asi");

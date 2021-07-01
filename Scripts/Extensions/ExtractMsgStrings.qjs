@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ ExtractMsgStrings = function()
 		throw NO_EXE;
 
 	/// 1.2 - Find the string 'msgStringTable.txt'
-	let addr = Exe.FindText("msgStringTable.txt");
+	let addr = Exe.FindText("msgStringTable.txt", CaseInsensitive);
 	if (addr < 0)
 		throw Error("'msgStringTable.txt' not found");
 
@@ -89,7 +89,7 @@ ExtractMsgStrings = function()
 	addr = Exe.Vir2Phy(disp - 4);
 
 	/// 2.1 - Get the mapping file from user
-	let inFile = Exe.GetUserInput('$$msgTranslations', D_InFile, "MsgString Translations", "Enter translation mapping file (Optional)", "Inputs/MsgStrMap_EN.yml");
+	let inFile = Exe.GetUserInput("$$msgTranslations", D_InFile, "MsgString Translations", "Enter translation mapping file (Optional)", "Inputs/MsgStrMap_EN.yml");
 
 	/// 2.2 - Load the translation mapping if valid file provided
 	let trMap = inFile ? _EMS_LoadTr(inFile) : null;
@@ -133,7 +133,7 @@ ExtractMsgStrings = function()
 	fp.Close();
 
 	/// 4  - Show the success message or display the file if requested
-	if (!Exe.TestMode && Exe.GetUserInput('$showFile', D_Bool, "Show File", "Display the generated file?", true))
+	if (!Exe.TestMode && UserChoice("Show File", "Display the generated file?"))
 	{
 		Warp.Show(fp.Path);
 		return true;
