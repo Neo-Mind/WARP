@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-07-01                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,39 +31,40 @@
 ///
 GetPacketKeys = function()
 {
-	/// 1.1 - Need a valid Exe loaded.
+	let _ = "GetPacketKeys : "
+	
+	$$(_ + '1.1 - Need a valid Exe loaded')
 	if (Exe.FileSize == 0)
 		throw NO_EXE;
 
-	/// 1.2 - Open the output file for writing.
+	$$(_ + '1.2 - Open the output file for writing')
 	let fileName = Exe.GetUserInput("$$keyOutput", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "PacketKeys_" + ROC.BaseName + ".txt");
 	if (fileName === false)
 		return true;
-	Debug("FILENAME IS ", fileName);
 	
 	let fp = new TextFile(fileName, 'w');
 	if (!fp.Valid)
 		throw NO_OUTPUT;
 
-	/// 2.1 - Ensure PACKET Object is loaded
+	$$(_ + '2.1 - Ensure PACKET Object is loaded')
 	PACKET.load();
 
 	let keys;
 	if (PACKET.KS_Mode === KeyMode.Virtual)
 	{
-		/// 2.2 - Check if it's a patched client
+		$$(_ + '2.2 - Check if it is a patched client')
 		let addr = Exe.FindHex(JMP(POS4WC), PACKET.Assigner, PACKET.Assigner + 6);
 		if (addr > 0)
 		{
-			/// 2.3 - Goto the JMP address
+			$$(_ + '2.3 - Goto the JMP address')
 			addr = Exe.GetTgtAddr(addr + 1, PHYSICAL);
 
-			/// 2.4 - Now find the position where the assignment is done
+			$$(_ + '2.4 - Now find the position where the assignment is done')
 			addr = Exe.FindHex(MOV([R32, ' 0?'], ALLWC).repeat(3), addr, addr + 0x50);
 		}
 		if (addr > 0)
 		{
-			/// 2.5 - Extract the assigned keys
+			$$(_ + '2.5 - Extract the assigned keys')
 			keys = [];
 			for (let i = 0; i < 3; i++)
 			{
@@ -74,28 +75,28 @@ GetPacketKeys = function()
 		}
 	}
 
-	/// 2.6 - Otherwise retrieve the packet keys found
+	$$(_ + '2.6 - Otherwise retrieve the packet keys found')
 	if (keys === undefined)
 		keys = PACKET.Keys;
 
-	/// 2.7 - Convert to hex
+	$$(_ + '2.7 - Convert to hex')
 	let hexKeys = [];
 	keys.forEach( (val, idx) =>
 	{
 		hexKeys[idx] = "0x" + val.toHex(true)
 	});
 
-	/// 3.1 - Write the essentials & the keys in hex to the file.
+	$$(_ + '3.1 - Write the essentials & the keys in hex to the file')
 	fp.WriteLine("Extracted with WARP")
 	fp.WriteLine("===================")
 	fp.WriteLine("Client: " + Exe.FilePath);
 	fp.WriteLine("BuildDate: " + Exe.BuildDate);
 	fp.WriteLine("Packet Keys : (" + hexKeys.join(', ') + ")");
 
-	/// 3.2 - Close the file
+	$$(_ + '3.2 - Close the file')
 	fp.Close();
 
-	/// 3.3 - Show the success message or display the file requested
+	$$(_ + '3.3 - Show the success message or display the file requested')
 	if (!Exe.TestMode && UserChoice("Show File", "Display the generated file?"))
 	{
 		Warp.Show(fp.Path);

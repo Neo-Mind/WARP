@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-07-01                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -58,9 +58,11 @@ if (typeof ROC === 'undefined')
 			let fromAddr = Exe.GetSectBegin(CODE);
 			let toAddr = fromAddr + 0x500;
 
-			let addr = Exe.FindHex(" CC CC CC CC CC 55 8B EC", fromAddr, toAddr);
+			let addr = Exe.FindHex(INT3.repeat(5) + FP_START, fromAddr, toAddr); //int3 x5 times
+			                                                                     //push ebp
+																				 //mov ebp, esp
 			if (addr < 0)
-				addr = Exe.FindHex(" 90 90 90 90 90 55 8B EC", fromAddr, toAddr);
+				addr = Exe.FindHex(NOP.repeat(5) + FP_START, fromAddr, toAddr); //change each 'int3' to 'nop'
 
 			this.HasFP = (addr > 0);
 
