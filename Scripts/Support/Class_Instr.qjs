@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -176,7 +176,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 		///
 		/// \brief 'Static' Method to extract all the instruction bytes at addr into an 'Instr' object
 		///
-		static FromAddr(addr, type, result)
+		static FromAddr(addr, type = null, result = null, reflect = false)
 		{
 			/// 1.1 - Convert the address if VIRTUAL
 			if (type === VIRTUAL)
@@ -213,13 +213,13 @@ if (typeof Instr === 'undefined') //avoid redefinition
 				return result;
 
 			/// 1.4 - Extract the first byte
-			let b = Exe.GetUint8(addr++);
+			let b = Exe.GetUint8(addr++, reflect);
 
 			/// 1.5 - Iterate over valid Prefixes till we reach an opcode byte
 			while (IPrefix.List.includes(b))
 			{
 				result.addPrefix(b);
-				b = Exe.GetUint8(addr++);
+				b = Exe.GetUint8(addr++, reflect);
 			}
 
 			/// 2.1 - Append the opcode
@@ -228,12 +228,12 @@ if (typeof Instr === 'undefined') //avoid redefinition
 			/// 2.2 - Check for multibyte opcodes & append accordingly
 			if (b === 0x0F)
 			{
-				b = Exe.GetUint8(addr++);
+				b = Exe.GetUint8(addr++, reflect);
 				result.addOpCode(b);
 
 				if (b === 0x38 || b === 0x3A)
 				{
-					b = Exe.GetUint8(addr++);
+					b = Exe.GetUint8(addr++, reflect);
 					result.addOpCode(b);
 				}
 			}
@@ -241,16 +241,16 @@ if (typeof Instr === 'undefined') //avoid redefinition
 			/// 3.1 - If the instruction expects a ModRM byte then extract it
 			if (result.needModRM())
 			{
-				result.MRM = new ModRM(Exe.GetUint8(addr++));
+				result.MRM = new ModRM(Exe.GetUint8(addr++, reflect));
 
 				/// 3.2 - If the ModRM expects an accompanying SIB byte then extract it.
 				if (result.MRM.needSIB())
-					result.SIB = new SIBase(Exe.GetUint8(addr++));
+					result.SIB = new SIBase(Exe.GetUint8(addr++, reflect));
 
 				/// 3.3 - If the ModRM specifies a Displacement then extract it
 				if (result.MRM.Mode === 1)
 				{
-					result.Disp = Exe.GetInt8(addr++);
+					result.Disp = Exe.GetInt8(addr++, reflect);
 					result.BC_Disp = 1;
 				}
 				else if ( result.MRM.Mode === 2 ||
@@ -260,12 +260,12 @@ if (typeof Instr === 'undefined') //avoid redefinition
 				{
 					if (result.Prefixes.includes(AD16.Value)) //Address override
 					{
-						result.Disp = Exe.GetInt16(addr);//not using ++ since we need to increment by 2
+						result.Disp = Exe.GetInt16(addr, reflect);//not using ++ since we need to increment by 2
 						result.BC_Disp = 2;
 					}
 					else
 					{
-						result.Disp = Exe.GetInt32(addr);//not using ++ since we need to increment by 4
+						result.Disp = Exe.GetInt32(addr, reflect);//not using ++ since we need to increment by 4
 						result.BC_Disp = 4;
 					}
 					addr += result.BC_Disp;
@@ -274,7 +274,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 			else if (OpCodeList.WithDisp32.includes(result.Codes[0]))
 			{
 				result.BC_Disp = 4;
-				result.Disp = Exe.GetInt32(addr);
+				result.Disp = Exe.GetInt32(addr, reflect);
 				addr += 4;
 			}
 
@@ -285,15 +285,15 @@ if (typeof Instr === 'undefined') //avoid redefinition
 			switch (result.BC_Immd)
 			{
 				case 1:
-					result.Immd = Exe.GetInt8(addr);
+					result.Immd = Exe.GetInt8(addr, reflect);
 					break;
 
 				case 2:
-					result.Immd = Exe.GetInt16(addr);
+					result.Immd = Exe.GetInt16(addr, reflect);
 					break;
 
 				case 4:
-					result.Immd = Exe.GetInt32(addr);
+					result.Immd = Exe.GetInt32(addr, reflect);
 					break;
 			}
 			addr += result.BC_Immd;
@@ -301,13 +301,13 @@ if (typeof Instr === 'undefined') //avoid redefinition
 			/// 4.1 - Extract the Nesting Level if expected
 			if (result.Codes[0] === 0xC8)//ENTER instruction
 			{
-				result.NestLvl = Exe.GetInt8(addr++);
+				result.NestLvl = Exe.GetInt8(addr++, reflect);
 			}
 
 			/// 4.2 - Otherwise Extract the Far type segment number if expected
 			else if (OpCodeList.FarType.includes(result.Codes[0]))
 			{
-				result.SegNum = Exe.GetInt16(addr);
+				result.SegNum = Exe.GetInt16(addr, reflect);
 				addr += 2;
 			}
 

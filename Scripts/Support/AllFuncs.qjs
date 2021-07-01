@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-06-20                                             *
+*   Last Modified : 2021-07-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -429,7 +429,7 @@ MapAddrs = function(start, arr)
 ///
 /// \brief Extract the switch jump address for the specified case
 ///
-CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
+CaseAddr = function(num, movzxAddr, retnType = null, jmpDpAddr = null, reflect = false)
 {
 	let _ = 'CaseAddr : ';
 
@@ -456,7 +456,7 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 		if (offset < 0)
 			return -1;
 
-		caseByte = Exe.GetInt8(offset + num);
+		caseByte = Exe.GetInt8(offset + num, reflect);
 	}
 
 	$$(_ + '2.2 - Use the byte retrieved to extract the case target address (VIRTUAL)')
@@ -464,7 +464,7 @@ CaseAddr = function(num, movzxAddr, retnType, jmpDpAddr)
 	if (offset < 0)
 		return -1;
 
-	let caseAddr = Exe.GetInt32(offset + caseByte*4);
+	let caseAddr = Exe.GetInt32(offset + caseByte*4, reflect);
 
 	$$(_ + '2.3 - Return the physical address if VIRTUAL is not explicity requested')
 	return (retnType === VIRTUAL ? caseAddr : Exe.Vir2Phy(caseAddr));
