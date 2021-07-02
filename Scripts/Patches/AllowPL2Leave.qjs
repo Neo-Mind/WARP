@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,34 +35,36 @@
 ///
 AllowPL2Leave = function()
 {
-	/// 1.1 - Find the PUSHes 
+	let _ = 'AllowPL2Leave : ';
+
+	$$(_ + '1.1 - Find the PUSHes ')
 	let code =
-		JZ(WCp)      //JZ addr3
-	+	PUSH_0       //PUSH 0
-	+	PUSH_0       //PUSH 0
-	+	PUSH(0xFF)   //PUSH 0FFh
-	+	PUSH(0XCC9)  //PUSH 0CC9h
-	+	JMP()        //JMP addr3
+		JZ(WCp)      //jz _next
+	+	PUSH_0       //push 0
+	+	PUSH_0       //push 0
+	+	PUSH(0xFF)   //push 0FFh
+	+	PUSH(0XCC9)  //push 0CC9h
+	+	JMP()        //jmp _next
 	;
 
 	let refAddr = Exe.FindHex(code);
 	if (refAddr < 0)
 		throw Error("Reference pattern missing");
 
-	/// 1.2 - Find the JZ/JNZ pattern before it
+	$$(_ + '1.2 - Find the JZ/JNZ pattern before it')
 	code =
-		TEST(AL, AL)              //TEST AL, AL
-	+	" [0111010.] [0011....]"  //JZ/JNZ addr1 <-- patch here
-	+	MOV([EBP, WC], -1)        //MOV DWORD PTR SS:[EBP + constA], -1
-	+	LEA(ECX, [EBP, ALLWC])    //LEA ECX, [EBP + fInfo]
-	+	CALL(ALLWC)               //CALL FRIEND_INFO_destructor
+		TEST(AL, AL)              //test al, al
+	+	" [0111010.] [0011....]"  //jz/jnz _skip          <------- patch here
+	+	MOV([EBP, WC], -1)        //mov dword ptr [LOCAL.x], -1
+	+	LEA(ECX, [EBP, ALLWC])    //lea ecx, [LOCAL.fInfo]       ; EBP + <fInfo>
+	+	CALL(ALLWC)               //call FRIEND_INFO_destructor
 	;
 
 	let addr = Exe.FindHex(code, refAddr - 0x40, refAddr);
 	if (addr < 0)
 		throw Error("JZ/JNZ Pattern not found");
 
-	/// 2 - Enforce the Jump
+	$$(_ + '2 - Enforce the Jump')
 	Exe.SetJMP(addr + 2);
 
 	return true;

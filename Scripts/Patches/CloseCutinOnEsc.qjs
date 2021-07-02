@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-06-02                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,134 +33,136 @@
 ///
 CloseCutinOnEsc = function()
 {
-	/// 1.1 - Find the test for case 6 inside UIIllustWnd::SendMsg
+	let _ = 'CloseCutinOnEsc : ';
+
+	$$(_ + '1.1 - Find the test for case 6 inside UIIllustWnd::SendMsg')
 	let code =
-		JE(POS2WC)      //JE addr ; this is for CMP EAX, 6
-	+ 	CMP(EAX, 0x22)  //CMP EAX, 22
-	+ 	JE(POS2WC)      //JE addr2
-	+ 	CMP(EAX, 0x4E)  //CMP EAX, 4E
+		JE(POS2WC)      //je _next ; this is for CMP EAX, 6
+	+ 	CMP(EAX, 0x22)  //cmp eax, 22h
+	+ 	JE(POS2WC)      //je _next
+	+ 	CMP(EAX, 0x4E)  //cmp eax, 4Eh
 	;
 
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Case 6 test missing");
 
-	/// 1.2 - Set addr to first JE location
+	$$(_ + '1.2 - Set addr to first JE location')
 	addr = Exe.GetTgtAddr(addr + 2, PHYSICAL);
 
-	/// 1.3 - Look for the GetGameMode CALL inside UIIllustWnd::SendMsg
+	$$(_ + '1.3 - Look for the GetGameMode CALL inside UIIllustWnd::SendMsg')
 	let prefix =
-		MOV(ECX, POS3WC)            //MOV ECX, OFFSET g_modeMgr
-	+	CALL(ALLWC)                 //CALL CModeMgr::GetGameMode
+		MOV(ECX, POS3WC)            //mov ecx, <g_modeMgr>
+	+	CALL(ALLWC)                 //call CModeMgr::GetGameMode
 	;
 	code = "";
 
 	if (Exe.Version < 14)
-		code += MOV(EDX, [EAX]);    //MOV EDX, DWORD PTR DS:[EAX] ; for VC6 - VC11
+		code += MOV(EDX, [EAX]);    //mov edx, dword ptr [eax] ; for VC6 - VC11
 
-	code +=	PUSH_0;                 //PUSH 0
+	code +=	PUSH_0;                 //push 0
 
 	if (Exe.BuildDate > 20110217)
-		code += PUSH(' 0?');        //PUSH 0 or 1
+		code += PUSH(' 0?');        //push 0 / push 1
 
-	code +=	PUSH(-1);               //PUSH -1
+	code +=	PUSH(-1);               //push -1
 
 	if (Exe.Version > 11)
 	{
 		code +=
-			MOV(EDX, [EAX])         //MOV EDX, DWORD PTR DS:[EAX]
-		+	MOV(ECX, EAX)           //MOV ECX, EAX
+			MOV(EDX, [EAX])         //mov edx, dword ptr [eax]
+		+	MOV(ECX, EAX)           //mov ecx, eax
 		;
 	}
 
-	code += PUSH(POS3WC);           //PUSH OFFSET EmptyStr ; zeros at the location
+	code += PUSH(POS3WC);           //push offset "" ; zeros at the location
 
 	if (Exe.Version > 6 && Exe.BuildDate < 20150000) //VC9 - VC10 (some of them)
 	{
 		code +=
-			MOV(ECX, EAX)           //MOV ECX, EAX
-		+	MOV(EAX, [EDX, ' 1?'])  //MOV EAX, DWORD PTR DS:[EDX + const] ; const is either 14 or 18
+			MOV(ECX, EAX)           //mov ecx, eax
+		+	MOV(EAX, [EDX, ' 1?'])  //mov eax, dword ptr [edx + dispA] ; dispA is either 14 or 18
 		;
 	}
 
-	code += PUSH(' [011.0.0.]');    //PUSH 64 or 71
+	code += PUSH(' [011.0.0.]');    //push 64h / push 71h
 
 	if (Exe.Version === 6 || Exe.BuildDate > 20150000)
 	{
 		if (Exe.Version < 14)
-			code += MOV(ECX, EAX);  //MOV ECX, EAX
+			code += MOV(ECX, EAX);  //mov ecx, eax
 
-		code += CALL([EDX, ' 1?']); //CALL DWORD PTR DS:[EDX + const] ; const is either 14 or 18
+		code += CALL([EDX, ' 1?']); //call dword ptr [edx + dispA] ; dispA is either 14 or 18
 	}
 	else
 	{
-		code += CALL(EAX);          //CALL EAX
+		code += CALL(EAX);          //call eax
 	}
 
 	let addr2 = Exe.FindHex(prefix + code, addr, addr + 0x50);
 	if (addr2 < 0)
 		throw Error("GetGameMode CALL missing");
 
-	/// 1.4 - Extract the necessary data
+	$$(_ + '1.4 - Extract the necessary data')
 	let gModeMgr = Exe.GetUint32(addr2 + 1);
 	let GetGameMode = Exe.GetTgtAddr(addr2 + 6);
 
 	let suffix = Exe.GetHex(addr2 + prefix.byteCount(), code.byteCount());
 
-	/// 2.1 - Construct the common code for new & old clients.
+	$$(_ + '2.1 - Construct the common code for new & old clients')
 	let part2 =
-		CMP(R32, -1)   //CMP reg32_A, -1
+		CMP(R32, -1)   //cmp regA, -1
 	+	((Exe.BuildDate > 20101116 && Exe.BuildDate < 20141020) || Exe.BuildDate > 20200800
 	?
-		JE(POS1WC)     //JE addr1
+		JE(POS1WC)     //je _skip
 	:                  // or
-		JZ(WCp)        //JZ SHORT addr1
+		JZ(WCp)        //jz short _skip
 	)
-	+	PUSH_R         //PUSH reg32_A
-	+	MOV(ECX, R32)  //MOV ECX, reg32_B
-	+	CALL(ALLWC)    //CALL UIWindowMgr::DeleteWindow
+	+	PUSH_R         //push regA
+	+	MOV(ECX, R32)  //mov ecx, regB
+	+	CALL(ALLWC)    //call UIWindowMgr::DeleteWindow
 	;
 
 	let dwinOffset = part2.byteCount() - 4;
 
 	part2 += Exe.BuildDate <= 20120222 ?
-		TEST(AL, AL)               //TEST AL, AL  or
-	:
-		CMP(AL, 1)                 //CMP AL, 1
+		TEST(AL, AL)   //test al, al
+	:                  //   OR
+		CMP(AL, 1)     //cmp al, 1
 	;
 
-	/// 2.2 - Search for the Esc Key check inside UIWindowMgr::ProcessPushButton
+	$$(_ + '2.2 - Search for the Esc Key check inside UIWindowMgr::ProcessPushButton')
 	let part1, funcOffset;
 	if (Exe.Version > 11) //VC14.16
 	{
 		part1 =
-			PUSH(R32)              //PUSH reg32_A
-		+	MOV(ECX, POS4WC)       //MOV ECX, OFFSET addr
-		+	CALL(ALLWC)            //CALL unknownFunc <-- patch here
+			PUSH(R32)              //push regA
+		+	MOV(ECX, POS4WC)       //mov ecx, offset
+		+	CALL(ALLWC)            //call UIWindowMgr::check_close  <-- patch here
 		;
 		funcOffset = part1.byteCount() - 4;
 
 		part1 +=
-			MOV(ECX, EAX)          //MOV ECX, EAX
-		+	TEST(ECX, ECX)         //TEST ECX, ECX
-		+	JE(WCp)                //JE SHORT addr
+			MOV(ECX, EAX)          //mov ecx, eax
+		+	TEST(ECX, ECX)         //test ecx, ecx
+		+	JE(WCp)                //je short _skip#2
 		;
 		addr = Exe.FindHex(part1);
 	}
 	else
 	{
 		part1 =
-			PUSH(R32)              //PUSH reg32_A
-		+	MOV(ECX, R32)          //MOV ECX, reg32_B
-		+	CALL(ALLWC)            //CALL UIWindowMgr::check_close <-- patch here
+			PUSH(R32)              //push regA
+		+	MOV(ECX, R32)          //mov ecx, regB
+		+	CALL(ALLWC)            //call UIWindowMgr::check_close <-- patch here
 		;
 		funcOffset = part1.byteCount() - 4;
 
 		if (Exe.Version > 6)
 		{
 			part1 +=
-				TEST(AL, AL)       //TEST AL, AL
-			+	JNZ(POS2WC)        //JNZ addr2
+				TEST(AL, AL)       //test al, al
+			+	JNZ(POS2WC)        //jnz _next
 			;
 		}
 
@@ -169,70 +171,73 @@ CloseCutinOnEsc = function()
 	if (addr < 0)
 		throw Error("Esc key check not found");
 
-	/// 2.3 - Extract the necessary stuff
-	let FirstFunc = Exe.GetTgtAddr(addr + funcOffset); //VIRTUAL address of the first function (check_close or unknownFunc)
-	let MovECX    = Instr.FromAddr(addr + 1); //MOV ECX, *
-	let hookLoc   = addr + funcOffset - 1; //CALL location
+	$$(_ + '2.3 - Extract the necessary stuff')
+	let FirstFunc = Exe.GetTgtAddr(addr + funcOffset);  //VIRTUAL address of the first function (check_close or unknownFunc)
+	let MovECX    = Instr.FromAddr(addr + 1);           //The 'mov ecx, * ' instruction
+	let hookLoc   = addr + funcOffset - 1;              //CALL location
 	let retnVir   = Exe.Phy2Vir(addr + funcOffset + 4); //VIRTUAL address of location after the CALL
 
-	/// 2.4 - Position addr after part1
+	$$(_ + '2.4 - Position addr after part1')
 	addr += part1.byteCount();
 
 	let jmpVir;
 	if (Exe.Version > 11)
 	{
-		/// 2.5 - Find the 2nd part for VC14.16 clients
+		$$(_ + '2.5 - Find the 2nd part for VC14.16 clients')
 		addr = Exe.FindHex(part2, addr, addr + 0x100);
 		if (addr < 0)
 			throw Error("DeleteWindow CALL missing");
 
-		/// 2.6 - Save the address as Jump address
+		$$(_ + '2.6 - Save the address as Jump address')
 		jmpVir = Exe.Phy2Vir(addr, CODE);
 	}
 	else
 	{
-		/// 2.7 - For VC11 and older retnVir is jmpVir
+		$$(_ + '2.7 - For VC11 and older retnVir is jmpVir')
 		jmpVir = retnVir;
 	}
 
-	/// 2.8 - Extract the DeleteWindow function address
+	$$(_ + '2.8 - Extract the DeleteWindow function address')
 	let DeleteWindow = Exe.GetTgtAddr(addr + dwinOffset); //VIRTUAL address of DeleteWindow
 
-	/// 3.1 - Prepare our code
-	code =
-		PUSH(78)            //PUSH 78 ; window id
-	+	CALL(Filler(1))     //CALL UIWindowMgr::DeleteWindow
-	+	CMP(AL, 0)          //CMP AL, 0
-	+	JNZ(MovECX.Size + 10) //JNZ SHORT _skip
-	+	MovECX              //MOV ECX, reg32_A or MOV ECX, OFFSET addr
-	+	PUSH(retnVir)       //PUSH retnVir
-	+	JMP(Filler(2))      //JMP UIWindowMgr::check_close or unknownFunc; equivalent to CALL intended for return to retnVir
-	+	PUSH(EDX)           //PUSH EDX ; _skip
-	+	MOV(ECX, gModeMgr)  //MOV ECX, OFFSET g_modeMgr
-	+	CALL(Filler(3))     //CALL CModeMgr::GetGameMode
-	+	MOV(EDX, [EAX])     //MOV EDX, DWORD PTR DS:[EAX]
-	+	suffix              //combinations of
-		                    //PUSH 0
-		                    //PUSH 0 or 1 (for newer clients)
-		                    //PUSH -1
-		                    //PUSH OFFSET EmptyStr
-		                    //PUSH 64 or 71
-		                    //MOV ECX, EAX
-		                    //CALL DWORD PTR DS:[EDX + const] or MOV reg32_A, DWORD PTR DS:[EDX + const] ; const is either 14 or 18
-		                    //CALL reg32_A
-	+	POP(EDX)            //POP EDX
-	+	POP(EAX)            //POP EAX
-	+	JMP(Filler(4))      //JMP jmpVir
-	;
+	$$(_ + '3.1 - Prepare our code')
+	let parts =
+	[
+		PUSH(78)            //push 78h ; window id
+	+	CALL(Filler(1))     //call UIWindowMgr::DeleteWindow
+	+	CMP(AL, 0)          //cmp al, 0
+	+	JNZ(Filler(5, 1))   //jnz short _skip#3
+	+	MovECX              //mov ecx, regA / mov ecx, offset
+	+	PUSH(retnVir)       //push retnVir
+	+	JMP(Filler(2))      //jmp UIWindowMgr::check_close ; equivalent to CALL intended for return to retnVir
+	,
+		PUSH(EDX)           //push edx ; _skip#3
+	+	MOV(ECX, gModeMgr)  //mov ecx, <g_modeMgr>
+	+	CALL(Filler(3))     //call CModeMgr::GetGameMode
+	+	MOV(EDX, [EAX])     //mov edx, dword ptr [eax]
 
-	/// 3.2 - Allocate space for the code
-	let free = Exe.FindSpace(code.byteCount(), 0x10);
-	if (free < 0)
-		throw NO_ALLOC;
+	+	suffix              //push 0
+		                    //push 0 or 1 (for newer clients)
+		                    //push -1
+		                    //push offset ""
+		                    //push 64h / push 71h
+		                    //mov ecx, eax
+		                    //call dword ptr [EDX + dispA]
+		                    //    OR
+							//mov regA, dword ptr [EDX + dispA] ; dispA is either 14 or 18
+		                    //call regA
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
+	+	POP(EDX)            //pop edx
+	+	POP_EAX             //pop eax
+	+	JMP(Filler(4))      //jmp <jmpVir>
+	];
 
-	/// 3.3 - Fill in the blanks
+	$$(_ + '3.2 - Allocate space for the code')
+	let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
+
+	$$(_ + '3.3 - Fill in the blanks')
+	code = SetFillTarget(parts.join(''), [5, 1], parts[0].byteCount(), 0, 1); //for the jnz short _skip#3
+
 	code = SetFillTargets(code, {
 		1 : DeleteWindow,
 		2 : FirstFunc,
@@ -240,10 +245,10 @@ CloseCutinOnEsc = function()
 		4 : jmpVir
 	}, freeVir, 1);
 
-	/// 3.4 - Add the code at the allocated space
+	$$(_ + '3.4 - Add the code at the allocated space')
 	Exe.AddHex(free, code);
 
-	/// 3.5 - Change the check_close CALL into JMP to the code above
+	$$(_ + '3.5 - Change the check_close CALL into JMP to the code above')
 	Exe.SetJMP(hookLoc, freeVir);
 
 	return true;

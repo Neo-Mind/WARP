@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144), CH.C (jchcc)                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-06-19                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,9 @@
 ///
 MoveShopIcon = function()
 {
-	/// 1.1 - Find the XCoord calculation pattern
+	let _ = 'MoveShopIcon : ';
+
+	$$(_ + '1.1 - Find the XCoord calculation pattern')
 	let tgtReg = (Exe.Version < 11) ? EDX : EAX;
 
 	let code =
@@ -48,7 +50,7 @@ MoveShopIcon = function()
 		                                                      //push eax
 		addr = Exe.FindHex(code);
 
-		/// 1.2 - If this pattern matches then move up the PUSH and increment addr by 2
+		$$(_ + '1.2 - If this pattern matches then move up the PUSH and increment addr by 2')
 		if (addr > 0)
 		{
 			Exe.SetHex(addr, Exe.GetHex(addr + code.byteCount() - 3, 2));
@@ -58,42 +60,41 @@ MoveShopIcon = function()
 	if (addr < 0)
 		throw Error("Coordinate calculation not found");
 
-	/// 1.3 - For EDX there is an extra byte so NOP it
-	if (tgtReg.is(EDX)) //EDX
+	$$(_ + '1.3 - For EDX there is an extra byte so NOP it')
+	if (tgtReg.is(EDX))
 	{
 		Exe.SetNOPs(addr, 1);
 		addr++;
 	}
 
-	/// 2.1 - Find the pattern where the Screen Size is picked up (Width is at 0x24, Height is at 0x28) - We need the address of g_ScreenStats
+	$$(_ + '2.1 - Find the pattern where the Screen Size is picked up (Width is at 0x24, Height is at 0x28)')
 	code = MOV( Exe.Version >= 11 ? EAX : ECX, [POS3WC]);     //mov eax/ecx, dword ptr [g_ScreenStats]
 	let addr2 = Exe.FindHex(code + ' 8B', addr - 0x18, addr); //Some MOV follows after the g_ScreenStats MOV
 	if (addr2 < 0)
 		throw Error("Screen size retrieval not found");
 
-	/// 2.2 - Extract g_ScreenStats
+	$$(_ + '2.2 - Extract <g_ScreenStats> address')
 	let ScreenStats = Exe.GetHex(addr2 + code.byteCount() - 6, 4);
 
-	/// 3.1 - Get new Coordinates from user
-	let xCoord = Exe.GetUserInput('$cashShopX', D_Int16, "CashShop Icon Coordinate", "Enter new X coordinate (negative values are relative to right side)", -0xBB, {min: -1366, max: 1366});
-	let yCoord = Exe.GetUserInput('$cashShopY', D_Int16, "CashShop Icon Coordinate", "Enter new Y coordinate (negative values are relative to top side)", 0x10, {min: -768, max: 768});
+	$$(_ + '3.1 - Get new Coordinates from user')
+	let result = Exe.GetUserInput('$cashShopXY', D_VecI16, "CashShop Icon", "Enter the new coordinates", [-187, 16], {
+		min0: -1366, max0: 1366, idx0: "X Coord",
+		min1: -768, max1: 768, idx1: "Y Coord ",
+		maxWidth: 50
+	});
 
-	if (xCoord === false && yCoord === false)
+	if (result === false)
 		Cancel("Coordinates", "(-187,16)");
 
-	if (xCoord === false)
-		xCoord = -0xBB;
+	let [xCoord, yCoord] = result;
 
-	else if (yCoord === false)
-		yCoord = 0x10;
-
-	/// 3.2 - Prepare code to add based on the sign of each coordinate (negative values are relative to width and height respectively)
+	$$(_ + '3.2 - Prepare code to add based on the sign of each coordinate (negative values are relative to width and height respectively)')
 	code = "";
 
 	if (yCoord < 0)
 	{
 		code +=
-			MOV(ECX, [ScreenStats])  //mov ecx, dword ptr [g_screenstats]
+			MOV(ECX, [ScreenStats])  //mov ecx, dword ptr [g_ScreenStats]
 		+	MOV(ECX, [ECX, 0x28])    //mov ecx, dword ptr [ecx + 28h]
 		+	ADD(ECX, yCoord)         //add ecx, <yCoord>; where yCoord is negative
 		;
@@ -121,18 +122,14 @@ MoveShopIcon = function()
 	+	RETN()                       //retn
 	;
 
-	let csize = code.byteCount();
+	$$(_ + '3.3 - Allocate space to add our code')
+	let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
-	/// 3.3 - Allocate space to add our code
-	let free = Exe.FindSpace(csize, 0x10);
-	if (free < 0)
-		throw NO_ALLOC;
-
-	/// 3.4 - Add the code at the allocated space
+	$$(_ + '3.4 - Add the code at the allocated space')
 	Exe.AddHex(free, code);
 
-	/// 3.5 - Create a CALL to our code at addr (originally will have the substraction)
-	Exe.SetCALL(addr, free, PHYSICAL);
+	$$(_ + '3.5 - Create a CALL to our code at addr (originally will have the substraction)')
+	Exe.SetCALL(addr, freeVir);
 
 	return true;
 };
@@ -148,7 +145,9 @@ MoveShopIcon.validate = HasCashShop;
 ///
 ZeroCinShop = function()
 {
-	/// 1 - Find where format string is  PUSHed
+	let _ = 'ZeroCinShop : ';
+
+	$$(_ + '1 - Find where format string is PUSHed')
 	let prefix =
 		MOV(ECX, ESI)       //mov ecx, esi
 	+	PUSH_EAX            //push eax
@@ -158,7 +157,7 @@ ZeroCinShop = function()
 	;
 	let suffix =
 		PUSH([ESI, POS2WC]) //push dword ptr [esi + dispA]
-	+	LEA(EAX, [EBP, WC]) //lea eax, [ebp + string_ptr]
+	+	LEA(EAX, [EBP, WC]) //lea eax, [ebp + <string_ptr>]
 	+	PUSH(ZC_Addr)       //push offset "%d C"
 	+	PUSH_EAX            //push eax
 	+	CALL()              //call std::string::sprintf
@@ -168,10 +167,10 @@ ZeroCinShop = function()
 	if (addr < 0)
 		throw Error("Format string reference missing");
 
-	/// 2.1 - Set addr to position of PUSH DWORD PTR
+	$$(_ + '2.1 - Set addr to position of PUSH dword ptr')
 	addr += prefix.byteCount();
 
-	/// 2.2 - Change it to a PUSH 0
+	$$(_ + '2.2 - Change it to a PUSH 0')
 	suffix =
 		PUSH_0  //push 0
 	+	NOP4    //4 byte NOP
@@ -198,20 +197,22 @@ ZeroCinShop.validate = () =>
 ///
 DefShopBrowser = function()
 {
-	/// 1 - Find locations where "iexplore.exe" is PUSHed
+	let _ = 'DefShopBrowser : ';
+
+	$$(_ + '1 - Find locations where "iexplore.exe" is PUSHed')
 	let addrs = Exe.FindHexN( PUSH(EAX) + PUSH(SB_Addr) ); //push eax
 	                                                       //push offset "iexplore.exe"
 	if (addrs.isEmpty())
 		throw Error("String references missing");
 
-	/// 2 - Prep code to change arguments of ShellExecuteA
+	$$(_ + '2 - Prep code to change arguments of ShellExecuteA')
 	code =
 		PUSH_0     //push 0
 	+	PUSH(EAX)  //push eax
 	+	NOP3       //3 byte NOP
 	;
 
-	/// 3 - Replace the arguments of ShellExecuteA
+	$$(_ + '3 - Replace the arguments of ShellExecuteA')
 	addrs.forEach( addr => Exe.SetHex(addr, code));
 
 	return true;
@@ -234,11 +235,13 @@ DefShopBrowser.validate = () =>
 ///
 PreviewInShop = function()
 {
-	/// 1.1 - Calculate essential values
+	let _ = 'PreviewInShop : ';
+
+	$$(_ + '1.1 - Calculate essential values')
 	let isNewType = Exe.Version > 11 && Exe.BuildDate > 20191220 && (ROC.IsZero || ROC.IsRenewal); //Newer function format for latest clients
 	let srcLoc = isNewType ? [POS4WC] : [R32, ' [000001.0]']; //displacement is 6 or 4 . Source Location is direct memory address for newer clients
 
-	/// 1.2 - Find the location inside the function handling the packet where we need to place the JMP
+	$$(_ + '1.2 - Find the location inside the function handling the packet where we need to place the JMP')
 	let code =
 		LEA(ECX, [EBP, NEG2WC])     //lea ecx, [LOCAL.x] ; iteminfo location
 	+	CALL(ALLWC)                 //call func
@@ -249,7 +252,7 @@ PreviewInShop = function()
 	:
 		''
 	)
-	+	CMP(EAX, ' [000010..]')     //cmp eax, 09h or 0Ah
+	+	CMP(EAX, ' [000010..]')     //cmp eax, 8 or 0Ah
 	+	JA(WCp)                     //ja short _skip
 	;
 
@@ -257,7 +260,7 @@ PreviewInShop = function()
 	if (hookAddr < 0)
 		throw Error("Hook pattern missing");
 
-	/// 1.3 - Next find the block size addition after it
+	$$(_ + '1.3 - Next find the block size addition after it')
 	let parts =
 	[
 		ADD(R32, WCp)               //add regA, immA ; block size addition
@@ -287,18 +290,18 @@ PreviewInShop = function()
 	if (addr < 0)
 		throw Error("Loop increment missing");
 
-	/// 1.4 - Extract the addition instruction & the block size value (immediate argument)
+	$$(_ + '1.4 - Extract the addition instruction & the block size value (immediate argument)')
 	let sizeAdd = Instr.FromAddr(addr + prefix.byteCount());
 	let blockSize = sizeAdd.Immd;
 
-	/// 1.5 - Setup the register to be used with the block size
+	$$(_ + '1.5 - Setup the register to be used with the block size')
 	let blockReg = isNewType ? ECX : R32.List[sizeAdd.MRM.RegM];
 
-	/// 1.6 - Extract the original instruction at the hook address & the displacement
+	$$(_ + '1.6 - Extract the original instruction at the hook address & the displacement')
 	let leaIns = Instr.FromAddr(hookAddr);
 	let iiOffset = leaIns.Disp;
 
-	/// 2.1 - Construct the function code in parts which varies based on isNewType
+	$$(_ + '2.1 - Construct the function code in parts which varies based on isNewType')
 	let viewOffset = (isNewType || Exe.BuildDate) < 20171000 ? 112 : 116;
 	let locOffset = isNewType ? 8 : 4;
 	parts = [
@@ -320,7 +323,7 @@ PreviewInShop = function()
 
 	if (isNewType)
 	{
-		/// 2.2 - For newer formats, find the end of the loop (the conditional jump)
+		$$(_ + '2.2 - For newer formats, find the end of the loop (the conditional jump)')
 		addr = sizeAdd.Addr + suffix.byteCount();
 		code =
 			CMP(R32, R32)  //cmp regA, regB ; loop var < final value
@@ -333,18 +336,18 @@ PreviewInShop = function()
 
 		endAddr += code.byteCount();
 
-		/// 2.3 - Goto the JL's target
+		$$(_ + '2.3 - Goto the JL\'s target')
 		addr = Exe.GetTgtAddr(endAddr - 4, PHYSICAL);
 
-		/// 2.4 - Find the assignment to stack location from ECX before it.
+		$$(_ + '2.4 - Find the assignment to stack location from ECX before it.')
 		let beginAddr = Exe.FindLastHex(MOV([EBP, NEG2WC], ECX), addr, addr - 0x30);
 		if (beginAddr < 0)
 			throw Error("Starting point missing");
 
-		/// 2.5 - Extract the offset/displacement used in the instruction
+		$$(_ + '2.5 - Extract the offset/displacement used in the instruction')
 		let offset = Exe.GetInt32(beginAddr + 2);
 
-		/// 2.6 - Now fill the gaps
+		$$(_ + '2.6 - Now fill the gaps')
 		parts[1] =
 			PUSH(ECX)                //push ecx
 		+	MOV(ECX, [EBP, offset])  //mov ecx, dword ptr [ebp + offset]
@@ -354,23 +357,19 @@ PreviewInShop = function()
 		;
 	}
 
-	/// 3.1 - Allocate space for the code
-	let free = Exe.FindSpace(parts.byteCount());
-	if (free < 0)
-		throw NO_ALLOC;
+	$$(_ + '3.1 - Allocate space for the code')
+	let [free, freeVir] = Exe.FindSpace(parts.byteCount());
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
-
-	/// 3.2 - Fill in the blanks
+	$$(_ + '3.2 - Fill in the blanks')
 	code = SetFillTarget(parts, 1, Exe.Phy2Vir(leaIns.NextAddr, CODE), freeVir, 1);
 
-	/// 3.3 - Add at allocated space
+	$$(_ + '3.3 - Add at allocated space')
 	Exe.AddHex(free, code);
 
-	/// 3.4 - Setup the jump to it
+	$$(_ + '3.4 - Setup the jump to it')
 	Exe.SetJMP(hookAddr, freeVir, 1); //1 NOP afterwards to keep it clean.
 
-	/// 3.5 - Update the block size (4 bytes for the location & 2 for viewSprite)
+	$$(_ + '3.5 - Update the block size (4 bytes for the location & 2 for viewSprite)')
 	Exe.SetInt8(sizeAdd.NextAddr - 1, sizeAdd.Immd + 6);
 
 	return true;
