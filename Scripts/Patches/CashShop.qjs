@@ -78,9 +78,8 @@ MoveShopIcon = function()
 
 	$$(_ + '3.1 - Get new Coordinates from user')
 	let result = Exe.GetUserInput('$cashShopXY', D_VecI16, "CashShop Icon", "Enter the new coordinates", [-187, 16], {
-		min0: -1366, max0: 1366, idx0: "X Coord",
-		min1: -768, max1: 768, idx1: "Y Coord ",
-		maxWidth: 50
+		name0: "X Coord ", min0: -1366, max0: 1366,
+		name1: "Y Coord ", min1: -768, max1: 768,
 	});
 
 	if (result === false)

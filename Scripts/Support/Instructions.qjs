@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-05-14                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -835,9 +835,10 @@ IdentifyObj('TEST');
 	['PUSHAD' , " 60"                        ],
 	['POPAD'  , " 61"                        ],
 	['CWDE'   , " 98"                        ],
+	['CDQ'    , " 99"                        ],
 	['LEAVE'  , " C9"                        ],
 	['INT3'   , " CC"                        ],
-	['NOP'    , " 90"                        ], //nop
+	['NOP'    , " 90"                        ],
 	['NOP2'   , " 66 90"                     ], //66 nop
 	['NOP3'   , " 0F 1F 00"                  ], //nop dword ptr [eax]
 	['NOP4'   , " 0F 1F 40 00"               ], //nop dword ptr [eax + 0]

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Unknown                                                *
 *   Created Date  : 2021-06-11                                             *
-*   Last Modified : 2021-06-11                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -97,18 +97,19 @@ if (typeof CSk_Data === 'undefined') //avoid redefinition
 ///
 CustomSkills = function(patchName)
 {
-	/// 1.1 - Retrieve the data corresponding to the patch
+	let _ = patchName + ' : ';
+
+	$$(_ + '1.1 - Retrieve the data corresponding to the patch')
 	let data = CSk_Data[patchName];
 
-
-	/// 1.2 - Find the skill id checker function
+	$$(_ + '1.2 - Find the skill id checker function')
 	let prefix = ROC.HasFP
 	?
 		PUSH(EBP)          //push ebp
 	+	MOV(EBP, ESP)      //mov ebp, esp
-	+	MOV(R32, [EBP, 8]) //mov reg32_A, [ebp+8] ; arg.1
+	+	MOV(R32, [EBP, 8]) //mov reg32_A, [ebp+8] ; ARG.1
 	:
-		MOV(R32, [ESP, 4]) //mov reg32_A, [esp+4] ; arg.1
+		MOV(R32, [ESP, 4]) //mov reg32_A, [esp+4] ; ARG.1
 	;
 
 	let suffix = Exe.Version in data ? data[Exe.Version] : data.default;
@@ -119,13 +120,13 @@ CustomSkills = function(patchName)
 	if (fnBegin < 0)
 		throw Error("ID Checker missing");
 
-	/// 1.3 - Load the LUA object
+	$$(_ + '1.3 - Load the LUA object')
 	LUA.load();
 
-	/// 1.4 - Construct the code to call the lua function & place the function name after it with a 4 byte gap
+	$$(_ + '1.4 - Construct the code to call the lua function & place the function name after it with a 4 byte gap')
 	let [prep, main, restore] = LUA.createCaller(data.funcName, "d>d", EAX, EAX);
 	prefix =
-		MOV(EAX, [ESP, 4]) //mov eax, [esp+4] ; arg.1
+		MOV(EAX, [ESP, 4]) //mov eax, [esp+4] ; ARG.1
 	+	prep               //Stack Prep
 	+	main               //Lua function call & result retrieval to 'eax'
 	+	restore            //Stack Restoration
@@ -137,48 +138,43 @@ CustomSkills = function(patchName)
 	+	ALL00                 //1 NULL for termination + 3 as a gap
 	;
 
-	/// 2 - Diverge based on the patch name
+	$$(_ + '2 - Diverge based on the patch name')
 	let nameOffset = prefix.byteCount();
 
 	let luaLoadAddr; //address where the lua file loading code need to be placed
 	if (patchName === "CustomPlayerSkills")
 	{
-		/// 2.1 - Since this function is big we can place everything here itself.
-		///       Fill the blanks with current values
+		$$(_ + '2.1 - Since this function is big we can place everything here itself. Fill the blanks with current values')
 		let fnVir = Exe.Phy2Vir(fnBegin, CODE);
 		let code = LUA.finalize(prefix + suffix, fnVir, fnVir + nameOffset);
 
-		/// 2.2 - Replace the original
+		$$(_ + '2.2 - Replace the original')
 		Exe.SetHex(fnBegin, code);
 
-		/// 2.3 - Set luaLoadAddr to address after the suffix
+		$$(_ + '2.3 - Set luaLoadAddr to address after the suffix')
 		luaLoadAddr = fnBegin + nameOffset + suffix.byteCount();
 	}
 	else
 	{
-		/// 2.4 - For others there is not enough space, so we need to allocate space for it
-		let free = Exe.FindSpace(nameOffset + suffix.byteCount());
-		if (free < 0)
-			throw NO_ALLOC;
+		$$(_ + '2.4 - For others there is not enough space, so we need to allocate space for it')
+		let [free, freeVir] = Exe.FindSpace(nameOffset + suffix.byteCount());
 
-		let freeVir = Exe.Phy2Vir(free, DIFF);
-
-		/// 2.5 - Fill in the blanks
+		$$(_ + '2.5 - Fill in the blanks')
 		let code = LUA.finalize(prefix + suffix, freeVir, freeVir + nameOffset);
 
-		/// 2.6 - Add at allocated space
+		$$(_ + '2.6 - Add at allocated space')
 		Exe.AddHex(free, code);
 
-		/// 2.7 - Create a JMP to it from fnBegin
+		$$(_ + '2.7 - Create a JMP to it from fnBegin')
 		Exe.SetJMP(fnBegin, freeVir);
 
-		/// 2.8 -  Set luaLoadAddr to -1 (function will allocate space on it's own)
+		$$(_ + '2.8 -  Set luaLoadAddr to -1 (function will allocate space on it\'s own)')
 		luaLoadAddr = -1;
 	}
 
 	if (!CSk_Data.loader)
 	{
-		/// 3.1 - Add code to load the lua files
+		$$(_ + '3.1 - Add code to load the lua files')
 		prefix = "Lua Files\\SkillInfo" + (Exe.BuildDate > 20100400 ? 'z\\' : '\\');
 		LUA.addLoaders(
 			prefix + "SkillInfo_F",
@@ -189,7 +185,7 @@ CustomSkills = function(patchName)
 			luaLoadAddr
 		);
 
-		/// 3.2 - Assign the loader member
+		$$(_ + '3.2 - Assign the loader member')
 		CSk_Data.loader = patchName;
 	}
 	return true;

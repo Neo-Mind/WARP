@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Neo-Mind, CH.C (jchcc)                        *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-03-12                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,40 +34,39 @@
 ///
 NoAutoFollow = function()
 {
-	/// 1 - Find the m_lastLockOnPcGid assignment (matches multiple locations)
+	let _ = 'NoAutoFollow : ';
+
+	$$(_ + '1 - Find the m_lastLockOnPcGid assignment (matches multiple locations)')
 	let prefix =
-		PUSH_1               //PUSH 1
-	+	PUSH(' [00011..0]')  //PUSH 1A or 1C
+		PUSH_1               //push 1
+	+	PUSH(' [00011..0]')  //push 1Ah / push 1Ch
 	+	(Exe.Version < 14
 	?
-		MOV(ECX, ESI)        //MOV ECX, ESI
+		MOV(ECX, ESI)        //mov ecx, esi
 	:
 		""
 	)
 	+	(Exe.Version === 9 || Exe.Version === 10
 	?
-		CALL(R32)            //CALL reg32_A
+		CALL(R32)            //call regA
 	:
-		CALL([R32, WCp])     //CALL DWORD PTR DS:[reg32_A+x]
+		CALL([R32, WCp])     //call dword ptr [regA + dispA]
 	);
 
-	let suffix;
-	if (Exe.Version === 6) //VC6
-	{
-		prefix += MOV(R32, [R32, POS2WC]);  //MOV R32, DWORD PTR DS:[reg32_C+const]
-		suffix = MOV([POS3WC], R32);        //MOV DWORD PTR DS:[CGameMode::m_lastLockOnPcGid], reg32_D
-	}
-	else
-	{
-		prefix += MOV(EAX, [R32, POS2WC]);  //MOV EAX, DWORD PTR DS:[reg32_C+const]
-		suffix = MOV([POS4WC], EAX);        //MOV DWORD PTR DS:[CGameMode::m_lastLockOnPcGid], EAX
-	}
+	let reg = Exe.Version < 9 ? R32 : EAX;
+	prefix +=
+		MOV(reg, [R32, POS2WC]) //mov regD, dword ptr [regC + dispC]  ; regD is eax for VC9+
+	;
+
+	let suffix =
+		MOV([POS4WC], reg)      //mov dword ptr [CGameMode::m_lastLockOnPcGid], regD
+	;
 
 	let addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("No matches found for assignment");
 
-	/// 2 - NOP out the assignment
+	$$(_ + '2 - NOP out the assignment')
 	let ins = Instr.FromAddr(addr + prefix.byteCount());
 	Exe.SetNOPs(ins.Addr, ins.Size);
 
@@ -79,32 +78,32 @@ NoAutoFollow = function()
 ///
 DecrAFDelay = function()
 {
-	/// 1.1 - Find the delay comparisons
+	$$(_ + '1.1 - Find the delay comparisons')
 	let reg = Exe.Version > 6 ? EDI : EBX
 	let code =
-		CALL(reg)           //CALL EDI or EBX              ; [<&WINMM.timeGetTime>]
-	+	SUB(EAX, [POS4WC])  //SUB EAX, DWORD PTR DS:[addr] ; lastFollowTime
-	+	CMP(EAX, 0x3E8)     //CMP EAX, 3E8                 ; 1000ms
+		CALL(reg)           //call edi / call ebx           ; [<&WINMM.timeGetTime>]
+	+	SUB(EAX, [POS4WC])  //sub eax, dword ptr [offset#1] ; lastFollowTime
+	+	CMP(EAX, 0x3E8)     //cmp eax, 3E8h                 ; 1000ms
 	;
 
 	let addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
 		throw Error("Delay comparison missing");
 
-	/// 1.2 - Find the register movement before it to find the correct match
-	let movReg = MOV(reg, [POS3WC]); //MOV reg, DWORD PTR DS:[<&WINMM.timeGetTime>]
+	$$(_ + '1.2 - Find the register movement before it to find the correct match')
+	let movReg = MOV(reg, [POS3WC]); //mov regA, dword ptr [<&WINMM.timeGetTime>] ; regA is edi / ebx
 	let addr = addrs.find( memAddr =>
 		Exe.FindLastHex(movReg, memAddr, memAddr - 0x20) > 0
 	);
 	if (!addr)
 		throw Error("No matches found");
 
-	/// 2.1 - Get the new value from the user
+	$$(_ + '2.1 - Get the new value from the user')
 	let newDelay = Exe.GetUserInput('$followDelay', D_Uint32, "Delay Value", "Enter the new autofollow delay", 1000, {max: 1000});
 	if (newDelay === false)
 		Cancel("Delay", 1000);
 
-	/// 2.2 - Replace the old value
+	$$(_ + '2.2 - Replace the old value')
 	Exe.SetFromVar(addr + code.byteCount() - 4, '$followDelay');
 
 	return true;

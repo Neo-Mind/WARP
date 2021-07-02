@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Hanashi, Andrei (4144)                                 *
 *   Created Date  : 2021-03-06                                             *
-*   Last Modified : 2021-03-06                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,26 +32,28 @@
 ///
 CustomSlotHLColor = function()
 {
-	/// 1.1 - Find the code before the color PUSH
+	let _ = 'CustomSlotHLColor : ';
+
+	$$(_ + '1.1 - Find the code before the color PUSH')
 	let code;
 	if (Exe.Version === 6)
 	{
 		code =
-			CMP(ROC.Post2010 ? ECX : EAX, -1) //CMP reg32, -1 ; reg32 = ECX/EAX
-		+	JE(WCp)                           //JE SHORT addr
+			CMP(ROC.Post2010 ? ECX : EAX, -1) //cmp regA, -1 ; regA = ECX/EAX
+		+	JE(WCp)                           //je short _skip
 		+	(ROC.Post2010
 		?
-			MOV(EAX, [POS3WC])                //MOV EAX, DWORD PTR DS:[addr]
+			MOV(EAX, [POS3WC])                //mov eax, dword ptr [offset#1]
 		:
-			LEA(ECX, [8, EAX])                //LEA ECX, [8*EAX]
+			LEA(ECX, [8, EAX])                //lea ecx, [8*eax]
 		)
 		;
 	}
 	else
 	{
 		code =
-			MOVZX(ECX, BYTE_PTR, [POS4WC])    //MOVZX ECX, BYTE PTR DS:[addr]
-		+	IMUL(R32, R32, 0x1D)              //IMUL reg32_A, reg32_B, 1D
+			MOVZX(ECX, BYTE_PTR, [POS4WC])    //movzx ecx, byte ptr [offset#1]
+		+	IMUL(R32, R32, 0x1D)              //imul regA, regB, 1Dh
 		;
 	}
 	let addrs = Exe.FindHexN(code);
@@ -60,8 +62,8 @@ CustomSlotHLColor = function()
 
 	let csize = code.byteCount();
 
-	/// 1.2 - Now find the PUSH after it
-	code = PUSH(0xB4FFB4);             //PUSH 00B4FFB4
+	$$(_ + '1.2 - Now find the PUSH after it')
+	code = PUSH(0xB4FFB4);             //push B4FFB4h
 
 	let addr;
 	addrs.find(memAddr =>
@@ -73,13 +75,13 @@ CustomSlotHLColor = function()
 	if (addr < 0)
 		throw Error("Light Green PUSH missing");
 
-	/// 2.1 - Get the new color from user
+	$$(_ + '2.1 - Get the new color from user')
 	let varName = '$HSkillSColor';
 	let newColor = Exe.GetUserInput(varName, D_Color, "Highlight Color", "Select the new color", 0x00B4FFB4, {ignoreAlpha: true, keepAlpha: true});
 	if (newColor === false)
 		Cancel("Highlight Color", "Light Green (0xB4FFB4)");
 
-	/// 2.2 - Replace the color
+	$$(_ + '2.2 - Replace the color')
 	Exe.SetFromVar(addr + 1, varName);
 
 	return true;

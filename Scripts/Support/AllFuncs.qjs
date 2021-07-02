@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-07-01                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -91,7 +91,10 @@ IsByte = function(v, signed = true)
 /// \brief Creates a filler hex string with the given index and byte count
 ///
 Filler = (idx, bc = 4) =>
-	(' ??'.repeat(Math.abs(bc)) + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.trunc(Math.abs(bc)));
+	bc > 1
+		? (' ??'.repeat(Math.abs(bc)) + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.trunc(Math.abs(bc)))
+		: (' ?' + (idx < 16 ? '0' : '') + idx.toString(16))
+		;
 
 ///
 /// \brief Background function for performing multiple swaps

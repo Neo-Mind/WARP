@@ -236,7 +236,7 @@ CloseCutinOnEsc = function()
 	let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
 	$$(_ + '3.3 - Fill in the blanks')
-	code = SetFillTarget(parts.join(''), [5, 1], parts[0].byteCount(), 0, 1); //for the jnz short _skip#3
+	code = SetFillTarget(parts, [5, 1], parts[0].byteCount(), 0, 1); //for the jnz short _skip#3
 
 	code = SetFillTargets(code, {
 		1 : DeleteWindow,

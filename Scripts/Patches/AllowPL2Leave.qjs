@@ -30,7 +30,7 @@
 // TODO - Pattern not present in clients before 2017-10-18
 
 ///
-/// \brief Change the conditional jump to JMP inside CGameMode_virt24 to 
+/// \brief Change the conditional jump to JMP inside CGameMode_virt24 to
 ///        ignore test for other members being on same map
 ///
 AllowPL2Leave = function()
