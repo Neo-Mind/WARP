@@ -38,7 +38,7 @@ MoveShopIcon = function()
 	$$(_ + '1.1 - Ensure that \'Hide Cash Shop\' patch is not selected (unless in test mode)')
 	if (!Warp.TestMode)
 		Warp.SetPatchState('HideCashShop', false);
-	
+
 	$$(_ + '1.2 - Find the XCoord calculation pattern')
 	let tgtReg = (Exe.Version < 11) ? EDX : EAX;
 

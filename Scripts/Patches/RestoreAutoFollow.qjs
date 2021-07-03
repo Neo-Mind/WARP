@@ -35,7 +35,11 @@ RestoreAutoFollow = function()
 {
 	let _ = 'RestoreAutoFollow : ';
 
-	$$(_ + '1.1 - Find the CGameMode::ProcessAutoFollow function')
+	$$(_ + '1.1 - Ensure that \'Disable auto follow\' patch is not selected (unless in test mode)')
+	if (!Warp.TestMode)
+		Warp.SetPatchState('NoAutoFollow', false);
+
+	$$(_ + '1.2 - Find the CGameMode::ProcessAutoFollow function')
 	let code =
 		FP_START            //push ebp
 		                    //mov ebp, esp
@@ -51,10 +55,10 @@ RestoreAutoFollow = function()
 	if (addr < 0)
 		throw Error("ProcessAutoFollow not found");
 
-	$$(_ + '1.2 - Save it\'s VIRTUAL address')
+	$$(_ + '1.3 - Save it\'s VIRTUAL address')
 	let ProcessAutoFollow = Exe.Phy2Vir(addr, CODE);
 
-	$$(_ + '1.3 - Next find the common pattern inside CGameMode::OnUpdate function')
+	$$(_ + '1.4 - Next find the common pattern inside CGameMode::OnUpdate function')
 	code =
 		MOV(ECX, EAX)        //mov ecx, eax
 	+	CALL(NEG3WC)         //call func#1
@@ -67,7 +71,7 @@ RestoreAutoFollow = function()
 	if (addrs.length !== 1)
 		throw Error("Unexpected number of matches");
 
-	$$(_ + '1.4 - Find the call to CGameMode::ProcessInput after the pattern (still inside the function)')
+	$$(_ + '1.5 - Find the call to CGameMode::ProcessInput after the pattern (still inside the function)')
 	let parts =
 	[
 		PUSH(0x3E8)         //push 3E8h
@@ -82,10 +86,10 @@ RestoreAutoFollow = function()
 	if (addr < 0)
 		throw Error("ProcessInput not called");
 
-	$$(_ + '1.5 - Save the MOV ECX instruction')
+	$$(_ + '1.6 - Save the MOV ECX instruction')
 	let movIns = Instr.FromAddr(addr + parts.byteCount(0));
 
-	$$(_ + '1.6 - Save the hook position & the ProcessInput function address')
+	$$(_ + '1.7 - Save the hook position & the ProcessInput function address')
 	let hookAddr = movIns.NextAddr;
 	let ProcessInput = Exe.GetTgtAddr(hookAddr + 1);
 
