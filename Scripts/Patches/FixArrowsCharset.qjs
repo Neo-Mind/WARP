@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, X-EcutiOnner, Neo-Mind                         *
 *   Created Date  : 2021-06-01                                             *
-*   Last Modified : 2021-06-10                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,13 +34,15 @@
 ///
 FixArrowsCharset = function()
 {
-	/// 1.1 - Find the Up, Right & Down arrow strings (they are always together)
+	let _ = 'FixArrowsCharset : ';
+
+	$$(_ + '1.1 - Find the Up, Right & Down arrow strings (they are always together)')
 	let code =
-		" A1 E8 00" // 00 asc_D14AF0 db '↑',0
+		" A1 E8 00" // 00 db '↑',0
     +   " 00 "      // 03 db 0
-    +   " A1 E6 00" // 04 asc_D14AF4 db '→',0
+    +   " A1 E6 00" // 04 db '→',0
     +   " 00 "      // 07 db 0
-    +   " A1 E9 00" // 08 asc_D14AF8 db '↓',0
+    +   " A1 E9 00" // 08 db '↓',0
     +   " 00 "      // 11 db 0
 	;
 
@@ -48,9 +50,9 @@ FixArrowsCharset = function()
 	if (addr < 0)
 		throw Error("First set of arrows missing");
 
-	/// 1.2 - Find the left arrow before this one
+	$$(_ + '1.2 - Find the left arrow before this one')
 	code =
-		" A1 E7 00" // asc_D14AEC db '←',0
+		" A1 E7 00" // db '←',0
     +   " 00 "      // db 0
 	;
 
@@ -58,9 +60,9 @@ FixArrowsCharset = function()
 	if (addrL < 0)
 		throw Error("Left arrow missing");
 
-	/// 1.3 - Find the square key after it
+	$$(_ + '1.3 - Find the square key after it')
 	code =
-		" A2 C7 00" // asc_D14AFC db '▤',0
+		" A2 C7 00" // db '▤',0
     +   " 00 "      // db 0
 	;
 
@@ -68,7 +70,7 @@ FixArrowsCharset = function()
 	if (addrM < 0)
 		throw Error("Square missing");
 
-	/// 2 - Replace the strings
+	$$(_ + '2 - Replace the strings')
 	[
 		[addrL   , " 20 3C"], //left arrow
 		[addr    , " 20 5E"], //up arrow

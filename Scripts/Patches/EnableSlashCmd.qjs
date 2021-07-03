@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Ai4rei/AN                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -160,8 +160,8 @@ EnableUnknCmds = function()
 	let cmn =
 		(ROC.HasFP
 	?
-		MOV(ESP, EBP)     //mov esp, ebp
-	+	POP(EBP)          //pop ebp
+		FP_STOP           //mov esp, ebp
+		                  //pop ebp
 	:
 		''
 	)

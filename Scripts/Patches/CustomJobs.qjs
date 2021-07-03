@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -1013,43 +1013,43 @@ CustomJobs = function()
 
 	let found = shrinkAddrs.filter( (shrinkAddr, idx) =>
 	{
-		let suf = ` (${idx})`;
+		let __ = `${_} [${idx}] `;
 
-		$$(_ + '9.1 - Deduce the register containing the Job id' + suf)
+		$$(__ + '9.1 - Deduce the register containing the Job id')
 		let reg =
 			style > 2   ? EAX :
 			style === 2 ? ESI :
 			              R32.List[Exe.GetUint8(shrinkAddr + 1) & 0x7];
 
-		$$(_ + '9.2 - Use it to create the LUA function Calling code' + suf)
+		$$(__ + '9.2 - Use it to create the LUA function Calling code')
 		let luaCaller = LUA.createCaller("GetSprScale", "d>d", reg, [scaleAddr]).join('');
 
 		if (style > 2) //Individual comparisons
 		{
-			$$(_ + '9.3 - Ensure there is a JLE after comparison with FBD' + suf)
+			$$(__ + '9.3 - Ensure there is a JLE after comparison with FBD')
 			let addr = Exe.FindHex(CMP(EAX, 0xFBD), shrinkAddr);
 			let ins = Instr.FromAddr(addr + 5);
 			if (ins.Codes[0] !== 0x7E && ins.Codes[1] !== 0x8E)
 				return false;
 
-			$$(_ + '9.4 - Extract the instruction at the address. It would be either an fld dword ptr or MOVSS XMM0, dword ptr' + suf)
+			$$(__ + '9.4 - Extract the instruction at the address. It would be either an fld dword ptr or MOVSS XMM0, dword ptr')
 			let tgtLoader = ins.getNext(ins.Immd);
 
-			$$(_ + '9.5 - Extract the instruction after it. Would be a FMUL dword ptr or MULSS XMM0, dword ptr' + suf)
+			$$(__ + '9.5 - Extract the instruction after it. Would be a FMUL dword ptr or MULSS XMM0, dword ptr')
 			let multiplier = tgtLoader.getNext();
 
-			$$(_ + '9.6 - Save the next address (if it\'s a JMP go to it\'s target instead)' + suf)
+			$$(__ + '9.6 - Save the next address (if it\'s a JMP go to it\'s target instead)')
 			let endAddr = multiplier.NextAddr;
 			if (Exe.GetUint8(endAddr) === 0xEB)
 				endAddr += Exe.GetInt8(endAddr + 1) + 2;
 
-			$$(_ + '9.7 - Modify the multiplier code to ensure dword ptr is used and use the scaleAddr as displacement' + suf)
+			$$(__ + '9.7 - Modify the multiplier code to ensure dword ptr is used and use the scaleAddr as displacement')
 			if (multiplier.Codes[0] === 0xDC)
 				multiplier.Codes[0] = 0xD8;
 
 			multiplier.Disp = scaleAddr;
 
-			$$(_ + '9.8 - Construct the code to replace with' + suf)
+			$$(__ + '9.8 - Construct the code to replace with')
 			let code =
 				PUSHAD                //pushad ; backup registers
 			+	luaCaller             //Code which calls the lua function to get the scale
@@ -1063,10 +1063,10 @@ CustomJobs = function()
 			;
 			let csize = code.byteCount();
 
-			$$(_ + '9.9 - Ensure there is enough space for the code' + suf)
+			$$(__ + '9.9 - Ensure there is enough space for the code')
 			if ((endAddr - shrinkAddr) > (csize + 2))
 			{
-				$$(_ + '9.10 - Append the NOPs/Short JMP to the end of the code' + suf)
+				$$(__ + '9.10 - Append the NOPs/Short JMP to the end of the code')
 				let delta = endAddr - shrinkAddr - csize;
 				code +=
 					delta > 0x12
@@ -1076,33 +1076,33 @@ CustomJobs = function()
 					NOPs(delta)      //set of multibyte NOPs
 				;
 
-				$$(_ + '9.11 - Replace at the address' + suf)
+				$$(__ + '9.11 - Replace at the address')
 				Exe.SetHex(shrinkAddr, LUA.finalize(code, Exe.Phy2Vir(shrinkAddr, CODE), AltFuncs[3]));
 			}
 			else
 			{
-				$$(_ + '9.12 - If space is not there then allocate it' + suf)
+				$$(__ + '9.12 - If space is not there then allocate it')
 				let [free, freeVir] = Exe.FindSpace(csize + 5);
 
-				$$(_ + '9.13 - Append the JMP')
+				$$(__ + '9.13 - Append the JMP')
 				code +=
 					JMP(Filler(1)) //jmp <endAddr>
 				;
 
-				$$(_ + '9.14 - Fill in the blanks')
+				$$(__ + '9.14 - Fill in the blanks')
 				code = LUA.finalize(code, freeVir, AltFuncs[3]);
 				code = SetFillTarget(code, 1, Exe.Phy2Vir(endAddr, CODE), freeVir, 1);
 
-				$$(_ + '9.15 - Add at allocated space')
+				$$(__ + '9.15 - Add at allocated space')
 				Exe.AddHex(free, code);
 
-				$$(_ + '9.16 - Create JMP to the code')
+				$$(__ + '9.16 - Create JMP to the code')
 				Exe.SetJMP(shrinkAddr, freeVir);
 			}
 		}
 		else //seperate function return after FLD
 		{
-			$$(_ + '9.17 - Construct the new function')
+			$$(__ + '9.17 - Construct the new function')
 			let code =
 				PUSHAD                //pushad ; backup registers
 			+	luaCaller             //Code which calls the lua function to get the scale
@@ -1121,7 +1121,7 @@ CustomJobs = function()
 			+	RETN(4)               //retn 4
 			;
 
-			$$(_ + '9.18 - Replace at shrinkAddr')
+			$$(__ + '9.18 - Replace at shrinkAddr')
 			Exe.SetHex(shrinkAddr, LUA.finalize(code, Exe.Phy2Vir(shrinkAddr, CODE), AltFuncs[3]));
 		}
 		return true;

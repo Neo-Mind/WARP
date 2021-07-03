@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei                                                 *
 *   Created Date  : 2021-06-15                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -155,7 +155,7 @@ DrawShieldOnTop = function()
         MOV(EAX, [EBP, cntLoc])  // mov eax, dword ptr [ebp + cnt]
 	+	CMP(EAX, 0)              // cmp eax, 0
     +	JNZ(Filler(1,1))         // jnz short _skip
-	+	POP(EAX)                 // pop eax
+	+	POP_EAX                  // pop eax
 	+	PUSH_EAX                 // push eax
 	+	MOVSS(XMM0, [EAX, 0x10]) // movss xmm0, dword ptr [eax + oow]
 	+	ADDSS(XMM0, [floatAddr]) // addss xmm0, dword ptr [floatAddr]

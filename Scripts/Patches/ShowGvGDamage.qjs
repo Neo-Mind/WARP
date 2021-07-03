@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, X-EcutiOnner                                   *
 *   Created Date  : 2021-06-01                                             *
-*   Last Modified : 2021-06-01                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,34 +33,36 @@
 ///
 ShowGvGDamage = function(patchName)
 {
-    /// 1 - Find the code responsible for checking GvG mapflag before showing Damage values
+	let _ = 'ShowGvGDamage : ';
+
+    $$(_ + '1 - Find the code responsible for checking GvG mapflag before showing Damage values')
 	let mct =
 		MOV(ECX, POS4WC)
 	+	CALL(ALLWC)
 	+	TEST(EAX, EAX)
 	;
 	let code =
-		mct         //  0 mov ecx, offset g_session
+		mct         //  0 mov ecx, <g_session>
 	                //  5 call CSession_IsSiegeMode
 	                // 10 test eax, eax
-	+	JNZ(0xE)    // 12 jnz short loc_99A826
-	+	mct         // 14 mov ecx, offset g_session
+	+	JNZ(0xE)    // 12 jnz short _skip
+	+	mct         // 14 mov ecx, <g_session>
 	                // 19 call CSession_IsBattleFieldMode
 	                // 24 test eax, eax
-	+	JZ(0x14)    // 26 jz short loc_99A83A
-	+	PUSH(7)     // 28 push 7
-	+	mct         // 30 mov ecx, offset g_session
+	+	JZ(0x14)    // 26 jz short _next#1
+	+	PUSH(7)     // 28 push 7 ; _skip
+	+	mct         // 30 mov ecx, <g_session>
 	                // 35 call CSession_IsMasterAid
 	                // 40 test eax, eax
-	+	JZ(POS2WC)  // 42 jz loc_9A1A84
+	+	JZ(POS2WC)  // 42 jz _next#2
 	;
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Pattern missing");
 
-	/// 2 - NOP it all out
+	$$(_ + '2 - NOP it all out')
 	Exe.SetNOPs(addr, code.byteCount());
-	
+
     /* Keeping it around for reference later
 	let nopsStart = 0;
     let nopsEnd = 48;

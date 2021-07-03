@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
-*   Copyright (C) 2017-2020 *Unknown*                                      *
+*   Copyright (C) 2017-2021 *Unknown*                                      *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,19 +33,21 @@
 ///
 IncrViewID = function()
 {
-	/// 1.1 - Find where ReqAccName is PUSHed (only done once in the entire client)
-	let addr = Exe.FindHex( PUSH(IVID_Addr) );
+	let _ = 'IncrViewID : ';
+
+	$$(_ + '1.1 - Find where ReqAccName is PUSHed (only done once in the entire client)')
+	let addr = Exe.FindHex( PUSH(IVID_Addr) ); //push offset "ReqAccName"
 	if (addr < 0)
 		throw Error("'ReqAccName' not used");
 
-	/// 1.2 - Calculate the current limit in the client based on date
+	$$(_ + '1.2 - Calculate the current limit in the client based on date')
 	let oldValue = (
 		Exe.BuildDate > 20200325 ? 3000 :
 		Exe.BuildDate > 20130000 ? 2000 :
 		                           1000
 	);
 
-	/// 2.1 - Find all occurrences of the old limit
+	$$(_ + '2.1 - Find all occurrences of the old limit')
 	let addrs = [
 		MOV(R32, oldValue),
 		MOV(EAX, oldValue),
@@ -59,13 +61,14 @@ IncrViewID = function()
 	if (addrs.length < 2 || addrs.length > 3)
 		throw Error("Incorrect no of matches found for Old limit");
 
-	/// 2.2 - Get the new limit from user
+	$$(_ + '2.2 - Get the new limit from user')
+
 	let varName = '$viewIDLimit';
 	let newValue = Exe.GetUserInput(varName, D_Uint32, "View ID Limit", "Enter the new Max Headgear View ID", oldValue, {min: oldValue, max: 64000});
 	if (newValue === false)
 		Cancel("Limit", oldValue);
 
-	/// 2.3 - Replace old with new for all
+	$$(_ + '2.3 - Replace old with new for all')
 	addrs.forEach( addr => Exe.SetFromVar(Instr.FromAddr(addr).NextAddr - 4, varName) );
 
 	return true;
@@ -76,6 +79,6 @@ IncrViewID = function()
 ///
 IncrViewID.validate = function()
 {
-	IVID_Addr = Exe.FindText("ReqAccName");
+	IVID_Addr = Exe.FindText("ReqAccName", Case_Insensitive);
     return (IVID_Addr > 0);
 };

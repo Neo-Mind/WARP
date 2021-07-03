@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Curiosity, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,30 +32,32 @@
 ///
 IncrMapQuality = function()
 {
-	/// 1 - Find CTexMgr::CreateTexture CALL
+	let _ = 'IncrMapQuality : ';
+
+	$$(_ + '1 - Find CTexMgr::CreateTexture CALL')
 	let reg = (Exe.Version < 10 ? ECX : EAX);
 	let part1 =
-		PUSH(reg)          //PUSH ECX/EAX ; imgData
-	+	PUSH(0x100)        //PUSH 100 ; h = 256
-	+	PUSH(0x100)        //PUSH 100 ; w = 256
+		PUSH(reg)          //push ecx/eax ; imgData
+	+	PUSH(0x100)        //push 100h    ; h = 256
+	+	PUSH(0x100)        //push 100h    ; w = 256
 	;
 	let part2 =
-		MOV(ECX, POS3WC);  //MOV ECX, OFFSET g_texMgr
+		MOV(ECX, POS3WC);  //mov ecx, <g_texMgr>
 
 	let addr = Exe.Version < 14 ?
-		Exe.FindHex(part1 + part2 + CALL()) //CALL CTexMgr::CreateTexture
+		Exe.FindHex(part1 + part2 + CALL()) //call CTexMgr::CreateTexture  follows part2
 	:
-		Exe.FindHex(part2 + part1 + CALL()) //CALL CTexMgr::CreateTexture
+		Exe.FindHex(part2 + part1 + CALL()) //call CTexMgr::CreateTexture  follows part1
 	;
 	if (addr < 0)
 		throw Error("CreateTexture CALL not found");
 
-	/// 2 - Find the pf argument PUSH before it.
-	addr = Exe.FindHex(PUSH_1, addr - 10, addr);//PUSH 1
+	$$(_ + '2 - Find the pf argument PUSH before it')
+	addr = Exe.FindHex(PUSH_1, addr - 10, addr);//push 1
 	if (addr < 0)
 		throw Error("pf PUSH not found");
 
-	/// 3 - Change PUSH 1 to PUSH 4
+	$$(_ + '3 - Change PUSH 1 to PUSH 4')
 	Exe.SetInt8(addr + 1, 4);
 
 	return true;

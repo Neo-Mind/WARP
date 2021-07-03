@@ -223,7 +223,7 @@ _MG_INI = (callAddr, AddPak) =>
 	let offsets = MapAddrs(0, parts);
 
 	$$(_ + '2.1 - Get the INI file name from user')
-	let iniFile = Exe.GetUserInput('$dataINI', D_Text, "INI File path", "Enter the name of the INI file", "DATA.INI", {minLen: 1, maxLen: 20, saveDefault: true});
+	let iniFile = Exe.GetUserInput('$dataINI', D_Text, "INI File path", "Enter the name of the INI file (containing GRF names)", "DATA.INI", {minLen: 1, maxLen: 20, saveDefault: true});
 	if (iniFile === false || iniFile.trim().isEmpty())
 		Cancel("No File name specified");
 

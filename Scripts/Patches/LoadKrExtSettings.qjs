@@ -1,8 +1,8 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2017 Secret                                              *
-*   Copyright (C) 2017-2020 Andrei Karas (4144)                            *
-*   Copyright (C) 2020 X-EcutiOnner (xex.ecutionner@gmail.com)             *
+*   Copyright (C) 2017-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2021 X-EcutiOnner (xex.ecutionner@gmail.com)        *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Secret, Andrei (4144), X-EcutiOnner                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-01-12                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,37 +33,37 @@
 ///
 LoadKrExtSettings = function()
 {
-	/// 1.1 - Ensure the LANGTYPE is loaded
+	let _ = 'LoadKrExtSettings : ';
+
+	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
-	/// 1.2 - Find where the string is PUSHed
+	$$(_ + '1.2 - Find where the string is PUSHed')
 	let refAddr = Exe.FindHex( PUSH(LKES_Addr) );
 	if (refAddr < 0)
 		throw Error("'ExternalSettings_kr' reference missing");
 
-	/// 2.1 - Find the LANGTYPE comparison (for old clients)
+	$$(_ + '2.1 - Find the LANGTYPE comparison (for old clients)')
 	let code =
-		MOV(EDI, ECX)         //MOV EDI, ECX
-	+	MOV(EAX, [LANGTYPE])  //MOV EAX, DWORD PTR DS:[g_serviceType]
-	+	CMP(EAX, 0x12)        //CMP EAX, 12
-	+	JA()                  //JA addr
+		MOV(EDI, ECX)         //mov edi, ecx
+	+	MOV(EAX, [LANGTYPE])  //mov eax, dword ptr [g_serviceType]
+	+	CMP(EAX, 0x12)        //cmp eax, 12h
+	+	JA()                  //ja _skip
 	;
 
 	let addr = Exe.FindHex(code, refAddr - 0x80, refAddr);
 	if (addr < 0)
 		throw Error("Langtype Comparison not found");
 
-	/// 2.2 - Change the EAX assignment to zero by XORing
+	$$(_ + '2.2 - Change the EAX assignment to zero by XORing')
 	code =
-		XOR(EAX, EAX)  //XOR EAX, EAX
-	+	NOP            //NOP
-	+	NOP            //NOP
-	+	NOP            //NOP
+		XOR(EAX, EAX)  //xor eax, eax
+	+	NOP3           //3 byte nop
 	;
 	Exe.SetHex(addr + 2, code);
 
 	return true;
-}
+};
 
 ///
 /// \brief Only applicable if ExternalSettings_kr path is present in the client
@@ -75,6 +75,8 @@ LoadKrExtSettings.validate = function()
 			"Lua Files\\service_korea\\zero_server\\ExternalSettings_kr"
 		:
 			"Lua Files\\service_korea\\ExternalSettings_kr"
+		,
+		Case_Insensitive
 	);
 	return (LKES_Addr > 0);
 };

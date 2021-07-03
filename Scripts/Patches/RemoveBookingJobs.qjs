@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -246,13 +246,13 @@ RemoveBookingJobs = function()
 	,//2
 		POP(EDX)               //pop edx ; _msgIt
 	+	POP(ECX)               //pop ecx
-	+	POP(EAX)               //pop eax
+	+	POP_EAX                //pop eax
 	+	JMP(Filler(2))         //jmp <MsgStr>
 
 	,//3
 		POP(EDX)               //pop edx ; _return
 	+	POP(ECX)               //pop ecx
-	+	POP(EAX)               //pop eax
+	+	POP_EAX                //pop eax
 	+	ADD(ESP, 8)            //add esp, 8
 	+	JMP(Filler(3))         //jmp <retnAddr>
 	];

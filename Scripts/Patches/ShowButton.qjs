@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -355,7 +355,7 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 	let _ = '_SRB_FixupBtnCoords : ';
 
 	$$(_ + '1.1 - Find the Button Image path')
-	let addr = Exe.FindText(btnImg, CaseInsensitive, false);
+	let addr = Exe.FindText(btnImg, CASE_INSENSITIVE, false);
 	if (addr < 0)
 		throw Error(msgPrefix + "Button String not found");
 

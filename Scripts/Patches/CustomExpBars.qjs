@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -553,7 +553,7 @@ ShowExpNumbers = function()
 			2: CurExpJob
 		})
     +	ADD(ESP, 0x20)          //add esp, 20h
-    +	POP(EAX)                //pop eax
+    +	POP_EAX                 //pop eax
     +	JMP(Filler(6))          //jmp <retAddr> ; i.e. (injectAddr + 5)
     ;
     let csize = code.byteCount();

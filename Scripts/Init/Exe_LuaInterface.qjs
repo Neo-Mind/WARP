@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -102,7 +102,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			});
 
 			$$(_ + '1.6 - Find \'ReqJobName\'')
-			addr = Exe.FindText("ReqJobName", CaseInsensitive);
+			addr = Exe.FindText("ReqJobName", CASE_INSENSITIVE);
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'ReqJobName' not found");
@@ -213,7 +213,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			this.FnInvoker = Exe.GetTgtAddr(addr + 1);
 
 			$$(_ + '5.1 - Find the string "Lua Files\\DataInfo\\jobName"')
-			addr = Exe.FindText("Lua Files\\DataInfo\\jobName", CaseInsensitive);
+			addr = Exe.FindText("Lua Files\\DataInfo\\jobName", CASE_INSENSITIVE);
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - jobName string missing");
@@ -391,7 +391,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				code = code.join('');
 
 			if (IsStr(nameAddr))
-				nameAddr = Exe.FindText(nameAddr, CaseInsensitive, false);
+				nameAddr = Exe.FindText(nameAddr, CASE_INSENSITIVE, false);
 
 			if (nameAddr)
 				code = SwapFiller(code, 50, nameAddr);
@@ -446,7 +446,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 
 			$$(_ + '1.2 - Find the string inside refName')
-			let refAddr = Exe.FindText(refName, CaseInsensitive);
+			let refAddr = Exe.FindText(refName, CASE_INSENSITIVE);
 			if (refAddr < 0)
 				throw Error("LUA.addLoaders - Reference file (" + refName + ") missing");
 

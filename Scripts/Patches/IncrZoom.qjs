@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144)                                 *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-06-14                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -46,82 +46,82 @@ if (typeof IZ_Data === 'undefined') //avoid redefinition
 ///
 IncrZoom = function(patchName)
 {
-	/// 1.1 - Find the FAR_DIST location
+	let _ = patchName + ' : ';
+
+	$$(_ + '1.1 - Find the FAR_DIST location')
 	let code =
-		(230.0).toIEEE()    //DD FLOAT 230.000 (0x43660000) <- NEAR_DIST
-	+   (400.0).toIEEE()    //DD FLOAT 400.000 (0x43C80000) <- FAR_DIST
-	+   (300.0).toIEEE()    //DD FLOAT 300.000 (0x43960000) <- FAR_DIST for Indoors
+		(230.0).toIEEE()    //dd float 230.000 (0x43660000) <- NEAR_DIST
+	+   (400.0).toIEEE()    //dd float 400.000 (0x43C80000) <- FAR_DIST
+	+   (300.0).toIEEE()    //dd float 300.000 (0x43960000) <- FAR_DIST for Indoors
 	;
 
 	let addr = Exe.FindHex(code, Exe.GetSectBegin(DATA), Exe.FileSize);//It may or may not be limited to end of data section
 	if (addr < 0)
 		throw Error("FAR_DIST storage not found");
 
-	/// 1.2 - Retrieve the new distance for the patch
+	$$(_ + '1.2 - Retrieve the new distance for the patch')
 	let newDist = IZ_Data[patchName];
 
-	/// 1.3 - Change to the value specified
+	$$(_ + '1.3 - Change to the value specified')
 	Exe.SetHex(addr + 4, newDist);
 
-	/// 2.1 - Find the string '/zoom'
-	if (Exe.FindText("/zoom", PHYSICAL) > 0)
+	$$(_ + '2.1 - Find \'/zoom\'')
+	if (Exe.FindText("/zoom", Case_Insensitive, PHYSICAL) > 0)
 	{
 		// If present, then we need some additional patching done - 4144
 
-		/// 2.2 - Retrieve the VIRTUAL address where we patched.
+		$$(_ + '2.2 - Retrieve the VIRTUAL address where we patched')
 		let distAddr = Exe.Phy2Vir(addr + 4);
 
-		/// 2.3 - Search for an assignment to this address - enabled /zoom (we are looking for
-		///       2 matches, 1 from UIGraphicSettingWnd_virt136 & 1 from CGameMode_func
-		let mov1 = MOV([distAddr], (480.0).toIEEE()); //MOV DWORD PTR DS:[distAddr], 0x43F00000 ; 480.0
+		$$(_ + '2.3 - Search for an assignment to this address - enabled /zoom (we are looking for 2 matches, 1 from UIGraphicSettingWnd_virt136 & 1 from CGameMode_func')
+		let mov1 = MOV([distAddr], (480.0).toIEEE()); //mov dword ptr [distAddr], 43F00000h ; 480.0
 		let addrs = Exe.FindHexN(mov1);
 		if (addrs.length < 2 || addrs.length > 3)
 			throw Error("Unexpected no of matches found for 1st /zoom assignment");
 
-		/// 2.4 - Change the assigned value to our new distance value
+		$$(_ + '2.4 - Change the assigned value to our new distance value')
 		addrs.forEach( addr => Exe.SetHex(addr + 6, newDist) );
 
-		/// 2.5 - Search for similar assignment to this address - disabled /zoom
-		///       (it will be in the same functions as before)
-		let mov2 = MOV([distAddr], (400.0).toIEEE()); //MOV DWORD PTR DS:[distAddr], 0x43C80000 ; 400.0
+		$$(_ + '2.5 - Search for similar assignment to this address - disabled /zoom (it will be in the same functions as before)')
+		let mov2 = MOV([distAddr], (400.0).toIEEE()); //mov dword ptr [distAddr], 43C80000h ; 400.0
 
 		addrs = Exe.FindHexN(mov2);
 		if (addrs.length < 2 || addrs.length > 3)
 			throw Error("Unexpected no of matches found for 2nd /zoom assignment");
 
-		/// 2.6 - Repeat 2.4 for this set of addresses
+		$$(_ + '2.6 - Repeat 2.4 for this set of addresses')
 		addrs.forEach( addr => Exe.SetHex(addr + 6, newDist) );
 
-		/// 3.1 - Find the '/zoom' enabled/disabled load configuration (in CSession_lua_configuration)
+		$$(_ + '3.1 - Find the \'/zoom\' enabled/disabled load configuration (in CSession_lua_configuration)')
 		let parts = [
-			MOVSS(XMM1, [POS4WC])  //MOVSS XMM1, DWORD PTR DS:[zoom_max_load_enabled]
+			MOVSS(XMM1, [POS4WC])  //movss xmm1, dword ptr [zoom_max_load_enabled]
 
 		,//1
 			Exe.Version > 11
 		?
-			mov1                   //MOV DWORD PTR DS:[distAddr], 0x43F00000 ; 480.0
-		+	JMP(0x12)              //JMP SHORT addr1
+			mov1                   //mov dword ptr [distAddr], 0x43F00000 ; 480.0
+		+	JMP(0x12)              //jmp short _next
 		:
-			JMP(8)                 //JMP SHORT addr1
+			JMP(8)                 //jmp short _next
 
 		,//2
-			MOVSS(XMM1, [POS4WC])  //MOVSS XMM1, DWORD PTR DS:[zoom_max_load_disabled]
+			MOVSS(XMM1, [POS4WC])  //movss xmm1, dword ptr [zoom_max_load_disabled]
 
 		,//3
 			(Exe.Version > 11
 		?
-			mov2                   //MOV DWORD PTR DS:[distAddr], 0x43C80000 ; 400.0
+			mov2                   //mov dword ptr [distAddr], 43C80000h ; 400.0
 		:
 			''
 		)
-		+	MOVSS(XMM0, [POS4WC])  //MOVSS XMM0, DWORD PTR DS:[some_addr]; addr1
-		+	MOVSS(XMM2, [POS4WC])  //MOVSS XMM2, DWORD PTR DS:[g_outdoorViewLatitude]
-		+	COMISS(XMM0, XMM2)	   //COMISS XMM0, XMM2
+		+	MOVSS(XMM0, [POS4WC])  //movss xmm0, dword ptr [some_addr] ; _next
+		+	MOVSS(XMM2, [POS4WC])  //movss xmm2, dword ptr [g_outdoorViewLatitude]
+		+	COMISS(XMM0, XMM2)	   //comiss xmm0, xmm2
 
 		,//4
 			Exe.Version <= 11
 		?
-			MOVSS([POS4WC], XMM1)  //MOVSS DWORD PTR DS:[zoom2_max_outdoor], XMM1
+			MOVSS([POS4WC], XMM1)  //movss dword ptr [zoom2_max_outdoor], xmm1
 		:
 			''
 		];
@@ -130,11 +130,11 @@ IncrZoom = function(patchName)
 		if (addr < 0)
 			throw Error("/zoom configuration missing");
 
-		/// 3.2 - Retrieve the zoom_max_load_enabled & zoom_max_load_disabled VIRTUAL addresses
+		$$(_ + '3.2 - Retrieve the zoom_max_load_enabled & zoom_max_load_disabled VIRTUAL addresses')
 		let enbAddr = Instr.FromAddr(addr).Disp;
-		let disAddr = Instr.FromAddr(addr + parts[0].byteCount() + parts[1].byteCount()).Disp;
+		let disAddr = Instr.FromAddr(addr + parts.byteCount(0, 1)).Disp;
 
-		/// 3.3 - Overwrite the values at both locations with the new distance
+		$$(_ + '3.3 - Overwrite the values at both locations with the new distance')
 		Exe.SetHex(Exe.Vir2Phy(enbAddr), newDist);
 		Exe.SetHex(Exe.Vir2Phy(disAddr), newDist);
 	}
@@ -148,4 +148,4 @@ IncrZoom = function(patchName)
 Zoom25Percent = IncrZoom;
 Zoom50Percent = IncrZoom;
 Zoom75Percent = IncrZoom;
-ZoomMax        = IncrZoom;
+ZoomMax       = IncrZoom;

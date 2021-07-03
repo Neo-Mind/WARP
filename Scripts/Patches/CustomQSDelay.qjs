@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : mrjnumber1                                             *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -69,17 +69,17 @@ CustomQSDelay = function()
 
 	addrs.forEach( (addr, idx) =>
 	{
-		let suf = ` (${idx})`;
+		let __ = `${_} [${idx}] `;
 
-		$$(_ + '2.4 - Replace the ms value' + suf)
+		$$(__ + '2.4 - Replace the ms value')
 		Exe.SetUint32(addr + 1, new_tick_ms);
 
-		$$(_ + '2.5 - Look for the old_tick assignment after the ms (used for showing "n seconds to next quick switch ...")' + suf)
+		$$(__ + '2.5 - Look for the old_tick assignment after the ms (used for showing "n seconds to next quick switch ...")')
 		let addr2 = Exe.FindHex(code, addr + 17, addr + 67);
 		if (addr2 < 0)
 			throw Error(`Delay subtraction missing for No.${idx+1}`);
 
-		$$(_ + '2.6 - Replace the tick value' + suf)
+		$$(__ + '2.6 - Replace the tick value')
 		Exe.SetUint32(addr2 + 1, new_tick);
 	});
 

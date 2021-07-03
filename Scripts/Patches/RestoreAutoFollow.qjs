@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, Neo-Mind                                       *
 *   Created Date  : 2021-06-16                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,8 +37,8 @@ RestoreAutoFollow = function()
 
 	$$(_ + '1.1 - Find the CGameMode::ProcessAutoFollow function')
 	let code =
-		PUSH(EBP)           //push ebp
-	+	MOV(EBP, ESP)       //mov ebp, esp
+		FP_START            //push ebp
+		                    //mov ebp, esp
 	+	MOV(EAX, [POS4WC])  //mov eax, dword ptr [addr#1]
 	+	SUB(ESP, 8)         //sub esp, 8
 	+	PUSH(ESI)           //push esi

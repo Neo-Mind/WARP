@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -117,13 +117,13 @@ CustomDLL = function()
 
 	dllSpec.forEach( (hash, idx) =>
 	{
-		let suf = ` (${idx})`;
+		let __ = `${_} [${idx}] `;
 
-		$$(_ + '3.3 - Sanity check (skip empty function names - shouldnt happen but still)' + suf)
+		$$(__ + '3.3 - Sanity check (skip empty function names - shouldnt happen but still)')
 		if ('Offset' in hash === false || hash.Funcs.isEmpty())
 			return;
 
-		$$(_ + '3.4 - Append the 12 byte prefix along with the offset of the dllname & its entry' + suf)
+		$$(__ + '3.4 - Append the 12 byte prefix along with the offset of the dllname & its entry')
 		dirTableData += prefix + (strRVA + hash.Offset).toHex() + (baseRVA + entryPtr).toHex();
 
 		hash.Funcs.forEach( func =>
@@ -138,7 +138,7 @@ CustomDLL = function()
 			entryPtr += 4;
 		});
 
-		$$(_ + '3.5- Append 0s as the end of entry table' + suf)
+		$$(__ + '3.5- Append 0s as the end of entry table')
 		dirEntryData += " 00 00 00 00";
 		entryPtr += 4;
 	});

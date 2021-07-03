@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -500,16 +500,16 @@ CustomAuraLimits = function()
 	let offset = size - tblSize;
 	let found = AuraSpec.filter( (hash, idx) =>
 	{
-		let suf = ` ($idx)`;
+		let __ = `${_} [${idx}] `;
 
-		$$(_ + '5.4 - Skip any entries without IDs or Maps' + suf)
+		$$(__ + '5.4 - Skip any entries without IDs or Maps')
 		if (!IsArr(hash.IDs) || !IsArr(hash.Maps))
 			return false;
 
-		$$(_ + '5.5 - Add the offset to the map' + suf)
+		$$(__ + '5.5 - Add the offset to the map')
 		mapData += (freeVir + offset).toHex();
 
-		$$(_ + '5.6 - Add the base IDs to the table' + suf)
+		$$(__ + '5.6 - Add the base IDs to the table')
 		hash.IDs.forEach( bases =>
 		{
 			if (IsArr(bases))
@@ -520,14 +520,14 @@ CustomAuraLimits = function()
 			offset += 4;
 		});
 
-		$$(_ + '5.7 - Add the -1 to end the table' + suf)
+		$$(__ + '5.7 - Add the -1 to end the table')
 		tblData += " FF FF";
 		offset += 2;
 
-		$$(_ + '5.8 - Add the offset to the map' + suf)
+		$$(__ + '5.8 - Add the offset to the map')
 		mapData += (freeVir + offset).toHex();
 
-		$$(_ + '5.9 - Add the level range and aura constant sets' + suf)
+		$$(__ + '5.9 - Add the level range and aura constant sets')
 		let found = hash.Maps.filter( map =>
 		{
 			if (!IsArr(map.JobRange) || !IsNum(map.Index))
@@ -541,7 +541,7 @@ CustomAuraLimits = function()
 			return true;
 		});
 
-		$$(_ + '5.10 - Add the -1 to end the table' + suf)
+		$$(__ + '5.10 - Add the -1 to end the table')
 		tblData += " FF FF";
 		offset += 2;
 

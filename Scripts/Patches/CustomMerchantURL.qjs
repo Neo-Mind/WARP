@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -112,27 +112,27 @@ CustomMerchantURL = function()
 	$$(_ + '2 - Next set of actions is common for both Saver & Loader')
 	let result = [Saver, Loader].filter( (obj, idx) =>
 	{
-		let suf = ` (${idx})`;
+		let __ = `${_} [${idx}] `;
 
-		$$(_ + '2.1 - Get the new URL from user' + suf)
+		$$(__ + '2.1 - Get the new URL from user')
 		let newURL = Exe.GetUserInput(obj.varName, D_Text, "MerchantStore URLs", "Enter the new " + obj.prefix + " URL", "http://", {minLen: 9, maxLen: 255, saveDefault: true});
 		if (newURL === false)
 			return false;
 
-		$$(_ + '2.2 - Allocate space for it' + suf)
+		$$(__ + '2.2 - Allocate space for it')
 		let [free, urlAddr] = Exe.FindSpace(obj.varName);
 
-		$$(_ + '2.3 - Add the new url' + suf)
+		$$(__ + '2.3 - Add the new url')
 		Exe.AddFromVar(free, obj.varName);
 
-		$$(_ + '2.4 - Get the length' + suf)
+		$$(__ + '2.4 - Get the length')
 		let len = newURL.length;
 
-		$$(_ + '2.5 - Replace all the lengths' + suf)
+		$$(__ + '2.5 - Replace all the lengths')
 		if (len !== 0x2E)
 			obj.lenRefs.forEach(addr => Exe.SetUint8(addr, len));
 
-		$$(_ + '2.6 - Replace the string addresses' + suf)
+		$$(__ + '2.6 - Replace the string addresses')
 		obj.urlRefs.forEach(addr => Exe.SetInt32(addr, urlAddr));
 		return true;
 	});

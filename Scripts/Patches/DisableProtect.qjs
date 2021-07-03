@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind, Andrei (4144), X-EcutiOnner       *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-05-15                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,52 +35,54 @@
 ///
 NoHShield = function()
 {
-	/// 1.1 - Find the string 'webclinic.ahnlab.com'
+	let _ = 'NoHShield : ';
+
+	$$(_ + '1.1 - Find \'webclinic.ahnlab.com\'')
 	let addr = Exe.FindText("webclinic.ahnlab.com");
 	if (addr < 0)
 		throw Error("'webclinic.ahnlab.com' not found");
 
-	/// 1.2 - Find where its used in a PUSH
-	addr = Exe.FindHex(PUSH(addr)); //PUSH OFFSET addr; ASCII "webclinic.ahnlab.com"
+	$$(_ + '1.2 - Find where it is PUSHed')
+	addr = Exe.FindHex(PUSH(addr)); //push offset "webclinic.ahnlab.com"
 	if (addr < 0)
 		throw Error("'webclinic.ahnlab.com' not used");
 
-	/// 1.3 - Find the JZ before the RETN that points to the PUSH
+	$$(_ + '1.3 - Find the JZ before the RETN that points to the PUSH')
 	let code =
-		JZ(WCp)        //JZ addr2 -> PUSH OFFSET addr; ASCII "webclinic.ahnlab.com"
-	+	XOR(EAX, EAX)  //XOR EAX, EAX
+		JZ(WCp)        //jz short _toWebclinic -> push offset "webclinic.ahnlab.com"
+	+	XOR(EAX, EAX)  //xor eax, eax
 	;
 
 	addr = Exe.FindHex(code, addr - 0x10, addr);
 	if (addr < 0)
 		throw Error("JZ not found");
 
-	/// 1.4 - Change the JZ + XOR to XOR + INC of EAX so as to return 1 without initializing AhnLab
+	$$(_ + '1.4 - Change the JZ + XOR to XOR + INC of EAX so as to return 1 without initializing AhnLab')
 	Exe.SetHex(addr, XOR(EAX, EAX) + INC(EAX) + NOP);
 
 	if (Exe.BuildDate >= 20090000 && Exe.BuildDate <= 20110228 && !ROC.IsRenewal)
 	{
-		/// 1.5 - Find the second pattern to fix
+		$$(_ + '1.5 - Find the second pattern to fix')
 		let prefix =
-			MOV(EAX, 1)        //MOV EAX, 1
-		+	POP(EBX)           //POP EBX
-		+	MOV(ESP, EBP)      //MOV ESP, EBP
-		+	POP(EBP)           //POP EBP
-		+	RETN(0x10)         //RETN 10
+			MOV(EAX, 1)        //mov eax, 1
+		+	POP(EBX)           //pop ebx
+		+	FP_STOP            //mov esp, ebp
+			                   //pop ebp
+		+	RETN(0x10)         //retn 10h
 		;
 
 		let suffix =
-			CALL(ALLWC)        //CALL addr
-		+	TEST(EAX, EAX)     //TEST EAX, EAX
-		+	JNZ(WCp)           //JNZ SHORT addr2
+			CALL(ALLWC)        //call func#3
+		+	TEST(EAX, EAX)     //test eax, eax
+		+	JNZ(WCp)           //jnz short _skip#2
 		;
 		addr = Exe.FindHex(prefix + suffix);
 
 		if (addr < 0)
 		{
 			prefix =
-				MOV(EAX, 1)    //MOV EAX, 1
-			+	JMP(POS2WC)    //JMP addr
+				MOV(EAX, 1)    //mov eax, 1
+			+	JMP(POS2WC)    //jmp _next
 			;
 			suffix = suffix.replace(JNZ(WCp) + JZ(WC)); //JNZ SHORT to JZ SHORT
 			addr = Exe.FindHex(prefix + suffix);
@@ -88,38 +90,38 @@ NoHShield = function()
 		if (addr < 0)
 			throw Error("2nd pattern missing");
 
-		/// 1.6 - Change the CALL to an assignment of EAX
+		$$(_ + '1.6 - Change the CALL to an assignment of EAX')
 		Exe.SetHex(addr + prefix.byteCount(), MOV(EAX, 1));
 	}
 
-	/// 2.1 - Find the Failure message (was only there in more recent clients)
+	$$(_ + '2.1 - Find the Failure message (only there in more recent clients)')
 	addr = Exe.FindText("CHackShieldMgr::Monitoring() failed");
 	if (addr > 0)
 	{
-		/// 2.2 - Find where its used in a PUSH
+		$$(_ + '2.2 - Find where it is PUSHed')
 		addr = Exe.FindHex( PUSH(addr) + CALL([]));
 
-		/// 2.3 - Find Pattern before the referenced location within 0x40 bytes
+		$$(_ + '2.3 - Find Pattern before the referenced location within 40h bytes')
 		if (addr > 0)
 		{
 			code =
-				CALL(ALLWC)    //CALL func1
-			+	TEST(AL, AL)   //TEST AL, AL
-			+	JZ(0x16)       //JZ SHORT addr1
-			+	MOV(ECX, R32)  //MOV ECX, ESI
-			+	CALL()         //CALL func2
+				CALL(ALLWC)    //call func#1
+			+	TEST(AL, AL)   //test al, al
+			+	JZ(0x16)       //jz short _skip
+			+	MOV(ECX, R32)  //mov ecx, esi
+			+	CALL()         //call func#2
 			;
 			addr = Exe.FindHex(code, addr - 0x40, addr);
 		}
 
-		/// 2.4 - Replace the First call with code to return 1 and cleanup stack
+		$$(_ + '2.4 - Replace the First call with code to return 1 and cleanup stack')
 		if (addr > 0)
 		{
 			code =
-				NOP         //NOP
-			+	MOV(AL, 1)  //MOV AL, 1
-			+	POP(ESI)    //POP ESI
-			+	RETN        //RETN
+				NOP         //nop
+			+	MOV(AL, 1)  //mov al, 1
+			+	POP(ESI)    //pop esi
+			+	RETN        //retn
 			;
 			Exe.SetHex(addr, code);
 		}
@@ -129,54 +131,54 @@ NoHShield = function()
 	/// Now for a failsafe to avoid calls just in case - for VC9+ clients ///
 	///===================================================================///
 
-	/// 3.1 - Find the string 'ERROR'
+	$$(_ + '3.1 - Find \'ERROR\'')
 	addr = Exe.FindText("ERROR");
 	if (addr < 0)
 		throw Error("'ERROR' not found");
 
-	/// 3.2 - Find address of MessageBoxA function
+	$$(_ + '3.2 - Find "MessageBoxA" imported function')
 	let MsgBoxA = Exe.FindFunc("MessageBoxA", "USER32.dll");
 	if (MsgBoxA < 0)
 		throw Error("MessageBoxA not found");
 
-	/// 3.3 - Find where 'ERROR' is PUSHed as argument to MessageBoxA CALL
+	$$(_ + '3.3 - Find where \'ERROR\' is PUSHed as argument to MessageBoxA CALL')
 	code =
-		PUSH(addr)        //PUSH OFFSET addr; ASCII "ERROR"
-	+	PUSH_R            //PUSH reg32_A
-	+	PUSH_R            //PUSH reg32_B
-	+	CALL([MsgBoxA])   //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
+		PUSH(addr)        //push offset "ERROR"
+	+	PUSH_R            //push regA
+	+	PUSH_R            //push regB
+	+	CALL([MsgBoxA])   //call dword ptr [<&USER32.MessageBoxA>]
 	;
 	addr = Exe.FindHex(code);
 
 	if (addr < 0)
 	{
-		code = code.replace(PUSH_R + PUSH_R, PUSH_R + PUSH_0); //Change PUSH reg32_B to PUSH 0
+		code = code.replace(PUSH_R + PUSH_R, PUSH_R + PUSH_0); //Change push regB to push 0
 		addr = Exe.FindHex(code);
 	}
 	if (addr > 0)
 	{
-		/// 3.4 - Find the JNE after it that skips the HShield calls
+		$$(_ + '3.4 - Find the JNE after it that skips the HShield calls')
 		code =
-			CMP(BYTE_PTR, [POS3WC], 0) //CMP BYTE PTR DS:[addr1], 0
-		+	JNE(WCp)                   //JNE SHORT addr2
+			CMP(BYTE_PTR, [POS3WC], 0) //cmp byte ptr [addr#1], 0
+		+	JNE(WCp)                   //jne short _skip#3
 		;
 		let addr2 = Exe.FindHex(code, addr, addr + 0x80);
 
 		if (addr2 < 0)
 		{
 			code =
-				CMP([POS3WC], R32)     //CMP DWORD PTR DS:[addr1], reg32_A
-			+	JNE(WCp)               //JNE SHORT addr2
+				CMP([POS3WC], R32)     //cmp dword ptr [addr#1], regA
+			+	JNE(WCp)               //jne short _skip#3
 			;
 			addr2 = Exe.FindHex(code, addr, addr + 0x80);
 		}
 
-		/// 3.5 - Change the JNE to JMP (for always skipping)
+		$$(_ + '3.5 - Change the JNE to JMP (for always skipping)')
 		if (addr2 > 0)
 			Exe.SetJMP(addr2 + code.byteCount() - 2); //change JNE to JMP
 	}
 
-	/// 3.6 - Skip remaining stuff as Custom DLL cannot be added for newest unpacked clients
+	$$(_ + '3.6 - Skip remaining stuff as Custom DLL cannot be added for newest unpacked clients')
 	if (Exe.BuildDate > 20140700)
 		return true;
 
@@ -184,16 +186,16 @@ NoHShield = function()
 	// Now we will remove aossdk.dll Import //
 	//======================================//
 
-	/// 4.1 - Check whether CustomDLL patch is already ON
+	$$(_ + '4.1 - Check whether CustomDLL patch is already ON')
 	if (Exe.IsSelected("CustomDLL"))
 	{
 		// Since the patch is ON, the import table will be shifted to new location and now
 		// we need to get & set all the details from / to ROC.ImpInfo hash
 
-		/// 4.2 - Construct the Image Descriptor Pattern (Relative Virtual Address prefixed by 8 zeros) i.e. the import entry
+		$$(_ + '4.2 - Construct the Image Descriptor Pattern (Relative Virtual Address prefixed by 8 zeros) i.e. the import entry')
 		let aosEntry = ALL00 + ALL00 + NHS_Addr;
 
-		/// 4.3 - Remove the aossdk import entry from the table and save it to newTblData
+		$$(_ + '4.3 - Remove the aossdk import entry from the table and save it to newTblData')
 		let tblData = ROC.ImpInfo.TblData;
 		let newTblData = "";
 
@@ -208,21 +210,20 @@ NoHShield = function()
 
 		if (newTblData.length < tblData.length) //comes false if HShield was already disabled during custom DLL
 		{
-			/// 4.4 - Clear the Custom DLL patch entries
+			$$(_ + '4.4 - Clear the Custom DLL patch entries')
 			Exe.ClearPatch("CustomDLL");
 
-			/// 4.5 - Setup the new Import table in the client with the updated tblData
+			$$(_ + '4.5 - Setup the new Import table in the client with the updated tblData')
 			_CDLL_SetupImports(newTblData); //this function is defined in CustomDLL.js
 		}
 	}
 	else
 	{
-		/// 5.1 - If Custom DLL is not present then extract the import table
-		///       while skipping over aossdk.dll entry
+		$$(_ + '5.1 - If Custom DLL is not present then extract the import table, while skipping over aossdk.dll entry')
 		let impAddr = Exe.GetDirAddr(D_Import, PHYSICAL);
 		let dirEntries = GetImpTable("aossdk.dll", impAddr);
 
-		/// 5.2 - Overwrite import table with the one we got
+		$$(_ + '5.2 - Overwrite import table with the one we got')
 		Exe.SetHex(impAddr, dirEntries + ALL00.repeat(5)); //table ends with 20 NULL bytes
 	}
 
@@ -263,79 +264,81 @@ NoHShield.cleanup = function()
 ///
 NoGGuard = function()
 {
-	/// 1 - Find where the error string is used in a PUSH (inside ProcessFindHack)
+	let _ = 'NoGGuard : ';
+
+	$$(_ + '1 - Find where the error string is used in a PUSH (inside ProcessFindHack)')
 	let addr = Exe.FindHex( PUSH(NGG_Addr) );
 	if (addr < 0)
 		throw Error("GameGuard Error string not PUSHed");
 
-	/// 2.1 - Find the starting location of ProcessFindHack (should be within 0x160 bytes before the PUSH)
+	$$(_ + '2.1 - Find the starting location of ProcessFindHack (should be within 0x160 bytes before the PUSH)')
 	let code =
-		PUSH(EBP)       //PUSH EBP
-	+	MOV(EBP, ESP)   //MOV EBP, ESP
-	;
+		FP_START        //push ebp
+	;	                //mov ebp, esp
+
 	if (Exe.Version >= 10) //VC10+
 	{
 		code +=
-			PUSH(-1)    //PUSH -1
-		+	PUSH()      //PUSH value
+			PUSH(-1)    //push -1
+		+	PUSH()      //push immA
 		;
 		addr = Exe.FindHex(code, addr - 0x160, addr);
 	}
 	else
 	{
 		code +=
-			SUB(ESP, POS2WC) //SUB ESP, const
-		+	PUSH_R           //PUSH reg32
+			SUB(ESP, POS2WC) //sub esp, immB
+		+	PUSH_R           //push regA
 		;
 		addr = Exe.FindHex(code, addr - 0x1A0, addr);
 	}
 	if (addr < 0)
 		throw Error("ProcessFindHack not found");
 
-	/// 2.2 - Set EAX to 1 and return
+	$$(_ + '2.2 - Set EAX to 1 and return')
 	Exe.SetHex(addr,
-		XOR(EAX, EAX) //XOR EAX, EAX
-	+	INC(EAX)      //INC EAX
-	+	RETN()        //RETN
+		XOR(EAX, EAX) //xor eax, eax
+	+	INC(EAX)      //inc eax
+	+	RETN()        //retn
 	);
 
-	/// 3.1 - Find the string 'nProtect GameGuard'
+	$$(_ + '3.1 - Find \'nProtect GameGuard\'')
 	addr = Exe.FindText("nProtect GameGuard");
 	if (addr < 0)
 		throw Error("'nProtect GameGuard' not found");
 
-	/// 3.2 - Find all locations where its used in a PUSH
+	$$(_ + '3.2 - Find all locations where it is PUSHed')
 	code =
-		PUSH(addr)    //PUSH addr; ASCII "nProtect GameGuard"
-	+	PUSH_R        //PUSH reg32
+		PUSH(addr)    //push offset "nProtect GameGuard"
+	+	PUSH_R        //push regB
 	+	(Exe.Version >= 10
 	?
-		PUSH([])      //PUSH DWORD PTR DS:[addr2]
+		PUSH([])      //push dword ptr [addr#2]
 	:
-		PUSH_R        //PUSH reg32_B
+		PUSH_R        //push regC
 	);
 
 	let addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
 		throw Error("'nProtect GameGuard' not used");
 
-	/// 3.3 - Find the conditional jump (JE) before the PUSH (within 0x50 bytes)
+	/// 3.3 - Find the conditional jump (JE) before the PUSH (within 50h bytes)
 	if (Exe.Version >= 10) //VC10+
 	{
 		code =
-			TEST(AL, AL)       //TEST AL, AL
-		+	JE(WCp)            //JE SHORT addr
-		+	CALL(NEG3WC)       //CALL addr2
-		+	MOV(ECX, EAX)      //MOV ECX, EAX
-		+	CALL()             //CALL addr3
+			TEST(AL, AL)       //test al, al
+		+	JE(WCp)            //je short _skip#2
+		+	CALL(NEG3WC)       //call func#1
+		+	MOV(ECX, EAX)      //mov ecx, eax
+		+	CALL()             //call func#2
 		;
 	}
 	else
 	{
 		code =
-			TEST(EAX, EAX)     //TEST EAX, EAX
-		+	JZ(WCp)            //JZ SHORT addr
-		+	MOV(R32, [POS3WC]) //MOV reg32_A, DWORD PTR DS:[addr2]
+			TEST(EAX, EAX)     //test eax, eax
+		+	JZ(WCp)            //jz short _skip#2
+		+	MOV(R32, [POS3WC]) //mov regA, dword ptr [addr#2]
 		;
 	}
 
@@ -343,7 +346,7 @@ NoGGuard = function()
 	{
 		addr = Exe.FindHex(code, memAddr - 0x50, memAddr);
 
-		/// 3.4 - Change the conditional jump
+		$$(_ + '3.4 - Change the conditional jump')
 		if (addr > 0)
 		{
 			Exe.SetJMP(addr + 2);
@@ -374,21 +377,23 @@ NoGGuard.validate = function()
 ///
 NoCDefender = function()
 {
-	/// 1.1 - Find the g_CCheatDefenderMgr assignment & CALL to CCheatDefenderMgr_init
+	let _ = 'NoCDefender : ';
+
+	$$(_ + '1.1 - Find the g_CCheatDefenderMgr assignment & CALL to CCheatDefenderMgr::init')
 	let parts = [
-		MOV(ECX, [POS4WC])          //MOV ECX, DWORD PTR DS:[g_CCheatDefenderMgr]
-	+	CALL(ALLWC)                 //CALL CCheatDefenderMgr::init
-	+	CMP(AL, 1)                  //CMP AL, 1    <-- change here
-	+	MOV(EAX, [POS4WC])          //MOV EAX, DWORD PTR DS:[g_CCheatDefenderMgr]
+		MOV(ECX, [POS4WC])          //mov ecx, dword ptr [g_CCheatDefenderMgr]
+	+	CALL(ALLWC)                 //call CCheatDefenderMgr::init
+	+	CMP(AL, 1)                  //cmp al, 1    <-- change here
+	+	MOV(EAX, [POS4WC])          //mov eax, dword ptr [g_CCheatDefenderMgr]
 	,
-		SETZ(CL)                    //SETZ CL
+		SETZ(CL)                    //setz cl
 	,
-		PUSH(POS4WC)                //PUSH OFFSET g_zoneServerAddr
+		PUSH(POS4WC)                //push <g_zoneServerAddr>
 	,
-		MOV(BYTE_PTR, [EAX, 5], CL) //MOV BYTE PTR DS:[EAX+5], CL
-	+	CALL(ALLWC)                 //CALL CRagConnection::instanceR
-	+	MOV(ECX, EAX)               //MOV ECX, EAX
-	+	CALL()                      //CALL CRagConnection::some_func
+		MOV(BYTE_PTR, [EAX, 5], CL) //mov byte ptr [eax+5], cl
+	+	CALL(ALLWC)                 //call CRagConnection::instanceR
+	+	MOV(ECX, EAX)               //mov ecx, eax
+	+	CALL()                      //call CRagConnection::some_func
 	];
 
 	if (Exe.Version > 11) //VC14.16
@@ -398,7 +403,7 @@ NoCDefender = function()
 	if (addrs.length !== 2)
 		throw Error("Incorrect no of CD references");
 
-	/// 1.2 - Ensure we didnt get a false match.
+	$$(_ + '1.2 - Ensure we didn\'t get a false match')
 	let offset1 = 2;                        // position of first g_CCheatDefenderMgr reference
 	let offset2 = parts[0].byteCount() - 4; // position of second g_CCheatDefenderMgr reference
 
@@ -407,27 +412,27 @@ NoCDefender = function()
 		if (Exe.GetInt32(addr + offset1) !== Exe.GetInt32(addr + offset2))
 			throw Error(`Invalid Match for no. ${idx + 1}`);
 
-		/// 1.3 - Change the 1 in CMP instruction to 0
+		$$(_ + `[${idx}] 1.3 - Change the 1 in CMP instruction to 0`)
 		Exe.SetUint8(addr + offset2 - 2, 0);
 	});
 
-	/// 2.1 - Find the seperate g_CCheatDefenderMgr member assignment after the 2nd match
-	///       (g_CCheatDefenderMgr->enc_enabled = 1)
+	$$(_ + '2.1 - Find the seperate g_CCheatDefenderMgr member assignment after the 2nd match. (g_CCheatDefenderMgr->enc_enabled = 1)')
 	let CCDM = Exe.GetHex(addrs[0] + offset1, 4);
 	let code =
-		MOV(EAX, [CCDM])            //MOV EAX, DWORD PTR DS:[g_CCheatDefenderMgr]
-	+	MOV(BYTE_PTR, [EAX, 5], 1)  //MOV BYTE PTR DS:[EAX+5], 1
-	+	MOV(EAX, POS3WC)            //MOV EAX, CZ_ENTER
+		MOV(EAX, [CCDM])            //mov eax, dword ptr [g_CCheatDefenderMgr]
+	+	MOV(BYTE_PTR, [EAX, 5], 1)  //mov byte ptr [eax+5], 1
+	+	MOV(EAX, POS3WC)            //mov eax, CZ_ENTER
 	;
 	let addr = Exe.FindHex(code, addrs[1], addrs[1] + 0x150);
 	if (addr < 0)
 		throw Error("enc_enabled assignment missing");
 
-	/// 2.2 - Change the 1 to 0 in MOV BYTE PTR
+	$$(_ + '2.2 - Change the 1 to 0 in mov byte ptr')
 	Exe.SetUint8(addr + 8, 0);
 
-	/// 2.3 - Ask for copying the DLL
-	NCD_Response = Exe.GetUserInput("$copyNCDdll", D_Bool, "Copy Files", "Do you want the CDClient DLL copied as well?", true);
+	$$(_ + '2.3 - Ask for copying the DLL')
+	if (!Exe.TestMode)
+		Exe.GetUserInput('$copyNCDdll', D_Bool, "Copy Files", "Do you want the CDClient DLL copied as well?", true);
 
 	return true;
 };
@@ -435,14 +440,15 @@ NoCDefender = function()
 ///
 /// \brief Disable for unsupported clients (Need to have the DLL)
 ///
-NoCDefender.validate = () => Exe.FindText("CDClient.dll", PHYSICAL) > 0;
+NoCDefender.validate = () =>
+	Exe.FindText("CDClient.dll", PHYSICAL) > 0;
 
 ///
 /// \brief Extra Steps when the patch is applied (Copying the DLL)
 ///
 NoCDefender.onApplied = function()
 {
-	if (NCD_Response)
+	if (Exe.GetSavedInput('$copyNCDdll'))
 	{
 		let tgtDir = System.DirPath(Warp.TgtExe);
 		System.Copy(Warp.Path + "Inputs/CDClient.dll", tgtDir);

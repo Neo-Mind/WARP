@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-03-06                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -90,7 +90,7 @@ HideZeroDateInGuildWin = function()
 	+	JZ(0xB)             //jz short _skip
 	+	CALL([localTime32]) //call dword ptr [&MSVCR#._localtime32]
 	+	JMP(Filler(1))      //jmp <retnPos1>
-	+	POP(EAX)            //pop eax ; _skip
+	+	POP_EAX             //pop eax ; _skip
 	+	ins                 //lea eax, [ebp + timeStr]
 	+	MOV([EAX], 0)       //mov dword ptr [eax], 0
 	+	JMP(Filler(2))      //jmp <retnPos2>

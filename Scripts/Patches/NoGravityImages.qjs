@@ -22,16 +22,18 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-02-08                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Zero out the Gravity related Image specified
 ///
-NoGravityImages = function(suffix, idx, throwErr = true)
-{	
-	/// 1 - Find the Image suffix
+NoGravityImages = function(patchName, suffix, idx, throwErr = true)
+{
+	let _ = patchName + ` : [${idx}] `;
+
+	$$(_ + '1 - Find the Image suffix')
 	let addr = Exe.FindText("\\T_" + suffix + ".tga", PHYSICAL, false);
 	if (addr < 0)
 	{
@@ -42,7 +44,7 @@ NoGravityImages = function(suffix, idx, throwErr = true)
 	}
 	else
 	{
-		/// 2 - Change the 'T' to NULL
+		$$(_ + '2 - Change the \'T\' to NULL')
 		Exe.SetUint8(addr + 1, 0);
 	}
 
@@ -52,15 +54,15 @@ NoGravityImages = function(suffix, idx, throwErr = true)
 ///
 /// \brief Wrappers for individual patches
 ///
-NoGravityAds = () =>
+NoGravityAds = (patchName) =>
 {
-	NoGravityImages("\xC1\xDF\xB7\xC2\xBC\xBA\xC0\xCE", 1, !ROC.IsZero); //\T_중력성인.tga
-	NoGravityImages("\xC5\xD7\xC0\xD4%d", 2);		               		 //\T_테입%d.tga
+	NoGravityImages(patchName, "\xC1\xDF\xB7\xC2\xBC\xBA\xC0\xCE", 1, !ROC.IsZero); //\T_중력성인.tga
+	NoGravityImages(patchName, "\xC5\xD7\xC0\xD4%d", 2);		               		 //\T_테입%d.tga
 	if (Exe.BuildDate > 20100000)
-		NoGravityImages("GameGrade", 3);                 				 //\T_GameGrade.tga
+		NoGravityImages(patchName, "GameGrade", 3);                 				 //\T_GameGrade.tga
 
 	return true;
 };
 
-NoGravityLogo = () =>
-	NoGravityImages("R%d", 1);
+NoGravityLogo = (patchName) =>
+	NoGravityImages(patchName, "R%d", 1);
