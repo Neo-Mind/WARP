@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2021-02-24                                             *
-*   Last Modified : 2021-06-12                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,18 +32,20 @@
 ///
 IncrHairs = function(patchName)
 {
-	/// 1.1 - Find the format strings using a common part
+	let _ = patchName + ' : ';
+
+	$$(_ + '1.1 - Find the format strings using a common part')
 	let addrs = Exe.FindTextN("\\\xB8\xD3\xB8\xAE\xC5\xEB\\%s\\%s", PHYSICAL, false, false);
 	if (addrs.isEmpty())
 		throw Error("Format string(s) missing");
 
-	/// 1.2 - Extract the string addresses
+	$$(_ + '1.2 - Extract the string addresses')
 	let strAddrs = addrs.map(addr => (Exe.GetUint8(addr - 1) > 0 ? addr - 6 : addr));
 
-	/// 1.3 - Detect newer clients with Doram
+	$$(_ + '1.3 - Detect newer clients with Doram')
 	let doramOn = addrs[0] == strAddrs[0];
 
-	/// 1.4 - Find the format string for the palette (unless shared head palette is ON)
+	$$(_ + '1.4 - Find the format string for the palette (unless shared head palette is ON)')
 	let addr = -1;
 	let prefix = "\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE";
 	if (Exe.Version <= 9) //VC6 & VC9
@@ -55,10 +57,10 @@ IncrHairs = function(patchName)
 	if (addr < 0)
 		throw Error("Palette format string missing");
 
-	/// 1.5 - Add to the strAddrs
+	$$(_ + '1.5 - Add to the strAddrs')
 	strAddrs.push(addr);
 
-	/// 1.6 - Get the limit from user or set it to 65k based on the patch
+	$$(_ + '1.6 - Get the limit from user or set it to 65k based on the patch')
 	let isPalShared = Exe.IsSelected("HeadPalMF") || Exe.IsSelected("HeadPalUnisex");
 	if (patchName === "IncrHairStyles")
 	{
@@ -71,75 +73,70 @@ IncrHairs = function(patchName)
 		IH_Max = 65535;
 	}
 
-	/// 2 - Prep the lambda function for fixing comparisons
+	$$(_ + '2 - Prep the lambda function for fixing comparisons')
 	const fixCmp = (addr) =>
 	{
-		/// 2.1 - For highest limit just enforce the conditional jump after the CMP
 		if (IH_Max === 65535)
 		{
+			$$(_ + '2.1 - For highest limit just enforce the conditional jump after the CMP')
 			Exe.SetJMP(addr + 3);
 		}
 
-		/// 2.2 - For 1 byte limits directly alter the limit value used
 		else if (IH_Max <= 0x7F)
 		{
+			$$(_ + '2.2 - For 1 byte limits directly alter the limit value used')
 			Exe.SetInt16(addr + 2, IH_Max | 0x7C00); //7C to make it JLE in case it isnt.
 		}
 
 		else
 		{
-			/// 2.3 - For multi byte limits, extract the register used
+			$$(_ + '2.3 - For multi byte limits, extract the register used')
 			let reg = R32.List[Exe.GetUint8(addr + 1) & 0x7];
 
-			/// 2.4 - Prep code to compare
+			$$(_ + '2.4 - Prep code to compare')
 			code =
-				CMP(reg, IH_Max) //CMP reg, maxHairs
-			+	JA(Filler(1))    //JA defAddr
-			+	JMP(Filler(2))   //JMP validAddr
+				CMP(reg, IH_Max) //cmp reg, <maxHairs>
+			+	JA(Filler(1))    //ja <defAddr>
+			+	JMP(Filler(2))   //jmp <validAddr>
 			;
 
-			/// 2.5 - Find space for the code
-			let free = Exe.FindSpace(code.byteCount());
-			if (free < 0)
-				throw NO_ALLOC;
+			$$(_ + '2.5 - Find space for the code')
+			let [free, freeVir] = Exe.FindSpace(code.byteCount());
 
-			let freeVir = Exe.Phy2Vir(free, DIFF);
-
-			/// 2.6 - Fill in the blanks
+			$$(_ + '2.6 - Fill in the blanks')
 			code = SetFillTargets( code,
 			{
 				1: Exe.Phy2Vir(addr + 5, CODE),
 				2: Exe.GetTgtAddr(addr + 4, 1)
 			},
-				freeVir
-			);
+			freeVir);
 
-			/// 2.7 - Add to allocated space
+			$$(_ + '2.7 - Add to allocated space')
 			Exe.AddHex(free, code);
 
-			/// 2.8 - Setup a JMP to the allocated space
+			$$(_ + '2.8 - Setup a JMP to the allocated space')
 			Exe.SetJMP(addr, freeVir);
 		}
 
-		/// 2.9 - Change the default value to 2 instead of 0D or 6
+		$$(_ + '2.9 - Change the default value to 2 instead of 0D or 6')
 		let ins = Instr.FromAddr(addr + 5);
 		ins.Immd = 2;
 		Exe.SetHex(ins.Addr, ins);
 	};
 
-	/// 3 - Prep the lambda function for table fixes
+	$$(_ + '3 - Prep the lambda function for table fixes')
 	const fixTbl = (addr) =>
 	{
-		/// 3.1 - Extract the instruction
+		$$(_ + '3.1 - Extract the instruction')
 		let ins = Instr.FromAddr(addr);
 
-		/// 3.2 - Update the ModRM to not use the 4*reg part
+		$$(_ + '3.2 - Update the ModRM to not use the 4*reg part')
 		ins.MRM.update(null, null, ins.SIB.Base);
 
-		/// 3.3 - Change the SIB to 90h (quick hack to set a NOP at end).
+		$$(_ + '3.3 - Change the SIB to 90h (quick hack to set a NOP at end)')
 		ins.SIB.Data = 0x90;
 
-		/// 3.4 - Replace the instruction
+		$$(_ + '3.4 - Replace the instruction')
 		Exe.SetHex(ins.Addr, ins);
 	};
 
@@ -149,24 +146,24 @@ IncrHairs = function(patchName)
 
 		if (!isLast || !isPalShared)
 		{
-			/// 4.1 - Retrieve the string & get the position of the 2nd %s
+			$$(_ + '4.1 - Retrieve the string & get the position of the 2nd %s')
 			let fmt = Exe.GetText(memAddr);
 			let pos = fmt.indexOf("%s", isLast ? 0 : fmt.indexOf("%s") + 1);
 
-			/// 4.2 - Change the s to u
+			$$(_ + '4.2 - Change the s to u')
 			Exe.SetInt8(memAddr + pos + 1, 0x75);
 		}
 
-		/// 4.3 - Find where the string is used in a PUSH
+		$$(_ + '4.3 - Find where the string is used in a PUSH')
 		let strVir = Exe.Phy2Vir(memAddr);
 		let hookAddr = Exe.FindHex(PUSH(strVir));
 		if (hookAddr < 0)
 			throw Error("Format string not used");
 
-		/// 4.4 - Setup the stack register
+		$$(_ + '4.4 - Setup the stack register')
 		let sreg = ROC.HasFP ? EBP : ESP;
 
-		/// 4.5 - Find the start of the function
+		$$(_ + '4.5 - Find the start of the function')
 		let code, addr = -1, type; //type is used to find the stack offset later
 		if (Exe.BuildDate < 20111000)
 		{
@@ -174,21 +171,22 @@ IncrHairs = function(patchName)
 			if (ROC.HasFP)
 			{
 				code +=
-					PUSH(EBP)               //PUSH EBP
-				+	MOV(EBP, ESP)           //MOV EBP, ESP
+					FP_START               //push ebp
+					                       //mov ebp, esp
 				;
 			}
 			else
 			{
 				code +=
 					isLast
-				?	' CC'                   //INT3 or
-				:	PUSH_R                  //PUSH reg32
+				?	INT3                   //int3
+					                       // OR
+				:	PUSH_R                 //push regA
 				;
 			}
 
 			code +=
-				MOV(R32, [sreg, ' 0?']) //MOV reg32_A, DWORD PTR SS:[ARG.2] or SS:[ARG.1]
+				MOV(R32, [sreg, ' 0?']) //mov regA, dword ptr [ARG.2] or [ARG.1]
 			;
 
 			addr = Exe.FindLastHex(code, hookAddr, hookAddr - 0x200);
@@ -197,10 +195,10 @@ IncrHairs = function(patchName)
 		if (addr < 0)
 		{
 			code =
-				PUSH(-1)                //PUSH -1
-			+	PUSH(POS3WC)            //PUSH addr
-			+	MOV(EAX, FS, [0])       //MOV EAX, DWORD PTR FS:[0]
-			+	PUSH_EAX                //PUSH EAX
+				PUSH(-1)                //push -1
+			+	PUSH(POS3WC)            //push offset#1
+			+	MOV(EAX, FS, [0])       //mov eax, dword ptr fs:[0]
+			+	PUSH_EAX                //push eax
 			;
 
 			addr = Exe.FindLastHex(code, hookAddr, hookAddr - 0x400);
@@ -209,17 +207,17 @@ IncrHairs = function(patchName)
 		if (addr < 0)
 			throw Error("Function start missing");
 
-		/// 4.6 - Save the address after the code
+		$$(_ + '4.6 - Save the address after the code')
 		let beginAddr = addr + code.byteCount();
 
-		/// 4.7 - Find the limiting comparison for hairstyle
+		$$(_ + '4.7 - Find the limiting comparison for hairstyle')
 		let prefix =
-			" [01111.00] 05" //JL or JS SHORT _skip
-		+	CMP(R32, WCp)    //CMP reg32_A, limit
+			" [01111.00] 05" //jl/js short _skip#1
+		+	CMP(R32, WCp)    //cmp regA, <limit>
 		;
 
 		let suffix =
-			" [011111.0] 0?" //JL or JLE SHORT _skip2
+			" [011111.0] 0?" //jl/jle short _skip#2
 
 		addr = Exe.FindHex(prefix + suffix, beginAddr, beginAddr + 0x50);
 		if (addr < 0 && doramOn)
@@ -229,10 +227,10 @@ IncrHairs = function(patchName)
 		if (addr < 0 && !isLast)
 			throw Error("Limit checker missing");
 
-		/// 4.8 - Fix the CMP
+		$$(_ + '4.8 - Fix the CMP')
 		fixCmp(addr + 2);
 
-		/// 4.9 - Repeat when doram specific section is present (only for the spr & act)
+		$$(_ + '4.9 - Repeat when doram specific section is present (only for the spr & act)')
 		if (idx === 0 && doramOn)
 		{
 			addr = Exe.FindHex(prefix + suffix, addr + 5, addr + 0xB0);
@@ -240,14 +238,14 @@ IncrHairs = function(patchName)
 				fixCmp(addr + 2);
 		}
 
-		/// 4.10 - Find the table assignments (MOV or LEA reg32_A, [reg32_B*4 + reg32_C])
+		$$(_ + '4.10 - Find the table assignments (MOV or LEA regA, [regB*4 + regC])')
 		let isLEA = !isLast && strAddrs.length == 3 && Exe.BuildDate > 20111000;
 		code = isLEA
 			? LEA(R32, [4, R32, R32])
 			: MOV(R32, [4, R32, R32])
 			;
 
-		/// 4.11 - Filter out the false matches
+		$$(_ + '4.11 - Filter out the false matches')
 		let addrs = Exe.FindHexN(code, beginAddr, hookAddr).filter(addr =>
 		{
 			let ins = Instr.FromAddr(addr);
@@ -263,33 +261,33 @@ IncrHairs = function(patchName)
 			if (!isLast && ins2.Codes[0] === 0x52 && ins3.Codes[0] === 0x8B && ins3.SIB !== undefined && ins3.SIB.Scale === 2) //PUSH EDX followed by MOV r32, [r32*4 + r32]
 				return true;
 
-			if (ins2.Codes[0] === 0x8B && ins2.BC_Disp > 0) //MOV r32, [r32 + offset] followed by
+			if (ins2.Codes[0] === 0x8B && ins2.BC_Disp > 0) //MOV regA, [regB + offset] followed by
 			{
-				if (ins3.Codes[0] === 0x52) //PUSH EDX
+				if (ins3.Codes[0] === 0x52) //push edx
 					return true;
 
-				if (ins3.Codes[0] === 0x8B && ins3.BC_Disp === 1 && ins3.SIB === undefined) //or MOV r32, [r32_B + disp8] where r32_B is not ESP
+				if (ins3.Codes[0] === 0x8B && ins3.BC_Disp === 1 && ins3.SIB === undefined) //or mov rega, [regb + disp8] where regB is not esp
 					return true;
 			}
 
-			if (ins2.Codes[0] >= 0x50 && ins2.Codes[0] <= 0x57 && ins3.Codes[0] === 0x68) //PUSH EAX followed by PUSH OFFSET format
-				return true;
+			if (ins2.Codes[0] >= 0x50 && ins2.Codes[0] <= 0x57 && ins3.Codes[0] === 0x68) //push eax
+				return true;                                                              //push offset <formatStr>
 
 			return false;
 		});
 		if (addrs.isEmpty())
 			throw Error("Table fetchers not found");
 
-		/// 4.12 - Fix the tables
+		$$(_ + '4.12 - Fix the tables')
 		addrs.forEach(fixTbl);
 
 		if (!isLast || !isPalShared)
 		{
-			/// 5.1 - Calculate the base stack offset for retrieving the argument.
+			$$(_ + '5.1 - Calculate the base stack offset for retrieving the argument')
 			let offset;
 			if (ROC.HasFP)
 			{
-				offset = 4; //for the PUSH EBP
+				offset = 4; //for the 'push ebp'
 			}
 			else if (type === 1) //Older VC9 function signature
 			{
@@ -297,14 +295,16 @@ IncrHairs = function(patchName)
 			}
 			else //Newer VC9 function signature
 			{
-				offset = 4 * 3; //for PUSH -1, PUSH offset and PUSH EAX
-				offset += Exe.GetInt8(beginAddr + 2); //from SUB ESP, <const>
+				offset = 4 * 3; //for push -1, push offset#2 and push eax
+				offset += Exe.GetInt8(beginAddr + 2); //from sub esp, immA
 
 				code =
-					PUSH_R.repeat(3)   //PUSH reg32 x3
-				+	MOV(EAX, [POS3WC]) //MOV EAX, DWORD PTR DS:[addr]
-				+	XOR(EAX, ESP)      //XOR EAX, ESP
-				+	PUSH_EAX           //PUSH EAX
+					PUSH_R.repeat(3)   //push regA
+					                   //push regB
+					                   //push regC
+				+	MOV(EAX, [POS3WC]) //mov eax, dword ptr [offset#3]
+				+	XOR(EAX, ESP)      //xor eax, esp
+				+	PUSH_EAX           //push eax
 				;
 				addr = Exe.FindHex(code, beginAddr + 3, beginAddr + 0x20);
 				if (addr < 0)
@@ -318,7 +318,7 @@ IncrHairs = function(patchName)
 
 				if (Exe.BuildDate > 20111105)
 				{
-					addr = Exe.FindLastHex(PUSH_R.repeat(3) + LEA(R32, [sreg, WCp]), hookAddr, hookAddr - 0x20);
+					addr = Exe.FindLastHex(PUSH_R.repeat(3) + LEA(R32, [sreg, WCp]), hookAddr, hookAddr - 0x20); //push reg *3 and lea regA, [sreg + disp8]
 					if (addr < 0)
 						throw Error("Final Reg PUSHes missing");
 
@@ -334,7 +334,7 @@ IncrHairs = function(patchName)
 				}
 			}
 
-			/// 5.2 - Construct the function argument required (which contains the hairstyle number or a pointer to it - in the case of spr/act)
+			$$(_ + '5.2 - Construct the function argument required (which contains the hairstyle number or a pointer to it - in the case of spr/act)')
 			let arg;
 			if (Exe.BuildDate < 20111108)
 				arg = [sreg, offset + 4 * (isLast ? 1 : 2)];
@@ -343,38 +343,34 @@ IncrHairs = function(patchName)
 
 			offset = isLast ? 4 : 8;
 
-			/// 5.3 - Prep the hook code
+			$$(_ + '5.3 - Prep the hook code')
 			code =
-				PUSH_EAX          //PUSH EAX
-			+	ADD(ESP, offset)  //ADD ESP, 4 or 8
-			+	MOV(EAX, arg)     //MOV EAX, [ARG.5/ARG.2 or ARG.2/ARG.1] ; latter for palette
+				PUSH_EAX          //push eax
+			+	ADD(ESP, offset)  //add esp, 4/8
+			+	MOV(EAX, arg)     //mov eax, [ARG.5/ARG.2 or ARG.2/ARG.1] ; latter for palette
 			+	(!isLast
 			?
-				MOV(EAX, [EAX])   //MOV EAX, DWORD PTR DS:[EAX]
+				MOV(EAX, [EAX])   //mov eax, dword ptr [eax]
 			:
 				''
 			)
-			+	MOV([ESP], EAX)   //MOV DWORD PTR SS:[ESP], EAX
-			+	SUB(ESP, offset)  //SUB ESP, 4 or 8
-			+	POP(EAX)          //POP EAX
-			+	PUSH(strVir)      //PUSH addr ; ASCII <format string>
-			+	JMP(Filler(1))    //JMP retnAddr ; Return Address is after the PUSH
+			+	MOV([ESP], EAX)   //mov dword ptr [esp], eax
+			+	SUB(ESP, offset)  //sub esp, 4/8
+			+	POP(EAX)          //pop eax
+			+	PUSH(strVir)      //push offset <format string>
+			+	JMP(Filler(1))    //jmp <retnAddr> ; Return Address is after the PUSH
 			;
 
-			/// 3.4 - Allocate space for it
-			let free = Exe.FindSpace(code.byteCount(), 0x10);
-			if (free < 0)
-				throw NO_ALLOC;
+			$$(_ + '3.4 - Allocate space for it')
+			let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
-			let freeVir = Exe.Phy2Vir(free, DIFF);
-
-			/// 3.5 - Fill in the blanks
+			$$(_ + '3.5 - Fill in the blanks')
 			code = SetFillTarget(code, 1, Exe.Phy2Vir(hookAddr + 5, CODE), freeVir, 1);
 
-			/// 3.6 - Add at allocated space
+			$$(_ + '3.6 - Add at allocated space')
 			Exe.AddHex(free, code);
 
-			/// 3.7 - Create a JMP to our code
+			$$(_ + '3.7 - Create a JMP to our code')
 			Exe.SetJMP(hookAddr, freeVir);
 		}
 	});

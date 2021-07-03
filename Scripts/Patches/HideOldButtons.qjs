@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-03-12                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,39 +34,31 @@
 if (typeof HOB_Data === 'undefined') //avoid redefinition
 {
 	HOB_Data =
-	{	
+	{
 		Stats : //also serves as Equip button for older clients
 		{
-			strings: [
-				"info"
-			],
+			strings: ["info"],
 			zeroPrefix: true
 		},
-		
+
 		Equipment :
 		{
-			strings: [
-				"equip"
-			],
+			strings: ["equip"],
 			zeroPrefix: true
 		},
-		
+
 		Inventory :
 		{
-			strings: [
-				"item"
-			],
+			strings: ["item"],
 			zeroPrefix: true
 		},
-		
-		Skill : 
+
+		Skill :
 		{
-			strings: [
-				"skill"
-			],
+			strings: ["skill"],
 			zeroPrefix: true
 		},
-		
+
 		Booking :
 		{
 			strings: [
@@ -75,19 +67,19 @@ if (typeof HOB_Data === 'undefined') //avoid redefinition
 			],
 			zeroPrefix: false
 		},
-		
+
 		Party :
 		{
 			strings: ["party"],
 			zeroPrefix: true
 		},
-		
+
 		Guild :
 		{
 			strings: ["guild"],
 			zeroPrefix: true
 		},
-		
+
 		Battleground :
 		{
 			strings: [
@@ -96,19 +88,19 @@ if (typeof HOB_Data === 'undefined') //avoid redefinition
 			],
 			zeroPrefix: false
 		},
-		
+
 		Quest :
 		{
 			strings: ["quest"],
 			zeroPrefix: true
 		},
-		
+
 		WorldMap :
 		{
 			strings: ["map"],
 			zeroPrefix: true
 		},
-		
+
 		Navigation :
 		{
 			strings : [
@@ -125,7 +117,7 @@ if (typeof HOB_Data === 'undefined') //avoid redefinition
 			],
 			zeroPrefix: false
 		},
-		
+
 		Bank :
 		{
 			strings: [
@@ -134,7 +126,7 @@ if (typeof HOB_Data === 'undefined') //avoid redefinition
 			],
 			zeroPrefix: false
 		},
-		
+
 		Record :
 		{
 			strings: [
@@ -143,7 +135,7 @@ if (typeof HOB_Data === 'undefined') //avoid redefinition
 			],
 			zeroPrefix: false
 		},
-		
+
 		"Rodex (Mail)" :
 		{
 			strings: ["RO_menu_icon\\mail"],
@@ -165,19 +157,21 @@ if (typeof HOB_Data === 'undefined') //avoid redefinition
 ///
 HideOldButtons = function()
 {
-	/// 1 - Get the user's selection of buttons to hide.
-	let selection = Exe.GetUserInput('$hiddenButtons', D_MultiList, "Hide Buttons", "Choose the buttons to be hidden", [], {choices: HOB_Keys});
+	let _ = 'HideOldButtons : ';
+
+	$$(_ + '1 - Get the user\'s selection of buttons to hide')
+	let selection = Exe.GetUserInput('$hiddenButtons', D_MultiChoice, "Hide Buttons", "Choose the buttons to be hidden", [], {choices: HOB_Keys});
 	if (selection === false || selection.isEmpty())
 		Cancel("No buttons hidden");
 
-	/// 2 - Iterate and zero out each button (depending on zeroPrefix)
+	$$(_ + '2 - Iterate and zero out each button (depending on zeroPrefix)')
 	selection.forEach( key =>
 	{
-		/// 2.1 - Extract the essential data
+		$$(_ + `2.1 - Extract the essential data for key = ${key}`)
 		let {strings, zeroPrefix, strPhy} = HOB_Data[key];
 		if (!zeroPrefix)
 		{
-			/// 2.2 - If there is no zero prefix then we can simply zero it out (i.e. string itself can be manipulated)
+			$$(_ + '2.2 - If there is no zero prefix then we can simply zero it out (i.e. string itself can be manipulated)')
 			Exe.SetInt8(strPhy, 0);
 		}
 		else
@@ -189,40 +183,40 @@ HideOldButtons = function()
 
 			if (typeof HOB_AssignSkill === 'undefined') //to avoid redundancy
 			{
-				/// 2.3 - Find the string 'skill' (needed since some prefixes are matching multiple areas)
+				$$(_ + '2.3 - Find \'skill\' (needed since some prefixes are matching multiple areas)')
 				let refAddr = Exe.FindText("skill");
 				if (refAddr < 0)
 					throw Error("'skill' not found");
 
 				let refHex = refAddr.toHex();
 
-				/// 2.4 - Find where 'skill' is assigned (inside UIBasicWnd::OnCreate)
-				let code = MOV([]); //MOV DWORD PTR
+				$$(_ + '2.4 - Find where \'skill\' is assigned (inside UIBasicWnd::OnCreate)')
+				let code = MOV([]); //mov dword ptr
 				let addr = Exe.FindHex(refHex + code);
-				
+
 				if (addr < 0)
 				{
-					code = LEA(); //LEA
+					code = LEA(); //lea regA
 					addr = Exe.FindHex(refHex + code);
 				}
 				if (addr < 0)
 					throw Error("'skill' not assigned");
 
-				/// 2.5 - Save the address of the 'skill' assignment & the code used as prefix
+				$$(_ + '2.5 - Save the address of the \'skill\' assignment & the code used as prefix')
 				HOB_AssignSkill = addr;
 				HOB_Prefix = code;
 			}
 
-			/// 2.6 - Extract the Virtual address of the prefix
+			$$(_ + '2.6 - Extract the Virtual address of the prefix')
 			let {strVir} = HOB_Data[key];
 
-			/// 2.7 - Find the prefix assignment after 'skill' assignment
+			$$(_ + '2.7 - Find the prefix assignment after \'skill\' assignment')
 			let str = strings[0];
 			let addr = Exe.FindHex(strVir.toHex() + HOB_Prefix, HOB_AssignSkill - 0x80, HOB_AssignSkill + (Exe.BuildDate > 20140210 ? 0x200 : 0x50));
 			if (addr < 0)
 				throw Error(`'${str}' not assigned`);
 
-			/// 2.8 - Change the address to point to the ending NULL.
+			$$(_ + '2.8 - Change the address to point to the ending NULL')
 			///       (Not the ideal way to fix since it still flags missing file errors)
 			Exe.SetInt32(addr, strVir + str.length);
 		}
@@ -237,26 +231,28 @@ HideOldButtons = function()
 ///
 HideOldButtons.validate = function()
 {
-	/// 1.1 - Ensure the client is infact using the older style of buttons
+	let _ = 'HideOldButtons.validate : ';
+
+	$$(_ + '1.1 - Ensure the client is infact using the older style of buttons')
 	if (Exe.BuildDate > 20170000)
 		return false;
 
-	/// 1.2 - Undefine HOB_AssignSkill
+	$$(_ + '1.2 - Undefine HOB_AssignSkill')
 	delete HOB_AssignSkill;
-	
-	/// 2 - Iterate and test for string existence and keep the keys only for valid ones.
+
+	$$(_ + '2 - Iterate and test for string existence and keep the keys only for valid ones')
 	HOB_Keys = [];
-	
+
 	for (let key in HOB_Data)
 	{
-		/// 2.1 - Quest is only valid for 2010+
+		$$(_ + '2.1 - Quest is only valid for 2010+')
 		if (!ROC.Post2010 && key === "Quest")
 			return false;
 
-		/// 2.2 - Retrieve the essentials
+		$$(_ + `2.2 - Retrieve the essentials for key = ${key}`)
 		let {strings, zeroPrefix} = HOB_Data[key];
 
-		/// 2.3 - Find the first match amongst the strings specified
+		$$(_ + '2.3 - Find the first match amongst the strings specified')
 		let addr = -1;
 		strings.find( str =>
 		{
@@ -264,18 +260,18 @@ HideOldButtons.validate = function()
 			return (addr > 0);
 		});
 
-		/// 2.4 - When found save it into HOB_Data . Also save the VIRTUAL address if zeroPrefix is ON since we need it.
+		$$(_ + '2.4 - When found save it into HOB_Data . Also save the VIRTUAL address if zeroPrefix is ON since we need it')
 		if (addr > 0)
 		{
 			HOB_Data[key].strPhy = addr;
 			if (zeroPrefix)
 				HOB_Data[key].strVir = Exe.Phy2Vir(addr);
 
-			/// 2.5 - Push the key into the list
+			$$(_ + '2.5 - Push the key into the list')
 			HOB_Keys.push(key);
 		}
 	}
 
-	/// 3 - Patch is valid if atleast 1 button is present
+	$$(_ + '3 - Patch is valid if atleast 1 button is present')
 	return !(HOB_Keys.isEmpty());
 };

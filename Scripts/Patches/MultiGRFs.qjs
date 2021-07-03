@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-06-19                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,13 +36,15 @@
 ///
 MultiGRFs = function(patchName)
 {
-	/// 1.1 - Ensure the DGRF object is loaded
+	let _ = patchName + ' : ';
+
+	$$(_ + '1.1 - Ensure the DGRF object is loaded')
 	DGRF.load();
 
-	/// 1.2 - Retrieve the refAddr (push location)
+	$$(_ + '1.2 - Retrieve the refAddr (push location)')
 	let addr = DGRF.RefAddr;
 
-	/// 2.1 - Find the AddPak call after the PUSH
+	$$(_ + '2.1 - Find the AddPak call after the PUSH')
 	let code, type;
 	switch (Exe.Version)
 	{
@@ -99,13 +101,13 @@ MultiGRFs = function(patchName)
 	if (callAddr < 0)
 		throw Error("AddPak call not found");
 
-	/// 2.2 - Extract AddPak function address
+	$$(_ + '2.2 - Extract AddPak function address')
 	let AddPak = Exe.Phy2Vir(callAddr + 5, CODE) + Exe.GetInt32(callAddr + 1);
 
-	/// 2.3 - Little trick to avoid changing 10 bytes (change the push to MOV ECX, addr)
+	$$(_ + '2.3 - Little trick to avoid changing 10 bytes (change the push to MOV ECX, addr)')
 	Exe.SetUint8(addr, 0xB9);
 
-	/// 3.1 - Run one of the helper functions below based on the patch name.
+	$$(_ + '3.1 - Run one of the helper functions below based on the patch name')
 	///       Helper functions were made for better readability.
 	///       Only the uncommon activities are being done in the seperate functions
 	///
@@ -114,7 +116,7 @@ MultiGRFs = function(patchName)
 	else
 		_MG_EMB(callAddr, AddPak);
 
-	/// 3.2 - Find the string 'rdata.grf' and zero it out if present
+	$$(_ + '3.2 - Find \'rdata.grf\' and zero it out if present')
 	if (ROC.IsRenewal)
 		Exe.SetInt8(ROC.RGrfPhy, 0);
 
@@ -132,7 +134,9 @@ GRFsEmbedded = MultiGRFs;
 ///
 _MG_INI = (callAddr, AddPak) =>
 {
-	/// 1.1 - Get the essential addresses for our function
+	let _ = '_MG_INI : ';
+
+	$$(_ + '1.1 - Get the essential addresses for our function')
 	if (ROC.GetModHandle < 0)
 		throw Error("GetModuleHandleA not found");
 
@@ -142,42 +146,36 @@ _MG_INI = (callAddr, AddPak) =>
 	if (ROC.Kernel32 < 0)
 		throw Error("'KERNEL32.dll' not found");
 
-	/// 1.2 - Create the function code
-	let parts = 
-	[	
+	$$(_ + '1.2 - Create the function code')
+	let parts =
+	[
 		ENTER(0x80, 0)                  //enter 80h, 0
 	+	PUSHAD                          //pushad
 	+	PUSH(ROC.Kernel32)              //push offset "KERNEL32"
 	+	CALL([ROC.GetModHandle])        //call dword ptr [<&KERNEL32.GetModuleHandleA>]
 	+	TEST(EAX, EAX)                  //test eax, eax
 	+	JZ(Filler(1))                   //jz _codeOver
-	
-	,//1
-		MOV(EDI, [ROC.GetProcAddr])     //mov edi, dword ptr [<&KERNEL32.GetProcAddress>]
+	+	MOV(EDI, [ROC.GetProcAddr])     //mov edi, dword ptr [<&KERNEL32.GetProcAddress>]
 	+	PUSH(Filler(10))                //push offset "GetPrivateProfileStringA"
 	+	MOV(EBX, EAX)                   //mov ebx, eax
 	+	PUSH_EAX                        //push eax ; hModule
-	+	CALL(EDI)                       //call edi ; GetProcAddress()
+	+	CALL(EDI)                       //call edi ; GetProcAddress
 	+	TEST(EAX, EAX)                  //test eax, eax
 	+	JZ(Filler(1))                   //jz _codeOver
-	
-	,//2
-		MOV([EBP, -0xA], EAX)           //mov dword ptr [ebp-0Ah], eax
+	+	MOV([EBP, -0xA], EAX)           //mov dword ptr [ebp-0Ah], eax
 	+	PUSH(Filler(11))                //push offset "WritePrivateProfileStringA"
 	+	MOV(EAX, EBX)                   //mov eax, EBX
 	+	PUSH_EAX                        //push eax ; hModule
-	+	CALL(EDI)                       //call edi ; GetProcAddress()
+	+	CALL(EDI)                       //call edi ; GetProcAddress
 	+	TEST(EAX, EAX)                  //test eax, eax
-	+	JZ(Filler(1, 1))                //jz short _codeOver
-	
-	,//3
-		MOV([EBP, -6], EAX)             //mov dword ptr [ebp-6], eax
+	+	JZ(Filler(1,1))                 //jz short _codeOver
+	+	MOV([EBP, -6], EAX)             //mov dword ptr [ebp-6], eax
 	+	XOR(EDX, EDX)                   //xor edx, edx
-	
-	,//4
+
+	,//1
 		MOV(WORD_PTR, [EBP, -2], 0x39)  //mov word ptr [ebp-2], '9' ; _loopOuter
-	
-	,//5
+
+	,//2
 		PUSH(EDX)                       //push edx ; _loopInner
 	+	PUSH(Filler(13))                //push offset <INI filename>
 	+	PUSH(0x74)                      //push 74h
@@ -193,23 +191,21 @@ _MG_INI = (callAddr, AddPak) =>
 	+	LEA(EBX, [EBP, -0x7F])          //lea ebx, [ebp-7Fh]
 	+	CMP(CX, [EBX])                  //cmp cx, word ptr [ebx]
 	+	POP(EDX)                        //pop edx
-	+	JZ(0xE)                         //jz short _next
+	+	JZ(Filler(4,1))                 //jz short _next
 	+	PUSH(EDX)                       //push edx
 	+	PUSH(EBX)                       //push ebx
 	+	DGRF.MovFMgr                    //mov ecx, offset <g_fileMgr>
-	+	CALL(Filler(14))                 //call CFileMgr::AddPak()
+	+	CALL(Filler(14))                //call CFileMgr::AddPak
 	+	POP(EDX)                        //pop edx
 	+	INC(EDX)                        //inc edx
-	+	DEC(BYTE_PTR, [EBP, -2])        //dec byte ptr [ebp-2] ; _next
+
+	,//3
+		DEC(BYTE_PTR, [EBP, -2])        //dec byte ptr [ebp-2] ; _next
 	+	CMP(BYTE_PTR, [EBP, -2], 0x30)  //cmp byte ptr [ebp-2], 30h
-	+	JNB(Filler(2, 1))               //jnb short _loopInner
-	
-	,//6
-		TEST(EDX, EDX)                  //test edx, edx
-	+	JNZ(Filler(1, 1))               //jnz short _codeOver
-	
-	,//7
-		PUSH(Filler(13))                //push offset <INI filename>
+	+	JNB(Filler(2,1))                //jnb short _loopInner
+	+	TEST(EDX, EDX)                  //test edx, edx
+	+	JNZ(Filler(1,1))                //jnz short _codeOver
+	+	PUSH(Filler(13))                //push offset <INI filename>
 	+	PUSH(DGRF.Addr)                 //push offset "data.grf"
 	+	MOV(WORD_PTR, [EBP, -2], 0x32)  //mov word ptr [ebp-2], 32h
 	+	LEA(EAX, [EBP, -2])             //lea eax, [ebp-2]
@@ -217,67 +213,61 @@ _MG_INI = (callAddr, AddPak) =>
 	+	PUSH(Filler(12))                //push offset "Data"
 	+	CALL([EBP, -6])                 //call dword ptr [EBP-6]
 	+	TEST(EAX, EAX)                  //test eax, eax
-	+	JNZ(Filler(3, 1))               //jnz short _loopOuter
-	
-	,//8
+	+	JNZ(Filler(3,1))                //jnz short _loopOuter
+
+	,//4
 		POPAD                           //popad ; _codeOver
 	+	LEAVE                           //leave
 	+	RETN() + ' 00'                  //retn ; followed by 1 byte gap before strings begin
 	];
-	let csize = parts.byteCount();
-	
-	/// 2.1 - Get the INI file name from user
+	let offsets = MapAddrs(0, parts);
+
+	$$(_ + '2.1 - Get the INI file name from user')
 	let iniFile = Exe.GetUserInput('$dataINI', D_Text, "INI File path", "Enter the name of the INI file", "DATA.INI", {minLen: 1, maxLen: 20, saveDefault: true});
 	if (iniFile === false || iniFile.trim().isEmpty())
 		Cancel("No File name specified");
 
 	iniFile = ".\\" + iniFile;
 
-	/// 2.2 - Put all the strings in an array (we need their individual lengths later)
+	$$(_ + '2.2 - Put all the strings in an array (we need their individual lengths later)')
 	let strList = ["GetPrivateProfileStringA", "WritePrivateProfileStringA", "Data", iniFile];
 
-	/// 2.3 - Join the strings with NULL in between and convert to Hex
+	$$(_ + '2.3 - Join the strings with NULL in between and convert to Hex')
 	let strings = strList.join("\x00").toHex() + " 00";
 
-	/// 2.4 - Allocate space to add our function
-	
-	let free = Exe.FindSpace(csize + strings.byteCount(), 0x10);
-	if (free < 0)
-		throw NO_ALLOC;
+	$$(_ + '2.4 - Allocate space to add our function')
+	let [free, freeVir] = Exe.FindSpace(offsets.last() + strings.byteCount(), 0x10);
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
+	$$(_ + '2.5 - Fill in the blanks')
 
-	/// 2.5 - Fill in the blanks
-	
-	// First the jumps
-	let outerOff = parts.byteCount(0, 3);         //offset for _loopOuter
-	let innerOff = outerOff + parts.byteCount(4); //offset for _loopInner
-	let overOff = csize - parts.byteCount(8);     //offset for _codeOver
-	
-	let code = SetFillTarget(parts, 1, overOff, 0);
-	code = SetFillTargets(code,
+	// First the short jumps
+	let code = SetFillTargets(parts,
 	{
-		1: overOff,
-		2: innerOff,
-		3: outerOff,
-	}, 
-	0, -1, 1); //-1 for variable count & 1 for byte count
-	
+		1: offsets[4], // _codeOver
+		2: offsets[2], // _loopInner
+		3: offsets[1], // _loopOuter
+		4: offsets[3], // _next
+	},
+	0, -1, 1);
+
+	// Next the 1 long jump for _codeOver
+	code = SetFillTarget(code, 1, offsets[4], 0);
+
 	// Next the strings
-	let strPos = freeVir + csize;
+	let strPos = freeVir + offsets.last();
 	strList.forEach( (str, idx) =>
 	{
 		code = SwapFiller(code, idx + 10, strPos, 2);
 		strPos += str.length + 1;     //1 for null
 	});
-	
+
 	// Finally the AddPak function
 	code = SetFillTarget(code, 14, AddPak, freeVir, 1);
 
-	/// 3.1 - Add the function at the allocated space
+	$$(_ + '3.1 - Add the function at the allocated space')
 	Exe.AddHex(free, code + strings);
 
-	/// 3.2 - Change the AddPak call to use our function
+	$$(_ + '3.2 - Change the AddPak call to use our function')
 	Exe.SetTgtAddr(callAddr + 1, freeVir);
 };
 
@@ -288,7 +278,9 @@ _MG_INI = (callAddr, AddPak) =>
 ///
 _MG_EMB = (callAddr, AddPak) =>
 {
-	/// 1.1 - Get the INI file from user to read
+	let _ = '_MG_EMB : ';
+
+	$$(_ + '1.1 - Get the INI file from user to read')
 	let file = Exe.GetUserInput('$inpMultGRF', D_InFile, "GRF List file", "Enter your INI file (containing GRF names) to embed", "Inputs/Sample_DATA.INI");
 	if (file === false)
 		Cancel("No input file received");
@@ -300,7 +292,7 @@ _MG_EMB = (callAddr, AddPak) =>
 	if (!handle.Valid)
 		throw Error("INI file is not readable");
 
-	/// 1.2 - Read the GRF filenames from the INI file into an array
+	$$(_ + '1.2 - Read the GRF filenames from the INI file into an array')
 	let grfNames = [];
 	while (!handle.AtEnd())
 	{
@@ -315,40 +307,37 @@ _MG_EMB = (callAddr, AddPak) =>
 	}
 	handle.Close();
 
-	/// 1.3 - Account for empty input file (atleast data.grf should be there)
+	$$(_ + '1.3 - Account for empty input file (atleast data.grf should be there)')
 	if (grfNames.isEmpty())
 		grfNames[0] = DGRF.Name;
 
-	/// 1.4 - Remove empty indices
+	$$(_ + '1.4 - Remove empty indices')
 	grfNames = grfNames.filter( name => name ?? false );
 
-	/// 2.1 - Prepare template for load 1 GRF (same needs to be repeated for all GRF files)
+	$$(_ + '2.1 - Prepare template for load 1 GRF (same needs to be repeated for all GRF files)')
 	let template =
 		PUSH(Filler(1))  //push offset <GRF name>
-	+	DGRF.MovFMgr     //mov ecx, offset <g_fileMgr>
+	+	DGRF.MovFMgr     //mov ecx, <g_fileMgr>
 	+	CALL(Filler(2))  //call CFileMgr::AddPak
 	;
 	let tsize = template.byteCount();
 
-	/// 2.2 - Join the strings with NULL in between and convert to Hex
+	$$(_ + '2.2 - Join the strings with NULL in between and convert to Hex')
 	let strings = grfNames.join("\x00").toHex() + " 00";
 
-	/// 2.3 - Allocate space to add our function
+	$$(_ + '2.3 - Allocate space to add our function')
 	let fullSize = grfNames.length * tsize + 2 + strings.byteCount(); //2 is for RETN & a null to leave a gap between the function and the strings
-	let free = Exe.FindSpace(fullSize, 0x10);
-	if (free < 0)
-		throw NO_ALLOC;
+	let [free, freeVir] = Exe.FindSpace(fullSize, 0x10);
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
-
-	/// 2.4 - Prepare the full code using the template with proper values
+	$$(_ + '2.4 - Prepare the full code using the template with proper values')
 	let strAddr = freeVir + grfNames.length * tsize + 2;    //Address of first string
 	let funAddr = AddPak - (strAddr - 2);                   //Difference value for Last AddPak call location (first string needs to be loaded last)
 
 	let code = "";
 	grfNames.forEach( name =>
 	{
-		code = SwapFillers(template, {
+		code = SwapFillers(template,
+		{
 			1: strAddr,
 			2: funAddr
 		})
@@ -360,10 +349,10 @@ _MG_EMB = (callAddr, AddPak) =>
 
 	code += RETN() + ' 00';//retn and 1 extra NULL byte
 
-	/// 2.5 - Add the function at the gap
+	$$(_ + '2.5 - Add the function at the gap')
 	Exe.AddHex(free, code + strings);
 
-	/// 2.6 - Change the AddPak call to use our function
+	$$(_ + '2.6 - Change the AddPak call to use our function')
 	Exe.SetTgtAddr(callAddr + 1, freeVir);
 };
 

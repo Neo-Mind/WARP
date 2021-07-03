@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-01-19                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,114 +32,112 @@
 ///
 function ItemInfoPerServer()
 {
-	/// 1.1 - Ensure LUA is present
-	LUA.load();
+	let _ = 'ItemInfoPerServer : ';
 
-	/// 1.2 - Find the pattern before Server Name is pushed to StringAllocator Function
+	$$(_ + '1.1 - Find the pattern before Server Name is pushed to StringAllocator Function')
 	let code =
-		SHL(R32, 5)                             //SHL reg32_A,5 ;reg32_A is usually EDI
-	+	CMP(WORD_PTR, [R32, R32, POS2WC], 0x3)  //CMP WORD PTR DS:[reg32_B+reg32_A+const],3 ;const is usually 1F4
+		SHL(R32, 5)                             //shl regA, 5 ; regA is usually EDI
+	+	CMP(WORD_PTR, [R32, R32, POS2WC], 0x3)  //cmp word ptr [regB + regA + dispC], 3 ; dispC is usually 1F4
 	;
 
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Pattern not found");
 
-	/// 1.3 - Set addr to location after the CMP
+	$$(_ + '1.2 - Set addr to location after the CMP')
 	addr += code.byteCount();
 
-	/// 1.4 - Find the StringAllocator call after pattern
+	$$(_ + '1.3 - Find the StringAllocator call after pattern')
 	code =
-		MOV(ECX, POS4WC)         //MOV ECX, addr
-	+	CALL(ALLWC)              //CALL StringAllocator
-	+	MOV(R32, [R32, POS2WC])  //MOV reg32_A, DWORD PTR DS:[reg32_B + const]
+		MOV(ECX, POS4WC)         //mov ecx, offset
+	+	CALL(ALLWC)              //call <StringAllocator>
+	+	MOV(R32, [R32, POS2WC])  //mov regA, dword ptr [regB + dispB]
 	;
 	let directCALL = true;
 	let addr2 = Exe.FindHex(code, addr, addr + 0x40);
 
 	if (addr2 < 0)
 	{
-		code = code.replace(CALL(ALLWC), CALL([POS4WC])); //CALL DWORD PTR DS:[StringAllocator]
+		code = code.replace(CALL(ALLWC), CALL([POS4WC])); //call dword ptr [StringAllocator]
 		directCALL = false;
 		addr2 = Exe.FindHex(code, addr, addr + 0x40);
 	}
 	if (addr2 < 0)
 		throw Error("StringAllocator CALL missing");
 
-	/// 1.5 - Save the address after the MOV ECX
+	$$(_ + '1.4 - Save the address after the MOV ECX')
 	let allocInject = addr2 + 5;
 
-	/// 2.1 - Find where ItemInfo Error string is PUSHed
+	$$(_ + '2.1 - Find where ItemInfo Error string is PUSHed')
 	addr = Exe.FindHex( PUSH(IIPS_Addr) );
 	if (addr < 0)
 		throw Error("ItemInfo ErrStr not used");
 
-	/// 2.2 - Find the loader CALL before the PUSH
+	$$(_ + '2.2 - Find the loader CALL before the PUSH')
 	code =
-		CALL(ALLWC)         //CALL iteminfoPrep
-	+	MOV(ECX, [POS4WC])  //MOV ECX, DWORD PTR DS:[refAddr]
-	+	CALL()              //CALL iteminfoLoader
+		CALL(ALLWC)         //call <iteminfoPrep>
+	+	MOV(ECX, [POS4WC])  //mov ecx, dword ptr [refAddr]
+	+	CALL()              //call <iteminfoLoader>
 	;
 
 	addr = Exe.FindHex(code, addr - 0x30, addr);
 	if (addr < 0)
 		throw Error("ItemInfo loader missing");
 
-	/// 2.4 - Extract the MOV ECX statement
+	$$(_ + '2.4 - Extract the MOV ECX statement')
 	let refMOV = Exe.GetHex(addr + 5, 6);
 
-	/// 2.5 - Change the MOV statement to JMP for skipping the loader
-	///       Also set AL to 1 (faux return value from the loader)
+	$$(_ + '2.5 - Change the MOV statement to JMP for skipping the loader. Also set AL to 1 (faux return value from the loader)')
 	let code2 =
-		MOV(AL, 1)  //MOV AL, 1
-	+	JMP(7)      //JMP to after iteminfoLoader call
+		MOV(AL, 1)  //mov al, 1
+	+	JMP(7)      //jmp _skip ; to location after 'call <iteminfoLoader>'
 	;
 	Exe.SetHex(addr + 5, code2);
 
-	/// 2.6 - Set addr to location of the iteminfoLoader function
+	$$(_ + '2.6 - Set addr to location of the iteminfoLoader function')
 	addr = Exe.GetTgtAddr(addr + code.byteCount(), PHYSICAL);
 
-	/// 2.7 - Save its VIRTUAL address
+	$$(_ + '2.7 - Save its VIRTUAL address')
 	let iiLoaderFunc = Exe.Phy2Vir(addr);
 
-	/// 3.1 - Find 'main'
+	$$(_ + '3.1 - Find \'main\'')
 	addr2 = Exe.FindText("main");
 	if (addr2 < 0)
 		throw Error("'main' not found");
 
-	/// 3.2 - Find the "main" PUSH to Lua stack inside iteminfoLoader
+	$$(_ + '3.2 - Find the "main" PUSH to Lua stack inside iteminfoLoader')
 	code =
-		PUSH(addr2)    //PUSH OFFSET addr; ASCII "main"
-	+ 	PUSH(-0x2712)  //PUSH -2712
+		PUSH(addr2)    //push offset "main"
+	+ 	PUSH(-0x2712)  //push -2712h
 	;
-	addr2 = Exe.FindHex(code, addr, addr + 0x200);	
+	addr2 = Exe.FindHex(code, addr, addr + 0x200);
 	if (addr2 < 0)
 		throw Error("'main' not used");
 
-	/// 3.3 - Set addr2 to location after the PUSHes
+	$$(_ + '3.3 - Set addr2 to location after the PUSHes')
 	addr2 += code.byteCount();
 
-	/// 3.4 - Find the CALL to Lua caller after it
+	$$(_ + '3.4 - Find the CALL to Lua caller after it')
 	let ins = FindInstr(i => i.Codes[0] === 0xE8, addr2, addr2 + 10);
 	if (ins === false)
 		throw Error("CALL missing after 'main' PUSH");
 
-	/// 3.3 - Save the location of the CALL
+	$$(_ + '3.3 - Save the location of the CALL')
 	let mainInject = ins.Addr;
 
-	/// 3.4 - Find the arg count PUSHes after it
+	$$(_ + '3.4 - Find the arg count PUSHes after it')
 	addr = Exe.FindHex(PUSH_0 + PUSH_2 + PUSH_0, mainInject + 5, mainInject + 0x20);
 	if (addr < 0)
 		throw Error("Arg Count PUSH missing");
 
-	/// 3.5 - Change the last PUSH 0 to PUSH 1 (since we have 1 input argument)
+	$$(_ + '3.5 - Change the last PUSH 0 to PUSH 1 (since we have 1 input argument)')
 	Exe.SetInt8(addr + 5, 1);
 
-	/// 4.1 - Find the location where the iteminfo copier is called
+	$$(_ + '4.1 - Find the location where the iteminfo copier is called')
 	code =
-		refMOV            //MOV ECX, DWORD PTR DS:[refAddr]
-	+	PUSH(POS4WC)    //PUSH OFFSET iiAddr
-	+	CALL(NEG3WC)    //CALL iteminfoCopier
+		refMOV          //mov ecx, dword ptr [refAddr]
+	+	PUSH(POS4WC)    //push offset <iiAddr>
+	+	CALL(NEG3WC)    //call <iteminfoCopier>
 	;
 	addr = Exe.FindHex(code);
 
@@ -153,31 +151,34 @@ function ItemInfoPerServer()
 
 	addr += refMOV.byteCount();
 
-	/// 4.2 - Extract the PUSH statement and Copier Function address
+	$$(_ + '4.2 - Extract the PUSH statement and Copier Function address')
 	let iiPush = Exe.GetHex(addr, 5);
 	let iiCopierFunc = Exe.GetTgtAddr(addr + 6);
 
-	/// 5.1 - Find the 's' input Push Function call inside the LuaFn Caller
+	$$(_ + '5.1 - Ensure LUA object is loaded')
+	LUA.load();
+
+	$$(_ + '5.2 - Find the \'s\' input Push Function call inside the LuaFn Caller')
 	addr2 = Exe.Vir2Phy(LUA.FnInvoker, CODE);
 	let prefix =
-		MOV(R32, [R32])  //MOV reg32_A, DWORD PTR DS:[reg32_B]
-	+	MOV(R32, [R32])  //MOV reg32_C, DWORD PTR DS:[reg32_D]
-	+	ADD(R32, 4)      //ADD reg32_B, 4
-	+	PUSH_R           //PUSH reg32_A
-	+	PUSH_R           //PUSH reg32_C
+		MOV(R32, [R32])  //mov regA, dword ptr [regB]
+	+	MOV(R32, [R32])  //mov regC, dword ptr [regD]
+	+	ADD(R32, 4)      //add regB, 4
+	+	PUSH_R           //push regA
+	+	PUSH_R           //push regC
 	;
 	let suffix =
-		CALL(ALLWC)      //CALL StringPusher
-	+	ADD(ESP, 8)      //ADD ESP, 8
+		CALL(ALLWC)      //call <StringPusher>
+	+	ADD(ESP, 8)      //add esp, 8
 	;
 	addr = Exe.FindHex(prefix + suffix, addr2, addr2 + 0x180);
 
 	if (addr < 0)
 	{
 		prefix =
-			PUSH([R32])  //PUSH DWORD PTR DS:[reg32_B]
-		+	ADD(R32, 4)  //ADD reg32_B, 4
-		+	PUSH([R32])  //PUSH DWORD PTR DS:[reg32_D]
+			PUSH([R32])  //push dword ptr [regB]
+		+	ADD(R32, 4)  //add regB, 4
+		+	PUSH([R32])  //push dword ptr [regD]
 		;
 		addr = Exe.FindHex(prefix + suffix, addr2, addr2 + 0x180);
 	}
@@ -186,77 +187,71 @@ function ItemInfoPerServer()
 
 	addr += prefix.byteCount() + 1;
 
-	/// 5.2 - Extract the Function address
+	$$(_ + '5.2 - Extract the Function address')
 	let strPushFunc = Exe.GetTgtAddr(addr);
 
-	/// 6.1 - Prep code to Push String after "main" push
+	$$(_ + '6.1 - Prep code to Push String after "main" push')
 	code =
-		CALL(Filler(1))    //CALL LuaFnNamePusher
-	+	ADD(ESP, 8)        //ADD ESP, 8
-	+	PUSH([Filler(2)])  //PUSH DWORD PTR DS:[serverAddr]
-	+	SUB(ESP, 4)        //SUB ESP, 4
-	+	CALL(Filler(3))    //CALL StringPusher
-	+	JMP(Filler(4))     //JMP addr -> after original CALL LuaFnNamePusher
+		CALL(Filler(1))    //call <LuaFnNamePusher>
+	+	ADD(ESP, 8)        //add esp, 8
+	+	PUSH([Filler(2)])  //push dword ptr [serverAddr]
+	+	SUB(ESP, 4)        //sub esp, 4
+	+	CALL(Filler(3))    //call <StringPusher>
+	+	JMP(Filler(4))     //jmp addr -> after original CALL LuaFnNamePusher
 	+	ALL00              //<-serverAddr
 	;
 	let csize = code.byteCount();
 
-	/// 6.2 - Allocate space for it
-	let free = Exe.FindSpace(csize, 0x10);
-	if (free < 0)
-		throw NO_ALLOC;
+	$$(_ + '6.2 - Allocate space for it')
+	let [free, freeVir] = Exe.FindSpace(csize, 0x10);
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
-
-	/// 6.3 - Fill in the blanks
+	$$(_ + '6.3 - Fill in the blanks')
 
 	// CALLs & JMPs
-	code = SetFillTargets(code, {
+	code = SetFillTargets(code,
+	{
 		1 : Exe.GetTgtAddr(mainInject + 1),
 		3 : strPushFunc,
 		4 : Exe.Phy2Vir(mainInject + 5, CODE)
-	}, freeVir, 1);
+	},
+	freeVir, 1);
 
 	// serverAddr
 	let servAddr = freeVir + csize - 4;
 	code = SwapFiller(code, 2, servAddr, 1);
 
-	/// 6.4 - Change the LuaFnNamePusher call to a JMP to our code
+	$$(_ + '6.4 - Change the LuaFnNamePusher call to a JMP to our code')
 	Exe.SetJMP(mainInject, freeVir);
 
-	/// 6.5 - Inject to allocated space
+	$$(_ + '6.5 - Inject to allocated space')
 	Exe.AddHex(free, code);
 
-	/// 7.1 - Prep code for calling the iteminfo loader upon server select
+	$$(_ + '7.1 - Prep code for calling the iteminfo loader upon server select')
 	code = (directCALL
 	?
-		CALL(Filler(1))       //CALL StringAllocator - This function also does stack restore but the servername argument is not wiped off the stack
-	:                         // or
-		CALL([Filler(1)])     //CALL DWORD PTR DS:[StringAllocator] - This function also does stack restore but the servername argument is not wiped off the stack
+		CALL(Filler(1))       //call <StringAllocator> - This function also does stack restore but the servername argument is not wiped off the stack
+	:                         //   OR
+		CALL([Filler(1)])     //call dword ptr [StringAllocator] - This function also does stack restore but the servername argument is not wiped off the stack
 	)
-	+	MOV(EAX, [ESP, -4])   //MOV EAX, DWORD PTR SS:[ESP-4]
-	+	CMP(EAX, [servAddr])  //CMP EAX, DWORD PTR DS:[serverAddr]; need to improve this - better would be to do strcmp on the string addresses
-	+	JE(0x20)              //JE Skip
-	+	MOV([servAddr], EAX)  //MOV DWORD PTR DS:[serverAddr], EAX
-	+	refMOV                //MOV ECX, DWORD PTR DS:[refAddr]
-	+	CALL(Filler(2))       //CALL iiLoaderFunc
-	+	refMOV                //MOV ECX, DWORD PTR DS:[refAddr] ;You can also add checking before this
-	+	iiPush                //PUSH OFFSET iiAddr
-	+	CALL(Filler(3))       //CALL iiCopierFunc
-	+	JMP(Filler(4))        //JMP to after original function call
+	+	MOV(EAX, [ESP, -4])   //mov eax, dword ptr [esp-4]
+	+	CMP(EAX, [servAddr])  //cmp eax, dword ptr [serverAddr] ; need to improve this - better would be to do strcmp on the string addresses
+	+	JE(Filler(4))         //je <retnAddr> ; to after original function call
+	+	MOV([servAddr], EAX)  //mov dword ptr [serverAddr], EAX
+	+	refMOV                //mov ecx, dword ptr [refAddr]
+	+	CALL(Filler(2))       //call <iiLoaderFunc>
+	+	refMOV                //mov ecx, dword ptr [refAddr] ;You can also add checking before this
+	+	iiPush                //push <iiAddr>
+	+	CALL(Filler(3))       //call <iiCopierFunc>
+	+	JMP(Filler(4))        //jmp <retnAddr> ; to after original function call
 	;
 	csize = code.byteCount();
 
-	/// 7.2 - Allocate space for it
-	free = Exe.FindSpace(csize);
-	if (free < 0)
-		throw NO_ALLOC;
-
-	freeVir = Exe.Phy2Vir(free, DIFF);
+	$$(_ + '7.2 - Allocate space for it')
+	[free, freeVir] = Exe.FindSpace(csize);
 
 	let freeEnd = freeVir + csize;
 
-	/// 7.3 - Fill in the blanks
+	$$(_ + '7.3 - Fill in the blanks')
 	code = directCALL
 	?
 		SetFillTarget(code, 1, Exe.GetTgtAddr(allocInject + 1), freeVir, 1)
@@ -264,19 +259,21 @@ function ItemInfoPerServer()
 		SwapFiller(code, 1, Exe.GetUint32(allocInject + 2), 1)
 	;
 
-	code = SetFillTargets(code, {
+	code = SetFillTargets(code,
+	{
 		2 : iiLoaderFunc,
 		3 : iiCopierFunc,
 		4 : Exe.Phy2Vir(allocInject + 5, CODE)
-	}, freeVir, 1);
+	},
+	freeVir);
 
-	/// 7.4 - Change the function call to a JMP to our custom code
+	$$(_ + '7.4 - Change the function call to a JMP to our custom code')
 	Exe.SetJMP(allocInject, freeVir);
 
 	if (!directCALL)
 		Exe.SetNOPs(allocInject + 5, 1);
 
-	/// 7.5 - Inject to allocated space
+	$$(_ + '7.5 - Inject to allocated space')
 	Exe.AddHex(free, code);
 
 	return true;

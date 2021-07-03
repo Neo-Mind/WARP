@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-03-06                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,41 +31,49 @@
 ///
 HideZeroDateInGuildWin = function()
 {
-	/// 1.1 - Find the location where the 'Msg strings' are fetched in UIGuildMemberManageWnd_virt68
+	let _ = 'HideZeroDateInGuildWin : ';
+
+	$$(_ + '1.1 - Find the location where the "Msg strings" are fetched in UIGuildMemberManageWnd_virt68')
 	let parts =
-	[//0
-		CALL([POS3WC])           //CALL DWORD PTR DS:[&MSVCR#._localtime32]
+	[
+		CALL([POS3WC])           //call dword ptr [&MSVCR#._localtime32]
+
 	,//1
-		ADD(ESP, 4)              //ADD ESP, 4
-	+	PUSH_EAX                 //PUSH EAX
-	+	PUSH(0xBC3)              //PUSH 0BC3
+		ADD(ESP, 4)              //add esp, 4
+	+	PUSH_EAX                 //push eax
+	+	PUSH(0xBC3)              //push 0BC3h
+
 	,//2
-		CALL(ALLWC)              //CALL MsgStr
+		CALL(ALLWC)              //call MsgStr
+
 	,//3
-		ADD(ESP, 4)              //ADD ESP, 4
-	+	PUSH_EAX                 //PUSH EAX
+		ADD(ESP, 4)              //add esp, 4
+	+	PUSH_EAX                 //push eax
+
 	,//4
-		LEA(EAX, [EBP, ALLWC])   //LEA EAX, [EBP + timeStr]
-	+	PUSH(0x80)               //PUSH 80
-	+	PUSH_EAX                 //PUSH EAX
-	+	CALL([POS3WC])           //CALL DWORD PTR DS:[&MSVCR#.strftime]
-	+	ADD(ESP, 0x10)           //ADD ESP, 10
+		LEA(EAX, [EBP, ALLWC])   //lea eax, [ebp + timeStr]
+	+	PUSH(0x80)               //push 80h
+	+	PUSH_EAX                 //push eax
+	+	CALL([POS3WC])           //call dword ptr [&MSVCR#.strftime]
+	+	ADD(ESP, 0x10)           //add esp, 10h
+
 	,//5
-		LEA(EAX, [EBP, ALLWC])   //LEA EAX, [EBP + timeStr]
-	+	PUSH_EAX                 //PUSH EAX
-	+	PUSH(0xBC4)              //PUSH 0BC4
+		LEA(EAX, [EBP, ALLWC])   //lea eax, [ebp + timeStr]
+	+	PUSH_EAX                 //push eax
+	+	PUSH(0xBC4)              //push 0BC4h
+
 	,//6
-		CALL(ALLWC)              //CALL MsgStr
+		CALL(ALLWC)              //call MsgStr
 	];
 
 	let addr = Exe.FindHex(parts);
 	if (addr < 0)
 		throw Error("Function not found");
 
-	/// 1.2 - Calculate the different positional addresses
+	$$(_ + '1.2 - Calculate the different positional addresses')
 	let [, retnPos1, callPos1, retnPos2, leaPos1, leaPos2, callPos2] = MapAddrs(addr, parts);
 
-	/// 1.3 - Ensure we dont have a false match
+	$$(_ + '1.3 - Ensure we dont have a false match')
 	if (Exe.GetTgtAddr(callPos1 + 1) !== Exe.GetTgtAddr(callPos2 + 1))
 		throw Error("Mismatched function CALLs");
 
@@ -73,39 +81,35 @@ HideZeroDateInGuildWin = function()
 	if (ins.Disp !== Instr.FromAddr(leaPos2).Disp)
 		throw Error("Mismatched offsets");
 
-	/// 1.4 - Extract the localTime32 function address
+	$$(_ + '1.4 - Extract the localTime32 function address')
 	let localTime32 = Exe.GetInt32(addr + 2);
 
-	/// 2.1 - Prepare the new code
+	$$(_ + '2.1 - Prepare the new code')
 	let code =
-		CMP([EAX], 0)       //CMP DWORD PTR DS:[EAX], 0
-	+	JZ(0xB)             //JZ SHORT _skip
-	+	CALL([localTime32]) //CALL DWORD PTR DS:[&MSVCR#._localtime32]
-	+	JMP(Filler(1))      //JMP retnPos1
-	+	POP(EAX)            //POP EAX
-	+	ins                 //LEA EAX, [EBP + timeStr]
-	+	MOV([EAX], 0)       //MOV DWORD PTR DS:[EAX], 0
-	+	JMP(Filler(2))      //JMP retnPos2
+		CMP([EAX], 0)       //cmp dword ptr [eax], 0
+	+	JZ(0xB)             //jz short _skip
+	+	CALL([localTime32]) //call dword ptr [&MSVCR#._localtime32]
+	+	JMP(Filler(1))      //jmp <retnPos1>
+	+	POP(EAX)            //pop eax ; _skip
+	+	ins                 //lea eax, [ebp + timeStr]
+	+	MOV([EAX], 0)       //mov dword ptr [eax], 0
+	+	JMP(Filler(2))      //jmp <retnPos2>
 	;
 
-	/// 2.2 - Allocate space for it
-	let free = Exe.FindSpace(code.byteCount());
-	if (free < 0)
-		throw NO_ALLOC;
+	$$(_ + '2.2 - Allocate space for it')
+	let [free, freeVir] = Exe.FindSpace(code.byteCount());
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
-
-	/// 2.3 - Fill in the blanks
+	$$(_ + '2.3 - Fill in the blanks')
 	code = SetFillTargets(code,
 	{
 		1: Exe.Phy2Vir(retnPos1, CODE),
 		2: Exe.Phy2Vir(retnPos2, CODE)
 	}, freeVir, 1);
 
-	/// 2.4 - Add to allocated space
+	$$(_ + '2.4 - Add to allocated space')
 	Exe.AddHex(free, code);
 
-	/// 2.5 - Setup a JMP to our code at the starting address.
+	$$(_ + '2.5 - Setup a JMP to our code at the starting address')
 	Exe.SetJMP(addr, freeVir);
 
 	return true;
@@ -114,4 +118,5 @@ HideZeroDateInGuildWin = function()
 ///
 /// \brief Disable for unsupported clients - Only 2017+ has it
 ///
-HideZeroDateInGuildWin.validate = () => Exe.BuildDate > 20170000;
+HideZeroDateInGuildWin.validate = () =>
+	Exe.BuildDate > 20170000;

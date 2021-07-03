@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,20 +35,22 @@
 ///
 RemoveBookingJobs = function()
 {
-	/// 1.1 - Find the MsgStr CALL used for Job Name loading.
+	let _ = 'RemoveBookingJobs : ';
+
+	$$(_ + '1.1 - Find the MsgStr CALL used for Job Name loading')
 	let code, type;
 	switch (Exe.Version)
 	{
 		case 6: //VC6
 		{
 			code =
-				LEA(R32, [R32, 0x65D])  //LEA reg32_A, [reg32_B + 65D]
-			+	ADD(R32, R32)           //ADD reg32_B, reg32_C
-			+	MOV([EBP, WCn], R32)    //MOV DWORD PTR SS:[EBP-const1], reg32_A
-			+	MOV([EBP, WCn], R32)    //MOV DWORD PTR SS:[EBP-const2], reg32_B
-			+	MOV(EAX, [EBP, WCn])    //MOV EAX, DWORD PTR SS:[EBP-const1]
-			+	PUSH_EAX                //PUSH EAX
-			+	CALL()                  //CALL MsgStr
+				LEA(R32, [R32, 0x65D])  //lea regA, [regB + 65D]
+			+	ADD(R32, R32)           //add regB, regC
+			+	MOV([EBP, WCn], R32)    //mov dword ptr [LOCAL.1], regA
+			+	MOV([EBP, WCn], R32)    //mov dword ptr [LOCAL.2], regB
+			+	MOV(EAX, [EBP, WCn])    //mov eax, dword ptr [LOCAL.3]
+			+	PUSH_EAX                //push eax
+			+	CALL()                  //call MsgStr
 			;
 			type = 1;
 			break;
@@ -57,10 +59,10 @@ RemoveBookingJobs = function()
 		case 11: //VC11
 		{
 			code =
-				LEA(ECX, [ECX, 0])      //LEA ECX, [ECX] ; 0 is required since it is looking for the 3 byte version
-			+	LEA(R32, [R32, 0x65D])  //LEA reg32_A, [reg32_B + 65D]
-			+	PUSH_R                  //PUSH reg32_A
-			+	CALL()                  //CALL MsgStr
+				LEA(ECX, [ECX, 0])      //lea ecx, [ecx] ; 0 is required since it is looking for the 3 byte version
+			+	LEA(R32, [R32, 0x65D])  //lea regA, [regB + 65Dh]
+			+	PUSH_R                  //push regA
+			+	CALL()                  //call MsgStr
 			;
 			type = 2;
 			break;
@@ -69,16 +71,16 @@ RemoveBookingJobs = function()
 		{
 			let reg = Exe.Version === 10 ? R32 : EAX;
 			code =
-				MOV(reg, [EBP, WCn])    //MOV reg32_A, DWORD PTR SS:[EBP-const]
+				MOV(reg, [EBP, WCn])    //MOV regA, dword ptr [LOCAL.x]
 			+	(Exe.Version > 11
 			?
-				NOP
+				NOP                     //nop
 			:
 				''
 			)
-			+	ADD(reg, 0x65D)         //ADD reg32_A, 65D
-			+	PUSH_R                  //PUSH reg32_A
-			+	CALL()                  //CALL MsgStr
+			+	ADD(reg, 0x65D)         //add regA, 65Dh
+			+	PUSH_R                  //push regA
+			+	CALL()                  //call MsgStr
 			;
 			type = 3;
 			break;
@@ -89,9 +91,9 @@ RemoveBookingJobs = function()
 	if (addr < 0 && type === 1) //Some VC6 clients need this one
 	{
 		code = code.replace(MOV(EAX, [EBP, WCn]),
-			JMP(2)
-		+	XOR(R32, R32)
-		+	MOV(EAX, [EBP, WCn])
+			JMP(2)                 //jmp short _skip
+		+	XOR(R32, R32)          //xor regD, regD
+		+	MOV(EAX, [EBP, WCn])   //mov eax, dword ptr [LOCAL.y] ; _skip
 		)
 		;
 		addr = Exe.FindHex(code);
@@ -99,15 +101,14 @@ RemoveBookingJobs = function()
 	if (addr < 0)
 		throw Error("Loop start not found");
 
-	/// 1.2 - Save location of CALL
+	$$(_ + '1.2 - Save location of CALL')
 	let callAddr = addr + code.byteCount() - 1;
 
-	/// 1.3 - Extract MsgStr address
+	$$(_ + '1.3 - Extract MsgStr address')
 	let MsgStr = Exe.GetTgtAddr(callAddr + 1);
 
-	/// 2.1 - Prepare Pattern for finding end of the loop
-	///       (We need to RETN to the location before Loop counter
-	///        increment which is what jmpDelta is for)
+	$$(_ + '2.1 - Prepare Pattern for finding end of the loop')
+	///       (We need to RETN to the location before Loop counter increment which is what jmpDelta is for)
 	///
 	let jmpDelta;
 	switch (type)
@@ -115,17 +116,17 @@ RemoveBookingJobs = function()
 		case 1: //VC6
 		{
 			code =
-				ADD(ESP, 4)                      //ADD ESP, 4
-			+	MOV(R32, [EBP, WCn])             //MOV reg32_A, DWORD PTR SS:[EBP-const1]
-			+	MOV(R32, [EBP, WCn])             //MOV reg32_B, DWORD PTR SS:[EBP-const2]
-			+	INC(R32)                         //INC reg32_A
-			+	INC(R32)                         //INC reg32_B
-			+	MOV([EBP, WCn], R32)             //MOV DWORD PTR SS:[EBP-const3],reg32_C
-			+	MOV([EBP, WCn], R32)             //MOV DWORD PTR SS:[EBP-const4],reg32_C
-			+	MOV([EBP, WCn], R32)             //MOV DWORD PTR SS:[EBP-const5],reg32_C
-			+	MOV([EBP, WCn], R32)             //MOV DWORD PTR SS:[EBP-const1],reg32_A
-			+	MOV([EBP, WCn], R32)             //MOV DWORD PTR SS:[EBP-const2],reg32_B
-			+	JNZ(NEG1WC)                      //JNZ addr
+				ADD(ESP, 4)                      //add esp, 4
+			+	MOV(R32, [EBP, WCn])             //mov regA, dword ptr [LOCAL.1]
+			+	MOV(R32, [EBP, WCn])             //mov regB, dword ptr [LOCAL.2]
+			+	INC(R32)                         //inc regA
+			+	INC(R32)                         //inc regB
+			+	MOV([EBP, WCn], R32)             //mov dword ptr [LOCAL.3], regC
+			+	MOV([EBP, WCn], R32)             //mov dword ptr [LOCAL.4], regC
+			+	MOV([EBP, WCn], R32)             //mov dword ptr [LOCAL.5], regC
+			+	MOV([EBP, WCn], R32)             //mov dword ptr [LOCAL.1], regA
+			+	MOV([EBP, WCn], R32)             //mov dword ptr [LOCAL.2], regB
+			+	JNZ(NEG1WC)                      //jnz _loop
 			;
 			jmpDelta = 3;
 			break;
@@ -135,23 +136,23 @@ RemoveBookingJobs = function()
 			if (Exe.Version === 11) //VC11
 			{
 				code =
-					ADD(ESP, 4)                  //ADD ESP, 4
-				+	INC(R32)                     //INC reg32_A
-				+	MOV([EBP, WCn], 0xF)         //MOV DWORD PTR SS:[EBP-const1], 0F
-				+	MOV([EBP, WCn], 0)           //MOV DWORD PTR SS:[EBP-const2], 0
-				+	MOV(BYTE_PTR, [EBP, WCn], 0) //MOV BYTE PTR SS:[EBP-const3], 0
-				+	DEC(R32)                     //DEC reg32_B
-				+	JNZ(NEG1WC)                  //JNZ addr
+					ADD(ESP, 4)                  //add esp, 4
+				+	INC(R32)                     //inc regA
+				+	MOV([EBP, WCn], 0xF)         //mov dword ptr [LOCAL.1], 0Fh
+				+	MOV([EBP, WCn], 0)           //mov dword ptr [LOCAL.2], 0
+				+	MOV(BYTE_PTR, [EBP, WCn], 0) //mov byte ptr [LOCAL.3], 0
+				+	DEC(R32)                     //dec regB
+				+	JNZ(NEG1WC)                  //jnz _loop
 				;
 				jmpDelta = 3;
 			}
 			else //VC9
 			{
 				code =
-					CALL([POS3WC])               //CALL DWORD PTR DS:[<&MSVCP#.$basic*>]
-				+	INC(R32)                     //INC reg32_A
-				+	SUB([ESP, WCp], 1)           //SUB DWORD PTR SS:[ESP+const], 1
-				+	JNZ(WCn)                     //JNZ SHORT addr
+					CALL([POS3WC])               //call dword ptr [<&MSVCP#.$basic*>]
+				+	INC(R32)                     //inc regA
+				+	SUB([ESP, WCp], 1)           //sub dword ptr [LOCAL.4], 1
+				+	JNZ(WCn)                     //jnz short _loop
 				;
 				jmpDelta = 6;
 			}
@@ -163,28 +164,28 @@ RemoveBookingJobs = function()
 			if (Exe.Version === 10) //VC10
 			{
 				code =
-					MOV(R32, 1)                  //MOV reg32_A, 1
-				+	ADD([EBP, WCn], R32)         //ADD DWORD PTR SS:[EBP-const1], reg32_A
-				+	SUB([EBP, WCn], R32)         //SUB DWORD PTR SS:[EBP-const2], reg32_A
-				+	MOV([EBP, WCn], 0xF)         //MOV DWORD PTR SS:[EBP-const3], 0F
-				+	MOV([EBP, WCn], R32)         //MOV DWORD PTR SS:[EBP-const4], reg32_B
-				+	MOV([EBP, WCn], R8)          //MOV BYTE PTR SS:[EBP-const5], reg8_B
-				+	JNZ(WCn)                     //JNZ SHORT addr
+					MOV(R32, 1)                  //mov regA, 1
+				+	ADD([EBP, WCn], R32)         //add dword ptr [LOCAL.1], regA
+				+	SUB([EBP, WCn], R32)         //sub dword ptr [LOCAL.2], regA
+				+	MOV([EBP, WCn], 0xF)         //mov dword ptr [LOCAL.3], 0Fh
+				+	MOV([EBP, WCn], R32)         //mov dword ptr [LOCAL.4], regB
+				+	MOV([EBP, WCn], R8)          //mov byte ptr [LOCAL.5], reg8C
+				+	JNZ(WCn)                     //jnz short _loop
 				;
 			}
 			else //VC14.16
 			{
 				code =
-					MOV(R32, [EBP, WCn])         //MOV reg32_A, DWORD PTR SS:[EBP-const1]
-				+	INC(R32)                     //INC reg32_A
-				+	MOV(R32, [EBP, WCn])         //MOV reg32_B, DWORD PTR SS:[EBP-const2]
-				+	INC(R32)                     //INC reg32_B
-				+	MOV([EBP, WCn], 0)           //MOV DWORD PTR SS:[EBP-const3], 0
-				+	MOV([EBP, WCn], 0xF)         //MOV DWORD PTR SS:[EBP-const4], F
-				+	MOV(BYTE_PTR, [EBP, WCn], 0) //MOV BYTE PTR SS:[EBP-const5], 0
-				+	MOV([EBP, WCn], R32)         //MOV DWORD PTR SS:[EBP-const2], reg32_B
-				+	CMP(R32, [4, R32, EBP, WCn]) //CMP reg32_A, DWORD PTR SS:[4*reg32_A + EBP + const6]
-				+	JL(NEG2WC)                   //JL addr
+					MOV(R32, [EBP, WCn])         //mov regA, dword ptr [LOCAL.1]
+				+	INC(R32)                     //inc regA
+				+	MOV(R32, [EBP, WCn])         //mov regB, dword ptr [LOCAL.2]
+				+	INC(R32)                     //inc regB
+				+	MOV([EBP, WCn], 0)           //mov dword ptr [LOCAL.3], 0
+				+	MOV([EBP, WCn], 0xF)         //mov dword ptr [LOCAL.4], 0Fh
+				+	MOV(BYTE_PTR, [EBP, WCn], 0) //mov byte ptr [LOCAL.5], 0
+				+	MOV([EBP, WCn], R32)         //mov dword ptr [LOCAL.2], regB
+				+	CMP(R32, [4, R32, EBP, WCn]) //cmp regA, dword ptr [4*regA + EBP + dispB]
+				+	JL(NEG2WC)                   //jl _loop
 				;
 			}
 
@@ -193,20 +194,20 @@ RemoveBookingJobs = function()
 		}
 	}
 
-	/// 2.2 - Find the pattern
+	$$(_ + '2.2 - Find the pattern')
 	addr = Exe.FindHex(code, callAddr + 5, callAddr + 0x100);
 	if (addr < 0)
 		throw Error("Loop End not found");
 
-	/// 2.3 - Get the VIRTUAL location to return to (add jmpDelta value to addr)
+	$$(_ + '2.3 - Get the VIRTUAL location to return to (add jmpDelta value to addr)')
 	let retnAddr = Exe.Phy2Vir(addr + jmpDelta, CODE);
 
-	/// 3.1 - Get the Skip List file from User
+	$$(_ + '3.1 - Get the Skip List file from User')
 	let inFile = Exe.GetUserInput('$bookingList', D_InFile, "Booking Skip List", "Enter the List file containing Job IDs to skip", "Inputs/BookSkipList.yml", {filters : YMLFILTER});
 	if (inFile === false)
 		Cancel("No list file specified");
 
-	/// 3.2 - Retrieve the list from the file
+	$$(_ + '3.2 - Retrieve the list from the file')
 	let idList = Warp.LoadYaml(inFile);
 	if (idList === false)
 		return false;
@@ -214,63 +215,80 @@ RemoveBookingJobs = function()
 	else if (!IsArr(idList))
 		throw Error("Need a list of Job IDs");
 
-	/// 3.3 - Prune out invalid values.
+	$$(_ + '3.3 - Prune out invalid values.')
 	idList = idList.filter( id => IsNum(id) && id >= 0x65D );
 	if (idList.isEmpty())
 		throw Error("List file contains no valid Job IDs");
 
-	/// 3.4 - Finish off with NULL at end of the Array
+	$$(_ + '3.4 - Finish off with NULL at end of the Array')
 	idList.push(0);
 
-	/// 4.1 - Prepare our function to check the ID
-	code =
-		PUSH_EAX               //PUSH EAX
-	+	PUSH(ECX)              //PUSH ECX
-	+	PUSH(EDX)              //PUSH EDX
-	+	MOV(EAX, [ESP, 0x10])  //MOV EAX, DWORD PTR SS:[ESP+10]; Arg0
-	+	INC(EAX)               //INC EAX ; Needed because the ids start from 0
-	+	MOV(ECX, Filler(1))    //MOV ECX, listaddr
-	+	MOVZX(EDX, [ECX])      //MOVZX EDX, WORD PTR DS:[ECX] ; addr3
-	+	TEST(EDX, EDX)         //TEST EDX, EDX
-	+	JE(8)                  //JE SHORT addr1
+	$$(_ + '4.1 - Prepare our function to check the ID')
+	let parts =
+	[
+		PUSH_EAX               //push eax
+	+	PUSH(ECX)              //push ecx
+	+	PUSH(EDX)              //push edx
+	+	MOV(EAX, [ESP, 0x10])  //mov eax, dword ptr [esp+10h] ; ARG.1
+	+	INC(EAX)               //inc eax ; Needed because the ids start from 0
+	+	MOV(ECX, Filler(1))    //mov ecx, <listaddr>
+
+	,//1
+		MOVZX(EDX, [ECX])      //movzx edx, word ptr [ecx] ; _next
+	+	TEST(EDX, EDX)         //test edx, edx
+	+	JE(Filler(4,1))        //je short _msgIt
 	+	CMP(EAX, EDX)          //CMP EAX, EDX
-	+	JE(0xC)                //JE SHORT addr2
-	+	INC(ECX)               //INC ECX
-	+	INC(ECX)               //INC ECX
-	+	JMP(-0xF)              //JMP SHORT addr3
-	+	POP(EDX)               //POP EDX
-	+	POP(ECX)               //POP ECX
-	+	POP(EAX)               //POP EAX
-	+	JMP(Filler(2))         //JMP MsgStr
-	+	POP(EDX)               //POP EDX
-	+	POP(ECX)               //POP ECX
-	+	POP(EAX)               //POP EAX
-	+	ADD(ESP, 8)            //ADD ESP, 8
-	+	JMP(Filler(3))         //JMP retnAddr
-	;
-	let csize = code.byteCount();
+	+	JE(Filler(5,1))        //je short _return
+	+	INC(ECX)               //inc ecx
+	+	INC(ECX)               //inc ecx
+	+	JMP(Filler(6,1))       //jmp short _next
 
-	/// 4.2 - Allocate space to add our function and the IDs
-	let size = csize + 2 + idList.length * 2; //each ID is 2 bytes long
-	let free = Exe.FindSpace(size, 0x10);
-	if (free < 0)
-		throw NO_ALLOC;
+	,//2
+		POP(EDX)               //pop edx ; _msgIt
+	+	POP(ECX)               //pop ecx
+	+	POP(EAX)               //pop eax
+	+	JMP(Filler(2))         //jmp <MsgStr>
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
+	,//3
+		POP(EDX)               //pop edx ; _return
+	+	POP(ECX)               //pop ecx
+	+	POP(EAX)               //pop eax
+	+	ADD(ESP, 8)            //add esp, 8
+	+	JMP(Filler(3))         //jmp <retnAddr>
+	];
+	let offsets = MapAddrs(0, parts);
 
-	/// 4.3 - Fill in the blanks
-	code = SwapFiller(code, 1, freeVir + csize + 2, 1);
+	$$(_ + '4.2 - Allocate space to add our function and the IDs')
+	let size = offsets.last() + 2 + idList.length * 2; //each ID is 2 bytes long
+	let [free, freeVir] = Exe.FindSpace(size, 0x10);
 
-	code = SetFillTargets(code, {
+	$$(_ + '4.3 - Fill in the blanks')
+
+	//The short jumps
+	code = SetFillTargets(parts,
+	{
+		4: offsets[2], //_msgIt
+		5: offsets[3], //_return
+		6: offsets[1], //_next
+	},
+	0, 1, 1);
+
+	//The listAddr
+	code = SwapFiller(code, 1, freeVir + offsets.last() + 2, 1);
+
+	//The long jumps
+	code = SetFillTargets(code,
+	{
 		2 : MsgStr,
 		3 : retnAddr
-	}, freeVir, 1);
+	},
+	freeVir, 1);
 
-	/// 4.4 - Add the ids and the function at the allocated space
+	$$(_ + '4.4 - Add the ids and the function at the allocated space')
 	let idHex = idList.map( id => id.toHex(2) ).join('');
 	Exe.AddHex(free, code + " 00 00" + idHex);
 
-	/// 4.5 - Change the CALL target in the MsgStr CALL to our function.
+	$$(_ + '4.5 - Change the CALL target in the MsgStr CALL to our function')
 	Exe.SetTgtAddr(callAddr + 1, freeVir);
 
 	return true;
@@ -279,4 +297,6 @@ RemoveBookingJobs = function()
 ///
 /// \brief Disable for Unsupported Clients
 ///
-RemoveBookingJobs.validate = () => Exe.BuildDate > 20100223;
+RemoveBookingJobs.validate = () =>
+	Exe.BuildDate > 20100223;
+
