@@ -187,7 +187,7 @@ NoHShield = function()
 	//======================================//
 
 	$$(_ + '4.1 - Check whether CustomDLL patch is already ON')
-	if (Exe.IsSelected("CustomDLL"))
+	if (Warp.GetPatchState("CustomDLL"))
 	{
 		// Since the patch is ON, the import table will be shifted to new location and now
 		// we need to get & set all the details from / to ROC.ImpInfo hash
@@ -250,7 +250,7 @@ NoHShield.validate = function()
 NoHShield.cleanup = function()
 {
 	let name = "CustomDLL";
-	if (Exe.IsSelected(name))
+	if (Warp.GetPatchState(name))
 	{
 		Exe.ClearPatch(name);
 		Exe.SetActivePatch(name);

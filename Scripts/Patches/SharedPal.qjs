@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -80,10 +80,10 @@ SharedPal = function(patchName, oldPrefix, newFormat, optional)
 SHP_reloadIH = function()
 {
 	let patchName = null;
-	if (Exe.IsSelected("IncrHairStyles"))
+	if (Warp.GetPatchState("IncrHairStyles"))
 		patchName = "IncrHairStyles";
 
-	else if (Exe.IsSelected("Allow65kHairs"))
+	else if (Warp.GetPatchState("Allow65kHairs"))
 		patchName = "Allow65kHairs";
 
 	if (patchName)

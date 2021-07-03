@@ -214,7 +214,7 @@ CustomSkills.cleanup = function(patchName)
 			if (name === 'loader' || name === patchName)
 				continue;
 
-			if (Exe.IsSelected(name))
+			if (Warp.GetPatchState(name))
 			{
 				Exe.ClearPatch(name);
 				Exe.SetActivePatch(name);

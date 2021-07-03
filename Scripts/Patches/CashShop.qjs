@@ -386,7 +386,7 @@ PreviewInShop.validate = () =>
 PreviewInShop.cleanup = function()
 {
 	let patchName = "SendClientFlags";
-	if (Exe.IsSelected(patchName))
+	if (Warp.GetPatchState(patchName))
 	{
 		Exe.ClearPatch(patchName);
 		Exe.SetActivePatch(patchName);

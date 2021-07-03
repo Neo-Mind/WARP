@@ -61,7 +61,7 @@ IncrHairs = function(patchName)
 	strAddrs.push(addr);
 
 	$$(_ + '1.6 - Get the limit from user or set it to 65k based on the patch')
-	let isPalShared = Exe.IsSelected("HeadPalMF") || Exe.IsSelected("HeadPalUnisex");
+	let isPalShared = Warp.GetPatchState("HeadPalMF") || Warp.GetPatchState("HeadPalUnisex");
 	if (patchName === "IncrHairStyles")
 	{
 		IH_Max = Exe.GetUserInput('$maxHairs', D_Uint16, "Limit input", "Enter the maximum no of hairstyles", 100, {saveDefault: true});

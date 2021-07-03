@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -117,7 +117,7 @@ CustomEncKeys.cleanup = function(patchName)
 	$$(_ + '2.1 - Set one of the other Packet Key patches as active if they are selected')
 	if (PACKET.PatchData[4] === index)
 	{
-		let newIdx = PktKeyPatches.findIndex( name => Exe.IsSelected(name) );
+		let newIdx = PktKeyPatches.findIndex( name => Warp.GetPatchState(name) );
 		if (newIdx < 0)
 		{
 			$$(_ + '2.2 - If no other patch is selected then clear the data')

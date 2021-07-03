@@ -37,7 +37,7 @@ CustomDLL = function()
 	let _ = 'CustomDLL : ';
 
 	$$(_ + '1.1 - Extract the import table (if HShield patch is enabled then skip aossdk entry while extracting)')
-	let dirEntries = GetImpTable(Exe.IsSelected("NoHShield") ? "aossdk.dll" : null);
+	let dirEntries = GetImpTable(Warp.GetPatchState("NoHShield") ? "aossdk.dll" : null);
 
 	$$(_ + '1.2 - Get the list file containing the dlls and functions to add')
 	let inFile = Exe.GetUserInput('$customDLL', D_InFile, "DLL Spec", "Enter the DLL specification file", "Inputs/DLLSpec.yml", {filters: YMLFILTER});
@@ -182,7 +182,7 @@ CustomDLL.validate = () => Exe.BuildDate < 20140700 || Exe.BuildDate > 20170700 
 CustomDLL.cleanup = function()
 {
 	let patchName = "NoHShield";
-	if (Exe.IsSelected(patchName))
+	if (Warp.GetPatchState(patchName))
 	{
 		Exe.ClearPatch(patchName);
 		Exe.SetActivePatch(patchName);

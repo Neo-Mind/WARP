@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144), X-EcutiOnner, Ai4rei/AN        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -92,7 +92,7 @@ IgnorePalErr = function()
 	let _ = 'IgnorePalErr : ';
 
 	$$(_ + '1.1 - Ensure IgnoreRsrcErr is not already ON (it would already be covered in that case)')
-	if (!Exe.TestMode && Exe.IsSelected("IgnoreRsrcErr"))
+	if (!Exe.TestMode && Warp.GetPatchState("IgnoreRsrcErr"))
 		Cancel("'Ignore Resource Errors' is ON and covers Palette errors as well");
 
 	$$(_ + '1.2 - Find the error message')
