@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -56,7 +56,7 @@ if (typeof NO_OUTPUT === 'undefined') //avoid redefinition
 
 if (typeof WC === 'undefined') //avoid redefinition
 {
-	[	
+	[
 		///
 		/// \brief The Basic wild cards
 		///
@@ -95,7 +95,7 @@ if (typeof WC === 'undefined') //avoid redefinition
 		['POP_EAX'  , " 58"],
 		['FP_START' , " 55 8B EC"],   //push ebp followed by mov ebp, esp
 		['FP_STOP'  , " 8B E5 5D"],   //mov esp, ebp followed by pop ebp
-		
+
 	].forEach( pair => AssignStr(...pair) );
 }
 
@@ -167,7 +167,7 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 
 		WithDisp32 :
 		[
-			0xA0, 0xA1, 0xA2, 0xA3,	
+			0xA0, 0xA1, 0xA2, 0xA3,
 		],
 
 		SecWithoutModRM : //Secondary opcodes without ModR/M byte - smaller list than the alternative
