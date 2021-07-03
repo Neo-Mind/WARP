@@ -37,7 +37,7 @@ OfficialPal = function()
 	let _ = 'OfficialPal : ';
 
 	$$(_ + '1.1 - Ensure the custom job patch is not selected (unless test mode is ON)')
-	if (!Exe.TestMode)
+	if (!Warp.TestMode)
 		Warp.SetPatchState("CustomJobs", false);
 
 	$$(_ + '1.2 - Find \'Å©·ç\'')

@@ -483,7 +483,7 @@ CustomShields = function()
 	Exe.SetHex(addr, code);
 
 	$$(_ + '7.9 - Check with user if they want to copy the supporting files to the target area\'s data folder')
-	if (!Exe.TestMode)
+	if (!Warp.TestMode)
 		Exe.GetUserInput('$copyCSLub', D_Bool, "Copy Custom Shield Lua", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
 
 	return true;
@@ -499,7 +499,7 @@ CustomShields.validate = IsPost2010;
 ///
 CustomShields.onApplied = function()
 {
-	if (!Exe.TestMode && Exe.GetSavedInput('$copyCSLub'))
+	if (!Warp.TestMode && Exe.GetSavedInput('$copyCSLub'))
 	{
 		let _ = 'CustomShields.onApplied : ';
 

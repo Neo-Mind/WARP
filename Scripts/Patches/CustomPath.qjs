@@ -142,7 +142,7 @@ CustomPath = function(patchName)
 	let _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Ensure \'Disable BGM\' is not selected (unless in test mode)')
-	if (!Exe.TestMode && patchName === 'CustomDefaultBGM')
+	if (!Warp.TestMode && patchName === 'CustomDefaultBGM')
 		Warp.SetPatchState("NoBGMAudio", false);
 
 	$$(_ + '1.2 - Retrieve the data for the index')

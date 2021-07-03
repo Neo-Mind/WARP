@@ -39,7 +39,7 @@ CustomEncKeys = function(patchName)
 	let _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Ensure the \'Disable Packet Encryption\' patch is unselected. Not applicable for test mode')
-	if (!Exe.TestMode)
+	if (!Warp.TestMode)
 		Warp.SetPatchState("NoPacketEncr", false);
 
 	$$(_ + '1.2 - Discern the Variable name and index based on patchName')

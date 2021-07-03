@@ -74,7 +74,7 @@ NoPacketEncr = function()
 	let _ = 'NoPacketEncr : ';
 
 	$$(_ + '1.1 - Ensure all the Packet Key patches are deselected (unless in test mode)')
-	if (!Exe.TestMode)
+	if (!Warp.TestMode)
 		PktKeyPatches.forEach(name => Warp.SetPatchState(name, false));
 
 	$$(_ + '1.2 - Ensure the PACKET object has been loaded with valid data')

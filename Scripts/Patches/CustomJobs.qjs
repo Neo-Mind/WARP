@@ -36,7 +36,7 @@ CustomJobs = function()
 	let _ = 'CustomJobs : ';
 
 	$$(_ + '1.1 - Ensure the \'Translate Taekwon\' patch is unselected. Not applicable for test mode')
-	if (!Exe.TestMode)
+	if (!Warp.TestMode)
 		Warp.SetPatchState("TranslateTaekwon", false);
 
 	//=====================================================//
@@ -1130,7 +1130,7 @@ CustomJobs = function()
 		throw Error("Shrinking address not found");
 
 	$$(_ + '10 - Check with user if they want to copy the supporting files to the target area\'s data folder')
-	if (!Exe.TestMode)
+	if (!Warp.TestMode)
 		Exe.GetUserInput('$copyCJLub', D_Bool, "Copy Custom Job Lua", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
 
 	return true;
@@ -1148,7 +1148,7 @@ CustomJobs.onApplied = function()
 {
 	let _ = 'CustomJobs.onApplied : ';
 
-	if (!Exe.TestMode && Exe.GetSavedInput('$copyCJLub'))
+	if (!Warp.TestMode && Exe.GetSavedInput('$copyCJLub'))
 	{
 		$$(_ + '1.1 - Prepare the directory paths')
 		let suffix = "/Luafiles514/Lua Files/JobInfo";

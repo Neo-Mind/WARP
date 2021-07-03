@@ -175,7 +175,7 @@ TranslateClient = function()
 		throw Error("All translations had issues");
 
 	$$(_ + '3.2 - If any fails were found, ask user if they want to see the FailedTranslations.txt to cross check for unexpected failures (only displays for Main GUI)')
-	if (!Exe.TestMode && translated.length < Translations.length)
+	if (!Warp.TestMode && translated.length < Translations.length)
 	{
 		if (UserChoice("Show Failures", "Some translations failed (not necessarily an error). Would you like to view them?"))
 			Warp.Show(fp.Path);

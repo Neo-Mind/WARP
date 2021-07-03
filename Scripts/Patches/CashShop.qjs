@@ -35,7 +35,11 @@ MoveShopIcon = function()
 {
 	let _ = 'MoveShopIcon : ';
 
-	$$(_ + '1.1 - Find the XCoord calculation pattern')
+	$$(_ + '1.1 - Ensure that \'Hide Cash Shop\' patch is not selected (unless in test mode)')
+	if (!Warp.TestMode)
+		Warp.SetPatchState('HideCashShop', false);
+	
+	$$(_ + '1.2 - Find the XCoord calculation pattern')
 	let tgtReg = (Exe.Version < 11) ? EDX : EAX;
 
 	let code =
@@ -50,7 +54,7 @@ MoveShopIcon = function()
 		                                                      //push eax
 		addr = Exe.FindHex(code);
 
-		$$(_ + '1.2 - If this pattern matches then move up the PUSH and increment addr by 2')
+		$$(_ + '1.3 - If this pattern matches then move up the PUSH and increment addr by 2')
 		if (addr > 0)
 		{
 			Exe.SetHex(addr, Exe.GetHex(addr + code.byteCount() - 3, 2));
@@ -60,7 +64,7 @@ MoveShopIcon = function()
 	if (addr < 0)
 		throw Error("Coordinate calculation not found");
 
-	$$(_ + '1.3 - For EDX there is an extra byte so NOP it')
+	$$(_ + '1.4 - For EDX there is an extra byte so NOP it')
 	if (tgtReg.is(EDX))
 	{
 		Exe.SetNOPs(addr, 1);

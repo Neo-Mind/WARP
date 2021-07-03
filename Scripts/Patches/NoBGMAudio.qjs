@@ -35,7 +35,7 @@ NoBGMAudio = function()
 	let _ = 'NoBGMAudio : ';
 
 	$$(_ + '1.1 - Ensure that \'Custom Default BGM\' patch is not selected (unless in test mode)')
-	if (!Exe.TestMode)
+	if (!Warp.TestMode)
 		Warp.SetPatchState('CustomDefaultBGM', false);
 
 	$$(_ + '1.2 - Zero the string')
