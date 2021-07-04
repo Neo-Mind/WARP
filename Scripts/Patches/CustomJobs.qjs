@@ -666,7 +666,6 @@ CustomJobs = function()
 			code = SetFillTarget(code, 3, endAddr, hookVir);
 
 		$$(_ + '5.19 - Replace at hook address')
-		ShowAddr({hookAddr});
 		Exe.SetHex(hookAddr, code);
 	}
 	else //Newer form - Name overrides are setup along with the regular loading and it uses a seperate function for it

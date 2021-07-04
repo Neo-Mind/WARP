@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -138,7 +138,7 @@ NoMultiWindow = function()
 	let [free, freeVir] = Exe.FindSpace(offsets.last(), 0x10);
 
 	$$(_ + '2.4 - Fill in the blanks')
-	let code = SetFillTargets(code, {
+	let code = SetFillTargets(parts, {
 		1: offsets[1], //_quit
 		2: offsets[2], //_return
 	},

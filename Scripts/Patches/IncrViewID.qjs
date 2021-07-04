@@ -79,6 +79,6 @@ IncrViewID = function()
 ///
 IncrViewID.validate = function()
 {
-	IVID_Addr = Exe.FindText("ReqAccName", Case_Insensitive);
+	IVID_Addr = Exe.FindText("ReqAccName", CASE_INSENSITIVE);
     return (IVID_Addr > 0);
 };

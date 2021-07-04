@@ -34,7 +34,7 @@ EnableEffectTool = function()
 	let _ = 'EnableEffectTool : ';
 
 	$$(_ + '1.1 - Find Lua file prefix')
-	let addr = Exe.FindText("Lua Files\\EffectTool\\", Case_Insensitive);
+	let addr = Exe.FindText("Lua Files\\EffectTool\\", CASE_INSENSITIVE);
 	if (addr < 0)
 		throw Error("Lua file prefix not found");
 

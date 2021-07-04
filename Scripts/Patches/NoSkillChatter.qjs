@@ -38,7 +38,7 @@ NoSkillChatter = function(patchName)
 	let suffix = patchName === "NoDancerScream" ? "DC_scream.txt" : "BA_frostjoke.txt";
 
 	$$(_ + '1.2 - Find the physical location of first text file name')
-	let addr = Exe.FindText("english\\" + suffix, Case_Insensitive, PHYSICAL);
+	let addr = Exe.FindText("english\\" + suffix, CASE_INSENSITIVE, PHYSICAL);
 	if (addr < 0)
 		throw Error("First filename not found");
 
@@ -46,7 +46,7 @@ NoSkillChatter = function(patchName)
 	Exe.SetInt8(addr, 0);
 
 	$$(_ + '2.1 - Find the physical location of second text file name')
-	addr = Exe.FindText(suffix, Case_Insensitive, PHYSICAL);
+	addr = Exe.FindText(suffix, CASE_INSENSITIVE, PHYSICAL);
 	if (addr < 0)
 		throw Error("Second filename not found");
 

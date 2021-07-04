@@ -36,7 +36,7 @@ NoEarthQuake = function()
 	let _ = 'NoEarthQuake : ';
 
 	$$(_ + '1.1 - Find \'.BMP\'')
-	let sufAddr = Exe.FindText(".BMP", Case_Insensitive);
+	let sufAddr = Exe.FindText(".BMP", CASE_INSENSITIVE);
 
 	if (sufAddr < 0 && Exe.BuildDate > 20180000)
 	{
@@ -44,7 +44,7 @@ NoEarthQuake = function()
 	}
 	if (sufAddr < 0 && Exe.BuildDate > 20180000)
 	{
-		sufAddr = Exe.FindText(".png", Case_Insensitive);
+		sufAddr = Exe.FindText(".png", CASE_INSENSITIVE);
 	}
 
 	if (sufAddr < 0)

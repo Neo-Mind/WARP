@@ -188,12 +188,12 @@ CustomPath.validate = (patchName) =>
 		let [pref, sakSuf, truSuf, suf] = data.parts;
 
 		let name = pref + "_" + (ROC.IsRenewal ? sakSuf : truSuf);
-		let addr = Exe.FindText(name, Case_Insensitive);
+		let addr = Exe.FindText(name, CASE_INSENSITIVE);
 
 		if (addr < 0)
 		{
 			name = pref + suf;
-			addr = Exe.FindText(name, Case_Insensitive);
+			addr = Exe.FindText(name, CASE_INSENSITIVE);
 		}
 
 		if (addr > 0)
@@ -206,7 +206,7 @@ CustomPath.validate = (patchName) =>
 	else //name is provided directly
 	{
 		let {name} = CP_Data[patchName];
-		let addr = Exe.FindText(name, Case_Insensitive);
+		let addr = Exe.FindText(name, CASE_INSENSITIVE);
 
 		if (addr > 0)
 		{
@@ -239,11 +239,11 @@ CustomMonSizeEffLub.validate = (patchName) =>
 	let suf = (ROC.IsRenewal ? "_sak" : "");
 
 	let name = "System/monster_size_effect" + suf + "_new.lub";
-	let addr = Exe.FindText(name, Case_Insensitive);
+	let addr = Exe.FindText(name, CASE_INSENSITIVE);
 	if (addr < 0)
 	{
 		name = "System/monster_size_effect" + suf + ".lub";
-		addr = Exe.FindText(name, Case_Insensitive);
+		addr = Exe.FindText(name, CASE_INSENSITIVE);
 	}
 
 	if (addr > 0)
@@ -265,7 +265,7 @@ CustomLicenseTxt = function()
 	let _ = 'CustomLicenseTxt : ';
 
 	$$(_ + '1.1 - Find \'..\\licence.txt\'')
-	let addr = Exe.FindText(Orig_LicTxt, Case_Insensitive);
+	let addr = Exe.FindText(Orig_LicTxt, CASE_INSENSITIVE);
 	if (addr < 0)
 		throw Error(`'${Orig_LicTxt}' not found`);
 
@@ -297,7 +297,7 @@ CustomLicenseTxt = function()
 	$$(_ + '3.2 - Prepare the new EULA error string using the filename received')
 	let eulaString = "No EULA text file. (" + newFile.replace("..\\", "") + ")\x00";
 
-	$$(_ + '3.3 - Allocate space to add the EULA error string')
+	$$(_ + '3.3 - Allocate space to add the EULA error string');
 	[free, freeVir] = Exe.FindSpace(eulaString.length);
 
 	$$(_ + '3.4 - Add the EULA error string')
@@ -471,12 +471,12 @@ CustomClientInfo.validate = function()
 {
 	/// 1.1 - Check if the client is Sakray (clientinfo file name is "sclientinfo.xml" for some Sakray clients)
 	CCI_Name = "sclientinfo.xml";
-	CCI_Addr = Exe.FindText(CCI_Name, Case_Insensitive);
+	CCI_Addr = Exe.FindText(CCI_Name, CASE_INSENSITIVE);
 
 	if (CCI_Addr < 0) // if sclientinfo.xml does not exist then it is a main server exe
 	{
 		CCI_Name = "clientinfo.xml";
-		CCI_Addr = Exe.FindText(CCI_Name, Case_Insensitive);
+		CCI_Addr = Exe.FindText(CCI_Name, CASE_INSENSITIVE);
 	}
 
 	return (CCI_Addr > 0);

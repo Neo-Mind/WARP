@@ -35,7 +35,7 @@ ShowLicense = function()
 	let _ = 'ShowLicense : ';
 
 	$$(_ + '1.1 - Find the location of the Guildflag string')
-	let addr = Exe.FindText("model\\3dmob\\guildflag90_1.gr2", Case_Insensitive);
+	let addr = Exe.FindText("model\\3dmob\\guildflag90_1.gr2", CASE_INSENSITIVE);
 	if (addr < 0)
 		throw Error("Guildflag string not found");
 

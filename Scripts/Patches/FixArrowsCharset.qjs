@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, X-EcutiOnner, Neo-Mind                         *
 *   Created Date  : 2021-06-01                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -70,7 +70,7 @@ FixArrowsCharset = function()
 	if (addrM < 0)
 		throw Error("Square missing");
 
-	$$(_ + '2 - Replace the strings')
+	$$(_ + '2 - Replace the strings'); //semicolon needed here
 	[
 		[addrL   , " 20 3C"], //left arrow
 		[addr    , " 20 5E"], //up arrow

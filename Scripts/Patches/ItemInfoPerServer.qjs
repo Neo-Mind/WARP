@@ -246,7 +246,7 @@ function ItemInfoPerServer()
 	;
 	csize = code.byteCount();
 
-	$$(_ + '7.2 - Allocate space for it')
+	$$(_ + '7.2 - Allocate space for it');
 	[free, freeVir] = Exe.FindSpace(csize);
 
 	let freeEnd = freeVir + csize;

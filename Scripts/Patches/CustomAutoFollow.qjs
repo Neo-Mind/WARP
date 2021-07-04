@@ -82,6 +82,8 @@ NoAutoFollow = function()
 ///
 DecrAFDelay = function()
 {
+	let _ = 'DecrAFDelay : ';
+
 	$$(_ + '1.1 - Find the delay comparisons')
 	let reg = Exe.Version > 6 ? EDI : EBX
 	let code =

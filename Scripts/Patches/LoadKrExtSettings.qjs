@@ -76,7 +76,7 @@ LoadKrExtSettings.validate = function()
 		:
 			"Lua Files\\service_korea\\ExternalSettings_kr"
 		,
-		Case_Insensitive
+		CASE_INSENSITIVE
 	);
 	return (LKES_Addr > 0);
 };

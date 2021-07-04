@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Yommy, Neo-Mind                             *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -57,7 +57,7 @@ CustomFontHeight = function()
 	let [free, freeVir] = Exe.FindSpace(csize);
 
 	$$(_ + '2.3 - Get the new Font height from user')
-	let newHeight = Exe.GetUserInput('$newFontHgt', D_FontSize, "Font Height", "Enter the new height (snaps to closest valid value)", 10, {sampleName: "Tahoma"});
+	let newHeight = Exe.GetUserInput('$newFontHgt', D_FontSize, "Font Height", "Enter the new height (snaps to closest valid value)", 10);//, {sampleName: "Tahoma"});
 	if (newHeight === false)
 		Cancel("Font height", 10);
 
@@ -120,7 +120,7 @@ CustomFontName = function()
 	}
 	else
 	{
-		$$(_ + '2.4 - Allocate space to add the font since its not already present')
+		$$(_ + '2.4 - Allocate space to add the font since its not already present') ;//semicolon needed here
 		[free, freeVir] = Exe.FindSpace(varName);
 	}
 
