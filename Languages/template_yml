@@ -1,10 +1,35 @@
+#################################################################################################
+##                                                                                              #
+##  This file serves to act as a template. Simply copy this to a .yml file in Languages folder, #
+##  uncomment the item you want to change and make the modification.                            #
+##                                                                                              #
+##  Be vary of the 'tabs' entry as it expects a list with 4 members.                            #
+##                                                                                              #
+##  All the entries in a language file are optional. If an entry is not present while loading,  #
+##  the tool will pickup the corresponding internal style.                                      #
+##                                                                                              #
+#################################################################################################
+#
+#
+##===================================#
+## Text orientation & other settings #
+##===================================#
+#
 #RTL: no
+#
+##============================#
+## Tab names for TestBench UI #
+##============================#
 #
 #tabs:
 #    - Patches
 #    - Extensions
 #    - Testers
 #    - Results
+#
+##========================#
+## File/Dir Dialog titles #
+##========================#
 #
 #dialogs:
 #    dir: Choose directory containing test exes
@@ -70,10 +95,6 @@
 #    runTest: 
 #        title: Run Test
 #        tooltip: Tests the selected patches & extensions on the list of exes selected and outputs to 'Results' tab
-#        
-#    clearResults:
-#        title: Clear<br>Results
-#        tooltip: Clear the 'Output' view in 'Results' tab
 #    
 #    #=======================#
 #    # Script Window related #
@@ -82,10 +103,6 @@
 #    showScriptWin:
 #        title: Show Script Window
 #        tooltip: Displays (Alt+W) the script window used for quickly testing scripts
-#    
-#    clearOutput:
-#        title: Clear
-#        tooltip: Clear the output view
 #    
 #    #=========================#
 #    # Remaining Quick Actions #
@@ -110,6 +127,10 @@
 #    loadChangedScripts:
 #        title: Load<br>Scripts
 #        tooltip: Load/Reload (Alt+C) all modified (since last loading) .qjs script files coming under 'Patches', 'Support' & 'Extensions' sub-folders inside 'Scripts' directory
+#    
+#    clearOutput:
+#        title: Clear
+#        tooltip: Clear the 'Output' view
 #    
 #    evalScript: 
 #        title: Evaluate
@@ -158,6 +179,45 @@
 #    loadExtns:
 #        title: Load Extensions
 #        tooltip: Fills the Extension drawer with all the defined extensions
+#    
+#    pro2Session:
+#        title: Convert Profile to Session
+#        tooltip: Converts a NEMO profile to a session file for use in WARP
+#	
+#    genSecFile:
+#        title: Generate Security File
+#        tooltip: Generates a security file containing various hashes from an input file (may or may not be executable)
+#    
+#    #=========================#
+#    # Settings Dialog related #
+#    #=========================#
+#    saveResolution:
+#        title: Save Resolution
+#        tooltip: Saves current resolution of Tester window as the default
+#    
+#    saveResolutions:
+#        title: Save Resolutions
+#        tooltip: Saves current resolutions of Main & Script windows as the default
+#	
+#    showVersion:
+#        title: Show loaded version
+#        tooltip: Check it to show the loaded exe's build version along with the date
+#        
+#    enableEpi:
+#        title: Enable EPI
+#        tooltip: Enable the generation & loading of EPI files along with corresponding exe files. Use with caution.
+#    
+#    genTgtSecure:
+#        title: Generate <target>.secure.txt
+#        tooltip: Enables the generation of security file (.secure.txt) along with the patched Target Exe
+#    
+#    genTgtSession:
+#        title: Generate target's session
+#        tooltip: Enables the generation of session file (for later use) along with the patched Target Exe
+#    
+#    keepInputs:
+#        title: Keep session inputs
+#        tooltip: Option to keep the saved input while loading session files instead of asking one by one
 #
 #messages:
 #    
@@ -224,6 +284,8 @@
 #    applyFail: "<b>Patches</b> could not be applied"
 #    tgtFail: "<b>Target Exe</b> could not be written"
 #    funcFail: "<b>%0 Function</b> missing or uncallable"
+#    allocFail: "Space allocation failed"
+#    dependFail: "Dependency '<b>%0</b>' could not be selected"
 #    
 #    #=================#
 #    # Warning prompts #
@@ -255,6 +317,7 @@
 #    extnInfo: "Testing Extension : <b>%0</b>"
 #    extnOutput: "<b>Result => %0</b>"
 #    patIgnored: "Patch is ignored for this build date"
+#    userInterrupt: "<b>User interrupted the test</b>"
 #    
 #    #===============#
 #    # Query prompts #
@@ -267,10 +330,11 @@
 #    # Header Prompts #
 #    #================#
 #    
-#    loadDate: Loaded Date
-#    selCount: Selected Patches
-#    extnSelCount: Selected Extensions
-#    exeSelCount: Selected Exes
+#    selCount: "Selected Patches"
+#    extnSelCount: "Selected Extensions"
+#    exeSelCount: "Selected Exes"
+#    loadDate: "Loaded Date"
+#    loadVersion: "& Version"
 #    
 #    #===========================================#
 #    # StringField titles (appears on the frame) #
@@ -299,7 +363,7 @@
 #    exeFrame: Exe List
 #    fontFrame: Font Names
 #    demoFrame: Demo
-#    optionFrame: Options
+#    choiceFrame: Choices
 #    
 #    #====================#
 #    # Text Editor titles #
@@ -330,6 +394,10 @@
 #    fontNamePrompt: "Font Name :"
 #    langPrompt: "Language :"
 #    stylePrompt: "Style :"
+#
+##===========================================================#
+## All translations (including UI, Patches, Extensions etc.) #
+##===========================================================#
 #
 #translations:
 #    - find: <original text>
