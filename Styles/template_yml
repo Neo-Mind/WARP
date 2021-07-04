@@ -1,3 +1,21 @@
+###############################################################################################
+##                                                                                            #
+##  This file serves to act as a template. Simply copy this to a .yml file in Styles folder,  #
+##  uncomment the item you want to change and make the modification.                          #
+##                                                                                            #
+##  Please note: not all of the individual control style customizations have been provided    #
+##  here, because it would be too exhaustive. Contact me (Neo) for details of specifics.      #
+##                                                                                            #
+##  All the entries in a styling file are optional. If an entry is not present while loading, #
+##  the tool will pickup the corresponding internal style.                                    #
+##                                                                                            #
+###############################################################################################
+#
+#
+##========================#
+## Radii & other settings #
+##========================#
+#
 #radius: 8
 #
 ##===============#
@@ -22,6 +40,10 @@
 #        inactive: "Images/browse_i.png"
 #        active: "Images/browse_a.png"
 #    
+#    viewBtn:
+#        inactive: "Images/viewfile_i.png"
+#        active: "Images/viewfile_a.png"
+#    
 #    clearBtn:
 #        inactive: "Images/clear_i.png"
 #        active: "Images/clear_a.png"
@@ -38,9 +60,17 @@
 #        inactive: "Images/discord_i.png"
 #        active: "Images/discord_a.png"
 #    
+#    donateBtn:
+#        inactive: "Images/donate_i.png"
+#        active: "Images/donate_a.png"
+#    
 #    githubBtn:
 #        inactive: "Images/github_i.png"
 #        active: "Images/github_a.png"
+#    
+#    settingsBtn:
+#        inactive: "Images/settings_i.png"
+#        active: "Images/settings_a.png"
 #    
 #    infoBtn:
 #        inactive: "Images/info_i.png"
@@ -66,6 +96,10 @@
 #        on: "Images/italic_on.png"
 #        off: "Images/italic_off.png"
 #    
+#    switch:
+#        on: "Images/on.png"
+#        off: "Images/off.png"
+#    
 #    rcmdTag:
 #        inactive: "Images/rcmd_i.png"
 #        selected: "Images/rcmd_s.png"
@@ -88,7 +122,7 @@
 #    # Used globally in various sections of the UI #
 #    #=============================================#	
 #    
-#    global: 
+#    global:
 #        background: '#FDFDFF'
 #        overlay: '#80101010'
 #        border: '#CED2E8'
@@ -102,7 +136,7 @@
 #    # Used for Drop Down menus #
 #    #==========================#
 #    
-#    dropDown: 
+#    dropDown:
 #        background: '#E0E8F2'
 #        border: '#C8CFDF'
 #    
@@ -110,7 +144,7 @@
 #    # Used for tabs/pages in Test Bench #
 #    #===================================#
 #    
-#    page: 
+#    page:
 #        background: '#F4F8FB'
 #        border: '#C0D5E0'
 #    
@@ -118,26 +152,34 @@
 #    # Used for Text Editor controls #
 #    #===============================#
 #    
-#    editor: 
+#    editor:
 #        background: aliceblue
 #    
 #    #===================================================================#
 #    # Override for Quick Action Frames (looks better without the lines) #
 #    #===================================================================#
 #    
-#    actionFrame: 
+#    actionFrame:
 #        border: transparent
+#    
+#    #=======================================================#
+#    # Override for Demo Text in FontDialog & FontSizeDialog #
+#    #=======================================================#
+#    demoText:
+#        inactiveText: '#20B295'
+#        activeText: '#20B295'
 #    
 #    #=============================================================#
 #    # Used for the items in Patch List, Extension List & Exe List #
 #    #=============================================================#
 #    
-#    delegate: 
+#    delegate:
 #        text: '#3850A8'
 #        groupText: lightseagreen
 #        selectedText: white
 #        background: '#E4EAF0'
 #        selectedBG: lightseagreen
+#        menuText: '#20B295'
 #    
 #    #=============================#
 #    # Used for Dialog Box Buttons #
@@ -166,6 +208,9 @@
 #    aboutBox:
 #        border: steelblue
 #    
+#    settingsBox:
+#        border: '#673AB7'
+#    
 #    #====================================================#
 #    # Used for pattern matches with Finder in Test Bench #
 #    #====================================================#
@@ -191,6 +236,7 @@
 #        exeInfo: darkmagenta
 #        patIgnored: magenta
 #        extnOutput: magenta
+#        userInterrupt: hotpink
 #    
 #    #============================================#
 #    # Used by Syntax Assistant for Script Editor #
