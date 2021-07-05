@@ -140,6 +140,16 @@
 #        title: Clear
 #        tooltip: Clear the script editor
 #    
+#    #================#
+#    # Filter Options #
+#    #================#
+#    
+#    rexBtn:
+#        tooltip: Select whether to use Regular expressions OR glob style matching
+#    
+#    csBtn:
+#        tooltip: Select whether to match with or without case-sensitvity
+#    
 #    #============#
 #    # Menu Items #
 #    #============#
@@ -195,6 +205,14 @@
 #        title: Save Resolution
 #        tooltip: Saves current resolution of Tester window as the default
 #    
+#    keepTestInputs:
+#        title: Keep test inputs
+#        tooltip: Option to keep the previously saved inputs for every test that follows
+#    
+#    stopAtError:
+#        title: Stop at Error
+#        tooltip: Option to stop running tests when the first error is encountered
+#
 #    saveResolutions:
 #        title: Save Resolutions
 #        tooltip: Saves current resolutions of Main & Script windows as the default
@@ -212,7 +230,7 @@
 #        tooltip: Enables the generation of security file (.secure.txt) along with the patched Target Exe
 #    
 #    genTgtSession:
-#        title: Generate target's session
+#        title: "Generate target's session"
 #        tooltip: Enables the generation of session file (for later use) along with the patched Target Exe
 #    
 #    keepInputs:
@@ -349,9 +367,9 @@
 #    #===============================#
 #    
 #    exePath: Exe Path
-#    path: Path
 #    filter: Filter Expression
-#    find: Regular Expression
+#    path: Path
+#    find: Search Expression
 #    
 #    #==============#
 #    # Frame titles #
