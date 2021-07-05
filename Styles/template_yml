@@ -96,6 +96,14 @@
 #        on: "Images/italic_on.png"
 #        off: "Images/italic_off.png"
 #    
+#    rexBtn:
+#        on: "Images/rex_on.png"
+#        off: "Images/rex_off.png"
+#    
+#    csBtn:
+#        on: "Images/cs_on.png"
+#        off: "Images/cs_off.png"
+#
 #    switch:
 #        on: "Images/on.png"
 #        off: "Images/off.png"
@@ -162,12 +170,19 @@
 #    actionFrame:
 #        border: transparent
 #    
-#    #=======================================================#
-#    # Override for Demo Text in FontDialog & FontSizeDialog #
-#    #=======================================================#
+#    #=========================================================#
+#    # Override for Demo Text in FontNamePanel & FontSizePanel #
+#    #=========================================================#
 #    demoText:
 #        inactiveText: '#20B295'
 #        activeText: '#20B295'
+#    
+#    #==============================================================#
+#    # Override for Index prompts in VectorPanel (for D_Vec* types) #
+#    #==============================================================#
+#    
+#    idxPrompt:
+#        color: lightseagreen
 #    
 #    #=============================================================#
 #    # Used for the items in Patch List, Extension List & Exe List #
