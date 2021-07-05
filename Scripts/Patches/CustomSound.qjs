@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-05                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -59,6 +59,8 @@ Enable44kHzAudio = function()
 
 	return true;
 };
+
+//TODO - Pre-VC11 clients are failing.
 
 ///
 /// \brief Insert custom code to auto mute audio when game window is inactive
@@ -107,7 +109,7 @@ AutoMute = function()
 		+	MOV(EDI, EAX)   //mov edi, eax
 		;
 
-		addr = Exe.FindHex(prefix + suffix);
+		addr = Exe.FindHex(parts);
 	}
 	if (addr < 0)
 	    throw Error("Reference pattern missing");

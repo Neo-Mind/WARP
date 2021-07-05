@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144)                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-05                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -228,7 +228,7 @@ DisConnToLogin = function()
 	+	JMP([EAX, 0x18])                     //jmp dword ptr [eax+18h]
 	;
 
-	$$(_ + '7.2 - Allocate space to add our code')
+	$$(_ + '7.2 - Allocate space to add our code');
 	[free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
 	$$(_ + '7.3 - Add the code at the space')
