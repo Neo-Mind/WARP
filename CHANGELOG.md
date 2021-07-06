@@ -1,3 +1,10 @@
+# 2021-07-06 Changes
+
+## Tool Updates
+- Added [Exe.ClearSavedInput](https://github.com/Neo-Mind/WARP/wiki/Exe-Object#patch-related) for clearing existing inputs. Useful in Test Bench.
+- Fixed the bug with WARP crashing when running **`Exe.GetUserInput`** from [Script Window](https://github.com/Neo-Mind/WARP/wiki/Script-Window).
+
+
 # 2021-07-05 Changes
 
 ## Patch Updates
