@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 CH.C (jchcc)                                        *
+*   Copyright (C) 2020-2021 CH.C (jchcc)                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-10                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,11 +31,13 @@
 ///
 NoLoginOTP = function()
 {
-	/// 1 - Find the code inside UILoginWnd::SendMsg
+	let _ = 'NoLoginOTP : ';
+
+	$$(_ + '1 - Find the code inside UILoginWnd::SendMsg')
 	let code =
-		PUSH(0x26)			//14 PUSH 26
-	+	PUSH(0x2735)		//16 PUSH 2735
-	+	CALL([EAX, 0x18])	//21 CALL DWORD PTR DS:[EAX + 18]
+		PUSH(0x26)			//push 26h
+	+	PUSH(0x2735)		//push 2735h
+	+	CALL([EAX, 0x18])	//call dword ptr [eax+18h]
 	;
 
 	let addr = Exe.FindHex(code);
@@ -45,9 +47,9 @@ NoLoginOTP = function()
 	// let CMode_SendMsgOffset = [23, 1]
 	// logField("CMode_vtable::SendMsg", addr, CMode_SendMsgOffset)
 
-	/// 2 - Change parameter to make client send original login packet instead
-	Exe.SetUint8(addr + 1, 0);       //replace 26 with 0
-	Exe.SetUint32(addr + 3, 0x2710); //replace 2735 with 2710
+	$$(_ + '2 - Change parameter to make client send original login packet instead')
+	Exe.SetUint8(addr + 1, 0);       //replace 26h with 0
+	Exe.SetUint32(addr + 3, 0x2710); //replace 2735h with 2710h
 
 	return true;
 };
@@ -55,4 +57,5 @@ NoLoginOTP = function()
 ///
 /// \brief Disable for unsupported clients - packet doesnt exist for older ones
 ///
-NoLoginOTP.validate = () => ROC.IsZero || Exe.BuildDate > 20181019;
+NoLoginOTP.validate = () =>
+	ROC.IsZero || Exe.BuildDate > 20181019;

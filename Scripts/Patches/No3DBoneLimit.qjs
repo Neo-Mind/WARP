@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,30 +32,32 @@
 ///
 No3DBoneLimit = function()
 {
-	/// 1.1 - Find the format string (used in sprintf for 3d mob bones)
-	let addr = Exe.FindText("model\\3dmob_bone\\%d_%s.gr2");
+	let _ = 'No3DBoneLimit : ';
+
+	$$(_ + '1.1 - Find the format string (used in sprintf for 3d mob bones)')
+	let addr = Exe.FindText("model\\3dmob_bone\\%d_%s.gr2", CASE_INSENSITIVE);
 	if (addr < 0)
 		throw Error("Format string not found");
 
-	/// 1.2 - Find where its used in a PUSH (inside C3dGrannyBoneRes::GetAnimation)
+	$$(_ + '1.2 - Find where it is PUSHed (it will be inside C3dGrannyBoneRes::GetAnimation)')
 	addr = Exe.FindHex( PUSH(addr) );
 	if (addr < 0)
 		throw Error("Format string not used");
 
-	/// 1.3 - Find the limit checker within 0x80 byte before the PUSH
-	let code = MOV(BYTE_PTR, [POS4WC], Exe.Version <= 11 ? 0 : AL) // MOV BYTE PTR DS:[addr], 0 or AL
+	$$(_ + '1.3 - Find the limit checker within 80h bytes before the PUSH')
+	let code = MOV(BYTE_PTR, [POS4WC], Exe.Version <= 11 ? 0 : AL) // mov byte ptr [addr], 0 or AL
 
 	if (Exe.Version === 6) //VC6
 	{
 		code +=
-			JL(POS1WC)    //JL addr
-		+	CMP(ESI, 0xA) //CMP ESI, 0A
+			JL(POS1WC)    //jl _skip
+		+	CMP(ESI, 0xA) //cmp esi, 0Ah
 		;
 	}
 	else
 	{
 		code +=
-			CMP(ESI, 9)   //CMP ESI, 9
+			CMP(ESI, 9)   //cmp esi, 9
 		;
 	}
 
@@ -63,10 +65,10 @@ No3DBoneLimit = function()
 	if (limitAddr < 0)
 		throw Error("Limit check not found");
 
-	/// 1.4 - Set limitAddr to location after CMP
+	$$(_ + '1.4 - Set limitAddr to location after CMP')
 	limitAddr += code.byteCount();
 
-	/// 1.5 - NOP out the JA/JGE instruction that will come after CMP
+	$$(_ + '1.5 - NOP out the JA/JGE instruction that will come after CMP')
 	let ins = Instr.FromAddr(limitAddr);
 	if (
 		(ins.Codes[0] === 0x77 || ins.Codes[0] === 0x7D) || //SHORT JA/JGE
@@ -80,30 +82,30 @@ No3DBoneLimit = function()
 		throw Error("Limit jump not found");
 	}
 
-	/// 2.1 - Find the index check after ID Comparison (should be within 0x20 bytes)
+	$$(_ + '2.1 - Find the index check after ID Comparison (should be within 20h bytes)')
 	code =
-		TEST(EDI, EDI)  //TEST EDI, EDI
-	+	JNE(" 2?")      //JNE SHORT addr ; distance can be 26, 27 or 28
+		TEST(EDI, EDI)  //test edi, edi
+	+	JNE(" 2?")      //jne short _proceed ; distance can be 26, 27 or 28
 	;
 
 	let indexAddr = Exe.FindHex(code, limitAddr, limitAddr + 0x20);
 	if (indexAddr < 0)
 		throw Error("Index check not found");
 
-	/// 2.2 - NOP out the TEST
+	$$(_ + '2.2 - NOP out the TEST')
 	Exe.SetNOPs(indexAddr, 2);
 
-	/// 2.3 - Change the conditional jump
+	$$(_ + '2.3 - Change the conditional jump')
 	Exe.SetJMP(indexAddr + 2);
 
-	/// 3.1 - Find the annoying warning message
-	addr = Exe.FindText("too many vertex granny model!");
+	$$(_ + '3.1 - Find the annoying warning message')
+	addr = Exe.FindText("too many vertex granny model!", CASE_INSENSITIVE);
 
-	/// 3.2 - Find where its PUSHed & the CALL after it
+	$$(_ + '3.2 - Find where its PUSHed & the CALL after it')
 	if (addr > 0)
 		addr = Exe.FindHex( PUSH(addr) + CALL() );
 
-	/// 3.3 - NOP out the CALL
+	$$(_ + '3.3 - NOP out the CALL')
 	if (addr > 0)
 		Exe.SetNOPs(addr + 5, 5);
 

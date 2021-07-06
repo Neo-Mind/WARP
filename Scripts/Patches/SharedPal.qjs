@@ -23,20 +23,22 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-06-17                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
 /// \brief Change the format string used, to skip some arguments.
 ///        The format string is used in CSession::GetBodyPaletteName (for Body) or CSession::GetHeadPaletteName (for Head)
 ///
-SharedPal = function(oldPrefix, newFormat, optional)
+SharedPal = function(patchName, oldPrefix, newFormat, optional)
 {
-	/// 1.1 - Find the original format string
+	let _ = patchName + ' : ';
+
+	$$(_ + `1.1 - Find the original format string (${oldPrefix})`)
 	let addr = -1;
 	if (oldPrefix.includes("costume"))
 	{
-		addr = Exe.FindText(oldPrefix + "%s_%s_%d_%d.pal"); //Costume specific 
+		addr = Exe.FindText(oldPrefix + "%s_%s_%d_%d.pal"); //Costume specific
 	}
 	else
 	{
@@ -55,21 +57,19 @@ SharedPal = function(oldPrefix, newFormat, optional)
 			throw Error("Format string not found");
 	}
 
-	/// 1.2 - Find where it is used in a PUSH
+	$$(_ + '1.2 - Find where it is used in a PUSH')
 	addr = Exe.FindHex( PUSH(addr) );
 	if (addr < 0)
 		throw Error("Format string not used");
 
-	/// 2.1 - Allocate space for adding new string
-	var free = Exe.FindSpace(newFormat.length);
-	if (free < 0)
-		throw NO_ALLOC;
+	$$(_ + '2.1 - Allocate space for adding new string')
+	let [free, freeVir] = Exe.FindSpace(newFormat.length);
 
-	/// 2.2 - Add the string there
+	$$(_ + '2.2 - Add the string there')
 	Exe.AddText(free, newFormat);
 
-	/// 2.3 - Update the PUSHed address
-	Exe.SetInt32(addr + 1, Exe.Phy2Vir(free, DIFF));
+	$$(_ + '2.3 - Update the PUSHed address')
+	Exe.SetInt32(addr + 1, freeVir);
 
 	return true;
 };
@@ -80,10 +80,10 @@ SharedPal = function(oldPrefix, newFormat, optional)
 SHP_reloadIH = function()
 {
 	let patchName = null;
-	if (Exe.IsSelected("IncrHairStyles"))
+	if (Warp.GetPatchState("IncrHairStyles"))
 		patchName = "IncrHairStyles";
 
-	else if (Exe.IsSelected("Allow65kHairs"))
+	else if (Warp.GetPatchState("Allow65kHairs"))
 		patchName = "Allow65kHairs";
 
 	if (patchName)
@@ -99,7 +99,7 @@ SHP_reloadIH = function()
 ///        Changes "赣府\赣府%s_%s_%d.pal" => "赣府\head%.s_%s_%d.pal" or "赣府\head%.s%.s_%d.pal"
 ///
 SharedHeadPal = patchName =>
-	SharedPal("\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE",
+	SharedPal(patchName, "\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE",
 		patchName === "HeadPalUnisex" ?
 			"\xB8\xD3\xB8\xAE\\head%.s%.s_%d.pal\x00" // %.s is required. Skips hairnum & gender
 		:
@@ -117,28 +117,28 @@ SharedHeadPal.onDeselected = SHP_reloadIH; //cleanup will work just as well but 
 ///        Changes "个\%s_%s_%d.pal" => "个\body%.s_%s_%d.pal" or "个\body%.s%.s_%d.pal"
 ///
 SharedBodyPal = patchName =>
-	SharedPal("\xB8\xF6\\", //for regular clothes
+	SharedPal(patchName, "\xB8\xF6\\", //for regular clothes
 		patchName === "BodyPalUnisex" ?
 			"\xB8\xF6\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
 			"\xB8\xF6\\body%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
 	) &&
 
-	SharedPal("\xB8\xF6\\costume_%d\\", //for costumes
+	SharedPal(patchName, "\xB8\xF6\\costume_%d\\", //for costumes
 		patchName === "BodyPalUnisex" ?
 			"\xB8\xF6\\costume_%d\\body%.s%.s_%d_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
 			"\xB8\xF6\\costume_%d\\body%.s_%s_%d_%d.pal\x00" // %.s is required. Skips jobname
 	, true) &&
 
-	SharedPal("%s\\body\\costume_%d\\", //for costumes - part 2
+	SharedPal(patchName, "%s\\body\\costume_%d\\", //for costumes - part 2
 		patchName === "BodyPalUnisex" ?
 			"%s\\costume_%d\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
 			"%s\\costume_%d\\body%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
 	, true) &&
 
-	SharedPal("%s\\body\\", //for doram races
+	SharedPal(patchName, "%s\\body\\", //for doram races
 		patchName === "BodyPalUnisex" ?
 			"%s\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:

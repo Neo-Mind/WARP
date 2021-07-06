@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-01-12                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,24 +31,26 @@
 ///
 RestoreChatFocus = function()
 {
-	/// 1.1 - Ensure WINMGR is loaded
+	let _ = 'RestoreChatFocus : ';
+
+	$$(_ + '1.1 - Ensure WINMGR is loaded')
 	WINMGR.load();
 
-	/// 1.2 - Find UIWindowMgr::SetFocusEdit CALL in CGameMode static member
-	let code = 
-		CMP([POS3WC], 1) //CMP DWORD PTR DS:[g_CMouse.button], 1
-	+	JNZ(WCp)         //JNZ SHORT addr1
-	+	PUSH(0)          //PUSH 0 <-- patch here
-	+	WINMGR.MovECX    //MOV ECX, OFFSET g_windowMgr
-	+	CALL(ALLWC)      //CALL UIWindowMgr::SetFocusEdit
-	+	JMP(WCp)         //JMP SHORT addr2
+	$$(_ + '1.2 - Find UIWindowMgr::SetFocusEdit CALL in CGameMode static member')
+	let code =
+		CMP([POS3WC], 1) //cmp dword ptr [g_cmouse.button], 1
+	+	JNZ(WCp)         //jnz short _skip#1
+	+	PUSH(0)          //push 0    <-- patch here
+	+	WINMGR.MovECX    //mov ecx, <g_windowMgr>
+	+	CALL(ALLWC)      //call UIWindowMgr::SetFocusEdit
+	+	JMP(WCp)         //jmp short _next
 	;
 
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("SetFocusEdit CALL missing");
 
-	/// 2 - NOP out the PUSH, MOV and CALL
+	$$(_ + '2 - NOP out the PUSH, MOV and CALL')
 	Exe.SetNOPs(addr + 9, 12);
 
 	return true;
@@ -57,4 +59,6 @@ RestoreChatFocus = function()
 ///
 /// \brief Disable for older clients
 ///
-RestoreChatFocus.validate = () => Exe.BuildDate > 20170700;
+RestoreChatFocus.validate = () =>
+	Exe.BuildDate > 20170700;
+

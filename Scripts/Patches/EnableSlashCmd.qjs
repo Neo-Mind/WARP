@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Ai4rei/AN                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-06-12                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,85 +33,87 @@
 ///
 EnableWho = function()
 {
-	/// 1.1 - Ensure the LANGTYPE is loaded
+	let _ = 'EnableWho : ';
+
+	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
-	/// 1.2 - Find Langtype comparison
+	$$(_ + '1.2 - Find Langtype comparison')
 	let code =
-		MOV(EAX, [LANGTYPE]) //MOV EAX, DWORD PTR DS:[g_serviceType]
-	+	CMP(EAX, 3)          //CMP EAX,3
-	+	JE(POS2WC)           //JE addr1
-	+	CMP(EAX, 8)          //CMP EAX,8
-	+	JE(POS2WC)           //JE addr1
-	+	CMP(EAX, 9)          //CMP EAX,9
-	+	JE(POS2WC)           //JE addr1
+		MOV(EAX, [LANGTYPE]) //mov eax, dword ptr [g_serviceType]
+	+	CMP(EAX, 3)          //cmp eax, 3
+	+	JE(POS2WC)           //je _next
+	+	CMP(EAX, 8)          //cmp eax, 8
+	+	JE(POS2WC)           //je _next
+	+	CMP(EAX, 9)          //cmp eax, 9
+	+	JE(POS2WC)           //je _next
 	;
 
-	let addr = Exe.FindHex(code + LEA()); //LEA ECX,[ESP + const]
+	let addr = Exe.FindHex(code + LEA()); //lea ecx, [esp + dispB]
 	if (addr < 0)
-		addr = Exe.FindHex(code + MOV(EAX)); //MOV EAX, const
+		addr = Exe.FindHex(code + MOV(EAX)); //mov eax, immA
 
 	if (addr < 0)
 		throw Error("Langtype comparison not found");
 
-	/// 1.3 - NOP out all the comparisons from first JE (essentially creates a JMP in the exe)
+	$$(_ + '1.3 - NOP out all the comparisons from first JE (essentially creates a JMP in the exe)')
 	Exe.SetNOPs(addr + 5, code.byteCount() - 5);
 
-	/// 2.1 - Find the common pattern to identify Zc_User_Count function
+	$$(_ + '2.1 - Find the common pattern to identify Zc_User_Count function')
 	code =
 		(Exe.Version < 11 ?
-		PUSH_R           //PUSH reg32_A
+		PUSH_R           //push regA
 	:
-		PUSH([R32, WCp]) //PUSH DWORD PTR DS:[reg32_A + const]
+		PUSH([R32, WCp]) //push dword ptr [regA + dispA]
 	)
-	+	PUSH(0xB2)       //PUSH 0B2
-	+	CALL(ALLWC)      //CALL MsgStr
-	+	ADD(ESP, 4)      //ADD ESP, 4
+	+	PUSH(0xB2)       //push 0B2h
+	+	CALL(ALLWC)      //call MsgStr
+	+	ADD(ESP, 4)      //add eSp, 4
 	;
 	addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Zc_User_Count not found");
 
-	/// 2.2 - Find the Langtype comparison before the pattern.
+	$$(_ + '2.2 - Find the Langtype comparison before the pattern')
 	code =
-		JNE(WCp)            //JNE SHORT addr
+		JNE(WCp)            //jne short _skip#2
 	+	(Exe.Version < 11
 	?
-		MOV(EAX, [POS3WC])  //MOV EAX, DWORD PTR DS:[refAddr]
-	+	PUSH_EAX            //PUSH EAX
+		MOV(EAX, [POS3WC])  //mov eax, dword ptr [refAddr]
+	+	PUSH_EAX            //push eax
 	:
-		PUSH([POS4WC])      //PUSH DWORD PTR DS:[refAddr]
+		PUSH([POS4WC])      //push dword ptr [refAddr]
 	)
-	+	CALL(ALLWC)         //CALL IsGravityAid
-	+	ADD(ESP, 4)         //ADD ESP, 4
-	+	TEST(AL, AL)        //TEST AL, AL
-	+	JNE(WCp)            //JNE SHORT addr
+	+	CALL(ALLWC)         //call IsGravityAid
+	+	ADD(ESP, 4)         //add esp, 4
+	+	TEST(AL, AL)        //test al, al
+	+	JNE(WCp)            //jne short _proceed
 	;
 
 	let cmpAddr = Exe.FindHex(code, addr - 0x60, addr);
 	if (cmpAddr < 0)
 		throw Error("2nd Langtype comparison not found");
 
-	/// 2.3 - Change the first JNE
+	$$(_ + '2.3 - Change the first JNE')
 	Exe.SetJMP(cmpAddr);
 
 	if (Exe.Version >= 9) //VC9+ has additional steps
 	{
-		/// 3.1 - Find the last Langtype comparison
+		$$(_ + '3.1 - Find the last Langtype comparison')
 		code =
-			CMP(EAX, 0xF) //CMP EAX, 0F
-		+	JE(5)         //JE SHORT addr
-		+	CMP(EAX, 4)   //CMP EAX, 4
-		+	JNE(WCp)      //JNE SHORT addr2
+			CMP(EAX, 0xF) //cmp eax, 0Fh
+		+	JE(5)         //je short _proceed#2
+		+	CMP(EAX, 4)   //cmp eax, 4
+		+	JNE(WCp)      //jne short _skip#3
 		;
 		addr = Exe.FindHex(code);
 
 		if (addr > 0)
 		{
-			/// 3.2 - Retrieve the JNE SHORT target address.
+			$$(_ + '3.2 - Retrieve the JNE SHORT target address')
 			let tgtAddr = Exe.GetTgtAddr(addr + code.byteCount() - 1, 1);
 
-			/// 3.3 - Create a JMP to it right after the CMP
+			$$(_ + '3.3 - Create a JMP to it right after the CMP')
 			Exe.SetJMP(addr + 3, tgtAddr);
 		}
 	}
@@ -125,20 +127,22 @@ EnableWho = function()
 ///
 EnableShowName = function()
 {
-	/// 1 - Find the Langtype comparison (don't need the langtype value to look for the pattern)
+	let _ = 'EnableShowName : ';
+
+	$$(_ + '1 - Find the Langtype comparison (don\'t need the langtype value to look for the pattern)')
 	let code =
-		TEST(EAX, EAX) //TEST EAX, EAX
-	+	JZ(WCp)        //JZ SHORT addr -> loading setting for showname
-	+	CMP(EAX, 6)    //CMP EAX, 06
-	+	JZ(WCp)        //JZ SHORT addr -> loading setting for showname
-	+	CMP(EAX, 0xA)  //CMP EAX, 0A
+		TEST(EAX, EAX) //test eax, eax
+	+	JZ(WCp)        //jz short _load -> loading setting for showname
+	+	CMP(EAX, 6)    //cmp eax, 6
+	+	JZ(WCp)        //jz short _load -> loading setting for showname
+	+	CMP(EAX, 0xA)  //cmp eax, 0Ah
 	;
 
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Langtype comparison not found");
 
-	/// 2 - Change the conditional jump
+	$$(_ + '2 - Change the conditional jump')
 	Exe.SetJMP(addr + 2);
 
 	return true;
@@ -150,20 +154,22 @@ EnableShowName = function()
 ///
 EnableUnknCmds = function()
 {
-	/// 1.1 - Prep code to find the ending point of CSession::GetNoParamTalkType function. Also setup the register to be modified
+	let _ = 'EnableUnknCmds : ';
+
+	$$(_ + '1.1 - Prep code to find the ending point of CSession::GetNoParamTalkType function. Also setup the register to be modified')
 	let cmn =
 		(ROC.HasFP
 	?
-		MOV(ESP, EBP)     //MOV ESP, EBP
-	+	POP(EBP)          //POP EBP
+		FP_STOP           //mov esp, ebp
+		                  //pop ebp
 	:
 		''
 	)
-	+	RETN(4)           //RETN 4
+	+	RETN(4)           //retn 4
 	;
 
-	let prefix = MOV(EAX, [R32, 4]); //MOV EAX, DWORD PTR DS:[reg32_A + 4]
-	let suffix = MOV(EAX, 3);        //MOV EAX, 3
+	let prefix = MOV(EAX, [R32, 4]); //mov eax, dword ptr [regA + 4]
+	let suffix = MOV(EAX, 3);        //mov eax, 3
 	let movPos, tgtReg;
 
 	switch (Exe.Version)
@@ -171,16 +177,16 @@ EnableUnknCmds = function()
 		case 6: //VC6
 		{
 			prefix +=
-				POP(EDI)  //POP EDI
-			+	POP(ESI)  //POP ESI
-			+	POP(EBX)  //POP EBX
+				POP(EDI)  //pop edi
+			+	POP(ESI)  //pop esi
+			+	POP(EBX)  //pop ebx
 			+	cmn       //stack restore + retn
 			;
 			suffix =
-				POP(EDI)  //POP EDI
-			+	POP(ESI)  //POP ESI
-			+	suffix    //MOV EAX, 3
-			+	POP(EBX)  //POP EBX
+				POP(EDI)  //pop edi
+			+	POP(ESI)  //pop esi
+			+	suffix    //mov eax, 3
+			+	POP(EBX)  //pop ebx
 			+	cmn       //stack restore + retn
 			;
 			movPos = 2;
@@ -190,16 +196,16 @@ EnableUnknCmds = function()
 		case 9: //VC9
 		{
 			prefix +=
-				POP(EDI)  //POP EDI
-			+	POP(ESI)  //POP ESI
-			+	POP(ECX)  //POP ECX
+				POP(EDI)  //pop edi
+			+	POP(ESI)  //pop esi
+			+	POP(ECX)  //pop ecx
 			+	cmn       //stack restore + retn
 			;
 			suffix =
-				POP(EDI)  //POP EDI
-			+	suffix    //MOV EAX, 3
-			+	POP(ESI)  //POP ESI
-			+	POP(ECX)  //POP ECX
+				POP(EDI)  //pop edi
+			+	suffix    //mov eax, 3
+			+	POP(ESI)  //pop esi
+			+	POP(ECX)  //pop ecx
 			+	cmn       //stack restore + retn
 			;
 			movPos = 1;
@@ -222,14 +228,14 @@ EnableUnknCmds = function()
 		default: //VC14.16
 		{
 			prefix +=
-				POP(EDI)  //POP EDI
-			+	POP(ESI)  //POP ESI
+				POP(EDI)  //pop edi
+			+	POP(ESI)  //pop esi
 			+	cmn       //stack restore + retn
 			;
 			suffix =
-				POP(EDI)  //POP EDI
-			+	suffix    //MOV EAX, 3
-			+	POP(ESI)  //POP ESI
+				POP(EDI)  //pop edi
+			+	suffix    //mov eax, 3
+			+	POP(ESI)  //pop esi
 			+	cmn       //stack restore + retn
 			;
 			movPos = 1;
@@ -242,58 +248,58 @@ EnableUnknCmds = function()
 	if (addr < 0)
 		throw Error("Function end missing");
 
-	/// 1.2 - Modify the MOV statement to unset EAX & increment the target register
+	$$(_ + '1.2 - Modify the MOV statement to unset EAX & increment the target register')
 	Exe.SetHex(addr + prefix.byteCount() + movPos,
-		XOR(EAX, EAX)  //XOR EAX, EAX
-	+	ADD(tgtReg, 1) //ADD reg32_A, 1
+		XOR(EAX, EAX)  //xor eax, eax
+	+	ADD(tgtReg, 1) //add regA, 1
 	);
 
-	/// 1.3 - Find the beginning of the function
+	$$(_ + '1.3 - Find the beginning of the function')
 	prefix =
 		(ROC.HasFP
 	?
-		PUSH(EBP)      //PUSH EBP
-	+	MOV(EBP, ESP)  //MOV EBP, ESP
+		FP_START       //push ebp
+		               //mov ebp, esp
 	:
 		''
 	)
 	+	(Exe.Version < 9 || Exe.Version > 11
 	?
-		SUB(ESP, 8)    //SUB ESP, 8
+		SUB(ESP, 8)    //sub esp, 8
 	:
-		PUSH(ECX)      //PUSH ECX
-	+	PUSH(ESI)      //PUSH ESI
+		PUSH(ECX)      //push ecx
+	+	PUSH(ESI)      //push esi
 	)
 	;
 	addr = Exe.FindLastHex(prefix, addr, addr - 0x100);
 	if (addr < 0)
 		throw Error("Function start missing");
 
-	/// 1.4 - Save it's VIRTUAL address
+	$$(_ + '1.4 - Save it\'s VIRTUAL address')
 	let funcAddr = Exe.Phy2Vir(addr, CODE);
 
-	/// 2.1 - Find the location where the function is CALLed (the pattern would match multiple locations).
+	$$(_ + '2.1 - Find the location where the function is CALLed (the pattern would match multiple locations)')
 	if (Exe.Version === 6)
 	{
 		prefix =
-			MOV(EAX, [EAX, 4])                            //MOV EAX, DWORD PTR DS:[EAX + 4]
-		+	TEST(EAX, EAX)                                //TEST EAX, EAX
-		+	JNZ(5)                                        //JNZ SHORT _skip
-		+	MOV(EAX, POS3WC)                              //MOV EAX, addr
+			MOV(EAX, [EAX, 4])                            //mov eax, dword ptr [EAX + 4]
+		+	TEST(EAX, EAX)                                //test eax, eax
+		+	JNZ(5)                                        //jnz short _skip#1
+		+	MOV(EAX, POS3WC)                              //mov eax, offset#1
 		;
 	}
 	else
 	{
 		prefix =
-			CMP([EAX, ' 1?'], 0x10)                       //CMP DWORD PTR DS:[EAX + const], 10 ; const is either 14 or 18
-		+	JB(WCp)                                       //JB SHORT addr
-		+	MOV(EAX, Exe.Version < 10 ? [EAX, 4] : [EAX]) //MOV EAX, DWORD PTR DS:[memLoc] ; memLoc is either EAX + 4 (for older clients) or EAX
+			CMP([EAX, ' 1?'], 0x10)                       //cmp dword ptr [eax + dispA], 10h ; dispA is either 14 or 18
+		+	JB(WCp)                                       //jb short _skip#2
+		+	MOV(EAX, Exe.Version < 10 ? [EAX, 4] : [EAX]) //mov eax, dword ptr [memLoc] ; memLoc is either EAX + 4 (for older clients) or EAX
 		;
 	}
 	suffix =
-		MOV(ECX, ROC.HasFP ? [EBP, WCn] : [ESP, WCp])     //MOV ECX, DWORD PTR DS:[LOCAL.x]
-	+	PUSH_EAX                                          //PUSH EAX
-	+	CALL();                                           //CALL CSession::GetNoParamTalkType
+		MOV(ECX, ROC.HasFP ? [EBP, WCn] : [ESP, WCp])     //mov ecx, dword ptr [LOCAL.x]
+	+	PUSH_EAX                                          //push eax
+	+	CALL();                                           //call CSession::GetNoParamTalkType
 
 	let addrs = Exe.FindHexN(prefix + suffix);
 	if (addrs.isEmpty())
@@ -301,12 +307,12 @@ EnableUnknCmds = function()
 
 	let csize = prefix.byteCount() + suffix.byteCount();
 
-	/// 2.2 - Find the correct one by checking the function being called.
+	$$(_ + '2.2 - Find the correct one by checking the function being called')
 	addr = addrs.find(memAddr => Exe.GetTgtAddr(memAddr + csize) === funcAddr);
 	if (!addr)
 		throw Error("Only False matches found");
 
-	/// 2.3 - Find the long JMP after the CALL (occurs twice for VC9). NOP away any OR reg32_A, -1 instructions in between
+	$$(_ + '2.3 - Find the long JMP after the CALL (occurs twice for VC9). NOP away any OR regA, -1 instructions in between')
 	let hookAddrs = [];
 	let ins = Instr.FromAddr(addr + csize + 4);
 	let count = Exe.Version === 9 ? 2 : 1;
@@ -327,10 +333,10 @@ EnableUnknCmds = function()
 		ins.moveToNext(); //move to next instruction
 	}
 
-	/// 2.4 - Extract the jump target
+	$$(_ + '2.4 - Extract the jump target')
 	let retnAddr = Exe.GetTgtAddr(hookAddrs[0]);
 
-	/// 2.5 - Check if the instruction at the target is OR reg32_A, -1
+	$$(_ + '2.5 - Check if the instruction at the target is OR regA, -1')
 	ins = Instr.FromAddr(retnAddr, VIRTUAL);
 	if (ins.Codes[0] === 0x83 && ins.Immd === -1)
 	{
@@ -339,28 +345,24 @@ EnableUnknCmds = function()
 			retnAddr += 3;
 	}
 
-	/// 3.1 - Prep new code to setup TT_NORMAL & chatStartOffset
+	$$(_ + '3.1 - Prep new code to setup TT_NORMAL & chatStartOffset')
 	let code =
-		DEC(tgtReg)    //DEC reg32_A ; for TT_NORMAL reg value becomes 0
-	+	JZ(3)          //JZ SHORT _skip
-	+	OR(tgtReg, -1) //OR reg32_A, -1 ; for all others reg value is -1
-	+	JMP(Filler(1)) //JMP retnAddr
+		DEC(tgtReg)    //dec regA ; for TT_NORMAL reg value becomes 0
+	+	JZ(Filler(1))  //jz <retnAddr>
+	+	OR(tgtReg, -1) //or regA, FFFFFFFFh ; for all others reg value is -1
+	+	JMP(Filler(1)) //jmp <retnAddr>
 	;
 
-	/// 3.2 - Allocate space for it
-	let free = Exe.FindSpace(code.byteCount());
-	if (free < 0)
-		throw NO_ALLOC;
+	$$(_ + '3.2 - Allocate space for it')
+	let [free, freeVir] = Exe.FindSpace(code.byteCount());
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
+	$$(_ + '3.3 - Fill in the blanks')
+	code = SetFillTarget(code, 1, retnAddr, freeVir, 2);
 
-	/// 3.3 - Fill in the blanks
-	code = SetFillTarget(code, 1, retnAddr, freeVir, 1);
-
-	/// 3.4 - Add to allocated space
+	$$(_ + '3.4 - Add to allocated space')
 	Exe.AddHex(free, code);
 
-	/// 3.5 - Update the JMP targets
+	$$(_ + '3.5 - Update the JMP targets')
 	hookAddrs.forEach(addr => Exe.SetTgtAddr(addr, freeVir));
 
 	return true;

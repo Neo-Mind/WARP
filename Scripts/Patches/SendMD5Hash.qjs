@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 GreenBox                                          *
-*   Copyright (C) 2013-2020 Neo-Mind                                       *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,55 +23,59 @@
 *                                                                          *
 *   Author(s)     : GreenBox, Neo-Mind                                     *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Change all Conditional jumps to JMP related to Langtype comparisons 
+/// \brief Change all Conditional jumps to JMP related to Langtype comparisons
 ///        inside CLoginMode::CheckExeHashFromAccServer function
 ///
 SendMD5Hash = function()
 {
-	/// 1.1 - Ensure the LANGTYPE is loaded
+	let _ = 'SendMD5Hash : ';
+
+	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
-	
-	/// 1.2 - Prep comparison patterns to look for
-	let patterns = 
+
+	$$(_ + '1.2 - Prep comparison patterns to look for')
+	let patterns =
 	[
-			MOV(R32, [LANGTYPE]) //MOV reg32, DWORD PTR DS:[g_serviceType]
-		+   XOR(EAX, EAX)        //XOR EAX, EAX
-		+   CMP(R32, 6)          //CMP reg32, 6
-		+   JE(WCp)              //JE SHORT addr -> (addr has MOV EAX, 1)
+			MOV(R32, [LANGTYPE]) //mov regA, dword ptr [g_serviceType]
+		+   XOR(EAX, EAX)        //xor eax, eax
+		+   CMP(R32, 6)          //cmp regA, 6
+		+   JE(WCp)              //JE SHORT _set1 -> (addr has 'mov eax, 1')
 		,
-			TEST(EAX, EAX)       //TEST EAX, EAX ; EAX has [g_serviceType]
-		+   JNE(WCp)             //JNE SHORT addr1
-		+   MOV(EAX, [POS4WC])   //MOV EAX, DWORD PTR DS:[addr2]
+			TEST(EAX, EAX)       //test eax, eax ; eax has [g_serviceType]
+		+   JNE(WCp)             //jne short _set1
+		+   MOV(EAX, [POS4WC])   //mov eax, dword ptr [addr#2]
 		,
-			CMP(EAX, 6)          //CMP EAX, 6  ; EAX has [g_serviceType]
-		+   JNE(WCp)             //JNE SHORT addr3
+			CMP(EAX, 6)          //cmp eax, 6  ; EAX has [g_serviceType]
+		+   JNE(WCp)             //jne short _skip
 	];
 	let delta = [2, 7, 2];
-	
-	/// 2.1 - Set the starting addr as the beginning of CODE section
+
+	$$(_ + '2.1 - Set the starting addr as the beginning of CODE section')
 	let addr = Exe.GetSectBegin(CODE);
-	
+
 	patterns.forEach( (pat, index) =>
 	{
-		/// 2.2 - Find the 'i'th Langtype comparison
+		let __ = `${_} [${index}] `;
+
+		$$(__ + '2.2 - Find the Langtype comparison')
 		addr = Exe.FindHex(pat, addr);
 		if (addr < 0)
 			throw Error(`Comparison no. ${index+1} not found`);
-		
-		/// 2.3 - Set addr to location after conditional jump
+
+		$$(__ + '2.3 - Set addr to location after conditional jump')
 		addr += pat.byteCount() - delta[index];
-		
-		/// 2.4 - Change the conditional jump
+
+		$$(__ + '2.4 - Change the conditional jump')
 		Exe.SetJMP(addr);
-		
-		/// 2.5 - Set addr to jumped location so that we can skip over unnecessary bytes in next FindHex call
+
+		$$(__ + '2.5 - Set addr to jumped location so that we can skip over unnecessary bytes in next FindHex call')
 		addr = Exe.GetTgtAddr(addr + 1, PHYSICAL, 1);
 	});
-	
+
 	return true;
 };

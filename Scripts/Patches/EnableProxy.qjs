@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,32 +33,34 @@
 ///
 EnableProxy = function()
 {
-	/// 1.1 - Find the string 'Failed to setup select mode'
+	let _ = 'EnableProxy : ';
+
+	$$(_ + '1.1 - Find \'Failed to setup select mode\'')
 	let addr = Exe.FindText("Failed to setup select mode");
 	if (addr > 0)
 	{
-		/// 1.2 - Find where it is PUSHed
+		$$(_ + '1.2 - Find where it is PUSHed')
 		addr = Exe.FindHex( PUSH(addr) );
 		if (addr < 0)
 			throw Error("Setup string not used");
 	}
 	else if (Exe.BuildDate > 20191020)
 	{
-		/// 1.3 - Find the new pattern
+		$$(_ + '1.3 - Find the new pattern')
 		addr = Exe.FindHex(
 			(
-				PUSH(0xA000)          //PUSH A000
-			+	LEA(ECX, [R32, WCp])  //LEA ECX, [reg32 + const1]
-			+	CALL(ALLWC)           //CALL func1
-			).repeat(3)               //PUSH A000
-			                          //LEA ECX, [reg32 + const2]
-			                          //CALL func2
-			                          //PUSH A000
-			                          //LEA ECX, [reg32 + const3]
-			                          //CALL func3
-			+	PUSH_0                //PUSH 0
-			+	PUSH_1                //PUSH 1
-			+	PUSH_2                //PUSH 2
+				PUSH(0xA000)          //push A000h
+			+	LEA(ECX, [R32, WCp])  //lea ecx, [regA + dispA]
+			+	CALL(ALLWC)           //call func#1
+			).repeat(3)               //push A000h
+			                          //lea ecx, [regA + dispB]
+			                          //call func#2
+			                          //push A000h
+			                          //lea ecx, [regA + dispC]
+			                          //call func#3
+			+	PUSH_0                //push 0
+			+	PUSH_1                //push 1
+			+	PUSH_2                //push 2
 		);
 		if (addr < 0)
 			throw Error("New pattern not found");
@@ -71,33 +73,33 @@ EnableProxy = function()
 	let code, indirectCALL, callAddr;
 	if (Exe.Version === 6) //VC6
 	{
-		/// 2.1 - Find connect call (Direct) within 0x90 byte before the PUSH
+		$$(_ + '2.1 - Find connect call (Direct) within 90h bytes before the PUSH')
 		code =
-			CALL(ALLWC)          //CALL <&WS2_32.connect>
-		+   CMP(EAX, -1)         //CMP EAX, -1
-		+   JNZ(WCp)             //JNZ SHORT addr
-		+   CALL(ALLWC)          //CALL <&WS2_32.WSAGetLastError>
-		+   CMP(EAX, 0x2733)     //CMP EAX, 2733h
+			CALL(ALLWC)          //call <&WS2_32.connect>
+		+   CMP(EAX, -1)         //cmp eax, -1
+		+   JNZ(WCp)             //jnz short _proceed
+		+   CALL(ALLWC)          //call <&WS2_32.WSAGetLastError>
+		+   CMP(EAX, 0x2733)     //cmp eax, 2733h
 		;
 		indirectCALL = false;
 		callAddr = Exe.FindHex(code, addr - 0x90, addr);
 	}
 	else //newer
 	{
-		/// 2.2 - Find connect call (Indirect) within 0x50 bytes before the PUSH
+		$$(_ + '2.2 - Find connect call (Indirect) within 50h bytes before the PUSH')
 		code =
 			(Exe.Version > 10
 		?
-			PUSH([R32, 4])       //PUSH DWORD PTR DS:[refReg + 4]
-		:                        //  or
-			MOV([R32, 0xA], R16) //MOV WORD PTR DS:[refReg + 0A], reg16_B
+			PUSH([R32, 4])       //push dword ptr [refReg + 4]
+		:                        //  OR
+			MOV([R32, 0xA], R16) //mov word ptr [refReg + 0Ah], reg16B
 		)
-		+	CALL([ALLWCp])       //CALL DWORD PTR DS:[<&WS2_32.connect>]
-		+   CMP(EAX, -1)         //CMP EAX, -1
-		+   JNZ(WCp)             //JNZ SHORT addr
-		+   MOV(R32, [ALLWCp])   //MOV reg32_A, DWORD PTR DS:[<&WS2_32.WSAGetLastError>]
-		+   CALL(R32)            //CALL reg32_A
-		+   CMP(EAX, 0x2733)     //CMP EAX, 2733h
+		+	CALL([ALLWCp])       //call dword ptr [<&WS2_32.connect>]
+		+   CMP(EAX, -1)         //cmp eax, -1
+		+   JNZ(WCp)             //jnz short _proceed
+		+   MOV(R32, [ALLWCp])   //mov regA, dword ptr [<&WS2_32.WSAGetLastError>]
+		+   CALL(R32)            //call regA
+		+   CMP(EAX, 0x2733)     //cmp eax, 2733h
 		;
 		indirectCALL = true;
 		callAddr = Exe.FindHex(code, addr - 0x60, addr);
@@ -109,22 +111,22 @@ EnableProxy = function()
 	let refReg;
 	if (indirectCALL)
 	{
-		/// 2.3 - Extract the register used & move callAddr to the next instruction which is the actual CALL
+		$$(_ + '2.3 - Extract the register used & move callAddr to the next instruction which is the actual CALL')
 		let ins = Instr.FromAddr(callAddr);
 		refReg = R32.List[ins.MRM.RegM];
 		callAddr = ins.NextAddr;
 
-		/// 2.4 - Change indirect CALL to direct one before we proceed
+		$$(_ + '2.4 - Change indirect CALL to direct one before we proceed')
 		Exe.SetUint16(callAddr, 0xE890); //NOP + CALL opcodes
 		callAddr++;
 	}
 	else
 	{
-		/// 2.5 - If direct CALL, it means they are older clients and only ESI was used
+		$$(_ + '2.5 - If direct CALL, it means they are older clients and only ESI was used')
 		refReg = ESI;
 	}
 
-	/// 2.5 - Extract address of ws2_32.connect
+	$$(_ + '2.5 - Extract address of ws2_32.connect')
 	let connAddr = indirectCALL
 	?
 		Exe.GetInt32(callAddr + 1)
@@ -132,43 +134,36 @@ EnableProxy = function()
 		Exe.GetTgtAddr(callAddr + 1)
 	;
 
-	/// 3.1 - Create the custom function (IP saver code)
+	$$(_ + '3.1 - Create the custom function (IP saver code)')
 	code =
-		MOV(EAX, [Filler(1)])   //MOV EAX, DWORD PTR DS:[g_saveIP]
-	+   TEST(EAX, EAX)          //TEST EAX, EAX
-	+   JNZ(0x08)               //JNZ SHORT addr
-	+   MOV(EAX, [refReg, 0xC]) //MOV EAX, DWORD PTR DS:[refReg + 0C] ; usually ESI
-	+   MOV([Filler(1)], EAX)   //MOV DWORD PTR DS:[g_saveIP], EAX
-	+   MOV([refReg, 0xC], EAX) //MOV DWORD PTR DS:[refReg + 0C], EAX <- addr
+		MOV(EAX, [Filler(1)])   //mov eax, dword ptr [g_saveIP]
+	+   TEST(EAX, EAX)          //test eax, eax
+	+   JNZ(0x08)               //jnz short _skip
+	+   MOV(EAX, [refReg, 0xC]) //mov eax, dword ptr [refReg + 0C] ; usually ESI
+	+   MOV([Filler(1)], EAX)   //mov dword ptr [g_saveIP], EAX
+	+   MOV([refReg, 0xC], EAX) //MOV dword ptr [refReg + 0C], EAX <- _skip
 	+	(indirectCALL
 	?
-		JMP([connAddr])         //JMP DWORD PTR DS:[<&WS2_32.connect>]
-	:                           //  or
-		JMP(Filler(2))          //JMP <&WS2_32.connect>; will be filled later since we need relative addr
+		JMP([connAddr])         //jmp dword ptr [<&WS2_32.connect>]
+	:                           //  OR
+		JMP(Filler(2))          //jmp <&WS2_32.connect>; will be filled later since we need relative addr
 	);
 
-	let csize = code.byteCount();
+	$$(_ + '3.2 - Allocate space for the function')
+	let [free, freeVir] = Exe.FindSpace(4 + code.byteCount(), 0x10); //First 4 bytes are g_saveIP
 
-	/// 3.2 - Allocate space for the function
-	let free = Exe.FindSpace(4 + csize, 0x10); //First 4 bytes are g_saveIP
-	if (free < 0)
-		throw NO_ALLOC;
-
-	let freeVir = Exe.Phy2Vir(free, DIFF);
-
-	/// 3.3 - Set g_saveIP for index 1
+	$$(_ + '3.3 - Set g_saveIP for index 1')
 	code = SwapFiller(code, 1, freeVir, 2); //Occurs twice
 
-	/// 3.4 - Set connect address for Direct call
+	$$(_ + '3.4 - Set connect address for Direct call')
 	if (!indirectCALL)
 		code = SetFillTarget(code, 2, connAddr, freeVir, 1);
 
-	/// 3.5 - Add the function at the allocated space
+	$$(_ + '3.5 - Add the function at the allocated space')
 	Exe.AddHex(free, ALL00 + code);
 
-	/// 3.6 - Redirect the connect call to use our function
+	$$(_ + '3.6 - Redirect the connect call to use our function')
 	Exe.SetTgtAddr(callAddr + 1, freeVir + 4);
-	ShowAddr(callAddr + 1);
 
 	return true;
 };

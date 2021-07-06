@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-06-17                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -52,7 +52,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 		{
 			this.ReqJN     = -1;   //The VIRTUAL address of "ReqJobName"
 			this.PushRJN   = '';   //The code for PUSH OFFSET addr; ASCII "ReqJobName"
-			this.PushState = '';   //The code for PUSH DWORD PTR DS:[GlobLuaState]
+			this.PushState = '';   //The code for PUSH dword ptr [GlobLuaState]
 			this.StkConst  = 0;    //The constant value used in SUB ESP, const which gets executed before Lua Function name is PUSHed
 			this.Allocator = -1;   //The VIRTUAL address of the function which allocates space to store the Lua function name
 
@@ -61,7 +61,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			this.FnInvoker  = -1;  //The VIRTUAL address of the function which invokes the "Lua function" already PUSHed as argument
 			this.FileLoader = -1;  //The VIRTUAL address of the function which loads the Lua file already PUSHed as argument
 
-			this.FL_movECX  = '';  //The code for MOV ECX, DWORD PTR DS:[addr] ; where addr evaluates to GlobLuaState
+			this.FL_movECX  = '';  //The code for MOV ECX, dword ptr [addr] ; where addr evaluates to GlobLuaState
 			                       //Used before CALLs to FileLoader
 
 			delete this.Pushers;   //Map of various PUSH codes for formats like "d>s"
@@ -95,14 +95,14 @@ if (typeof LUA === 'undefined') // avoid redefinition
 
 			["d>s", "d>d", "dd>d", "dd>s"].forEach( fmt =>
 			{
-				$$(_ + '1.5 - Find "' + fmt + '" & save PUSH "' + fmt + '" instruction')
+				$$(_ + `1.5 - Find '${fmt}' & save it's PUSH instruction`)
 				let addr = Exe.FindText(fmt, false);
 				if (addr > 0)
 					this.Pushers.set(fmt, PUSH(addr));
 			});
 
-			$$(_ + '1.6 - Find the string "ReqJobName"')
-			addr = Exe.FindText("ReqJobName");
+			$$(_ + '1.6 - Find \'ReqJobName\'')
+			addr = Exe.FindText("ReqJobName", CASE_INSENSITIVE);
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - 'ReqJobName' not found");
@@ -113,7 +113,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			this.ReqJN = addr;
 			this.PushRJN = PUSH(addr);
 
-			$$(_ + '2.1 - Find where "ReqJobName" is used in a PUSH')
+			$$(_ + '2.1 - Find where \'ReqJobName\' is used in a PUSH')
 			addr = Exe.FindHex(this.PushRJN);
 			if (addr < 0)
 			{
@@ -123,8 +123,8 @@ if (typeof LUA === 'undefined') // avoid redefinition
 
 			$$(_ + '2.2 - Find the ESP allocation before the PUSH')
 			let code =
-				SUB(ESP, WC)	//SUB ESP, const
-			+	MOV(ECX, ESP)   //MOV ECX, ESP
+				SUB(ESP, WC)	//sub esp, immA
+			+	MOV(ECX, ESP)   //mov ecx, esp
 			;
 			let movAddr = Exe.FindHex(code, addr - 0x28, addr);
 			if (movAddr < 0)
@@ -152,7 +152,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				case 0xFF:
 					$$(_ + '3.2 - For INDIRECT call (seen in VC9). Save the pointer address as \'Allocator\' & set the type to Ptr')
 
-					if (ins.MRM.RegO !== 2) //ensuring its a CALL DWORD PTR
+					if (ins.MRM.RegO !== 2) //ensuring its a CALL dword ptr
 					{
 						this.Error = new Error("LUA - 0xFF seen after PUSH 'ReqJobName', but not a CALL");
 						throw this.Error;
@@ -193,7 +193,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 			}
 
-			$$(_ + '4.2 - Extract the GlobLuaState address & save it as a PUSH DWORD PTR')
+			$$(_ + '4.2 - Extract the GlobLuaState address & save it as a PUSH dword ptr')
 			ins = Instr.FromAddr(addr);
 			this.PushState = PUSH( [ins.Disp] );
 
@@ -213,7 +213,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			this.FnInvoker = Exe.GetTgtAddr(addr + 1);
 
 			$$(_ + '5.1 - Find the string "Lua Files\\DataInfo\\jobName"')
-			addr = Exe.FindText("Lua Files\\DataInfo\\jobName");
+			addr = Exe.FindText("Lua Files\\DataInfo\\jobName", CASE_INSENSITIVE);
 			if (addr < 0)
 			{
 				this.Error = new Error("LUA - jobName string missing");
@@ -229,9 +229,9 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			}
 
 			$$(_ + '5.3 - Find the GlobLuaState movement to ECX before the PUSH')
-			movAddr = Exe.FindHex( MOV(ECX, [ESI, POS2WC]), addr - 10, addr);
+			movAddr = Exe.FindHex( MOV(ECX, [ESI, POS2WC]), addr - 10, addr); //mov ecx, dword ptr [esi + dispA]
 			if (movAddr < 0)
-				movAddr = Exe.FindHex( MOV(ECX, [POS3WC]), addr - 10, addr);
+				movAddr = Exe.FindHex( MOV(ECX, [POS3WC]), addr - 10, addr);  //mov ecx, dword ptr [dispA]
 
 			if (movAddr < 0)
 			{
@@ -293,17 +293,17 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			$$(_ + '2.1 - First we prepare stack locations for the outputs & PUSH them')
 			if (ocnt > 0)
 			{
-				pre += SUB(ESP, 4 * ocnt);         //SUB ESP, constO ; enough for all the outputs
+				pre += SUB(ESP, 4 * ocnt);         //sub esp, immA ; enough for all the outputs
 
 				code +=
 					ocnt === 1
 				?
-					PUSH(ESP)                       //PUSH ESP; for 1 output
-				:                                   //  or
-					MOV(ECX, ESP)                   //MOV ECX, ESP
-				+	(PUSH(ECX)                      //PUSH ECX   ; repeated n-1 times
-				+	ADD(ECX, 4)).repeat(ocnt - 1)   //ADD ECX, 4 ; repeated n-1 times
-				+	PUSH(ECX)                       //PUSH ECX
+					PUSH(ESP)                       //push esp; for 1 output
+				:                                   //  OR
+					MOV(ECX, ESP)                   //mov ecx, esp
+				+	(PUSH(ECX)                      //push ecx     ; repeated n-1 times
+				+	ADD(ECX, 4)).repeat(ocnt - 1)   //add ecx, 4   ; repeated n-1 times
+				+	PUSH(ECX)                       //push ecx
 				;
 			}
 
@@ -312,9 +312,9 @@ if (typeof LUA === 'undefined') // avoid redefinition
 
 			$$(_ + '2.3 - PUSH the format, and prepare ECX for the allocator')
 			code +=
-				PUSH_fmt                         //PUSH argFormat
-			+	SUB(ESP, this.StkConst)          //SUB ESP, StkConst
-			+	MOV(ECX, ESP)                    //MOV ECX, ESP
+				PUSH_fmt                         //push offset <argFormat>
+			+	SUB(ESP, this.StkConst)          //sub esp, <StkConst>
+			+	MOV(ECX, ESP)                    //mov ecx, esp
 			;
 
 			$$(_ + '2.4 - PUSH the function name along with additional argument and CALL the Allocator')
@@ -322,37 +322,37 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			{
 				case FnMode.ZInit :
 					code +=
-						PUSH(name.length)        //PUSH funcNameLength
-					+	PUSH(Filler(50))         //PUSH nameAddr ; ASCII funcName
-					+	MOV([ECX, 0x14], 0xF)    //MOV DWORD PTR DS:[ECX+14], 0F
-					+	MOV([ECX, 0x10], 0x0)    //MOV DWORD PTR DS:[ECX+10], 0
-					+	MOV(BYTE_PTR, [ECX], 0)  //MOV BYTE PTR DS:[ECX], 0
-					+	CALL(Filler(51))         //CALL Allocator
+						PUSH(name.length)        //push <funcNameLength>
+					+	PUSH(Filler(50))         //push offset <funcName>
+					+	MOV([ECX, 0x14], 0xF)    //mov dword ptr [ecx + 14h], 0f
+					+	MOV([ECX, 0x10], 0x0)    //MOV dword ptr [ecx + 10h], 0
+					+	MOV(BYTE_PTR, [ECX], 0)  //mov byte ptr [ecx], 0
+					+	CALL(Filler(51))         //call Allocator
 					;
 					break;
 
 				case FnMode.Ptr :
 					code +=
-						PUSH(Filler(50))         //PUSH nameAddr ; ASCII funcName
-					+	CALL([this.Allocator])   //CALL DWORD PTR DS:[Allocator]
+						PUSH(Filler(50))         //push offset <funcName>
+					+	CALL([this.Allocator])   //call dword ptr [Allocator]
 					;
 					break;
 
 				case FnMode.Regular :
 					code +=
-						LEA(EAX, [ESP, this.StkConst + 4 * (icnt + ocnt + 2)]) //LEA EAX, [ESP + StkConst + constL]; contains funcName length
-					+	PUSH_EAX                 //PUSH EAX
-					+	PUSH(Filler(50))         //PUSH nameAddr ; ASCII funcName
-					+	CALL(Filler(51))         //CALL Allocator
+						LEA(EAX, [ESP, this.StkConst + 4 * (icnt + ocnt + 2)]) //lea eax, [esp + StkConst + constL]; contains funcName length
+					+	PUSH_EAX                 //push eax
+					+	PUSH(Filler(50))         //push offset <funcName>
+					+	CALL(Filler(51))         //call Allocator
 					;
 					break;
 			}
 
 			$$(_ + '2.5 - PUSH the state and Call the FnInvoker')
 			code +=
-				this.PushState                   //PUSH DWORD PTR DS:[GlobLuaState]
-			+	CALL(Filler(52))                 //CALL FnInvoker
-			+	ADD(ESP, this.StkConst + 8 + 4*icnt)  //ADD ESP, StkConst + 8 + constI
+				this.PushState                   //push dword ptr [GlobLuaState]
+			+	CALL(Filler(52))                 //call FnInvoker
+			+	ADD(ESP, this.StkConst + 8 + 4*icnt)  //add esp, StkConst + 8 + constI
 			;
 
 			$$(_ + '2.6 - Retrieve the outputs')
@@ -361,19 +361,19 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				outputs.forEach( arg =>
 				{
 					code +=
-						POP(ECX)                 //POP ECX
+						POP(ECX)                 //pop ecx
 					+	(IsArr(arg)
 					?
-						MOV(ECX, [ECX])          //MOV ECX, DWORD PTR DS:[ECX]
-					+	MOV(arg, ECX)            //MOV outputPtr, ECX
-					:                            //  or
-						MOV(arg, [ECX])          //MOV outputReg, DWORD PTR DS:[ECX]
+						MOV(ECX, [ECX])          //mov ecx, dword ptr [ecx]
+					+	MOV(arg, ECX)            //mov outputPtr, ecx
+					:                            //  OR
+						MOV(arg, [ECX])          //mov outputReg, dword ptr [ecx]
 					)
 					;
 				});
 
 				$$(_ + '2.7 - Restore the stack')
-				suf = ADD(ESP, 4 * ocnt +                     //ADD ESP, constO + 4 for Regular CALL
+				suf = ADD(ESP, 4 * ocnt +                     //add esp, (immA + 4)  for Regular CALL
 					(this.Al_Mode === FnMode.Regular ? 4 : 0)
 				);
 			}
@@ -391,7 +391,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				code = code.join('');
 
 			if (IsStr(nameAddr))
-				nameAddr = Exe.FindText(nameAddr, false);
+				nameAddr = Exe.FindText(nameAddr, CASE_INSENSITIVE, false);
 
 			if (nameAddr)
 				code = SwapFiller(code, 50, nameAddr);
@@ -446,7 +446,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 
 			$$(_ + '1.2 - Find the string inside refName')
-			let refAddr = Exe.FindText(refName);
+			let refAddr = Exe.FindText(refName, CASE_INSENSITIVE);
 			if (refAddr < 0)
 				throw Error("LUA.addLoaders - Reference file (" + refName + ") missing");
 
@@ -458,7 +458,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			$$(_ + '1.4 - Find the ECX movement right before it')
 			let hookAddr = Exe.FindHex(this.FL_movECX, addr - 10, addr);
 			if (hookAddr < 0)
-				hookAddr = Exe.FindHex(MOV(ECX, [POS4WC]), addr - 10, addr);
+				hookAddr = Exe.FindHex(MOV(ECX, [POS4WC]), addr - 10, addr); //mov ecx, dword ptr [GlobLuaState]
 
 			if (hookAddr < 0)
 				throw Error("LUA.addLoaders - ECX assignment missing");
@@ -469,9 +469,9 @@ if (typeof LUA === 'undefined') // avoid redefinition
 
 			$$(_ + '2.1 - Prepare the template to use for each file & save its size')
 			let template =
-				Exe.GetHex(hookAddr, addr - hookAddr)
-			+	PUSH(Filler(1))
-			+	CALL(Filler(2))
+				Exe.GetHex(hookAddr, addr - hookAddr)  //prep code
+			+	PUSH(Filler(1))                        //push offset <filePrefix>
+			+	CALL(Filler(2))                        //call CLua::Load
 			;
 			let tsize = template.byteCount();
 
@@ -482,16 +482,12 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			let strings = files.join('\x00').toHex() + ' 00';
 			let ssize = strings.byteCount();
 
-			$$(_ + '2.4 - If no address is specified then allocate space for it')
-			if (tgt < 0)
-			{
-				tgt = Exe.FindSpace(csize + ssize, 0x10); //snapping to 0x10 since its going to be like a function
-				if (tgt < 0)
-					throw NO_ALLOC;
-			}
-
-			$$(_ + '2.5 - Save the target\'s VIRTUAL address')
-			let tgtVir = Exe.Phy2Vir(tgt);
+			$$(_ + '2.4 - Save the VIRTUAL address (If no address is specified then allocate space for it)')
+			let tgtVir;
+			if (tgt > 0)
+				tgtVir = Exe.Phy2Vir(tgt);
+			else
+				[tgt, tgtVir] = Exe.FindSpace(csize + ssize, 0x10); //snapping to 0x10 since its going to be like a function
 
 			$$(_ + '3.1 - Initialize the code variable, set the initial CALL distance and address of first string')
 			let code = "";

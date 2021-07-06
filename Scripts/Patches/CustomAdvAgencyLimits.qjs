@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Asheraf                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,74 +32,82 @@
 ///
 CustomAdvAgencyLimits = function()
 {
-	/// 1.1 - Find the format string for integers
+	let _ = 'CustomAdvAgencyLimits : ';
+
+	$$(_ + '1.1 - Find the format string for integers')
 	let strAddr = Exe.FindText("%d");
 	if (strAddr < 0)
         throw Error("Format string missing");
 
-	/// 1.2 - Find all locations of the Upper Limit addition
+	$$(_ + '1.2 - Find all locations of the Upper Limit addition')
     let code =
-		LEA(EAX, [ESI, 5])            //LEA EAX, [ESI+5]
+		LEA(EAX, [ESI, 5])            //lea eax, [esi+5]
 	+	(Exe.Version > 11
 	?
-		MOV(WORD_PTR, [EBP, WC], 0)   //MOV WORD PTR SS:[EBP + var_20], 0
+		MOV(WORD_PTR, [EBP, WC], 0)   //mov word ptr [LOCAL.x], 0
 	:
 		''
 	)
-	+	PUSH_EAX                      //PUSH EAX
-	+	PUSH(strAddr)                 //PUSH OFFSET addr ; ASCII "%d"
-	+	PUSH(-1)                      //PUSH -1
+	+	PUSH_EAX                      //push eax
+	+	PUSH(strAddr)                 //push offset "%d"
+	+	PUSH(-1)                      //push -1
 	;
 
     let addrsU = Exe.FindHexN(code);
     if (addrsU.isEmpty())
         throw Error("AgencyUpperLevellimit not found");
 
-	/// 1.3 - Find all locations of the Lower Limit subtraction
+	$$(_ + '1.3 - Find all locations of the Lower Limit subtraction')
 	code =
-		LEA(EAX, [ESI, -5])    //LEA EAX, [ESI-5]
+		LEA(EAX, [ESI, -5])    //lea eax, [esi-5]
 	+	(Exe.Version > 11
 	?
-		XORPS(XMM0, XMM0)      //XORPS XMM0, XMM0
+		XORPS(XMM0, XMM0)      //xorps xmm0, xmm0
 	:
 		''
 	)
-	+	CMP(EAX, ECX)          //CMP EAX, ECX
+	+	CMP(EAX, ECX)          //cmp eax, ecx
 	+	(Exe.Version > 11
 	?
-		MOVQ([EBP, WC], XMM0)  //MOVQ DWORD PTR SS:[EBP + var_1C], XMM0
+		MOVQ([EBP, WC], XMM0)  //movq dword ptr [EBP + var_1C], XMM0
 	:
 		''
 	)
-	+	CMOVL(EAX, ECX)        //CMOVL EAX, ECX
-	+	PUSH_EAX               //PUSH EAX
-	+	PUSH(strAddr)          //PUSH OFFSET addr ; ASCII "%d"
-	+	PUSH(-1)               //PUSH -1
+	+	CMOVL(EAX, ECX)        //cmovl eax, ecx
+	+	PUSH_EAX               //push eax
+	+	PUSH(strAddr)          //push offset "%d"
+	+	PUSH(-1)               //push -1
 	;
 
-    let offsetsL = Exe.FindHexN(code);
-	if (offsetsL.isEmpty())
+    let addrsL = Exe.FindHexN(code);
+	if (addrsL.isEmpty())
         throw Error("AgencyLowerLevellimit not found");
 
-	/// 2.1 - Obtain the 2 limits
-	let upper = Exe.GetUserInput("$upplimitVal", D_Int8, "Level limit", "Enter new upper level limit", 5, {min: 1});
-	let lower = Exe.GetUserInput("$lowlimitVal", D_Int8, "Level limit", "Enter new lower level limit", -5, {max: -1});
-	if (upper === false && lower === false)
+	$$(_ + '2.1 - Obtain the 2 limits')
+	let result = Exe.GetUserInput("$agencyLimits", D_VecI8, "Adventure Agency Levels", "Enter the new level limits", [-5, 5], {
+		name0: "Lower Limit", max0: -1,
+		name1: "Upper Limit", min1: 1,
+	});
+
+	if (result === false)
 		Cancel("Limits", "(-5, +5)");
 
-	/// 2.2 - Change the upper limit if new value is provided (won't be false then)
-	if (upper !== false)
+	let [lower, upper] = result;
+
+
+	$$(_ + '2.2 - Change the upper limit if new value is provided')
+	if (upper !== 5)
 	{
 		addrsU.forEach( addr =>
-			Exe.SetFromVar(addr + 2, "$upplimitVal")
+			Exe.SetInt8(addr + 2, upper)
 		);
 	}
 
-	/// 2.3 - Change the lower limit if new value is provided (won't be false then)
-	if (lower !== false)
+	$$(_ + '2.3 - Change the lower limit if new value is provided')
+	if (lower !== -5)
 	{
-		offsetsL.forEach( addr =>
-			Exe.SetFromVar(addr + 2, "$lowlimitVal")
+		addrsL.forEach( addr =>
+			Exe.SetInt8(addr + 2, lower)
 		);
 	}
 

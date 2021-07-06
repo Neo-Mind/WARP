@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,45 +34,47 @@
 ///
 ChatRepeat = function(patchName)
 {
-	/// 1.1 - Ensure the LANGTYPE is loaded
+	let _ = patchName + ' :';
+
+	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
-	/// 1.2 - Find the Langtype comparison to identify ::IsSameSentence
+	$$(_ + '1.2 - Find the Langtype comparison to identify ::IsSameSentence')
 	let dist = Exe.Version === 6 ? POS1WC : WCp;
 
 	let prefix =
-		CMP([LANGTYPE], 0xA) //CMP DWORD PTR DS:[g_serviceType], 0A
-	+	JE(dist)             //JE SHORT addr or JE addr
-	+	CMP(ROC.HasFP
+		CMP([LANGTYPE], 0xA) //cmp dword ptr [g_serviceType], 0Ah
+	+	JE(dist)             //je short _next / je _next
+	+	CMP(ROC.HasFP        //cmp dword ptr [ARG.1], 2 ; where ARG.1 =
 	?
-		[EBP, 8]             //CMP DWORD PTR SS:[EBP+8], 2
-	:                        //or
-		[ESP, 4]             //CMP DWORD PTR SS:[ESP+4], 2
+		[EBP, 8]             // ebp+8 with FP
+	:                        //  OR
+		[ESP, 4]             // esp+4 without FP
 		, 2
 	);
 
-	let suffix = JL(dist);  //JL SHORT addr or JL addr
+	let suffix = JL(dist);   //jl short _skip / jl _skip
 
 	let addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("Langtype comparison missing");
 
-	/// 2.1 - Point addr to position of the JL
+	$$(_ + '2.1 - Point addr to position of the JL')
 	addr += prefix.byteCount();
 
 	if (patchName === "UnlimitedChatRepeat")
 	{
-		/// 2.2 - If no limit is needed, change the JL to JMP
+		$$(_ + '2.2 - If no limit is needed, change the JL to JMP')
 		Exe.SetJMP(addr);
 	}
 	else
 	{
-		/// 2.3 - Otherwise, get the new limit from the user
+		$$(_ + '2.3 - Otherwise, get the new limit from the user')
 		let limit = Exe.GetUserInput('$chatFloodLimit', D_Uint8, "Chat Limit", "Enter the new limit", 2, {max: 127});
 		if (limit === false)
 			Cancel("Chat Limit", 2);
 
-		/// 2.4 - Change the limit in the Exe
+		$$(_ + '2.4 - Change the limit in the Exe')
 		Exe.SetFromVar(addr - 1, '$chatFloodLimit');
 	}
 

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-06-02                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -55,7 +55,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 
 			this.KS_Mode   = KeyMode.Unknown; //The mode of the function above
 
-			this.MovECX    = "";       //The code for MOV ECX, DWORD PTR DS:[KeyAddr]
+			this.MovECX    = "";       //The code for mov ecx, dword ptr [KeyAddr]
 			this.Keys      = [0,0,0];  //The set of Packet Keys that were extracted/mapped out
 
 			this.RefAddr   = -1;       //Reference Location from where we started
@@ -108,24 +108,24 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			{
 				$$(_ + '1.7 - If not found then look for the CALL, MOV, CALL pattern')
 				let inb4 =
-					CALL(ALLWC)   //CALL func1
-				+	MOV(ECX, EAX) //MOV ECX, EAX
-				+	CALL(ALLWC)   //CALL func2
+					CALL(ALLWC)   //call func#1
+				+	MOV(ECX, EAX) //mov ecx, eax
+				+	CALL(ALLWC)   //call func#2
 				;
 
 				let code =
-					inb4          //CALL CRagConnection::instanceR
-					              //MOV ECX, EAX
-					              //CALL CRagConnection::GetPacketSize
-				+	PUSH_EAX      //PUSH EAX
-				+	inb4          //CALL CRagConnection::instanceR
-					              //MOV ECX, EAX
-					              //CALL CRagConnection::SendPacket
-				+	PUSH_1        //PUSH 1
-				+	inb4          //CALL CRagConnection::instanceR
-					              //MOV ECX, EAX
-					              //CALL CConnection::SetBlock
-				+	PUSH(6)       //PUSH 6
+					inb4          //call CRagConnection::instanceR
+					              //mov ecx, eax
+					              //call CRagConnection::GetPacketSize
+				+	PUSH_EAX      //push EAX
+				+	inb4          //call CRagConnection::instanceR
+					              //mov ecx, eax
+					              //call CRagConnection::SendPacket
+				+	PUSH_1        //push 1
+				+	inb4          //call CRagConnection::instanceR
+					              //mov ecx, eax
+					              //call CConnection::SetBlock
+				+	PUSH(6)       //push 6
 				;
 				addr = Exe.FindHex(code);
 			}
@@ -139,9 +139,9 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				if (ccAddr > 0)
 				{
 					let code =
-						PUSH(4)      //PUSH 4 ; Type = REG_DWORD
-					+	PUSH_0       //PUSH 0 ; Reserved = 0
-					+	PUSH(ccAddr) //PUSH OFFSET addr; SubKey = "CASH_CATEGORY"
+						PUSH(4)      //push 4                      ; Type = REG_DWORD
+					+	PUSH_0       //push 0                      ; Reserved
+					+	PUSH(ccAddr) //push offset "CASH_CATEGORY" ; SubKey 
 					;
 					addr = Exe.FindHex(code);
 				}
@@ -158,11 +158,11 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 
 			$$(_ + '2.1 - Look for 3 PUSHes followed by a CALL (keys are PUSHed to function)')
 			let code =
-				MOV(ECX, [POS3WC]) //MOV ECX, DWORD PTR DS:[KeyAddr]
-			+	PUSH(ALLWC)        //PUSH key3
-			+	PUSH(ALLWC)        //PUSH key2
-			+	PUSH(ALLWC)        //PUSH key1
-			+	CALL()             //CALL KeySetter
+				MOV(ECX, [POS3WC]) //mov ecx, dword ptr [KeyAddr]
+			+	PUSH(ALLWC)        //push <key3>
+			+	PUSH(ALLWC)        //push <key2>
+			+	PUSH(ALLWC)        //push <key1>
+			+	CALL()             //call KeySetter
 			;
 			let callAddr = Exe.FindHex(code, addr - 0x100, addr);
 			if (callAddr > 0)
@@ -187,9 +187,9 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 
 			$$(_ + '3.1 - Look for PUSH 1, CALL pattern next (keys get assigned inside the function)')
 			code =
-				MOV(ECX, [POS4WC]) //MOV ECX, DWORD PTR DS:[KeyAddr]
-			+	PUSH_1             //PUSH 1
-			+	CALL()             //CALL CRagConnection::ObfuscateOrInit
+				MOV(ECX, [POS4WC]) //mov ecx, dword ptr [KeyAddr]
+			+	PUSH_1             //push 1
+			+	CALL()             //call CRagConnection::ObfuscateOrInit
 			;
 			callAddr = Exe.FindHex(code, addr - 0x100, addr);
 			if (callAddr < 0)
@@ -210,9 +210,9 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 
 			$$(_ + '4.1 - First look for the individual key assignment pattern')
 			let reg = Exe.Version > 11 ? EAX : ECX;
-			code = MOV([reg, ' 0?'], ALLWC).repeat(3) //MOV DWORD PTR DS:[ECX+x], <Key A> ;the keys could be assigned in any order
-			                                          //MOV DWORD PTR DS:[ECX+y], <Key B>
-			                                          //MOV DWORD PTR DS:[ECX+z], <Key C>
+			code = MOV([reg, ' 0?'], ALLWC).repeat(3) //mov dword ptr [ecx + dispA], <Key A> ;the keys could be assigned in any order
+			                                          //mov dword ptr [ecx + dispB], <Key B>
+			                                          //mov dword ptr [ecx + dispC], <Key C>
 			;
 
 			addr = Exe.FindHex(code, fnAddr, fnAddr + 0x60);
@@ -237,15 +237,15 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 
 			$$(_ + '5.1 - Next look for the shared key pattern')
 			let prefix =
-				CMP(EAX, 1) //CMP EAX, 1
-			+	JNE(WCp)    //JNE SHORT addr
+				CMP(EAX, 1)              //cmp eax, 1
+			+	JNE(WCp)                 //jne short _next
 			;
 			code =
 				prefix
-			+	MOV(EAX, ALLWC)        //MOV EAX, <Key A> ; shared key
-			+	MOV([ECX, ' 0?'], EAX)   //MOV DWORD PTR DS:[ECX+x], EAX
-			+	MOV([ECX, ' 0?'], EAX)   //MOV DWORD PTR DS:[ECX+y], EAX
-			+	MOV([ECX, ' 0?'], ALLWC) //MOV DWORD PTR DS:[ECX+z], <Key B>
+			+	MOV(EAX, ALLWC)          //mov eax, <Key A> ; shared key
+			+	MOV([ECX, ' 0?'], EAX)   //mov dword ptr [ecx + dispA], eax
+			+	MOV([ECX, ' 0?'], EAX)   //mov dword ptr [ecx + dispC], eax
+			+	MOV([ECX, ' 0?'], ALLWC) //mov dword ptr [ecx + dispB], <Key B>
 			;
 
 			addr = Exe.FindHex(code, fnAddr, fnAddr + 0x60);

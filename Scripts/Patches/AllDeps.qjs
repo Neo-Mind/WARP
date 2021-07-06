@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -81,6 +81,8 @@ GetImpTable = (skipDLL, impAddr) =>
 ///
 FetchTillEnd = (hookAddr, format, movIns, tgtReg, fetcher, endTester) =>
 {
+	let _ = 'FetchTillEnd : ';
+
 	let regAssigns = [];
 	let codes = [];
 	let count = 0; // limiting to approx 1000 instructions for now (avoiding an infinite loop).
@@ -92,17 +94,19 @@ FetchTillEnd = (hookAddr, format, movIns, tgtReg, fetcher, endTester) =>
 		if (endTester(ins))
 			break;
 
+		$$(_ + `Processing instruction no.${count} from ${ins.Addr}`)
+
 		if (format === 0)
 		{
 			/// 1.2 - Check for the sequence of instructions for old clients.
 			///       The index is used as argument to a function to get the memory location
-			if ((ins.Codes[0] === 0x6A || ins.Codes[0] === 0x68) && Exe.GetUint16(ins.NextAddr) === 0xCE8B) //PUSH index followed by MOV ECX, ESI
-			{
+			if ((ins.Codes[0] === 0x6A || ins.Codes[0] === 0x68) && Exe.GetUint16(ins.NextAddr) === 0xCE8B) //push <index> followed by mov ECX, ESI
+			{                                                                                               //mov ecx, esi
 				let nextIns = ins.getNext(2); //third instruction
-				if (nextIns.Codes[0] === 0xC7 && nextIns.MRM.Data === 0) //MOV DWORD PTR DS:[EAX], stringAddr
+				if (nextIns.Codes[0] === 0xC7 && nextIns.MRM.Data === 0) //mov dword ptr [eax], <stringAddr>
 					nextIns.moveToNext();
 
-				if (nextIns.Codes[0] === 0xE8 && Exe.GetTgtAddr(nextIns.Addr + 1) === fetcher) //CALL fetcher
+				if (nextIns.Codes[0] === 0xE8 && Exe.GetTgtAddr(nextIns.Addr + 1) === fetcher) //call <fetcher>
 				{
 					ins = nextIns; //skip over all the instructions
 					continue;
@@ -110,7 +114,7 @@ FetchTillEnd = (hookAddr, format, movIns, tgtReg, fetcher, endTester) =>
 			}
 		}
 
-		/// 1.3 - For newer clients check for the MOV instruction used to get the table's starting address into the target Reg
+		/// 1.3 - For newer clients check for the mov instruction used to get the table's starting address into the target Reg
 		else if (movIns && ins.Codes[0] === movIns.Codes[0] && ins.MRM.Mode === movIns.MRM.Mode && ins.MRM.RegM === movIns.MRM.RegM && ins.Disp === movIns.Disp)
 		{
 			tgtReg = R32.List[ins.MRM.RegO];
@@ -123,10 +127,10 @@ FetchTillEnd = (hookAddr, format, movIns, tgtReg, fetcher, endTester) =>
 			let skip = false;
 			switch (ins.Codes[0])
 			{
-				case 0xC7: // MOV DWORD PTR DS:[reg32_A + offset], OFFSET addr
-				case 0x89: // MOV DWORD PTR DS:[reg32_A + const], reg32_C
+				case 0xC7: // mov dword ptr [regA + dispA], <stringAddr>
+				case 0x89: // mov dword ptr [regA + dispA], regC
 				{
-					if (ins.MRM.Mode !== 3 && ins.MRM.RegM === tgtReg.Index) //reg32_A is the target reg which was calculated previously
+					if (ins.MRM.Mode !== 3 && ins.MRM.RegM === tgtReg.Index) //regA is the target reg which was calculated previously
 					{
 						skip = true;
 
@@ -138,7 +142,7 @@ FetchTillEnd = (hookAddr, format, movIns, tgtReg, fetcher, endTester) =>
 					break;
 				}
 
-				case 0xB8: // MOV reg32_B, OFFSET addr
+				case 0xB8: // mov regB, <stringAddr> ; possibly
 				case 0xB9:
 				case 0xBA:
 				case 0xBB:
@@ -151,7 +155,7 @@ FetchTillEnd = (hookAddr, format, movIns, tgtReg, fetcher, endTester) =>
 					break;
 				}
 
-				case 0x8B: // MOV reg32_B, DWORD PTR DS:[reg32_A + offset]
+				case 0x8B: // mov regB, dword ptr [regA + dispA]
 				{
 					skip = ins.MRM.Mode !== 3 && ins.MRM.RegM === tgtReg.Index;
 					break;
@@ -192,7 +196,7 @@ FetchTillEnd = (hookAddr, format, movIns, tgtReg, fetcher, endTester) =>
 					break;
 				}
 
-				case 0xE8: // CALL func
+				case 0xE8: // call func#1
 				{
 					if (fetcher > 0 && Exe.GetTgtAddr(ins.Addr + 1) === fetcher)
 					{

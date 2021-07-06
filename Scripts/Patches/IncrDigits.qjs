@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-06-12                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,16 +33,17 @@
 ///
 IncrDigits = function()
 {
-	/// 1.1 - Find the location where 999999 is checked &
-	///       extract the register containing the value
+	let _ = 'IncrDigits : ';
+
+	$$(_ + '1.1 - Find the location where 999999 is checked & extract the register containing the value')
 	let refAddr, refReg;
 	if (Exe.Version > 11)
 	{
 		let code =
-			MOV(R32, 0xF423F)
-		+	MOV(R32, 1)
-		+	CMP([EBP, 0xC], EDX)
-		+	CMOVLE(EDX, [EBP, 0xC])
+			MOV(R32, 0xF423F)        //mov regA, 0F423Fh ; 999999
+		+	MOV(R32, 1)              //mov regB, 1
+		+	CMP([EBP, 0xC], EDX)     //cmp dword ptr [ebp+0Ch], edx
+		+	CMOVLE(EDX, [EBP, 0xC])  //cmovle edx, dword ptr [ebp+0Ch]
 		;
 
 		refAddr = Exe.FindHex(code);
@@ -51,31 +52,31 @@ IncrDigits = function()
 
 		refReg = EDX;
 
-		/// 1.2 - Retrieve the 2nd argument into EDX
-		Exe.SetHex(refAddr, MOV(EDX, [EBP, 0xC]));
+		$$(_ + '1.2 - Retrieve the 2nd argument into EDX')
+		Exe.SetHex(refAddr, MOV(EDX, [EBP, 0xC])); //mov edx, dword ptr [ebp+0Ch]
 		refAddr += 3;
 	}
 	else
 	{
 		let parts =
 		[
-			CMP(R32, 0xF423F)   //CMP reg32_A, 0F423F ; 999999
+			CMP(R32, 0xF423F)   //cmp regA, 0F423Fh ; 999999
 		,
 			Exe.Version === 6
 		?
-			PUSH_R				//PUSH_R
+			PUSH_R				//push regB
 		:
 			''
 		,
-			JLE(7)              //JLE SHORT addr
-		+	MOV(R32, 0xF423F)   //MOV reg32_A, 0F423F
+			JLE(7)              //jle short _proceed
+		+	MOV(R32, 0xF423F)   //mov regA, 0F423Fh
 		]
 		;
 
 		refAddr = Exe.FindHex(parts);
 		if (refAddr < 0 && Exe.BuildDate > 20190000)
 		{
-			parts[1] = PUSH_R + parts[1];  //PUSH reg32 before JLE
+			parts[1] = PUSH_R + parts[1];  //'push regC' before JLE
 			refAddr = Exe.FindHex(parts);
 		}
 
@@ -85,19 +86,19 @@ IncrDigits = function()
 		refReg = R32.List[Instr.FromAddr(refAddr).MRM.RegM];
 	}
 
-	/// 1.3 - Find the start of the function (Am_Make_Number)
+	$$(_ + '1.3 - Find the start of the function (Am_Make_Number)')
 	code =
-		PUSH(-1)            //PUSH -1
-	+	PUSH(POS3WC)        //PUSH addr
-	+	MOV(EAX, FS, [0])   //MOV EAX, DWORD PTR FS:[0]
-	+	PUSH_EAX            //PUSH EAX
+		PUSH(-1)            //push -1
+	+	PUSH(POS3WC)        //push offset#1
+	+	MOV(EAX, FS, [0])   //mov eax, dword ptr fs:[0]
+	+	PUSH_EAX            //push eax
 	+	(Exe.Version === 6
 	?
-		MOV(FS, [0], ESP)	//MOV DWORD PTR FS:[0], ESP (only for VC6)
+		MOV(FS, [0], ESP)	//mov dword ptr fs:[0], esp ; only for VC6
 	:
 		""
 	)
-	+	SUB(ESP, WCp)       //SUB ESP, const
+	+	SUB(ESP, WCp)       //sub esp, immA
 	;
 
 	let addr = Exe.FindHex(code, refAddr - 0x40, refAddr);
@@ -105,25 +106,25 @@ IncrDigits = function()
 		throw Error("Function start not found");
 
 
-	/// 1.4 - Set addr to location after the SUB ESP
+	$$(_ + '1.4 - Set addr to location after the SUB ESP')
 	addr += code.byteCount();
 
-	/// 2.1 - Update the stack allocation 'const' to hold 4 more nibbles(16 bits) - increase the const value
+	$$(_ + '2.1 - Update the stack allocation "displacement" to hold 4 more nibbles(16 bits) - i.e. increase the value')
 	_ID_UpdateStack(addr - 1 , 1);
 
-	/// 2.2 - Find the location of digit counter
+	$$(_ + '2.2 - Find the location of digit counter')
 	let StkReg = ROC.HasFP ? EBP : ESP;
 
-	code = MOV([StkReg, WC], Exe.Version > 11 ? 6 : 1); //MOV DWORD PTR SS:[StkReg+x], 1; x is negative for StkReg == EBP
+	code = MOV([StkReg, WC], Exe.Version > 11 ? 6 : 1); //mov dword ptr [StkReg + disp8A], 1; disp8A is negative for StkReg == EBP
 	addr = Exe.FindHex(code, refAddr + 0x10, refAddr + 0x28);
 	let stackAssign = true;
 
 	if (addr < 0)
 	{
 		code =
-			JLE(7)       //JLE SHORT addr
-		+	MOV(R32, 6)  //MOV reg32_B, 6
-		+	JMP(WC)      //JMP SHORT addr
+			JLE(7)       //jle short _skip
+		+	MOV(R32, 6)  //mov regB, 6
+		+	JMP(WC)      //jmp short _skip#2 ; _skip
 		;
 		addr = Exe.FindHex(code, refAddr + 0x10, refAddr + 0x30);
 		stackAssign = false;
@@ -131,7 +132,7 @@ IncrDigits = function()
 	if (addr < 0)
 		throw Error("Digit counter not found");
 
-	/// 2.3 - Save the stack addr if the code was a stack assignment
+	$$(_ + '2.3 - Save the stack addr if the code was a stack assignment')
 	let DigCntLoc;
 	if (stackAssign)
 	{
@@ -139,24 +140,24 @@ IncrDigits = function()
 	}
 	else
 	{
-		/// 3.1 - If not then extract the register from MOV reg32_B, 6
+		$$(_ + '3.1 - If not then extract the register from MOV regB, 6')
 		DigCntLoc = R32.List[Exe.GetUint8(addr + 2) - 0xB8];
 
-		/// 3.2 - Find reg32_B getting assigned to stack location (if present)
-		let addr2 = Exe.FindHex( MOV([StkReg, WC], DigCntLoc), addr, addr + 0x80); //MOV DWORD PTR SS:[StkReg+x], reg32_B ; x is negative for EBP (instruction will be followed by LEA)
+		$$(_ + '3.2 - Find regB getting assigned to stack location (if present)')
+		let addr2 = Exe.FindHex( MOV([StkReg, WC], DigCntLoc), addr, addr + 0x80); //mov dword ptr [StkReg + disp8B], regB ; disp8B is negative for EBP (instruction will be followed by LEA)
 
-		/// 3.3 - If found then save the stack displacement instead
+		$$(_ + '3.3 - If found then save the stack displacement instead')
 		if (addr2 > 0)
 			DigCntLoc = Instr.FromAddr(addr2).Disp;
 	}
 
-	/// 4.1 - Find the location of digit extraction
-	addr = Exe.FindHex( MOV(EAX, 0x66666667), addr, addr + 0x200); //MOV EAX, 66666667 ; magic number for divide by 10
+	$$(_ + '4.1 - Find the location of digit extraction')
+	addr = Exe.FindHex( MOV(EAX, 0x66666667), addr, addr + 0x200); //mov eax, 66666667h ; magic number for divide by 10
 	if (addr < 0)
 		throw Error("Digit extraction not found");
 
-	/// 4.2 - Find the first digit movement to stack location
-	code = MOV([StkReg, WC], R32); //MOV DWORD PTR SS:[StkReg+x], reg32_C
+	$$(_ + '4.2 - Find the first digit movement to stack location')
+	code = MOV([StkReg, WC], R32); //mov dword ptr [StkReg + disp8C], regC
 	let addr2 = Exe.FindHex(code + " 8B", addr + 0x5, addr + 0x38); //followed by another MOV
 	if (addr2 < 0)
 	{
@@ -170,26 +171,26 @@ IncrDigits = function()
 	if (addr2 < 0)
 		throw Error("Digit movement not found");
 
-	/// 4.3 - Extract the stack addr for the first digit
+	$$(_ + '4.3 - Extract the stack addr for the first digit')
 	let FirstDigLoc = Instr.FromAddr(addr2).Disp;
 
-	/// 4.4 - Set addr2 to location after the digit movement
+	$$(_ + '4.4 - Set addr2 to location after the digit movement')
 	addr2 += code.byteCount();
 
-	/// 4.5 - Find the g_modeMgr assignment after it
-	addr = Exe.FindHex( MOV(ECX, POS3WC), addr2, addr2 + 0x100); //MOV ECX, g_modeMgr
+	$$(_ + '4.5 - Find the g_modeMgr assignment after it')
+	addr = Exe.FindHex( MOV(ECX, POS3WC), addr2, addr2 + 0x100); //mov ecx, <g_modeMgr>
 	if (addr < 0)
 		throw Error("g_modeMgr assignment not found");
 
-	/// 4.6 - Extract the assignment
+	$$(_ + '4.6 - Extract the assignment')
 	let MovModeMgr = Exe.GetHex(addr, 5);
 
-	/// 4.7 - Now find the CModeMgr::GetGameMode CALL after it (we will jump to this location after digits have been counted and extracted)
-	let ggmAddr = Exe.FindHex( CALL(NEG3WC), addr + 5, addr + 0x100 ); //CALL CModeMgr::GetGameMode
+	$$(_ + '4.7 - Now find the CModeMgr::GetGameMode CALL after it (we will jump to this location after digits have been counted and extracted)')
+	let ggmAddr = Exe.FindHex( CALL(NEG3WC), addr + 5, addr + 0x100 ); //call CModeMgr::GetGameMode
 	if (ggmAddr < 0)
 		throw Error("GetGameMode CALL not found");
 
-	/// 5.1 - Adjust the extracted stack offsets for the 4 extra nibbles (DigCntLoc & FirstDigLoc)
+	$$(_ + '5.1 - Adjust the extracted stack offsets for the 4 extra nibbles (DigCntLoc & FirstDigLoc)')
 	if (ROC.HasFP)
 	{
 		if (IsNum(DigCntLoc) && DigCntLoc < FirstDigLoc)
@@ -203,68 +204,69 @@ IncrDigits = function()
 			DigCntLoc += 16;
 	}
 
-	/// 5.2 - Prepare our digit splitter + counter code to put at refAddr
+	$$(_ + '5.2 - Prepare our digit splitter + counter code to put at refAddr')
 	let parts = [
-		MOV(ECX, refReg)             //MOV ECX, refReg
-	+	MOV(ESI, FirstDigLoc)        //MOV ESI, FirstDigLoc
+		MOV(ECX, refReg)             //mov ecx, refReg
+	+	MOV(ESI, FirstDigLoc)        //mov esi, FirstDigLoc
 	,
-		MOV(EAX, 0x66666667)         //MOV EAX, 66666667 ; addr1
-	+	IMUL(ECX)                    //IMUL ECX
-	+	SAR(EDX, 2)                  //SAR EDX, 2
-	+	LEA(EAX, [4, EDX, EDX])      //LEA EAX, [EDX*4+EDX]
-	+	SHL(EAX, 1)                  //SHL EAX,1
-	+	SUB(ECX, EAX)                //SUB ECX, EAX
-	+	MOV([ESI, StkReg], ECX)      //MOV DWORD PTR SS:[ESI + StkReg], ECX
-	+	ADD(ESI, 4)                  //ADD ESI, 4
-	+	MOV(ECX, EDX)                //MOV ECX, EDX
-	+	TEST(ECX, ECX)               //TEST ECX, ECX
+		MOV(EAX, 0x66666667)         //mov eax, 66666667h ; _loop
+	+	IMUL(ECX)                    //imul ecx
+	+	SAR(EDX, 2)                  //sar edx, 2
+	+	LEA(EAX, [4, EDX, EDX])      //lea eax, [edx*4 + edx]
+	+	SHL(EAX, 1)                  //shl eax, 1
+	+	SUB(ECX, EAX)                //sub ecx, eax
+	+	MOV([ESI, StkReg], ECX)      //mov dword ptr [esi + StkReg], ecx
+	+	ADD(ESI, 4)                  //add esi, 4
+	+	MOV(ECX, EDX)                //mov ecx, edx
+	+	TEST(ECX, ECX)               //test ecx, ecx
 	,
-		JNE(Filler(1,1))             //JNE SHORT addr1
-	+	SUB(ESI, FirstDigLoc)        //SUB ESI, FirstDigLoc; Now ESI has number of digits * 4 bytes each
-	+	SAR(ESI, 2)                  //SAR ESI, 2
+		JNE(Filler(1,1))             //jne short _loop
+	+	SUB(ESI, FirstDigLoc)        //sub esi, FirstDigLoc ; Now ESI has number of digits * 4 bytes each
+	+	SAR(ESI, 2)                  //sar esi, 2
 	+	(IsReg(DigCntLoc)
 	?
-		MOV(DigCntLoc, ESI)			 //MOV DigCntLoc, ESI
-	:								 //or
-		MOV([StkReg, DigCntLoc], ESI)//MOV DWORD PTR SS:[StkReg+DigCntLoc], ESI
+		MOV(DigCntLoc, ESI)			 //mov DigCntLoc, esi
+	:								 //  OR
+		MOV([StkReg, DigCntLoc], ESI)//mov dword ptr [StkReg + DigCntLoc], esi
 	)
-	+	MovModeMgr                   //MOV ECX, g_modeMgr
+	+	MovModeMgr                   //mov ecx, <g_modeMgr>
 	,
-		JMP(Filler(2))               //JMP ggmAddr
+		JMP(Filler(2))               //jmp <ggmAddr>
 	];
 
 	code = SetFillTarget(parts.join(''), [1, 1], parts[0].byteCount(), 0, 1); //setting the JNE SHORT target
 	code = SetFillTarget(code, 2, ggmAddr, refAddr, 1);
 
-	/// 5.3 - Put the code at refAddr
+	$$(_ + '5.3 - Put the code at refAddr')
 	Exe.SetHex(refAddr, code);
 
-	/// 5.4 - Find the end of the function
+	$$(_ + '5.4 - Find the end of the function')
 	if (ROC.HasFP)
-		code = MOV(ESP, EBP) + POP(EBP);    //MOV ESP, EBP followed by POP EBP
+		code = FP_STOP;       //mov esp, ebp
+		                      //pop ebp
 	else
-		code = ADD(ESP, WC);                //ADD ESP, const
+		code = ADD(ESP, WC);  //add esp, imm8A
 
-	code += RETN(0x10);                     //RETN 10
+	code += RETN(0x10);       //retn 10h
 
 	let endAddr = Exe.FindHex(code, ggmAddr, ggmAddr + 0x200);
 	if (endAddr < 0)
 		throw Error("Function end not found");
 
-	/// 5.5 - Prepare stack addr value
+	$$(_ + '5.5 - Prepare stack addr value')
 	let stackOff = ROC.HasFP ? 16 :  24; //4 bit * 6 digits
 
-	/// 6 - Update all relevant stack offsets to incorporate the extra 4 digits between the ggmAddr and end of the function
+	$$(_ + '6 - Update all relevant stack offsets to incorporate the extra 4 digits between the ggmAddr and end of the function')
 	addr = ggmAddr + 5;
 	while (addr < endAddr)
 	{
-		/// 6.1 - Get the instruction at addr
+		$$(_ + '6.1 - Get the instruction at addr')
 		let ins = Instr.FromAddr(addr)
 
-		/// 6.2 - Update stack addr based on opcode
+		$$(_ + '6.2 - Update stack addr based on opcode')
 		switch (ins.Codes[0])
 		{
-			case 0x89:
+			case 0x89: //various MOVs
 			case 0x8B:
 			case 0x8D:
 			case 0xC7:
@@ -272,7 +274,7 @@ IncrDigits = function()
 			case 0xFF:
 			case 0x83:
 			{
-				if (ins.Codes[0] === 0xFF && !ROC.HasFP && ins.MRM.RegO === 2) //CALL reg or CALL DWORD PTR DS:[reg+x]
+				if (ins.Codes[0] === 0xFF && !ROC.HasFP && ins.MRM.RegO === 2) //call regA OR call dword ptr [regA + dispA]
 					stackOff = 24; //resetting back to 24
 
 				ins.StackLimit = FirstDigLoc + stackOff;
@@ -281,7 +283,7 @@ IncrDigits = function()
 
 				break;
 			}
-			case 0x6B:
+			case 0x6B: //PUSHes
 			case 0x6A:
 			{
 				if (!ROC.HasFP)
@@ -290,7 +292,7 @@ IncrDigits = function()
 				break;
 			}
 
-			case 0xE8:
+			case 0xE8: //CALLs
 			{
 				if (!ROC.HasFP)
 					stackOff = 24;
@@ -299,17 +301,17 @@ IncrDigits = function()
 			}
 		}
 
-		/// 6.3 - Set addr to next instruction location
+		$$(_ + '6.3 - Set addr to next instruction location')
 		addr = ins.NextAddr;
 	}
 
-	/// 7 - Extra steps for some clients
+	$$(_ + '7 - Extra steps for some clients')
 	if (ROC.HasFP)
 	{
 		if (IsNum(DigCntLoc) && Exe.Version < 14) //VC10 & VC11 essentially
 		{
-			/// 7.1 - Look for MOV instruction to stack before refAddr
-			code = MOV([EBP, WCn], R32); //MOV DWORD PTR SS:[EBP-x], reg32_E
+			$$(_ + '7.1 - Look for MOV instruction to stack before refAddr')
+			code = MOV([EBP, WCn], R32); //mov dword ptr [LOCAL.x], regE
 
 			addr = Exe.FindHex(code + " 81", refAddr - 6, refAddr + 2); //above MOV followed by CMP
 			if (addr < 0)
@@ -319,29 +321,29 @@ IncrDigits = function()
 			if (addr < 0)
 				throw Error("Stack movement not found");
 
-			/// 7.2 - Update the stack addr
+			$$(_ + '7.2 - Update the stack addr')
 			_ID_UpdateStack(addr + 2);
 		}
 	}
 	else
 	{
-		/// 7.3 - Update the stack addr for ADD ESP, x
+		$$(_ + '7.3 - Update the stack addr for ADD ESP, x')
 		_ID_UpdateStack(endAddr + 2, 1);
 
-		/// 7.4 - Find LEA instruction before refAddr which uses ESP
-		addr = Exe.FindHex( LEA(EAX, [ESP, WCp]), refAddr - 0x28, refAddr); //LEA EAX, [ESP+x]
+		$$(_ + '7.4 - Find LEA instruction before refAddr which uses ESP')
+		addr = Exe.FindHex( LEA(EAX, [ESP, WCp]), refAddr - 0x28, refAddr); //lea eax, [LOCAL.x]
 		if (addr < 0)
 			throw Error("LEA not found");
 
-		/// 7.5 - Update the stack addr
+		$$(_ + '7.5 - Update the stack addr')
 		_ID_UpdateStack(addr + 3, 1);
 
-		/// 7.6 - Find the ARG.2 assignment before refAddr.
-		addr = Exe.FindHex( MOV(ECX, [ESP, WCp]), refAddr - 8, refAddr); //MOV ECX, DWORD PTR SS:[ESP+y]
+		$$(_ + '7.6 - Find the ARG.2 assignment before refAddr')
+		addr = Exe.FindHex( MOV(ECX, [ESP, WCp]), refAddr - 8, refAddr); //mov ecx, dword ptr [LOCAL.y]
 		if (addr < 0)
 			throw Error("ARG.2 assignment not found");
 
-		/// 7.7 - Update the stack addr
+		$$(_ + '7.7 - Update the stack addr')
 		_ID_UpdateStack(addr + 3, 1);
 	}
 
@@ -351,7 +353,8 @@ IncrDigits = function()
 ///
 /// \brief Disable for Unsupported Clients
 ///
-IncrDigits.validate = () => Exe.BuildDate < 20190500;
+IncrDigits.validate = () =>
+	Exe.BuildDate < 20190500;
 
 ///
 /// \brief Helper function which adjusts the addr used w.r.t ESP/EBP

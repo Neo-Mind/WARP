@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,12 +31,14 @@
 ///
 NoSwearFilter = function()
 {
-	/// 1 - Find the string 'manner.txt'
+	let _ = 'NoSwearFilter : ';
+
+	$$(_ + '1 - Find \'manner.txt\'')
 	let addr = Exe.FindText("manner.txt", PHYSICAL);
 	if (addr < 0)
 		throw Error("'manner.txt' not found");
 
-	/// 2 - Set first char to zero
+	$$(_ + '2 - Set first char to zero')
 	Exe.SetUint8(addr, 0);
 
 	return true;

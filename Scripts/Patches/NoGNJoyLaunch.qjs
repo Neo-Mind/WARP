@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 mrjnumber1                                          *
+*   Copyright (C) 2020-2021 mrjnumber1                                     *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : mrjnumber1                                             *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-04                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,12 +31,14 @@
 ///        When an in-game setting that requires a restart to take effect is changed,
 ///        the client tries to launch ro.gnjoy.com. This patch disables the behavior.
 ///
-NoGNJoyLaunch = function() 
+NoGNJoyLaunch = function()
 {
-	/// 1 - Zero out the first string
+	let _ = 'NoGNJoyLaunch : ';
+
+	$$(_ + '1 - Zero out the first string')
 	Exe.SetInt8(NGNJL_Addr, 0);
 
-	/// 2 - Look for the 2nd one and zero it out as well
+	$$(_ + '2 - Look for the 2nd one and zero it out as well')
 	let addr = Exe.FindText("ro.gnjoy.com/", PHYSICAL, false);
 	if (addr > 0)
 		Exe.SetInt8(addr, 0);

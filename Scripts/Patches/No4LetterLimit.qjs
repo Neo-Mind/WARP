@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) ?-2021 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,31 +32,32 @@
 ///
 No4LetterLimit = function(patchName)
 {
-	/// 1.1 - Find all the size comparisons against 4
+	let _ = patchName + ' : ';
+
+	$$(_ + '1.1 - Find all the size comparisons against 4')
 	let prefix =
-		CALL(NEG3WC) //CALL UIEditCtrl::GetTextSize
-	+	CMP(EAX, 4)  //CMP EAX, 4
+		CALL(NEG3WC) //call UIEditCtrl::GetTextSize
+	+	CMP(EAX, 4)  //cmp eax, 4
 	;
 
 	let addrs = [
-		...Exe.FindHexN(prefix + JL(WC)),    //JL SHORT addr
-		...Exe.FindHexN(prefix + JL(POS2WC)) //JL addr
+		...Exe.FindHexN(prefix + JL(WC)),    //jl short _proceed
+		...Exe.FindHexN(prefix + JL(POS2WC)) //jl _proceed
 	];
 	if (addrs.length < 3)
 		throw Error("Not enough comparisons found");
 
 	addrs.sort();
 
-	/// 1.2 - Find the location that is part of Username & Password check (compared one after the other)
-	///       others are part of Charname check
+	$$(_ + '1.2 - Find the location that is part of Username & Password check (compared one after the other). Others are part of Charname check')
 	let userAddr = -1;
 	let passAddr = -1;
 	let GetTextSize = -1; //the function address
 	let psize = prefix.byteCount();
 
 	let prefixNew =
-		CALL(NEG3WC) //CALL UIEditCtrl::GetTextSize
-	+	CMP(EAX, 6)  //CMP EAX, 6
+		CALL(NEG3WC) //call UIEditCtrl::GetTextSize
+	+	CMP(EAX, 6)  //cmp eax, 6
 	;
 
 	addrs.find( addr =>
@@ -84,7 +85,7 @@ No4LetterLimit = function(patchName)
 	if (userAddr < 0)
 		throw Error("Essential comparison not found");
 
-	/// 2 - Replace 4 with 0 in the CMP at relevant locations based on mode
+	$$(_ + '2 - Replace 4 with 0 in the CMP at relevant locations based on mode')
 	switch (patchName)
 	{
 		case "NoCharnameLimit":

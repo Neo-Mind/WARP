@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,74 +32,75 @@
 ///
 FixChatAt = function()
 {
+	let _ = 'FixChatAt : ';
+
 	if (Exe.Version === 6) //VC6
 	{
-		/// 1.1 - Find the CALL inside UIWindowMgr::ProcessPushButton
+		$$(_ + '1.1 - Find the CALL inside UIWindowMgr::ProcessPushButton')
 		let code =
-			MOV(ECX, ESI)            //MOV ECX, ESI
-		+	CALL(POS2WC)             //CALL func <- this is what we need to hijack
-		+	TEST(AL, AL)             //TEST AL, AL
-		+	JZ(WCp)                  //JZ SHORT POS2WC
-		+	MOV(R32, [ESI, POS2WC])  //MOV reg32_A, DWORD PTR DS:[ESI+const]
+			MOV(ECX, ESI)            //mov ecx, esi
+		+	CALL(POS2WC)             //call func#1  <- this is what we need to hijack
+		+	TEST(AL, AL)             //test al, al
+		+	JZ(WCp)                  //jz short _skip
+		+	MOV(R32, [ESI, POS2WC])  //mov regA, dword ptr [ESI+const]
 		;
 		let addr = Exe.FindHex(code);
 		if (addr < 0)
 			throw Error("Function CALL not found");
 
-		/// 1.2 - Extract the called address (VIRTUAL).
+		$$(_ + '1.2 - Extract the called address (VIRTUAL)')
 		let func = Exe.GetTgtAddr(addr + 3);
 
-		/// 1.3 - Get essential addresses for our function
+		$$(_ + '1.3 - Get essential addresses for our function')
 		let GetAKS = Exe.FindFunc("GetAsyncKeyState", "USER32.dll");
 		if (GetAKS < 0)
 			throw Error("GetAsyncKeyState not found");
 
-		/// 2.1 - Construct our new function
-		code =
-			PUSHAD                             //PUSHAD
-		+	MOVZX(EAX, BYTE_PTR, [ECX, 0x2C])  //MOVZX EAX, BYTE PTR DS:[ECX+2C]
-		+	TEST(EAX, EAX)                     //TEST EAX, EAX
-		+	JE(0x1C)                           //JE SHORT addr1
-		+	MOV(ESI, [GetAKS])                 //MOV ESI, DWORD PTR DS:[<&USER32.GetAsyncKeyState>]
-		+	PUSH(0x12)                         //PUSH 12 ;       VirtualKey = VK_ALT
-		+	CALL(ESI)                          //CALL ESI ;     [<&USER32.GetAsyncKeyState>]
-		+	TEST(EAX, EAX)                     //TEST EAX, EAX
-		+	JE(0x0E)                           //JE SHORT addr1
-		+	PUSH(0x11)                         //PUSH 11 ;       VirtualKey = VK_CONTROL
-		+	CALL(ESI)                          //CALL ESI ;     [<&USER32.GetAsyncKeyState>]
-		+	TEST(EAX, EAX)                     //TEST EAX, EAX
-		+	JE(6)                              //JE SHORT addr1
-		+	POPAD                              //POPAD
-		+	XOR(EAX, EAX)                      //XOR EAX,EAX
-		+	RETN(4)                            //RETN 4
-		+	POPAD                              //POPAD <- addr1
-		+	JMP(Filler(1))				       //JMP func
-		;
+		$$(_ + '2.1 - Construct our new function')
+		let parts =
+		[
+			PUSHAD                             //pushad
+		+	MOVZX(EAX, BYTE_PTR, [ECX, 0x2C])  //movzx eax, byte ptr [ecx+2Ch]
+		+	TEST(EAX, EAX)                     //test eax, eax
+		+	JE(Filler(2,1))                    //je short _exit
+		+	MOV(ESI, [GetAKS])                 //mov esi, dword ptr [<&USER32.GetAsyncKeyState>]
+		+	PUSH(0x12)                         //push 12h ;       VirtualKey = VK_ALT
+		+	CALL(ESI)                          //call esi ;     [<&USER32.GetAsyncKeyState>]
+		+	TEST(EAX, EAX)                     //test eax, eax
+		+	JE(Filler(2,1))                    //je short _exit
+		+	PUSH(0x11)                         //push 11h ;       VirtualKey = VK_CONTROL
+		+	CALL(ESI)                          //call esi ;     [<&USER32.GetAsyncKeyState>]
+		+	TEST(EAX, EAX)                     //test eax, eax
+		+	JE(Filler(2,1))                    //je short _exit
+		+	POPAD                              //popad
+		+	XOR(EAX, EAX)                      //xor eax, eax
+		+	RETN(4)                            //retn 4
+		,
+			POPAD                              //popad ; _exit
+		+	JMP(Filler(1))				       //jmp func#1
+		];
 
-		/// 2.2 - Allocate space for adding our function
-		let free = Exe.FindSpace(code.byteCount(), 0x10);
-		if (free < 0)
-			throw NO_ALLOC;
+		$$(_ + '2.2 - Allocate space for adding our function')
+		let [free, freeVir] = Exe.FindSpace(parts.byteCount(), 0x10);
 
-		let freeVir = Exe.Phy2Vir(free, DIFF);
-
-		/// 2.3 - Fill in the blanks
+		$$(_ + '2.3 - Fill in the blanks')
+		code = SetFillTarget(parts, [2,1], parts.byteCount(0), 0); //the jumps to _exit
 		code = SetFillTarget(code, 1, func, freeVir, 1);
 
-		/// 2.4 - Add our function there
+		$$(_ + '2.4 - Add our function in the allocated space')
 		Exe.AddHex(free, code);
 
-		/// 2.5 - Change the CALLed address from func to our function.
+		$$(_ + '2.5 - Change the CALLed address to our function')
 		Exe.SetTgtAddr(addr + 3, freeVir);
 	}
 	else
 	{
-		/// 3.1 - Find the JZ after '@' check
+		$$(_ + '3.1 - Find the JZ after \'@\' check')
 		let code =
-			JZ(4)                        //JZ SHORT POS2WC -> POP EDI below
-		+	MOV(BYTE_PTR, [R32, WC], 0)  //MOV BYTE PTR DS:[reg32_A+const], 0 ; <- this is the return value we need to change
-		+	POP(EDI)                     //POP EDI
-		+	POP(ESI)                     //POP ESI
+			JZ(4)                        //jz short _next
+		+	MOV(BYTE_PTR, [R32, WC], 0)  //mov byte ptr [regA + dispA], 0 ; <- this is the return value we need to change
+		+	POP(EDI)                     //pop edi ; _next
+		+	POP(ESI)                     //pop esi
 		;
 		let addr = Exe.FindHex(code);
 		if (addr < 0)
@@ -110,7 +111,7 @@ FixChatAt = function()
 				and POP EBP/EBX statements
 		==============================================**/
 
-		/// 3.2 - Change 0 to 1 in MOV BYTE PTR
+		$$(_ + '3.2 - Change 0 to 1 in MOV byte ptr')
 		Exe.SetUint8(addr + 5, 1);
 	}
 

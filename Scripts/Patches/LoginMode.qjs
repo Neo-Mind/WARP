@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Neo-Mind, Andrei (4144)            *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,29 +34,31 @@
 ///
 UseSSOLogin = function()
 {
-	/// 1.1 - Ensure the LANGTYPE is loaded
+	let _ = 'UseSSOLogin : ';
+
+	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
 	if (Exe.Version === 6) //VC6
 	{
-		/// 1.2 - Find the Langtype comparison
+		$$(_ + '1.2 - Find the Langtype comparison')
 		let code =
-			MOV(AL, [POS3WC])      //MOV AL, BYTE PTR DS:[g_passwordencrypt]
-		+	WC + WC                //TEST AL, AL - (could be checked with CMP also. hence using wildcard)
-		+	JNE(POS2WC)            //JNE addr1
-		+	MOV(EAX, [LANGTYPE])   //MOV EAX, DWORD PTR DS:[g_serviceType]
-		+	WC + WC                //Can be either TEST EAX, EAX or CMP EAX, EBP
+			MOV(AL, [POS3WC])      //mov al, byte ptr [g_passwordencrypt]
+		+	WC + WC                //test al, al ; (could be checked with CMP also. hence using wildcard)
+		+	JNE(POS2WC)            //jne _skip
+		+	MOV(EAX, [LANGTYPE])   //mov eax, dword ptr [g_serviceType]
+		+	WC + WC                //test eax, eax OR cmp eax, ebp
 		;
 		let isJNE = true;
 		let addr = Exe.FindHex(code +
-			JNE(POS2WC)            //JNE addr2 -> Send Login Packet (ID = 0x64)
+			JNE(POS2WC)            //jne _sendLP -> Send Login Packet (ID = 0x64)
 		);
 
 		if (addr < 0)
 		{
 			isJNE = false;
 			addr = Exe.FindHex(code +
-				JZ(WCp)            //JZ addr2 -> Skip sending Login Packet (ID = 0x64)
+				JZ(WCp)            //jz _skipLP -> Skip sending Login Packet (ID = 0x64)
 			);
 		}
 		if (addr < 0)
@@ -64,40 +66,40 @@ UseSSOLogin = function()
 
 		if (isJNE)
 		{
-			/// 1.3 - NOP out the 2nd JNE
+			$$(_ + '1.3 - NOP out the 2nd JNE')
 			Exe.SetNOPs(addr + code.byteCount(), 6);
 		}
 		else
 		{
-			/// 1.4 - Enforce the JZ
+			$$(_ + '1.4 - Enforce the JZ')
 			Exe.SetJMP(addr + code.byteCount());
 		}
 	}
 	else //newer clients
 	{
-		/// 2.1 - Find the Langtype comparison
+		$$(_ + '2.1 - Find the Langtype comparison')
 		let prefix =
-			CMP(BYTE_PTR, [POS4WC], 0) //CMP BYTE PTR DS:[g_passwordencrypt], 0
-		+	JNE(POS2WC)                //JNE addr1
-		+	MOV(EAX, [LANGTYPE])       //MOV EAX, DWORD PTR DS:[g_serviceType]
-		+	WC + WC                    //Can be either TEST EAX, EAX or CMP EAX, EBP
+			CMP(BYTE_PTR, [POS4WC], 0) //cmp byte ptr [g_passwordencrypt], 0
+		+	JNE(POS2WC)                //jne _skip#2
+		+	MOV(EAX, [LANGTYPE])       //mov eax, dword ptr [g_serviceType]
+		+	WC + WC                    //test eax, eax OR cmp eax, ebp
 		;
 		let suffix =
-			JZ(POS2WC)                 //JZ addr2 -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
-		+	CMP(R32, 0x12)             //CMP reg32_A, 12 ; ideally should be EAX but some clients have different register
-		+	JZ(POS2WC)                 //JZ addr2 -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
+			JZ(POS2WC)                 //jz _sendSSO -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
+		+	CMP(R32, 0x12)             //cmp regA, 12h ; ideally should be EAX but some clients have different register
+		+	JZ(POS2WC)                 //jz _sendSSO
 		;
 
 		let addr = Exe.FindHex(prefix + suffix);
 		if (addr < 0)
 		{
-			prefix = prefix.replace( MOV(EAX, [LANGTYPE]), MOV(R32, [LANGTYPE]) ); //Change MOV EAX to MOV reg32_A, DWORD PTR DS:[g_serviceType]
+			prefix = prefix.replace( MOV(EAX, [LANGTYPE]), MOV(R32, [LANGTYPE]) ); //Change MOV EAX to MOV regA, dword ptr [g_serviceType]
 			addr = Exe.FindHex(prefix + suffix);
 		}
 		if (addr < 0)
 			throw Error("Langtype comparison not found <b>for (VC9+)</b>");
 
-		/// 2.2 - Enforce the first JZ
+		$$(_ + '2.2 - Enforce the first JZ')
 		Exe.SetJMP(addr + prefix.byteCount());
 	}
 
@@ -110,42 +112,44 @@ UseSSOLogin = function()
 ///
 UseOldLogin = function()
 {
-	/// 1.1 - Ensure the LANGTYPE is loaded
+	let _ = 'UseOldLogin : ';
+
+	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
-	/// 1.2 - Find the langtype comparison for sending login packet inside CLoginMode::ChangeState
+	$$(_ + '1.2 - Find the langtype comparison for sending login packet inside CLoginMode::ChangeState')
 	let prefix =
-		CMP(BYTE_PTR, [POS4WC], 0) //CMP BYTE PTR DS:[g_passwordencrypt], 0
-	+	JNE(POS2WC)                //JNE addr1
-	+	MOV(Exe.Version > 10       //MOV reg32_A, DWORD PTR DS:[g_serviceType]
+		CMP(BYTE_PTR, [POS4WC], 0) //cmp byte ptr [g_passwordencrypt], 0
+	+	JNE(POS2WC)                //jne _skip
+	+	MOV(Exe.Version > 10       //mov regA, dword ptr [g_serviceType]
 			? R32
-			: EAX                  //reg32_A will be EAX for older clients
+			: EAX                  //regA will be EAX for older clients
 			, [LANGTYPE]
 		)
 	;
 	let suffix =
-		WC + WC                    //Can be either TEST EAX, EAX or CMP EAX, EBP
-	+	JZ(POS2WC)                 //JZ addr2 -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
-	+	CMP(R32, 0x12)             //CMP reg32_A, 12 ; ideally should be EAX but some clients have different register
-	+	JZ(POS2WC)                 //JZ addr2 -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
+		WC + WC                    //test eax, eax OR cmp eax, ebp
+	+	JZ(POS2WC)                 //jz _sendSSO -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
+	+	CMP(R32, 0x12)             //cmp regA, 12h ; ideally should be EAX but some clients have different register
+	+	JZ(POS2WC)                 //jz _sendSSO
 	;
 
 	let addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("Langtype comparison missing");
 
-	/// 1.3 - Set addr to location of the TEST/CMP
+	$$(_ + '1.3 - Set addr to location of the TEST/CMP')
 	addr += prefix.byteCount();
 
-	/// 2.1 - Set the amount of bytes to skip over
+	$$(_ + '2.1 - Set the amount of bytes to skip over')
 	let nopCount = suffix.byteCount();
 
-	/// 2.2 - Ensure the instruction after the code is not another comparison. If so update the nopCount
+	$$(_ + '2.2 - Ensure the instruction after the code is not another comparison. If so update the nopCount')
 	let ins = Instr.FromAddr(addr + nopCount);
 	if (ins.Codes[0] === 0x83 && ins.MRM.RegO === 7)
 		nopCount += 9; //3 for CMP, 6 for JZ
 
-	/// 2.3 - Now NOP it (technically it will just become a JMP inside)
+	$$(_ + '2.3 - Now NOP it (technically it will just become a JMP inside)')
 	Exe.SetNOPs(addr, nopCount);
 
 	return true;
@@ -154,7 +158,8 @@ UseOldLogin = function()
 ///
 /// \brief Disable for Unneeded Clients - Only Latest clients have the new login window which needs the old packet
 ///
-UseOldLogin.validate = () => Exe.BuildDate > 20100803 && !ROC.HasLWhidden;
+UseOldLogin.validate = () =>
+	Exe.BuildDate > 20100803 && !ROC.HasLWhidden;
 
 ///
 /// \brief Restore the original code that created the Login Window inside CLoginMode::OnChangeState function.
@@ -162,56 +167,59 @@ UseOldLogin.validate = () => Exe.BuildDate > 20100803 && !ROC.HasLWhidden;
 ///
 RestoreLoginWindow = function()
 {
-	/// 1.1 - Ensure the LANGTYPE is loaded
-	LANGTYPE.load();
+	let _ = 'RestoreLoginWindow : ';
 
-	/// 1.2 - Ensure the WINMGR object has been loaded
+	$$(_ + '1 - Ensure the LANGTYPE & WINMGR has been loaded')
+	LANGTYPE.load();
 	WINMGR.load();
 
-	/// 2.1 - Find the location where we need to make client call the login window
+	$$(_ + '2.1 - Find the location where we need to make client call the login window')
 	let parts = [
-		PUSH_EAX                    //PUSH EAX
-	+ 	CALL(NEG3WC)                //CALL g_ResMgr
-	+ 	MOV(ECX, EAX)               //MOV ECX, EAX
-	+ 	CALL(NEG3WC)                //CALL CResMgr::Get
-	+ 	PUSH_EAX                    //PUSH EAX
-	+ 	WINMGR.MovECX               //MOV ECX, OFFSET g_windowMgr
-	+ 	CALL(NEG3WC)                //CALL UIWindowMgr::SetWallpaper
+		PUSH_EAX                    //push eax
+	+ 	CALL(NEG3WC)                //call g_ResMgr
+	+ 	MOV(ECX, EAX)               //mov ecx, eax
+	+ 	CALL(NEG3WC)                //call CResMgr::Get
+	+ 	PUSH_EAX                    //push eax
+	+ 	WINMGR.MovECX               //mov ecx, <g_windowMgr>
+	+ 	CALL(NEG3WC)                //call UIWindowMgr::SetWallpaper
 	,
-		CMP(BYTE_PTR, [POS4WC], 0)  //CMP BYTE PTR DS:[g_Tparam], 0 <- The parameter push + call to UIWindowManager::MakeWindow originally here
-	+ 	JZ(0x13)                    //JZ SHORT addr1 - after the JMP
-	+ 	MOV(BYTE_PTR, [POS4WC], 0)  //MOV BYTE PTR DS:[g_Tparam], 0
-	+	MOV([R32, 0xC], 4)          //MOV DWORD PTR DS:[reg32_B + 0C], 4 <- till here we need to overwrite. reg32_B can be EBX or EDI
+		CMP(BYTE_PTR, [POS4WC], 0)  //cmp byte ptr [g_Tparam], 0 <- The parameter push + call to UIWindowManager::MakeWindow originally here
+	+ 	JZ(0x13)                    //jz short _skip ; after the JMP
+	+ 	MOV(BYTE_PTR, [POS4WC], 0)  //mov byte ptr [g_Tparam], 0
+	+	MOV([R32, 0xC], 4)          //mov dword ptr [regB + 0Ch], 4 <- till here we need to overwrite. regB can be EBX or EDI
 	,
-		JMP()                       //JMP addr2
+		JMP()                       //JMP _next
+
+		                            //_skip comes here
 	];
 
 	let codeAddr = Exe.FindHex(parts);
 	if (codeAddr < 0)
 		throw Error("g_Tparam comparison missing");
 
-	/// 2.2 - Set codeAddr to location where we will overwrite
-	codeAddr += parts[0].byteCount();
+	$$(_ + '2.2 - Set codeAddr to location where we will overwrite')
+	codeAddr += parts.byteCount(0);
 
-	/// 2.3 - Get the VIRTUAL address of the location
+	$$(_ + '2.3 - Get the VIRTUAL address of the location')
 	let codeVir = Exe.Phy2Vir(codeAddr, CODE);
 
-	/// 2.4 - Prepare code to overwrite with (originally present in old clients)
+	$$(_ + '2.4 - Prepare code to overwrite with (originally present in old clients)')
 	code =
-		PUSH(3)                           //PUSH 3
-	+	WINMGR.MovECX                     //MOV ECX, OFFSET g_windowMgr
-	+	CALL(WINMGR.MakeWin, codeVir + 7) //CALL UIWindowMgr::MakeWindow ; 2 + 5 bytes from previous 2 instructions
-	+	JMP(parts[1].byteCount(), 12)     //JMP SHORT addr ; skip over to the MOV DWORD PTR DS:[reg32_B + 0C], 4
+		PUSH(3)                           //push 3
+	+	WINMGR.MovECX                     //mov ecx, <g_windowMgr>
+	+	CALL(WINMGR.MakeWin, codeVir + 7) //call UIWindowMgr::MakeWindow ; 2 + 5 bytes from previous 2 instructions
+	+	JMP(Filler(1,1))                  //jmp short _skip#2 ; skip over to the mov dword ptr [regB + 0C], 4
 	;
+	code = SetFillTarget(code, [1,1], parts.byteCount(1), 0, 1);
 
-	/// 2.5 - Overwrite at codeAddr
+	$$(_ + '2.5 - Overwrite at codeAddr')
 	Exe.SetHex(codeAddr, code);
 
 	//===============================================//
 	// Now for some additional stuff to make it work //
 	//===============================================//
 
-	/// 3 - Enable the old login packet
+	$$(_ + '3 - Enable the old login packet')
 	UseOldLogin();
 
 	/*============================================================================================================================
@@ -220,76 +228,73 @@ RestoreLoginWindow = function()
 			and skip the quit operation.
 	==============================================================================================================================
 	First we need to find the g_modeMgr & mode setting function address. The address is kept indirectly =>
-	MOV ECX, DWORD PTR DS:[Reference]
-	MOV EAX, DWORD PTR DS:[ECX]
-	MOV EDX, DWORD PTR DS:[EAX+18]
 
-	now ECX + C contains g_modeMgr & EDX is the function address we need. But these 3 instructions are not always kept together
+	mov ecx, dword ptr [Reference]
+	mov eax, dword ptr [ecx]
+	mov edx, dword ptr [eax+18h]
+
+	now ECX + 0Ch contains g_modeMgr & EDX is the function address we need. But these 3 instructions are not always kept together
 	as of recent clients.
 	=============================================================================================================================*/
 
-	/// 4.1 - First we look for one location that appears always after g_modeMgr is retrieved
+	$$(_ + '4.1 - First we look for one location that appears always after g_modeMgr is retrieved')
 	code =
-		PUSH_0     //PUSH 0
-	+ 	PUSH_0     //PUSH 0
-	+ 	PUSH_0     //PUSH 0
-	+ 	PUSH(0xF6) //PUSH F6
-	+ 	" FF"      //CALL reg32_A or CALL DWORD PTR DS:[reg32_A+const]
+		PUSH_0     //push 0
+	+ 	PUSH_0     //push 0
+	+ 	PUSH_0     //push 0
+	+ 	PUSH(0xF6) //push 0F6h
+	+ 	" FF"      //call regA OR call dword ptr [regA + dispA]
 	;
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Unable to find g_modeMgr code");
 
-	/// 4.2 - Find the start of the function
+	$$(_ + '4.2 - Find the start of the function')
 	code =
-		CMP([POS4WC], 1)  //CMP DWORD PTR DS:[addr1], 1
-	+	JNE(WCp)          //JNE addr2
-	+	MOV(ECX, [])      //MOV ECX, DWORD PTR DS:[Reference]
+		CMP([POS4WC], 1)  //cmp dword ptr [addr#1], 1
+	+	JNE(WCp)          //jne short _skip#3
+	+	MOV(ECX, [])      //mov ecx, dword ptr [Reference]
 	;
 
 	addr = Exe.FindHex(code, addr - 30, addr);
 	if (addr < 0)
 		throw Error("Start of Function missing");
 
-	/// 4.3 - Set addr to location after the MOV
+	$$(_ + '4.3 - Set addr to location after the MOV')
 	addr += code.byteCount();
 
-	/// 5.1 - Extract the reference and construct the code for getting g_modeMgr to ECX + C & mode setter to EDX (same as shown initially)
+	$$(_ + '5.1 - Extract the reference and construct the code for getting g_modeMgr to ECX + C & mode setter to EDX (same as shown initially)')
 	let infix =
-		Exe.GetHex(addr - 1, 6)  //MOV ECX, DWORD PTR DS:[Reference]
-	+ 	MOV(EAX, [ECX])          //MOV EAX, DWORD PTR DS:[ECX]
-	+ 	MOV(EDX, [EAX, 0x18])    //MOV EDX, DWORD PTR DS:[EAX+18]
+		Exe.GetHex(addr - 1, 6)  //mov ecx, dword ptr [Reference]
+	+ 	MOV(EAX, [ECX])          //mov eax, dword ptr [ecx]
+	+ 	MOV(EDX, [EAX, 0x18])    //mov edx, dword ptr [eax+18h]
 	;
 
-	/// 5.2 - Find how many PUSH 0s are there. Older clients had 3 arguments but newer ones only have 3
+	$$(_ + '5.2 - Find how many push 0s are there. Older clients had 3 arguments but newer ones only have 3')
 	let pushes = Exe.FindHexN(PUSH_0, addr + 4, addr + 16);
 
-	/// 5.3 - Find error handler (CModeMgr::Quit)
+	$$(_ + '5.3 - Find error handler (CModeMgr::Quit)')
 	code =
-		MOV(ESI, ECX)           //MOV ESI,ECX
-	+ 	MOV(EAX, [ESI, 4])      //MOV EAX,DWORD PTR DS:[ESI+4]
-	+ 	MOV([EAX, 0x14], 0)     //MOV DWORD PTR DS:[EAX+14], 0
-	+ 	CMP([LANGTYPE], 0xB)    //CMP DWORD PTR DS:[g_serviceType], 0B
+		MOV(ESI, ECX)           //mov esi, ecx
+	+ 	MOV(EAX, [ESI, 4])      //mov eax, dword ptr [esi+4]
+	+ 	MOV([EAX, 0x14], 0)     //mov dword ptr [eax+14h], 0
+	+ 	CMP([LANGTYPE], 0xB)    //cmp dword ptr [g_serviceType], 0Bh
+	+	JNE('[0001110.]')       //jne short _skip#4 -> after CALL instruction below (different delta for VC11+)
+	+ 	MOV(ECX, [POS3WC])      //mov ecx, dword ptr [g_hMainWnd]
+	+ 	PUSH_1                  //push 1
+	+ 	PUSH_0                  //push 0
+	+ 	PUSH_0                  //push 0
+	+ 	PUSH(POS3WC)            //push offset "http://www.ragnarok.co.in/index.php"
+	+ 	PUSH(POS3WC)            //push offset "open"
 	+	(Exe.Version > 10
 	?
-		JNE(0x1C)               //JNE SHORT addr1 -> after CALL instruction below (for VC11+)
+		PUSH([POS4WC])          //push dword ptr [g_hMainWnd] ; For recent client g_hMainWnd is directly pushed instead of assigning to ECX first
 	:                           //  or
-		JNE(0x1D)               //JNE SHORT addr1 -> after CALL instruction below
-	+ 	MOV(ECX, [POS3WC])      //MOV ECX,DWORD PTR DS:[g_hMainWnd]
+		PUSH(ECX)               //push ecx
 	)
-	+ 	PUSH_1                  //PUSH 1
-	+ 	PUSH_0                  //PUSH 0
-	+ 	PUSH_0                  //PUSH 0
-	+ 	PUSH(POS3WC)            //PUSH addr2 ; ASCII "http://www.ragnarok.co.in/index.php"
-	+ 	PUSH(POS3WC)            //PUSH addr3 ; ASCII "open"
-	+	(Exe.Version > 10
-	?
-		PUSH([POS4WC])          //PUSH DWORD PTR DS:[g_hMainWnd] ; For recent client g_hMainWnd is directly pushed instead of assigning to ECX first
-	:                           //  or
-		PUSH(ECX)               //PUSH ECX
-	)
-	+	CALL([POS3WC])          //CALL DWORD PTR DS:[<&SHELL32.ShellExecuteA>]
-	+	MOV([ESI], 0)	 	    //MOV DWORD PTR DS:[ESI],0 (ESI is supposed to have g_modeMgr but it doesn't always point to it, so we assign it another way)
+	+	CALL([POS3WC])          //call dword ptr [<&SHELL32.ShellExecuteA>]
+
+	+	MOV([ESI], 0)	 	    //mov dword ptr [esi], 0 ; _skip#4 (ESI is supposed to have g_modeMgr but it doesn't always point to it, so we assign it another way)
 	;
 
 	addr = Exe.FindHex(code);
@@ -302,23 +307,24 @@ RestoreLoginWindow = function()
 	of 0, but the client would dimmer down/flicker and appear again at login interface.
 	=====================================================================================*/
 
-	/// 5.4 - Construct the full replacement code
+	$$(_ + '5.4 - Construct the full replacement code')
 	let replace =
-		PUSH(EDX)                     //PUSH EDX
-	+ 	PUSH_EAX                      //PUSH EAX
-	+ 	infix                         //MOV ECX,DWORD PTR DS:[Reference]
-		                              //MOV EAX,DWORD PTR DS:[ECX]
-		                              //MOV EDX,DWORD PTR DS:[EAX+18]
-	+	PUSH_0.repeat(pushes.length)  //PUSH 0 sequence
-	+	PUSH(0x271D)                  //PUSH 271D
-	+	MOV([ECX, 0xC], 3)            //MOV DWORD PTR DS:[ECX+0C],3
-	+	CALL(EDX)                     //CALL EDX
-	+	POP(EAX)                      //POP EAX
-	+	POP(EDX)                      //POP EDX
+		PUSH(EDX)                     //push edx
+	+ 	PUSH_EAX                      //push eax
+	+ 	infix                         //mov ecx, dword ptr [Reference]
+		                              //mov eax, dword ptr [ecx]
+		                              //mov edx, dword ptr [eax+18]
+	+	PUSH_0.repeat(pushes.length)  //push 0 ; multiple number of times
+
+	+	PUSH(0x271D)                  //push 271Dh
+	+	MOV([ECX, 0xC], 3)            //mov dword ptr [ecx+0Ch],3
+	+	CALL(EDX)                     //call edx
+	+	POP(EAX)                      //pop eax
+	+	POP(EDX)                      //pop edx
 	;
 	replace += JMP(code.byteCount(), replace.byteCount()); //Skip to the POP ESI
 
-	/// 5.5 - Overwrite the SendMsg function.
+	$$(_ + '5.5 - Overwrite the SendMsg function')
 	Exe.SetHex(addr, replace);
 
 	//==========================================================================//
@@ -327,50 +333,50 @@ RestoreLoginWindow = function()
 
 	if (Exe.BuildDate >= 20130320 && Exe.BuildDate <= 20140226)
 	{
-		/// 6.1 - Find the string 'ID'
+		$$(_ + '6.1 - Find \'ID\'')
 		addr = Exe.FindText("ID");
 		if (addr < 0)
 			throw Error("'ID' not found");
 
-		/// 6.2 - Find where its used in a PUSH
-		//  PUSH 1
-		//  PUSH 0
-		//  PUSH addr; "ID"
+		$$(_ + '6.2 - Find where its used in a PUSH')
+		//  push 1
+		//  push 0
+		//  push offset "ID"
 		addr = Exe.FindHex( PUSH_1 + PUSH_0 + PUSH(addr) );
 		if (addr < 0)
 			throw Error("'ID' not used");
 
-		/// 6.3 - Find the new function CALL in 2013 clients
-		//  PUSH EAX
-		//  CALL func
-		//  JMP addr
+		$$(_ + '6.3 - Find the new function CALL in 2013 clients')
+		//  push eax
+		//  call func#2
+		//  jmp addr#2
 		addr = Exe.FindHex( PUSH_EAX  + CALL(POS3WC) + JMP(WC), addr - 80, addr);
 		if (addr < 0)
 			throw Error("Function not found");
 
-		/// 6.4 - Extract the CALLed address
+		$$(_ + '6.4 - Extract the CALLed address')
 		let tgtAddr = Exe.GetTgtAddr(addr + 2, PHYSICAL);
 
-		/// 6.5 - Now look for the JMP inside the function (ugh)
+		$$(_ + '6.5 - Now look for the JMP inside the function (ugh)')
 		addr = Exe.FindHex( JMP(), tgtAddr );
 		if (addr < 0)
 			throw Error("Jump Not found inside function");
 
-		/// 6.6 - Now get the jump target address
+		$$(_ + '6.6 - Now get the jump target address')
 		tgtAddr = Exe.GetTgtAddr(addr + 1, PHYSICAL);
 
-		/// 6.7 - Search for pattern to get func call <- need to remove that call
-		//  PUSH 13
-		//  CALL DWORD PTR DS:[addr]
-		//  AND EAX, 000000FF
+		$$(_ + '6.7 - Search for pattern to get func call <- need to remove that call')
+		//  push 13
+		//  call dword ptr [addr#1]
+		//  and eax, 000000FFh
 		addr = Exe.FindHex( PUSH(0x13) + CALL([POS3WC]) + AND(EAX, 0xFF), tgtAddr);
 		if (addr < 0)
 			throw Error("Pattern not found");
 
-		/// 6.8 - This part is tricky we are going to replace the call with xor eax,eax & add esp, c for now since i dunno what its purpose was anyways. 13 is a hint
-		//  XOR EAX, EAX
-		//  ADD ESP, 0C
-		//  NOP
+		$$(_ + '6.8 - This part is tricky we are going to replace the call with xor eax,eax & add esp, c for now since i dunno what its purpose was anyways. 13 is a hint')
+		//  xor eax, eax
+		//  add esp, 0Ch
+		//  nop
 		Exe.SetHex(addr + 2, XOR(EAX,EAX) + ADD(ESP, 0xC) + NOP);
 	}
 

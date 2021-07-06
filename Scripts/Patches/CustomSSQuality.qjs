@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-06                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,12 +31,14 @@
 ///
 CustomSSQuality = function()
 {
-	/// 1.1 - Find the JPEG_CORE_PROPERTIES member assignments (DIBChannels & DIBColor)
-	let tgt = ROC.HasFP ? [EBP, NEG2WC] : [ESP, WCp] ; //template for DWORD PTR SS:[EBP-x] or DWORD PTR SS:[ESP+x] as per frame pointer presence
+	let _ = 'CustomSSQuality : ';
+
+	$$(_ + '1.1 - Find the JPEG_CORE_PROPERTIES member assignments (DIBChannels & DIBColor)')
+	let tgt = ROC.HasFP ? [EBP, NEG2WC] : [ESP, WCp] ; //template for dword ptr [EBP-x] or dword ptr [ESP+x] as per frame pointer presence
 
 	let code =
-		MOV(tgt, 3)     //MOV tgt, 3; DIBChannels
-	+	MOV(tgt, 2)     //MOV tgt, 2; DIBColor
+		MOV(tgt, 3)     //mov tgt, 3 ; DIBChannels
+	+	MOV(tgt, 2)     //mov tgt, 2 ; DIBColor
 	;
 	let addr = Exe.FindHex(code);
 	if (addr < 0) //x > 0x7F for ESP or x < 0x7F for EBP
@@ -44,8 +46,8 @@ CustomSSQuality = function()
 		tgt = ROC.HasFP ? [EBP, WCn] : [ESP, POS2WC];
 
 		code =
-			MOV(tgt, 3) //MOV tgt, 3; DIBChannels
-		+	MOV(tgt, 2) //MOV tgt, 2; DIBColor
+			MOV(tgt, 3) //mov tgt, 3 ; DIBChannels
+		+	MOV(tgt, 2) //mov tgt, 2 ; DIBColor
 		;
 		addr = Exe.FindHex(code);
 	}
@@ -54,24 +56,25 @@ CustomSSQuality = function()
 
 	let halfSize = code.byteCount() / 2; //Length of 1 assignment
 
-	/// 1.2 - Get new quality value from user
+	$$(_ + '1.2 - Get new quality value from user')
 	let newValue = Exe.GetUserInput('$ssQuality', D_Int8, "Screenshot Quality", "Enter the new quality factor", 50, {min:0, max:100});
 	if (newValue === false)
 		Cancel("Quality factor", 50);
 
-	/// 2.1 - Get the jquality addr = DIBChannels displacement + 60
+	$$(_ + '2.1 - Get the jquality addr = DIBChannels displacement + 60')
 	let jqAddr = Instr.FromAddr(addr).Disp + 60;
 
-	/// 2.2 - Prepare code to change DIBChannels member assignment to jquality member assignment.
+	$$(_ + '2.2 - Prepare code to change DIBChannels member assignment to jquality member assignment.')
 	///       By default DIBChannels is 3 and DIBColor is 2 already, so overwriting their assignments doesnt matter
 	///
-	code = MOV( [(ROC.HasFP ? EBP : ESP), jqAddr], newValue);  //MOV DWORD PTR SS:[EBP + jqAddr], newValue ;jqAddr is negative or
-	                                                           //MOV DWORD PTR SS:[ESP + jqAddr], newValue ;jqAddr is positive
+	code = MOV( [(ROC.HasFP ? EBP : ESP), jqAddr], newValue);  //mov dword ptr [EBP + jqAddr], newValue ; where jqAddr is negative
+	                                                           //       OR
+	                                                           //mov dword ptr [ESP + jqAddr], newValue ; where jqAddr is positive
 
-	/// 2.3 - Write the code to client
+	$$(_ + '2.3 - Write the code to client')
 	Exe.SetHex(addr, code);
 
-	/// 2.4 - NOP out all excess bytes after the code based on the size
+	$$(_ + '2.4 - NOP out all excess bytes after the code based on the size')
 	let codeSize = code.byteCount();
 
 	if (codeSize < halfSize)

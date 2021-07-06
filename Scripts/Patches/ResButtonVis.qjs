@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,12 +34,14 @@
 ///
 HideResButton = function()
 {
-	/// 1 - Find the "Token of Siegfried" id PUSH in CGameMode::HaveSiegfriedItem function.
+	let _ = 'HideResButton : ';
+
+	$$(_ + '1 - Find the "Token of Siegfried" id PUSH in CGameMode::HaveSiegfriedItem function')
 	let addr = Exe.FindHex( PUSH(0x1DC5) ); //PUSH 1DC5
 	if (addr < 0)
 		throw Error("Siegfried ID not PUSHed");
 
-	/// 2 - Change the id to 0xFFFF - Fastest & Easiest method
+	$$(_ + '2 - Change the id to 0xFFFF - Fastest & Easiest method')
 	Exe.SetUint32(addr + 1, 0xFFFF);
 
 	return true;
@@ -50,24 +52,26 @@ HideResButton = function()
 ///
 ShowResButton = function()
 {
-	/// 1.1 - Find the "Token of Siegfried" id PUSH in CGameMode::HaveSiegfriedItem function.
-	let addr = Exe.FindHex( PUSH(0x1DC5) ); //PUSH 1DC5
+	let _ = 'ShowResButton : ';
+
+	$$(_ + '1.1 - Find the "Token of Siegfried" id PUSH in CGameMode::HaveSiegfriedItem function')
+	let addr = Exe.FindHex( PUSH(0x1DC5) ); //push 1DC5h
 	if (addr < 0)
 		throw Error("Siegfried ID not PUSHed");
 
-	/// 1.2 - Set addr to location after the PUSH, MOV ECX and CALL . Any other statements in between can lety
+	$$(_ + '1.2 - Set addr to location after the PUSH, MOV ECX and CALL . Any other statements in between can lety')
 	addr += 15;
 
-	/// 2.1 - Find the triple comparisons after the PUSH (unknown param, PVP, GVG)
+	$$(_ + '2.1 - Find the triple comparisons after the PUSH (unknown param, PVP, GVG)')
 	let code;
 	switch (Exe.Version)
 	{
 		case 6: //VC6
 		{
 			code =
-				MOV(ECX, [EAX, WCp])  //MOV ECX, DWORD PTR DS:[EAX + const]
-			+	TEST(ECX, ECX)        //TEST ECX, ECX
-			+	JNE(WCp)              //JNE SHORT addr
+				MOV(ECX, [EAX, WCp])  //mov ecx, dword ptr [eax + disp8A]
+			+	TEST(ECX, ECX)        //test ecx, ecx
+			+	JNE(WCp)              //jne short _skip
 			;
 			break;
 		}
@@ -75,8 +79,8 @@ ShowResButton = function()
 		case 10: //VC10
 		{
 			code =
-				CMP([EAX, WCp], R32)  //CMP DWORD PTR DS:[EAX + const], reg32
-			+	JNE(POS2WC)           //JNE addr
+				CMP([EAX, WCp], R32)  //cmp dword ptr [eax + disp8A], regA
+			+	JNE(POS2WC)           //jne _skip
 			;
 			break;
 		}
@@ -84,8 +88,8 @@ ShowResButton = function()
 		default: //VC9 & VC11+
 		{
 			code =
-				CMP([EAX, WCp], 0)    //CMP DWORD PTR DS:[EAX + const], 0
-			+	JNE(WCp)              //JNE SHORT addr
+				CMP([EAX, WCp], 0)    //cmp dword ptr [eax + disp8A], 0
+			+	JNE(WCp)              //jne short _skip
 			;
 			break;
 		}
@@ -96,19 +100,19 @@ ShowResButton = function()
 	{
 		if (Exe.Version === 10) //VC10
 		{
-			code = code.replace( JNE(POS2WC), JNE(WCp) ); //change JNE to SHORT JNE
+			code = code.replace( JNE(POS2WC), JNE(WCp) ); //change jne to jne short
 			cmpAddr = Exe.FindHex(code.repeat(3), addr, addr + 0x40);
 		}
 		else if (Exe.Version >= 11) //VC11+
 		{
-			code = code.replace( JNE(WCp), JNE(POS2WC) ); //change JNE SHORT to JNE
+			code = code.replace( JNE(WCp), JNE(POS2WC) ); //change jne short to jne
 			cmpAddr = Exe.FindHex(code.repeat(3), addr, addr + 0x40);
 		}
 	}
 	if (cmpAddr < 0)
 		throw Error("Triple comparisons not found");
 
-	/// 2.2 - NOP out the comparisons (a short JMP will get automatically placed)
+	$$(_ + '2.2 - NOP out the comparisons (a short JMP will get automatically placed)')
 	Exe.SetNOPs(cmpAddr, 3 * code.byteCount());
 
 	return true;

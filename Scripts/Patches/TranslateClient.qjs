@@ -23,22 +23,23 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Translate Korean strings to user specified strings both loaded from user specified file.
-///        Also fixes Taekwon branch Job names
 ///
 TranslateClient = function()
 {
-	/// 1.1 - Get the translation map file from user
+	let _ = 'TranslateClient : ';
+
+	$$(_ + '1.1 - Get the translation map file from user')
 	let inFile = Exe.GetUserInput('$translationFile', D_InFile, "Translation Mapping", "Enter the translation file", "Inputs/Translations_EN.yml", {filters: YMLFILTER});
 	if (inFile === false)
 		Cancel("No translation file specified");
 
-	/// 1.2 - Load the mapping
+	$$(_ + '1.2 - Load the mapping')
 	let Translations = Warp.LoadYaml(inFile);
 	if (Translations === false)
 		return false;
@@ -46,21 +47,23 @@ TranslateClient = function()
 	else if (!IsArr(Translations))
 		throw Error("Need a list of translations");
 
-	/// 1.3 - Open the Failed Translations output file - for writing out unexpected translation fails
+	$$(_ + '1.3 - Open the Failed Translations output file - for writing out unexpected translation fails')
 	let fp = new TextFile(OUTDIR + "FailedTranslations_" + ROC.BaseName + ".txt", 'w');
 	if (!fp.Valid)
 		throw Error("Unable to create FailedTranslations Output file");
 
-	/// 2.1 - Retrieve the Section end point addresses
+	$$(_ + '2.1 - Retrieve the Section end point addresses')
 	let dbegin  = Exe.GetSectBegin(DATA);
 	let d2begin = Exe.GetSectBegin(DATA2);
 	let dend  = Exe.GetSectEnd(DATA);
 	let d2end = Exe.GetSectEnd(DATA2);
 
-	/// 2.2 - Save the filtered array with successful translations
+	$$(_ + '2.2 - Save the filtered array with successful translations')
 	let translated = Translations.filter( (hash, idx) =>
 	{
-		/// 2.3 - Retrieve the 5 parts & verify if we are within the expected date range for the builddate
+		let __ = `${_} [${idx}] `;
+
+		$$(__ + '2.3 - Retrieve the 5 parts & verify if we are within the expected date range for the builddate')
 		let findPat = hash.find;
 		let replStr = hash.replace;
 		let {startDate, endDate, startDateRE, endDateRE, startDate0, endDate0, desc} = hash;
@@ -84,13 +87,13 @@ TranslateClient = function()
 		else if ( (IsNum(startDate) && Exe.BuildDate < startDate) || (IsNum(endDate) && Exe.BuildDate > endDate) )
 			return true; // its not a fail
 
-		/// 2.4 - Ensure description is a valid string/number, defaults to the replacement string
+		$$(__ + '2.4 - Ensure description is a valid string/number, defaults to the replacement string')
 		desc = desc ?? replStr;
 
 		if (!IsNumOrStr(desc))
 			desc = "Translation #" + idx;
 
-		/// 2.5 - Ensure we have valid patterns for search & replace
+		$$(__ + '2.5 - Ensure we have valid patterns for search & replace')
 		if (!IsStr(findPat))
 		{
 			fp.WriteLine(desc + " => Invalid/Non-existent search pattern");
@@ -103,7 +106,7 @@ TranslateClient = function()
 			return false;
 		}
 
-		/// 2.6 - Check if the search pattern is hex or text string
+		$$(__ + '2.6 - Check if the search pattern is hex or text string')
 		let hexMode = true;
 		let parts = findPat.match(/^\s*<(.*)>\s*$/);
 		if (parts === null)
@@ -118,7 +121,7 @@ TranslateClient = function()
 			findPat = parts[1];
 		}
 
-		/// 2.7 - Find the pattern
+		$$(__ + '2.7 - Find the pattern')
 		let addr;
 		if (hexMode)
 		{
@@ -131,18 +134,18 @@ TranslateClient = function()
 			addr = Exe.FindText(findPat, PHYSICAL);
 		}
 
-		/// 2.8 - If not found write to FailedTranslations.txt
+		$$(__ + '2.8 - If not found write to FailedTranslations.txt')
 		if (addr < 0)
 		{
 			fp.WriteLine(desc + " => Pattern not found");
 			return false;
 		}
 
-		/// 2.9 - Increment addr for hexMode (since we searched with 0 prefixed)
+		$$(__ + '2.9 - Increment addr for hexMode (since we searched with 0 prefixed)')
 		if (hexMode)
 			addr++;
 
-		/// 2.10 - Repeat 3.6 for replacement string
+		$$(__ + '2.10 - Repeat 3.6 for replacement string')
 		hexMode = true;
 		parts = replStr.match(/^\s*<(.*)>\s*$/);
 		if (parts === null)
@@ -157,7 +160,7 @@ TranslateClient = function()
 			replStr = parts[1];
 		}
 
-		/// 2.11 - Replace based on hexMode
+		$$(__ + '2.11 - Replace based on hexMode')
 		if (hexMode)
 			Exe.SetHex(addr, replStr + " 00");
 		else
@@ -167,14 +170,14 @@ TranslateClient = function()
 	});
 	fp.Close();
 
-	/// 3.1 - If 'translated' is empty i.e. everything in Translations array failed (highly unlikely), then report error
+	$$(_ + '3.1 - If "translated" is empty i.e. everything in Translations array failed (highly unlikely), then report error')
 	if (translated.isEmpty())
 		throw Error("All translations had issues");
 
-	/// 3.2 - If any fails were found, ask user if they want to see the FailedTranslations.txt to cross check for unexpected failures (only displays for Main GUI)
-	if (!Exe.TestMode && translated.length < Translations.length)
+	$$(_ + '3.2 - If any fails were found, ask user if they want to see the FailedTranslations.txt to cross check for unexpected failures (only displays for Main GUI)')
+	if (!Warp.TestMode && translated.length < Translations.length)
 	{
-		if (Exe.GetUserInput('$showFailures', D_Bool, "Show Failures", "Some translations failed (not necessarily an error). Would you like to view them?", true))
+		if (UserChoice("Show Failures", "Some translations failed (not necessarily an error). Would you like to view them?"))
 			Warp.Show(fp.Path);
 	}
 
