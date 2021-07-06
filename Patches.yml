@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-06-20                                             #
+#   Last Modified : 2021-07-04                                             #
 #                                                                          #
 ############################################################################
 
@@ -796,12 +796,14 @@
             recommend : no
             author : Neo-Mind , Andrei Karas (4144)
             desc : Make the client return to Login Window upon disconnection.
+            needs : RestoreLoginWindow
         
         - CancelToLogin:
             title : Cancel to Login Window
             recommend : yes
             author : Neo-Mind , Andrei Karas (4144)
             desc : Makes the Cancel button in Character selection window return to login window instead of Quitting.
+            needs : RestoreLoginWindow
 
 - DisableEffect:
     title : DISABLE EFFECT

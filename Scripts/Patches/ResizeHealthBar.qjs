@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,26 +33,28 @@
 ///
 ResizePlayerBar = function()
 {
-	/// 1.1 - Find the original size PUSHes
+	let _ = 'ResizePlayerBar : ';
+
+	$$(_ + '1.1 - Find the original size PUSHes')
 	let prefix =
-		MOV(ECX, [R32, POS2WC])  //MOV ECX, DWORD PTR DS:[reg32_A+x]
-	+	PUSH(POS4WC)             //PUSH const1
-	+	PUSH(POS4WC)             //PUSH const2
-	+	CALL(ALLWC)              //CALL func
-	+	MOV(ECX, [R32, POS2WC])  //MOV ECX, DWORD PTR DS:[reg32_A+x]
+		MOV(ECX, [R32, POS2WC])  //mov ecx, dword ptr [regA + dispA]
+	+	PUSH(POS4WC)             //push immA
+	+	PUSH(POS4WC)             //push immB
+	+	CALL(ALLWC)              //call func#1
+	+	MOV(ECX, [R32, POS2WC])  //mov ecx, dword ptr [regA + dispA]
 	;
 
 	let suffix =
-		PUSH(9)                  //PUSH 09
-	+	PUSH(0x3C)               //PUSH 3C
+		PUSH(9)                  //push 9
+	+	PUSH(0x3C)               //push 3Ch
 	;
 
 	let addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0 && Exe.Version === 6) //VC6 2nd form
 	{
 		prefix =
-			MOV([R32, POS1WC], R32) //MOV DWORD PTR DS:[reg32_B+y], reg32_C
-		+	MOV(ECX, [R32, POS2WC]) //MOV ECX, DWORD PTR DS:[reg32_A+x]
+			MOV([R32, POS1WC], R32) //mov dword ptr [regB + dispB], regC
+		+	MOV(ECX, [R32, POS2WC]) //mov ecx, dword ptr [regA + dispC]
 		;
 		addr = Exe.FindHex(prefix + suffix);
 	}
@@ -61,20 +63,19 @@ ResizePlayerBar = function()
 
 	let sizeAddr = addr + prefix.byteCount();
 
-	/// 1.2 - Find the reference assignment before the half width subtraction
-	let addrs = Exe.FindHexN( MOV([EAX, WCp], 0x32FF32) );    //MOV DWORD PTR DS:[EAX+const], 32FF32
+	$$(_ + '1.2 - Find the reference assignment before the half width subtraction')
+	let addrs = Exe.FindHexN( MOV([EAX, WCp], 0x32FF32) );    //mov dword ptr [eax + disp8D], 32FF32h
 	if (addrs.isEmpty())
 	{
-		addrs = Exe.FindHexN( MOV([EAX, POS2WC], 0x32FF32) ); //MOV DWORD PTR DS:[EAX+const], 32FF32
+		addrs = Exe.FindHexN( MOV([EAX, POS2WC], 0x32FF32) ); //mov dword ptr [eax + dispD], 32FF32h
 	}
 	if (addrs.length !== 2)
 		throw Error("Invalid no of matches found");
 
-	/// 1.3 - Now find the subtraction after it.
-	///       The pattern changes a lot between 2008 - 2019 so this is the only foolproof way
+	$$(_ + '1.3 - Now find the subtraction after it. The pattern changes a lot between 2008 - 2019 so this is the only foolproof way')
 
 	let halfAddr = -1;
-	let MovEAX = MOV(EAX, 0x88888889);
+	let MovEAX = MOV(EAX, 0x88888889); //mov eax, 88888889h
 
 	addrs.find( addr =>
 	{
@@ -94,23 +95,26 @@ ResizePlayerBar = function()
 	if (halfAddr < 0)
 		throw Error("Half Width subtraction missing");
 
-	/// 2.1 - Get the new dimensions from user
-	let wid = Exe.GetUserInput('$hpWidth', D_Uint8, "HP Bar Dimensions", "Enter new HP bar width in pixels", 60, {min:1, max:127});
-	let hgt = Exe.GetUserInput('$hpHeight', D_Uint8, "HP Bar Dimensions", "Enter new HP bar height in pixels", 9, {min:1, max:127});
-
-	if (wid === false && hgt === false)
+	$$(_ + '2.1 - Get the new dimensions from user')
+	let result = Exe.GetUserInput('$pcHPBarSize', D_VecI8, "Player HP Bar Dimensions", "Enter the new HP bar size for Player (in pixels)", [60, 9], {
+		name0: "Bar Width", min0: 1,
+		name1: "Bar Height", min1: 1,
+	});
+	if (result === false)
 		Cancel("Size", "(60 x 9)");
 
-	/// 2.2 - Replace at all the locations
-	if (wid !== false)
+	let [wid, hgt] = result;
+
+	$$(_ + '2.2 - Replace at all the locations')
+	if (wid !== 60)
 	{
-		Exe.SetFromVar(sizeAddr + 3, '$hpWidth');
+		Exe.SetInt8(sizeAddr + 3, wid);
 		Exe.SetUint8(halfAddr + 2, wid >> 1);
 	}
 
-	if (hgt !== false)
+	if (hgt !== 9)
 	{
-		Exe.SetFromVar(sizeAddr + 1, '$hpHeight');
+		Exe.SetInt8(sizeAddr + 1, hgt);
 	}
 
 	return true;
@@ -131,20 +135,22 @@ _RPB_SubTest = (ins) =>
 ///
 ResizeBossBar = function()
 {
+	let _ = 'ResizeBossBar : ';
+
 	let parts, type, tgtAddr;
 	if (Exe.BuildDate < 20160000)
 	{
-		/// 1,1 - Find the weird calculation used for older clients with the size values
+		$$(_ + '1,1 - Find the weird calculation used for older clients with the size values')
 		parts = [
-			LEA(R32, [2, R32, R32])                         //LEA reg32_A, [2*reg32_B + reg32_B]
+			LEA(R32, [2, R32, R32])                         //lea regA, [regB*2 + regB]
 		,
-			LEA(R32, [Exe.Version < 11 ? R32 : 2, R32, 5])  //LEA reg32_A, [2*reg32_A + 5] or LEA reg32_A, [reg32_A + reg32_A +5]
-		+	PUSH_R                                          //PUSH reg32_A
-		+	LEA(R32, [4, R32, R32])                         //LEA reg32_A, [4*reg32_B + reg32_B]
-		+	(Exe.Version >= 11 ? MOV(ECX, R32) : "")        //MOV ECX, reg32_C (in old clients)
+			LEA(R32, [Exe.Version < 11 ? R32 : 2, R32, 5])  //lea regA, [regA*2 + 5] OR lea regA, [regA + regA + 5]
+		+	PUSH_R                                          //push regA
+		+	LEA(R32, [4, R32, R32])                         //lea regA, [regB*4 + regB]
+		+	(Exe.Version >= 11 ? MOV(ECX, R32) : "")        //mov ecx, regC ; only there in old clients
 		,
-			LEA(R32, [8, R32, 0x3C])                        //LEA reg32_A, [8*reg32_A + 3C]
-		+	PUSH_R                                          //PUSH reg32_A
+			LEA(R32, [8, R32, 0x3C])                        //lea regA, [regA*8 + 3Ch]
+		+	PUSH_R                                          //push regA
 		]
 		;
 		type = 1;
@@ -155,15 +161,15 @@ ResizeBossBar = function()
 	}
 	else
 	{
-		/// 1.2 - Find the size PUSHes (multiple matches will be there)
+		$$(_ + '1.2 - Find the size PUSHes (multiple matches will be there)')
 		parts = [
-			PUSH(0x5)                //PUSH 5
-		+	PUSH(0x3C)               //PUSH 3C
+			PUSH(0x5)                //push 5
+		+	PUSH(0x3C)               //push 3Ch
 		,
-			MOV(ECX, EAX)            //MOV ECX, EAX
+			MOV(ECX, EAX)            //mov ecx, eax
 		,
-			MOV([R32, POS2WC], EAX)  //MOV DWORD PTR DS:[reg32_C + const], EAX
-		+	CALL()                   //CALL func
+			MOV([R32, POS2WC], EAX)  //mov dword ptr [regC + dispC], eax
+		+	CALL()                   //call func#1
 		]
 		;
 		type = 2;
@@ -179,23 +185,24 @@ ResizeBossBar = function()
 		if (addrs.isEmpty())
 			throw Error("PUSH pattern missing");
 
-		/// 1.3 - Filter out the correct PUSH based on code before it
+		$$(_ + '1.3 - Filter out the correct PUSH based on code before it')
 		tgtAddr = addrs.find(memAddr =>
 		{
 			let code2 =
-				CMP(EBX, -1)			//CMP EBX, -1
-			+	JE(POS2WC)				//JE addr1
-			+	MOV(ESI, [EBP, WCp])	//MOV ESI, DWORD PTR SS:[EBP+x]
-			+	CMP(ESI, -1)			//CMP ESI, -1
+				CMP(EBX, -1)			//cmp ebx, -1
+			+	JE(POS2WC)				//je _skip
+			+	MOV(ESI, [EBP, WCp])	//mov esi, dword ptr [ebp + disp8A] ; ARG.x
+			+	CMP(ESI, -1)			//cmp esi, -1
 			;
 			let addr = Exe.FindHex(code2, memAddr - 0xA0, memAddr);
 			if (addr < 0)
 			{
 				code2 = code2.replace(
-					JE(POS2WC),				//change JE addr1 to
-					JNE(WCp)				//JNE SHORT addr2
-				+	CMP([EBP, NEG2WC], EBX)	//CMP DWORD PTR SS:[EBP-x], EBX
-				+	JE(WCp)					//JE SHORT addr3
+					JE(POS2WC),				//change JE _skip
+					                        //  TO
+					JNE(WCp)				//jne short _skip#2
+				+	CMP([EBP, NEG2WC], EBX)	//cmp dword ptr [LOCAL.x], ebx
+				+	JE(WCp)					//je short _skip#3
 				);
 
 				addr = Exe.FindHex(code2, memAddr - 0xF0, memAddr);
@@ -206,33 +213,36 @@ ResizeBossBar = function()
 			throw Error("No proper size PUSHes found");
 	}
 
-	/// 2.1 - Get the new dimensions from user
-	let wid = Exe.GetUserInput('$mvpHpWidth', D_Uint8, "HP Bar Dimensions", "Enter new HP bar width in pixels", 60, {min:1, max:127});
-	let hgt = Exe.GetUserInput('$mvpHpHeight', D_Uint8, "HP Bar Dimensions", "Enter new HP bar height in pixels", 5, {min:1, max:127});
+	$$(_ + '2.1 - Get the new dimensions from user')
+	let result = Exe.GetUserInput('$mvpHPBarSize', D_VecI8, "MVP HP Bar Dimensions", "Enter the new HP bar size for MVP/Boss (in pixels)", [60, 5], {
+		name0: "Bar Width", min0: 1,
+		name1: "Bar Height", min1: 1,
+	});
+	if (result === false)
+		Cancel("Size", "(60 x 5)");
 
-	if (wid === false && hgt === false)
-		Cancel("Size", "(60 x 9)");
+	let [wid, hgt] = result;
 
-	/// 2.2 - Based on type replace the values
+	$$(_ + '2.2 - Based on type replace the values')
 	if (type === 1)
 	{
 		let [,hgtAddr, widAddr] = MapAddrs(tgtAddr, parts);
-		if (hgt !== false)
-			Exe.SetFromVar(hgtAddr + 3, '$mvpHpHeight');
+		if (hgt !== 5)
+			Exe.SetInt8(hgtAddr + 3, hgt);
 
-		if (wid !== false)
-			Exe.SetFromVar(widAddr + 3, '$mvpHpWidth');
+		if (wid !== 60)
+			Exe.SetInt8(widAddr + 3, wid);
 	}
 	else
 	{
 		if (type === 3)
 			tgtAddr += 2;
 
-		if (hgt !== false)
-			Exe.SetFromVar(tgtAddr + 1, '$mvpHpHeight');
+		if (hgt !== 5)
+			Exe.SetInt8(tgtAddr + 1, hgt);
 
-		if (wid !== false)
-			Exe.SetFromVar(tgtAddr + 3, '$mvpHpWidth');
+		if (wid !== 60)
+			Exe.SetInt8(tgtAddr + 3, wid);
 	}
 
 	return true;

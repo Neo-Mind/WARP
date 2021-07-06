@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144), X-EcutiOnner, Ai4rei/AN        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,47 +34,49 @@
 ///
 IgnoreRsrcErr = function()
 {
-	/// 1.1 - Find the common error string
+	let _ = 'IgnoreRsrcErr : ';
+
+	$$(_ + '1.1 - Find the common error string')
 	let addr = Exe.FindText("Failed to load Winsock library!");
 	if (addr < 0)
 		throw Error("Winsock error string missing");
 
-	/// 1.2 - Find where its used in a PUSH
+	$$(_ + '1.2 - Find where it is PUSHed')
 	let code =
-		PUSH(addr)  //PUSH OFFSET ; ASCII "Failed to load Winsock library!"
-	+	CALL()      //CALL ErrorMsg
+		PUSH(addr)  //push offset "Failed to load Winsock library!"
+	+	CALL()      //call ErrorMsg
 	;
 	addr = Exe.FindHex(code);
 
 	if (addr < 0)
 		throw Error("Winsock error string not used");
 
-	/// 1.3 - Go inside the ErrorMsg function
+	$$(_ + '1.3 - Go inside the ErrorMsg function')
 	addr = Exe.GetTgtAddr(addr + 6, PHYSICAL);
 
-	/// 2.1 - Find the GDIFlip CALL at the beginning of the function
+	$$(_ + '2.1 - Find the GDIFlip CALL at the beginning of the function')
 	addr = Exe.FindHex( CALL(NEG3WC), addr, addr + 10);
 	if (addr < 0)
 		throw Error("GDIFlip CALL missing");
 
-	/// 2.2 - Set the address to after the call.
+	$$(_ + '2.2 - Set the address to after the call')
 	addr += 5;
 
-	/// 2.3 - Prep code to replace with (for calling OutputDebugStringA & stack restoration)
+	$$(_ + '2.3 - Prep code to replace with (for calling OutputDebugStringA & stack restoration)')
 	if (ROC.OutDbgStrA < 0)
 		throw Error("'OutputDebugStringA' function missing");
 
 	code =
-		PUSH(ROC.HasFP ? [EBP, 8] : [ESP, 4]) //PUSH DWORD PTR DS:[ARG.1]
-	+	CALL([ROC.OutDbgStrA])                //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
-	+	XOR(EAX, EAX)                         //XOR EAX, EAX
+		PUSH(ROC.HasFP ? [EBP, 8] : [ESP, 4]) //push dword ptr [ARG.1]
+	+	CALL([ROC.OutDbgStrA])                //call dword ptr [&KERNEL32.OutputDebugStringA]
+	+	XOR(EAX, EAX)                         //xor eax, eax
 	+  	(ROC.HasFP
 	?
-		POP(EBP)                              //POP EBP ; if EBP was PUSHed before
+		POP(EBP)                              //pop ebp ; if EBP was PUSHed before
 	:
 		''
 	)
-	+	RETN()                                //RETN
+	+	RETN()                                //retn
 	;
 	Exe.SetHex(addr, code);
 
@@ -87,56 +89,58 @@ IgnoreRsrcErr = function()
 ///
 IgnorePalErr = function()
 {
-	/// 1.1 - Ensure IgnoreRsrcErr is not already ON (it would already be covered in that case)
-	if (!Exe.TestMode && Exe.IsSelected("IgnoreRsrcErr"))
+	let _ = 'IgnorePalErr : ';
+
+	$$(_ + '1.1 - Ensure IgnoreRsrcErr is not already ON (it would already be covered in that case)')
+	if (!Warp.TestMode && Warp.GetPatchState("IgnoreRsrcErr"))
 		Cancel("'Ignore Resource Errors' is ON and covers Palette errors as well");
 
-	/// 1.2 - Find the error message
+	$$(_ + '1.2 - Find the error message')
 	let msgAddr = Exe.FindText("CPaletteRes :: Cannot find File : ");
 	if (msgAddr < 0)
 		throw Error("CPaletteRes string not found");
 
-	/// 1.3 - Find where its PUSHed/assigned
+	$$(_ + '1.3 - Find where its PUSHed/assigned')
 	let code = PUSH(msgAddr);  //PUSH OFFSET addr; ASCII "CPaletteRes :: Cannot find File : "
 
-	let addr = Exe.FindHex(code + LEA());   //LEA ECX, [LOCAL.x]
+	let addr = Exe.FindHex(code + LEA());   //lea ecx, [LOCAL.x]
 	if (addr < 0)
-		addr = Exe.FindHex(code + MOV([])); //MOV DWORD PTR
+		addr = Exe.FindHex(code + MOV([])); //mov dword ptr
 
 	if (addr < 0)
 	{
-		code = MOV(EDI, msgAddr); //MOV EDI, OFFSET addr; ASCII "CPaletteRes :: Cannot find File : "
+		code = MOV(EDI, msgAddr); //mov edi, offset "CPaletteRes :: Cannot find File : "
 		addr = Exe.FindHex(code);
 	}
 	if (addr < 0)
 		throw Error("CPaletteRes string not PUSHed/assigned");
 
-	/// 2.1 - Find the CALL to CFile::Open and its result comparison before the PUSH (within 0x100 bytes)
+	$$(_ + '2.1 - Find the CALL to CFile::Open and its result comparison before the PUSH (within 0x100 bytes)')
 	code =
-		CALL(ALLWC)   //CALL CFile::Open
-	+	TEST(AL, AL)  //TEST AL, AL
-	+	JNZ(POS2WC)   //JNZ addr
+		CALL(ALLWC)   //call CFile::Open
+	+	TEST(AL, AL)  //test al, al
+	+	JNZ(POS2WC)   //jnz _skip
 	;
 	addr = Exe.FindHex(code, addr - 0x100, addr);
 	if (addr < 0)
 		throw Error("CFile::Open CALL not found");
 
-	/// 2.2 - Save the location after the conditional jump
+	$$(_ + '2.2 - Save the location after the conditional jump')
 	let modAddr = addr + code.byteCount();
 
-	/// 2.3 - Goto the location of the conditional jump
+	$$(_ + '2.3 - Goto the location of the conditional jump')
 	addr = Exe.GetTgtAddr(modAddr - 4, PHYSICAL);
 
-	/// 2.4 - Find the location to jump to (based on build version) before the jump address
+	$$(_ + '2.4 - Find the location to jump to (based on build version) before the jump address')
 	let jmpAddr;
 	switch (Exe.Version)
 	{
 		case 6: //VC6
 		{
 			code =
-				LEA(ECX, [EBP, NEG1WC]) //LEA ECX, [LOCAL.x]
-			+	MOV([EBP, WCn], ESI)    //MOV DWORD PTR SS:[LOCAL.y], ESI
-			+	MOV([EBP, WCn], ESI)    //MOV DWORD PTR SS:[LOCAL.z], ESI
+				LEA(ECX, [EBP, NEG1WC]) //lea ecx, [LOCAL.x]
+			+	MOV([EBP, WCn], ESI)    //mov dword ptr [LOCAL.y], esi
+			+	MOV([EBP, WCn], ESI)    //mov dword ptr [LOCAL.z], esi
 			;
 			jmpAddr = Exe.FindHex(code, addr - 0x38, addr);
 			break;
@@ -146,9 +150,9 @@ IgnorePalErr = function()
 		case 10: //VC10
 		{
 			code =
-				LEA(ECX, ROC.HasFP ? [EBP, NEG2WC] : [ESP, POS2WC]) //LEA ECX, [LOCAL.x]
-			+	CALL(POS3WC)                                        //CALL func
-			+	XOR(AL, AL)                                         //XOR AL, AL
+				LEA(ECX, ROC.HasFP ? [EBP, NEG2WC] : [ESP, POS2WC]) //lea ecx, [LOCAL.x]
+			+	CALL(POS3WC)                                        //call func
+			+	XOR(AL, AL)                                         //xor al, al
 			;
 			jmpAddr = Exe.FindHex(code, addr - 0x20, addr);
 			break;
@@ -157,7 +161,7 @@ IgnorePalErr = function()
 		default: //VC11+
 		{
 			code =
-				XOR(BL, BL) //XOR BL, BL
+				XOR(BL, BL) //xor bl, bl
 			;
 			jmpAddr = Exe.FindHex(code, addr - 0x10, addr);
 			break;
@@ -167,39 +171,53 @@ IgnorePalErr = function()
 	if (jmpAddr < 0)
 		throw Error("End code missing");
 
-	/// 3.1 - Prep new code to send the message to OutputDebugStringA function
+	$$(_ + '3.1 - Prep new code to send the message to OutputDebugStringA function')
 	if (ROC.OutDbgStrA < 0)
 		throw Error("'OutputDebugStringA' function missing");
 
-	code =
-		PUSH(EDX)              //PUSH EDX
-	+	SUB(ESP, 0x100)        //SUB ESP, 100
-	+	MOV(ECX, ESP)          //MOV ECX, ESP
-	+	MOV(EDX, msgAddr)      //MOV EDX, OFFSET addr; ASCII "CPaletteRes :: Cannot find File : "
-	+	MOV(AL, [EDX])         //MOV AL, BYTE PTR DS:[EDX] ;loop1
-	+	MOV([ECX], AL)         //MOV BYTE PTR DS:[ECX], AL
-	+	INC(ECX)               //INC ECX
-	+	INC(EDX)               //INC EDX
-	+	TEST(AL, AL)           //TEST AL, AL
-	+	JNE(-0xA)              //JNE SHORT loop1
-	+	DEC(ECX)               //DEC ECX ; to remove the NULL
-	+	MOV(EDX, ESI)          //MOV EDX, ESI
-	+	MOV(AL, [EDX])         //MOV AL, BYTE PTR DS:[EDX] ;loop2
-	+	MOV([ECX], AL)         //MOV BYTE PTR DS:[ECX], AL
-	+	INC(ECX)               //INC ECX
-	+	INC(EDX)               //INC EDX
-	+	TEST(AL, AL)           //TEST AL, AL
-	+	JNE(-0xA)              //JNE SHORT loop2
-	+	PUSH(ESP)              //PUSH ESP
-	+	CALL([ROC.OutDbgStrA]) //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
-	+	ADD(ESP, 0x100)        //ADD ESP, 100
-	+	POP(EDX)               //POP EDX
-	;
+	let parts =
+	[
+		PUSH(EDX)              //push edx
+	+	SUB(ESP, 0x100)        //sub esp, 100h
+	+	MOV(ECX, ESP)          //mov ecx, esp
+	+	MOV(EDX, msgAddr)      //mov edx, offset "CPaletteRes :: Cannot find File : "
 
-	/// 3.2 - Replace at the modAddr
+	,//1
+		MOV(AL, [EDX])         //mov al, byte ptr [EDX] ; _loop1
+	+	MOV([ECX], AL)         //mov byte ptr [ECX], AL
+	+	INC(ECX)               //inc ecx
+	+	INC(EDX)               //inc edx
+	+	TEST(AL, AL)           //test al, al
+	+	JNE(Filler(1,1))       //jne short _loop1
+	+	DEC(ECX)               //dec ecx ; to remove the NULL
+	+	MOV(EDX, ESI)          //mov edx, esi
+
+	,//2
+		MOV(AL, [EDX])         //mov al, byte ptr [edx] ; _loop2
+	+	MOV([ECX], AL)         //mov byte ptr [ecx], al
+	+	INC(ECX)               //inc ecx
+	+	INC(EDX)               //inc edx
+	+	TEST(AL, AL)           //test al, al
+	+	JNE(Filler(2,1))       //jne short _loop2
+	+	PUSH(ESP)              //push esp
+	+	CALL([ROC.OutDbgStrA]) //call dword ptr [&KERNEL32.OutputDebugStringA]
+	+	ADD(ESP, 0x100)        //add esp, 100h
+	+	POP(EDX)               //pop edx
+	];
+
+	let offsets = MapAddrs(0, parts);
+
+	code = SetFillTargets(parts,
+	{
+		1: offsets[1],
+		2: offsets[2],
+	},
+	0, 1, 1);
+
+	$$(_ + '3.2 - Replace at the modAddr')
 	Exe.SetHex(modAddr, code);
 
-	/// 3.3 - Put a JMP after the code to the jmpAddr we found
+	$$(_ + '3.3 - Put a JMP after the code to the jmpAddr we found')
 	Exe.SetJMP(modAddr + code.byteCount(), jmpAddr, PHYSICAL);
 
 	return true;
@@ -210,39 +228,45 @@ IgnorePalErr = function()
 ///
 IgnoreLuaErr = function()
 {
-	/// 1.1 - Find 'MessageBoxA' imported function
+	let _ = 'IgnoreLuaErr : ';
+
+	$$(_ + '1.1 - Find "MessageBoxA" imported function')
 	let MBoxA = Exe.FindFunc("MessageBoxA");
 	if (MBoxA < 0)
 		throw Error("MessageBoxA function missing");
 
-	/// 1.2 - Find the LuaErrorMsg function code
+	$$(_ + '1.2 - Find the LuaErrorMsg function code')
 	let cmn = ROC.HasFP ?
-		LEA(R32, [EBP, NEG2WC])  //LEA reg32_B, [EBP-x]
+		LEA(R32, [EBP, NEG2WC])  //lea regB, [EBP-dispA]
 	:
-		LEA(R32, [ESP, WCp])     //LEA reg32_B, [ESP+x]
+		LEA(R32, [ESP, WCp])     //lea regB, [ESP+disp8A]
 	;
 
 	let parts =
-	[//0
+	[
 		Exe.Version === 6
 	?
-			CALL(ALLWC)          //CALL sprintf equivalent
-		+	MOV(R32, [EBP, WCp]) //MOV reg32, DWORD PTR SS:[EBP+x]
-		+	ADD(ESP, WCp)        //ADD ESP, 0C or some other constant possibly
+			CALL(ALLWC)          //call std::string::sprintf
+		+	MOV(R32, [EBP, WCp]) //mov regA, dword ptr [ebp+x]
+		+	ADD(ESP, WCp)        //add esp, imm8A ; usually 0Ch
 	:
-			CALL([POS3WC])       //CALL DWORD PTR DS:[<&MSVCR110.vsprintf>] ; can also be different print function
-		+	ADD(ESP, WCp)        //ADD ESP, 0C or 1C
+			CALL([POS3WC])       //call dword ptr [<&MSVCR110.vsprintf>] ; can also be different print function
+		+	ADD(ESP, WCp)        //add esp, 0Ch / 1Ch
+
 	,//1
 			''
+
 	,//2
-			cmn                  //LEA reg32_B, [LOCAL.x]
+			cmn                  //lea regB, [LOCAL.x]
+
 	,//3
-			PUSH_0               //PUSH 0
-		+	PUSH_R               //PUSH reg32_A
+			PUSH_0               //push 0
+		+	PUSH_R               //push regA
+
 	,//4
-			PUSH_R               //PUSH reg32_B
-		+	PUSH_0               //PUSH 0
-		+	CALL([MBoxA])        //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
+			PUSH_R               //push regB
+		+	PUSH_0               //push 0
+		+	CALL([MBoxA])        //call dword ptr [<&USER32.MessageBoxA>]
 	];
 
 	let addr = Exe.FindHex(parts);
@@ -256,25 +280,25 @@ IgnoreLuaErr = function()
 	if (addr < 0)
 		throw Error("LuaErrorMsg function missing");
 
-	/// 2.1 - Check for the OutputDebugStringA function address
+	$$(_ + '2.1 - Check for the OutputDebugStringA function address')
 	if (ROC.OutDbgStrA < 0)
 		throw Error("'OutputDebugStringA' function missing");
 
-	/// 2.2 - Calculate the addresses for each part
+	$$(_ + '2.2 - Calculate the addresses for each part')
 	let partAddrs = MapAddrs(addr, parts);
 
-	/// 2.3 - NOP out any code in 2nd part
+	$$(_ + '2.3 - NOP out any code in 2nd part')
 	if (!parts[1].isEmpty())
 		Exe.SetNOPs(partAddrs[1], partAddrs[2] - partAddrs[1]);
 
-	/// 2.4 - NOP out any code in 4th part
+	$$(_ + '2.4 - NOP out any code in 4th part')
 	if (!parts[3].isEmpty())
 		Exe.SetNOPs(partAddrs[3], partAddrs[4] - partAddrs[3]);
 
-	/// 2.5 - Change the MessageBoxA CALL to OutputDebugStringA CALL followed by XOR EAX, EAX
+	$$(_ + '2.5 - Change the MessageBoxA CALL to OutputDebugStringA CALL followed by xor eax, eax')
 	Exe.SetHex(partAddrs[4] + 1,
-		CALL([ROC.OutDbgStrA])
-	+	XOR(EAX, EAX)
+		CALL([ROC.OutDbgStrA])  //call dword ptr [&KERNEL32.OutputDebugStringA]
+	+	XOR(EAX, EAX)           //xor eax, eax
 	);
 
 	return true;
@@ -290,51 +314,53 @@ IgnoreLuaErr.validate = IsPost2010;
 ///
 IgnoreQuestErr = function()
 {
-	/// 1.1 - Find 'MessageBoxA' function
+	let _ = 'IgnoreQuestErr : ';
+
+	$$(_ + '1.1 - Find "MessageBoxA" imported function')
 	let MBoxA = Exe.FindFunc("MessageBoxA");
 	if (MBoxA < 0)
 		throw Error("MessageBoxA function missing");
 
-	/// 1.2 - Find the MessageBoxA CALL inside QuestErrorMsg function
+	$$(_ + '1.2 - Find the MessageBoxA CALL inside QuestErrorMsg function')
 	let prefix =
-		PUSH(IQE_Addr)          //PUSH OFFSET addr; ASCII "Not found Quest Info = %lu"
-	+	PUSH_EAX                //PUSH EAX
-	+	CALL(ALLWC)             //CALL std_string_sprintf
-	+	ADD(ESP, 0xC)           //ADD ESP, 0C
-	+	MOV([EBP, WC], 1)       //MOV DWORD PTR SS:[EBP+var_4], 1
-	+	CMP([EAX, 0x14], 0x10)  //CMP DWORD PTR DS:[EAX+14], 10
-	+	JB(2)                   //JB SHORT addr ; skip the MOV below
-	+	MOV(EAX, [EAX])         //MOV EAX, DWORD PTR DS:[EAX]
+		PUSH(IQE_Addr)          //push offset "Not found Quest Info = %lu"
+	+	PUSH_EAX                //push eax
+	+	CALL(ALLWC)             //call std::string::sprintf
+	+	ADD(ESP, 0xC)           //add esp, 0Ch
+	+	MOV([EBP, WC], 1)       //mov dword ptr [LOCAL.x], 1
+	+	CMP([EAX, 0x14], 0x10)  //cmp dword ptr [eax+14h], 10h
+	+	JB(2)                   //jb short _skip ; skips the MOV below
+	+	MOV(EAX, [EAX])         //mov eax, dword ptr [eax]
 	;
 
 	let suffix =
-		PUSH_0                  //PUSH 0
-	+	PUSH(POS4WC)            //PUSH OFFSET addr; ASCII "Error"
-	+	PUSH_EAX                //PUSH EAX
-	+	PUSH([POS4WC])          //PUSH DWORD PTR DS:[g_hMainWnd]
-	+	CALL([MBoxA])           //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
+		PUSH_0                  //push 0
+	+	PUSH(POS4WC)            //push offset "Error"
+	+	PUSH_EAX                //push eax
+	+	PUSH([POS4WC])          //push dword ptr [g_hMainWnd]
+	+	CALL([MBoxA])           //call dword ptr [<&USER32.MessageBoxA>]
 	;
 
 	let addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("QuestErrorMsg not found");
 
-	/// 2.1 - Set addr to location after prefix
+	$$(_ + '2.1 - Set addr to location after prefix')
 	addr += prefix.byteCount();
 
-	/// 2.2 - Check the OutputDebugStringA function address
+	$$(_ + '2.2 - Check the OutputDebugStringA function address')
 	if (ROC.OutDbgStrA < 0)
 		throw Error("'OutputDebugStringA' function missing");
 
-	/// 2.3 - Prepare the replacement code (CALLs OutputDebugStringA instead)
+	$$(_ + '2.3 - Prepare the replacement code (CALLs OutputDebugStringA instead)')
 	let code =
-		PUSH_EAX               //PUSH EAX
-	+	CALL([ROC.OutDbgStrA]) //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
-	+	XOR(EAX, EAX)          //XOR EAX, EAX
+		PUSH_EAX               //push eax
+	+	CALL([ROC.OutDbgStrA]) //call dword ptr [&KERNEL32.OutputDebugStringA]
+	+	XOR(EAX, EAX)          //xor eax, eax
 	;
 	code += NOPs(suffix.byteCount() - code.byteCount());
 
-	/// 2.4 - Now replace it
+	$$(_ + '2.4 - Now replace it')
 	Exe.SetHex(addr, code);
 
 	return true;
@@ -354,60 +380,62 @@ IgnoreQuestErr.validate = function()
 ///
 IgnoreEntryQueueErr = function()
 {
-	/// 1.1 - Find the location where the file is accessed
+	let _ = 'IgnoreEntryQueueErr : ';
+
+	$$(_ + '1.1 - Find the location where the file is accessed')
 	let parts =
-	[//0
-		PUSH(IEQE_Addr)  //PUSH OFFSET addr; ASCII "Data\Table\EntryQueue.bex"
-	+	CALL([POS3WC])   //CALL DWORD PTR DS:[&CreateFileA]
-	+	MOV(R32, EAX)    //MOV reg32_A, EAX
-	+	CMP(R32, -1)     //CMP reg32_A, -1
-	+	JNZ(WCp)         //JNE SHORT addr
+	[
+		PUSH(IEQE_Addr)  //push offset "Data\Table\EntryQueue.bex"
+	+	CALL([POS3WC])   //call dword ptr [&CreateFileA]
+	+	MOV(R32, EAX)    //mov regA, eax
+	+	CMP(R32, -1)     //cmp regA, -1
+	+	JNZ(WCp)         //jne short _skip
+
 	,//1
-		PUSH(0x30)       //PUSH 30h ; '0'
-	+	PUSH(POS3WC)     //PUSH OFFSET addr; ASCII "Load Failed"
-	+	PUSH(IEQE_Addr)  //PUSH OFFSET addr; ASCII "Data\Table\EntryQueue.bex"
+		PUSH(0x30)       //push 30h ; '0'
+	+	PUSH(POS3WC)     //push offset "Load Failed"
+	+	PUSH(IEQE_Addr)  //push offset "Data\Table\EntryQueue.bex"
+
 	,//2
 		Exe.Version > 10
 	?
-		PUSH_0           //PUSH 0
+		PUSH_0           //push 0
 	:
-		PUSH_R           //PUSH reg32_B
+		PUSH_R           //push regB
+
 	,//3
-		CALL([POS3WC])   //CALL DWORD PTR DS:[<&USER32.MessageBoxA>]
+		CALL([POS3WC])   //call dword ptr [<&USER32.MessageBoxA>]
 	];
+
 	let addr = Exe.FindHex(parts);
 	if (addr < 0)
 		throw Error("Pattern not found");
 
-	/// 1.2 - Calculate the positional addresses
+	$$(_ + '1.2 - Calculate the positional addresses')
 	let addrs = MapAddrs(addr, parts);
 
-	/// 1.3 - Prepare the error string
+	$$(_ + '1.3 - Prepare the error string')
 	let str = "EntryQueue Loading Failed\x00";
 
-	/// 1.4 - Allocate space for it
-	let free = Exe.FindSpace(str.length);
-	if (free < 0)
-		throw NO_ALLOC;
+	$$(_ + '1.4 - Allocate space for it')
+	let [free, freeVir] = Exe.FindSpace(str.length);
 
-	let freeVir = Exe.Phy2Vir(free, VIRTUAL);
-
-	/// 1.5 - Add the string to it
+	$$(_ + '1.5 - Add the string to it')
 	Exe.AddText(free, str);
 
-	/// 2.1 - Check the OutputDebugStringA function address
+	$$(_ + '2.1 - Check the OutputDebugStringA function address')
 	if (ROC.OutDbgStrA < 0)
 		throw Error("'OutputDebugStringA' function missing");
 
-	/// 2.2 - Prepare the replacement code (CALLs OutputDebugStringA instead)
+	$$(_ + '2.2 - Prepare the replacement code (CALLs OutputDebugStringA instead)')
 	let code =
-		PUSH(freeVir)           //PUSH OFFSET addr; "EntryQueue Loading Failed"
-	+	CALL([ROC.OutDbgStrA])  //CALL DWORD PTR DS:[&KERNEL32.OutputDebugStringA]
-	+	XOR(EAX, EAX)           //XOR EAX, EAX
+		PUSH(freeVir)           //push offset "EntryQueue Loading Failed"
+	+	CALL([ROC.OutDbgStrA])  //call dword ptr [&KERNEL32.OutputDebugStringA]
+	+	XOR(EAX, EAX)           //xor eax, eax
 	;
 	code += NOPs(addrs[4] - addrs[1] - code.byteCount());
 
-	/// 2.3 - Now Replace it
+	$$(_ + '2.3 - Now Replace it')
 	Exe.SetHex(addrs[1], code);
 
 	return true;

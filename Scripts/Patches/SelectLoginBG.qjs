@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-06-10                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,9 @@
 ///
 SelectLoginBG = function(patchName)
 {
-	/// 1 - Prepare Strings to Find and Replace
+	let _ = patchName + ' : ';
+
+	$$(_ + '1 - Prepare Strings to Find and Replace')
 	let prefix = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\T";
 	let src, tgt;
 	if (patchName === "OnlyFirstBG")
@@ -45,12 +47,12 @@ SelectLoginBG = function(patchName)
 		tgt = "2_\xB9\xE8\xB0\xE6" + "%d-%d.bmp";
 	}
 
-	/// 2 - Find the src string
-	let addr = Exe.FindText(prefix + src, PHYSICAL, false);
+	$$(_ + '2 - Find the src string')
+	let addr = Exe.FindText(prefix + src, CASE_INSENSITIVE, PHYSICAL, false);
 	if (addr < 0)
 		throw Error("Source string not found");
 
-	/// 3 - Modify the string after the dir prefix (16 bytes later) with the tgt string
+	$$(_ + '3 - Modify the string after the dir prefix (16 bytes later) with the tgt string')
 	Exe.SetText(addr + prefix.length, tgt);
 
 	return true;

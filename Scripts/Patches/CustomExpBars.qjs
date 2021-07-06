@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-06-12                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,75 +32,77 @@
 ///
 CustomBarLimits = function()
 {
-    /// 1.1 - Find the coordinate PUSHes for Base exp bar
+	let _ = 'CustomBarLimits : ';
+
+    $$(_ + '1.1 - Find the coordinate PUSHes for Base exp bar')
     let code =
-		PUSH(0x4E)   //PUSH 4E
-    +	PUSH(-0xC8)  //PUSH -0C8
+		PUSH(0x4E)   //push 4Eh
+    +	PUSH(-0xC8)  //push -0C8h
     ;
 
     let refAddr = Exe.FindHex(code);
     if (refAddr < 0)
 		throw Error("Base coord PUSHes missing");
 
-    /// 1.2 - Find the Job ID fetcher CALL before the first reference
+    $$(_ + '1.2 - Find the Job ID fetcher CALL before the first reference')
     code =
-		MOV(ECX, POS4WC)  //MOV ECX, OFFSET g_session
-    +	CALL(POS3WC)      //CALL CSession::GetJobID
-    +	PUSH_EAX          //PUSH EAX
-    +	MOV(ECX, POS4WC)  //MOV ECX, OFFSET g_session
-    +	CALL(POS3WC)      //CALL CSession::IsThirdJob
+		MOV(ECX, POS4WC)  //mov ecx, <g_session>
+    +	CALL(POS3WC)      //call CSession::GetJobID
+    +	PUSH_EAX          //push eax
+    +	MOV(ECX, POS4WC)  //mov ecx, <g_session>
+    +	CALL(POS3WC)      //call CSession::IsThirdJob
     ;
 
     let addr = Exe.FindHex(code, refAddr - 0x120, refAddr);
     if (addr < 0)
 		throw Error("JobID CALL not found");
 
-    /// 1.3 - Extract g_session, GetJobID and save the addr to baseBegin variable
+    $$(_ + '1.3 - Extract g_session, GetJobID and save the addr to baseBegin variable')
     let Session  = Exe.GetInt32(addr + 1);
     let GetJobID = Exe.GetTgtAddr(addr + 6);// 5 from the MOV and 1 from opcode of CALL
     let baseBegin = addr;
 
-    /// 1.4 - Save location after the 2nd CALL
+    $$(_ + '1.4 - Save location after the 2nd CALL')
     let afterBB = baseBegin + code.byteCount();
 
-    /// 2.1 - Find the base level assignment/comparison after the CALLs
+    $$(_ + '2.1 - Find the base level assignment/comparison after the CALLs')
     code =
 		Exe.Version === 6   //VC6
     ?
-		MOV(EAX, [POS3WC])  //MOV EAX, DWORD PTR DS:[g_baseLevel]
-	+	MOV(EDI, 0x63)      //MOV EDI, 63
+		MOV(EAX, [POS3WC])  //mov eax, dword ptr [g_baseLevel]
+	+	MOV(EDI, 0x63)      //mov edi, 63h
     :
 		Exe.BuildDate < 20130000
 	?
-		CMP([POS3WC], EDI)  //CMP DWORD PTR DS:[g_baseLevel], EDI
+		CMP([POS3WC], EDI)  //cmp dword ptr [g_baseLevel], edi
 	:
 		Exe.BuildDate < 20170000
     ?
-		CMP([POS3WC], 0xAF) //CMP DWORD PTR DS:[g_baseLevel], 0AF
+		CMP([POS3WC], 0xAF) //cmp dword ptr [g_baseLevel], 0AFh
     :
-		CMP(R32, [POS4WC])  //CMP reg32_A, DWORD PTR DS:[g_baseLevel]
+		CMP(R32, [POS4WC])  //cmp regA, dword ptr [g_baseLevel]
 	;
 
     addr = Exe.FindHex(code, afterBB, afterBB + 0x100);
     if (addr < 0)
 		throw Error("Base level address missing");
 
-    /// 2.2 - Extract the address
+    $$(_ + '2.2 - Extract the address')
     let BaseLevel = Instr.FromAddr(addr).Disp; //this is easier and will remain accurate even if some changes happen in later versions
 
-    /// 2.3 - Find the ESI + const assignment between afterBB & refAddr
-    addr = Exe.FindHex( MOV(ECX, [ESI, POS1WC]), afterBB, refAddr);//MOV ECX, DWORD PTR DS:[ESI+const]
+    $$(_ + '2.3 - Find the ESI + const assignment between afterBB & refAddr')
+    addr = Exe.FindHex( MOV(ECX, [ESI, POS1WC]), afterBB, refAddr); //mov ecx, dword ptr [esi + dispA]
 
     if (addr < 0 && Exe.Version > 11) //VC14.16
-		addr = Exe.FindHex( MOV(EDX, [ESI, POS1WC]), afterBB, refAddr);//MOV EDX, DWORD PTR DS:[ESI+const]
+		addr = Exe.FindHex( MOV(EDX, [ESI, POS1WC]), afterBB, refAddr); //mov edx, dword ptr [esi + dispA]
 
     if (addr < 0)
 		throw Error("First ESI ptr missing");
 
-    /// 2.4 - Extract the const (which is HideBase)
+    $$(_ + '2.4 - Extract the const (which is HideBase)')
     let HideBase = Instr.FromAddr(addr).Disp;
 
-    /// 2.5 - Calculate remaining constants
+    $$(_ + '2.5 - Calculate remaining constants')
     let HideJob  = HideBase + 0x04;
 	let ShowBars, FuncOff;
     if (Exe.Version === 6)
@@ -114,30 +116,30 @@ CustomBarLimits = function()
 		FuncOff = 0x10;
     }
 
-    /// 3.1 - Find the end of the base exp display code after the ESI movement
+    $$(_ + '3.1 - Find the end of the base exp display code after the ESI movement')
     code =
-		PUSH(0x55)            //PUSH 55
+		PUSH(0x55)            //push 55h
     +	(Exe.Version === 6 || Exe.Version === 11
 	?
-		CALL([R32, FuncOff])  //CALL DWORD PTR DS:[reg32 + FuncOff] ;VC6 & VC11
+		CALL([R32, FuncOff])  //call dword ptr [regC + FuncOff] ; VC6 & VC11
 	:                         // or
-		CALL(R32)             //CALL reg32 ; all others
+		CALL(R32)             //call regC ; all others
 	)
-    +	MOV(ECX, Session)     //MOV ECX, OFFSET g_session
+    +	MOV(ECX, Session)     //mov ecx, <g_session>
     ;
     let addr2 = Exe.FindHex( code, addr, refAddr + 0x60);
     if (addr2 < 0)
 		throw Error("End of Base missing");
 
-    /// 3.2 - Save the location of MOV ECX
+    $$(_ + '3.2 - Save the location of MOV ECX')
     let baseEnd = addr2 + code.byteCount() - 5;
     let jobBegin = baseEnd; //MOV ECX also marks the beginning of Job Exp Display code so yea they are same
 
-    /// 3.3 - Find the job level comparison with 10
+    $$(_ + '3.3 - Find the job level comparison with 10')
 	let delta;
 	if (Exe.BuildDate > 20170000)
 	{
-		code = CMP([POS4WC], R32);  //CMP DWORD PTR DS:[g_jobLevel], reg32_A
+		code = CMP([POS4WC], R32);  //cmp dword ptr [g_jobLevel], regA
 
 		delta = 0;
 
@@ -150,11 +152,11 @@ CustomBarLimits = function()
 	{
 		let prefix = (Exe.BuildDate < 20100620 || Exe.BuildDate === 20101214 ||  Exe.BuildDate > 20110620
 		?
-			JMP(WCp) //JMP SHORT addr
+			JMP(WCp) //jmp short _next
 		:            // or
-			RETN(4)  //RETN 4
+			RETN(4)  //retn 4
 		);
-		let suffix = CMP([POS3WC], 0xA); //CMP DWORD PTR DS:[g_jobLevel], 0A
+		let suffix = CMP([POS3WC], 0xA); //cmp dword ptr [g_jobLevel], 0Ah
 
 		delta = prefix.byteCount();
 
@@ -163,18 +165,18 @@ CustomBarLimits = function()
     if (addr < 0)
 		throw Error("Job level comparison missing");
 
-    /// 3.4 - Extract the Address
+    $$(_ + '3.4 - Extract the Address')
     let JobLevel = Instr.FromAddr(addr + delta).Disp;
 
-    /// 3.5 - Find the coordinate PUSHes for Job exp bar (job End is just after it)
+    $$(_ + '3.5 - Find the coordinate PUSHes for Job exp bar (job End is just after it)')
     code =
-		PUSH(0x58)           //PUSH 58
-    +	PUSH(-0xC8)          //PUSH -0C8
+		PUSH(0x58)           //push 58h
+    +	PUSH(-0xC8)          //push -0C8h
     +	(Exe.Version === 9 || Exe.Version === 10
 	?
-		CALL(R32)			 //CALL reg32 ; for VC9, VC10
+		CALL(R32)			 //call regD ; for VC9, VC10
 	:
-		CALL([R32, FuncOff]) //CALL DWORD PTR DS:[reg32 + FuncOff] ; for VC6, VC11, VC14.16
+		CALL([R32, FuncOff]) //call dword ptr [regD + FuncOff] ; for VC6, VC11, VC14.16
 	)
     ;
 
@@ -182,23 +184,23 @@ CustomBarLimits = function()
     if (addr2 < 0 && Exe.BuildDate > 20190000)
 	{
 		code =
-			PUSH(0x55)	//PUSH 55
-		+	CALL(R32)	//CALL reg32
+			PUSH(0x55)	//push 55h
+		+	CALL(R32)	//call regD
 		;
 		addr2 = Exe.FindHex(code, addr + 7, addr + 0x60);
 	}
     if (addr2 < 0)
 		throw Error("Job coord PUSHes missing");
 
-    /// 3.6 - Save location after the CALL as jobEnd
+    $$(_ + '3.6 - Save location after the CALL as jobEnd')
     let jobEnd = addr2 + code.byteCount();
 
-    /// 4.1 - Get the input file from user
+    $$(_ + '4.1 - Get the input file from user')
 	let inFile = Exe.GetUserInput('$expBarSpec', D_InFile, "Exp Bar Spec", "Enter the Exp Bar Mapping file", "Inputs/ExpSpec.yml", {filters: YMLFILTER});
     if (inFile === false)
 		Cancel("No mapping file specified");
 
-    /// 4.2 - Load the input file which creates the hash table mapping the id ranges to max base & job levels
+    $$(_ + '4.2 - Load the input file which creates the hash table mapping the id ranges to max base & job levels')
 	let ExpSpec = Warp.LoadYaml(inFile);
 	if (ExpSpec === false)
 		return false;
@@ -206,95 +208,133 @@ CustomBarLimits = function()
 	else if (!IsArr(ExpSpec))
 		throw Error("Need a list of Exp Bar specifications")
 
-	/// 4.3 - Calculate size of mapping table
+	$$(_ + '4.3 - Calculate size of mapping table')
     let identSize = ExpSpec.reduce( (acc, hash) => acc + hash.IDs.length*4 + 2, 0);
 
-    /// 5.1 - Prepare code for base & job exp bars (will be replaced at baseBegin)
+    $$(_ + '5.1 - Prepare code for base & job exp bars (will be replaced at baseBegin)')
+	let parts =
+	[
+		PUSH(EDX)                  //push edx
+    +	PUSH(EBX)                  //push ebx
+    +	MOV(ECX, Session)          //mov ecx, <g_session>
+	+	CALL(Filler(1))            //call CSession::GetJobID
+	+	MOV(EBX, Filler(2))        //mov ebx, <mapTblAddr>
+
+	,//1
+    	MOV(ECX, [EBX])            //mov ecx, dword ptr [ebx] ;	_mapTblLoop
+    +	TEST(ECX, ECX)             //test ecx, ecx
+    +	JE(Filler(10,1))           //je short _noMatches
+
+	,//2
+    	MOVSX(EDX, [ECX])          //movsx edx, word ptr [ecx] ; _idTblLoop
+    +	TEST(EDX, EDX)             //test edx, edx
+    +	JS(Filler(11,1))           //js short _fetchNextIDTbl
+    +	CMP(EAX, EDX)              //cmp eax, edx
+    +	JL(Filler(12,1))           //jl short _fetchNextIDPair
+    +	MOVSX(EDX, [ECX, 2])       //movsx edx, word ptr [ecx+2]
+    +	TEST(EDX, EDX)             //test edx, edx
+    +	JS(Filler(11,1))           //js short _fetchNextIDTbl
+    +	CMP(EAX, EDX)              //cmp eax, edx
+    +	JLE(Filler(14,1))          //jle short _foundIDMatch
+
+	,//3
+    	ADD(ECX, 4)                //add ecx, 4 ; _fetchNextIDPair
+    +	JMP(Filler(15,1))          //jmp short _idTblLoop
+
+	,//4
+    	ADD(EBX, 8)                //add ebx, 8 ; _fetchNextIDTbl
+    +	JMP(Filler(16,1))          //jmp short _mapTblLoop
+
+	,//5
+    	LEA(EDI, [EBX, 4])         //lea edi, [ebx+4] ; _foundIDMatch
+    +	JMP(5)                     //jmp short _skipEDI
+
+	,//6
+    	MOV(EDI, Filler(3))        //mov edi, <defAddr> ; _noMatches
+	+	POP(EBX)                   //pop ebx ; _skipEDI
+    +	POP(EDX)                   //pop edx
+    +	MOVZX(EAX, [EDI])          //movzx eax, word ptr [edi]
+    +	CMP([BaseLevel], EAX)      //cmp dword ptr [g_baseLevel], eax
+    +	MOV(ECX, [ESI, HideBase])  //mov ecx, dword ptr [esi + HideBase]
+    +	JL(Filler(17,1))           //jl short _lowBase
+    +	PUSH(0x4E)                 //push 4Eh
+    +	PUSH(-0xC8)                //push -0C8h
+    +	JMP(Filler(18,1))          //jmp short _common1
+
+	,//7
+    	MOV(EAX, [ESI, ShowBars])  //mov eax, dword ptr [esi + ShowBars] ; _lowBase
+    +	ADD(EAX, 0x4C)             //add eax, 4Ch
+    +	PUSH_EAX                   //push eax
+    +	PUSH(0x55)                 //push 55h
+
+	,//8
+    	MOV(EAX, [ECX])            //mov eax, dword ptr [ecx] ; _common1
+    +	CALL([EAX, FuncOff])       //call dword ptr [eax + funcOff]
+    +	MOVZX(EAX, [EDI, 2])       //movzx eax, word ptr [edi+2]
+    +	CMP([JobLevel], EAX)       //cmp dword ptr [g_jobLevel], eax
+    +	MOV(ECX, [ESI, HideJob])   //mov ecx, dword ptr [esi + HideJob]
+    +	JL(Filler(19,1))           //jl short _lowJob
+    +	PUSH(0x58)                 //push 58h
+    +	PUSH(-0xC8)                //push -0C8h
+    +	JMP(Filler(20,1))          //jmp short _common2
+
+	,//9
+    	MOV(EAX, [ESI, ShowBars])  //mov eax, dword ptr [esi + ShowBars] ; _lowJob
+    +	ADD(EAX, 0x58)             //add eax, 58h
+    +	PUSH_EAX                   //push eax
+    +	PUSH(0x55)                 //push 55h
+
+	,//10
+    	MOV(EAX, [ECX])            //mov eax, dword ptr [ecx] ; _common2
+    +	CALL([EAX, FuncOff])       //call dword ptr [eax + FuncOff]
+	+	JMP(Filler(4))             //jmp <jobEnd>
+    +	" FF 00 FF 00"             //part of the id to level mapping ; defAddr
+	];
+
 	let baseVir = Exe.Phy2Vir(baseBegin, CODE);
-	let callPos = baseVir + 7; //2 from the PUSHes & 5 from the MOV
+	addrs = MapAddrs(baseVir, parts);
 
-    code =
-		PUSH(EDX)                  //PUSH EDX
-    +	PUSH(EBX)                  //PUSH EBX
-    +	MOV(ECX, Session)          //MOV ECX, g_session
-    +	CALL(GetJobID, callPos)    //CALL CSession::GetJobID  ; callPos
-    +	MOV(EBX, Filler(1))        //MOV EBX, mapTblAddr
-    +	MOV(ECX, [EBX])            //MOV ECX, DWORD PTR DS:[EBX];	loop_mapTbl
-    +	TEST(ECX, ECX)             //TEST ECX, ECX
-    +	JE(0x26)                   //JE SHORT _noMatches
-    +	MOVSX(EDX, [ECX])          //MOVSX EDX, WORD PTR DS:[ECX]; loop_idTbl
-    +	TEST(EDX, EDX)             //TEST EDX, EDX
-    +	JS(0x15)                   //JS SHORT _fetchNextIDTbl
-    +	CMP(EAX, EDX)              //CMP EAX, EDX
-    +	JL(0xC)                    //JL SHORT _fetchNextIDPair
-    +	MOVSX(EDX, [ECX, 2])       //MOVSX EDX, WORD PTR DS:[ECX+2]
-    +	TEST(EDX, EDX)             //TEST EDX, EDX
-    +	JS(0x9)                    //JS SHORT _fetchNextIDTbl
-    +	CMP(EAX, EDX)              //CMP EAX, EDX
-    +	JLE(0xA)                   //JLE SHORT _foundIDMatch
-    +	ADD(ECX, 4)                //ADD ECX, 4;	_fetchNextIDPair
-    +	JMP(-0x28)                 //JMP SHORT loop_idTbl
-    +	ADD(EBX, 8)                //ADD EBX, 8;	_fetchNextIDTbl
-    +	JMP(-0x39)                 //JMP SHORT loop_mapTbl
-    +	LEA(EDI, [EBX, 4])         //LEA EDI, [EBX + 4] ; _foundIDMatch
-    +	JMP(0x5)                   //JMP SHORT addr7
-    +	MOV(EDI, Filler(2))        //MOV EDI, OFFSET defAddr ; _noMatches
-    +	POP(EBX)                   //POP EBX; addr7
-    +	POP(EDX)                   //POP EDX
-    +	MOVZX(EAX, [EDI])          //MOVZX EAX, WORD PTR DS:[EDI]
-    +	CMP([BaseLevel], EAX)      //CMP DWORD PTR DS:[g_baseLevel], EAX
-    +	MOV(ECX, [ESI, HideBase])  //MOV ECX, DWORD PTR DS:[ESI + HideBase]
-    +	JL(0x9)                    //JL SHORT _lowBase
-    +	PUSH(0x4E)                 //PUSH 4E
-    +	PUSH(-0xC8)                //PUSH -0C8
-    +	JMP(0xC)                   //JMP SHORT _common1
-    +	MOV(EAX, [ESI, ShowBars])  //MOV EAX, DWORD PTR DS:[ESI + ShowBars]; _lowBase
-    +	ADD(EAX, 0x4C)             //ADD EAX, 4C
-    +	PUSH_EAX                   //PUSH EAX
-    +	PUSH(0x55)                 //PUSH 55
-    +	MOV(EAX, [ECX])            //MOV EAX, DWORD PTR DS:[ECX]; _common1
-    +	CALL([EAX, FuncOff])       //CALL DWORD PTR DS:[EAX + funcOff]
-    +	MOVZX(EAX, [EDI, 2])       //MOVZX EAX, WORD PTR DS:[EDI+2]
-    +	CMP([JobLevel], EAX)       //CMP DWORD PTR DS:[g_jobLevel], EAX
-    +	MOV(ECX, [ESI, HideJob])   //MOV ECX, DWORD PTR DS:[ESI + HideJob]
-    +	JL(0x9)                    //JL SHORT _lowJob
-    +	PUSH(0x58)                 //PUSH 58
-    +	PUSH(-0xC8)                //PUSH -0C8
-    +	JMP(0xC)                   //JMP SHORT _common2
-    +	MOV(EAX, [ESI, ShowBars])  //MOV EAX, DWORD PTR DS:[ESI + ShowBars]; _lowJob
-    +	ADD(EAX, 0x58)             //ADD EAX, 58
-    +	PUSH_EAX                   //PUSH EAX
-    +	PUSH(0x55)                 //PUSH 55
-    +	MOV(EAX, [ECX])            //MOV EAX, DWORD PTR DS:[ECX]; _common2
-    +	CALL([EAX, FuncOff])       //CALL DWORD PTR DS:[EAX + funcOff]
-	;
-
-	let csize = code.byteCount();
-	code +=
-		JMP(jobEnd, baseBegin + csize) //JMP jobEnd
-    +	"FF 00 FF 00"                  //part of the id to level mapping ; defAddr
-    ;
-
-	csize += 9; //5 for the JMP & 4 for the default value
-
-    /// 5.2 - Calculate mapTblAddr value (we will be placing it right after the JMP jobEnd since we have space for it)
-    let mapTblAddr = baseVir + csize;//mapTblAddr comes right after the code
+    $$(_ + '5.2 - Calculate mapTblAddr value (we will be placing it right after the JMP since we have space for it)')
+	let mapTblAddr = addrs.last(); //mapTblAddr comes right after the code
     let defAddr = mapTblAddr - 4;    //Address for the default value.
 
-    /// 5.3 - Fill in the blanks
-    code = SwapFillers(code, {
-		1: mapTblAddr,
-		2: defAddr
+    $$(_ + '5.3 - Fill in the blanks')
+
+	//First the short jumps
+	code = SetFillTargets(parts,
+	{
+		10: addrs[6], //_noMatches
+		11: addrs[4], //_fetchNextIDTbl
+		12: addrs[3], //_fetchNextIDPair
+		14: addrs[5], //_foundIDMatch
+		15: addrs[2], //_idTblLoop
+		16: addrs[1], //_mapTblLoop
+		17: addrs[7], //_lowBase
+		18: addrs[8], //_common1
+		19: addrs[9], //_lowJob
+		20: addrs[10], //_common1
+	},
+	baseVir, 2, 1);
+
+	//Next the call & jmp
+	code = SetFillTargets(code,
+	{
+		1: GetJobID,
+		4: Exe.Phy2Vir(jobEnd, CODE)
+	},
+	baseVir, 1);
+
+	//Finally the assigned addresses
+    code = SwapFillers(code,
+	{
+		2: mapTblAddr,
+		3: defAddr
 	}, 1);
 
-    /// 5.4 - Allocate space to add the id values
-    let free = Exe.FindSpace(identSize);
-    if (free < 0)
-		throw NO_ALLOC;
+    $$(_ + '5.4 - Allocate space to add the id values')
+    let [free, freeVir] = Exe.FindSpace(identSize);
 
-    let freeVir = Exe.Phy2Vir(free, DIFF);
-
-    /// 5.5 - Concatenate all the ID values and prepare the mapping
+    $$(_ + '5.5 - Concatenate all the ID values and prepare the mapping')
     let mapData   = ""; //will contain address pointing to set of IDs and base (16bit) & job (16bit) max levels after the address
     let identData = ""; //will contain the set of IDs
 
@@ -319,10 +359,10 @@ CustomBarLimits = function()
 
 	mapData += ALL00;
 
-    /// 5.6 - Add the IDs at the allocated space
+    $$(_ + '5.6 - Add the IDs at the allocated space')
     Exe.AddHex(free, identData);
 
-    /// 5.7 - Put the function & the map at baseBegin
+    $$(_ + '5.7 - Put the function & the map at baseBegin')
     Exe.SetHex(baseBegin, code + mapData);
 
     return true;
@@ -336,77 +376,79 @@ CustomBarLimits = function()
 ///
 ShowExpNumbers = function()
 {
-    /// 1.1 - Find the string 'Alt+V, Ctrl+V'
+	let _ = 'ShowExpNumbers : ';
+
+    $$(_ + '1.1 - Find \'Alt+V, Ctrl+V\'')
     let addr = Exe.FindText("Alt+V, Ctrl+V", false);
     if (addr < 0)
 		throw Error("Reference string not found");
 
-    /// 1.2 - Find where it is PUSHed inside UIBasicInfoWnd::OnCreate function
+    $$(_ + '1.2 - Find where it is PUSHed inside UIBasicInfoWnd::OnCreate function')
 	let code =
-		PUSH(addr)     //PUSH addr; ASCII "Alt+V, Ctrl+V"
-	+	MOV(ECX, R32)  //MOV ECX, reg32_A
-	+	CALL(ALLWC)    //CALL func
+		PUSH(addr)     //push offset "Alt+V, Ctrl+V"
+	+	MOV(ECX, R32)  //mov ecx, regA
+	+	CALL(ALLWC)    //call func#1
 	;
     addr = Exe.FindHex(code);
     if (addr < 0)
 		throw Error("Reference string not used");
 
-    /// 1.3 - Set addr to location after the code
+    $$(_ + '1.3 - Set addr to location after the code')
     addr += code.byteCount();
 
-    /// 2.1 - Find the double PUSH pattern after the above PUSH (addresses of Total and Current Exp values are being sent as args to be filled)
+    $$(_ + '2.1 - Find the double PUSH pattern after the above PUSH (addresses of Total and Current Exp values are being sent as args to be filled)')
     code =
-		MOV(ECX, [R32, POS1WC])  //MOV ECX, DWORD PTR DS:[reg32_B + const]
-    +	PUSH(POS3WC)             //PUSH totExp
-    +	PUSH(POS3WC)             //PUSH curExp
-    +	CALL()                   //CALL loaderFunc
+		MOV(ECX, [R32, POS1WC])  //mov ecx, dword ptr [regB + dispB]
+    +	PUSH(POS3WC)             //push <totExp>
+    +	PUSH(POS3WC)             //push <curExp>
+    +	CALL()                   //call LoaderFunc
     ;
-	let totOffset = 7; //6 from MOV and 1 for PUSH opcode
+	let totOffset = 7; //6 from MOV and 1 for push opcode
 
     let pushAddr = Exe.FindHex(code, addr, addr + 0x300);
 	if (pushAddr < 0)
 	{
 		code =
-			MOV(ECX, [R32, POS1WC]) //MOV ECX, DWORD PTR DS:[reg32_B + const]
-		+	PUSH([POS4WC])          //PUSH DWORD PTR DS:[totExp]
-		+	PUSH([POS4WC])          //PUSH DWORD PTR DS:[curExp.sign bit]
-		+	PUSH([POS4WC])          //PUSH DWORD PTR DS:[curExp]
-		+	CALL()                  //CALL loaderFunc
+			MOV(ECX, [R32, POS1WC]) //mov ecx, dword ptr [regB + dispB]
+		+	PUSH([POS4WC])          //push dword ptr [totExp]
+		+	PUSH([POS4WC])          //push dword ptr [curExp.sign bit]
+		+	PUSH([POS4WC])          //push dword ptr [curExp]
+		+	CALL()                  //call LoaderFunc
 		;
 
-		totOffset = 8; //6 from MOV and 2 for PUSH DWORD PTR opcode
+		totOffset = 8; //6 from MOV and 2 for push dword ptr opcode
 		pushAddr = Exe.FindHex(code, addr, addr + 0x380);
 	}
     if (pushAddr < 0)
 		throw Error("Base Exp addresses not PUSHed");
 
-	/// 2.2 - Extract the Total Exp address
+	$$(_ + '2.2 - Extract the Total Exp address')
     let TotExpBase = Exe.GetInt32(pushAddr + totOffset);
 
-    /// 2.3 - Set pushAddr to location after the CALL
+    $$(_ + '2.3 - Set pushAddr to location after the CALL')
     pushAddr += code.byteCount() + 4;
 
-    /// 2.4 - Extract the Current Exp address
+    $$(_ + '2.4 - Extract the Current Exp address')
     let CurExpBase = Exe.GetInt32(pushAddr - 9);
 
-    /// 2.5 - Find the double PUSH pattern again after the first one (this time it is for Job Exp values)
+    $$(_ + '2.5 - Find the double/triple PUSH pattern again after the first one (this time it is for Job Exp values)')
     pushAddr = Exe.FindHex(code, pushAddr, pushAddr + 0x100);
     if (pushAddr < 0)
 		throw Error("Job Exp addrs not PUSHed");
 
-    /// 2.6 - Extract the Total Exp & Current Exp addresses
+    $$(_ + '2.6 - Extract the Total Exp & Current Exp addresses')
     let TotExpJob = Exe.GetInt32(pushAddr + totOffset);
     let CurExpJob = Exe.GetInt32(pushAddr + code.byteCount() - 5);
 
-    /// 3.1 - Find the string 'SP'
+    $$(_ + '3.1 - Find \'SP\'')
     let addrs = Exe.FindTextN("SP");
 	let found = addrs.find(matchAddr =>
 	{
-		/// 3.2 - Find where it is PUSHed inside OnDraw function (we need to inject after this location)
+		$$(_ + '3.2 - Find where it is PUSHed inside OnDraw function (we need to inject after this location)')
 		code =
-			PUSH(matchAddr) //PUSH addr; ASCII "SP"
-		+	PUSH(0x41)      //PUSH 41
-		+	PUSH(0x11)      //PUSH 11
+			PUSH(matchAddr) //push offset "SP"
+		+	PUSH(0x41)      //push 41h
+		+	PUSH(0x11)      //push 11h
 		;
 
 		addr = Exe.FindHex(code);
@@ -416,10 +458,10 @@ ShowExpNumbers = function()
 	if (!found)
 		throw Error("PUSH 'SP' missing");
 
-    /// 3.3 - Set addr to location after PUSH 11
+    $$(_ + '3.3 - Set addr to location after PUSH 11')
     addr += code.byteCount();
 
-    /// 3.4 - Setup ECX movement based on the next instruction
+    $$(_ + '3.4 - Setup ECX movement based on the next instruction')
     ///       If the UIWindow::TextOutA function CALL comes immediately after the pattern, ECX should be loaded from ESI
     ///       otherwise the next instruction is a MOV to ECX after which the CALL is expected
 	let MovECX;
@@ -436,11 +478,11 @@ ShowExpNumbers = function()
 			throw Error("TextOutA CALL not found");
     }
 
-    /// 3.5 - Extract UIWindow::TextOutA and the location where the CALL is made (we will be hijacking the CALL)
+    $$(_ + '3.5 - Extract UIWindow::TextOutA and the location where the CALL is made (we will be hijacking the CALL)')
     let UIW_TextOutA = Exe.GetTgtAddr(addr + 1);
     let injectAddr = addr;
 
-    /// 3.6 - Account for extra argument PUSHes (PUSH 0) for more recent clients
+    $$(_ + '3.6 - Account for extra argument PUSHes (push 0) for more recent clients')
 	let extraPush = '';
 	if (Exe.BuildDate > 20140116)
 	{
@@ -449,7 +491,7 @@ ShowExpNumbers = function()
 			extraPush += PUSH_0;
 	}
 
-    /// 4.1 - Get the essential addresses for our code
+    $$(_ + '4.1 - Get the essential addresses for our code')
 
     // sprintf/wsprintfA
     let printFunc = Exe.FindFunc("sprintf");
@@ -465,77 +507,77 @@ ShowExpNumbers = function()
     if (ddAddr < 0)
 		throw Error("Format string for exp not found");
 
-    /// 4.2 - Prepare the template code for displaying the exp numbers (common for both Base & Job Exp)
+    $$(_ + '4.2 - Prepare the template code for displaying the exp numbers (common for both Base & Job Exp)')
     let template =
-		MOV(EAX, [Filler(1)]) //MOV EAX, DWORD PTR DS:[totExp*]
-    +	MOV(ECX, [Filler(2)]) //MOV ECX, DWORD PTR DS:[curExp*]
-    +	OR(ECX, EAX)          //OR ECX, EAX
-    +	JE(Filler(3, 1))      //JE SHORT addr ; location after TextOutA CALL
-    +	PUSH_EAX              //PUSH EAX
-    +	MOV(EAX, [Filler(2)]) //MOV EAX, DWORD PTR DS:[curExp*]
-    +	PUSH_EAX              //PUSH EAX
-    +	PUSH(ddAddr)          //PUSH addr; ASCII "%d / %d"
-    +	LEA(EAX, [ESP, 0xC])  //LEA EAX, [ESP + 0C]
-    +	PUSH_EAX              //PUSH EAX
-    +	CALL([printFunc])     //CALL DWORD PTR DS:[<&MSVCR#.sprintf>] ; wsprintfA if sprintf is not found
-    +	ADD(ESP, 0x10)        //ADD ESP, 10
-    +	MOV(EAX, ESP)         //MOV EAX, ESP
-    +	extraPush             //PUSH 0        ; Arg9 = unknown. Only for 2019+ clients
-		                      //PUSH 0        ; Arg8 = unknown. Only for new clients
-    +	PUSH(0xFF0000)        //PUSH 00,00,FF ; Arg7 = Color. Keeping blue for now
-    +	PUSH(0xD)             //PUSH 0D       ; Arg6 = Font Height
-    +	PUSH_1                //PUSH 1        ; Arg5 = Font Index
-    +	PUSH_0                //PUSH 0        ; Arg4 = Char count (0 => calculate string size)
-    +	PUSH_EAX              //PUSH EAX      ; Arg3 = String i.e. output from sprintf above
-    +	PUSH(Filler(4, 1))    //PUSH y        ; Arg2 = y Coord
-    +	PUSH(0x56)            //PUSH x        ; Arg1 = x Coord
-    +	MovECX                //MOV ECX, reg32_A
-    +	CALL(Filler(5))       //CALL UIWindow::TextOutA ; stdcall => No Stack restore required
-    ;
+		MOV(EAX, [Filler(1)]) //mov eax, dword ptr [totExp*]
+    +	MOV(ECX, [Filler(2)]) //mov ecx, dword ptr [curExp*]
+    +	OR(ECX, EAX)          //or ecx, eax
+    +	JE(Filler(3,1))       //je short _skipOut ; location after TextOutA CALL
+    +	PUSH_EAX              //push eax
+    +	MOV(EAX, [Filler(2)]) //mov eax, dword ptr [curExp*]
+    +	PUSH_EAX              //push eax
+    +	PUSH(ddAddr)          //push offset "%d / %d"
+    +	LEA(EAX, [ESP, 0xC])  //lea eax, [esp+0Ch]
+    +	PUSH_EAX              //push eax
+    +	CALL([printFunc])     //call dword ptr [<&MSVCR#.sprintf>] ; wsprintfA if sprintf is not found
+    +	ADD(ESP, 0x10)        //add esp, 10
+    +	MOV(EAX, ESP)         //mov eax, esp
+    +	extraPush             //push 0        ; Arg9 = unknown. Only for 2019+ clients
+		                      //push 0        ; Arg8 = unknown. Only for new clients
+    +	PUSH(0xFF0000)        //push 00,00,FF ; Arg7 = Color. Keeping blue for now
+    +	PUSH(0xD)             //push 0D       ; Arg6 = Font Height
+    +	PUSH_1                //push 1        ; Arg5 = Font Index
+    +	PUSH_0                //push 0        ; Arg4 = Char count (0 => calculate string size)
+    +	PUSH_EAX              //push eax      ; Arg3 = String i.e. output from sprintf above
+    +	PUSH(Filler(4, 1))    //push y        ; Arg2 = y Coord
+    +	PUSH(0x56)            //push x        ; Arg1 = x Coord
+    +	MovECX                //mov ecx, regA
+    +	CALL(Filler(5))       //call UIWindow::TextOutA ; stdcall => No Stack restore required
+    ;                         //_skipOut
 
 	template = SetFillTarget(template, [3, 1], template.byteCount(), 0, 1); //putting the distance in JE SHORT (this is needed since byteCount can vary)
 
-    /// 4.3 - Prepare the full code from the template
+    $$(_ + '4.3 - Prepare the full code from the template')
     code =
-		CALL(Filler(5))         //CALL UIWindow::TextOutA
-    +	PUSH_EAX                //PUSH EAX
-    +	SUB(ESP, 0x20)          //SUB ESP, 20
-    +	SwapFillers(template, {
+		CALL(Filler(5))         //call UIWindow::TextOutA
+    +	PUSH_EAX                //push eax
+    +	SUB(ESP, 0x20)          //sub esp, 20
+    +	SwapFillers(template,
+		{
 			1: TotExpBase,      //for Base Exp
 			2: CurExpBase
 		})
-    +	SwapFillers(template, {
+    +	SwapFillers(template,
+		{
 			1: TotExpJob,       //for Job Exp
 			2: CurExpJob
 		})
-    +	ADD(ESP, 0x20)          //ADD ESP, 20
-    +	POP(EAX)                //POP EAX
-    +	JMP(Filler(6))          //JMP retAddr = injectAddr + 5
+    +	ADD(ESP, 0x20)          //add esp, 20h
+    +	POP_EAX                 //pop eax
+    +	JMP(Filler(6))          //jmp <retAddr> ; i.e. (injectAddr + 5)
     ;
     let csize = code.byteCount();
 
-    /// 4.4 - Allocate space to add our code
-    let free = Exe.FindSpace(csize, 0x10);
-    if (free < 0)
-		throw NO_ALLOC;
+    $$(_ + '4.4 - Allocate space to add our code')
+    let [free, freeVir] = Exe.FindSpace(csize, 0x10);
 
-    let freeVir = Exe.Phy2Vir(free, DIFF);
-
-    /// 4.5 - Fill in the remaining blanks
+    $$(_ + '4.5 - Fill in the remaining blanks')
 
 	// CALLs & JMPs
-	code = SetFillTargets(code, {
+	code = SetFillTargets(code,
+	{
 		 5 : UIW_TextOutA,
 		 6 : Exe.Phy2Vir(injectAddr + 5, CODE),
-	}, freeVir);
+	},
+	freeVir);
 
 	// yCoords for Base & Job respectively
 	code = SwapFiller(code, [4, 1], [0x4E, 0x68], 2); // 4th filler (y coord) is 1 byte hence [4, 1]
 
-    /// 4.6 - Add the code at the allocated space
+    $$(_ + '4.6 - Add the code at the allocated space')
     Exe.AddHex(free, code);
 
-    /// 4.7 - Hijack the CALL at injectAddr (change it to a JMP to our code)
+    $$(_ + '4.7 - Hijack the CALL at injectAddr (change it to a JMP to our code)')
     Exe.SetJMP(injectAddr, freeVir);
 
     return true;

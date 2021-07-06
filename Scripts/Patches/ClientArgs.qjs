@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Secret                                        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,39 +33,41 @@
 ///
 No1and1Arg = function()
 {
-	/// 1 - Find the string '1rag1'
+	let _ = 'No1and1Arg : ';
+
+	$$(_ + '1 - Find \'1rag1\'')
 	let addr = Exe.FindText("1rag1");
 	if (addr < 0)
 		throw Error("'1rag1' not found");
 
-	/// 2 - Find where it is used in a PUSH
+	$$(_ + '2 - Find where it is used in a PUSH')
 	let prefix =
-		PUSH(addr)      //PUSH addr ; ASCII "1rag1"
-	+	PUSH_R          //PUSH reg32_A
+		PUSH(addr)      //push offset "1rag1"
+	+	PUSH_R          //push regA
 	+	(Exe.Version > 6 && Exe.Version < 14
 	?
-		CALL(R32)       //CALL reg32_B ; strstr function compares reg32_A with "1rag1". reg32_B is ESI in most clients
+		CALL(R32)       //call regB ; strstr function compares regA with "1rag1". regB is ESI in most clients
 	:
-		CALL(ALLWC)     //CALL strstr
+		CALL(ALLWC)     //call <strstr>
 	)
-	+	ADD(ESP, 8)     //ADD ESP, 8
-	+	TEST(EAX, EAX)  //TEST EAX, EAX
+	+	ADD(ESP, 8)     //add esp, 8
+	+	TEST(EAX, EAX)  //test eax, eax
 	;
 
 	let suffix =
-		JNZ(WCp)        //JNZ SHORT addr2
+		JNZ(WCp)        //jnz short _next
 	;
 	addr = Exe.FindHex(prefix + suffix);
 
 	if (addr < 0)
 	{
-		suffix = JNZ(POS2WC); //Change JNZ size
+		suffix = JNZ(POS2WC); //_next is farther away
 		addr = Exe.FindHex(prefix + suffix);
 	}
 	if (addr < 0)
 		throw Error("'1rag1' not used");
 
-	/// 3 - Change the conditional jump
+	$$(_ + '3 - Change the conditional jump')
 	Exe.SetJMP(addr + prefix.byteCount());
 
 	return true;
@@ -77,33 +79,35 @@ No1and1Arg = function()
 ///
 IgnoreAccArg = function()
 {
-	/// 1.1 - Find the string '/account:';
+	let _ = 'IgnoreAccArg : ';
+
+	$$(_ + '1.1 - Find \'/account:\'')
 	let addr = Exe.FindText("/account:");
 	if (addr < 0)
 		throw Error("'/account:' not found");
 
-	/// 1.2 - Find where '/account:' is used in a PUSH
+	$$(_ + '1.2 - Find where \'/account:\' is used in a PUSH')
 	addr = Exe.FindHex(PUSH(addr));
 	if (addr < 0)
 		throw Error("'/account:' not used");
 
-	/// 2 - Find the comparison after strstr CALL
+	$$(_ + '2.1 - Find the comparison after strstr CALL')
 	code =
-		ADD(ESP, 8)     //ADD ESP, 8
-	+	TEST(R32, R32)  //TEST reg32_A, reg32_A
-	+	JZ(WCp)         //JZ loadClientInfo
+		ADD(ESP, 8)     //add esp, 8
+	+	TEST(R32, R32)  //test regA, regA
+	+	JZ(WCp)         //jz short _loadClientInfo
 	;
 	let addr2 = Exe.FindHex(code, addr + 5, addr + 0x50);
 
 	if (addr2 < 0)
 	{
-		code = code.replace(TEST(R32, R32), CMP(R32, R32));
+		code = code.replace(TEST(R32, R32), CMP(R32, R32)); //change the 'test' to 'cmp'
 		addr2 = Exe.FindHex(code, addr + 5, addr + 0x50);
 	}
 	if (addr2 < 0)
 		throw Error("Comparison not found.");
 
-	/// 2.2 - Replace JZ with JMP
+	$$(_ + '2.2 - Replace JZ with JMP')
 	Exe.SetJMP(addr2 + 5);
 
 	return true;

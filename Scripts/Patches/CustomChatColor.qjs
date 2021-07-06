@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shakto                                      *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,7 +39,7 @@ if (typeof CCC_Data === 'undefined') //avoid redefinition
 			varName : '$guildChatColor',
 			pattern :
 				PUSH(0x4)                 //PUSH 4
-			+	LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
+			+	LEA(R32, [EBP, NEG2WC])   //LEA regA, [EBP-x]
 			+	PUSH(0xB4FFB4)            //PUSH B4,FF,B4 (Light Green)
 			,
 			clrName : "Light Green",
@@ -53,7 +53,7 @@ if (typeof CCC_Data === 'undefined') //avoid redefinition
 			varName : '$partyChatColor',
 			pattern :
 				PUSH(0x03)                //PUSH 3
-			+	LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
+			+	LEA(R32, [EBP, NEG2WC])   //LEA regA, [EBP-x]
 			+	PUSH(0xC8C8FF)            //PUSH FF,C8,C8 (Light Pink)
 			,
 			clrName : "Light Pink",
@@ -67,7 +67,7 @@ if (typeof CCC_Data === 'undefined') //avoid redefinition
 			varName : '$yourPartyChatColor',
 			pattern :
 				PUSH(0x03)                //PUSH 3
-			+	LEA(R32, [EBP, NEG2WC])   //LEA reg32_A, [EBP-x]
+			+	LEA(R32, [EBP, NEG2WC])   //LEA regA, [EBP-x]
 			+	PUSH(0x00C8FF)            //PUSH FF,C8,00 (Yellowish Brown)
 			,
 			clrName : "Yellowish Brown",
@@ -95,24 +95,26 @@ if (typeof CCC_Data === 'undefined') //avoid redefinition
 ///
 CustomChatColor = function(patchName)
 {
-	/// 1.1 - Retrieve the data to be used
+	let _ = patchName + ' : ';
+
+	$$(_ + '1.1 - Retrieve the data to be used')
 	let {pattern, rmOnVC9, clrName, varName, title, clrVal} = CCC_Data[patchName];
 
-	/// 1.2 - Calculate the pattern to be searched
+	$$(_ + '1.2 - Calculate the pattern to be searched')
 	if (rmOnVC9 && Exe.Version >= 9)
 		pattern = pattern.remove(LEA(R32, [EBP, NEG2WC]));//Remove the LEA for VC9+
 
-	/// 2.1 - Find the pattern
+	$$(_ + '2.1 - Find the pattern')
 	let addr = Exe.FindHex(pattern);
 	if (addr < 0)
 		throw Error(`'${clrName}' reference missing`);
 
-	/// 2.2 - Retrieve the new color from user
+	$$(_ + '2.2 - Retrieve the new color from user')
 	let color = Exe.GetUserInput(varName, D_Color, title, "Select the new color", clrVal, {ignoreAlpha: true, keepAlpha: true});
 	if (color === false)
 		Cancel("Color", clrName + " (0x" + clrVal.toHex(3, true) + ")");
 
-	/// 2.3 - Replace the color
+	$$(_ + '2.3 - Replace the color')
 	Exe.SetFromVar(addr + pattern.byteCount() - 4, varName);
 
 	return true;
@@ -132,28 +134,30 @@ CustomPublicColor    = CustomChatColor; //inside CGameMode ::Zc_Notify_Chat func
 ///
 CustomGMColor = function()
 {
-	/// 1.1 - Find the Orange color (#FF8D1D) PUSHed for Langtype 11
+	let _ = 'CustomGMColor : ';
+
+	$$(_ + '1.1 - Find the Orange color (#FF8D1D) PUSHed for Langtype 11')
 	let addr1 = Exe.FindHex( PUSH(0x1D8DFF) ); //colors are in reverse order not sure why
 	if (addr1 < 0)
 		throw Error("'Orange' reference missing");
 
-	/// 1.2 - Find the Cyan color (#FFFF00) PUSH in the vicinity of addr1
+	$$(_ + '1.2 - Find the Cyan color (#FFFF00) PUSH in the vicinity of addr1')
 	let addr2 = Exe.FindHex( PUSH(0x00FFFF), addr1 - 0x30, addr1 + 0x30);
 	if (addr2 < 0)
 		throw Error("'Cyan' reference missing");
 
-	/// 1.3 - Find the Yellow color (#00FFFF) PUSH in the vicinity of addr1
+	$$(_ + '1.3 - Find the Yellow color (#00FFFF) PUSH in the vicinity of addr1')
 	let addr3 = Exe.FindHex( PUSH(0xFFFF00), addr1 - 0x30, addr1 + 0x30);
 	if (addr3 < 0)
 		throw Error("'Yellow' reference missing");
 
-	/// 2.1 - Get the new color from user
+	$$(_ + '2.1 - Get the new color from user')
 	let varName = '$gmChatColor';
 	let color = Exe.GetUserInput(varName, D_Color, "GM Chat Color", "Select the new color", 0x00FFFF, {ignoreAlpha: true, keepAlpha: true});
 	if (color === false)
 		Cancel("Color", "Cyan (0x00FFFF)");
 
-	/// 2.2 - Replace the PUSHed color at all 3 addrs found
+	$$(_ + '2.2 - Replace the PUSHed color at all 3 addrs found')
 	Exe.SetFromVar(addr1 + 1, varName);
 	Exe.SetFromVar(addr2 + 1, varName);
 	Exe.SetFromVar(addr3 + 1, varName);
@@ -167,12 +171,14 @@ CustomGMColor = function()
 ///
 CustomPublicColorSelf = function ()
 {
-	/// 1.1 - Find all locations where Dark Green (#007800) is PUSHed
+	let _ = 'CustomPublicColorSelf : ';
+
+	$$(_ + '1.1 - Find all locations where Dark Green (#007800) is PUSHed')
 	let addrs = Exe.FindHexN( PUSH(0x007800) ); //PUSH 00,78,00
 	if (addrs.isEmpty())
 		throw Error("'Dark Green' reference missing");
 
-	/// 1.2 - Find the original color (Green) PUSH within the vicinity of one of the addrs
+	$$(_ + '1.2 - Find the original color (Green) PUSH within the vicinity of one of the addrs')
 	let greenAddr = -1;
 	addrs.find(addr =>
 	{
@@ -183,13 +189,13 @@ CustomPublicColorSelf = function ()
 	if (greenAddr < 0)
 		throw Error("'Green' reference missing");
 
-	/// 2.1 - Get the new color from user
+	$$(_ + '2.1 - Get the new color from user')
 	let varName = '$yourChatColor';
 	let color = Exe.GetUserInput(varName, D_Color, "Public Chat Color (Self)", "Select the new color", 0x00FF00, {ignoreAlpha: true, keepAlpha: true});
 	if (color === false)
 		Cancel("Color", "Green (0x00FF00)");
 
-	/// 2.2 - Replace PUSHed color with new one
+	$$(_ + '2.2 - Replace PUSHed color with new one')
 	Exe.SetFromVar(greenAddr + 1, varName);
 
 	return true;

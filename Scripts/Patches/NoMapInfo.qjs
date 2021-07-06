@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), X-EcutiOnner                            *
 *   Created Date  : 2021-03-06                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,21 +33,25 @@
 ///
 NoMapInfo = function()
 {
-	/// 1 - Zero it out
+	let _ = 'NoMapInfo : ';
+
+	$$(_ + '1 - Zero it out')
 	Exe.SetInt8(NMI_Addr, 0);
 
-	/// 2.1 - Find the CMapInfoMgr ErrorMsg function
+	$$(_ + '2.1 - Find the CMapInfoMgr ErrorMsg function')
 	let parts =
 	[
-		JZ(POS1WC)       //JZ _skip
+		JZ(POS1WC)       //jz _skip
+
 	,//1
-		PUSH([EBP, WC])  //PUSH DWORD PTR SS:[EBP + offsetA]
-	+	CALL(ALLWC)      //CALL CLua::OpenLibs
-	+	PUSH_0           //PUSH 0
-	+	PUSH(POS4WC)     //PUSH OFFSET lua_function_sub
+		PUSH([EBP, WC])  //push dword ptr [LOCAL.x]
+	+	CALL(ALLWC)      //call CLua::OpenLibs
+	+	PUSH_0           //push 0
+	+	PUSH(POS4WC)     //push <lua_function_sub>
+
 	,//2
-		PUSH([EBP, WC])  //PUSH DWORD PTR SS:[EBP + offsetA]
-	+	CALL()           //CALL lua_pushCclosure
+		PUSH([EBP, WC])  //push dword ptr [LOCAL.x]
+	+	CALL()           //call lua_pushCclosure
 	]
 	;
 
@@ -55,7 +59,7 @@ NoMapInfo = function()
 	if (addr < 0)
 		throw Error("ErrorMsg function missing");
 
-	/// 2.2 - Ensure the offsets are same
+	$$(_ + '2.2 - Ensure the offsets are same')
 	let partAddrs = MapAddrs(addr, parts);
 	if (Instr.FromAddr(partAddrs[1]).Disp !== Instr.FromAddr(partAddrs[2]).Disp)
 		throw Error("False match found");
@@ -67,7 +71,7 @@ NoMapInfo = function()
     logRawFunc("lua_pushcclosure", addr, pushcclosureOffset);
 	*/
 
-	/// 2.3 - Enforce the JZ
+	$$(_ + '2.3 - Enforce the JZ')
 	Exe.SetJMP(addr);
 
 	return true;
@@ -79,6 +83,6 @@ NoMapInfo = function()
 NoMapInfo.validate = function()
 {
 	NMI_Name = "system\\mapInfo_" + (ROC.IsRenewal ? "sak" : "true") + ".lub";
-	NMI_Addr = Exe.FindText(NMI_Name, PHYSICAL);
+	NMI_Addr = Exe.FindText(NMI_Name, CASE_INSENSITIVE, PHYSICAL);
 	return (NMI_Addr > 0);
 };

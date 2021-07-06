@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,66 +31,67 @@
 ///
 EnableMailAccess = function()
 {
-	/// 1.1 - Ensure the LANGTYPE is loaded
+	let _ = 'EnableMailAccess : ';
+
+	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
-	/// 1.2 - Prepare codes for finding short jumps
-	let tc = " [.0.....1] [11000...]"; //Common match for TEST EAX, EAX & CMP EAX, r32
+	$$(_ + '1.2 - Prepare codes for finding short jumps')
+	let tc = " [.0.....1] [11000...]"; //Common match for test eax, eax AND cmp eax, regA
 
 	let code =
-		tc           //TEST or CMP
-	+   JE(WCp)      //JE SHORT addr1
-	+   CMP(EAX, 8)  //CMP EAX, 08
-	+   JE(WCp)    	 //JE SHORT addr1
-	+   CMP(EAX, 9)	 //CMP EAX, 09
-	+   JE(WCp)    	 //JE SHORT addr1
+		tc           //test OR cmp
+	+   JE(WCp)      //je short _next
+	+   CMP(EAX, 8)  //cmp eax, 8
+	+   JE(WCp)    	 //je short _next
+	+   CMP(EAX, 9)	 //cmp eax, 9
+	+   JE(WCp)    	 //je short _next
 	;
-	let nopCount = code.byteCount();   
+	let nopCount = code.byteCount();
 
-	/// 1.3 - Find all locations of 1st Langtype comparison (in the mailbox function)
-	let addrs = Exe.FindHexN(code + MOV(ECX, [ESI, POS1WC])); //MOV ECX, DWORD PTR DS:[ESI + const]
+	$$(_ + '1.3 - Find all locations of 1st Langtype comparison (in the mailbox function)')
+	let addrs = Exe.FindHexN(code + MOV(ECX, [ESI, POS1WC])); //MOV ECX, dword ptr [ESI + const]
 	if (addrs.length !== 3)
 		throw Error("First comparison not found");
 
-	/// 1.4 - Find the 2nd Langtype comparison
-	let addr = Exe.FindHex(code + MOV(EBX, 1)); //MOV EBX, 1
+	$$(_ + '1.4 - Find the 2nd Langtype comparison')
+	let addr = Exe.FindHex(code + MOV(EBX, 1)); //mov ebx, 1
 	if (addr < 0)
 		throw Error("Second comparison not found");
 
-	/// 1.5 - NOP out the entire 'code' (since nopCount is large internally we will get a JMP automatically)
+	$$(_ + '1.5 - NOP out the entire "code" (since nopCount is large internally we will get a JMP automatically)'); //semicolon needed here
 	[addr, ...addrs].forEach( memAddr => Exe.SetNOPs(memAddr, nopCount) );
 
-	/// 2.1 - Prepare codes for finding Long jumps
-	let prefix = MOV(EAX, [LANGTYPE]);    //MOV EAX, DWORD PTR DS:[g_serviceType]
+	$$(_ + '2.1 - Prepare codes for finding Long jumps')
+	let prefix = MOV(EAX, [LANGTYPE]);    //MOV EAX, dword ptr [g_serviceType]
 
 	code =
-		tc           //TEST or CMP
-	+   JE(POS2WC)   //JE addr1
-	+   CMP(EAX, 8)  //CMP EAX, 08
-	+   JE(POS2WC)   //JE addr1
-	+   CMP(EAX, 9)  //CMP EAX, 09
-	+   JE(POS2WC)   //JE addr1
+		tc           //test OR cmp
+	+   JE(POS2WC)   //je _next#2
+	+   CMP(EAX, 8)  //cmp eax, 8
+	+   JE(POS2WC)   //je _next#2
+	+   CMP(EAX, 9)  //cmp eax, 9
+	+   JE(POS2WC)   //je _next#2
 	;
 	nopCount = code.byteCount();
 
-	/// 2.2 - Find all locations with this pattern - 3 or 4 would be there
+	$$(_ + '2.2 - Find all locations with this pattern - 3 or 4 would be there')
 	addrs = Exe.FindHexN(prefix + code);
 	if (addrs.length < 3 || addrs.length > 4)
 		throw Error("Incorrect no of matches found");
 
 	if (addrs.length === 3)
 	{
-		/// 2.3 - If only 3 locations were found then one got missed 
-		///       so we will use different pattern to look for it
-		let addr = Exe.FindHex(code + PUSH(0x23));//PUSH 23
+		$$(_ + '2.3 - If only 3 locations were found then one got missed, so we will use different pattern to look for it')
+		let addr = Exe.FindHex(code + PUSH(0x23)); //push 23h
 		if (addr < 0)
 			throw Error("Fourth comparison not found");
 
-		/// 2.4 - Add it as well to the array
+		$$(_ + '2.4 - Add it as well to the array')
 		addrs.push(addr - 5); //the substraction is needed since we add 5 during SetNOPs later
 	}
 
-	/// 2.5 - NOP out the 'code'
+	$$(_ + '2.5 - NOP out the "code"')
 	addrs.forEach( addr => Exe.SetNOPs(addr + 5, nopCount) );
 
 	return true;

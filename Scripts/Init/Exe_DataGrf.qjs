@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-16                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -84,10 +84,10 @@ if (typeof DGRF === 'undefined') //avoid redefinition
 			if (Exe.Version >= 14.0) //for VC14.16
 			{
 				let code =
-					MOV(ECX, POS4WC)   	//MOV ECX, OFFSET g_fileMgr
-				+	TEST(EAX, EAX)		//TEST EAX, EAX
-				+	SETNE([POS4WC])		//SETNE BYTE PTR DS:[addr]
-				+	PUSH(this.Addr)		//PUSH OFFSET addr1; "data.grf"
+					MOV(ECX, POS4WC)   	//mov ecx, offset <g_fileMgr>
+				+	TEST(EAX, EAX)		//test eax, eax
+				+	SETNE([POS4WC])		//setne byte ptR [addr]
+				+	PUSH(this.Addr)		//push offset "data.grf"
 				;
 
 				addr = Exe.FindHex(code);
@@ -101,8 +101,8 @@ if (typeof DGRF === 'undefined') //avoid redefinition
 			if (addr < 0) //for VC6-VC11 or when the above match failed
 			{
 				let code =
-					PUSH(this.Addr)		//PUSH OFFSET addr1; "data.grf"
-				+	MOV(ECX, POS4WC)	//MOV ECX, OFFSET g_fileMgr
+					PUSH(this.Addr)		//push offset "data.grf"
+				+	MOV(ECX, POS4WC)	//mov ecx, <g_fileMgr>
 				;
 
 				addr = Exe.FindHex(code);

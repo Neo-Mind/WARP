@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,12 +31,14 @@
 ///
 NoNagle = function()
 {
-	/// 1.1 - Find the string 'ws2_32.dll'
+	let _ = 'NoNagle : ';
+
+	$$(_ + '1.1 - Find \'ws2_32.dll\'')
 	let WS2_32 = Exe.FindText("ws2_32.dll");
 	if (WS2_32 < 0)
 		throw Error("'ws2_32.dll' not found");
 
-	/// 1.2 - Get the essential addresses for our function
+	$$(_ + '1.2 - Get the essential addresses for our function')
 	if (ROC.GetModHandle < 0)
 		throw Error("GetModuleHandleA not found");
 
@@ -50,67 +52,68 @@ NoNagle = function()
 
 	let WS2_socHex = WS2_socket.toHex();
 
-	/// 2.1 - Prepare the function to override with
-	let code =
-		Filler(1)                 //Address to be used in CALL DWORD PTR and JMP DWORD PTR replacements
-	+	PUSH(EBP)                 //PUSH EBP <- Actual start of function
-	+	MOV(EBP, ESP)             //MOV EBP,ESP
-	+	SUB(ESP, 0xC)             //SUB ESP,0C
-	+	MOV([EBP, -8], 1)         //MOV DWORD PTR SS:[EBP-8], 1
-	+	MOV(EAX, [EBP, 0x10])     //MOV EAX,DWORD PTR SS:[EBP+10]
-	+	PUSH_EAX                  //PUSH EAX
-	+	MOV(ECX, [EBP, 0xC])      //MOV ECX,DWORD PTR SS:[EBP+0C]
-	+	PUSH(ECX)                 //PUSH ECX
-	+	MOV(EDX, [EBP, 8])        //MOV EDX,DWORD PTR SS:[EBP+8]
-	+	PUSH(EDX)                 //PUSH EDX
-	+	CALL([WS2_socHex])        //CALL DWORD PTR DS:[<&WS2_32.#23>] ; WS2_32.socket()
-	+	MOV([EBP, -4], EAX)       //MOV DWORD PTR SS:[EBP-4],EAX
-	+	CMP([EBP, -4], -1)        //CMP DWORD PTR SS:[EBP-4],-1
-	+	JE(0x3C)                  //JE SHORT addr1
-	+	CALL(0xB)                 //JMP &PUSH ; A little trick to PUSH the following string to stack directly
-	+	"setsockopt\x00".toHex()  //DB "setsockopt\x00"
-	+	PUSH(WS2_32)              //PUSH OFFSET addr2; ASCII "ws2_32.dll"
-	+	CALL([ROC.GetModHandle])  //CALL DWORD PTR DS:[<&KERNEL32.GetModuleHandleA>]
-	+	PUSH_EAX                  //PUSH EAX
-	+	CALL([ROC.GetProcAddr])   //CALL DWORD PTR DS:[<&KERNEL32.GetProcAddress>]
-	+	MOV([EBP, -0xC], EAX)     //MOV DWORD PTR SS:[EBP-0C],EAX
-	+	CMP([EBP, -0xC], 0)       //CMP DWORD PTR SS:[EBP-0C],0
-	+	JE(0x11)                  //JE SHORT addr1
-	+	PUSH(0x04)                //PUSH 4
-	+	LEA(EAX, [EBP, -8])       //LEA EAX,[EBP-8]
-	+	PUSH_EAX                  //PUSH EAX
-	+	PUSH_1                    //PUSH 1
-	+	PUSH(6)                   //PUSH 6
-	+	MOV(ECX, [EBP, -4])       //MOV ECX,DWORD PTR SS:[EBP-4]
-	+	PUSH(ECX)                 //PUSH ECX
-	+	CALL([EBP, -0xC])         //CALL DWORD PTR SS:[EBP-0C]
-	+	MOV(EAX, [EBP, -4])       //MOV EAX,DWORD PTR SS:[EBP-4]; addr1
-	+	MOV(ESP, EBP)             //MOV ESP,EBP
-	+	POP(EBP)                  //POP EBP
-	+	RETN(0xC)                 //RETN 0C
-	;
-	let csize = code.byteCount();
+	$$(_ + '2.1 - Prepare the function to override with')
+	let parts =
+	[
+		Filler(1)                 //Address to be used in CALL dword ptr and JMP dword ptr replacements
+	+	FP_START                  //push ebp <- Actual start of function
+		                          //mov ebp,esp
+	+	SUB(ESP, 0xC)             //sub esp, 0Ch
+	+	MOV([EBP, -8], 1)         //mov dword ptr [ebp-8], 1
+	+	MOV(EAX, [EBP, 0x10])     //mov eax, dword ptr [ebp+10h] ; ARG.3
+	+	PUSH_EAX                  //push eax
+	+	MOV(ECX, [EBP, 0xC])      //mov ecx, dword ptr [ebp+0C] ; ARG.2
+	+	PUSH(ECX)                 //push ecx
+	+	MOV(EDX, [EBP, 8])        //mov edx, dword ptr [ebp+8] ; ARG.1
+	+	PUSH(EDX)                 //push edx
+	+	CALL([WS2_socHex])        //call dword ptr [<&WS2_32.#23>] ; WS2_32.socket()
+	+	MOV([EBP, -4], EAX)       //mov dword ptr [EBP-4], eax
+	+	CMP([EBP, -4], -1)        //cmp dword ptr [EBP-4], -1
+	+	JE(Filler(2,1))           //je short _return
+	+	CALL(0xB)                 //jmp &PUSH ; A little trick to PUSH the following string to stack directly
+	+	"setsockopt\x00".toHex()  //db "setsockopt\x00"
+	+	PUSH(WS2_32)              //push offset "ws2_32.dll"
+	+	CALL([ROC.GetModHandle])  //call dword ptr [<&KERNEL32.GetModuleHandleA>]
+	+	PUSH_EAX                  //push eax
+	+	CALL([ROC.GetProcAddr])   //call dword ptr [<&KERNEL32.GetProcAddress>]
+	+	MOV([EBP, -0xC], EAX)     //mov dword ptr [ebp-0Ch],EAX
+	+	CMP([EBP, -0xC], 0)       //cmp dword ptr [ebp-0Ch],0
+	+	JE(Filler(2,1))           //je short _return
+	+	PUSH(0x04)                //push 4
+	+	LEA(EAX, [EBP, -8])       //lea eax, [ebp-8]
+	+	PUSH_EAX                  //push eax
+	+	PUSH_1                    //push 1
+	+	PUSH(6)                   //push 6
+	+	MOV(ECX, [EBP, -4])       //mov ecx, dword ptr [ebp-4]
+	+	PUSH(ECX)                 //push ecx
+	+	CALL([EBP, -0xC])         //call dword ptr [ebp-0Ch]
+	,
+		MOV(EAX, [EBP, -4])       //mov eax, dword ptr [ebp-4] ; _return
+	+	FP_STOP                   //mov esp, ebp
+		                          //pop ebp
+	+	RETN(0xC)                 //retn 0Ch
+	];
 
-	/// 2.2 - Allocate space for adding the function
-	let free = Exe.FindSpace(csize, 0x10);
-	if (free < 0)
-		throw NO_ALLOC;
+	let retOff = parts.byteCount(0); //position of _return
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
+	$$(_ + '2.2 - Allocate space for adding the function')
+	let [free, freeVir] = Exe.FindSpace(retOff + parts.byteCount(1), 0x10);
 
-	/// 2.3 - Fill in the blank
+	$$(_ + '2.3 - Fill in the blanks')
+	code = SetFillTarget(parts, [2,1], retOff, 0); //_return
+
 	code = SwapFiller(code, 1, freeVir + 4, 1); //Actual Function address
 
-	/// 2.4 - Add the function in the allocated space
+	$$(_ + '2.4 - Add the function in the allocated space')
 	Exe.AddHex(free, code);
 
-	/// 3.1 - Find all JMP DWORD PTR & CALL DWORD PTR to ws2_32.socket function
+	$$(_ + '3.1 - Find all JMP dword ptr & CALL dword ptr to ws2_32.socket function')
 	let addrs = [
 		...Exe.FindHexN( JMP([WS2_socHex])  ),
 		...Exe.FindHexN( CALL([WS2_socHex]) )
 	];
 
-	/// 3.2 - Change the called address with our function.
+	$$(_ + '3.2 - Change the called address with our function')
 	addrs.forEach( addr => Exe.SetInt32(addr + 2, freeVir) );
 
 	return true;

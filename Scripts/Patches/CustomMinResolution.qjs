@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,54 +31,60 @@
 ///
 CustomMinResolution = function()
 {
-	/// 1.1 - Find the location where 'OLD_HEIGHT' is PUSHed
+	let _ = 'CustomMinResolution : ';
+
+	$$(_ + '1.1 - Find where \'OLD_HEIGHT\' is PUSHed')
 	let code =
-		PUSH_0              //PUSH 0
-	+	PUSH(CMR_Addr)      //PUSH OFFSET addr ; ASCII "OLD_HEIGHT"
-	+	MOV(ECX, R32)       //MOV ECX, reg32
-	+	MOV([POS4WC], EAX)  //MOV DWORD PTR DS:[screen_old_width], EAX
+		PUSH_0              //push 0
+	+	PUSH(CMR_Addr)      //push offset "OLD_HEIGHT"
+	+	MOV(ECX, R32)       //mov ecx, regA
+	+	MOV([POS4WC], EAX)  //mov dword ptr [screen_old_width], eax
 	;
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("'OLD_HEIGHT' reference missing");
 
-	/// 1.2 - Save the location after as reference
+	$$(_ + '1.2 - Save the location after as reference')
 	let refAddr = addr + code.byteCount();
 
-	/// 1.3 - Set the previous value
+	$$(_ + '1.3 - Set the previous value')
 	let oldMinW = 0x400;
 	let oldMinH = 0x300;
 
-	/// 2.1 - Get the new values from user
-	let newMinW = Exe.GetUserInput('$newScreenWidth',  D_Uint32, "Screen Resolution Limit", "Enter the new Minimum Width",  oldMinW, {min:0, max:10000});
-	let newMinH = Exe.GetUserInput('$newScreenHeight', D_Uint32, "Screen Resolution Limit", "Enter the new Minimum Height", oldMinH, {min:0, max:10000});
-	if (newMinW === false && newMinH === false)
+	$$(_ + '2.1 - Get the new values from user')
+	let result = Exe.GetUserInput('$newScreenSize', D_VecU32, "Screen Resolution", "Enter the new minimum resolution", [oldMinW, oldMinH], {
+		name0: "Minimum Width", max0: 10000,
+		name1: "Minimum Height", max1: 10000
+	});
+	if (result === false)
 		Cancel("Min Resolution", "1024x768");
 
-	if (newMinW !== false)
+	let [newMinW, newMinH] = result;
+
+	if (newMinW !== oldMinW)
 	{
-		/// 2.2 - Look for comparison against width. Only certain clients have it
-		code = 
-			CMP(R32, oldMinW)  //CMP reg32, 400 ; usually ECX
-		+	JB(0xC)            //JB SHORT addr
+		$$(_ + '2.2 - Look for comparison against width. Only certain clients have it')
+		code =
+			CMP(R32, oldMinW)  //cmp regB, 400h ; usually ECX
+		+	JB(0xC)            //jb short _next#1
 		;
 		addr = Exe.FindHex(code, refAddr, refAddr + 0x80);
 
-		/// 2.3 - Replace with new width value
+		$$(_ + '2.3 - Replace with new width value')
 		if (addr > 0)
-			Exe.SetFromVar(addr + 2, '$newScreenWidth');
+			Exe.SetUint32(addr + 2, newMinW);
 	}
 
-	if (newMinH !== false)
+	if (newMinH !== oldMinH)
 	{
-		/// 2.4 - Look for comparison against height. Only certain clients have it
+		$$(_ + '2.4 - Look for comparison against height. Only certain clients have it')
 		code =
-			CMP(EAX, POS2WC)   //CMP EAX, 300 or some lower value
-		+	JNB(WCp)           //JNB SHORT addr
+			CMP(EAX, POS2WC)   //cmp eax, 300h ; or some lower value
+		+	JNB(WCp)           //jnb short _next#2
 		;
 		addr = Exe.FindHex(code, refAddr, refAddr + 0x80);
 
-		/// 2.5 - Replace with new height value
+		$$(_ + '2.5 - Replace with new height value')
 		if (addr > 0)
 		{
 			let diff = Exe.GetUint32(addr + 1) - oldMinH;
@@ -86,8 +92,8 @@ CustomMinResolution = function()
 		}
 	}
 
-	/// 2.6 - Look for assignments of width and height
-	code = 
+	$$(_ + '2.6 - Look for assignments of width and height')
+	code =
 		MOV(ECX, oldMinW)      //MOV ECX, 400
 	+	MOV(EAX, oldMinH)      //MOV EAX, 300
 	;
@@ -95,12 +101,12 @@ CustomMinResolution = function()
 	if (addr < 0)
 		throw Error("Limit assignments missing");
 
-	/// 2.7 - Replace both
-	if (newMinW !== false)
-		Exe.SetFromVar(addr + 1, '$newScreenWidth' );
+	$$(_ + '2.7 - Replace both')
+	if (newMinW !== oldMinW)
+		Exe.SetUint32(addr + 1, newMinW);
 
-	if (newMinH !== false)
-		Exe.SetFromVar(addr + 6, '$newScreenHeight');
+	if (newMinH !== oldMinH)
+		Exe.SetUint32(addr + 6, newMinH);
 
 	return true;
 };

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,35 +33,38 @@
 ///
 EnableDnsSupport = function()
 {
-	/// 1.1 - Ensure the WINMGR object has been loaded
+	let _ = 'EnableDnsSupport : ';
+
+	$$(_ + '1.1 - Ensure the WINMGR object has been loaded')
 	WINMGR.load();
 
-	/// 1.2 - Find the common IP address across all clients
+	$$(_ + '1.2 - Find the common IP address across all clients')
 	let addr = Exe.FindText("211.172.247.115");
 	if (addr < 0)
 		throw Error("Common IP not found");
 
-	/// 1.3 - Find the g_accountAddr assignment to the IP
-	addr = Exe.FindHex( MOV([POS3WC], addr) ); //MOV DWORD PTR DS:[g_accountAddr], addr; ASCII "211.172.247.115"
+	$$(_ + '1.3 - Find the g_accountAddr assignment to the IP')
+	addr = Exe.FindHex( MOV([POS3WC], addr) ); //mov dword ptr [g_accountAddr], offset "211.172.247.115"
 	if (addr < 0)
 		throw Error("g_accountAddr assignment not found");
 
-	/// 1.4 - Extract g_accountAddr
+	$$(_ + '1.4 - Extract g_accountAddr')
 	let AccountAddr = Exe.GetHex(addr + 2, 4);
 
-	/// 2.1 - Find the code to hook our function to
+	$$(_ + '2.1 - Find the code to hook our function to')
 	let prefix =
-		CALL(NEG3WC)             //CALL g_resMgr
-	+	MOV(ECX, EAX)            //MOV ECX,EAX
-	+	CALL(NEG3WC)             //CALL CResMgr::Get
-	+	PUSH_EAX                 //PUSH EAX
-	+	WINMGR.MovECX            //MOV ECX, OFFSET g_windowMgr
-	+	CALL(NEG3WC)             //CALL UIWindowMgr::SetWallpaper
+		CALL(NEG3WC)             //call g_resMgr
+	+	MOV(ECX, EAX)            //mov ecx, eax
+	+	CALL(NEG3WC)             //call CResMgr::Get
+	+	PUSH_EAX                 //push eax
+	+	WINMGR.MovECX            //mov ecx, <g_windowMgr>
+	+	CALL(NEG3WC)             //call UIWindowMgr::SetWallpaper
 	;
 
 	let suffix = MOV(
-		Exe.Version === 9 || Exe.Version === 10 ? EAX : R32, //MOV EAX, DWORD PTR DS:[g_accountAddr] or
-		[AccountAddr]                                        //MOV reg32_B, DWORD PTR DS:[g_accountAddr]
+		Exe.Version === 9 || Exe.Version === 10 ? EAX : R32, //mov eax, dword ptr [g_accountAddr]
+		                                                     //   OR
+		[AccountAddr]                                        //mov regB, dword ptr [g_accountAddr]
 	);
 
 	addr = Exe.FindHex(prefix + suffix);
@@ -69,19 +72,19 @@ EnableDnsSupport = function()
 	if (addr < 0 && Exe.BuildDate > 20180000)
 	{
 		suffix =
-			MOV(ECX, [POS4WC])   //MOV ECX, DWORD PTR DS:[g_CCheatDefenderMgr]
-		+	CALL(ALLWC)          //CALL CCheatDefenderMgr::init
-		+	suffix               //MOV reg32_B, DWORD PTR DS:[g_accountAddr]
+			MOV(ECX, [POS4WC])   //mov ecx, dword ptr [g_CCheatDefenderMgr]
+		+	CALL(ALLWC)          //call CCheatDefenderMgr::init
+		+	suffix               //mov regB, dword ptr [g_accountAddr]
 		;
 		addr = Exe.FindHex(prefix + suffix);
 	}
 	if (addr < 0)
 		throw Error("Function not found");
 
-	/// 2.2 - Extract g_resMgr
+	$$(_ + '2.2 - Extract g_resMgr')
 	let gResMgr = Exe.GetTgtAddr(addr + 1);
 
-	/// 3.1 - Find some essential addresses for our function
+	$$(_ + '3.1 - Find some essential addresses for our function')
 
 	// gethostbyname
 	let GetHostByName = Exe.FindFunc("gethostbyname", 52, "ws2_32.dll");//(#52 when imported by ordinal)
@@ -98,54 +101,53 @@ EnableDnsSupport = function()
 	if (IPformat < 0)
 		throw Error("IP format not found");
 
-	/// 3.2 - Prepare our function
+	$$(_ + '3.2 - Prepare our function')
 	let dnsCode =
-		CALL(Filler(1))                 //CALL g_ResMgr ; call the actual function that was supposed to be run
-	+	PUSHAD                          //PUSHAD
-	+	MOV(ESI, [AccountAddr])         //MOV ESI, DWORD PTR DS:[g_accountAddr]
-	+	PUSH(ESI)                       //PUSH ESI
-	+	CALL([GetHostByName])           //CALL DWORD PTR DS:[<&WS2_32.#52>] ; WS2_32.gethostbyname()
-	+	MOV(ECX, [EAX, 0xC])            //MOV ECX, DWORD PTR DS:[EAX+0C]
-	+	MOV(EDX, [ECX])                 //MOV EDX, DWORD PTR DS:[ECX]
-	+	MOV(EAX, EDX)                   //MOV EAX, EDX
-	+	MOVZX(ECX, BYTE_PTR, [EAX, 3])  //MOVZX ECX, BYTE PTR DS:[EAX+3]
-	+	PUSH(ECX)                       //PUSH ECX
-	+	MOVZX(ECX, BYTE_PTR, [EAX, 2])  //MOVZX ECX, BYTE PTR DS:[EAX+2]
-	+	PUSH(ECX)                       //PUSH ECX
-	+	MOVZX(ECX, BYTE_PTR, [EAX, 1])  //MOVZX ECX, BYTE PTR DS:[EAX+1]
-	+	PUSH(ECX)                       //PUSH ECX
-	+	MOVZX(ECX, BYTE_PTR, [EAX])     //MOVZX ECX, BYTE PTR DS:[EAX]
-	+	PUSH(ECX)                       //PUSH ECX
-	+	PUSH(IPformat)                  //PUSH OFFSET addr1 ; ASCII "%d.%d.%d.%d"
-	+	PUSH(Filler(2))                 //PUSH OFFSET addr2 ; location is at the end of the code with Initial value "127.0.0.1"
-	+	CALL([WsprintfA])               //CALL DWORD PTR DS:[<&USER32.wsprintfA>]
-	+	ADD(ESP, 0x18)                  //ADD ESP,18
-	+	MOV([AccountAddr], Filler(2))   //MOV DWORD PTR DS:[g_accountAddr], addr2 ; Replace g_accountAddr current value with its ip address
-	+	POPAD                           //POPAD
-	+	RETN()                          //RETN
+		CALL(Filler(1))                 //call g_ResMgr ; call the actual function that was supposed to be run
+	+	PUSHAD                          //pushad
+	+	MOV(ESI, [AccountAddr])         //mov esi, dword ptr [g_accountAddr]
+	+	PUSH(ESI)                       //push esi
+	+	CALL([GetHostByName])           //call dword ptr [<&WS2_32.#52>] ; WS2_32.gethostbyname()
+	+	MOV(ECX, [EAX, 0xC])            //mov ecx, dword ptr [eax+0Ch]
+	+	MOV(EDX, [ECX])                 //mov edx, dword ptr [ecx]
+	+	MOV(EAX, EDX)                   //mov eax, edx
+	+	MOVZX(ECX, BYTE_PTR, [EAX, 3])  //movzx ecx, byte ptr [eax+3]
+	+	PUSH(ECX)                       //push ecx
+	+	MOVZX(ECX, BYTE_PTR, [EAX, 2])  //movzx ecx, byte ptr [eax+2]
+	+	PUSH(ECX)                       //push ecx
+	+	MOVZX(ECX, BYTE_PTR, [EAX, 1])  //movzx ecx, byte ptr [eax+1]
+	+	PUSH(ECX)                       //push ecx
+	+	MOVZX(ECX, BYTE_PTR, [EAX])     //movzx ecx, byte ptr [eax]
+	+	PUSH(ECX)                       //push ecx
+	+	PUSH(IPformat)                  //push offset "%d.%d.%d.%d"
+	+	PUSH(Filler(2))                 //push <ipAddr>  ; location is at the end of the code with Initial value "127.0.0.1"
+	+	CALL([WsprintfA])               //call dword ptr [<&USER32.wsprintfA>]
+	+	ADD(ESP, 0x18)                  //add esp, 18h
+	+	MOV([AccountAddr], Filler(2))   //mov dword ptr [g_accountAddr], <ipAddr> ; Replace g_accountAddr current value with its ip address
+	+	POPAD                           //popad
+	+	RETN()                          //retn
+
 	+	" 00"                           //Just a gap in between
-	+	"127.000.000.001\x00".toHex()   //addr2 ; Putting enough space for 4*3 digits  + 3 Dots + 1 NULL at the end
+
+	+	"127.000.000.001\x00".toHex()   //ipAddr ; Putting enough space for 4*3 digits  + 3 Dots + 1 NULL at the end
 	;
 	let fullSize = dnsCode.byteCount();
 	let csize = fullSize - (3*1 + 4*3 + 1); //(3 Dots, 4x3 digits, NULL)
 
-	/// 3.3 - Allocate space to add our function
-	let free = Exe.FindSpace(fullSize, 0x10);
-	if (free < 0)
-		throw NO_ALLOC;
+	$$(_ + '3.3 - Allocate space to add our function')
+	let [free, freeVir] = Exe.FindSpace(fullSize, 0x10);
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
-
-	/// 3.4 - Fill in the blanks
-	dnsCode = SwapFillers(dnsCode, {
+	$$(_ + '3.4 - Fill in the blanks')
+	dnsCode = SwapFillers(dnsCode,
+	{
 		1: gResMgr - (freeVir + 5),
 		2: freeVir + csize
 	});
 
-	/// 3.5 - Add the function at the allocated space
+	$$(_ + '3.5 - Add the function at the allocated space')
 	Exe.AddHex(free, dnsCode);
 
-	/// 3.6 - Swap g_ResMgr CALL with our function
+	$$(_ + '3.6 - Swap g_ResMgr CALL with our function')
 	Exe.SetTgtAddr(addr + 1, freeVir);
 
 	return true;

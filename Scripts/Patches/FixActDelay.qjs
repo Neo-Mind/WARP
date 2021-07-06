@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2018 Functor                                             *
-*   Copyright (C) 2018-2020 Andrei Karas (4144)                            *
+*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Andrei (4144)                                 *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,19 +33,21 @@
 ///
 FixActDelay = function()
 {
-	/// 1 - Find the GetDelay CALL 
+	let _ = 'FixActDelay : ';
+
+	$$(_ + '1 - Find the GetDelay CALL')
 	let part1 =
-		FSTP([EBP, WCp])        //FSTP DWORD PTR SS:[EBP+actIndex]      
-	+	MOVSS(XMM0, [EBP, WCp]) //MOVSS XMM0, DWORD PTR SS:[EBP+actIndex]
-	+	XORPS(XMM1, XMM1)       //XORPS XMM1, XMM1
-	+	COMISS(XMM1, XMM0)      //COMISS XMM1, XMM0
-	+	MOVSS([EBP, WCp], XMM0) //MOVSS DWORD PTR SS:[EBP+actIndex], XMM0
+		FSTP([EBP, WCp])        //fstp dword ptr [ebp + actIndex]
+	+	MOVSS(XMM0, [EBP, WCp]) //movss xmm0, dword ptr [ebp + actIndex]
+	+	XORPS(XMM1, XMM1)       //xorps xmm1, xmm1
+	+	COMISS(XMM1, XMM0)      //comiss xmm1, xmm0
+	+	MOVSS([EBP, WCp], XMM0) //movss dword ptr [ebp + actIndex], xmm0
 	;
 	let part2 =
-		JB(WCp)                 //JB SHORT addr1
-	+	PUSH(EDI)               //PUSH EDI
-	+	MOV(ECX, EBX)           //MOV ECX, EBX
-	+	CALL()                  //CALL CActRes::GetDelay
+		JB(WCp)                 //jb short _skip
+	+	PUSH(EDI)               //push edi
+	+	MOV(ECX, EBX)           //mov ecx, ebx
+	+	CALL()                  //call CActRes::GetDelay
 	;
 
 	let addr = Exe.FindHex(part1 + part2);
@@ -58,7 +60,7 @@ FixActDelay = function()
 	if (index != Exe.GetUint8(addr + 7) || index != Exe.GetUint8(addr2 - 1))
 		throw Error("False match with different indices");
 
-	/// 2 - NOP out the conditional Jump
+	$$(_ + '2 - NOP out the conditional Jump')
 	Exe.SetNOPs(addr2, 2);
 
 	return true;

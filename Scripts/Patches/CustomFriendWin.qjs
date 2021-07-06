@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), X-EcutiOnner, CH.C (jchcc)              *
 *   Created Date  : 2021-01-22                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,14 +34,16 @@
 ///
 CustomFriendsLimit = function()
 {
-    /// 1.1 - Search pattern for jump to the friends window
+	let _ = 'CustomFriendsLimit : ';
+
+    $$(_ + '1.1 - Search pattern for jump to the friends window')
 	let code;
 	if (Exe.BuildDate > 20170000)
 	{
 		code =
 			MOV(EAX, [EDI, POS1WC]) // 00 mov eax, [edi+98h]
 		+	MOV(EAX, [EAX, 0x18])   // 06 mov eax, [eax+18h]
-		+	" 99"                   // 09 cdq
+		+	CDQ                     // 09 cdq
 		+	IDIV([EDI, POS2WC])     // 10 idiv dword ptr [edi+100h]
 		+	MOV([EDI, POS1WC], EAX) // 16 mov [edi+0F8h], eax
 		;
@@ -51,7 +53,7 @@ CustomFriendsLimit = function()
         code =
 			MOV(R32, [R32, POS1WC]) // 00 mov eax, [edi+90h]
 		+	MOV(R32, [R32, WCp])    // 06 mov eax, [eax+18h]
-		+	" 99"                   // 09 cdq
+		+	CDQ                     // 09 cdq
 		+	IDIV(ECX)               // 10 idiv ecx
 		+	MOV([R32, POS1WC], R32) // 12 mov [edi+0F0h], eax
 		;
@@ -61,7 +63,7 @@ CustomFriendsLimit = function()
 		code =
 			MOV(R32, [R32, WCp])    // 00 mov edx, [esi+78h]
 		+	MOV(R32, [R32, WCp])    // 03 mov eax, [edx+0Ch]
-		+   " 99"                   // 06 cdq
+		+   CDQ                     // 06 cdq
 		+	IDIV(ECX)               // 07 idiv ecx
 		+	MOV([R32, POS1WC], EAX) // 09 mov [esi+0E0h], eax
 		;
@@ -71,49 +73,51 @@ CustomFriendsLimit = function()
     if (refAddr < 0)
         throw Error("Reference pattern missing");
 
-    /// 1.2 - Now find the argument push for the max friends limit
-	let prefix = PUSH(0x28);                                    //PUSH 28
+    $$(_ + '1.2 - Now find the argument push for the max friends limit')
+	let prefix = PUSH(0x28);                                    //push 28h
 	if (Exe.Version > 10) //VC11+
 	{
 		code =
-			PUSH([R32, POS1WC])                                 //PUSH DWORD PTR DS:[reg32_A + const]
+			PUSH([R32, POS1WC])                                 //push dword ptr [regA + const]
 		+	(Exe.BuildDate > 20170000 //need to flip the order
 		?
-			LEA(R32, [EBP, NEG2WC])                             //LEA reg32_B, [EBP - multiByteStr]
-		+	PUSH([4, R32, EBP, NEG2WC])                         //PUSH DWORD PTR SS:[4*reg32_C + EBP - var_3c8]
+			LEA(R32, [EBP, NEG2WC])                             //lea regB, [ebp - multiByteStr]
+		+	PUSH([4, R32, EBP, NEG2WC])                         //push dword ptr [4*regC + ebp - var_3c8]
 		:
-			PUSH([4, R32, EBP, NEG2WC])                         //PUSH DWORD PTR SS:[4*reg32_C + EBP - var_3c8]
-		+	LEA(R32, [EBP, NEG2WC])                             //LEA reg32_B, [EBP - multiByteStr]
+			PUSH([4, R32, EBP, NEG2WC])                         //push dword ptr [4*regC + ebp - var_3c8]
+		+	LEA(R32, [EBP, NEG2WC])                             //lea regB, [ebp - multiByteStr]
 		)
 		;
 	}
 	else
 	{
 		code =
-			PUSH_R                                              //PUSH reg32_A
-		+	PUSH_R                                              //PUSH reg32_B
-		+	LEA(R32, ROC.HasFP ? [EBP, NEG2WC] : [ESP, POS2WC]) //LEA reg32_C, [LOCAL.x]
+			PUSH_R                                              //push regA
+		+	PUSH_R                                              //push regB
+		+	LEA(R32, ROC.HasFP ? [EBP, NEG2WC] : [ESP, POS2WC]) //lea regC, [LOCAL.x]
 		;
 	}
-	let suffix = PUSH(CFL_Addr);                                 //PUSH OFFSET addr; ASCII "%s(%d/%d)"
+	let suffix = PUSH(CFL_Addr);                                //push offset "%s(%d/%d)"
 
 	let addr = Exe.FindHex(prefix + code + suffix, refAddr, refAddr + 0xBC);
 	if (addr < 0)
         throw Error("PUSH Pattern missing");
 
-    // if (sprintfOffset[1] === true)
-        // logVaFunc("sprintf", offset, sprintfOffset[0]);
-    // else
-        // logRawFunc("sprintf", offset, sprintfOffset[0]);
+    /*
+	if (sprintfOffset[1] === true)
+        logVaFunc("sprintf", offset, sprintfOffset[0]);
+    else
+        logRawFunc("sprintf", offset, sprintfOffset[0]);
 
-    // logVal("max friends count", offset, [repLoc, 1]);
+    logVal("max friends count", offset, [repLoc, 1]);
+	*/
 
-	/// 2.1 - Get the new limit from user
+	$$(_ + '2.1 - Get the new limit from user')
     let value = Exe.GetUserInput("$max_friends", D_Int8, "Max Friends", "Enter Max Friends Limit", 40, {min: 1});
 	if (value === false)
 		Cancel("Limit", 40);
 
-    /// 2.2 - Replace the 28 with this value.
+    $$(_ + '2.2 - Replace the 28 with this value.')
     Exe.SetFromVar(addr + 1, "$max_friends");
 
     return true;
@@ -135,28 +139,30 @@ CustomFriendsLimit.validate = function()
 ///
 CustomPartyLimit = function()
 {
-	/// 1.1 - Find the reference pattern
+	let _ = 'CustomPartyLimit : ';
+
+	$$(_ + '1.1 - Find the reference pattern')
 	let addr = Exe.FindHex( PUSH(0xC9F) );
 	if (addr < 0)
 		throw Error("Reference pattern missing");
 
-	/// 1.2 - Find the GetNumParty call below it.
+	$$(_ + '1.2 - Find the GetNumParty call below it.')
 	let code =
-		MOV(ECX, POS4WC)	// MOV ECX, OFFSET g_session
-	+	PUSH(0xC)			// PUSH 0C
-	+	CALL()				// CALL CSession_GetNumParty
+		MOV(ECX, POS4WC)	// mov ecx, <g_session>
+	+	PUSH(0xC)			// push 0Ch
+	+	CALL()				// call CSession::GetNumParty
 	;
 
 	addr = Exe.FindHex(code, addr, addr + 0x70);
 	if (addr < 0)
 		throw Error("GetNumParty CALL missing");
 
-	/// 2.1 - Get new value from user
+	$$(_ + '2.1 - Get new value from user')
 	let val = Exe.GetUserInput('$max_party_value', D_Uint8, "Party Limit", "Enter Max Party Value", 12, {min:1, max:127});
 	if (val === false)
 		Cancel("Value", 12);
 
-	/// 2.2 - Replace the value
+	$$(_ + '2.2 - Replace the value')
 	Exe.SetFromVar(addr + 6, '$max_party_value');
 
 	return true;

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei                                                 *
 *   Created Date  : 2021-06-15                                             *
-*   Last Modified : 2021-06-19                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,13 +34,14 @@
 ///
 DrawShieldOnTop = function()
 {
-	/// 1.1 - Find the locations where the Priority string is pushed.
+	let _ = 'DrawShieldOnTop : ';
+
+	$$(_ + '1.1 - Find the locations where the Priority string is pushed')
 	let addrs = Exe.FindHexN(PUSH(DSOT_Addr));
 	if (addrs.isEmpty())
 		throw Error("String references missing");
-	
-	
-	/// 1.2 - Find the RenderSprite2 call after one of these PUSHes (In the default case)
+
+	$$(_ + '1.2 - Find the RenderSprite2 call after one of these PUSHes (In the default case)')
 	let parts =
 	[
 		MOVSS([ESP, 4], XMM0)     // movss dword ptr [esp+4], xmm0
@@ -66,7 +67,7 @@ DrawShieldOnTop = function()
 		addr = Exe.FindHex(parts, memAddr + 0x80, memAddr + 0x180);
 		return addr > 0;
 	};
-	
+
 	let foundAddr = addrs.find(findPat);
 	if (foundAddr == undefined && Exe.Version === 11)
 	{
@@ -76,11 +77,11 @@ DrawShieldOnTop = function()
 	}
 	if (addr < 0)
 		throw Error("RenderSprite2 call missing");
-	
-	/// 1.3 - Save the location of the call
+
+	$$(_ + '1.3 - Save the location of the call')
 	let hookAddr1 = addr + parts.byteCount() - 1;
-	
-	/// 1.4 - Find the call to RenderSprite after it
+
+	$$(_ + '1.4 - Find the call to RenderSprite after it')
 	parts = [
 		PUSH_EAX                 //push eax
 	+	(Exe.Version > 11
@@ -100,66 +101,61 @@ DrawShieldOnTop = function()
 	{
 		parts[0] =
 			PUSH([EBP, WCn])    //push dword ptr [LOCAL.z]
-		+	MOV(ECX, R32)       //mov ecx, regA 
+		+	MOV(ECX, R32)       //mov ecx, regA
 		;
 		addr = Exe.FindHex(parts, hookAddr1 + 5, hookAddr1 + 0x100);
 	}
 	if (addr < 0)
 		throw Error("RenderSprite call missing");
-	
-	/// 1.5 - Save the location of the call
+
+	$$(_ + '1.5 - Save the location of the call')
 	let hookAddr2 = addr + parts.byteCount() - 1;
-	
-	/// 1.6 - Look for the cnt usage towards the beginning of the function (starting point of the outer loop)
-		
+
+	$$(_ + '1.6 - Look for the cnt usage towards the beginning of the function (starting point of the outer loop)')
 	parts =
 	[
 		Exe.Version === 11
 	?
-    	MOV(EDX, [EDI, WCp])     // 14 mov edx, [edi+3Ch]
-    +	MOV(EAX, ECX)           // 17 mov eax, ecx
-	+	SUB(EAX, [EDI, WCp])     // 19 sub eax, [edi+34h]
-	:	
-    	MOV(EAX, ECX)           // 17 mov eax, ecx
-	+	SUB(EAX, [EDI, WCp])     // 19 sub eax, [edi+34h]
-	+	MOV(EDX, [EDI, WCp])     // 14 mov edx, [edi+3Ch]
+    	MOV(EDX, [EDI, WCp])    //mov edx, [edi+3Ch]
+    +	MOV(EAX, ECX)           //mov eax, ecx
+	+	SUB(EAX, [EDI, WCp])    //sub eax, [edi+34h]
+	:
+    	MOV(EAX, ECX)           //mov eax, ecx
+	+	SUB(EAX, [EDI, WCp])    //sub eax, [edi+34h]
+	+	MOV(EDX, [EDI, WCp])    //mov edx, [edi+3Ch]
 	,
-		ADD(EAX, -2)            // 22 add eax, 0FFFFFFFEh
-    +	CMP(EAX, 3)             // 25 cmp eax, 3
+		ADD(EAX, -2)            //add eax, -2
+    +	CMP(EAX, 3)             //cmp eax, 3
 	];
-	
+
 	addr = Exe.FindHex(parts, foundAddr - 0x1000, foundAddr - 0x800);
 	if (addr < 0)
 		throw Error("post-cnt assignment missing");
-	
+
 	let code =
-		MOV(R32, " 0? 00 00 00")             // 0 mov ebx/esi, 7 or 8
-	+	MOV([EBP, ALLWC], R32)  // 5 mov [ebp+cnt], ebx/esi
+		MOV(R32, " 0? 00 00 00") //mov ebx/esi, 7/8
+	+	MOV([EBP, ALLWC], R32)   //mov dword ptr [ebp + cnt], ebx/esi
 	;
-	
+
 	addr = Exe.FindLastHex(code, addr, addr - 0x40);
 	if (addr < 0)
 		throw Error("cnt assignment missing");
-	
+
 	let cntLoc = Instr.FromAddr(addr + 5).Disp;
-	
-	/// 2.1 - Allocate space for storing 0.001
-	let free = Exe.FindSpace(4);
-	if (free < 0)
-		throw NO_ALLOC;
-	
-	/// 2.2 - Add the value there.
+
+	$$(_ + '2.1 - Allocate space for storing 0.001')
+	let [free, floatAddr] = Exe.FindSpace(4);
+
+	$$(_ + '2.3 - Add the value there')
 	Exe.AddHex(free, (0.001).toIEEE());
-	
-	/// 2.3 - Save its VIRTUAL address
-	let floatAddr = Exe.Phy2Vir(free, DIFF);
-	
-	/// 2.4 - Construct the new code to be added
-	let template =	
-        MOV(EAX, [EBP, cntLoc])  // mov eax, dword ptr [ebp+cnt]
+
+	$$(_ + '2.4 - Construct the new code to be added')
+	parts =
+	[
+        MOV(EAX, [EBP, cntLoc])  // mov eax, dword ptr [ebp + cnt]
 	+	CMP(EAX, 0)              // cmp eax, 0
-    +	JNZ(0x26)                // jnz +26h
-	+	POP(EAX)                 // pop eax
+    +	JNZ(Filler(1,1))         // jnz short _skip
+	+	POP_EAX                  // pop eax
 	+	PUSH_EAX                 // push eax
 	+	MOVSS(XMM0, [EAX, 0x10]) // movss xmm0, dword ptr [eax + oow]
 	+	ADDSS(XMM0, [floatAddr]) // addss xmm0, dword ptr [floatAddr]
@@ -167,33 +163,35 @@ DrawShieldOnTop = function()
 	+	MOVSS(XMM0, [EAX, 0x14]) // movss xmm0, dword ptr [eax + oowUp]
 	+	ADDSS(XMM0, [floatAddr]) // addss xmm0, dword ptr [floatAddr]
 	+	MOVSS([EAX, 0x14], XMM0) // movss dword ptr [eax + oowUp], xmm0
-	+	PUSH(Filler(1))          // push retnAddr
-    +	MOV(EAX, Filler(2))      // mov eax, CRenderObject::RenderSprite/RenderSprite2
+	,
+		PUSH(Filler(1))          // push retnAddr ; _skip
+    +	MOV(EAX, Filler(2))      // mov eax, <CRenderObject::RenderSprite/RenderSprite2>
 	+	JMP(EAX)                 // jmp eax
-	;
-	let csize = code.byteCount();
-	
+	];
+	let [ , skipOff, csize] = MapAddrs(0, parts);
+
+	let template = SetFillTarget(parts, [1,1], skipOff, 0, 1); //_skip
+
 	[hookAddr1, hookAddr2].forEach( hookAddr =>
 	{
-		/// 2.5 - Allocate space for it (for each hook address)
-		let free = Exe.FindSpace(csize, 0x10);
-		if (free < 0)
-			throw NO_ALLOC;
-		
-		/// 2.6 - Fill in the blanks
-		code = SwapFillers(template, 
+		$$(_ + `2.5 - Allocate space for it (hookAddr = ${hookAddr})`)
+		let [free, freeVir] = Exe.FindSpace(csize, 0x10);
+
+		$$(_ + '2.6 - Fill in the blanks')
+		code = SwapFillers(template,
 		{
 			1: Exe.Phy2Vir(hookAddr + 5, CODE),
 			2: Exe.GetTgtAddr(hookAddr + 1)
-		}, 1);
-		
-		/// 2.7 - Add at allocated space
+		},
+		1);
+
+		$$(_ + '2.7 - Add at allocated space')
 		Exe.AddHex(free, code);
-		
-		/// 2.8 - Create a JMP at hookAddr to our code
-		Exe.SetJMP(hookAddr, free, PHYSICAL);
+
+		$$(_ + '2.8 - Create a JMP at hookAddr to our code')
+		Exe.SetJMP(hookAddr, freeVir);
 	});
-	
+
 	return true;
 };
 

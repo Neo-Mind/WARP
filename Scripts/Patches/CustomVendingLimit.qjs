@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-06-03                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,9 @@
 ///
 CustomVendingLimit = function()
 {
-	/// 1.1 - Find where 1,000,000,000 is PUSHed
+	let _ = 'CustomVendingLimit : ';
+
+	$$(_ + '1.1 - Find where 1,000,000,000 is PUSHed')
 	if (typeof CVL_Vir === 'undefined')
 		CVL_Vir = Exe.Phy2Vir(CVL_Phy);
 
@@ -39,43 +41,43 @@ CustomVendingLimit = function()
 	if (addr < 0)
 		throw Error("'1,000,000,000' not PUSHed");
 
-	/// 1.2 - Find the comparison with 1Billion or 1Billion+1 before the PUSH
+	$$(_ + '1.2 - Find the comparison with 1Billion or 1Billion+1 before the PUSH')
 	let newStyle = Exe.BuildDate > 20130618;
 	let limiter = (1e9 + (newStyle ? 0 : 1)).toHex(); //1B or 1B+1 in hex
 	let code =
-		limiter  //CMP reg32_A, 3B9ACA00 or 3B9ACA01 ; easier to do without opcode since it changes when reg32_A is EAX
+		limiter  //cmp regA, 3B9ACA00h or 3B9ACA01h ; easier to do without opcode since it changes when regA is EAX
 	+	(newStyle
 	?
-		JLE(WCp) //JLE SHORT addr
+		JLE(WCp) //jle short _proceed
 	:            // or
-		JL(WCp)  //JL SHORT addr
+		JL(WCp)  //jl short _proceed
 	);
 
 	addr = Exe.FindHex(code, addr - 0x10, addr);
 	if (addr < 0)
 		throw Error("First Comparison not found");
 
-	/// 1.3 - Add to comparison address set
+	$$(_ + '1.3 - Add to comparison address set')
 	let limitAddrs = [addr];
 
-	/// 1.4 - Find the MsgString CALL that gets the 0 zeny message
+	$$(_ + '1.4 - Find the MsgString CALL that gets the 0 zeny message')
 	code =
-		PUSH_1       //PUSH 1
-	+	PUSH_2       //PUSH 2
-	+	PUSH(0x25C)  //PUSH 25C ; Line no. 605
+		PUSH_1       //push 1
+	+	PUSH_2       //push 2
+	+	PUSH(0x25C)  //push 25Ch ; Line no. 605
 	;
 	addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("MsgBox CALL not found");
 
-	/// 1.5 - Find the 2nd 1B or 1B+1 comparison before the PUSHes
+	$$(_ + '1.5 - Find the 2nd 1B or 1B+1 comparison before the PUSHes')
 	code =
-		limiter  //CMP reg32_A, 3B9ACA00 or 3B9ACA01 ; easier to do without opcode since it changes when reg32_A is EAX
+		limiter  //cmp regA, 3B9ACA00h or 3B9ACA01h ; easier to do without opcode since it changes when regA is EAX
 	+	(newStyle
 	?
-		JLE(WCp) //JLE SHORT addr
+		JLE(WCp) //jle short _proceed#2
 	:            // or
-		JGE(WCp) //JGE SHORT addr
+		JGE(WCp) //jge short _limit
 	);
 
 	let addr2 = Exe.FindHex(code, addr - 0x80, addr);
@@ -87,19 +89,19 @@ CustomVendingLimit = function()
 	if (addr2 < 0)
 		throw Error("Second Comparison not found");
 
-	/// 1.6 - Add to comparison address set
+	$$(_ + '1.6 - Add to comparison address set')
 	limitAddrs.push(addr2);
 
 	if (newStyle)
 	{
-		/// 1.7 - For new style look for the additional comparisons (can range from 0 to 3)
+		$$(_ + '1.7 - For new style look for the additional comparisons (can range from 0 to 3)')
 		let code1 = CMP(R32, limiter);
 		let code1a = CMP(EAX, limiter);
 
 		let code2 =
-			PUSH_1      //PUSH 1
-		+	PUSH_2      //PUSH 2
-		+	PUSH(0x9A3) //PUSH 9A3 ; Line no. 2468
+			PUSH_1      //push 1
+		+	PUSH_2      //push 2
+		+	PUSH(0x9A3) //push 9A3h ; Line no. 2468
 		;
 
 		let code3 = MOV(R32, limiter);
@@ -128,32 +130,32 @@ CustomVendingLimit = function()
 	}
 	else
 	{
-		/// 1.8 - Find the 3rd extra comparison for oldstyle clients
+		$$(_ + '1.8 - Find the 3rd extra comparison for oldstyle clients')
 		code = code.replace(JGE(WCp), JNE(WCp));//JNE instead of JGE
 		addr = Exe.FindHex(code, addr - 0x60, addr);
 		if (addr < 0)
 			throw Error("Extra Comparison not found");
 
-		/// 1.9 - Change the JNE to JMP
+		$$(_ + '1.9 - Change the JNE to JMP')
 		Exe.SetJMP(addr + 4);
 	}
 
-	/// 2.1 - Get the new limit value from user
+	$$(_ + '2.1 - Get the new limit value from user')
 	let newLimit = Exe.GetUserInput('$vendingLimit', D_Int32, "Vending Limit", "Enter the new limit", 1e9, {min: 0});
 	if (newLimit === false)
 		Cancel("Vending Limit", 1e9);
 
-	/// 2.2 - Prepare string with commas for the newLimit similar to the original 1B string
+	$$(_ + '2.2 - Prepare string with commas for the newLimit similar to the original 1B string')
 	let str = newLimit.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '\0'; //Adding Commas every 3 digits like the original
 
-	/// 2.3 - Change the 1B string
+	$$(_ + '2.3 - Change the 1B string')
 	Exe.SetText(CVL_Phy, str);
 
-	/// 2.4 - For the old style increment the replaced value (original was also 1B+1)
+	$$(_ + '2.4 - For the old style increment the replaced value (original was also 1B+1)')
 	if (!newStyle)
 		newLimit++;
 
-	/// 2.5 - Replace the limit at all the comparison locations
+	$$(_ + '2.5 - Replace the limit at all the comparison locations')
 	limitAddrs.forEach(addr => Exe.SetInt32(addr, newLimit));
 
 	return true;

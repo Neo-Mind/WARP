@@ -85,7 +85,7 @@ if (typeof LANGTYPE === 'undefined') // avoid redefinition
 			}
 
 			$$(_ + '1.7 - Find an assignment to g_serviceType after it')
-			addr = Exe.FindHex( MOV([POS4WC], 1), addr + 5); //MOV DWORD PTR DS:[g_serviceType], 1
+			addr = Exe.FindHex( MOV([POS4WC], 1), addr + 5); //mov dword ptr ds:[g_serviceType], 1
 			if (addr < 0)
 			{
 				this.Error = new Error("LT - g_serviceType not assigned");

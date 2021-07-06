@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-01-22                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,21 +31,23 @@
 ///
 CustomCharCreateId = function()
 {
-	/// 1 - Find location where packet 0xA39 is being sent
+	let _ = 'CustomCharCreateId : ';
+
+	$$(_ + '1 - Find location where packet 0xA39 is being sent')
 	let prefix =
-		MOV(EAX, 0xA39)         //MOV EAX, 0A39h
-	+	MOV([EBP, NEG3WC], AX)  //MOV WORD PTR SS:[EBP + a39.packet_id], AX
-	+	MOVZX(EAX, [POS4WC])    //MOVZX EAX, DWORD PTR DS:[clrAddr]
-	+	MOV([EBP, NEG3WC], AX)  //MOV WORD PTR SS:[EBP + a39.hair_color], AX
-	+	MOVZX(EAX, [POS4WC])    //MOVZX EAX, DWORD PTR DS:[styleAddr]
-	+	MOV([EBP, NEG3WC], AX)  //MOV WORD PTR SS:[EBP + a39.hair_style], AX
-	+	MOV(AL, [POS4WC])       //MOV AL, BYTE PTR DS:[slotAddr]
-	+	MOV([EBP, NEG3WC], AL)  //MOV BYTE PTR SS:[EBP + a39.slot], AL
+		MOV(EAX, 0xA39)         //mov eax, 0A39h
+	+	MOV([EBP, NEG3WC], AX)  //mov word ptr [ebp + a39.packet_id], ax
+	+	MOVZX(EAX, [POS4WC])    //movzx eax, dword ptr [clrAddr]
+	+	MOV([EBP, NEG3WC], AX)  //mov word ptr [ebp + a39.hair_color], ax
+	+	MOVZX(EAX, [POS4WC])    //movzx eax, dword ptr [styleAddr]
+	+	MOV([EBP, NEG3WC], AX)  //mov word ptr [ebp + a39.hair_style], ax
+	+	MOV(AL, [POS4WC])       //mov al, byte ptr[slotAddr]
+	+	MOV([EBP, NEG3WC], AL)  //mov byte ptr [ebp + a39.slot], al
 	;
 
 	let suffix =
-		MOVSX(EAX, [POS4WC])    //MOVSX EAX, DWORD PTR DS:[jobIdAddr] <-- patch here
-	+	MOV([EBP, NEG3WC], EAX) //MOV DWORD PTR SS:[EBP + a39.starting_job_id], EAX
+		MOVSX(EAX, [POS4WC])    //movsx eax, dword ptr [jobIdAddr] <-- patch here
+	+	MOV([EBP, NEG3WC], EAX) //mov dword ptr [ebp + a39.starting_job_id], eax
 	;
 
 	let addrs = Exe.FindHexN(prefix + suffix);
@@ -55,12 +57,12 @@ CustomCharCreateId = function()
 	if (addrs.length > 1)
 		throw Error("More than 1 match found, which is too many");
 
-	/// 2.1 - Retrieve the new value from user
+	$$(_ + '2.1 - Retrieve the new value from user')
 	let newId = Exe.GetUserInput('$newJobVal', D_Uint16, "Job Id Input", "Enter the new job id", 1, {saveDefault: true});
 	if (newId === false)
 		Cancel("User didn't provide any inputs");
 
-	/// 2.2 - Change the assignment of job id
+	$$(_ + '2.2 - Change the assignment of job id')
 	Exe.SetHex(addrs[0] + prefix.byteCount(), MOV(EAX, newId) + NOP + NOP);
 
 	return true;
@@ -69,4 +71,5 @@ CustomCharCreateId = function()
 ///
 /// \brief Disable for older clients which doesn't have the packet
 ///
-CustomCharCreateId.validate = () => Exe.BuildDate >= 20151001;
+CustomCharCreateId.validate = () =>
+	Exe.BuildDate >= 20151001;
