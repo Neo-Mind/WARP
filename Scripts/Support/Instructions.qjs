@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-05-14                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -835,16 +835,18 @@ IdentifyObj('TEST');
 	['PUSHAD' , " 60"                        ],
 	['POPAD'  , " 61"                        ],
 	['CWDE'   , " 98"                        ],
+	['CDQ'    , " 99"                        ],
 	['LEAVE'  , " C9"                        ],
-	['NOP'    , " 90"                        ], //NOP
-	['NOP2'   , " 66 90"                     ], //66 NOP
-	['NOP3'   , " 0F 1F 00"                  ], //NOP DWORD PTR DS:[EAX]
-	['NOP4'   , " 0F 1F 40 00"               ], //NOP DWORD PTR DS:[EAX + 0]
-	['NOP5'   , " 0F 1F 44 00 00"            ], //NOP DWORD PTR DS:[EAX + EAX + 0]
-	['NOP6'   , " 66 0F 1F 44 00 00"         ], //NOP DWORD PTR DS:[AX + AX + 0]
-	['NOP7'   , " 0F 1F 80 00 00 00 00"      ], //NOP DWORD PTR DS:[EAX + 00000000]
-	['NOP8'   , " 0F 1F 84 00 00 00 00 00"   ], //NOP DWORD PTR DS:[EAX + EAX + 00000000]
-	['NOP9'   , " 66 0F 1F 84 00 00 00 00 00"], //NOP DWORD PTR DS:[AX + AX + 00000000]
+	['INT3'   , " CC"                        ],
+	['NOP'    , " 90"                        ],
+	['NOP2'   , " 66 90"                     ], //66 nop
+	['NOP3'   , " 0F 1F 00"                  ], //nop dword ptr [eax]
+	['NOP4'   , " 0F 1F 40 00"               ], //nop dword ptr [eax + 0]
+	['NOP5'   , " 0F 1F 44 00 00"            ], //nop dword ptr [eax + eax + 0]
+	['NOP6'   , " 66 0F 1F 44 00 00"         ], //nop dword ptr [ax + ax + 0]
+	['NOP7'   , " 0F 1F 80 00 00 00 00"      ], //nop dword ptr [eax + 00000000]
+	['NOP8'   , " 0F 1F 84 00 00 00 00 00"   ], //nop dword ptr [eax + eax + 00000000]
+	['NOP9'   , " 66 0F 1F 84 00 00 00 00 00"], //nop dword ptr [ax + ax + 00000000]
 ].forEach( pair => AssignStr(...pair) );
 
   //===================//

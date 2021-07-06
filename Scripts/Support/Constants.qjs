@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2020-12-11                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -41,11 +41,8 @@ if (typeof TAB === 'undefined')  //avoid redefinition
 ///
 /// \brief Common error messages
 ///
-if (typeof NO_ALLOC === 'undefined') //avoid redefinition
+if (typeof NO_OUTPUT === 'undefined') //avoid redefinition
 {
-	//used as error message for Exe.FindSpace
-	Assign('NO_ALLOC', 'new Error("Space Allocation failed")');
-
 	//used as error message after Exe.FileSize===0 in extensions
 	Assign('NO_EXE', 'new Error("No Valid Exe loaded")');
 
@@ -59,7 +56,7 @@ if (typeof NO_ALLOC === 'undefined') //avoid redefinition
 
 if (typeof WC === 'undefined') //avoid redefinition
 {
-	[	
+	[
 		///
 		/// \brief The Basic wild cards
 		///
@@ -95,6 +92,10 @@ if (typeof WC === 'undefined') //avoid redefinition
 		['PUSH_R'   , " [01010...]"], //5? but with 4th bit 0
 		['PUSH_EAX' , " 50"],
 		['POP_R'    , " [01011...]"], //5? but with 4th bit 1
+		['POP_EAX'  , " 58"],
+		['FP_START' , " 55 8B EC"],   //push ebp followed by mov ebp, esp
+		['FP_STOP'  , " 8B E5 5D"],   //mov esp, ebp followed by pop ebp
+
 	].forEach( pair => AssignStr(...pair) );
 }
 
@@ -166,7 +167,7 @@ if (typeof OpCodeList === 'undefined') //avoid redefinition
 
 		WithDisp32 :
 		[
-			0xA0, 0xA1, 0xA2, 0xA3,	
+			0xA0, 0xA1, 0xA2, 0xA3,
 		],
 
 		SecWithoutModRM : //Secondary opcodes without ModR/M byte - smaller list than the alternative
