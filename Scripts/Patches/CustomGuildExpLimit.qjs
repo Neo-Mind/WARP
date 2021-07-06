@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,32 +33,37 @@
 ///
 CustomGuildExpLimit = function()
 {
-	/// 1 - Find the comparison
+	let _ = 'CustomGuildExpLimit : ';
+
+	$$(_ + '1 - Find the comparison')
 	let parts =
-	[//0
-		TEST(EAX, EAX)    //TEST EAX, EAX
-	+	JS(' [0000..01]') //JS SHORT addr1 (delta is 5 or 9)
+	[
+		TEST(EAX, EAX)    //test eax, eax
+	+	JS(' [0000..01]') //js short _addr1 (delta is 5 or 9)
+
 	,//1
-		CMP(EAX, 0x32)    //CMP EAX, 32
+		CMP(EAX, 0x32)    //CMP EAX, 32h
+
 	,//2
-		JLE(Exe.Version > 11 ? WCp : POS2WC) //JLE SHORT addr2 or JLE addr2
+		JLE(Exe.Version > 11 ? WCp : POS2WC) //jle short _proceed or jle _proceed
+
 	,//3
-		PUSH_0            //PUSH 0
-	+	PUSH(0x32)        //PUSH 32
-	+	PUSH(0xD9E)       //PUSH 0D9E
-	+	CALL()            //CALL MsgStr
+		PUSH_0            //push 0 ; _addr1
+	+	PUSH(0x32)        //push 32
+	+	PUSH(0xD9E)       //push 0D9Eh
+	+	CALL()            //call MsgStr
 	]
 	;
 	let addr = Exe.FindHex(parts);
 	if (addr < 0)
 		throw Error("Limit checker missing");
 
-	/// 2.1 - Get the new value from user
+	$$(_ + '2.1 - Get the new value from user')
 	let newLimit = Exe.GetUserInput('$guildExpLimit', D_Uint8, "Exp Limit", "Enter new guild exp limit", 50, {max: 120});
 	if (newLimit === false)
 		Cancel("Exp Limit", 50);
 
-	/// 2.2 - Set the new limit
+	$$(_ + '2.2 - Set the new limit')
 	Exe.SetFromVar(addr + parts[0].byteCount() + 2, '$guildExpLimit');
 
 	return true;
@@ -67,4 +72,6 @@ CustomGuildExpLimit = function()
 ///
 /// \brief Disable for older client since comparison isnt there (atleast in the place it was supposed to be)
 ///
-CustomGuildExpLimit.validate = () => Exe.BuildDate > 20180600;
+CustomGuildExpLimit.validate = () =>
+	Exe.BuildDate > 20180600;
+

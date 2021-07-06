@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-06-12                                             *
+*   Last Modified : 2021-07-05                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -74,49 +74,51 @@ if (typeof NBV === 'undefined') //avoid redefinition
 ///
 NewButtonVis = function(patchName)
 {
+	let _ = patchName + ' : ';
+
 	if (!NBV.Loaded)
 	{
-		/// 1.1 - Find the string 'status_doram'
+		$$(_ + '1.1 - Find \'status_doram\'')
 		let addr = Exe.FindText("status_doram");
 		if (addr < 0)
 			throw Error("Reference string missing");
 
-		/// 1.2 - Find where it is used in a PUSH along with its length (12 characters)
+		$$(_ + '1.2 - Find where it is used in a PUSH along with its length (12 characters)')
 		let refAddr = Exe.FindHex(PUSH(0xC) + PUSH(addr));
 		if (refAddr < 0)
 			throw Error("Reference string not PUSHed");
 
-		/// 1.3 - Find the start of the function
+		$$(_ + '1.3 - Find the start of the function')
 		let code =
-			PUSH(EBP)     //PUSH EBP
-		+	MOV(EBP, ESP) //MOV EBP, ESP
-		+	PUSH(-1)      //PUSH -1
-		+	PUSH(POS3WC)  //PUSH OFFSET addr
+			FP_START     //push ebp
+			             //mov ebp, esp
+		+	PUSH(-1)     //push -1
+		+	PUSH(POS3WC) //push offset#1
 		;
 
 		let beginAddr = Exe.FindLastHex(code, refAddr, refAddr - 0x800);
 		if (beginAddr < 0)
 			throw Error("Function start missing");
 
-		/// 1.4 - Find all the ID assignments & string PUSHes (they will be in same order)
+		$$(_ + '1.4 - Find all the ID assignments & string PUSHes (they will be in same order)')
 		let idAssigners, strPushers;
 		if (Exe.Version === 11)
 		{
-			idAssigners = Exe.FindHexN(MOV([EBP, WCn], POS2WC), beginAddr, beginAddr + 0x100);  //MOV DWORD PTR SS:[LOCAL.x], <ID>
-			strPushers = Exe.FindHexN(PUSH(POS4WC) + " 8D [..001101]", beginAddr, refAddr);     //PUSH OFFSET name
-			                                                                                    //LEA ECX, [LOCAL.y]
+			idAssigners = Exe.FindHexN(MOV([EBP, WCn], POS2WC), beginAddr, beginAddr + 0x100);  //mov dword ptr [LOCAL.x], <ID>
+			strPushers = Exe.FindHexN(PUSH(POS4WC) + " 8D [..001101]", beginAddr, refAddr);     //push offset#2
+			                                                                                    //lea ecx, [LOCAL.y]
 		}
 		else
 		{
 			idAssigners = [
-				...Exe.FindHexN(MOVAPS(XMM0, [POS4WC]), beginAddr, beginAddr + 0x100),          //MOVAPS XMM0, DQWORD PTR DS:[memaddr]
-				...Exe.FindHexN(MOV([EBP, NEG2WC], POS2WC), beginAddr, beginAddr + 0xE0)        //MOV DWORD PTR SS:[LOCAL.x], <ID>
+				...Exe.FindHexN(MOVAPS(XMM0, [POS4WC]), beginAddr, beginAddr + 0x100),          //movaps xmm0, dqword ptr [memaddr]
+				...Exe.FindHexN(MOV([EBP, NEG2WC], POS2WC), beginAddr, beginAddr + 0xE0)        //mov dword ptr [LOCAL.x], <ID>
 			].sort();
 
 			strPushers = [
-				...Exe.FindHexN(PUSH(POS4WC) + " 0F 28", beginAddr, beginAddr + 0x100),         //PUSH OFFSET name; followed by MOVAPS XMM0, DQWORD PTR DS:[memaddr]
-				...Exe.FindHexN(PUSH(POS4WC) + " C7 [..000101]", beginAddr, refAddr),           //PUSH OFFSET name; followed by MOV DWORD PTR
-				...Exe.FindHexN(PUSH(POS4WC) + " 8D [10...101]", beginAddr, refAddr)            //PUSH OFFSET name; followed by LEA reg32, [LOCAL.x]
+				...Exe.FindHexN(PUSH(POS4WC) + " 0F 28", beginAddr, beginAddr + 0x100),         //push offset#1; followed by MOVAPS XMM0, DQword ptr [memaddr]
+				...Exe.FindHexN(PUSH(POS4WC) + " C7 [..000101]", beginAddr, refAddr),           //push offset#1; followed by MOV dword ptr
+				...Exe.FindHexN(PUSH(POS4WC) + " 8D [10...101]", beginAddr, refAddr)            //push offset#1; followed by LEA reg32, [LOCAL.x]
 			].sort();
 		}
 		if (idAssigners.isEmpty())
@@ -125,7 +127,7 @@ NewButtonVis = function(patchName)
 		if (strPushers.isEmpty())
 			throw Error("String PUSHes missing");
 
-		/// 1.5 - Extract the ID values
+		$$(_ + '1.5 - Extract the ID values')
 		let idList = [];
 		idAssigners.forEach(addr =>
 		{
@@ -146,7 +148,7 @@ NewButtonVis = function(patchName)
 		if (idList.length !== strPushers.length)
 			throw Error("Either String or ID missing");
 
-		/// 1.6 - Map & assign the IDs based on the strings PUSHed
+		$$(_ + '1.6 - Map & assign the IDs based on the strings PUSHed')
 		strPushers.forEach((addr, idx) =>
 		{
 			let str = Exe.GetText(Exe.Vir2Phy(Exe.GetInt32(addr + 1))); //the string being pushed.
@@ -154,52 +156,51 @@ NewButtonVis = function(patchName)
 			NBV.IDs[name] = idList[idx];
 		});
 
-		/// 2.1 - Find the Jump table used for switch
-		let prefix = MOVZX(EAX, BYTE_PTR, [EAX, POS4WC]); //MOVZX EAX, BYTE PTR DS:[EAX + switchTbl]
-		let suffix = JMP([4, EAX, POS4WC]);               //JMP DWORD PTR DS:[4*EAX + jumpTbl]
+		$$(_ + '2.1 - Find the Jump table used for switch')
+		let prefix = MOVZX(EAX, BYTE_PTR, [EAX, POS4WC]); //movzx eax, byte ptr [eax + switchTbl]
+		let suffix = JMP([4, EAX, POS4WC]);               //jmp dword ptr [eax*4 + jumpTbl]
 
 		addr = Exe.FindHex(prefix + suffix, refAddr + 5, refAddr + 0x60);
 		if (addr > 0)
 		{
-			/// 2.2 - If found then set the type to 1
+			$$(_ + '2.2 - If found then set the type to 1')
 			NBV.Type = 1;
 
-			/// 2.3 - Save the VIRTUAL location (serves as the returning address)
+			$$(_ + '2.3 - Save the VIRTUAL location (serves as the returning address)')
 			NBV.RetnAddr = Exe.Phy2Vir(addr, CODE);
 
-			/// 2.4 - Extract the switchTbl address
+			$$(_ + '2.4 - Extract the switchTbl address')
 			let jmpDpAddr = addr + prefix.byteCount();
 			let switchTbl = Exe.Vir2Phy(Exe.GetInt32(jmpDpAddr - 4), CODE);
 
-			/// 2.5 - Calculate the addresses for Hidden (OFF) & Visible (ON) states
+			$$(_ + '2.5 - Calculate the addresses for Hidden (OFF) & Visible (ON) states')
 			NBV.OffAddr = CaseAddr(0, addr, VIRTUAL, jmpDpAddr);
 			NBV.OnAddr  = CaseAddr(1, addr, VIRTUAL, jmpDpAddr);
 
-			/// 2.6 - Now find the limiting comparison before the switch table
-			prefix = LEA(EAX, [EBX, NEG2WC]); //LEA EAX, [EBX - limitL]
-			suffix = CMP(EAX, POS1WC);        //CMP EAX, range
+			$$(_ + '2.6 - Now find the limiting comparison before the switch table')
+			prefix = LEA(EAX, [EBX, NEG2WC]); //lea eax, [ebx - limitL]
+			suffix = CMP(EAX, POS1WC);        //cmp eax, range
 			NBV.Reg = EBX;
 
 			let addr2 = Exe.FindLastHex(prefix + suffix, addr, addr - 0x30);
 			if (addr2 < 0)
 			{
-				prefix = ADD(EAX, NEG2WC);    //ADD EAX, -limitL
+				prefix = ADD(EAX, NEG2WC);    //add eax, -limitL
 				addr2 = Exe.FindLastHex(prefix + suffix, addr, addr - 0x30);
 				NBV.Reg = EAX;
 			}
 			if (addr2 < 0)
 				throw Error("Limiting comparison missing");
 
-			/// 2.7 - Save it as our hook address
+			$$(_ + '2.7 - Save it as our hook address')
 			NBV.HookAddr = addr2;
 
-			/// 2.8 - Extract the limits
+			$$(_ + '2.8 - Extract the limits')
 			addr2 += prefix.byteCount();
 			NBV.MinLimit = -Exe.GetInt32(addr2 - 4);
 			NBV.Range = Exe.GetInt32(addr2 + 1);
 
-			/// 2.9 - Isolate the visible & hidden button names.
-			///       Also save the table address (PHYSICAL) when applicable for each button
+			$$(_ + '2.9 - Isolate the visible & hidden button names. Also save the table address (PHYSICAL) when applicable for each button')
 			NBV.Visible = [];
 			NBV.Hidden = [];
 			NBV.TblAddr = {};
@@ -226,20 +227,19 @@ NewButtonVis = function(patchName)
 		}
 		else
 		{
-			/// 3.1 - Since table is not there set the type.
-			///       The switch gets implemented with direct comparisons.
+			$$(_ + '3.1 - Since table is not there set the type. The switch gets implemented with direct comparisons')
 			NBV.Type = 2;
 
-			/// 3.2 - Find the comparisons
+			$$(_ + '3.2 - Find the comparisons')
 			prefix =
 				CMP(EBX, POS2WC) //CMP EBX, 164 or 162
 			;
 			suffix =
-				JE(POS2WC)       //JE offAddr
-			+	CMP(EBX, POS2WC) //CMP EBX, 208 or 204
-			+	JLE(0xC)         //JLE SHORT onAddr
-			+	CMP(EBX, POS2WC) //CMP EBX, 20A or 206
-			+	JLE(POS2WC)      //JLE offAddr
+				JE(POS2WC)       //je <offAddr>
+			+	CMP(EBX, POS2WC) //cmp ebx, 208h / 204h
+			+	JLE(0xC)         //jle short <onAddr>
+			+	CMP(EBX, POS2WC) //cmp ebx, 20Ah / 206h
+			+	JLE(POS2WC)      //jle <offAddr>
 			;
 			NBV.Reg = EBX;
 
@@ -253,9 +253,9 @@ NewButtonVis = function(patchName)
 			else
 			{
 				suffix =
-					JE(POS2WC)       //JE offAddr
-				+	CMP(EBX, POS2WC) //CMP EBX, 1F3 or 205
-				+	JE(POS2WC)       //JE offAddr
+					JE(POS2WC)       //je <offAddr>
+				+	CMP(EBX, POS2WC) //cmp ebx, 1F3h / 205h
+				+	JE(POS2WC)       //je <offAddr>
 				;
 
 				addr = Exe.FindHex(prefix + suffix, refAddr + 5, refAddr + 0x60);
@@ -272,11 +272,11 @@ NewButtonVis = function(patchName)
 					SUB(EAX, POS2WC) //SUB EAX, 16C or 16B or 1E9
 				;
 				suffix =
-					JZ(POS2WC)       //JZ offAddr
-				+	SUB(EAX, 0x8B)   //SUB EAX, 8B
-				+	JZ(POS2WC)       //JZ offAddr
-				+	SUB(EAX, 0x30)   //SUB EAX, 30
-				+	JZ(POS2WC)       //JZ offAddr
+					JZ(POS2WC)       //jz offAddr
+				+	SUB(EAX, 0x8B)   //sub eax, 8Bh
+				+	JZ(POS2WC)       //jz offAddr
+				+	SUB(EAX, 0x30)   //sub eax, 30h
+				+	JZ(POS2WC)       //jz offAddr
 				;
 				NBV.Reg = EAX;
 
@@ -291,9 +291,9 @@ NewButtonVis = function(patchName)
 			if (addr < 0)
 			{
 				suffix =
-					JZ(POS2WC)       //JZ offAddr
-				+	SUB(EAX, 7)      //SUB EAX, 7
-				+	JZ(POS2WC)       //JZ offAddr
+					JZ(POS2WC)       //jz <offAddr>
+				+	SUB(EAX, 7)      //sub eax, 7
+				+	JZ(POS2WC)       //jz <offAddr>
 				;
 
 				addr = Exe.FindHex(prefix + suffix, refAddr + 5, refAddr + 0x60);
@@ -306,17 +306,17 @@ NewButtonVis = function(patchName)
 			if (addr < 0)
 				throw Error("Switch case missing");
 
-			/// 3.3 - Save the location as our hook address
+			$$(_ + '3.3 - Save the location as our hook address')
 			NBV.HookAddr = addr;
 
-			/// 3.4 - Calculate the addresses for Hidden (OFF) & Visible (ON) states
+			$$(_ + '3.4 - Calculate the addresses for Hidden (OFF) & Visible (ON) states')
 			addr += prefix.byteCount();
 			NBV.OffAddr = Exe.GetTgtAddr(addr + 2);
 
 			addr += suffix.byteCount();
 			NBV.OnAddr = Exe.Phy2Vir(addr, CODE);
 
-			/// 3.5 - Isolate the visible & hidden button names.
+			$$(_ + '3.5 - Isolate the visible & hidden button names')
 			NBV.Visible = [];
 			NBV.Hidden = [];
 			NBV.TblAddr = {};
@@ -334,7 +334,7 @@ NewButtonVis = function(patchName)
 		NBV.Loaded = true;
 	}
 
-	/// 4.1 - Setup values based on patchName
+	$$(_ + '4.1 - Setup values based on patchName')
 	let varName, title, suffix, btnChoices;
 
 	let index = NBV.Patches.indexOf(patchName);
@@ -353,15 +353,15 @@ NewButtonVis = function(patchName)
 		btnChoices = NBV.Hidden;
 	}
 
-	/// 4.2 - Retrieve the user's selection.
-	let selection = Exe.GetUserInput(varName, D_MultiList, title, "Choose the buttons to be " + suffix, [], {choices: btnChoices});
+	$$(_ + '4.2 - Retrieve the user\'s selection')
+	let selection = Exe.GetUserInput(varName, D_MultiChoice, title, "Choose the buttons to be " + suffix, [], {choices: btnChoices});
 	if (selection === false || selection.isEmpty())
 		Cancel("No new buttons are " + suffix);
 
-	/// 4.3 - Save the selection
+	$$(_ + '4.3 - Save the selection')
 	NBV.Selection[index] = selection;
 
-	/// 4.4 - Call the helper to stage the changes
+	$$(_ + '4.4 - Call the helper to stage the changes')
 	_NBV_Stage(index);
 
 	return true;
@@ -372,26 +372,28 @@ NewButtonVis = function(patchName)
 ///
 _NBV_Stage = function(index)
 {
-	/// 1.1 - Get the  other patch's index
+	let _ = '_NBV_Stage : ';
+
+	$$(_ + '1.1 - Get the other patch\'s index. Current index = ' + index)
 	let otherIndex = 1 - index;
 
-	/// 1.2 - Retrieve the other patch name
+	$$(_ + '1.2 - Retrieve the other patch name')
 	let otherPatch = NBV.Patches[otherIndex];
 
-	/// 1.3 - Retrieve the selected names. Clear the other patch if its selected.
+	$$(_ + '1.3 - Retrieve the selected names. Clear the other patch if its selected')
 	let selection = NBV.Selection[index];
 
 	let otherSelection = [];
-	if (Exe.IsSelected(otherPatch))
+	if (Warp.GetPatchState(otherPatch))
 	{
 		otherSelection = NBV.Selection[otherIndex];
 		Exe.ClearPatch(otherPatch);
 	}
 
-	/// 2.1 - Prepare the array to store IDs of newly visible buttons (Used for Type 2)
+	$$(_ + '2.1 - Prepare the array to store IDs of newly visible buttons (Used for Type 2)')
 	let onIDs = [];
 
-	/// 2.2 - Iterate through the current selection and change the value in table or add corresponding JE to code.
+	$$(_ + '2.2 - Iterate through the current selection and change the value in table or add corresponding JE to code')
 	let prefix = '';
 	selection.forEach(key =>
 	{
@@ -403,8 +405,8 @@ _NBV_Stage = function(index)
 		{
 			let ID = NBV.IDs[key];
 			prefix +=
-				CMP(NBV.Reg, ID) //CMP reg32, ID
-			+	JE(Filler(1))    //JE onAddr/offAddr
+				CMP(NBV.Reg, ID) //cmp regA, ID
+			+	JE(Filler(1))    //je <onAddr> / je <offAddr>
 			;
 
 			if (index === 1 && NBV.Type === 2)
@@ -412,7 +414,7 @@ _NBV_Stage = function(index)
 		}
 	});
 
-	/// 2.3 - Repeat the process for the other selection
+	$$(_ + '2.3 - Repeat the process for the other selection')
 	let suffix = '';
 	otherSelection.forEach(key =>
 	{
@@ -424,8 +426,8 @@ _NBV_Stage = function(index)
 		{
 			let ID = NBV.IDs[key];
 			suffix +=
-				CMP(NBV.Reg, ID) //CMP reg32, ID
-			+	JE(Filler(2))    //JE offAddr/onAddr
+				CMP(NBV.Reg, ID) //cmp regA, ID
+			+	JE(Filler(2))    //je <offAddr> / je <onAddr>
 			;
 
 			if (otherIndex === 1 && NBV.Type === 2)
@@ -435,7 +437,7 @@ _NBV_Stage = function(index)
 
 	if (!prefix.isEmpty() || !suffix.isEmpty())
 	{
-		/// 2.4 - Now combine the parts
+		$$(_ + '2.4 - Now combine the parts')
 		let code =
 			prefix
 		+	suffix
@@ -444,10 +446,10 @@ _NBV_Stage = function(index)
 		if (NBV.Type === 1)
 		{
 			code +=
-				LEA(EAX, [NBV.Reg, -NBV.MinLimit]) //LEA EAX, [reg32 - minLimit]
-			+	CMP(EAX, NBV.Range)                //CMP EAX, range
-			+	JA(Filler(3))                      //JA onAddr
-			+	JMP(Filler(4))                     //JMP retnAddr; address of the MOVZX
+				LEA(EAX, [NBV.Reg, -NBV.MinLimit]) //lea eax, [regA - minLimit]
+			+	CMP(EAX, NBV.Range)                //cmp eax, <range>
+			+	JA(Filler(3))                      //ja <onAddr>
+			+	JMP(Filler(4))                     //jmp <retnAddr> ; address of the MOVZX
 			;
 		}
 		else
@@ -458,24 +460,20 @@ _NBV_Stage = function(index)
 					return;
 
 				code +=
-					CMP(NBV.Reg, ID)       //CMP reg32, ID
-				+	JZ(Filler(3))          //JZ offAddr
+					CMP(NBV.Reg, ID)       //cmp regA, ID
+				+	JZ(Filler(3))          //jz <offAddr>
 				;
 			});
 
 			code +=
-				JMP(Filler(4))             //JMP onAddr
+				JMP(Filler(4))             //jmp <onAddr>
 			;
 		}
 
-		/// 2.5 - Find space for the code
-		let free = Exe.FindSpace(code.byteCount());
-		if (free < 0)
-			throw NO_ALLOC;
+		$$(_ + '2.5 - Find space for the code')
+		let [free, freeVir] = Exe.FindSpace(code.byteCount());
 
-		let freeVir = Exe.Phy2Vir(free, DIFF);
-
-		/// 2.6 - Fill in the blanks
+		$$(_ + '2.6 - Fill in the blanks')
 		code = SetFillTargets(code, index === 0 ? {1: NBV.OffAddr, 2: NBV.OnAddr} : {1: NBV.OnAddr, 2: NBV.OffAddr}, freeVir);
 
 		if (NBV.Type === 1)
@@ -483,10 +481,10 @@ _NBV_Stage = function(index)
 		else
 			code = SetFillTargets(code, {3: NBV.OffAddr, 4: NBV.OnAddr}, freeVir);
 
-		/// 2.7 - Insert at allocated space
+		$$(_ + '2.7 - Insert at allocated space')
 		Exe.AddHex(free, code);
 
-		/// 2.8 - Set a JMP to the code at HookAddr
+		$$(_ + '2.8 - Set a JMP to the code at HookAddr')
 		Exe.SetJMP(NBV.HookAddr, freeVir);
 	}
 };
@@ -510,7 +508,7 @@ NewButtonVis.cleanup = function(patchName)
 	let otherIndex = 1 - NBV.Patches.indexOf(patchName);
 	let otherPatch = NBV.Patches[otherIndex];
 
-	if (Exe.IsSelected(otherPatch))
+	if (Warp.GetPatchState(otherPatch))
 	{
 		Exe.SetActivePatch(otherPatch);
 		Exe.ClearPatch(otherPatch);

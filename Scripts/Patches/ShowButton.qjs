@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,115 +33,115 @@
 ///
 ShowRegisterBtn = function()
 {
-	/// 1.1 - Ensure the LANGTYPE is loaded
-	LANGTYPE.load();
+	let _ = 'ShowRegisterBtn : ';
 
-	/// 1.2 - Find the registration URL
+	$$(_ + '1.1 - Find the registration URL')
 	let addr = Exe.FindText("http://ro.hangame.com/login/loginstep.asp?prevURL=/NHNCommon/NHN/Memberjoin.asp");
 	if (addr < 0)
 		throw Error("Registration URL not found");
 
-	/// 1.3 - Find where it is used in a PUSH (which will be inside UILoginWnd::SendMsg)
+	$$(_ + '1.2 - Find where it is used in a PUSH (which will be inside UILoginWnd::SendMsg)')
 	addr = Exe.FindHex( PUSH(addr) );
 	if (addr < 0)
 		throw Error("Registration URL not PUSHed");
 
-	/// 2.1 - Look for the Langtype comparison before the PUSH (within 0x30 bytes)
+	$$(_ + '1.3 - Ensure the LANGTYPE is loaded')
+	LANGTYPE.load();
+
+	$$(_ + '2.1 - Look for the Langtype comparison before the PUSH (within 0x30 bytes)')
 	let prefix, jnePos; //jnePos indicates position of the JNE opcode w.r.t. end of prefix
 	if (Exe.Version === 6) //VC6
 	{
 		prefix =
-			MOV(EAX, [LANGTYPE])   //MOV EAX, DWORD PTR DS:[g_serviceType]
-		+   TEST(EAX, EAX)         //TEST EAX, EAX
-		+   JNE(POS2WC)            //JNE addr
+			MOV(EAX, [LANGTYPE])   //mov eax, dword ptr [g_serviceType]
+		+   TEST(EAX, EAX)         //test eax, eax
+		+   JNE(POS2WC)            //jne _skip
 		;
 		jnePos = -6;
 	}
 	else //VC9 - VC11
 	{
 		prefix =
-			CMP([LANGTYPE], 0)   //CMP DWORD PTR DS:[g_serviceType], 0
-		+   JNE(WCp)             //JNE SHORT addr
+			CMP([LANGTYPE], 0)    //cmp dword ptr [g_serviceType], 0
+		+   JNE(WCp)              //jne short _skip
 		;
 		jnePos = -2;
 	}
 
 	let suffix =
-		CMP([POS4WC], 1)     //CMP DWORD PTR DS:[g_isGravityID], 1
-	+   JNE(WCp)             //JNE SHORT addr
+		CMP([POS4WC], 1)          //cmp dword ptr [g_isGravityID], 1
+	+   JNE(WCp)                  //jne short _skip#2
 	;
 
 	let cmpAddr = Exe.FindHex(prefix + suffix, addr - 0x30, addr);
 	if (cmpAddr < 0)
 		throw Error("First Langtype comparison not found");
 
-	/// 2.2 - Update cmpAddr to location after first JNE
+	$$(_ + '2.2 - Update cmpAddr to location after first JNE')
 	cmpAddr += prefix.byteCount();
 
-	/// 2.3 - Change the first JNE
+	$$(_ + '2.3 - Change the first JNE')
 	Exe.SetJMP(cmpAddr + jnePos);
 
-	/// 3.1 - Goto the jumped address
+	$$(_ + '3.1 - Goto the jumped address')
 	let travel = (jnePos === -2) ? 1 : 4;
 	let jmpedAddr = Exe.GetTgtAddr(cmpAddr - travel, PHYSICAL, travel);
 
-	/// 3.2 - Prep new function code to use as replacement for CModeMgr::Quit (original one will get overwritten by RestoreLoginWindow)
+	$$(_ + '3.2 - Prep new function code to use as replacement for CModeMgr::Quit (original one will get overwritten by RestoreLoginWindow)')
 	let code =
-		MOV(EAX, [ECX, 4])   //MOV EAX, DWORD PTR DS:[ECX+4]
-	+   MOV([EAX, 0x14], 0)  //MOV DWORD PTR DS:[EAX+14], 0
-	+   MOV([ECX], 0)        //MOV DWORD PTR DS:[ECX], 0
-	+   RETN()               //RETN
+		MOV(EAX, [ECX, 4])   //mov eax, dword ptr [ecx+4]
+	+   MOV([EAX, 0x14], 0)  //mov dword ptr [eax+14h], 0
+	+   MOV([ECX], 0)        //mov dword ptr [ecx], 0
+	+   RETN()               //retn
 	;
 
-	/// 3.3 - Allocate space to add the function
-	let free = Exe.FindSpace(code.byteCount(), 0x10);
-	if (free < 0)
-		throw NO_ALLOC;
+	$$(_ + '3.3 - Allocate space to add the function')
+	let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
-	/// 3.4 - Add the function there
+	$$(_ + '3.4 - Add the function there')
 	Exe.AddHex(free, code);
 
-	/// 3.5 - Change the CALLed address from CModeMgr::Quit to our function
-	Exe.SetTgtAddr(jmpedAddr + 6, free, PHYSICAL); //5 for the MOV ECX, g_modeMgr & 1 for opcode of CALL CModeMgr::Quit
+	$$(_ + '3.5 - Change the CALLed address from CModeMgr::Quit to our function')
+	Exe.SetTgtAddr(jmpedAddr + 6, freeVir); //5 for the MOV ECX, g_modeMgr & 1 for opcode of CALL CModeMgr::Quit
 
-	/// 4.1 - Find location of 'btn_request_b' (the prefix string for the button in pressed state)
+	$$(_ + '4.1 - Find \'btn_request_b\' (the prefix string for the button in pressed state)')
 	let btnAddr = Exe.FindText("btn_request_b");
 	if (btnAddr < 0)
 		throw Error("'btn_request_b' not found");
 
-	/// 4.2 - Find where it is assigned
+	$$(_ + '4.2 - Find where it is assigned')
 	if (Exe.Version === 9) //VC9
 	{
 		addr = Exe.FindHex( ROC.HasFP ?
-			MOV([EBP, WCp], btnAddr)
-		:
-			MOV([ESP, POS2WC], btnAddr)
+			MOV([EBP, WCp], btnAddr)    //mov dword ptr [ebp+disp8A], <btnAddr>
+		:                               //   OR
+			MOV([ESP, POS2WC], btnAddr) //mov dword ptr [esp+dispA], <btnAddr>
 		);
 	}
 	else //VC6, VC10, VC11
 	{
 		addr = Exe.FindHex( ROC.HasFP ?
-			MOV([EBP, NEG2WC], btnAddr)
-		:
-			MOV([ESP, WCn], btnAddr)
+			MOV([EBP, NEG2WC], btnAddr) //mov dword ptr [ebp-dispB], <btnAddr>
+		:                               //   OR
+			MOV([ESP, WCn], btnAddr)    //mov dword ptr [esp-disp8B], <btnAddr>
 		);
 	}
 
 	if (addr < 0)
 		throw Error("'btn_request_b' not assigned");
 
-	/// 4.3 - Find the Langtype comparison after the assignment
+	$$(_ + '4.3 - Find the Langtype comparison after the assignment')
 	code =
-		CMP(R32, 3)             //CMP reg32, 03 ; 03 is for register button
-	+   JNE(0x25)               //JNE SHORT addr
-	+   MOV(EAX, [LANGTYPE])    //MOV EAX, DWORD PTR DS:[g_serviceType]
+		CMP(R32, 3)             //cmp regA, 3 ; 03 is for register button
+	+   JNE(0x25)               //jne short _skip#3
+	+   MOV(EAX, [LANGTYPE])    //mov eax, dword ptr [g_serviceType]
 	;
 
 	cmpAddr = Exe.FindHex(code, addr + 0xA0, addr + 0x100);
 	if (cmpAddr < 0)
 		throw Error("Second Langtype comparison not found");
 
-	/// 4.4 - Change the conditional jump (This way no Langtype check occurs for any of the login window buttons)
+	$$(_ + '4.4 - Change the conditional jump (This way no Langtype check occurs for any of the login window buttons)')
 	Exe.SetJMP(cmpAddr + 3);
 
 	return true;
@@ -158,56 +158,58 @@ ShowRegisterBtn.validate = () =>
 ///
 ShowCancelBtn = function()
 {
-	/// 1.1 - Find location of 'btn_intro_b'
+	let _ = 'ShowCancelBtn : ';
+
+	$$(_ + '1.1 - Find \'btn_intro_b\'')
 	let btnAddr = Exe.FindText("btn_intro_b");
 	if (btnAddr < 0)
 		throw Error("'btn_intro_b' not found");
 
-	/// 1.2 - Find where it is assigned (inside UILoginWnd::OnCreate)
+	$$(_ + '1.2 - Find where it is assigned (inside UILoginWnd::OnCreate)')
 	let code;
 	if (Exe.Version === 9) //VC9 didn't use FP
-		code = MOV([ESP, POS2WC], btnAddr);
+		code = MOV([ESP, POS2WC], btnAddr);  //mov dword ptr [esp + dispC], <btnAddr>
 	else
-		code = MOV( ROC.HasFP ? [EBP, NEG2WC] : [ESP, WCn], btnAddr);
+		code = MOV( ROC.HasFP ? [EBP, NEG2WC] : [ESP, WCn], btnAddr); //mov dword ptr [ebp/esp - dispC], <btnAddr>
 
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("'btn_intro_b' not assigned");
 
-	/// 1.3 - Set addr to the MOV instruction after the assignment
+	$$(_ + '1.3 - Set addr to the MOV instruction after the assignment')
 	addr += code.byteCount();
 
-	/// 2.1 - Find the X-coord assignment of login button (btn_connect)
+	$$(_ + '2.1 - Find the X-coord assignment of login button (btn_connect)')
 	let reg = ROC.HasFP ? EBP : ESP;
-	code = MOV([reg, WC], 0xBD); //MOV DWORD PTR SS:[EBP-x], 0BD or //MOV DWORD PTR SS:[ESP+x], 0BD
+	code = MOV([reg, WC], 0xBD); //mov dword ptr [ebp - disp8C], 0BDh OR mov dword ptr [esp + disp8C], 0BDh
 
 	let addr2 = Exe.FindHex(code, addr, addr + 0x40);
 
 	if (addr2 < 0) //x > 0x7F (haven't seen it so far though)
 	{
-		code = MOV([reg, ROC.HasFP ? NEG1WC : POS1WC], 0xBD); //MOV DWORD PTR SS:[EBP-x], 0BD or //MOV DWORD PTR SS:[ESP+x], 0BD
+		code = MOV([reg, ROC.HasFP ? NEG1WC : POS1WC], 0xBD); //mov dword ptr [ebp - dispD], 0BDh OR mov dword ptr [esp + dispD], 0BDh
 		addr2 = Exe.FindHex(code, addr, addr + 0x40);
 	}
 	if (addr2 < 0)
 		throw Error("'btn_connect' coordinate not found");
 
-	/// 2.2 - Set addr to location after the X-Coord assignment
+	$$(_ + '2.2 - Set addr to location after the X-Coord assignment')
 	addr = addr2 + code.byteCount();
 
-	/// 2.3 - Change 0xBD to 0x90 (its not a NOP xD)
+	$$(_ + '2.3 - Change 0BDh to 90h (its not a NOP xD)')
 	Exe.SetInt32(addr - 4, 0x90);
 
-	/// 3.1 - Find the X-Coord assignment of cancel button (btn_cancel)
+	$$(_ + '3.1 - Find the X-Coord assignment of cancel button (btn_cancel)')
 	code = code.replace("BD 00", "B2 01"); //swap 0BD with 1B2 in the search pattern
 
 	addr = Exe.FindHex(code, addr, addr + 0x30);
 	if (addr < 0)
 		throw Error("'btn_cancel' coordinate not found");
 
-	/// 3.2 - Set addr to location after the X-Coord assignment
+	$$(_ + '3.2 - Set addr to location after the X-Coord assignment')
 	addr += code.byteCount();
 
-	/// 3.3 - Change Change 0x1B2 to 0xBD
+	$$(_ + '3.3 - Change Change 1B2h to 0BDh')
 	Exe.SetInt32(addr - 4, 0xBD);
 
 	return true;
@@ -225,58 +227,59 @@ ShowCancelBtn.validate = HasHiddenLogWin;
 ///
 ShowReplayBtn = function()
 {
-	/// 1.1 - Move Select Server Button to visible area
+	let _ = 'ShowReplayBtn : ';
+
+	$$(_ + '1.1 - Move Select Server Button to visible area')
 	_SRB_FixupBtnCoords("replay_interface\\btn_selectserver_a", "Select Server - ", " C7", " 89");
 
-	/// 1.2 - Move Replay Button to visible area
+	$$(_ + '1.2 - Move Replay Button to visible area')
 	let jmpAddr = _SRB_FixupBtnCoords("replay_interface\\btn_replay_a", "Replay - ", " E8", " E8");
 
 	if (Exe.Version <= 11)
 	{
-		/// 2.1 - Service and Server select both use the same Window.
-		///       so look for the mode comparison to distinguish
+		$$(_ + '2.1 - Service and Server select both use the same Window, so look for the mode comparison to distinguish')
 		let code =
-			CMP([EAX, 4], 0x1E)  //CMP DWORD PTR DS:[EAX+4], 1E
-		+   JNE(WCp)             //JNE SHORT addr
+			CMP([EAX, 4], 0x1E)  //cmp dword ptr [eax+4], 1Eh
+		+   JNE(WCp)             //jne short _skip
 		;
 		let addr = Exe.FindHex(code, jmpAddr, jmpAddr + 0x40);
 		if (addr < 0)
 			throw Error("Mode comparison not found");
 
-		/// 2.2 - Change the value to Mode 6 (Server Select)
+		$$(_ + '2.2 - Change the value to Mode 6 (Server Select)')
 		Exe.SetInt8(addr + 3, 6);
 	}
 
-	/// 3.1 - Find the ShowMsg case
+	$$(_ + '3.1 - Find the ShowMsg case')
 	let code =
-		PUSH_0           //PUSH 0
-	+	PUSH_0           //PUSH 0
+		PUSH_0           //push 0
+	+	PUSH_0           //push 0
 	+	(Exe.Version > 11
 	?
-		MOV(R32, [R32])  //MOV reg32_A, DWORD PTR DS:[reg32_B]
+		MOV(R32, [R32])  //mov regA, dword ptr [regB]
 	:
 		''
 	)
-	+	PUSH_0           //PUSH 0
-	+	PUSH(0x2729)     //PUSH 2729
+	+	PUSH_0           //push 0
+	+	PUSH(0x2729)     //push 2729h
 	;
 
 	addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Select Server case not found");
 
-	/// 3.2 - Save the location after last PUSH
+	$$(_ + '3.2 - Save the location after last PUSH')
 	let retnAddr = addr + code.byteCount();
 
-	/// 3.3 - Find the Replay Mode Enable bit setting
+	$$(_ + '3.3 - Find the Replay Mode Enable bit setting')
 	let parts = [
-		MOV(BYTE_PTR, [EAX, WCp], 1)	//MOV BYTE PTR DS:[EAX + const], 1
+		MOV(BYTE_PTR, [EAX, WCp], 1)	//mov byte ptr [eax + disp8A], 1
 	,
-		MOV(BYTE_PTR, [EAX, POS1WC], 1)	//MOV BYTE PTR DS:[EAX + const], 1
+		MOV(BYTE_PTR, [EAX, POS1WC], 1)	//mov byte ptr [eax + dispA], 1
 	,
-		XOR(R32, R32)					//XOR reg32_A, reg32_B
+		XOR(R32, R32)					//xor regA, regB
 	,
-		MOV([R32, 0xC], 0x1B)			//MOV DWORD PTR DS:[reg32_A + 0C], 1B
+		MOV([R32, 0xC], 0x1B)			//mov dword ptr [regA + 0Ch], 1Bh
 	];
 
 	let addr2;
@@ -302,40 +305,38 @@ ShowReplayBtn = function()
 	if (addr2 < 0)
 		throw Error("Replay mode setter not found");
 
-	/// 3.4 - Get the Function address before the setter
+	$$(_ + '3.4 - Get the Function address before the setter')
 	let funcAddr = Exe.GetTgtAddr(addr2 - 4);
 
-	/// 3.5 - Extract the move instruction & change 1 to 0
+	$$(_ + '3.5 - Extract the move instruction & change 1 to 0')
 	let ins = Instr.FromAddr(addr2);
 	ins.Imm = 0;
 
-	/// 4.1 - Prep code to disable the Replay Mode and send 2722 instead of 2729
+	$$(_ + '4.1 - Prep code to disable the Replay Mode and send 2722h instead of 2729h')
 	code =
-		PUSHAD           //PUSHAD
-	+	CALL(Filler(1))  //CALL funcAddr
-	+	ins              //MOV BYTE PTR DS:[EAX + const], 1
-	+	POPAD            //POPAD
-	+	PUSH(0x2722)     //PUSH 2722
-	+	JMP(Filler(2))   //JMP retnAddr
+		PUSHAD           //pushad
+	+	CALL(Filler(1))  //call <funcAddr>
+	+	ins              //mov byte ptr [eax + dispA], 1
+	+	POPAD            //popad
+	+	PUSH(0x2722)     //push 2722h
+	+	JMP(Filler(2))   //jmp <retnAddr>
 	;
 
-	/// 4.2 - Allocate space to add the code
-	let free = Exe.FindSpace(code.byteCount(), 0x10);
-	if (free < 0)
-		throw NO_ALLOC;
+	$$(_ + '4.2 - Allocate space to add the code')
+	let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
-
-	/// 4.3 - Fill in the blanks
-	code = SetFillTargets(code, {
+	$$(_ + '4.3 - Fill in the blanks')
+	code = SetFillTargets(code,
+	{
 		1 : funcAddr,
 		2 : Exe.Phy2Vir(retnAddr, CODE)
-	}, freeVir, 1);
+	},
+	freeVir, 1);
 
-	/// 4.4 - Add the code at the allocated space
+	$$(_ + '4.4 - Add the code at the allocated space')
 	Exe.AddHex(free, code);
 
-	/// 4.5 - Create a JMP to our code from ShowMsg
+	$$(_ + '4.5 - Create a JMP to our code from ShowMsg')
 	Exe.SetJMP(addr - 5, freeVir);
 
 	return true;
@@ -351,32 +352,34 @@ ShowReplayBtn.validate = () => Exe.FindText("replay_interface\\btn_replay_b", PH
 ///
 _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 {
-	/// 1.1 - Find the Button Image path
-	let addr = Exe.FindText(btnImg, false);
+	let _ = '_SRB_FixupBtnCoords : ';
+
+	$$(_ + '1.1 - Find the Button Image path')
+	let addr = Exe.FindText(btnImg, CASE_INSENSITIVE, false);
 	if (addr < 0)
 		throw Error(msgPrefix + "Button String not found");
 
-	/// 1.2 - Find where its assigned inside the UI*Wnd::OnCreate function
+	$$(_ + '1.2 - Find where its assigned inside the UI*Wnd::OnCreate function')
 	addr = Exe.FindHex(addr.toHex() + " C7");
 	if (addr < 0)
 		throw Error(msgPrefix + "OnCreate function not found");
 
-	/// 1.3 - Set addr to location after the assignment
+	$$(_ + '1.3 - Set addr to location after the assignment')
 	addr += 5;
 
-	/// 2.1 - Find the coordinate assignment for the Cancel/Exit button
+	$$(_ + '2.1 - Find the coordinate assignment for the Cancel/Exit button')
 	addr = Exe.FindHex( (0xEA).toHex(), addr, addr + 0x50);
 	if (addr < 0)
 		throw Error(msgPrefix + "Second Button assignment not found");
 
-	/// 2.3 - Find the coordinate assignment for the button we need
+	$$(_ + '2.2 - Find the coordinate assignment for the button we need')
 	let reg = (ROC.HasFP ? EBP : ESP);
 	let code, type;
 	if (Exe.Version >= 11)//reg will be EBP since client has not done FPO since VC11
 	{
 		code =
-			MOV([reg, WC], -0x64)    //MOV DWORD PTR SS:[reg + x], -64 ; x-coord
-		+	MOV([reg, WC], -0x64)    //MOV DWORD PTR SS:[reg + y], -64 ; y-coord
+			MOV([reg, WC], -0x64)    //mov dword ptr [ebp/esp + dispX], -64 ; x-coord
+		+	MOV([reg, WC], -0x64)    //mov dword ptr [ebp/esp + dispY], -64 ; y-coord
 		+	(Exe.Version > 11 ? suffix : suffix2)
 		;
 		type = 1; //VC11+
@@ -384,8 +387,8 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 	else
 	{
 		code =
-			MOV([reg, WC], R32)      //MOV DWORD PTR SS:[reg + x], reg32_A ; x-coord
-		+	MOV([reg, WC], R32)      //MOV DWORD PTR SS:[reg + y], reg32_A ; y-coord
+			MOV([reg, WC], R32)      //mov dword ptr [ebp/esp + dispX], regA ; x-coord
+		+	MOV([reg, WC], R32)      //mov dword ptr [ebp/esp + dispY], regA ; y-coord
 		+	suffix
 		;
 		type = (ROC.HasFP ? 2 : 3) ; //2 for VC10 and 3 for VC9
@@ -395,10 +398,10 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 	if (jmpAddr < 0)
 		throw Error(msgPrefix + "Coordinate assignment not found");
 
-	/// 2.3 - Save the location after the match
+	$$(_ + '2.3 - Save the location after the match')
 	let retnAddr = jmpAddr + code.byteCount() - 1;
 
-	/// 3.1 - Prepare code to replace/insert
+	$$(_ + '3.1 - Prepare code to replace/insert')
 	let xOff, yOff, yOk;
 	switch (type)
 	{
@@ -408,9 +411,9 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 			yOff = Exe.GetInt8(retnAddr - 5);//should be xOff + 4 but still
 
 			code =
-				MOV([EBP, xOff], 4)    //MOV DWORD PTR DS:[EBP - x], 4 ;just need to swap -64 with 4
-			+	MOV([EBP, yOff], EAX)  //MOV DWORD PTR DS:[EBP - y], EAX
-			+	NOP.repeat(4)          //NOP x4
+				MOV([EBP, xOff], 4)    //mov dword ptr [ebp - dispX], 4 ;just need to swap -64 with 4
+			+	MOV([EBP, yOff], EAX)  //mov dword ptr [ebp - dispY], eax
+			+	NOP.repeat(4)          //nop x4
 			;
 			break;
 		}
@@ -421,12 +424,12 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 			yOk = xOff - 20;
 
 			code =
-				PUSH_EAX              //PUSH EAX ; needed since we lost the y-coord we need to retrieve it from the OK button
-			+	MOV(EAX, [EBP, yOk])  //MOV EAX, DWORD PTR DS:[EBP - yOk]
-			+	MOV([EBP, xOff], 4)   //MOV DWORD PTR DS:[EBP - x], 4
-			+	MOV([EBP, yOff], EAX) //MOV DWORD PTR DS:[EBP - y], EAX
-			+	POP(EAX)              //POP EAX
-			+	JMP(Filler(1))        //JMP retnAddr
+				PUSH_EAX              //push eax ; needed since we lost the y-coord we need to retrieve it from the OK button
+			+	MOV(EAX, [EBP, yOk])  //mov eax, dword ptr [ebp - yOk]
+			+	MOV([EBP, xOff], 4)   //mov dword ptr [ebp - dispX], 4
+			+	MOV([EBP, yOff], EAX) //mov dword ptr [ebp - dispY], eax
+			+	POP(EAX)              //pop eax
+			+	JMP(Filler(1))        //jmp <retnAddr>
 			;
 			break;
 		}
@@ -436,15 +439,15 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 			yOff = Exe.GetInt8(retnAddr - 1);//should be xOff + 4 but still
 
 			code =
-				MOV([ESP, xOff], 4)   //MOV DWORD PTR DS:[ESP + x], 4
-			+	MOV([ESP, yOff], EAX) //MOV DWORD PTR DS:[ESP + y], EAX
-			+	JMP(Filler(1))        //JMP retnAddr
+				MOV([ESP, xOff], 4)   //mov dword ptr [esp + dispX], 4
+			+	MOV([ESP, yOff], EAX) //mov dword ptr [esp + dispY], eax
+			+	JMP(Filler(1))        //jmp <retnAddr>
 			;
 			break;
 		}
 	}
 
-	/// 3.2 - For VC11+ we can simply replace at appropriate area after the match (there is enough space)
+	$$(_ + '3.2 - For VC11+ we can simply replace at appropriate area after the match (there is enough space)')
 	let csize = code.byteCount();
 	if (type === 1) //VC11 & VC14.16
 	{
@@ -452,20 +455,16 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 	}
 	else //VC9 & VC10
 	{
-		/// 3.3 - For the others, allocate space to add the code
-		let free = Exe.FindSpace(csize, 0x10);
-		if (free < 0)
-			throw NO_ALLOC;
+		$$(_ + '3.3 - For the others, allocate space to add the code')
+		let [free, freeVir] = Exe.FindSpace(csize, 0x10);
 
-		let freeVir = Exe.Phy2Vir(free, DIFF);
-
-		/// 3.4 - Fill in the blanks
+		$$(_ + '3.4 - Fill in the blanks')
 		code = SetFillTarget(code, 1, Exe.Phy2Vir(retnAddr, CODE), freeVir, 1);
 
-		/// 3.5 - Add the code at the allocated space
+		$$(_ + '3.5 - Add the code at the allocated space')
 		Exe.AddHex(free, code);
 
-		/// 3.6 - Create a JMP to our code at jmpAddr
+		$$(_ + '3.6 - Create a JMP to our code at jmpAddr')
 		Exe.SetJMP(jmpAddr, freeVir);
 	}
 

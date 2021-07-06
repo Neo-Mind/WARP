@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -85,7 +85,7 @@ if (typeof SRVRTYPE === 'undefined') // avoid redefinition
 			}
 
 			$$(_ + '1.7 - Find an assignment to g_serverType after it')
-			addr = Exe.FindHex( MOV([POS4WC], 1), addr + 5); //MOV DWORD PTR DS:[g_serverType], 1
+			addr = Exe.FindHex( MOV([POS4WC], 1), addr + 5); //mov dword ptr [g_serverType], 1
 			if (addr < 0)
 			{
 				this.Error = new Error("ST - g_serverType not assigned");

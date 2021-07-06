@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-03-02	                                           *
+*   Last Modified : 2021-07-02	                                           *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,21 +31,23 @@
 ///
 AlwaysAscii = function()
 {
-	/// 1 - Find the comparison
+	let _ = 'AlwaysAscii : '
+
+	$$(_ + '1 - Find the comparison')
 	let code;
 	if (Exe.Version <= 11) //VC6 - VC11
 	{
 		code =
-			TEST(BYTE_PTR, [R32, R32], 0x80)  //TEST BYTE PTR DS:[reg32_A + reg32_B], 80
-		+	JNZ(WCp)                          //JNZ SHORT addr
+			TEST(BYTE_PTR, [R32, R32], 0x80)  //test byte ptr [regA + regB], 80h
+		+	JNZ(WCp)                          //jnz short _skip
 		;
 	}
 	else
 	{
 		code =
-			CMP(BYTE_PTR, [R32, R32], 0)      //CMP BYTE PTR DS:[reg32_A + reg32_B], 0
-		+	JL(WCp)                           //JL SHORT addr
-		+	INC(R32)                          //INC reg32_C
+			CMP(BYTE_PTR, [R32, R32], 0)      //cmp byte ptr [regA + regB], 0
+		+	JL(WCp)                           //jl short _skip
+		+	INC(R32)                          //inc regC
 		;
 	}
 
@@ -53,7 +55,7 @@ AlwaysAscii = function()
 	if (addr < 0)
 		throw Error("IsOnlyEnglish not found");
 
-	/// 2 - NOP out the jump
+	$$(_ + '2 - NOP out the jump')
 	Exe.SetNOPs(addr + 4, 2);
 
 	return true;

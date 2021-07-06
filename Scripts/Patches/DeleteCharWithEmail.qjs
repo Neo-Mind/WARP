@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,36 +32,38 @@
 ///
 DeleteCharWithEmail = function()
 {
-	/// 1.1 - Ensure the LANGTYPE is loaded
+	let _ = 'DeleteCharWithEmail : ';
+
+	$$(_  + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
-	/// 1.2 - Find the Langtype comparison in Char Delete function (name not known right now)
+	$$(_  + '1.2 - Find the Langtype comparison in Char Delete function (name not known right now)')
 	let prefix =
-		MOV(EAX, [LANGTYPE]) //MOV EAX, DWORD PTR DS:[g_serviceType]
-	+	ADD(ESP, 8)          //ADD ESP,8
-	+	CMP(EAX, 0xA)        //CMP EAX,0A
+		MOV(EAX, [LANGTYPE]) //mov eax, dword ptr [g_serviceType]
+	+	ADD(ESP, 8)          //add esp, 8
+	+	CMP(EAX, 0xA)        //cmp eax, 0Ah
 	;
 
 	let suffix =
-		JE(WCp)              //JE SHORT addr -> do the one for Email
-	+	CMP(EAX, 0xC)		 //CMP EAX,0C
-	+	JE(WCp)              //JE SHORT addr -> do the one for Email
+		JE(WCp)              //je short _useEmail -> do the one for Email
+	+	CMP(EAX, 0xC)		 //cmp eax, 0Ch
+	+	JE(WCp)              //je short _useEmail -> do the one for Email
 	;
 
 	let addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0 && Exe.BuildDate > 20170000)
 	{
 		prefix =
-			JMP(WCp)		 //JMP SHORT addr2
-		+	CMP(R32, 0xA)	 //CMP reg32,0A
+			JMP(WCp)		 //jmp short _skip
+		+	CMP(R32, 0xA)	 //cmp regA, 0Ah
 		;
 
 		suffix =
-			JE(WCp)          //JE SHORT addr -> do the one for Email
-		+	CMP(R32, 0xC)	 //CMP reg32,0c
-		+	JE(WCp)          //JE SHORT addr -> do the one for Email
-		+	CMP(R32, 0x1)	 //CMP reg32,1
-		+	JE(WCp)          //JE SHORT addr -> do the one for Email
+			JE(WCp)          //je short _useEmail -> do the one for Email
+		+	CMP(R32, 0xC)	 //cmp regA, 0Ch
+		+	JE(WCp)          //je short _useEmail -> do the one for Email
+		+	CMP(R32, 0x1)	 //cmp regA, 1
+		+	JE(WCp)          //je shorT _useEmail -> do the one for Email
 		;
 
 		addr = Exe.FindHex(prefix + suffix);
@@ -69,46 +71,49 @@ DeleteCharWithEmail = function()
 	if (addr < 0)
 		throw Error("Langtype comparison not found");
 
-	/// 1.3 - Enforce the first conditional jump
+	$$(_  + '1.3 - Enforce the first conditional jump')
 	Exe.SetJMP(addr + prefix.byteCount());
 
 	if (Exe.Version <= 11) //VC6 - VC11
 	{
-		/// 2.1 - Find the Langtype comparison for MsgBox String
+		$$(_  + '2.1 - Find the Langtype comparison for MsgBox String')
 		let code =
-			PUSH_0       //PUSH 0
-		+	JNE(7)       //JNE SHORT addr -> PUSH 12B
-		+	PUSH(POS2WC) //PUSH 717 or 718 or 12E - the MsgString ID changes between clients
-		+	JMP(5)       //JMP SHORT addr2 -> CALL MsgStr
-		+	PUSH(0x12B)  //PUSH 12B
+			PUSH_0       //push 0
+		+	JNE(7)       //jne short _skip
+		+	PUSH(POS2WC) //push 717h / 718h / 12Eh - the MsgString ID changes between clients
+		+	JMP(5)       //jmp short _showMsg -> CALL MsgStr
+
+		+	PUSH(0x12B)  //push 12Bh ; _skip
+
+		                 //_showMsg comes here
 		;
 
 		addr = Exe.FindHex(code);
 		if (addr < 0)
 			throw Error("2nd Langtype comparison not found");
 
-		/// 2.2 - Change the conditional jump
+		$$(_  + '2.2 - Change the conditional jump')
 		Exe.SetJMP(addr + 2);
 	}
 	else //VC14.16
 	{
-		/// 3.1 - Find the Langtype comparison for MsgBox String
+		$$(_  + '3.1 - Find the Langtype comparison for MsgBox String')
 		prefix =
-			CMP([LANGTYPE], 0)  //CMP DWORD PTR DS:[g_serviceType], 0
-		+	MOV(R32, 0x717)     //MOV reg32_B, 717
-		+	MOV(R32, 0x12B)     //MOV reg32_A, 12B
+			CMP([LANGTYPE], 0)  //cmp dword ptr [g_serviceType], 0
+		+	MOV(R32, 0x717)     //mov regB, 717h
+		+	MOV(R32, 0x12B)     //mov regA, 12Bh
 		;
 
 		suffix =
-			CMOVE(R32, R32)     //CMOVE reg32_A, reg32_B
-		+	PUSH_R              //PUSH reg32_A
+			CMOVE(R32, R32)     //cmove regA, regB
+		+	PUSH_R              //push regA
 		;
 
 		addr = Exe.FindHex(prefix + suffix);
 		if (addr < 0)
 			throw Error("2nd Langtype comparison not found (VC14.16)");
 
-		/// 3.2 - NOP out the Conditional MOV
+		$$(_  + '3.2 - NOP out the Conditional MOV')
 		Exe.SetNOPs(addr + prefix.byteCount(), 3);
 	}
 

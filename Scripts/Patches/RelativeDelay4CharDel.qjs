@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Neo-Mind                                      *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,32 +35,34 @@
 ///
 RelativeDelay4CharDel = function()
 {
-	/// 1.1 - Find the code which prepare character deletion time data
+	let _ = 'RelativeDelay4CharDel : ';
+
+	$$(_ + '1.1 - Find the code which prepare character deletion time data')
 	let code;
 	if (Exe.Version <= 11)
 	{
 		code =
-			SUB(ESP, 0x24)        //SUB ESP, 24
-		+	XOR(EAX, EAX)         //XOR EAX, EAX
-		+	PUSH(ESI)             //PUSH ESI
-		+	MOV(ESI, [EBP, 8])    //MOV ESI,DWORD PTR SS:[EBP+8]
-		+	XORPS(XMM0, XMM0)     //XORPS XMM0, XMM0
-		+	MOV([ESI], AX)        //MOV WORD PTR DS:[ESI], AX
-		+	MOVQ([ESI, 2], XMM0)  //MOVQ QWORD PTR DS:[ESI+2], XMM0
-		+	MOV([ESI, 0xA], EAX)  //MOV DWORD PTR DS:[ESI+0A], EAX
+			SUB(ESP, 0x24)        //sub esp, 24h
+		+	XOR(EAX, EAX)         //xor eax, eax
+		+	PUSH(ESI)             //push esi
+		+	MOV(ESI, [EBP, 8])    //mov esi, dword ptr [ebp+8] ; ARG.1
+		+	XORPS(XMM0, XMM0)     //xorps xmm0, xmm0
+		+	MOV([ESI], AX)        //mov word ptr [esi], ax
+		+	MOVQ([ESI, 2], XMM0)  //movq qword ptr [esi+2], xmm0
+		+	MOV([ESI, 0xA], EAX)  //mov dword ptr [esi+0Ah], eax
 		;
 	}
 	else
 	{
 		code =
-			SUB(ESP, 0x24)        //SUB ESP, 24
-		+	XORPS(XMM0, XMM0)     //XORPS XMM0, XMM0
-		+	CMP([ECX], 0)         //CMP DWORD PTR DS:[ECX], 0
-		+	PUSH(ESI)             //PUSH ESI
-		+	MOV(ESI, [EBP, 8])    //MOV ESI,DWORD PTR SS:[EBP+8]
-		+	MOVUPS([ESI], XMM0)   //MOVUPS QWORD PTR DS:[ESI], XMM0
-		+	JGE(6)                //JGE SHORT addr
-		+	MOV([ECX], 0)         //MOV DWORD PTR DS:[ECX], 0
+			SUB(ESP, 0x24)        //sub esp, 24h
+		+	XORPS(XMM0, XMM0)     //xorps xmm0, xmm0
+		+	CMP([ECX], 0)         //cmp dword ptr [ecx], 0
+		+	PUSH(ESI)             //push esi
+		+	MOV(ESI, [EBP, 8])    //mov esi,dword ptr [ebp+8] ; ARG.1
+		+	MOVUPS([ESI], XMM0)   //movups qword ptr [esi], xmm0
+		+	JGE(6)                //jge short _next
+		+	MOV([ECX], 0)         //mov dword ptr [ecx], 0
 		;
 	}
 
@@ -68,49 +70,53 @@ RelativeDelay4CharDel = function()
 	if (addr < 0)
 		throw Error("Char Del prep missing");
 
-	/// 1.2 - Get "MSVCR110._time32" address
+	$$(_ + '1.2 - Get "MSVCR110._time32" address')
 	let time32Func = Exe.FindFunc("_time32");
 	if (time32Func < 0)
 		throw Error("'_time32' function missing");
 
-	/// 2.1 - Prepare the replacement code
-	code =
-		PUSH(EBX)             //PUSH EBX
-	+	PUSH(ESI)             //PUSH ESI
-	+	PUSH(ECX)             //PUSH ECX
-	+	MOV(ESI, [EBP, 8])    //MOV ESI, DWORD PTR SS:[EBP+8]
-	+	XOR(EDX, EDX)         //XOR EDX, EDX
-	+	MOV([ESI, 0x6], EDX)  //MOV DWORD PTR DS:[ESI+6], EDX
-	+	MOV([ESI, 0xA], EDX)  //MOV DWORD PTR DS:[ESI+A], EDX
-	+	PUSH_0                //PUSH 0
-	+ 	CALL([time32Func])    //CALL DWORD PTR DS:[<&MSVCR110._time32>]
-	+	ADD(ESP, 4)           //ADD ESP, 4
-	+	POP(ECX)              //POP ECX
-	+	MOV(ECX, [ECX])       //MOV ECX, DWORD PTR DS:[ECX]
-	+	CMP(EAX, ECX)         //CMP EAX, ECX
-	+ 	JNB(0x22)             //JNB SHORT addr1
-	+ 	SUB(ECX, EAX)         //SUB ECX, EAX
-	+	XOR(EDX, EDX)         //XOR EDX, EDX
-	+	MOV(EAX, ECX)         //MOV EAX, ECX
-	+	MOV(EBX, 0x3C)        //MOV EBX, 3C
-	+	DIV(EBX)              //DIV EBX
-	+	MOV([ESI, 0xA], DX)   //MOV WORD PTR DS:[ESI+A], DX
-	+	XOR(EDX, EDX)         //XOR EDX, EDX
-	+	MOV(EBX, 0x3C)        //MOV EBX, 3C
-	+	DIV(EBX)              //DIV EBX
-	+	MOV([ESI, 0x6], AX)   //MOV WORD PTR DS:[ESI+6], AX
-	+	MOV([ESI, 0x8], DX)   //MOV WORD PTR DS:[ESI+8], DX
-	+	POP(ESI)              //POP ESI ; addr1
-	+	POP(EBX)              //POP EBX
-	+	MOV(ESP, EBP)         //MOV ESP, EBP
-	+	POP(EBP)              //POP EBP
-	+	RETN(4)               //RETN 4
-	;
+	$$(_ + '2.1 - Prepare the replacement code')
+	let parts =
+	[
+		PUSH(EBX)             //push ebx
+	+	PUSH(ESI)             //push esi
+	+	PUSH(ECX)             //push ecx
+	+	MOV(ESI, [EBP, 8])    //mov esi, dword ptr [ebp+8] ; ARG.1
+	+	XOR(EDX, EDX)         //xor edx, edx
+	+	MOV([ESI, 0x6], EDX)  //mov dword ptr [esi+6], edx
+	+	MOV([ESI, 0xA], EDX)  //mov dword ptr [esi+0Ah], edx
+	+	PUSH_0                //push 0
+	+ 	CALL([time32Func])    //call dword ptr [<&MSVCR110._time32>]
+	+	ADD(ESP, 4)           //add esp, 4
+	+	POP(ECX)              //pop ecx
+	+	MOV(ECX, [ECX])       //mov ecx, dword ptr [ecx]
+	+	CMP(EAX, ECX)         //cmp eax, ecx
+	+ 	JNB(Filler(1,1))      //jnb short _skip
+	+ 	SUB(ECX, EAX)         //sub ecx, eax
+	+	XOR(EDX, EDX)         //xor edx, edx
+	+	MOV(EAX, ECX)         //mov eax, ecx
+	+	MOV(EBX, 0x3C)        //mov ebx, 3Ch
+	+	DIV(EBX)              //div ebx
+	+	MOV([ESI, 0xA], DX)   //mov word ptr [esi+0Ah], dx
+	+	XOR(EDX, EDX)         //xor edx, edx
+	+	MOV(EBX, 0x3C)        //mov ebx, 3Ch
+	+	DIV(EBX)              //div ebx
+	+	MOV([ESI, 0x6], AX)   //mov word ptr [esi+6], ax
+	+	MOV([ESI, 0x8], DX)   //mov word ptr [esi+8], dx
+	,
+		POP(ESI)              //pop esi ; _skip
+	+	POP(EBX)              //pop ebx
+	+	FP_STOP               //mov esp, ebp
+		                      //pop ebp
+	+	RETN(4)               //retn 4
+	];
 
-	/// 2.2 - Replace the original with our code
+	code = SetFillTarget(parts, [1,1], parts.byteCount(0), 0, 1, 1);
+
+	$$(_ + '2.2 - Replace the original with our code')
 	Exe.SetHex(addr, code);
 
-	/// 2.3 - Hide the text "X month X day" by changing coords (0x28 to 0x90)
+	$$(_ + '2.3 - Hide the text "X month X day" by changing coords (28h to 90h)')
 	Exe.SetUint8(RD4CD_Addr + 2, 0x90); //its not a NOP
 
 	return true;
@@ -122,26 +128,26 @@ RelativeDelay4CharDel = function()
 RelativeDelay4CharDel.validate = function()
 {
 	let parts = [
-		PUSH_R      //PUSH reg32_A
-	+	PUSH(0x28)  //PUSH 28
-	+	PUSH_0      //PUSH 0
+		PUSH_R      //push regA
+	+	PUSH(0x28)  //push 28h
+	+	PUSH_0      //push 0
 	,
-		PUSH(0xB)   //PUSH 0B
-	+	PUSH_0      //PUSH 0
+		PUSH(0xB)   //push 0Bh
+	+	PUSH_0      //push 0
 	,
 		Exe.Version <= 11
 	?
-		LEA(ESI, [EBP, WCn])    //LEA ESI, [EBP-const]
-	+	CMOVNB(ESI, [EBP, WC])  //CMOVNB ESI, DWORD PTR DS:[EBP-const] ; previous instruction seems wasteful
+		LEA(ESI, [EBP, WCn])    //lea esi, [ebp - disp8A]
+	+	CMOVNB(ESI, [EBP, WC])  //cmovnb esi, dword ptr [ebp - disp8B] ; previous instruction seems wasteful
 	:
 		''
 	,
-		PUSH_0      //PUSH 0
-	+	PUSH_R      //PUSH reg32_B; ESI for VC11
+		PUSH_0      //push 0
+	+	PUSH_R      //push regB ; ESI for VC11
 	];
 	RD4CD_Addr = Exe.FindHex(parts);
 
-	if (RD4CD_Addr < 0) //Extra PUSH 0 after PUSH 28 for newer clients.
+	if (RD4CD_Addr < 0) //Extra "push 0" after "push 28h" for newer clients
 	{
 		parts[0] += PUSH_0
 		RD4CD_Addr = Exe.FindHex(parts);

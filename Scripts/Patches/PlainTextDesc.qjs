@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,27 +32,29 @@
 ///
 PlainTextDesc = function()
 {
-	/// 1 - Ensure the LANGTYPE is loaded
+	let _ = 'PlainTextDesc : ';
+
+	$$(_ + '1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
-	/// 2 - Find the Langtype comparison in DataTxtDecode function
+	$$(_ + '2 - Find the Langtype comparison in DataTxtDecode function')
 	let prefix, suffix;
 	if (Exe.Version === 6)//VC6
 	{
 		prefix =
-			MOV(EAX, [LANGTYPE])       //MOV EAX, DWORD PTR DS:[g_serviceType]
-		+	PUSH(ESI)                  //PUSH ESI
-		+	TEST(EAX, EAX)             //TEST EAX, EAX
-		+	PUSH(EDI)                  //PUSH EDI
+			MOV(EAX, [LANGTYPE])       //mov eax, dword ptr [g_serviceType]
+		+	PUSH(ESI)                  //push esi
+		+	TEST(EAX, EAX)             //test eax, eax
+		+	PUSH(EDI)                  //push edi
 		;
 		suffix =
-			JNZ(WCp)                   //JNZ SHORT addr
+			JNZ(WCp)                   //jnz short _skip
 		;
 	}
 	else
 	{
 		prefix =
-			CMP([LANGTYPE], 0)         //CMP DWORD PTR DS:[g_serviceType], 0
+			CMP([LANGTYPE], 0)         //cmp dword ptr [g_serviceType], 0
 		;
 
 		switch (Exe.Version)
@@ -61,9 +63,9 @@ PlainTextDesc = function()
 			case 10: //VC14
 			{
 				suffix =
-					JNZ(WCp)           //JNZ SHORT addr
-				+	PUSH(ESI)          //PUSH ESI
-				+	PUSH(EDI)          //PUSH EDI
+					JNZ(WCp)           //jnz short _skip
+				+	PUSH(ESI)          //push esi
+				+	PUSH(EDI)          //push edi
 				;
 				break;
 			}
@@ -71,8 +73,8 @@ PlainTextDesc = function()
 			case 11: //VC11
 			{
 				suffix =
-					JNZ(WCp)           //JNZ SHORT addr
-				+	PUSH(EDI)          //PUSH EDI
+					JNZ(WCp)           //jnz short _skip
+				+	PUSH(EDI)          //push edi
 				;
 				break;
 			}
@@ -80,9 +82,9 @@ PlainTextDesc = function()
 			default: //VC14.16
 			{
 				suffix =
-					JNZ(WCp)           //JNZ SHORT addr
-				+	MOV(R32, [EBP, 8]) //MOV reg32_A, DWORD PTR SS:[EBP+8]
-				+	PUSH(ESI)          //PUSH ESI
+					JNZ(WCp)           //jnz short _skip
+				+	MOV(R32, [EBP, 8]) //mov regA, dword ptr [ebp+8] ; ARG.1
+				+	PUSH(ESI)          //push esi
 				;
 				break;
 			}
@@ -93,7 +95,7 @@ PlainTextDesc = function()
 	if (addr < 0)
 		throw Error("Langtype comparison missing");
 
-	/// 3 - Change the conditional jump
+	$$(_ + '3 - Change the conditional jump')
 	Exe.SetJMP(addr + prefix.byteCount() - 2);
 
 	return true;

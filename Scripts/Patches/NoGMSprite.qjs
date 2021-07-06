@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) ?-2015 Shinryo                                           *
+*   Copyright (C) ?-2021 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-03-02                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,12 +31,14 @@
 ///
 NoGMSprite = function()
 {
-	/// 1.1 - Find the location where both functions are called
+	let _ = 'NoGMSprite : ';
+
+	$$(_ + '1.1 - Find the location where both functions are called')
 	let halfCode =
-		PUSH(POS3WC)    //PUSH OFFSET addr; actName / sprName
-	+	PUSH(5)         //PUSH 5; layer
-	+	MOV(ECX, R32)   //MOV ECX, reg32_A
-	+	CALL(NEG2WC)    //CALL CPc::SetActNameList / CPc::SetSprNameList
+		PUSH(POS3WC)    //push offset actName / sprName
+	+	PUSH(5)         //push 5 ; layer
+	+	MOV(ECX, R32)   //mov ecx, regA
+	+	CALL(NEG2WC)    //call CPc::SetActNameList / CPc::SetSprNameList
 	;
 	let code = halfCode + halfCode;
 	let addr = Exe.FindHex(code);
@@ -44,7 +46,7 @@ NoGMSprite = function()
 	/* - Seems to be not of any use
 	if (addr < 0)
 	{
-		code = code.remove( MOV(ECX, R32) ); //Remove the first MOV ECX, reg32_A . It might have been assigned earlier
+		code = code.remove( MOV(ECX, R32) ); //Remove the first MOV ECX, regA . It might have been assigned earlier
 		addr = Exe.FindHex(code);
 	}
 	*/
@@ -52,7 +54,7 @@ NoGMSprite = function()
 	if (addr < 0)
 		throw Error("Function CALLs not found");
 
-	/// 1.2 - Extract the Function addresses (PHYSICAL)
+	$$(_ + '1.2 - Extract the Function addresses (PHYSICAL)')
 	let pos2 = code.byteCount() - 4;
 	let pos1 = pos2 - halfCode.byteCount();
 
@@ -61,11 +63,11 @@ NoGMSprite = function()
 		Exe.GetTgtAddr(addr + pos2, PHYSICAL)  //CPc::SetSprNameList PHYSICAL address
 	];
 
-	/// 2.1 - Prep code to look for IsNameYellow function call
+	$$(_ + '2.1 - Prep code to look for IsNameYellow function call')
 	let prefix =
-		CALL(ALLWC)     //CALL IsNameYellow; Compares accountID against GM IDs
-	+	ADD(ESP, 4)     //ADD ESP, 4
-	+	TEST(AL, AL)    //TEST AL, AL
+		CALL(ALLWC)     //call IsNameYellow ; Compares accountID against GM IDs
+	+	ADD(ESP, 4)     //add esp, 4
+	+	TEST(AL, AL)    //test al, al
 	;
 	let csize = prefix.byteCount();
 
@@ -73,12 +75,14 @@ NoGMSprite = function()
 
 	funcs.forEach( (fnAddr, i) =>
 	{
-		/// 2.2 - Find the CALL inside the Set*NameList functions
+		let __ = `${_} [${i}] `;
+
+		$$(__ + '2.2 - Find the CALL inside the Set*NameList functions')
 		let addr = Exe.FindHex(prefix + suffix, fnAddr, fnAddr + 0x80);
 		if (addr < 0)
 			throw Error(`CALL not found for No. ${i+1}`);
 
-		/// 2.3 - Change conditional jump
+		$$(__ + '2.3 - Change conditional jump')
 		Exe.SetJMP(addr + csize);
 	});
 

@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2020 Neo-Mind                                            *
+*   Copyright (C) 2013-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,34 +33,32 @@
 ///
 TildeForMatk = function()
 {
-	/// 1.1 - Find the string '%d + %d'
+	let _ = 'TildeForMatk : ';
+
+	$$(_ + '1.1 - Find \'%d + %d\'')
 	let addr = Exe.FindText("%d + %d");
 	if (addr < 0)
 		throw Error("Format string not found");
 
-	/// 1.2 - Find all locations where its used in a PUSH (there should be 5)
+	$$(_ + '1.2 - Find all locations where its used in a PUSH (there should be 5)')
 	let addrs = Exe.FindHexN( PUSH(addr) );
 	if (addrs.length !== 5)
 		throw Error("Incorrect no. of matches found");
 
-	/// 2.1 - Find the string '%d ~ %d'
+	$$(_ + '2.1 - Find \'%d ~ %d\'')
 	addr = Exe.FindText("%d ~ %d", false);
 	if (addr < 0)
 	{
-		/// 2.2 - If not present, allocate space for adding the string
-		addr = Exe.FindSpace(8);
-		if (addr < 0)
-			throw NO_ALLOC;
+		$$(_ + '2.2 - If not present, allocate space for adding the string')
+		let phyAddr;
+		[phyAddr, addr] = Exe.FindSpace(8);
 
-		/// 2.3 - Add the string there
-		Exe.AddText(addr, "%d ~ %d");
-
-		/// 2.4 - Convert to VIRTUAL address
-		addr = Exe.Phy2Vir(addr, DIFF);
+		$$(_ + '2.3 - Add the string there')
+		Exe.AddText(phyAddr, "%d ~ %d");
 	}
 
-	/// 2.5 - Replace the PUSHed string for the 2nd location out of the 5
-	Exe.SetInt32(addrs[1] + 1, addr); 
+	$$(_ + '2.4 - Replace the PUSHed string for the 2nd location out of the 5')
+	Exe.SetInt32(addrs[1] + 1, addr);
 
 	return true;
 };

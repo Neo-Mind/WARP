@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,40 +32,42 @@
 ///
 MsgStrings = function()
 {
-	/// 1.1 - Ensure the LANGTYPE is loaded
+	let _ = 'MsgStrings : ';
+
+	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
-	/// 1.2 - Find the comparison which is at the start of the function
+	$$(_ + '1.2 - Find the comparison which is at the start of the function')
 	let prefix, suffix;
 	if (Exe.Version === 6) //VC6
 	{
 		prefix =
-			MOV(EAX, [LANGTYPE])   //MOV EAX, DWORD PTR DS:[g_serviceType]
-		+	PUSH(ESI)              //PUSH ESI
-		+	TEST(EAX, EAX)         //TEST EAX, EAX
+			MOV(EAX, [LANGTYPE])   //mov eax, dword ptr [g_serviceType]
+		+	PUSH(ESI)              //push esi
+		+	TEST(EAX, EAX)         //test eax, eax
 		;
 		suffix =
-			JNZ(WCp)               //JNZ SHORT addr -> continue with msgStringTable.txt loading
+			JNZ(WCp)               //jnz short _proceed -> continue with msgStringTable.txt loading
 		;
 	}
 	else if (Exe.BuildDate < 20170000)
 	{
 		prefix =
-			CMP([LANGTYPE], 0) //CMP DWORD PTR DS:[g_serviceType], 0
-		+	PUSH(ESI)          //PUSH ESI
+			CMP([LANGTYPE], 0) //cmp dword ptr [g_serviceType], 0
+		+	PUSH(ESI)          //push esi
 		;
 		suffix =
-			JNZ(WCp)           //JNZ SHORT addr -> continue with msgStringTable.txt loading
+			JNZ(WCp)           //jnz short _proceed -> continue with msgStringTable.txt loading
 		;
 	}
 	else
 	{
 		prefix =
-			CMP([LANGTYPE], 0) //CMP DWORD PTR DS:[g_serviceType], 0
+			CMP([LANGTYPE], 0) //cmp dword ptr [g_serviceType], 0
 		;
 		suffix =
-			JNZ(WCp)           //JNZ SHORT addr -> continue with msgStringTable.txt loading
-		+	PUSH(ESI)          //PUSH ESI
+			JNZ(WCp)           //jnz short _proceed -> continue with msgStringTable.txt loading
+		+	PUSH(ESI)          //push esi
 		;
 	}
 
@@ -73,7 +75,7 @@ MsgStrings = function()
 	if (addr < 0)
 		throw Error("Langtype comparison not found");
 
-	/// 2 - Change the conditional jump
+	$$(_ + '2 - Change the conditional jump')
 	Exe.SetJMP(addr + prefix.byteCount());
 
 	return true;
@@ -86,24 +88,26 @@ MsgStrings = function()
 ///
 QuestDisplay = function()
 {
-	/// 1 - Find where 'questID2display.txt' is used in a PUSH
+	let _ = 'QuestDisplay : ';
+
+	$$(_ + '1 - Find where \'questID2display.txt\' is used in a PUSH')
 	let prefix = JNE(Exe.Version < 10 ? POS3WC : WCp);
 	let suffix =
-		PUSH_0                //PUSH 0
+		PUSH_0                //push 0
 	+	(Exe.Version === 6
 	?
-		LEA(R32, [R32, WC])   //LEA reg32_A, [reg32_B + const] for VC6
+		LEA(R32, [R32, WC])   //lea regA, [regB + disp8A] ; for VC6
 	:
 		''
 	)
-	+	PUSH(QD_Addr)         //PUSH OFFSET addr ; ASCII "questID2display.txt"
+	+	PUSH(QD_Addr)         //push offset "questID2display.txt"
 	;
 
 	let addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("'questID2display.txt' not used");
 
-	/// 2 - NOP out the JNE
+	$$(_ + '2 - NOP out the JNE')
 	Exe.SetNOPs(addr, prefix.byteCount());
 
 	return true;

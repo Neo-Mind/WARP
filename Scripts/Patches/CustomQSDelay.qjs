@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : mrjnumber1                                             *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-07                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,51 +31,55 @@
 ///
 CustomQSDelay = function()
 {
-	/// 1.1 - Define the default values
+	let _ = 'CustomQSDelay : ';
+
+	$$(_ + '1.1 - Define the default values')
 	let old_tick = 10;
 	let old_tick_ms = old_tick * 1000;
 
-	/// 1.2 - Find all the comparisons to old_tick in ms
+	$$(_ + '1.2 - Find all the comparisons to old_tick in ms')
 	let code =
-		CMP(EAX, old_tick_ms)	// CMP EAX, 10000
-	+	JNB(POS2WC)				// JNB addr
-	+ 	MOV(R32, [POS4WC])		// MOV reg32_A, DWORD PTR DS:[g_qsTick]
+		CMP(EAX, old_tick_ms)	// cmp eax, 10000
+	+	JNB(POS2WC)				// jnb _next
+	+ 	MOV(R32, [POS4WC])		// mov regA, dword ptr [g_qsTick]
 	;
 
 	let addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
 	{
-		code = code.replace(JNB(POS2WC), JNB(WCp));
+		code = code.replace(JNB(POS2WC), JNB(WCp)); //_next is closer
 		addrs = Exe.FindHexN(code);
 	}
 	if (addrs.isEmpty())
 		throw Error("Quickswitch Tick references missing");
 
-	/// 1.3 - Extract the 'g_qsTick' address (needed later)
+	$$(_ + '1.3 - Extract the "g_qsTick" address (needed later)')
 	let g_qsTick = Exe.GetUint32(addrs[0] + code.byteCount() - 4);
 
-	/// 2.1 - Get the new delay from user in ticks
+	$$(_ + '2.1 - Get the new delay from user in ticks')
 	let new_tick = Exe.GetUserInput('$myNewTick', D_Uint8, "Clock Ticks", "Enter the new quick switch delay", old_tick);
 	if (new_tick === false)
 		Cancel("Delay", 10);
 
-	/// 2.2 - Calculate the new tick in ms
+	$$(_ + '2.2 - Calculate the new tick in ms')
 	let new_tick_ms = new_tick * 1000;
 
-	/// 2.3 - Prepare code for searching old_tick assignment
-	code = MOV(EAX, old_tick); //MOV EAX, 10
+	$$(_ + '2.3 - Prepare code for searching old_tick assignment')
+	code = MOV(EAX, old_tick); //mov eax, 10
 
 	addrs.forEach( (addr, idx) =>
 	{
-		/// 2.4 - Replace the ms value
+		let __ = `${_} [${idx}] `;
+
+		$$(__ + '2.4 - Replace the ms value')
 		Exe.SetUint32(addr + 1, new_tick_ms);
 
-		/// 2.5 - Look for the old_tick assignment after the ms (used for showing "n seconds to next quick switch ...")
+		$$(__ + '2.5 - Look for the old_tick assignment after the ms (used for showing "n seconds to next quick switch ...")')
 		let addr2 = Exe.FindHex(code, addr + 17, addr + 67);
 		if (addr2 < 0)
 			throw Error(`Delay subtraction missing for No.${idx+1}`);
 
-		/// 2.6 - Replace the tick value
+		$$(__ + '2.6 - Replace the tick value')
 		Exe.SetUint32(addr2 + 1, new_tick);
 	});
 
@@ -83,22 +87,22 @@ CustomQSDelay = function()
 	// status of the quickswitch button doesn't reload
 	// when the time is expired anyways.. oh well.
 
-	/// 3.1 - Find the first use of g_qsTick
+	$$(_ + '3.1 - Find the first use of g_qsTick')
 	code =
-		PUSH_R                // PUSH reg32
-	+	MOV(R32, [g_qsTick])  // MOV reg32, DWORD PTR DS:[g_qsTick]
+		PUSH_R                // push regA
+	+	MOV(R32, [g_qsTick])  // mov regB, dword ptr [g_qsTick]
 	;
 	let ui_addr = Exe.FindHex(code);
 	if (ui_addr < 0)
 		throw Error("UI quickswitch addr missing");
 
-	/// 3.2 - Find the comparison to the default tick_ms value after it
+	$$(_ + '3.2 - Find the comparison to the default tick_ms value after it')
 	code = CMP(EAX, old_tick_ms)	// CMP EAX, old_tick_ms (default)
 	addr = Exe.FindHex(code, ui_addr + 6, ui_addr + 30);
 	if (addr < 0)
 		throw Error("Comparison missing");
 
-	/// 3.3 - Unless its already been handled in the loop, replace the ms tick
+	$$(_ + '3.3 - Unless its already been handled in the loop, replace the ms tick')
 	if (addrs.indexOf(addr) < 0)
 		Exe.SetUint32(addr + 1, new_tick_ms);
 
@@ -108,4 +112,5 @@ CustomQSDelay = function()
 ///
 /// \brief Disable for Unsupported date
 ///
-CustomQSDelay.validate = () => Exe.BuildDate >= 20170517;
+CustomQSDelay.validate = () =>
+	Exe.BuildDate >= 20170517;

@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Functor, CH.C (jchcc), Andrei (4144), X-EcutiOnner     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-05-14                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,46 +35,51 @@
 ///
 NoEquipSwap = function()
 {
-	/// 1.1 - Find the location where equipment function is called
+	let _ = 'NoEquipSwap : ';
+
+	$$(_ + '1.1 - Find the location where equipment function is called')
 	let parts =
-	[//0
-		CALL(NEG3WC)            // CALL sub_59E810
-	+	MOV(EAX, [EDI, 0x18])   // MOV EAX, DWORD PTR DS:[EDI+18]
-	+	MOV(ECX, [EDI, POS2WC]) // MOV ECX, DWORD PTR DS:[EDI+const]
+	[
+		CALL(NEG3WC)            //call func#1
+	+	MOV(EAX, [EDI, 0x18])   //mov eax, dword ptr [edi + 18h]
+	+	MOV(ECX, [EDI, POS2WC]) //mov ecx, dword ptr [edi + dispA]
+
 	,//1
-		SUB(EAX, 0x14)          // SUB EAX, 14
+		SUB(EAX, 0x14)          //sub eax, 14h
+
 	,//2
 		Exe.Version <= 11
 	?
-		MOV(EDX, [ECX])         // MOV EDX, DWORD PTR DS:[ECX]
+		MOV(EDX, [ECX])         //mov edx, dword ptr [ecx]
 	:
 		''
+
 	,//3
-		PUSH_EAX                // PUSH EAX
+		PUSH_EAX                //push eax
 	];
 	let addr = Exe.FindHex(parts);
 	if (addr < 0)
 		throw Error("Equip Function CALL missing");
 
-	/// 1.2 - Change the SUB to ADD
+	$$(_ + '1.2 - Change the SUB to ADD')
 	Exe.SetHex(addr + parts[0].byteCount(), ADD(EAX, 0x14));
 
-	/// 2.1 - Find the location where costume function is called
+	$$(_ + '2.1 - Find the location where costume function is called')
 	let code =
-		MOV(ECX, [ESI, POS2WC]) // MOV ECX, DWORD PTR DS:[ESI + const]
-	+	TEST(ECX, ECX)          // TEST ECX, ECX
-	+	JZ(0x6F)                // JZ SHORT addr
-	+	MOV(EAX, [ESI, POS1WC]) // MOV EAX, DWORD PTR DS:[ESI + const2]; const2 < const
-	+	MOV(EDX, [ECX])         // MOV EDX, DWORD PTR DS:[ECX]
-	+	ADD(EAX, 0x93)          // ADD EAX, 93
-	+	PUSH_EAX                // PUSH EAX
+		MOV(ECX, [ESI, POS2WC]) //mov ecx, dword ptr [esi + dispB]
+	+	TEST(ECX, ECX)          //test ecx, ecx
+	+	JZ(0x6F)                //jz short _skip
+	+	MOV(EAX, [ESI, POS1WC]) //mov eax, dword ptr [esi + dispC] ; dispC < dispB
+	+	MOV(EDX, [ECX])         //mov edx, dword ptr [ecx]
+	+	ADD(EAX, 0x93)          //add eax, 93h
+	+	PUSH_EAX                //push eax
 	;
 	addr = Exe.FindHex(code);
 
 	if (addr < 0)
 		throw Error("Costume function CALL missing");
 
-	/// 2.2 - Change 93 to FF
+	$$(_ + '2.2 - Change 93h to FFh')
 	Exe.SetUint8(addr + code.byteCount() - 5, 0xFF);
 
 	return true;
@@ -91,20 +96,22 @@ NoEquipSwap.validate = () => Exe.BuildDate >= 20170208;
 ///
 NoEquipWinTitle = function()
 {
-	/// 1 - Find the location where equipment function is called
+	let _ = 'NoEquipWinTitle : ';
+
+	$$(_ + '1 - Find the location where equipment function is called')
 	let delta = Exe.BuildDate > 20170000 ? POS2WC : WCp;
 	let prefix =
-		CALL(NEG3WC)              //CALL UITabControl_AddTab
-	+	CMP([EDI, delta], 0)      //CMP DWORD PTR DS:[EDI + UIEquipWnd.m_typeWnd], 0
+		CALL(NEG3WC)              //call UITabControl_AddTab
+	+	CMP([EDI, delta], 0)      //cmp dword ptr [edi + UIEquipWnd.m_typeWnd], 0
 	;
 	let suffix =
-		JNZ(0x19)                 //JNZ SHORT addr
-	+	PUSH(0xA7D)               //PUSH 0A7D
-	+	CALL(ALLWC)               //CALL MsgStr
-	+	MOV(ECX, [EDI, POS2WC])   //MOV ECX, DWORD PTR DS:[EDI + UIEquipWnd.m_UITabControl]
-	+	ADD(ESP, 4)               //ADD ESP, 4
-	+	PUSH_EAX                  //PUSH EAX
-	+	CALL()                    //CALL UITabControl_AddTab
+		JNZ(0x19)                 //jnz short _valid
+	+	PUSH(0xA7D)               //push 0A7Dh
+	+	CALL(ALLWC)               //call MsgStr
+	+	MOV(ECX, [EDI, POS2WC])   //mov ecx, dword ptr [edi + UIEquipWnd.m_UITabControl]
+	+	ADD(ESP, 4)               //add esp, 4
+	+	PUSH_EAX                  //push eax
+	+	CALL()                    //call UITabControl_AddTab
 	;
 
 	/* - Used for debugging
@@ -128,11 +135,11 @@ NoEquipWinTitle = function()
 	logField("UIEquipWnd::m_UITabControl", addr, tabControlOffset);
 	*/
 
-	/// 2 - Change JNZ to JMP
+	$$(_ + '2 - Change JNZ to JMP')
 	Exe.SetJMP(addr + prefix.byteCount());
 
 	return true;
-}
+};
 
 ///
 /// \brief Disable for Older Clients - Check for Reference

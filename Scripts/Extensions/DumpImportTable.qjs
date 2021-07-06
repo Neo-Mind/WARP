@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-01-30                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,14 +32,16 @@
 ///
 DumpImportTable = function()
 {
-	/// 1.1 - Need a valid Exe loaded.
+	let _ = 'DumpImportTable : ';
+	
+	$$(_ + '1.1 - Need a valid Exe loaded')
 	if (Exe.FileSize == 0)
 		throw NO_EXE;
 
-	/// 1.2 - Get the Import Data Directory PHYSICAL address
+	$$(_ + '1.2 - Get the Import Data Directory PHYSICAL address')
 	let addr = Exe.GetDirAddr(D_Import, PHYSICAL);
 
-	/// 1.3 - Open output file for writing
+	$$(_ + '1.3 - Open output file for writing')
 	let fileName = Exe.GetUserInput("$$impTable", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "importTable_Dump_" + ROC.BaseName + ".txt");
 	if (fileName === false)
 		return true;
@@ -48,7 +50,7 @@ DumpImportTable = function()
 	if (!fp.Valid)
 		throw NO_OUTPUT;
 
-	/// 2.1 - First write the essentials along with import address to file
+	$$(_ + '2.1 - First write the essentials along with import address to file')
 	fp.WriteLine("Extracted with WARP")
 	fp.WriteLine("===================")
 	fp.WriteLine("Client: " + Exe.FilePath);
@@ -57,24 +59,24 @@ DumpImportTable = function()
 
 	for ( ;true; addr += 20)
 	{
-		/// 2.2 - Iterate through each IMAGE_IMPORT_DESCRIPTOR
+		$$(_ + '2.2 - Iterate through each IMAGE_IMPORT_DESCRIPTOR')
 		let iltRva = Exe.GetUint32(addr);      //Lookup Table address (RVA)
 		let ts     = Exe.GetUint32(addr + 4);  //TimeStamp
 		let fchain = Exe.GetUint32(addr + 8);  //Forwarder Chain
 		let dllRva = Exe.GetUint32(addr + 12); //DLL Name address (RVA)
 		let iatRva = Exe.GetUint32(addr + 16); //Import Address Table (RVA) <- points to the First Thunk
 
-		/// 2.3 - Ensure we havent reached the end - DLL name addr would be zero
+		$$(_ + '2.3 - Ensure we have not reached the end - DLL name addr would be zero')
 		if (dllRva <= 0)
 			break;
 
-		/// 2.4 - Get the DLL name from Exe & IAT's  PHYSICAL & VIRTUAL addresses
+		$$(_ + '2.4 - Get the DLL name from Exe & IAT\'s  PHYSICAL & VIRTUAL addresses')
 		let dllPhy = Exe.Rva2Phy(dllRva); //need the PHYSICAL address of the string
 		let dllName = Exe.GetText(dllPhy);
 		let iatPhy = Exe.Rva2Phy(iatRva);
 		let iatVir = iatRva + Exe.ImageBase;
 
-		/// 2.5 - Write the Descriptor Info to file
+		$$(_ + '2.5 - Write the Descriptor Info to file')
 		fp.Write("\tLookup Table Address = 0x" + (iltRva + Exe.ImageBase).toHex(true) + " (0x" + Exe.Rva2Phy(iltRva).toHex(true) + ")");
 		fp.Write(", TimeStamp = " + ts + ", Forwarder = " + fchain);
 		fp.Write(", Name = " + dllName + " (0x" +  dllPhy + ")");
@@ -83,10 +85,10 @@ DumpImportTable = function()
 		// Now we move on to the functions starting from the first thunk
 		for (let offset = 0; true; offset += 4)
 		{
-			/// 2.6 - Get each IMAGE_THUNK_DATA
+			$$(_ + '2.6 - Get each IMAGE_THUNK_DATA')
 			let thunkData = Exe.GetInt32(iatPhy + offset);//Ordinal Number or Offset of Function Name
 
-			/// 2.7 - Check based on value & write out accordingly
+			$$(_ + '2.7 - Check based on value & write out accordingly')
 			///       0 => end of the list
 			///       +ve => Address to Hint + Function Name (IMAGE_IMPORT_BY_NAME struct)
 			///       -ve => Last 2 bytes are Ordinal Number
@@ -113,11 +115,11 @@ DumpImportTable = function()
 		}
 	}
 
-	/// 2.8 - Close the file
+	$$(_ + '2.8 - Close the file')
 	fp.Close();
 
-	/// 3 - Show the success message or display the file if requested
-	if (!Exe.TestMode && Exe.GetUserInput('$$showFile', D_Bool, "Show File", "Display the generated file?", true))
+	$$(_ + '3 - Show the success message or display the file if requested')
+	if (!Exe.TestMode && UserChoice("Show File", "Display the generated file?"))
 	{
 		Warp.Show(fp.Path);
 		return true;

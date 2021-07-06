@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-08                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,69 +31,72 @@
 ///
 HideWorldView = function()
 {
-    /// 1.1 - Ensure the WINMGR object has been loaded
+	let _ = 'HideWorldView : ';
+
+    $$(_ + '1.1 - Ensure the WINMGR object has been loaded')
 	WINMGR.load();
 
-    /// 1.2 - Find 1st pattern of window creation (There should be exactly 2 matches for map button & shortcut)
+    $$(_ + '1.2 - Find 1st pattern of window creation (There should be exactly 2 matches for map button & shortcut)')
     let id = (Exe.BuildDate < 20100616) ? 0x93 : 0x8C;
-        
-    let part1 =
-        PUSH(id)        //PUSH 8C or 93
-    +   WINMGR.MovECX   //MOV ECX, g_winMgr
-    +   CALL(ALLWC)     //CALL UIWindowMgr::PrepWindow (not sure what its called but this seems likely)
-    +   TEST(AL, AL)    //TEST AL, AL
+
+    let prefix =
+        PUSH(id)        //push 8Ch / 93h
+    +   WINMGR.MovECX   //mov ecx, <g_winMgr>
+    +   CALL(ALLWC)     //call UIWindowMgr::PrepWindow ; not sure what its called but this seems likely
+    +   TEST(AL, AL)    //test al, al
 	;
-	let part2 =
-        JNE(POS2WC)     //JNE addr
-    +   PUSH(id)        //PUSH 8C or 93
-    +   WINMGR.MovECX   //MOV ECX, g_winMgr
-    +   CALL()          //CALL UIWindowMgr::MakeWindow
+	let suffix =
+        JNE(POS2WC)     //jne _skip
+    +   PUSH(id)        //push 8Ch / 93h
+    +   WINMGR.MovECX   //mov ecx, <g_winMgr>
+    +   CALL()          //call UIWindowMgr::MakeWindow
     ;
 
-    let addrs = Exe.FindHexN(part1 + part2);
+    let addrs = Exe.FindHexN(prefix + suffix);
     if (addrs.isEmpty())
         throw Error("First pattern not found");
 
-	let csize = part1.byteCount();
+	let csize = prefix.byteCount();
 
-	/// 1.3 - Also find 2nd pattern with JNE changed to JNE SHORT
+	$$(_ + '1.3 - Also find 2nd pattern with JNE changed to JNE SHORT')
 	let extraCheck = (Exe.BuildDate > 20141022 && Exe.BuildDate < 20170000);
 
 	if (extraCheck)
 	{
-		part2 = part2.replace(JNE(POS2WC), JNE(WCp));
-		let addrs2 = Exe.FindHexN(part1 + part2);
+		suffix = suffix.replace(JNE(POS2WC), JNE(WCp)); //change 'jne _skip' TO 'jne short _skip'
+
+		let addrs2 = Exe.FindHexN(prefix + suffix);
 		if (addrs2.isEmpty())
 			throw Error("Second pattern not found");
 
 		addrs = addrs.concat(addrs2);
 	}
 
-    /// 1.4 - NOP out the code till JNE & change JNE to JMP
+    $$(_ + '1.4 - NOP out the code till JNE & change JNE to JMP')
     addrs.forEach( addr =>
     {
         Exe.SetNOPs(addr, csize);
         Exe.SetJMP(addr + csize);
     });
 
-    /// 2.1 - Find the 3rd pattern (func calls functions from 1st pattern)
+    $$(_ + '2.1 - Find the 3rd pattern (func calls functions from 1st pattern)')
     if (extraCheck)
 	{
-		part1 =
-			PUSH(id)        //PUSH 8C or 93
-		+   MOV(ECX, R32)   //MOV ECX, reg32
-		+   CALL(NEG3WC)    //CALL func ?
+		prefix =
+			PUSH(id)        //push 8Ch / 93h
+		+   MOV(ECX, R32)   //mov ecx, regA
+		+   CALL(NEG3WC)    //call func#1
 		;
-		part2 =
-		    POP(ESI)        //POP ESI
+		suffix =
+		    POP(ESI)        //pop esi
 		;
 
-		let addr = Exe.FindHex(part1);
+		let addr = Exe.FindHex(prefix);
 		if (addr < 0)
 			throw Error("Third pattern not found");
 
-		/// 3.2 - NOP it out till POP ESI
-        Exe.SetNOPs(addr, part1.byteCount());
+		$$(_ + '2.2 - NOP it out till POP ESI')
+        Exe.SetNOPs(addr, prefix.byteCount());
 	}
 
     return true;

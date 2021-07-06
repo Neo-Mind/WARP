@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Secret, A.K.M., Neo-Mind                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,36 +32,38 @@
 ///
 Intravision = function()
 {
-	/// 1 - Find the comparison loop
+	let _ = 'Intravision : ';
+
+	$$(_ + '1 - Find the comparison loop')
 	let code;
 	if (!ROC.Post2010)
 	{
 		code =
-			JNE(2)						//JNE SHORT addr1
-		+	MOV(BL, 1)					//MOV BL, 1
-		+	INC(ECX)					//INC ECX ; addr1
-		+	JMP(WCn)					//JMP SHORT loop_start
-		+	CMP(BL, 1)					//CMP BL, 1
+			JNE(2)						//jne short _skip
+		+	MOV(BL, 1)					//mov bl, 1
+		+	INC(ECX)					//inc ecx ; _skip
+		+	JMP(WCn)					//jmp short _loop
+		+	CMP(BL, 1)					//cmp bl, 1
 		;
 	}
 	else
 	{
 		code =
-			JZ(ALLWC)					//JZ addr
-		+	ADD(EAX, WCp)				//ADD EAX, const  ; Varies 14 in 2017 clients
-		+	CMP(EAX, ECX)				//CMP EAX, ECX
-		+	JNZ(WCn)					//JNZ SHORT loop_start
+			JZ(ALLWC)					//JZ _next
+		+	ADD(EAX, WCp)				//add eax, imm8A  ; 14h in 2017 clients
+		+	CMP(EAX, ECX)				//cmp eax, ecx
+		+	JNZ(WCn)					//jnz short _loop
 		;
 	}
 	let addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
 		throw Error("Comparison missing");
 
-	/// 2 - Change the JZ/JNE SHORT to JMP for the right match
+	$$(_ + '2 - Change the JZ/JNE SHORT to JMP for the right match')
 	code =
-		PUSH_2							//PUSH 2
-	+	MOV(ECX, ESI)					//MOV ECX, ESI
-	+	CALL()							//CALL func
+		PUSH_2							//push 2
+	+	MOV(ECX, ESI)					//mov ecx, esi
+	+	CALL()							//call func#1
 	;
 
 	let found = addrs.filter( addr =>

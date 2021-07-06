@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-05-15                                             *
+*   Last Modified : 2021-07-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,12 +31,14 @@
 ///
 ShowBGEmblem = function()
 {
-	/// 1.1 - Find the Mode checker pattern used in the emblem display function.
-	let plus110 = Exe.Version < 11  //(reg32_A is usually ESI)
+	let _ = 'ShowBGEmblem : ';
+
+	$$(_ + '1.1 - Find the Mode checker pattern used in the emblem display function.')
+	let plus110 = Exe.Version < 11  //(regA is usually ESI)
 	?
-		ADD(R32, 0x110)               //ADD reg32_A, 110 ; for VC9-VC10
-	:                                 //  or
-		LEA(EAX, [R32, 0x110])        //LEA EAX, [reg32_A + 110] ; for VC11 to VC14.16
+		ADD(R32, 0x110)               //add regA, 110h ; for VC9-VC10
+	:                                 //  OR
+		LEA(EAX, [R32, 0x110])        //lea eax, [regA + 110h] ; for VC11 to VC14.16
 	;
 
 	let addrs = [
@@ -47,10 +49,10 @@ ShowBGEmblem = function()
 		throw Error("Reference pattern missing");
 
 	let code =
-		MOV(ECX, POS4WC)  //MOV ECX, OFFSET g_session
-	+	CALL(POS3WC)      //CALL CSession::IsSiegeMode
-	+	TEST(EAX, EAX)    //TEST EAX, EAX
-	+	JZ(WCp)           //JZ SHORT addr
+		MOV(ECX, POS4WC)  //mov ecx, <g_session>
+	+	CALL(POS3WC)      //call CSession::IsSiegeMode
+	+	TEST(EAX, EAX)    //test eax, eax
+	+	JZ(WCp)           //jz short _skip
 	;
 
 	let matchAddr;
@@ -62,22 +64,22 @@ ShowBGEmblem = function()
 	if (matchAddr < 0)
 		throw Error("Mode checker not found");
 
-	/// 1.2 - Save the address to be hookAddrs
+	$$(_ + '1.2 - Save the address to be hookAddrs')
 	let hookAddrs = [matchAddr + 6];
 
-	/// 1.3 - Skip the 2nd CALL if present (same pattern as before except there is a JNZ at end)
+	$$(_ + '1.3 - Skip the 2nd CALL if present (same pattern as before except there is a JNZ at end)')
 	let csize = code.byteCount();
 	if (Exe.GetUint8(matchAddr + csize) === 0xB9)
 		Exe.SetNOPs(matchAddr + csize, csize);
 
-	/// 1.4 - Save the values needed to find the 2nd pattern
+	$$(_ + '1.4 - Save the values needed to find the 2nd pattern')
 	let movSession = Exe.GetHex(matchAddr, 5);
 	let IsSiegeMode = Exe.GetTgtAddr(matchAddr + 6);
 
-	/// 1.5 - Extract the needed stuff from inside the function (always has the same form)
+	$$(_ + '1.5 - Extract the needed stuff from inside the function (always has the same form)')
 	let addr = Exe.Vir2Phy(IsSiegeMode, CODE);
-	let movModeMgr = Exe.GetHex(addr, 5);       //MOV ECX, OFFSET g_modeMgr
-	let GetGameMode = Exe.GetTgtAddr(addr + 6); //CALL CModeMgr::GetGameMode
+	let movModeMgr = Exe.GetHex(addr, 5);       //mov ecx, <g_modeMgr>
+	let GetGameMode = Exe.GetTgtAddr(addr + 6); //call CModeMgr::GetGameMode
 
 	let ins = Instr.FromAddr(addr + 10);
 	let mapOffset = ins.Disp;
@@ -88,11 +90,11 @@ ShowBGEmblem = function()
 
 	if (Exe.BuildDate < 20121010)
 	{
-		/// 2.1 - Find the second pattern
+		$$(_ + '2.1 - Find the second pattern')
 		code =
-			movSession      //MOV ECX, OFFSET g_session
-		+	CALL(ALLWC)     //CALL CSession::IsSiegeMode
-		+	TEST(EAX, EAX)  //TEST EAX, EAX
+			movSession      //mov ecx, <g_session>
+		+	CALL(ALLWC)     //call CSession::IsSiegeMode
+		+	TEST(EAX, EAX)  //test eax, eax
 		;
 
 		addrs = Exe.FindHexN(JMP(WCp) + code + JE(WCp)).filter(memAddr => Exe.GetTgtAddr(memAddr + 8) === IsSiegeMode);
@@ -102,13 +104,13 @@ ShowBGEmblem = function()
 		if (addrs.isEmpty())
 			throw Error("2nd pattern missing");
 
-		/// 2.2 - Add the last entry to the hookAddrs
+		$$(_ + '2.2 - Add the last entry to the hookAddrs')
 		let memAddr = addrs.last();
 		if (hookAddrs.indexOf(memAddr + 8) < 0)
 		{
 			hookAddrs.push(memAddr + 8);
 
-			/// 2.3 - Look for the additional comparison before the current one within the same function.. ugh!
+			$$(_ + '2.3 - Look for the additional comparison before the current one within the same function.. ugh!')
 			let	addr = Exe.FindLastHex(code + JE(POS2WC), memAddr - 0x80, memAddr - 0x180);
 			if (addr > 0)
 				hookAddrs.push(addr + 6);
@@ -117,15 +119,15 @@ ShowBGEmblem = function()
 				throw Error("Additional pattern missing");
 		}
 
-		/// 2.4 - Find the 3rd pattern for VC9 (to fix the stagnant icon issue)
+		$$(_ + '2.4 - Find the 3rd pattern for VC9 (to fix the stagnant icon issue)')
 		if (Exe.Version === 9)
 		{
 			code =
-				movSession      //MOV ECX, OFFSET g_session
-			+	CALL(ALLWC)     //CALL CSession::IsSiegeMode
-			+	POP_R           //POP reg32_A
-			+	TEST(EAX, EAX)  //TEST EAX, EAX
-			+	JZ(WCp)         //JZ SHORT addr
+				movSession      //mov ecx, <g_session>
+			+	CALL(ALLWC)     //call CSession::IsSiegeMode
+			+	POP_R           //pop regA
+			+	TEST(EAX, EAX)  //test eax, eax
+			+	JZ(WCp)         //jz short _skip#2
 			;
 
 			addrs = Exe.FindHexN(code).filter(memAddr => Exe.GetTgtAddr(memAddr + 6) === IsSiegeMode);
@@ -136,32 +138,28 @@ ShowBGEmblem = function()
 		}
 	}
 
-	/// 3.1 - Prep the new code
+	$$(_ + '3.1 - Prep the new code')
 	code =
-		movModeMgr                  //MOV ECX, OFFSET g_modeMgr
-	+	CALL(Filler(1))             //CALL CModeMgr::GetGameMode
-	+	MOV(ECX, [EAX, mapOffset])  //MOV ECX, DWORD PTR DS:[EAX + mapOffset]
-	+	MOV(EAX, [ECX, gvgPos])     //MOV EAX, DWORD PTR DS:[ECX + gvgPos]
-	+	TEST(EAX, EAX)              //TEST EAX, EAX
-	+	JNZ(bgPos > 0x7F ? 6 : 3)   //JNZ SHORT _skip
-	+	MOV(EAX, [ECX, bgPos])      //MOV EAX, DWORD PTR DS:[ECX + bgPos]
-	+	RETN()                      //RETN ; _skip
+		movModeMgr                  //mov ecx, <g_modeMgr>
+	+	CALL(Filler(1))             //call CModeMgr::GetGameMode
+	+	MOV(ECX, [EAX, mapOffset])  //mov ecx, dword ptr [eax + mapOffset]
+	+	MOV(EAX, [ECX, gvgPos])     //mov eax, dword ptr [ecx + gvgPos]
+	+	TEST(EAX, EAX)              //test eax, eax
+	+	JNZ(bgPos > 0x7F ? 6 : 3)   //jnz short _skipMov
+	+	MOV(EAX, [ECX, bgPos])      //mov eax, dword ptr [ecx + bgPos]
+	+	RETN()                      //retn ; _skipMov
 	;
 
-	/// 3.2 - Allocate space to add it
-	let free = Exe.FindSpace(code.byteCount(), 0x10);
-	if (free < 0)
-		throw NO_ALLOC;
+	$$(_ + '3.2 - Allocate space to add it')
+	let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
-	let freeVir = Exe.Phy2Vir(free, DIFF);
-
-	/// 3.3 - Fill in the blanks
+	$$(_ + '3.3 - Fill in the blanks')
 	code = SetFillTarget(code, 1, GetGameMode, freeVir, 1);
 
-	/// 3.4 - Add at allocated space
+	$$(_ + '3.4 - Add at allocated space')
 	Exe.AddHex(free, code);
 
-	/// 3.5 - Change the targets of all hookAddrs
+	$$(_ + '3.5 - Change the targets of all hookAddrs')
 	hookAddrs.forEach( addr =>
 		Exe.SetTgtAddr(addr, freeVir)
 	);

@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020 CH.C (jchcc)                                        *
+*   Copyright (C) 2020-2021 CH.C (jchcc)                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-16                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,20 +31,22 @@
 ///
 EnableHttpEmblem = function()
 {
-	/// 1 - Find the code
+	let _ = 'EnableHttpEmblem : ';
+
+	$$(_ + '1 - Find the code')
 	let code =
-		PUSH(EBP)		//0 PUSH EBP
-	+	MOV(EBP, ESP)	//1 MOV EBP, ESP
-	+	ADD(ECX, 0x6C)	//3 ADD ECX, 6C
-	+	POP(EBP)		//6 POP EBP
-	+	JMP()	        //7 JMP addr
+		FP_START		//push ebp
+		                //mov ebp, esp
+	+	ADD(ECX, 0x6C)	//add ecx, 6Ch
+	+	POP(EBP)		//pop ebp
+	+	JMP()	        //jmp _next
 	;
 
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Pattern not found")
 
-	/// 2 - Change buffer addr from 6C to 3C
+	$$(_ + '2 - Change buffer addr from 6Ch to 3Ch')
 	Exe.SetUint8(addr + 5, 0x3C);
 
 	/* Used for debug
@@ -60,6 +62,6 @@ EnableHttpEmblem = function()
 
 ///
 /// \brief Disable for unsupported clients
-EnableHttpEmblem.validate = () => 
+EnableHttpEmblem.validate = () =>
 	Exe.FindText(".?AVCEmblemDataDownloadAsyncWork@@", PHYSICAL, false) > 0 &&
 	Exe.FindText("CDClient.dll", PHYSICAL, false) > 0;

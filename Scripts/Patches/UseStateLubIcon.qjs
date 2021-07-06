@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2019-2020 CH.C (jchcc)                                   *
+*   Copyright (C) 2019-2021 CH.C (jchcc)                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2020-12-09                                             *
+*   Last Modified : 2021-07-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,24 +31,26 @@
 ///
 UseStateLubIcon = function()
 {
-	/// 1 - Find where 'GetEFSTImgFileName' is PUSHed
+	let _ = 'UseStateLubIcon : ';
+
+	$$(_ + '1 - Find where \'GetEFSTImgFileName\' is PUSHed')
 	let addr = Exe.FindHex( PUSH(USLI_Addr) );
 	if (addr < 0)
 		throw Error("Reference string not PUSHed");
 
-	/// 2 - Find the comparison followed by switch-case
+	$$(_ + '2 - Find the comparison followed by switch-case')
 	let limit = (Exe.BuildDate > 20130626 ? 4 : 3);
 	let code =
-		CMP(R32, limit)        //CMP reg32, 4 or 3
-	+	JA(POS2WC)             //JA addr1
-	+	JMP([4, R32, POS3WC])  //JMP DWORD PTR DS:[reg32*4 + addr2]
+		CMP(R32, limit)        //cmp regA, 4/3
+	+	JA(POS2WC)             //ja _skip
+	+	JMP([4, R32, POS3WC])  //jmp dword ptr [regA*4 + offset#1]
 	;
 
 	addr = Exe.FindHex(code, addr, addr + 0x100);
 	if (addr < 0)
 		throw Error("Comparison missing");
 
-	/// 3 - Change JA to JMP
+	$$(_ + '3 - Change JA to JMP')
 	Exe.SetJMP(addr + 3);
 
 	return true;
