@@ -93,7 +93,7 @@ IsByte = function(v, signed = true)
 Filler = (idx, bc = 4) =>
 	bc > 1
 		? (' ??'.repeat(Math.abs(bc)) + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.trunc(Math.abs(bc)))
-		: (' ?' + (idx < 16 ? '0' : '') + idx.toString(16))
+		: (' ?.' + (idx < 16 ? '0' : '') + idx.toString(16))
 		;
 
 ///

@@ -355,7 +355,7 @@ String.prototype.byteCount = function()
 		return -1;
 
 	$$(_ + '2.1 - Split the string into parts based on bit wrapper \'[\'')
-	let parts = this.replace(/\?(\w\w)\w*/g, '$1').replace(/ +/g, '').split('[');
+	let parts = this.replace(/\?\.(\w\w)\w*/g, '$1').replace(/ +/g, '').split('[');
 
 	$$(_ + '2.2 - Initialize the nibble length')
 	let nibLen = 0;
