@@ -1,3 +1,14 @@
+# 2021-07-07 Changes
+
+## Patch Updates
+- Changed the pattern for 1 byte fillers to use `?.` prefix . The earlier pattern was creating chaos when the bytes are clubbed together.
+- Fixed issue with doram palette in **`Increase Hairstyle`** patches.
+- (Hopefully) Fixed the rendering bug with [Increase Zoom](https://github.com/Neo-Mind/WARP/issues/44) patches.
+
+## Tool Updates
+- Updated thai language file with translations for the new entries.
+
+
 # 2021-07-06 Changes
 
 ## Tool Updates

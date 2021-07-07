@@ -148,7 +148,7 @@
 #        tooltip: Select whether to use Regular expressions OR glob style matching
 #    
 #    csBtn:
-#        tooltip: Select whether to match with or without case-sensitvity
+#        tooltip: Select whether to match with or without case-sensitivity
 #    
 #    #============#
 #    # Menu Items #

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144)                                 *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-07                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -92,6 +92,8 @@ IncrZoom = function(patchName)
 		$$(_ + '2.6 - Repeat 2.4 for this set of addresses')
 		addrs.forEach( addr => Exe.SetHex(addr + 6, newDist) );
 
+		/* - Doesn't look like this step is needed.
+
 		$$(_ + '3.1 - Find the \'/zoom\' enabled/disabled load configuration (in CSession_lua_configuration)')
 		let parts = [
 			MOVSS(XMM1, [POS4WC])  //movss xmm1, dword ptr [zoom_max_load_enabled]
@@ -137,6 +139,7 @@ IncrZoom = function(patchName)
 		$$(_ + '3.3 - Overwrite the values at both locations with the new distance')
 		Exe.SetHex(Exe.Vir2Phy(enbAddr), newDist);
 		Exe.SetHex(Exe.Vir2Phy(disAddr), newDist);
+		*/
 	}
 
 	return true;
