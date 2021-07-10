@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shakto                                      *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-10                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -110,7 +110,7 @@ CustomChatColor = function(patchName)
 		throw Error(`'${clrName}' reference missing`);
 
 	$$(_ + '2.2 - Retrieve the new color from user')
-	let color = Exe.GetUserInput(varName, D_Color, title, "Select the new color", clrVal, {ignoreAlpha: true, keepAlpha: true});
+	let color = Exe.GetUserInput(varName, D_Color, title, "Select the new color", clrVal, {ignoreAlpha: true, keepAlpha: true, order: "RGBA"});
 	if (color === false)
 		Cancel("Color", clrName + " (0x" + clrVal.toHex(3, true) + ")");
 
@@ -153,9 +153,10 @@ CustomGMColor = function()
 
 	$$(_ + '2.1 - Get the new color from user')
 	let varName = '$gmChatColor';
-	let color = Exe.GetUserInput(varName, D_Color, "GM Chat Color", "Select the new color", 0x00FFFF, {ignoreAlpha: true, keepAlpha: true});
+	let color = Exe.GetUserInput(varName, D_Color, "GM Chat Color", "Select the new color", 0x00FFFF, {ignoreAlpha: true, keepAlpha: true, order: "RGBA"});
 	if (color === false)
 		Cancel("Color", "Cyan (0x00FFFF)");
+	Debug(color.toHex())
 
 	$$(_ + '2.2 - Replace the PUSHed color at all 3 addrs found')
 	Exe.SetFromVar(addr1 + 1, varName);
@@ -191,7 +192,7 @@ CustomPublicColorSelf = function ()
 
 	$$(_ + '2.1 - Get the new color from user')
 	let varName = '$yourChatColor';
-	let color = Exe.GetUserInput(varName, D_Color, "Public Chat Color (Self)", "Select the new color", 0x00FF00, {ignoreAlpha: true, keepAlpha: true});
+	let color = Exe.GetUserInput(varName, D_Color, "Public Chat Color (Self)", "Select the new color", 0x00FF00, {ignoreAlpha: true, keepAlpha: true, order: "RGBA"});
 	if (color === false)
 		Cancel("Color", "Green (0x00FF00)");
 

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Hanashi, Andrei (4144)                                 *
 *   Created Date  : 2021-03-06                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-10                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -77,7 +77,7 @@ CustomSlotHLColor = function()
 
 	$$(_ + '2.1 - Get the new color from user')
 	let varName = '$HSkillSColor';
-	let newColor = Exe.GetUserInput(varName, D_Color, "Highlight Color", "Select the new color", 0x00B4FFB4, {ignoreAlpha: true, keepAlpha: true});
+	let newColor = Exe.GetUserInput(varName, D_Color, "Highlight Color", "Select the new color", 0x00B4FFB4, {ignoreAlpha: true, keepAlpha: true, order: "RGBA"});
 	if (newColor === false)
 		Cancel("Highlight Color", "Light Green (0xB4FFB4)");
 
