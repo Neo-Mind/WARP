@@ -1,7 +1,15 @@
+# 2021-07-12 Changes
+
+## Patch Updates
+- Fixed bug in [Disable Multiple Windows](https://github.com/Neo-Mind/WARP/issues/52) patch.
+- Some minor cleanup.
+
+
 # 2021-07-10 Changes
 
 ## Patch Updates
 - Fixed the ordering for **`D_Color`** in the **`Customize Chat Color` & `Customize Slot Highlight color`** patches.
+
 
 # 2021-07-07 Changes
 

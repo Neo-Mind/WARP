@@ -38,7 +38,7 @@ if (typeof RsrcEntry === 'undefined') //avoid redefinition
 			this.ID = id;
 			this.Addr = rootAddr + offset;
 			this.IsFile = (isFile === true);
-	
+
 			if (this.IsFile)
 			{
 				this.DataAddr = Exe.Rva2Phy(Exe.GetInt32(this.Addr));
@@ -47,7 +47,7 @@ if (typeof RsrcEntry === 'undefined') //avoid redefinition
 			else
 			{
 				this.Entries = [];
-	
+
 				let count = Exe.GetInt16(this.Addr + 12) + Exe.GetInt16(this.Addr + 14);
 				let pos = this.Addr + 16;
 				for (let i = 0; i < count; i++, pos += 8)
@@ -59,8 +59,8 @@ if (typeof RsrcEntry === 'undefined') //avoid redefinition
 				}
 			}
 		}
-	
-		traverse(hierarchy) 
+
+		traverse(hierarchy)
 		{
 			if (Array.isArray(hierarchy) && hierarchy.isEmpty())
 			{

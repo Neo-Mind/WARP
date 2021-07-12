@@ -59,7 +59,7 @@ IncrHairs = function(patchName)
 
 	$$(_ + '1.5 - Add to the strAddrs')
 	strAddrs.push(addr);
-	
+
 	$$(_ + '1.6 - Get the limit from user or set it to 65k based on the patch')
 	let isPalShared = Warp.GetPatchState("HeadPalMF") || Warp.GetPatchState("HeadPalUnisex");
 	if (patchName === "IncrHairStyles")
@@ -143,7 +143,7 @@ IncrHairs = function(patchName)
 	strAddrs.forEach( (memAddr, idx) =>
 	{
 		let __ = `[${idx}] `;
-		
+
 		let isLast = idx === strAddrs.length-1;
 
 		if (!isLast || !isPalShared)
@@ -374,23 +374,23 @@ IncrHairs = function(patchName)
 
 			$$(__ + '5.7 - Create a JMP to our code')
 			Exe.SetJMP(hookAddr, freeVir);
-			
+
 			if (isLast && doramOn)
 			{
 				$$(__ + '6.1 - For doram palettes find the seperate format string')
 				let newStrAddr = Exe.FindText("%s\\" + fmtPrefix + "%s_%s_%d.pal", PHYSICAL);
-				
+
 				if (newStrAddr > 0)
 				{
 					$$(__ + '6.2 - Change the second %s to %u')
 					Exe.SetInt8(newStrAddr + 4 + fmtPrefix.length, 0x75);
-					
+
 					$$(__ + '6.3 - Find where it is PUSHed before the original format string PUSH')
 					let newStrPush = PUSH(Exe.Phy2Vir(newStrAddr));
 					let newHookAddr = Exe.FindLastHex(newStrPush, hookAddr, beginAddr);
 					if (newHookAddr < 0)
 						throw Error("Second palette format string not PUSHed");
-					
+
 					$$(__ + '6.4 - Prep the hook code for doram palette')
 					let code =
 						PUSH_EAX          //push eax
@@ -402,16 +402,16 @@ IncrHairs = function(patchName)
 					+	newStrPush        //push offset "%s\<fmtPrefix>\%s_%s_%d.pal";
 					+	JMP(Filler(1))    //jmp <newRetnAddr> ; after the original PUSH i.e. newHookAddr + 5
 					;
-					
+
 					$$(__ + '6.5 - Allocate space for it')
 					let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
-					
+
 					$$(__ + '6.6 - Fiil in the blanks')
 					code = SetFillTarget(code, 1, Exe.Phy2Vir(newHookAddr + 5, CODE), freeVir, 1);
-					
+
 					$$(__ + '6.7 - Add at allocated space')
 					Exe.AddHex(free, code);
-					
+
 					$$(__ + '6.8 - Create JMP to our code')
 					Exe.SetJMP(newHookAddr, freeVir);
 				}

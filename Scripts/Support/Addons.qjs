@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -431,7 +431,7 @@ Warp.identify('console', [
 ]);
 
 Warp.identify('Array', [], [
-	'isEmpty', 'isRegPtr', 'isDispPtr', 'last'
+	'isEmpty', 'isRegPtr', 'isDispPtr', 'last', 'take_if'
 ]);
 
 Warp.identify('Number', [], [

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -46,7 +46,7 @@ if (typeof IPrefix === 'undefined') //avoid redefinition
 		///
 		is(p)
 		{
-			return (this.Value === p.Value);
+			return (p instanceof IPrefix && this.Value === p.Value);
 		}
 
 		///

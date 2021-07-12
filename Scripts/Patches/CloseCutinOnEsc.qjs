@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -243,7 +243,8 @@ CloseCutinOnEsc = function()
 		2 : FirstFunc,
 		3 : GetGameMode,
 		4 : jmpVir
-	}, freeVir, 1);
+	},
+	freeVir, 1);
 
 	$$(_ + '3.4 - Add the code at the allocated space')
 	Exe.AddHex(free, code);

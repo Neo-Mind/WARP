@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-12-11                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -117,10 +117,8 @@ $$$ = function(txt)
 ///
 /// \brief Function for adding Headers or Just Underlines to Logs and console if requested.
 ///
-$_ = function()
+$_ = function(...args)
 {
-	let args = [...arguments];
-
 	let tee = args.take_if('boolean', Log.Tee);
 	let msg = args.shift();
 	let bold = args.take_if('boolean', false);
@@ -166,19 +164,10 @@ $_ = function()
 };
 
 ///
-/// \brief Same as above just added the 'Tee' override directly
-///
-$__ = function()
-{
-	$_(true, ...arguments);
-};
-
-///
 /// \brief Same as $_ but add the line on top and bottom
 ///
-_$_ = function(tee, msg)
+_$_ = function(tee, msg, ...args)
 {
-	let args = Array.prototype.slice.call(arguments, 2);
 	if (typeof tee !== 'boolean')
 	{
 		args.unshift(msg);
@@ -282,10 +271,8 @@ Dump = function(name, obj)
 ///
 /// \brief Displays all the elements in the array hierarchically.
 ///
-ShowArr = function()
+ShowArr = (...args) =>
 {
-	let args = [...arguments];
-
 	let arr = args.last();
 	if (!IsArr(arr))
 		return false;
@@ -323,9 +310,8 @@ ShowArr = function()
 ///
 /// \brief Show the variable provided (wrapped in {}) and it's value.
 ///
-ShowVar = function()
+ShowVar = (...args) =>
 {
-	let args = [...arguments];
 	let obj = args.last();
 
 	if (typeof obj !== 'object')
@@ -363,10 +349,8 @@ ShowVar = function()
 /// \brief Shows the physical and virtual cntparts of an address.
 ///        You can also provide variable wrapped in {} to display it's name as the prompt.
 ///
-ShowAddr = function()
+ShowAddr = (...args) =>
 {
-	let args = [...arguments];
-
 	let prompt, addr;
 	let obj = args.take_if('object', null);
 	if (obj === null)
@@ -406,10 +390,8 @@ ShowAddr = function()
 ///
 /// \brief Shows the physical and virtual counterparts of multiple addresses
 ///
-ShowAddrs = function()
+ShowAddrs = (...args) =>
 {
-	let args = [...arguments];
-
 	let prompt = args.take_if('string', 'Addrs');
 
 	let addrs = args.shift();

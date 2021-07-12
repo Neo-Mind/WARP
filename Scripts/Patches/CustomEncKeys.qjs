@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-12                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -199,7 +199,8 @@ _CEK_SetupObfuscate = function(index)
 		{
 			1: offsets[2], //_init
 			2: offsets[3]  //_assign
-		}, 0, 1, 1);
+		},
+		0, 1, 1);
 	}
 
 	$$(_ + '1.3 - Add the code for assigning the Initial packet keys')
