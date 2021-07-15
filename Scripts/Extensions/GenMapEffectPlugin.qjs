@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-22                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,6 +32,8 @@
 ///
 GenMapEffectPlugin = function()
 {
+	let _ = 'GenMapEffectPlugin : ';
+
 	$$(_ + '1.1 - Open the template file & ensure exe file is valid')
 	if (Exe.FileSize == 0)
 		throw NO_EXE;
@@ -41,7 +43,7 @@ GenMapEffectPlugin = function()
 		throw Error("Template file is inaccessible");
 	
 	$$(_ + '1.2 - Find \'xmas_fild01.rsw\'')
-	let addr = Exe.FindText("xmas_fild01.rsw", CaseInsensitive);
+	let addr = Exe.FindText("xmas_fild01.rsw", CASE_INSENSITIVE);
 	if (addr < 0)
 		throw Error("'xmas_fild01.rsw' not found");
 	
@@ -62,7 +64,7 @@ GenMapEffectPlugin = function()
 		throw Error("'xmas_fild01.rsw' not used");
 
 	$$(_ + '1.4 - Find \'gef_fild07.rsw\'')
-	addr = Exe.FindText("gef_fild07.rsw", CaseInsensitive);
+	addr = Exe.FindText("gef_fild07.rsw", CASE_INSENSITIVE);
 	if (addr < 0)
 		throw Error("'gef_fild07.rsw' not found");
 	
@@ -100,7 +102,7 @@ GenMapEffectPlugin = function()
 	let CI_Exit = addr + 4;
 	
 	$$(_ + '3.1 - Find \'yuno.rsw\'')
-	let yunoAddr = Exe.FindText("yuno.rsw", CaseInsensitive);
+	let yunoAddr = Exe.FindText("yuno.rsw", CASE_INSENSITIVE);
 	if (yunoAddr < 0)
 		throw Error("'yuno.rsw' not found");
 	

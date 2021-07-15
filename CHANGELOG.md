@@ -1,3 +1,13 @@
+# 2021-07-15 Changes
+
+## Patch Updates
+- Added patch for [Chris' lua overrides](https://github.com/llchrisll/ROenglishRE/tree/master/Custom%20Lua%20Files)
+
+## Extension Updates
+- Bug fix (Changed all the wrong `CaseInsensitive` names to `CASE_INSENSITIVE`).
+- Added the missing `_` variable in `GenMapEffectPlugin.qjs`
+
+
 # 2021-07-12 Changes
 
 ## Patch Updates

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : -, Neo-Mind                                            *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -56,7 +56,7 @@ ExtractTxtNames = function()
 	fp.WriteLine("Txt Files:");
 
 	$$(_ + '2.2 - Find all locations of .txt')
-	let addrs = Exe.FindTextN(".txt", CaseInsensitive, PHYSICAL, false);
+	let addrs = Exe.FindTextN(".txt", CASE_INSENSITIVE, PHYSICAL, false);
 	addrs.forEach( addr =>
 	{
 		$$(_ + '2.3 - Retrieve the starting location of each string (prepending each character along the way)')

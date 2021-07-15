@@ -1,0 +1,125 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2021 llchrisll                                           *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : llchrisll                                              *
+*   Created Date  : 2021-07-15                                             *
+*   Last Modified : 2021-07-15                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Add the lua overrides created by llchrisll
+///
+AddLuaOverrides = function()
+{
+	let _ = 'AddLuaOverrides : ';
+	
+	$$(_ + '1 - Setup the file replacements. This is simpler since we dont have multiple files in the original\'s place')
+	let pairs1 = 
+	[
+		["Lua Files\\DataInfo\\accName_F", "lua files\\cls\\accname_f"],
+		["Lua Files\\DataInfo\\jobName_F", "lua files\\cls\\jobname_f"],
+		["Lua Files\\DataInfo\\QuestInfo_f", "lua files\\cls\\questinfo_f"],
+		["Lua Files\\DataInfo\\AddRandomOption_F", "lua files\\cls\\addrandomoption_f"],
+		["Lua Files\\DataInfo\\ShadowTable_F", "lua files\\cls\\shadowtable_f"],
+		["Lua Files\\DataInfo\\SpriteRobeName_F", "lua files\\cls\\spriterobename_f"],
+		["Lua Files\\transparentItem\\transparentItem_f", "lua files\\cls\\transparentitem_f"],
+		["Lua Files\\DataInfo\\WeaponTable_F", "lua files\\cls\\weapontable_f"],
+	];
+	
+	let failedPairs1 = pairs1.filter( (pair, idx) =>
+	{
+		let __ = `${_} [${idx}] `;
+		
+		let [oldPre, newPre] = pair;
+		
+		$$(__ + '1.1 - Find the original file prefix')
+		let addr = Exe.FindText(oldPre, CASE_INSENSITIVE, PHYSICAL);
+		if (addr < 0)
+			return true;
+		
+		$$(__ + '1.2 - Replace with the new prefix')
+		Exe.SetText(addr, newPre);
+		
+		return false;
+	});
+	
+	$$(_ + '2 - Ensure LUA object is loaded')
+	LUA.load();
+	
+	$$(_ + '3 - Setup the additional file loading')
+	let pairs2 = 
+	[
+		//Existing file                                   The file to be loaded before it
+		["Lua Files\\DataInfo\\accName",                  "lua files\\cls\\accname"],
+		["Lua Files\\DataInfo\\AccessoryId",              "lua files\\cls\\accessoryid"],
+		["Lua Files\\DataInfo\\EnumVAR",                  "lua files\\cls\\enumvar"],
+		["Lua Files\\HatEffectInfo\\HatEffectInfo",       "lua files\\cls\\hateffectinfo"],
+		["Lua Files\\DataInfo\\jobName",                  "lua files\\cls\\jobname"],
+		["Lua Files\\DataInfo\\NPCIdentity",              "lua files\\cls\\npcidentity"],
+		["Lua Files\\DataInfo\\PetInfo",                  "lua files\\cls\\petinfo"],
+		["Lua Files\\datainfo\\LapineDdukDDakBox",        "lua files\\cls\\lapineddukddakbox"],
+		["Lua Files\\datainfo\\LapineUpgradeBox",         "lua files\\cls\\lapineupgradebox"],
+		["Lua Files\\DataInfo\\AddRandomOptionNameTable", "lua files\\cls\\randomoption"],
+		["Lua Files\\DataInfo\\ShadowTable",              "lua files\\cls\\shadowtable"],
+		["Lua Files\\DataInfo\\SpriteRobeId",             "lua files\\cls\\spriterobeid"],
+		["Lua Files\\DataInfo\\SpriteRobeName",           "lua files\\cls\\spriterobename"],
+		["Lua Files\\DataInfo\\TB_Layer_Priority",        "lua files\\cls\\tb_layer_priority"],
+		["Lua Files\\DataInfo\\TitleTable",               "lua files\\cls\\titletable"],
+		["Lua Files\\transparentItem\\transparentItem",   "lua files\\cls\\transparentitem"],
+		["Lua Files\\DataInfo\\WeaponTable",              "lua files\\cls\\weapontable"]
+	];
+	
+	let failedPairs2 = pairs2.filter( pair =>
+	{
+		let [oldPre, newPre] = pair;
+		try {
+			return (LUA.addLoaders([newPre], oldPre) < 0);
+		}
+		catch (e) {
+			return true;
+		}
+	});
+	
+	if (pairs1.length === failedPairs1.length && pairs2.length === failedPairs2.length)
+		throw Error("Failed to find any files");
+	
+	if (!failedPairs1.isEmpty() || !failedPairs2.isEmpty())
+	{
+		let failedPres = [
+			...failedPairs1,
+			...failedPairs2
+		].map(pair => pair[0]);
+		
+		Warp.WarnUser(
+			"Add Chris' lua overrides",
+			"<b>The following file prefixes were not found :</b><br><br>" + failedPres.join('<br>')
+		);
+	}
+	
+	return true;
+};
+
+///
+/// \brief Disable for unsupported clients (Need Lua interface)
+///
+AddLuaOverrides.validate = IsPost2010;

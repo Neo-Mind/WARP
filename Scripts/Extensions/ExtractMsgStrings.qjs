@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -40,7 +40,7 @@ ExtractMsgStrings = function()
 		throw NO_EXE;
 
 	$$(_ + '1.2 - Find the string \'msgStringTable.txt\'')
-	let addr = Exe.FindText("msgStringTable.txt", CaseInsensitive);
+	let addr = Exe.FindText("msgStringTable.txt", CASE_INSENSITIVE);
 	if (addr < 0)
 		throw Error("'msgStringTable.txt' not found");
 
