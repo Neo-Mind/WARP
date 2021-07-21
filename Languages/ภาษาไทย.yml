@@ -1,0 +1,499 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) 2020-2021 X-EcutiOnner (xex.ecutionner@gmail.com)        #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation- either version 3 of the License- or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful-        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not- see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : X-EcutiOnner (xex.ecutionner@gmail.com)                #
+#   Created Date  : 2020-10-24                                             #
+#   Last Modified : 2021-07-07                                             #
+#                                                                          #
+############################################################################
+
+#####################################
+# Thai Language Translation (TH-th) #
+#####################################
+
+#===================================#
+# Text orientation & other settings #
+#===================================#
+
+RTL: no
+
+#============================#
+# Tab names for TestBench UI #
+#============================#
+
+tabs:
+   - รายการแพทช์
+   - รายการส่วนขยาย
+   - ทดสอบแพทช์
+   - การประมวลผล
+
+#========================#
+# File/Dir Dialog titles #
+#========================#
+
+dialogs:
+   dir: เลือกโฟลเดอร์เพื่อค้นหาไฟล์ไคลเอ็นท์
+   src: เลือกไคลเอ็นท์ต้นทาง
+   tgt: เลือกไคลเอ็นท์ปลายทาง
+   loadS: เลือกไฟล์เพื่อโหลดรายการแพทช์จากโปรไฟล์
+   saveS: เลือกไฟล์เพื่อจัดเก็บรายการแพทช์ไปยังโปรไฟล์
+
+actions:
+
+    #==============#
+    # Patches Page #
+    #==============#
+    
+    getPatches:
+        title: "โหลด<br>รายการแพทช์"
+        tooltip: "โหลดรายการแพทช์ด้วยแพทช์ที่กำหนดไว้ทั้งหมด"
+    
+    selVisiblePatches:
+        title: "เลือก<br>แพทช์ทั้งหมด"
+        tooltip: "เลือกรายการแพทช์ที่แสดงอยู่ทั้งหมด"
+    
+    clearSelPatches:
+        title: "ล้าง<br>แพทช์ที่เลือก"
+        tooltip: "ล้างรายการแพทช์ที่เลือกไว้ทั้งหมด"
+    
+    #=================#
+    # Extensions Page #
+    #=================#
+    
+    getExtns:
+        title: "โหลด<br>รายการส่วนขยาย"
+        tooltip: "โหลดรายการส่วนขยายด้วยส่วนขยายที่กำหนดไว้ทั้งหมด"
+    
+    selVisibleExtns:
+        title: "เลือก<br>ส่วนขยายทั้งหมด"
+        tooltip: "เลือกรายการส่วนขยายที่แสดงอยู่ทั้งหมด"
+    
+    clearSelExtns:
+        title: "ล้าง<br>ส่วนขยายที่เลือก"
+        tooltip: "ล้างรายการส่วนขยายที่เลือกไว้ทั้งหมด"
+    
+    #==============#
+    # Testers Page #
+    #==============#
+    
+    getExes:
+        title: "โหลด<br>รายการไคลเอ็นท์"
+        tooltip: "แสดงรายการไคลเอ็นท์ที่มีทั้งหมดในโฟลเดอร์ทดสอบที่เลือก"
+    
+    selVisibleExes:
+        title: "เลือก<br>ไคลเอ็นท์ทั้งหมด"
+        tooltip: "เลือกรายการไคลเอ็นท์ที่แสดงอยู่ทั้งหมด"
+    
+    clearSelExes:
+        title: "ล้าง<br>ไคลเอ็นท์ที่เลือก"
+        tooltip: "ล้างรายการไคลเอ็นท์ที่เลือกไว้ทั้งหมด"
+    
+    #==============#
+    # Results Page #
+    #==============#
+    
+    runTest:
+        title: "ทดสอบ<br>แพทช์ที่เลือก"
+        tooltip: "ทดสอบแพทช์และส่วนขยายกับไคลเอ็นท์ที่เลือกไว้ และแสดงผลการทดสอบไปยังหน้าต่างการประมวลผล"
+    
+    #=======================#
+    # Script Window related #
+    #=======================#
+    
+    showScriptWin:
+        title: "แสดงหน้าต่างสคริปต์"
+        tooltip: "แสดงหน้าต่าง (Alt+W) สคริปต์ (ใช้สำหรับทดสอบสคริปต์แบบเร่งด่วน)"
+    
+    #=========================#
+    # Remaining Quick Actions #
+    #=========================#
+    
+    loadSrcExe:
+        title: "โหลด<br>ไฟล์ต้นทาง"
+        tooltip: "โหลดไฟล์ไคลเอ็นท์จากโฟลเดอร์ต้นทาง (และโหลดสคริปต์ด้วยในครั้งแรก)"
+    
+    applyPatches:
+        title: "แพทช์<br>ไฟล์ปลายทาง"
+        tooltip: ทำการเรียกใช้แพทช์ทั้งหมดที่เลือกไว้ และบันทึกไคลเอ็นท์ไปยังโฟลเดอร์ปลายทาง
+    
+    selectPrev:
+        title: "เลือก<br>แพทช์ที่ใช้ล่าสุด"
+        tooltip: "เลือกแพทช์ทั้งหมดที่ทำการใช้งานล่าสุด"
+    
+    selectRcmd:
+        title: "เลือก<br>แพทช์แนะนำ"
+        tooltip: "เลือกแพทช์ทั้งหมดที่มีเครื่องหมาย Recommended"
+    
+    loadChangedScripts:
+        title: "โหลด<br>สคริปต์"
+        tooltip: "โหลด/รีโหลด (Alt+C) ไฟล์ .qjs ที่แก้ไขแล้วทั้งหมด (ตั้งแต่โหลดครั้งล่าสุด)"
+    
+    clearOutput:
+        title: "ล้างข้อมูล"
+        tooltip: "ล้างข้อมูลการประมวลผลสคริปต์"
+    
+    evalScript:
+        title: "ประมวลผล"
+        tooltip: "ประมวลผล (Ctrl+R) สคริปต์ที่อยู่ในตัวแก้ไข และแสดงผลไปยังหน้าต่างการประมวลผลสคริปต์"
+    
+    clearEditor:
+        title: "ล้างข้อมูล"
+        tooltip: "ล้างข้อมูลสคริปต์ที่อยู่ในตัวแก้ไข"
+   
+    #================#
+    # Filter Options #
+    #================#
+    
+    rexBtn:
+        tooltip: "เลือกว่าจะใช้นิพจน์ทั่วไปหรือการจับคู่สัญลักษณ์แทน"
+    
+    csBtn:
+        tooltip: "เลือกว่าจะจับคู่อักษรตัวพิมพ์เล็กและตัวพิมพ์ใหญ่หรือไม่"
+    
+    #============#
+    # Menu Items #
+    #============#
+
+    loadPatchScripts:
+       title: "โหลดแพทช์"
+       tooltip: "โหลด/รีโหลด (Alt+P) ไฟล์ .qjs สคริปต์ ที่อยู่ในโฟลเดอร์ Scripts/Patches"
+ 
+    loadExtnScripts:
+       title: "โหลดส่วนขยาย"
+       tooltip: "โหลด/รีโหลด (Alt+E) ไฟล์ .qjs สคริปต์ ที่อยู่ในโฟลเดอร์ Scripts/Extensions"
+ 
+    loadSuppScripts:
+       title: "โหลดส่วนสนับสนุน"
+       tooltip: "โหลด/รีโหลด (Alt+S) ไฟล์ .qjs สคริปต์ ที่อยู่ในโฟลเดอร์ Scripts/Support"
+ 
+    loadAllScripts:
+       title: "โหลดสคริปต์"
+       tooltip: "โหลด/รีโหลด (Alt+A) ไฟล์ .qjs สคริปต์ (แพทช์, ส่วนขยาย และส่วนสนับสนุน) ที่อยู่ในโฟลเดอร์ Scripts"
+ 
+    loadSession:
+       title: "โหลดรายการแพทช์"
+       tooltip: โหลดรายการแพทช์จากโปรไฟล์ที่ทำการจัดเก็บไว้
+ 
+    saveSession:
+       title: "จัดเก็บรายการแพทช์"
+       tooltip: จัดเก็บรายการแพทช์ทั้งหมดที่เลือกไปยังโปรไฟล์
+ 
+    refreshLanguages:
+       title: "รีโหลดรายการภาษา"
+       tooltip: "รีโหลดรายการภาษาจากไฟล์ .yml ที่อยู่ในโฟลเดอร์ Languages"
+ 
+    refreshStyles:
+       title: "รีโหลดชุดรูปแบบ"
+       tooltip: "รีโหลดชุดรูปแบบ (ธีม) จากไฟล์ .yml ที่อยู่ในโฟลเดอร์ Styles"
+ 
+    loadExtns:
+       title: "โหลดส่วนขยาย"
+       tooltip: "โหลดรายการส่วนขยายด้วยส่วนขยายที่กำหนดไว้ทั้งหมด"
+ 
+    saveResolution:
+       title: "บันทึกขนาดหน้าต่าง"
+       tooltip: "บันทึกขนาดหน้าต่างปัจจุบันเป็นค่าเริ่มต้น"
+ 
+    pro2Session:
+       title: "แปลงโปรไฟล์เป็นไฟล์เซสชั่น"
+       tooltip: "แปลงโปรไฟล์ NEMO เป็นไฟล์เซสชั่นเพื่อใช้ใน WARP"
+ 
+    genSecFile:
+       title: "สร้างไฟล์ความปลอดภัย"
+       tooltip: "สร้างไฟล์ความปลอดภัยที่มีค่าแฮชต่างๆ จากไฟล์ต้นทาง (อาจใช้ได้หรือไม่ได้)"
+    
+    #=========================#
+    # Settings Dialog related #
+    #=========================#
+    
+    saveResolution:
+        title: "บันทึกความละเอียด"
+        tooltip: "บันทึกความละเอียดปัจจุบันของม้านั่งทดสอบโดยค่าเริ่มต้น"
+    
+    keepTestInputs:
+        title: "เก็บอินพุตทดสอบไว้"
+        tooltip: "ตัวเลือกในการเก็บอินพุตที่บันทึกไว้ก่อนหน้านี้สำหรับการทดสอบครั้งต่อไปทุกครั้ง"
+    
+    stopAtError:
+        title: "หยุดที่ความผิดพลาด"
+        tooltip: "ตัวเลือกในการหยุดการทดสอบในครั้งแรกที่พบข้อผิดพลาด"
+
+    saveResolutions:
+        title: "บันทึกความละเอียด"
+        tooltip: "บันทึกความละเอียดปัจจุบันของหน้าต่างหลักและสคริปต์เป็นค่าเริ่มต้น"
+	
+    showVersion:
+        title: "แสดงเวอร์ชันที่โหลด"
+        tooltip: "ตัวเลือกในการแสดงเวอร์ชันบิลด์ของ exe ที่โหลดพร้อมกับวันที่"
+        
+    enableEpi:
+        title: "เปิดใช้งาน EPI แล้ว"
+        tooltip: "เปิดใช้งานการสร้างและโหลดไฟล์ EPI พร้อมกับไฟล์ exe ที่เกี่ยวข้อง ใช้อย่างระมัดระวัง"
+    
+    genTgtSecure:
+        title: "สร้าง <target>.secure.txt"
+        tooltip: "เปิดใช้งานการสร้างไฟล์ความปลอดภัย (.secure.txt) ด้วยไฟล์ exe เป้าหมาย"
+    
+    genTgtSession:
+        title: "สร้างไฟล์เซสชันเป้าหมาย"
+        tooltip: "เปิดใช้งานการสร้างไฟล์เซสชันด้วย Target Exe (สำหรับใช้ในภายหลัง)"
+    
+    keepInputs:
+        title: "เก็บข้อมูลผู้ใช้ของเซสชันไว้"
+        tooltip: "ตัวเลือกในการเก็บอินพุตที่บันทึกไว้ขณะโหลดไฟล์เซสชันแทนที่จะถามทีละรายการ"
+
+messages:
+
+    #====================#
+    # Regular Box titles #
+    #====================#
+    
+    success: ข้อมูล
+    query: คำถาม
+    warn: คำเตือน
+    error: ผิดพลาด
+    
+    #============================#
+    # Script specific Box titles #
+    #============================#
+    
+    errS: สคริปต์ผิดพลาด
+    
+    #===========================#
+    # Patch specific Box titles #
+    #===========================#
+    
+    infoP: "ข้อมูลแพทช์ : <b>'%0'</b>"
+    warnP: "คำเตือนแพทช์ : <b>'%0'</b>"
+    errP: "แพทช์ผิดพลาด : <b>'%0'</b>"
+    
+    #===============================#
+    # Extension specific Box titles #
+    #===============================#
+    
+    infoE: "ข้อมูลส่วนขยาย : <b>'%0'</b>"
+    warnE: "คำเตือนส่วนขยาย : <b>'%0'</b>"
+    errE: "ส่วนขยายผิดพลาด : <b>'%0'</b>"
+    
+    #===============#
+    # Button titles #
+    #===============#
+
+    btnOK: ตกลง
+    btnCANC: ยกเลิก
+    btnYES: ใช่
+    btnNO: ไม่ใช่
+    btnLOAD: โหลด
+    btnSAVE: บันทึก
+    btnSEL: เลือกปัจจุบัน
+    
+    #===============#
+    # Error prompts #
+    #===============#
+    
+    noAccess: "<b>'%0'</b> ไม่สามารถเข้าถึงได้"
+    noWrite: "ไม่สามารถเปิดไฟล์ <b>'%0'</b> เพื่อทำการเขียนได้"
+    
+    wrongSig: "<b>'%0'</b> ลายเซ็นไม่ถูกต้อง"
+    wrongPE: "ไม่พบ PE header ใน <b>'%0'</b>"
+    need32: "เฉพาะไคลเอ็นท์ 32 บิต สามารถใช้เป็น <b>'%0'</b>"
+    
+    yamlErr: "ล้มเหลวในการอ่านไฟล์ YAML (%0) : <b>%1</b>"
+    evalErr: "พบข้อผิดพลาดในบรรทัดที่ %0 จาก %1 : <b>%2</b>"
+    grpErr: "<b>'groups'</b> ควรแสดงเป็น อาร์เรย์/ลำดับ"
+    extErr: "ส่วนขยาย ควรจัดให้เป็น อาร์เรย์/ลำดับ"
+    
+    loadFail: "โหลดรายการ <b>'%0'</b> ล้มเหลว"
+    callFail: "<b>ฟังก์ชั่นแพทช์</b> ไม่สามารถเรียกใช้ได้"
+    applyFail: "<b>การแพทช์</b> ไม่สามารถเขียนได้"
+    tgtFail: "<b>ไคลเอ็นท์ปลายทาง</b> ไม่สามารถเขียนได้"
+    funcFail: "<b>%0 ฟังก์ชั่น</b> ขาดหายไปหรือไม่สามารถเรียกใช้ได้"
+    allocFail: "การจัดสรรพื้นที่ล้มเหลว"
+    dependFail: "ไม่สามารถเลือกการพึ่งพา '<b>%0</b>'"
+
+    #=================#
+    # Warning prompts #
+    #=================#
+    
+    empty: "<b>'%0'</b> ว่างเปล่า"
+    noneLoaded: "ไม่มีการโหลดไคลเอ็นท์"
+    skipWarn: "มีการข้าม <b>%0</b> บางรายการ เนื่องจากสาเหตุบางประการ (ไม่มีฟังก์ชัน หรือไวยากรณ์ไม่ถูกต้อง ฯลฯ)"
+    retnFalse: "การส่งคืนฟังก์ชัน <b>เป็นเท็จ</b>"
+    noExes: "ยังไม่ได้เลือกไฟล์ไคลเอ็นท์เพื่อทำการทดสอบ"
+    noPatExts: "ยังไม่ได้เลือกแพทช์หรือส่วนขยายเพื่อทำการทดสอบ"
+    setNoSave: "การตั้งค่า <b>'%0'</b> ไม่สามารถทำการจัดเก็บได้"
+    
+    #=================#
+    # Success prompts #
+    #=================#
+    
+    ready: "โหลดรายการ <b>'%0'</b> สำเร็จ"
+    tgtReady: "ทำการเขียนแพทช์ไปยัง <b>ไคลเอ็นท์ปลายทาง</b>"
+    patSuccess: "การทดสอบแพทช์สำเร็จ!!!"
+    extnSuccess: "การทดสอบส่วนขยายสำเร็จ!!!"
+    
+    #==============#
+    # Info prompts #
+    #==============#
+    
+    patInfo: "แพทช์ที่ทดสอบ : <b>%0</b>"
+    exeInfo: "ทดสอบกับ <b>'%0'</b><br>"
+    extnInfo: "ส่วนขยายที่ทดสอบ : <b>%0</b>"
+    extnOutput: "<b>ผลลัพธ์ => %0</b>"
+    patIgnored: "แพทช์ถูกละเว้นสำหรับไคลเอ็นท์วันที่นี้"
+    userInterrupt: "<b>ผู้ใช้ขัดจังหวะการทดสอบ</b>"
+    
+    #===============#
+    # Query prompts #
+    #===============#
+    
+    srcQuery: "อัพเดตชื่อไฟล์ในโฟลเดอร์ปลายทางหรือไม่?"
+
+texts:
+    
+    #================#
+    # Header Prompts #
+    #================#
+    
+    loadDate: ไคลเอ็นท์
+    loadVersion: "& รุ่น"
+    selCount: จำนวนแพทช์ที่เลือก
+    extnSelCount: จำนวนส่วนขยายที่เลือก
+    exeSelCount: จำนวนไคลเอ็นท์ที่เลือก
+    
+    #===========================================#
+    # StringField titles (appears on the frame) #
+    #===========================================#
+    
+    srcEntry: ไฟล์ต้นทาง
+    tgtEntry: ไฟล์ปลายทาง
+    dirEntry: โฟลเดอร์ที่ต้องการทดสอบ
+    
+    #===============================#
+    # StringField placeholder texts #
+    #===============================#
+    
+    exePath: ตำแหน่งโฟลเดอร์ของไคลเอ็นท์
+    path: ตำแหน่งโฟลเดอร์
+    filter: ตัวกรองการค้นหา
+    find: Regular Expression
+    
+    #==============#
+    # Frame titles #
+    #==============#
+    
+    actionFrame: เมนูลัด
+    patchFrame: รายการแพทช์
+    extnFrame: รายการส่วนขยาย
+    exeFrame: รายการไคลเอ็นท์
+    fontFrame: ชื่อฟอนท์
+    demoFrame: ตัวอย่าง
+    choiceFrame: ตัวเลือก
+    
+    #====================#
+    # Text Editor titles #
+    #====================#
+    
+    scriptEditor: ตัวแก้ไขสคริปต์
+    outputView: การประมวลผลสคริปต์
+    
+    #======================#
+    # Context Menu prompts #
+    #======================#
+    
+    cutPrompt: ตัด
+    copyPrompt: คัดลอก
+    pastePrompt: วาง
+    delPrompt: ลบ
+    clrPrompt: ล้าง
+    undoPrompt: ย้อนกลับ
+    redoPrompt: ทำต่อไป
+    deselPrompt: ไม่เลือกทั้งหมด
+    selAllPrompt: เลือกทั้งหมด
+    
+    #===============#
+    # Other prompts #
+    #===============#
+    
+    fontSizePrompt: "ขนาดตัวอักษร :"
+    fontNamePrompt: "ชื่อตัวอักษร :"
+    langPrompt: "ภาษา :"
+    stylePrompt: "รูปแบบ :"
+
+#===========================================================#
+# All translations (including UI, Patches, Extensions etc.) #
+#===========================================================#
+
+translations:
+    - find: Settings
+      replace: การตั้งค่า
+    
+    - find: Title
+      replace: หัวข้อ
+    
+    - find: Group
+      replace: กลุ่ม
+    
+    - find: Author
+      replace: ผู้เขียน
+    
+    - find: Description
+      replace: คำอธิบาย
+      
+    - find: Selected
+      replace: เลือกแล้ว
+    
+    - find: Tooltip
+      replace: เคล็ดลับเครื่องมือ
+    
+    - find: FileName
+      replace: ชื่อไฟล์
+    
+    - find: Inbuilt
+      replace: ในตัว
+    
+    - find: From Scripts
+      replace: จากสคริปต์
+    
+    - find: Scripts
+      replace: สคริปต์
+    
+    - find: Refresh
+      replace: รีเฟรช
+    
+    - find: Session
+      replace: เซสชั่น
+    
+    - find: Patches
+      replace: ปะ
+    
+    - find: Find
+      replace: หา
+    
+    - find: Sort
+      replace: เรียงลำดับ
+    
+    - find: by
+      replace: โดย
+
+    - find: None
+      replace: ไม่มีอะไร

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,8 @@
 /// \brief Equates other variable names in the array
 ///        to the value of the first one
 ///
-const _equate_ = (name, idx, set) => {
+const _equate_ = (name, idx, set) =>
+{
 	if (idx > 0)
 		Assign(set[idx], set[0]);
 };
@@ -42,19 +43,28 @@ const _equate_ = (name, idx, set) => {
 ///
 /// \brief Creates functions for all provided instructions using the name (first arg) & index
 ///
-const _define_with = function(name)
-{
-	for (let idx = 1; idx < arguments.length; idx++)
-	{
-		let set = Wrap(arguments[idx]);
-		Assign(
-			set[0],
-			`function(){ return ${name}(${idx-1}, arguments) }`
-		);
 
-		if (set.length > 1)
-			set.forEach(_equate_);
-	}
+const _define_with = (base, ...names) =>
+{
+	names.forEach( (set, idx) =>
+	{
+		if (!set)
+			return;
+
+		const val = `function(){ return ${base}(${idx}, arguments) }`;
+
+		if (IsArr(set))
+		{
+			Assign(set[0], val);
+
+			if (set.length > 1)
+				set.forEach(_equate_);
+		}
+		else
+		{
+			Assign(set, val);
+		}
+	});
 };
 
   //==================//
@@ -197,7 +207,7 @@ _transfer_ = (ocImm, oper, args, noImm8) =>
 ///
 RETN = (arg) =>
 {
-	let type = typeof(arg);
+	const type = typeof(arg);
 	if (type === 'number')
 		return ' C2' + arg.toHex(2);
 	else if (type === 'string')
@@ -545,36 +555,16 @@ _add_sub_1 = (ocReg, oper, args) =>
  // Complements, Multiplication & Division //
 //========================================//
 
-NOT = function() //1s complement
-{
-	return _cmpl_mul_div(2, arguments);
-};
-
-NEG = function() //2s complement
-{
-	return _cmpl_mul_div(3, arguments);
-};
-
-MUL = function()
-{
-	return _cmpl_mul_div(4, arguments);
-};
-
-DIV = function()
-{
-	return _cmpl_mul_div(6, arguments);
-};
-
-IDIV = function()
-{
-	return _cmpl_mul_div(7, arguments);
-};
-
-IdentifyObj('NOT');
-IdentifyObj('NEG');
-IdentifyObj('MUL');
-IdentifyObj('DIV');
-IdentifyObj('IDIV');
+_define_with('_cmpl_mul_div',
+	null,
+	null,
+	'NOT', //1s complement
+	'NEG', //2s complement
+	'MUL',
+	null,
+	'DIV',
+	'IDIV'
+);
 
 ///
 /// \brief Creates hex for Complements (NOT & NEG), Multiplication & Division (i.e. MUL, DIV & IDIV)
@@ -732,13 +722,10 @@ _arith_logic = (oper, args) =>
 {
 	let alt = false;
 	if (args[0] === true)
-	{
-		alt = true;
-		args = Array.prototype.slice.call(args, 1);
-	}
+		[alt, ...args] = [...args];
 
 	let data = new OpData(args);
-	let addon = oper * 8;
+	const addon = oper * 8;
 
 	let opCode;
 	switch (data.OpType)
@@ -827,6 +814,31 @@ TEST = function()
 
 IdentifyObj('TEST');
 
+  //=====================//
+ // String instructions //
+//=====================//
+
+_str_op = (oc, args) =>
+{
+	let data = new OpData(args, true);
+	if (data.OpSize === 8)
+		oc--;
+
+	return Instr.FromParts(data, oc, 0).toString();
+};
+
+for (const [name, oc] of
+[
+	['INS',  0x6D],
+	['MOVS', 0xA5],
+	['OUTS', 0x6F],
+	['LODS', 0xAD],
+	['STOS', 0xAB],
+	['CMPS', 0xA7],
+	['SCAS', 0xAF],
+])
+	Assign(name, `function() { return _str_op(${oc}, arguments) }`);
+
   //===============================//
  // Instructions without operands //
 //===============================//
@@ -853,7 +865,7 @@ IdentifyObj('TEST');
  // Special functions //
 //===================//
 
-NOPs = function(count)
+NOPs = (count) =>
 {
 	if (count == 1)
 	{
