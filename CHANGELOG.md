@@ -1,3 +1,21 @@
+# 2021-07-22 Changes
+
+## Patch Updates
+- Changed the placeholder functions to use `_` & `_.` instead of `?` to avoid clashing with regular wildcards.
+- Removed `SwapFiller` & `SetFillTarget` function (kind of redundant with the other one without much benefits).
+
+- Changed the way the byte count is sent to `SwapFillers` and `SetFillTargets`, now the byte count can be clubbed with the index as a string key => `"index, bc"`
+- Also, for `SetFillTargets`, the starting address needs to be provided in the map argument itself using the key `start`. If it's not there then `0` is assumed.
+
+- Converted a lot of `let` to `const`
+- Changed some of the `forEach` functions to `for of` loops.
+
+- Changed `LOCK`, `REPE` & `REPN` to `ILOCK`, `IREPE` & `IREPN` respectively. The first 3 are now functions instead to automatically prefix these values.
+  `REP` function has also been provided as an alias to `REPE`. Check the wiki for more details. 
+
+- Added string instructions to use with the `REP*` functions.
+
+
 # 2021-07-07 Changes
 
 ## Patch Updates
