@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -137,7 +137,7 @@ if (typeof Register === 'undefined') //avoid redefinition
 	///
 	/// \brief Defining the FPU Register Stack & SSE Registers
 	///
-	let indices = [0, 1, 2, 3, 4, 6, 7];
+	const indices = [0, 1, 2, 3, 4, 6, 7];
 
 	_createR_("ST$" ,  80); //Generic Placeholder
 	_createR_("MM$" ,  64); //Generic Placeholder
