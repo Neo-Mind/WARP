@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -83,7 +83,7 @@ if (typeof OpData === 'undefined')
 			/// 1.3 - Extract the values from the args
 			for (let i = 0; i < args.length; i++)
 			{
-				let arg = args[i];
+				const arg = args[i];
 				if (arg instanceof IPrefix) //extra prefixes added
 				{
 					this.Prefix.push(arg);
@@ -257,7 +257,7 @@ if (typeof OpData === 'undefined')
 			}
 
 			/// 1.4 - Retrieve the first value & check if its a number
-			let first = ptr[0];
+			const first = ptr[0];
 			if (IsNumOrStr(first)) //scale*index + base mode
 			{
 				/// 1.5 - If it is then we are using SIB and the first 2 args are the S & I parts
@@ -307,7 +307,7 @@ if (typeof OpData === 'undefined')
 				/// 2.5 - Calculate the displacement size
 				if ('Disp' in this) //only defined for num or str displacements
 				{
-					let dsize = BitWidth(this.Disp);
+					const dsize = BitWidth(this.Disp);
 					this.DpSize = (dsize > 8) ? this.AdSize : dsize;
 				}
 				if ('Base' in this)
@@ -329,7 +329,7 @@ if (typeof OpData === 'undefined')
 			/// 3 - If a valid displacement was found earlier then set up the size
 			if ('Disp' in this)
 			{
-				let dsize = BitWidth(this.Disp);
+				const dsize = BitWidth(this.Disp);
 				this.DpSize = (dsize > 8) ? this.AdSize : dsize;
 			}
 		}
@@ -360,7 +360,7 @@ if (typeof OpData === 'undefined')
 		toString()
 		{
 			const {OpType, Prefix, OpSize, AdSize, DpSize, ImSize, PtSize} = this;
-			let prefix =
+			const prefix =
 				`OpType = ${OpType}, Prefix = ${Prefix}<br>`
 			+	`Sizes = [OpSize = ${OpSize}, AdSize = ${AdSize}, DpSize = ${DpSize}, ImSize = ${ImSize}, PtSize = ${PtSize}]<br>`
 			+	`Others = [`;
