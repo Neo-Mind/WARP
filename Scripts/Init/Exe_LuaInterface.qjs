@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -76,7 +76,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 		///
 		load : function()
 		{
-			let _ = "LUA.load : ";
+			const _ = "LUA.load : ";
 
 			$$(_ + '1.1 - Check if load was already called')
 			if ('Valid' in this)
@@ -93,13 +93,13 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			this.Valid = false;
 			this.Pushers = new Map();
 
-			["d>s", "d>d", "dd>d", "dd>s"].forEach( fmt =>
+			for (const fmt of ["d>s", "d>d", "dd>d", "dd>s"])
 			{
 				$$(_ + `1.5 - Find '${fmt}' & save it's PUSH instruction`)
-				let addr = Exe.FindText(fmt, false);
+				const addr = Exe.FindText(fmt, false);
 				if (addr > 0)
 					this.Pushers.set(fmt, PUSH(addr));
-			});
+			}
 
 			$$(_ + '1.6 - Find \'ReqJobName\'')
 			addr = Exe.FindText("ReqJobName", CASE_INSENSITIVE);
@@ -165,7 +165,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				case 0xC6:
 					$$(_ + '3.3 - For Zero Init DIRECT call (seen in VC10+). Save the target address as \'Allocator\' & set the type to ZInit')
 
-					ins = Instr.FromAddr(ins.NextAddr);
+					ins.moveToNext();
 					if (ins.Codes[0] !== 0xE8) // Ensure the next instruction is a direct CALL
 					{
 						this.Error = new Error("LUA - No direct call found after Zero Init");
@@ -254,7 +254,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 		///
 		createCaller : function(name, format)
 		{
-			let _ = "LUA.createCaller : ";
+			const _ = "LUA.createCaller : ";
 
 			$$(_ + '1.1 - Sanity Check (Ensure we have a valid object)')
 			if ('Valid' in this === false)
@@ -279,11 +279,11 @@ if (typeof LUA === 'undefined') // avoid redefinition
 
 
 			$$(_ + '1.3 - Calculate the number of arguments for input & output')
-			let [icnt, ocnt] = format.split(">").map(e => e.length);
+			const [icnt, ocnt] = format.split(">").map(e => e.length);
 
 			$$(_ + '1.4 - Split up the inputs & outputs')
-			let inputs = Array.prototype.slice.call(arguments, 2, 2 + icnt).reverse();
-			let outputs = Array.prototype.slice.call(arguments, 2 + icnt, 2 + icnt + ocnt).reverse();
+			const inputs = Array.prototype.slice.call(arguments, 2, 2 + icnt).reverse();
+			const outputs = Array.prototype.slice.call(arguments, 2 + icnt, 2 + icnt + ocnt).reverse();
 
 			$$(_ + '2 - Now we construct the code in stages')
 			let pre = this.Al_Mode === FnMode.Regular ? PUSH(name.length) : '';
@@ -308,7 +308,8 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			}
 
 			$$(_ + '2.2 - PUSH all the inputs in reverse order')
-			inputs.forEach( arg => {code += PUSH(arg)} ); //PUSH input_arg
+			for (const arg of inputs)
+				code += PUSH(arg); //PUSH input_arg
 
 			$$(_ + '2.3 - PUSH the format, and prepare ECX for the allocator')
 			code +=
@@ -358,7 +359,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			$$(_ + '2.6 - Retrieve the outputs')
 			if (ocnt > 0)
 			{
-				outputs.forEach( arg =>
+				for (const arg of outputs)
 				{
 					code +=
 						POP(ECX)                 //pop ecx
@@ -370,7 +371,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 						MOV(arg, [ECX])          //mov outputReg, dword ptr [ecx]
 					)
 					;
-				});
+				}
 
 				$$(_ + '2.7 - Restore the stack')
 				suf = ADD(ESP, 4 * ocnt +                     //add esp, (immA + 4)  for Regular CALL
@@ -394,12 +395,13 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				nameAddr = Exe.FindText(nameAddr, CASE_INSENSITIVE, false);
 
 			if (nameAddr)
-				code = SwapFiller(code, 50, nameAddr);
+				code = SwapFillers( code, {50: nameAddr} );
 
-			code = SetFillTargets(code, {
-				51 : this.Allocator,
-				52 : this.FnInvoker
-			}, at);
+			code = SetFillTargets( code, {
+				'start': at,
+				    51 : this.Allocator,
+				    52 : this.FnInvoker
+			});
 
 			return code;
 		},
@@ -412,7 +414,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			/// 0 - Parse the arguments
 			let files, refName, tgt, skipOrig = false;
 
-			let loadNewFirst = IsArr(arg1);
+			const loadNewFirst = IsArr(arg1);
 			if (loadNewFirst)
 			{
 				files = arg1;
@@ -436,7 +438,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			if (!IsNum(tgt))
 				tgt = -1;
 
-			let _ = "LUA.addLoaders : ";
+			const _ = "LUA.addLoaders : ";
 
 			$$(_ + '1.1 - Sanity Check (Ensure we have a valid object)')
 			if ('Valid' in this === false)
@@ -446,7 +448,7 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw this.Error;
 
 			$$(_ + '1.2 - Find the string inside refName')
-			let refAddr = Exe.FindText(refName, CASE_INSENSITIVE);
+			const refAddr = Exe.FindText(refName, CASE_INSENSITIVE);
 			if (refAddr < 0)
 				throw Error("LUA.addLoaders - Reference file (" + refName + ") missing");
 
@@ -464,23 +466,23 @@ if (typeof LUA === 'undefined') // avoid redefinition
 				throw Error("LUA.addLoaders - ECX assignment missing");
 
 			$$(_ + '1.5 - Save the location after the CALL')
-			let retnPhy = addr + 10;
-			let retnVir = Exe.Phy2Vir(retnPhy, CODE);
+			const retnPhy = addr + 10;
+			const retnVir = Exe.Phy2Vir(retnPhy, CODE);
 
 			$$(_ + '2.1 - Prepare the template to use for each file & save its size')
-			let template =
+			const template =
 				Exe.GetHex(hookAddr, addr - hookAddr)  //prep code
 			+	PUSH(Filler(1))                        //push offset <filePrefix>
 			+	CALL(Filler(2))                        //call CLua::Load
 			;
-			let tsize = template.byteCount();
+			const tsize = template.byteCount();
 
 			$$(_ + '2.2 - Calculate total code size')
-			let csize = tsize * (files.length + (skipOrig ? 0 : 1)) + 7; //5 for the JMP at the end and 2 NULL bytes for seperation between code and strings
+			const csize = tsize * (files.length + (skipOrig ? 0 : 1)) + 7; //5 for the JMP at the end and 2 NULL bytes for seperation between code and strings
 
 			$$(_ + '2.3 - Prepare the strings to be appended at the end of the code')
-			let strings = files.join('\x00').toHex() + ' 00';
-			let ssize = strings.byteCount();
+			const strings = files.join('\x00').toHex() + ' 00';
+			const ssize = strings.byteCount();
 
 			$$(_ + '2.4 - Save the VIRTUAL address (If no address is specified then allocate space for it)')
 			let tgtVir;
@@ -497,36 +499,38 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			$$(_ + '3.2 - If the original file needs to be loaded first then first add the entry for that using the template')
 			if (!skipOrig && !loadNewFirst)
 			{
-				code += SwapFillers(template, {
+				code += SwapFillers( template, 1,
+				{
 					1 : refAddr,
 					2 : dist,
-				}, 1);
+				});
 
 				dist -= tsize;
 			}
 
-			files.forEach( file =>
+			for (const file of files)
 			{
 				$$(_ + '3.3 - Fill the template with the string address & distance and append to the code (' + file + ')')
-				code += SwapFillers(template, {
+				code += SwapFillers( template, 1,
+				{
 					1 : strAddr,
 					2 : dist,
-				}, 1);
+				});
 
 				$$(_ + '3.4 - Update the strAddr to the next string location')
 				strAddr += file.length + 1;
 
 				$$(_ + '3.5 - Update the distance for the next CALL')
 				dist -= tsize;
-			});
+			};
 
 			$$(_ + '3.6 - If the original file needs to be loaded last then add the entry for that using the template')
 			if (!skipOrig && loadNewFirst)
 			{
-				code += SwapFillers(template, {
+				code += SwapFillers( template, 1, {
 					1 : refAddr,
 					2 : dist,
-				}, 1);
+				});
 			}
 
 			$$(_ + '3.7 - Append the JMP at the end along with the 2 NULLs')

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -52,7 +52,7 @@ if (typeof LANGTYPE === 'undefined') // avoid redefinition
 		///
 		load : function()
 		{
-			let _ = "LANGTYPE.load : ";
+			const _ = "LANGTYPE.load : ";
 			
 			$$(_ + '1.1 - Check if load was already called')
 			if ('Valid' in this)

@@ -15,6 +15,8 @@
 
 - Added string instructions to use with the `REP*` functions.
 
+- Updated **'Init'** scripts to reflect the changes in placeholder functions.
+
 
 # 2021-07-07 Changes
 

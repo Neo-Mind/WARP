@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ if (typeof ROC === 'undefined')
 		///
 		init : function()
 		{
-			let _ = "ROC.init : ";
+			const _ = "ROC.init : ";
 
 			$$(_ + '1.1 - Get the PHYSICAL address of "rdata.grf" & if present its a renewal client.')
 			this.RGrfPhy = Exe.FindText("rdata.grf", PHYSICAL);
@@ -55,8 +55,8 @@ if (typeof ROC === 'undefined')
 
 			$$(_ + '1.5 - Check for Frame Pointer by searching for the characteristic PUSH EBP & MOV EBP, ESP as the first statement of a function')
 			$$(_ + '      To avoid false match we will prefix sequence of INTs (some clients have NOPs instead)')
-			let fromAddr = Exe.GetSectBegin(CODE);
-			let toAddr = fromAddr + 0x500;
+			const fromAddr = Exe.GetSectBegin(CODE);
+			const toAddr = fromAddr + 0x500;
 
 			let addr = Exe.FindHex(INT3.repeat(5) + FP_START, fromAddr, toAddr); //int3 x5 times
 			                                                                     //push ebp
