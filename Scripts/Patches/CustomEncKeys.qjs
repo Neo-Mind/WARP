@@ -189,11 +189,11 @@ _CEK_SetupObfuscate = function(index)
 		                          //retn 4
 		];
 
-		const offsets = MapAddrs(0, parts);
+		const [,,_init, _assign] = MapAddrs(0, parts);
 		code += SetFillTargets( parts, 1,
 		{
-			'1,1' : offsets[2], //_init
-			'2,1' : offsets[3]  //_assign
+			'1,1' : _init,
+			'2,1' : _assign
 		});
 	}
 

@@ -7,6 +7,7 @@
 ## Extension Updates
 - A little bit of cleanup (using `const` and swapping out `forEach` with `for of`)
 
+
 # 2021-07-22 Changes
 
 ## Patch Updates
@@ -25,6 +26,23 @@
 - Added string instructions to use with the `REP*` functions.
 
 - Updated **'Init'** scripts to reflect the changes in placeholder functions.
+
+
+# 2021-07-15 Changes
+
+## Patch Updates
+- Added patch for [Chris' lua overrides](https://github.com/llchrisll/ROenglishRE/tree/master/Custom%20Lua%20Files)
+
+## Extension Updates
+- Bug fix (Changed all the wrong `CaseInsensitive` names to `CASE_INSENSITIVE`).
+- Added the missing `_` variable in `GenMapEffectPlugin.qjs`
+
+
+# 2021-07-12 Changes
+
+## Patch Updates
+- Fixed bug in [Disable Multiple Windows](https://github.com/Neo-Mind/WARP/issues/52) patch.
+- Some minor cleanup.
 
 
 # 2021-07-07 Changes
