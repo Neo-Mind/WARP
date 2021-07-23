@@ -69,7 +69,7 @@ FixFontsCharset = function()
 			+	CMP(EAX, 0x14)       //cmp eax, 14h
 			+	JL(POS1WC)           //jl _skip
 			+	MOV([ECX, WCp], EDX) //mov dword ptr [ecx + DrawDC.m_fontHeight], edx
-			+	MOV(DL, [ROC.StkReg, ROC.HasFP ? 0x10, 0xC]) //mov dl, byte ptr [ARG.3] ; where ARG.3 = ebp+0x10 with fp and esp+0xC without fp
+			+	MOV(DL, [ROC.StkReg, ROC.HasFP ? 0x10 : 0xC]) //mov dl, byte ptr [ARG.3] ; where ARG.3 = ebp+0x10 with fp and esp+0xC without fp
 			+	MOV([ECX, WCp], EAX) //mov dword ptr [ecx + DrawDC.m_fontType], eax
 			
 			,//1
