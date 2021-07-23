@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-14                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,37 +33,35 @@
 ///
 /// \brief Creates functions for all provided instructions using the name (first arg) & index
 ///
-const _define_with = function(name)
+const _define_with = (base, ...names) =>
 {
-	for (let idx = 1; idx < arguments.length; idx++)
+	names.forEach( (name, idx) =>
 	{
-		let opName = arguments[idx];
-		if (opName.length === 0)
-			continue;
+		if (!name)
+			return;
 
 		Assign(
-			opName,
-			`function(){ return ${name}(${idx-1}, arguments) }`
+			name,
+			`function(){ return ${base}(${idx}, arguments) }`
 		);
-	}
+	});
 };
 
 ///
 /// \brief Creates functions for all provided instructions using the name (first arg), opcodes (second arg) & index
 ///
-const _define_with_oc = function(name, oc)
+const _define_with_oc = (base, oc, ...names) =>
 {
-	for (let idx = 2; idx < arguments.length; idx++)
+	names.forEach( (name, idx) =>
 	{
-		let opName = arguments[idx];
-		if (opName.length === 0)
-			continue;
+		if (!name)
+			return;
 
 		Assign(
-			opName,
-			`function(){ return ${name}(${oc}, ${idx-2}, arguments) }`
+			name,
+			`function(){ return ${base}(${oc}, ${idx}, arguments) }`
 		);
-	}
+	});
 };
 
   //======================================//
@@ -129,8 +127,8 @@ _st_arith_cmp = (oper, args) =>
 //===========================//
 
 _define_with('_st_lod_sto',
-	'FLD', '', 'FST', 'FSTP', 'FLDENV',
-	'FLDCW', 'FSTENV', 'FSTCW'
+	'FLD', null, 'FST', 'FSTP',
+	'FLDENV', 'FLDCW', 'FSTENV', 'FSTCW'
 );
 
 ///
@@ -144,7 +142,8 @@ _st_lod_sto = (oper, args) =>
 	switch (data.OpType)
 	{
 		case OpTypes.P:
-			let _valid_sizes = [
+			const _valid_sizes =
+			[
 				[80, 64, 32],
 				[],//never used
 				[64, 32],
@@ -279,7 +278,7 @@ _st_cond_mov = (opCode, oper, args) =>
 //=====================================//
 
 _define_with('_st_arith_pop',
-	'FADDP', 'FMULP', '', '',
+	'FADDP', 'FMULP', null, null,
 	'FSUBRP', 'FSUBP', 'FDIVRP', 'FDIVP'
 );
 

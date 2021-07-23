@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,7 +35,7 @@
 ///
 RemoveBookingJobs = function()
 {
-	let _ = 'RemoveBookingJobs : ';
+	const _ = 'RemoveBookingJobs : ';
 
 	$$(_ + '1.1 - Find the MsgStr CALL used for Job Name loading')
 	let code, type;
@@ -69,7 +69,7 @@ RemoveBookingJobs = function()
 		}
 		default: //VC10 & VC14+
 		{
-			let reg = Exe.Version === 10 ? R32 : EAX;
+			const reg = Exe.Version === 10 ? R32 : EAX;
 			code =
 				MOV(reg, [EBP, WCn])    //MOV regA, dword ptr [LOCAL.x]
 			+	(Exe.Version > 11
@@ -102,10 +102,10 @@ RemoveBookingJobs = function()
 		throw Error("Loop start not found");
 
 	$$(_ + '1.2 - Save location of CALL')
-	let callAddr = addr + code.byteCount() - 1;
+	const callAddr = addr + code.byteCount() - 1;
 
 	$$(_ + '1.3 - Extract MsgStr address')
-	let MsgStr = Exe.GetTgtAddr(callAddr + 1);
+	const MsgStr = Exe.GetTgtAddr(callAddr + 1);
 
 	$$(_ + '2.1 - Prepare Pattern for finding end of the loop')
 	///       (We need to RETN to the location before Loop counter increment which is what jmpDelta is for)
@@ -203,7 +203,7 @@ RemoveBookingJobs = function()
 	let retnAddr = Exe.Phy2Vir(addr + jmpDelta, CODE);
 
 	$$(_ + '3.1 - Get the Skip List file from User')
-	let inFile = Exe.GetUserInput('$bookingList', D_InFile, "Booking Skip List", "Enter the List file containing Job IDs to skip", "Inputs/BookSkipList.yml", {filters : YMLFILTER});
+	const inFile = Exe.GetUserInput('$bookingList', D_InFile, "Booking Skip List", "Enter the List file containing Job IDs to skip", "Inputs/BookSkipList.yml", {filters : YMLFILTER});
 	if (inFile === false)
 		Cancel("No list file specified");
 
@@ -224,7 +224,7 @@ RemoveBookingJobs = function()
 	idList.push(0);
 
 	$$(_ + '4.1 - Prepare our function to check the ID')
-	let parts =
+	const parts =
 	[
 		PUSH_EAX               //push eax
 	+	PUSH(ECX)              //push ecx
@@ -255,37 +255,32 @@ RemoveBookingJobs = function()
 	+	POP_EAX                //pop eax
 	+	ADD(ESP, 8)            //add esp, 8
 	+	JMP(Filler(3))         //jmp <retnAddr>
+	+	" 00 00"               //2 NULL byte gap
 	];
-	let offsets = MapAddrs(0, parts);
 
 	$$(_ + '4.2 - Allocate space to add our function and the IDs')
-	let size = offsets.last() + 2 + idList.length * 2; //each ID is 2 bytes long
-	let [free, freeVir] = Exe.FindSpace(size, 0x10);
+	const size = parts.byteCount() + idList.length * 2; //each ID is 2 bytes long
+	const [free, freeVir] = Exe.FindSpace(size, 0x10);
 
 	$$(_ + '4.3 - Fill in the blanks')
 
-	//The short jumps
-	code = SetFillTargets(parts,
+	//The jumps
+	const [, _next, _msgIt, _return, listAddr] = MapAddrs(freeVir, parts);
+	code = SetFillTargets( parts, 1,
 	{
-		4: offsets[2], //_msgIt
-		5: offsets[3], //_return
-		6: offsets[1], //_next
-	},
-	0, 1, 1);
+		start : freeVir,
+		    2 : MsgStr,
+		    3 : retnAddr,
+		'4,1' : _msgIt,
+		'5,1' : _return,
+		'6,1' : _next
+	});
 
 	//The listAddr
-	code = SwapFiller(code, 1, freeVir + offsets.last() + 2, 1);
-
-	//The long jumps
-	code = SetFillTargets(code,
-	{
-		2 : MsgStr,
-		3 : retnAddr
-	},
-	freeVir, 1);
+	code = SwapFillers( code, 1, {1: listAddr} );
 
 	$$(_ + '4.4 - Add the ids and the function at the allocated space')
-	let idHex = idList.map( id => id.toHex(2) ).join('');
+	const idHex = idList.map( id => id.toHex(2) ).join('');
 	Exe.AddHex(free, code + " 00 00" + idHex);
 
 	$$(_ + '4.5 - Change the CALL target in the MsgStr CALL to our function')
@@ -299,4 +294,3 @@ RemoveBookingJobs = function()
 ///
 RemoveBookingJobs.validate = () =>
 	Exe.BuildDate > 20100223;
-

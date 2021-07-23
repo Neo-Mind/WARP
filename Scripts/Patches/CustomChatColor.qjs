@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shakto                                      *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -95,22 +95,25 @@ if (typeof CCC_Data === 'undefined') //avoid redefinition
 ///
 CustomChatColor = function(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Retrieve the data to be used')
-	let {pattern, rmOnVC9, clrName, varName, title, clrVal} = CCC_Data[patchName];
+	const data = CCC_Data[patchName];
+	const {varName, clrName, clrVal} = data;
 
 	$$(_ + '1.2 - Calculate the pattern to be searched')
-	if (rmOnVC9 && Exe.Version >= 9)
-		pattern = pattern.remove(LEA(R32, [EBP, NEG2WC]));//Remove the LEA for VC9+
+	const pattern = (data.rmOnVC9 && Exe.Version >= 9)
+		? data.pattern.remove(LEA(R32, [EBP, NEG2WC])) //Remove the LEA for VC9+
+		: data.pattern;
 
 	$$(_ + '2.1 - Find the pattern')
-	let addr = Exe.FindHex(pattern);
+
+	const addr = Exe.FindHex(pattern);
 	if (addr < 0)
 		throw Error(`'${clrName}' reference missing`);
 
 	$$(_ + '2.2 - Retrieve the new color from user')
-	let color = Exe.GetUserInput(varName, D_Color, title, "Select the new color", clrVal, {ignoreAlpha: true, keepAlpha: true});
+	const color = Exe.GetUserInput(varName, D_Color, data.title, "Select the new color", clrVal, {ignoreAlpha: true, keepAlpha: true, order: "RGBA"});
 	if (color === false)
 		Cancel("Color", clrName + " (0x" + clrVal.toHex(3, true) + ")");
 
@@ -134,26 +137,26 @@ CustomPublicColor    = CustomChatColor; //inside CGameMode ::Zc_Notify_Chat func
 ///
 CustomGMColor = function()
 {
-	let _ = 'CustomGMColor : ';
+	const _ = 'CustomGMColor : ';
 
 	$$(_ + '1.1 - Find the Orange color (#FF8D1D) PUSHed for Langtype 11')
-	let addr1 = Exe.FindHex( PUSH(0x1D8DFF) ); //colors are in reverse order not sure why
+	const addr1 = Exe.FindHex( PUSH(0x1D8DFF) ); //colors are in reverse order not sure why
 	if (addr1 < 0)
 		throw Error("'Orange' reference missing");
 
 	$$(_ + '1.2 - Find the Cyan color (#FFFF00) PUSH in the vicinity of addr1')
-	let addr2 = Exe.FindHex( PUSH(0x00FFFF), addr1 - 0x30, addr1 + 0x30);
+	const addr2 = Exe.FindHex( PUSH(0x00FFFF), addr1 - 0x30, addr1 + 0x30);
 	if (addr2 < 0)
 		throw Error("'Cyan' reference missing");
 
 	$$(_ + '1.3 - Find the Yellow color (#00FFFF) PUSH in the vicinity of addr1')
-	let addr3 = Exe.FindHex( PUSH(0xFFFF00), addr1 - 0x30, addr1 + 0x30);
+	const addr3 = Exe.FindHex( PUSH(0xFFFF00), addr1 - 0x30, addr1 + 0x30);
 	if (addr3 < 0)
 		throw Error("'Yellow' reference missing");
 
 	$$(_ + '2.1 - Get the new color from user')
-	let varName = '$gmChatColor';
-	let color = Exe.GetUserInput(varName, D_Color, "GM Chat Color", "Select the new color", 0x00FFFF, {ignoreAlpha: true, keepAlpha: true});
+	const varName = '$gmChatColor';
+	const color = Exe.GetUserInput(varName, D_Color, "GM Chat Color", "Select the new color", 0x00FFFF, {ignoreAlpha: true, keepAlpha: true, order: "RGBA"});
 	if (color === false)
 		Cancel("Color", "Cyan (0x00FFFF)");
 
@@ -171,10 +174,10 @@ CustomGMColor = function()
 ///
 CustomPublicColorSelf = function ()
 {
-	let _ = 'CustomPublicColorSelf : ';
+	const _ = 'CustomPublicColorSelf : ';
 
 	$$(_ + '1.1 - Find all locations where Dark Green (#007800) is PUSHed')
-	let addrs = Exe.FindHexN( PUSH(0x007800) ); //PUSH 00,78,00
+	const addrs = Exe.FindHexN( PUSH(0x007800) ); //PUSH 00,78,00
 	if (addrs.isEmpty())
 		throw Error("'Dark Green' reference missing");
 
@@ -190,8 +193,8 @@ CustomPublicColorSelf = function ()
 		throw Error("'Green' reference missing");
 
 	$$(_ + '2.1 - Get the new color from user')
-	let varName = '$yourChatColor';
-	let color = Exe.GetUserInput(varName, D_Color, "Public Chat Color (Self)", "Select the new color", 0x00FF00, {ignoreAlpha: true, keepAlpha: true});
+	const varName = '$yourChatColor';
+	const color = Exe.GetUserInput(varName, D_Color, "Public Chat Color (Self)", "Select the new color", 0x00FF00, {ignoreAlpha: true, keepAlpha: true, order: "RGBA"});
 	if (color === false)
 		Cancel("Color", "Green (0x00FF00)");
 

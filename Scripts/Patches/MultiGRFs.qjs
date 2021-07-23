@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,13 +36,13 @@
 ///
 MultiGRFs = function(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Ensure the DGRF object is loaded')
 	DGRF.load();
 
 	$$(_ + '1.2 - Retrieve the refAddr (push location)')
-	let addr = DGRF.RefAddr;
+	const addr = DGRF.RefAddr;
 
 	$$(_ + '2.1 - Find the AddPak call after the PUSH')
 	let code, type;
@@ -102,7 +102,7 @@ MultiGRFs = function(patchName)
 		throw Error("AddPak call not found");
 
 	$$(_ + '2.2 - Extract AddPak function address')
-	let AddPak = Exe.Phy2Vir(callAddr + 5, CODE) + Exe.GetInt32(callAddr + 1);
+	const AddPak = Exe.Phy2Vir(callAddr + 5, CODE) + Exe.GetInt32(callAddr + 1);
 
 	$$(_ + '2.3 - Little trick to avoid changing 10 bytes (change the push to MOV ECX, addr)')
 	Exe.SetUint8(addr, 0xB9);
@@ -134,7 +134,7 @@ GRFsEmbedded = MultiGRFs;
 ///
 _MG_INI = (callAddr, AddPak) =>
 {
-	let _ = '_MG_INI : ';
+	const _ = '_MG_INI : ';
 
 	$$(_ + '1.1 - Get the essential addresses for our function')
 	if (ROC.GetModHandle < 0)
@@ -147,7 +147,7 @@ _MG_INI = (callAddr, AddPak) =>
 		throw Error("'KERNEL32.dll' not found");
 
 	$$(_ + '1.2 - Create the function code')
-	let parts =
+	const parts =
 	[
 		ENTER(0x80, 0)                  //enter 80h, 0
 	+	PUSHAD                          //pushad
@@ -220,7 +220,6 @@ _MG_INI = (callAddr, AddPak) =>
 	+	LEAVE                           //leave
 	+	RETN() + ' 00'                  //retn ; followed by 1 byte gap before strings begin
 	];
-	let offsets = MapAddrs(0, parts);
 
 	$$(_ + '2.1 - Get the INI file name from user')
 	let iniFile = Exe.GetUserInput('$dataINI', D_Text, "INI File path", "Enter the name of the INI file (containing GRF names)", "DATA.INI", {minLen: 1, maxLen: 20, saveDefault: true});
@@ -230,39 +229,37 @@ _MG_INI = (callAddr, AddPak) =>
 	iniFile = ".\\" + iniFile;
 
 	$$(_ + '2.2 - Put all the strings in an array (we need their individual lengths later)')
-	let strList = ["GetPrivateProfileStringA", "WritePrivateProfileStringA", "Data", iniFile];
+	const strList = ["GetPrivateProfileStringA", "WritePrivateProfileStringA", "Data", iniFile];
 
 	$$(_ + '2.3 - Join the strings with NULL in between and convert to Hex')
-	let strings = strList.join("\x00").toHex() + " 00";
+	const strings = strList.join("\x00").toHex() + " 00";
 
 	$$(_ + '2.4 - Allocate space to add our function')
-	let [free, freeVir] = Exe.FindSpace(offsets.last() + strings.byteCount(), 0x10);
+	const [free, freeVir] = Exe.FindSpace(parts.byteCount() + strings.byteCount(), 0x10);
 
 	$$(_ + '2.5 - Fill in the blanks')
 
-	// First the short jumps
-	let code = SetFillTargets(parts,
-	{
-		1: offsets[4], // _codeOver
-		2: offsets[2], // _loopInner
-		3: offsets[1], // _loopOuter
-		4: offsets[3], // _next
-	},
-	0, -1, 1);
+	// First the jumps & the CALL
+	const [, _loopOuter, _loopInner, _next, _codeOver, lastAddr] = MapAddrs(freeVir, parts);
 
-	// Next the 1 long jump for _codeOver
-	code = SetFillTarget(code, 1, offsets[4], 0);
-
-	// Next the strings
-	let strPos = freeVir + offsets.last();
-	strList.forEach( (str, idx) =>
+	let code = SetFillTargets( parts,
 	{
-		code = SwapFiller(code, idx + 10, strPos, 2);
-		strPos += str.length + 1;     //1 for null
+		start : freeVir,
+		    1 : _codeOver, //for the long jump
+		'1,1' : _codeOver, //for the short jump
+		'2,1' : _loopInner,
+		'3,1' : _loopOuter,
+		'4,1' : _next,
+		   14 : AddPak
 	});
 
-	// Finally the AddPak function
-	code = SetFillTarget(code, 14, AddPak, freeVir, 1);
+	// Next the strings
+	let strPos = lastAddr;
+	strList.forEach( (str, idx) =>
+	{
+		code = SwapFillers( code, 2, {[idx + 10] : strPos} );
+		strPos += str.length + 1;     //1 for null
+	});
 
 	$$(_ + '3.1 - Add the function at the allocated space')
 	Exe.AddHex(free, code + strings);
@@ -278,10 +275,10 @@ _MG_INI = (callAddr, AddPak) =>
 ///
 _MG_EMB = (callAddr, AddPak) =>
 {
-	let _ = '_MG_EMB : ';
+	const _ = '_MG_EMB : ';
 
 	$$(_ + '1.1 - Get the INI file from user to read')
-	let file = Exe.GetUserInput('$inpMultGRF', D_InFile, "GRF List file", "Enter your INI file (containing GRF names) to embed", "Inputs/Sample_DATA.INI");
+	const file = Exe.GetUserInput('$inpMultGRF', D_InFile, "GRF List file", "Enter your INI file (containing GRF names) to embed", "Inputs/Sample_DATA.INI");
 	if (file === false)
 		Cancel("No input file received");
 
@@ -296,14 +293,13 @@ _MG_EMB = (callAddr, AddPak) =>
 	let grfNames = [];
 	while (!handle.AtEnd())
 	{
-		let line = handle.ReadLine().trim();
-		let matches = line.match(/^(\d)\s*=\s*(.*)/);
+		const line = handle.ReadLine().trim();
+		const matches = line.match(/^(\d)\s*=\s*(.*)/);
 		if (!matches)
 			continue;
 
-		let index = matches[1];
-		let value = matches[2].trim();
-		grfNames[index] = value;
+		const [,index, value] = matches;
+		grfNames[index] = value.trim();
 	}
 	handle.Close();
 
@@ -315,19 +311,19 @@ _MG_EMB = (callAddr, AddPak) =>
 	grfNames = grfNames.filter( name => name ?? false );
 
 	$$(_ + '2.1 - Prepare template for load 1 GRF (same needs to be repeated for all GRF files)')
-	let template =
+	const template =
 		PUSH(Filler(1))  //push offset <GRF name>
 	+	DGRF.MovFMgr     //mov ecx, <g_fileMgr>
 	+	CALL(Filler(2))  //call CFileMgr::AddPak
 	;
-	let tsize = template.byteCount();
+	const tsize = template.byteCount();
 
 	$$(_ + '2.2 - Join the strings with NULL in between and convert to Hex')
-	let strings = grfNames.join("\x00").toHex() + " 00";
+	const strings = grfNames.join("\x00").toHex() + " 00";
 
 	$$(_ + '2.3 - Allocate space to add our function')
-	let fullSize = grfNames.length * tsize + 2 + strings.byteCount(); //2 is for RETN & a null to leave a gap between the function and the strings
-	let [free, freeVir] = Exe.FindSpace(fullSize, 0x10);
+	const fullSize = grfNames.length * tsize + 2 + strings.byteCount(); //2 is for RETN & a null to leave a gap between the function and the strings
+	const [free, freeVir] = Exe.FindSpace(fullSize, 0x10);
 
 	$$(_ + '2.4 - Prepare the full code using the template with proper values')
 	let strAddr = freeVir + grfNames.length * tsize + 2;    //Address of first string
@@ -336,7 +332,7 @@ _MG_EMB = (callAddr, AddPak) =>
 	let code = "";
 	grfNames.forEach( name =>
 	{
-		code = SwapFillers(template,
+		code = SwapFillers( template,
 		{
 			1: strAddr,
 			2: funAddr

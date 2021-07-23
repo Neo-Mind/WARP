@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144), CH.C (jchcc)                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,14 +33,14 @@
 ///
 MoveShopIcon = function()
 {
-	let _ = 'MoveShopIcon : ';
+	const _ = 'MoveShopIcon : ';
 
 	$$(_ + '1.1 - Ensure that \'Hide Cash Shop\' patch is not selected (unless in test mode)')
 	if (!Warp.TestMode)
 		Warp.SetPatchState('HideCashShop', false);
 
 	$$(_ + '1.2 - Find the XCoord calculation pattern')
-	let tgtReg = (Exe.Version < 11) ? EDX : EAX;
+	const tgtReg = (Exe.Version < 11) ? EDX : EAX;
 
 	let code =
 		SUB(tgtReg, 0xBB) //sub regA, 0BBh
@@ -73,15 +73,15 @@ MoveShopIcon = function()
 
 	$$(_ + '2.1 - Find the pattern where the Screen Size is picked up (Width is at 0x24, Height is at 0x28)')
 	code = MOV( Exe.Version >= 11 ? EAX : ECX, [POS3WC]);     //mov eax/ecx, dword ptr [g_ScreenStats]
-	let addr2 = Exe.FindHex(code + ' 8B', addr - 0x18, addr); //Some MOV follows after the g_ScreenStats MOV
+	const addr2 = Exe.FindHex(code + ' 8B', addr - 0x18, addr); //Some MOV follows after the g_ScreenStats MOV
 	if (addr2 < 0)
 		throw Error("Screen size retrieval not found");
 
 	$$(_ + '2.2 - Extract <g_ScreenStats> address')
-	let ScreenStats = Exe.GetHex(addr2 + code.byteCount() - 6, 4);
+	const ScreenStats = Exe.GetHex(addr2 + code.byteCount() - 6, 4);
 
 	$$(_ + '3.1 - Get new Coordinates from user')
-	let result = Exe.GetUserInput('$cashShopXY', D_VecI16, "CashShop Icon", "Enter the new coordinates", [-187, 16], {
+	const result = Exe.GetUserInput('$cashShopXY', D_VecI16, "CashShop Icon", "Enter the new coordinates", [-187, 16], {
 		name0: "X Coord ", min0: -1366, max0: 1366,
 		name1: "Y Coord ", min1: -768, max1: 768,
 	});
@@ -89,7 +89,7 @@ MoveShopIcon = function()
 	if (result === false)
 		Cancel("Coordinates", "(-187,16)");
 
-	let [xCoord, yCoord] = result;
+	const [xCoord, yCoord] = result;
 
 	$$(_ + '3.2 - Prepare code to add based on the sign of each coordinate (negative values are relative to width and height respectively)')
 	code = "";
@@ -126,7 +126,7 @@ MoveShopIcon = function()
 	;
 
 	$$(_ + '3.3 - Allocate space to add our code')
-	let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
+	const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
 	$$(_ + '3.4 - Add the code at the allocated space')
 	Exe.AddHex(free, code);
@@ -148,10 +148,10 @@ MoveShopIcon.validate = HasCashShop;
 ///
 ZeroCinShop = function()
 {
-	let _ = 'ZeroCinShop : ';
+	const _ = 'ZeroCinShop : ';
 
 	$$(_ + '1 - Find where format string is PUSHed')
-	let prefix =
+	const prefix =
 		MOV(ECX, ESI)       //mov ecx, esi
 	+	PUSH_EAX            //push eax
 	+	PUSH(0x1C2)         //push 1C2h
@@ -200,11 +200,11 @@ ZeroCinShop.validate = () =>
 ///
 DefShopBrowser = function()
 {
-	let _ = 'DefShopBrowser : ';
+	const _ = 'DefShopBrowser : ';
 
 	$$(_ + '1 - Find locations where "iexplore.exe" is PUSHed')
-	let addrs = Exe.FindHexN( PUSH(EAX) + PUSH(SB_Addr) ); //push eax
-	                                                       //push offset "iexplore.exe"
+	const addrs = Exe.FindHexN( PUSH(EAX) + PUSH(SB_Addr) ); //push eax
+	                                                         //push offset "iexplore.exe"
 	if (addrs.isEmpty())
 		throw Error("String references missing");
 
@@ -216,7 +216,8 @@ DefShopBrowser = function()
 	;
 
 	$$(_ + '3 - Replace the arguments of ShellExecuteA')
-	addrs.forEach( addr => Exe.SetHex(addr, code));
+	for (const addr of addrs)
+		Exe.SetHex(addr, code);
 
 	return true;
 };
@@ -238,11 +239,11 @@ DefShopBrowser.validate = () =>
 ///
 PreviewInShop = function()
 {
-	let _ = 'PreviewInShop : ';
+	const _ = 'PreviewInShop : ';
 
 	$$(_ + '1.1 - Calculate essential values')
-	let isNewType = Exe.Version > 11 && Exe.BuildDate > 20191220 && (ROC.IsZero || ROC.IsRenewal); //Newer function format for latest clients
-	let srcLoc = isNewType ? [POS4WC] : [R32, ' [000001.0]']; //displacement is 6 or 4 . Source Location is direct memory address for newer clients
+	const isNewType = Exe.Version > 11 && Exe.BuildDate > 20191220 && (ROC.IsZero || ROC.IsRenewal); //Newer function format for latest clients
+	const srcLoc = isNewType ? [POS4WC] : [R32, ' [000001.0]']; //displacement is 6 or 4 . Source Location is direct memory address for newer clients
 
 	$$(_ + '1.2 - Find the location inside the function handling the packet where we need to place the JMP')
 	let code =
@@ -259,7 +260,7 @@ PreviewInShop = function()
 	+	JA(WCp)                     //ja short _skip
 	;
 
-	let hookAddr = Exe.FindHex(code);
+	const hookAddr = Exe.FindHex(code);
 	if (hookAddr < 0)
 		throw Error("Hook pattern missing");
 
@@ -294,32 +295,38 @@ PreviewInShop = function()
 		throw Error("Loop increment missing");
 
 	$$(_ + '1.4 - Extract the addition instruction & the block size value (immediate argument)')
-	let sizeAdd = Instr.FromAddr(addr + prefix.byteCount());
-	let blockSize = sizeAdd.Immd;
+	const sizeAdd = Instr.FromAddr(addr + prefix.byteCount());
+	const blockSize = sizeAdd.Immd;
 
 	$$(_ + '1.5 - Setup the register to be used with the block size')
-	let blockReg = isNewType ? ECX : R32.List[sizeAdd.MRM.RegM];
+	const blockReg = isNewType ? ECX : R32.List[sizeAdd.MRM.RegM];
 
 	$$(_ + '1.6 - Extract the original instruction at the hook address & the displacement')
-	let leaIns = Instr.FromAddr(hookAddr);
-	let iiOffset = leaIns.Disp;
+	const leaIns = Instr.FromAddr(hookAddr);
+	const iiOffset = leaIns.Disp;
 
 	$$(_ + '2.1 - Construct the function code in parts which varies based on isNewType')
-	let viewOffset = (isNewType || Exe.BuildDate) < 20171000 ? 112 : 116;
-	let locOffset = isNewType ? 8 : 4;
-	parts = [
+	const viewOffset = (isNewType || Exe.BuildDate) < 20171000 ? 112 : 116;
+	const locOffset = isNewType ? 8 : 4;
+
+	parts =
+	[//0
 		leaIns          //lea ecx, [ebp + <iiOffset>]
 	+	PUSH_EAX        //push eax
-	,
+
+	,//1
 		''
-	,
+
+	,//2
 		MOVZX(EAX, [blockReg, blockSize])      //movzx eax, dword ptr [<blockReg> + <blockSize>]
 	+	MOV([EBP, iiOffset + viewOffset], EAX) //mov dword ptr [ebp + <iiOffset> + <viewOffset>], eax
 	+	MOV(EAX, [blockReg, blockSize + 2])    //mov eax, dword ptr [<blockReg> + <blockSize> + 2]
 	+	MOV([EBP, iiOffset + locOffset], EAX)  //mov dword ptr [ebp + <iiOffset> + <locOffset>], eax
-	,
+
+	,//3
 		''
-	,
+
+	,//4
 		POP_EAX         //pop eax
 	+	JMP(Filler(1))  //jmp retnAddr ; after the original LEA
 	];
@@ -343,28 +350,33 @@ PreviewInShop = function()
 		addr = Exe.GetTgtAddr(endAddr - 4, PHYSICAL);
 
 		$$(_ + '2.4 - Find the assignment to stack location from ECX before it.')
-		let beginAddr = Exe.FindLastHex(MOV([EBP, NEG2WC], ECX), addr, addr - 0x30);
+		const beginAddr = Exe.FindLastHex(MOV([EBP, NEG2WC], ECX), addr, addr - 0x30);
 		if (beginAddr < 0)
 			throw Error("Starting point missing");
 
 		$$(_ + '2.5 - Extract the offset/displacement used in the instruction')
-		let offset = Exe.GetInt32(beginAddr + 2);
+		const offset = Exe.GetInt32(beginAddr + 2);
 
 		$$(_ + '2.6 - Now fill the gaps')
 		parts[1] =
 			PUSH(ECX)                //push ecx
 		+	MOV(ECX, [EBP, offset])  //mov ecx, dword ptr [ebp + offset]
 		;
+
 		parts[3] =
 			POP(ECX)                 //pop ecx
 		;
 	}
 
 	$$(_ + '3.1 - Allocate space for the code')
-	let [free, freeVir] = Exe.FindSpace(parts.byteCount());
+	const [free, freeVir] = Exe.FindSpace(parts.byteCount());
 
 	$$(_ + '3.2 - Fill in the blanks')
-	code = SetFillTarget(parts, 1, Exe.Phy2Vir(leaIns.NextAddr, CODE), freeVir, 1);
+	code = SetFillTargets( parts, 1,
+	{
+		start : freeVir,
+		    1 : Exe.Phy2Vir(leaIns.NextAddr, CODE)
+	});
 
 	$$(_ + '3.3 - Add at allocated space')
 	Exe.AddHex(free, code);
@@ -389,7 +401,8 @@ PreviewInShop.validate = () =>
 ///
 PreviewInShop.cleanup = function()
 {
-	let patchName = "SendClientFlags";
+	const patchName = "SendClientFlags";
+
 	if (Warp.GetPatchState(patchName))
 	{
 		Exe.ClearPatch(patchName);

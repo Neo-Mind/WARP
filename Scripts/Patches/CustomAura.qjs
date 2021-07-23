@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,36 +37,36 @@
 ///
 CustomAuraSprites = function()
 {
-	let _ = 'CustomAuraSprites : ';
+	const _ = 'CustomAuraSprites : ';
 
 	$$(_ + '1.1 - Find \'effect\ring_blue.tga\'')
 	let addr = Exe.FindText("effect\\ring_blue.tga", false); //Some clients dont have NULL prefix
 	if (addr < 0)
 		throw Error("'effect\\ring_blue.tga' not found");
 
-	let rblue = addr.toHex();
+	const rblue = addr.toHex();
 
 	$$(_ + '1.2 - Find \'effect\pikapika2.bmp\'')
 	addr = Exe.FindText("effect\\pikapika2.bmp", false); //same issue
 	if (addr < 0)
 		throw Error("'effect\\pikapika2.bmp' not found");
 
-	let ppika2 = addr.toHex();
+	const ppika2 = addr.toHex();
 
 	$$(_ + '2.1 - Prepare replacement strings')
-	let strAF = "effect\\aurafloat.tga\x00";
-	let strAR = "effect\\auraring.bmp\x00";
-	let size = strAF.length + strAR.length;
+	const strAF = "effect\\aurafloat.tga\x00";
+	const strAR = "effect\\auraring.bmp\x00";
+	const size = strAF.length + strAR.length;
 
 	$$(_ + '2.2 - Allocate space to add the strings')
-	let [free, offsetAF] = Exe.FindSpace(size);
-	let offsetAR = offsetAF + strAF.length;
+	const [free, offsetAF] = Exe.FindSpace(size);
+	const offsetAR = offsetAF + strAF.length;
 
 	$$(_ + '2.3 - Add the strings there (since there are null characters in between we will convert to hex and add)')
 	Exe.AddHex(free, (strAF + strAR).toHex());
 
 	$$(_ + '3.1 - Find the first pattern (original strings are PUSHed to display the aura)')
-	let template =
+	const template =
 		PUSH(Filler(1))         //push offset <path>
 	+	(Exe.Version <= 11 && Exe.BuildDate < 20191000
 	?
@@ -84,14 +84,14 @@ CustomAuraSprites = function()
 	)
 	;
 
-	let codeRB = SwapFiller(template, 1, rblue, 1);  //path => "effect\ring_blue.tga"
-	let offRB = 1;
+	const codeRB = SwapFillers( template, 1, {1: rblue} );  //path => "effect\ring_blue.tga"
+	const offRB = 1;
 
-	let codePP = SwapFiller(template, 1, ppika2, 1); //path => "effect\pikapika2.bmp"
-	let offPP = template.byteCount() + 2;
+	const codePP = SwapFillers( template, 1, {1: ppika2} ); //path => "effect\pikapika2.bmp"
+	const offPP = template.byteCount() + 2;
 
 	// PUSH reg for VC6 & some clients in VC9. PUSH 0 for the remaining
-	let infix = Exe.Version === 6 || (Exe.Version === 9 && Exe.BuildDate > 20101116) ? PUSH_R : PUSH_0 ;
+	const infix = Exe.Version === 6 || (Exe.Version === 9 && Exe.BuildDate > 20101116) ? PUSH_R : PUSH_0 ;
 
 	addr = Exe.FindHex(codeRB + infix + codePP);
 	if (addr < 0)
@@ -109,7 +109,7 @@ CustomAuraSprites = function()
 	if (Exe.BuildDate >= 20110700 && Exe.Version < 14)
 	{
 		$$(_ + '4.1 - Find the second pattern')
-		let code =
+		const code =
 			PUSH(ESI)      //push esi
 		+	MOV(ESI, ECX)  //mov esi, ecx
 		+	CALL(NEG2WC)   //call func#2
@@ -117,14 +117,14 @@ CustomAuraSprites = function()
 		+	POP(ESI)       //pop esi
 		+	JMP(NEG2WC)    //jmp offset#2
 		;
-		let csize = code.byteCount();
-		let addrs = Exe.FindHexN(code);
+		const csize = code.byteCount();
+		const addrs = Exe.FindHexN(code);
 
-		offRB = -1;
-		offPP = -1;
+		let offRB = -1;
+		let offPP = -1;
 
 		$$(_ + '4.2 - Filter out the pattern that CALLs pikapika2 effect followed by JMP to ring_blue')
-		let found = addrs.find( patAddr =>
+		const found = addrs.find( patAddr =>
 		{
 			addr = Exe.GetTgtAddr(patAddr + 4, PHYSICAL);
 			offPP = Exe.FindHex( PUSH(ppika2), addr, addr + 0x100);
@@ -155,7 +155,7 @@ CustomAuraSprites = function()
 ///
 CustomAuraLimits = function()
 {
-	let _ = 'CustomAuraLimits : ';
+	const _ = 'CustomAuraLimits : ';
 
 	$$(_ + '1.1 - Find the double PUSH before ReLaunchBlurEffects is CALLed')
 	let code =
@@ -168,11 +168,11 @@ CustomAuraLimits = function()
 	)
 	+	PUSH(0x6D)   //push 6Dh
 	;
-	let addrs = Exe.FindHexN(code);
+	const addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
 		throw Error("Reference PUSHes not found");
 
-	let csize = code.byteCount();
+	const csize = code.byteCount();
 
 	$$(_ + '1.2 - Find the CALL below it')
 	code =
@@ -195,7 +195,7 @@ CustomAuraLimits = function()
 	addr = Exe.GetTgtAddr(addr + code.byteCount() - 4, PHYSICAL);
 
 	$$(_ + '1.4 - Find the first JE inside the function')
-	let refAddr = Exe.FindHex( JE(POS2WC), addr, addr + 0x80);
+	const refAddr = Exe.FindHex( JE(POS2WC), addr, addr + 0x80);
 	if (refAddr < 0)
 		throw Error("First JE not found");
 
@@ -203,7 +203,7 @@ CustomAuraLimits = function()
 
 	let cmpBegin, cmpEnd, MovSSN, GetJobID, gLevel, AuraConsts = [], PUSH0s, AssgnZero;
 
-	let directCMP = Exe.BuildDate < 20130000;
+	const directCMP = Exe.BuildDate < 20130000;
 	if (directCMP) //aura constants are assigned in here itself
 	{
 		$$(_ + '2.1 - Save JE\'s target address (PHYSICAL) as end address of comparison')
@@ -235,7 +235,7 @@ CustomAuraLimits = function()
 		GetJobID = Exe.GetTgtAddr(MovSSN.NextAddr + 1);
 
 		$$(_ + '2.10 - Now we need to find the level comparison')
-		let code = Exe.Version === 6 || Exe.BuildDate > 20120716
+		const code = Exe.Version === 6 || Exe.BuildDate > 20120716
 		?
 			MOV(EAX, [POS3WC])     //mov eax, dword ptr [g_level] ; EAX is compared afterwards
 		:                          //   or
@@ -250,7 +250,7 @@ CustomAuraLimits = function()
 		gLevel = Instr.FromAddr(addr).Disp;
 
 		$$(_ + '2.12 - Now we find the CALL to Aura Displayer (dunno the name of the function)')
-		let pushZero = Exe.Version === 6 ? PUSH(EBX) : PUSH_0;
+		const pushZero = Exe.Version === 6 ? PUSH(EBX) : PUSH_0;
 
 		let parts = [
 			pushZero
@@ -275,7 +275,7 @@ CustomAuraLimits = function()
 			throw Error("Aura Call not found");
 
 		$$(_ + '2.14 - Extract the constant PUSHed which is the Aura constant for 1st and 2nd levels')
-		let arg = Exe.GetHex(addr + pushZero.byteCount() + 1, 1);
+		const arg = Exe.GetHex(addr + pushZero.byteCount() + 1, 1);
 
 		$$(_ + '2.15 - Save to AuraConsts array')
 		AuraConsts[0] = AuraConsts[1] = arg;
@@ -283,7 +283,7 @@ CustomAuraLimits = function()
 		AuraConsts[3] = AuraConsts[2];
 
 		$$(_ + '2.16 - Get the number of zero pushes before the aura const push')
-		let addrs = Exe.FindHexN(pushZero, addr - 10, addr + 4);
+		const addrs = Exe.FindHexN(pushZero, addr - 10, addr + 4);
 
 		$$(_ + '2.17 - Construct the PUSH0s for use later')
 		PUSH0s = pushZero.repeat(addrs.length);
@@ -294,10 +294,10 @@ CustomAuraLimits = function()
 	else //uses a seperate function
 	{
 		$$(_ + '3.1 - Get the target address of JE')
-		let jeTarget = Exe.GetTgtAddr(refAddr + 2, PHYSICAL);
+		const jeTarget = Exe.GetTgtAddr(refAddr + 2, PHYSICAL);
 
 		$$(_ + '3.2 - Find the function CALL pattern')
-		let reg = Exe.Version > 10 ? AX : DX;
+		const reg = Exe.Version > 10 ? AX : DX;
 		let code =
 			MOV(reg, [POS4WC])       //mov regA, dword ptr [g_level]
 		+	MOV(ECX, R32)            //mov ecx, regB; usually esi
@@ -326,11 +326,11 @@ CustomAuraLimits = function()
 		addr = Exe.GetTgtAddr(cmpEnd - 4, PHYSICAL);
 
 		$$(_ + '3.6 - Find the GetJobID CALL & g_session assignment afterwards')
-		let prefix =
+		const prefix =
 			CALL(ALLWC)         //call GetJobID
 		+	PUSH_EAX            //push eax
 		;
-		let suffix =
+		const suffix =
 			MOV(ECX, POS4WC)    //mov ecx, <g_session>
 		+	CALL()              //call func#3
 		;
@@ -366,12 +366,12 @@ CustomAuraLimits = function()
 	}
 
 	$$(_ + '4.1 - Get the Input file')
-	let inFile = Exe.GetUserInput('$auraSpec', D_InFile, "Aura Limit Spec", "Enter the Aura Mapping file", "Inputs/AuraSpec.yml", {filters: YMLFILTER});
+	const inFile = Exe.GetUserInput('$auraSpec', D_InFile, "Aura Limit Spec", "Enter the Aura Mapping file", "Inputs/AuraSpec.yml", {filters: YMLFILTER});
 	if (inFile === false)
 		Cancel("No Mapping file specified");
 
 	$$(_ + '4.2 - Load the input file which creates the hash table mapping the id ranges to level limits & aura id')
-	let AuraSpec = Warp.LoadYaml(inFile);
+	const AuraSpec = Warp.LoadYaml(inFile);
 	if (AuraSpec === false) //some error occured while loading
 		return false;
 
@@ -379,7 +379,7 @@ CustomAuraLimits = function()
 		throw Error("Need a list of Aura specifications");
 
 	$$(_ + '4.3 - Calculate the total table size')
-	let tblSize = AuraSpec.reduce( (acc, hash) =>
+	const tblSize = AuraSpec.reduce( (acc, hash) =>
 		acc + (IsArr(hash.IDs) && IsArr(hash.Maps)
 			? (4 * hash.IDs.length) + 2 + (5 * hash.Maps.length) + 2
 			: 0)
@@ -389,7 +389,7 @@ CustomAuraLimits = function()
 		Cancel("Need both IDs & Maps for all entries");
 
 	$$(_ + '5.1 - Prepare code to insert (Reads the table, compare against Base Level & Job ID & apply appropriate constant)')
-	let parts =
+	const parts =
 	[//0
 		PUSH(ESI)                       //push esi
 	+	MOV(ESI, ECX)                   //mov esi, ecx
@@ -440,11 +440,11 @@ CustomAuraLimits = function()
 	+	TEST(EDX, EDX)                  //test edx, edx
 	+	JS(Filler(3,1))                 //js short _exit
 	+	CMP(EAX, EDX)                   //cmp eax, edx
-	+	JLE(Filler(10, 1))              //jle short _matchFound
+	+	JLE(Filler(10,1))               //jle short _matchFound
 
 	,//7
 		ADD(ECX, 5)                     //add ecx, 5 ; _nextRange
-	+	JMP(Filler(11, 1))              //jmp short _lvlLoop
+	+	JMP(Filler(11,1))               //jmp short _lvlLoop
 
 	,//8
 		POP(EBX)                        //pop ebx ; _exit
@@ -469,38 +469,43 @@ CustomAuraLimits = function()
 	+	POP(ESI)                        //pop esi
 	+	RETN()                          //retn
 	];
-	let offsets = MapAddrs(0, parts);
 
 	$$(_ + '5.2 - Allocate space to add the code and the table data')
-	let size = tblSize + offsets.last() + 8 * AuraSpec.length + 4;
-	let [free, freeVir] = Exe.FindSpace(size);
+	const size = tblSize + parts.byteCount() + 8 * AuraSpec.length + 4;
+	const [free, freeVir] = Exe.FindSpace(size);
 
 	$$(_ + '5.3 - Fill in the blanks')
-	code = SetFillTargets(parts,
+
+	//The CALLs & jumps
+	const [ ,_idTblLoop, _idLoop, _nextID, _nextEntry, _lvlCompare, _lvlLoop, _nextRange, _exit, _matchFound, tblAddr] = MapAddrs(freeVir, parts);
+	code = SetFillTargets( parts,
 	{
-		 3: offsets[8], //_exit
-		 4: offsets[4], //_nextEntry
-		 5: offsets[3], //_nextID
-		 6: offsets[5], //_lvlCompare
-		 7: offsets[2], //_idLoop
-		 8: offsets[1], //_idTblLoop
-		 9: offsets[7], //_nextRange
-		10: offsets[9], //_matchFound
-		11: offsets[6], //_lvlLoop
-	},
-	0, -1, 1);
+		 start : freeVir,
+		     1 : GetJobID,
+		' 3,1' : _exit,
+		' 4,1' : _nextEntry,
+		' 5,1' : _nextID,
+		' 6,1' : _lvlCompare,
+		' 7,1' : _idLoop,
+		' 8,1' : _idTblLoop,
+		' 9,1' : _nextRange,
+		'10,1' : _matchFound,
+		'11,1' : _lvlLoop,
+	});
 
-	code = SetFillTarget(code, 1, GetJobID, freeVir, 1);
-	code = SwapFiller(code, 2, freeVir + offsets.last(), 1);
+	//The table's starting address
+	code = SwapFillers( code, 1, {2: tblAddr} );
 
-	// Now we construct the map and table to insert
+	//////////////////////////////////////////////////
+	/// Now to construct the map and table to insert
+	//////////////////////////////////////////////////
 	let mapData = "";
 	let tblData = "";
 
 	let offset = size - tblSize;
-	let found = AuraSpec.filter( (hash, idx) =>
+	const found = AuraSpec.filter( (hash, idx) =>
 	{
-		let __ = `${_} [${idx}] `;
+		const __ = `${_} [${idx}] `;
 
 		$$(__ + '5.4 - Skip any entries without IDs or Maps')
 		if (!IsArr(hash.IDs) || !IsArr(hash.Maps))
@@ -510,7 +515,7 @@ CustomAuraLimits = function()
 		mapData += (freeVir + offset).toHex();
 
 		$$(__ + '5.6 - Add the base IDs to the table')
-		hash.IDs.forEach( bases =>
+		for (const bases of hash.IDs)
 		{
 			if (IsArr(bases))
 				tblData += bases[0].toHex(2) + bases[1].toHex(2);
@@ -518,7 +523,7 @@ CustomAuraLimits = function()
 				tblData += bases.toHex(2).repeat(2);  //if its not a pair use the same id twice
 
 			offset += 4;
-		});
+		}
 
 		$$(__ + '5.7 - Add the -1 to end the table')
 		tblData += " FF FF";
@@ -528,7 +533,7 @@ CustomAuraLimits = function()
 		mapData += (freeVir + offset).toHex();
 
 		$$(__ + '5.9 - Add the level range and aura constant sets')
-		let found = hash.Maps.filter( map =>
+		const found = hash.Maps.filter( map =>
 		{
 			if (!IsArr(map.JobRange) || !IsNum(map.Index))
 				return false;
@@ -547,6 +552,7 @@ CustomAuraLimits = function()
 
 		return (!found.isEmpty());
 	});
+
 	if (found.isEmpty())
 		Cancel("No complete elements found");
 

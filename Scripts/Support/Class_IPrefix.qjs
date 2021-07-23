@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -46,7 +46,7 @@ if (typeof IPrefix === 'undefined') //avoid redefinition
 		///
 		is(p)
 		{
-			return (this.Value === p.Value);
+			return (p instanceof IPrefix && this.Value === p.Value);
 		}
 
 		///
@@ -57,9 +57,7 @@ if (typeof IPrefix === 'undefined') //avoid redefinition
 			return this.Value.toHex(1);
 		}
 	};
-
-	IdentifyClass(IPrefix);
-
+	
 	///
 	/// \brief Define all the prefixes
 	///
@@ -79,17 +77,34 @@ if (typeof IPrefix === 'undefined') //avoid redefinition
 		['AD16' , 0x67],
 
 		// Repeat/Lock to grant exclusive use of all shared memory
-		['LOCK' , 0xF0],
+		['ILOCK' , 0xF0],
 
 		// String Manipulation
-		['REPE' , 0xF2],
-		['REPN' , 0xF3],
-	].map( pair =>
+		['IREPE' , 0xF2],
+		['IREPN' , 0xF3],
+	].map( ([name, value]) => 
 	{
-		Assign(
-			pair[0],
-			`new IPrefix(${pair[1]})`
-		);
-		return pair[1];
+		Assign( name, `new IPrefix(${value})` );
+		return value;
 	});
+	
+	IdentifyClass(IPrefix);
+	
+	///
+	/// \brief Define the functions for the last 3 prefixes.
+	///
+	LOCK = _ =>
+		ILOCK + (_ ? _ : '')
+	;
+	IdentifyObj('LOCK');
+	
+	for (const name of
+	[
+		'REPE',
+		'REPN'
+	])
+		Assign(name, `_ => _.replace(/^( 66)?/, '$1' + I${name})` );
+	
+	REP = REPE;
+	IdentifyObj('REP');
 }

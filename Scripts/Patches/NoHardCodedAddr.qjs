@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei Karas (4144)                                    *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,24 +32,24 @@
 ///
 NoHardCodedAddr = function()
 {
-	let _ = 'NoHardCodedAddr : ';
+	const _ = 'NoHardCodedAddr : ';
 
 	if (Exe.Version <= 11) //VC11 basically since the patch isnt valid for older versions
 	{
 		$$(_ + '1.1 - Find the code where we will remove call')
-		let code =
+		const code =
 			CMP(BYTE_PTR, [POS4WC], 0)  //cmp byte ptr [addr#1], 0
 		+	JNZ(WC)                     //jnz short _proceed
 		+	CALL(POS3WC)                //call <override_address_port>
 		+	JMP(POS2WC)                 //jmp _next
 		;
-		let addr = Exe.FindHex(code);
+		const addr = Exe.FindHex(code);
 
 		if (addr < 0)
 			throw Error("Override function call missing");
 
 		$$(_ + '1.2 - Extract CALLed function address')
-		let ovrdAddr = Exe.GetTgtAddr(addr + 10, PHYSICAL);
+		const ovrdAddr = Exe.GetTgtAddr(addr + 10, PHYSICAL);
 
 		$$(_ + '1.3 - Change the function code')
 		return _NHCA_SwapWithCI(ovrdAddr);
@@ -60,29 +60,29 @@ NoHardCodedAddr = function()
 		SRVRTYPE.load();
 
 		$$(_ + '2.2 - Find \'6900\'')
-		let PortStr = Exe.FindText("6900");
+		const PortStr = Exe.FindText("6900");
 		if (PortStr < 0)
 			throw Error("'6900' not found");
 
 		$$(_ + '2.3 - Find its reference')
-		let prefix =
+		const prefix =
 			CMP(BYTE_PTR, [POS4WC], 0)  //cmp byte ptr [addr#2], 0
 		+	JNZ(POS3WC)                 //jnz _next#2
 		;
-		let suffix =
+		const suffix =
 			MOV(EDX, [SRVRTYPE])        //mov edx, dword ptr [g_serverType]
 		+	MOV(EAX, [POS4WC])          //mov eax, dword ptr [offset#1]
 		+	MOV(ECX, [POS4WC])          //mov ecx, dword ptr [offset#2]
 		+	MOV([POS4WC], PortStr)      //mov dword ptr [addr#3], <PortStr>
 		;
 
-		let addr = Exe.FindHex(prefix + suffix);
+		const addr = Exe.FindHex(prefix + suffix);
 		if (addr < 0)
 			throw Error("'6900' not used");
 
 		$$(_ + '2.5 - Save the JNZ target location and location of MOV EDX')
-		let ovrdAddr = addr + prefix.byteCount();
-		let jnzAddr = Exe.GetTgtAddr(ovrdAddr - 4);
+		const ovrdAddr = addr + prefix.byteCount();
+		const jnzAddr = Exe.GetTgtAddr(ovrdAddr - 4);
 
 		$$(_ + '2.6 - Change the code')
 		return _NHCA_SwapWithCI(ovrdAddr, jnzAddr);
@@ -102,10 +102,10 @@ NoHardCodedAddr.validate = () =>
 ///
 _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 {
-	let _ = '_NHCA_SwapWithCI : ';
+	const _ = '_NHCA_SwapWithCI : ';
 
 	$$(_ + '1.1 - Check if its older style or newer style (older as in 2017)')
-	let isOld = (jnzAddr < 0);
+	const isOld = (jnzAddr < 0);
 
 	$$(_ + '1.2 - Find \'127.0.0.1\'')
 	let addr = Exe.FindText("127.0.0.1", VIRTUAL, false);
@@ -113,7 +113,7 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 		throw Error("localhost string missing");
 
 	$$(_ + '1.3 - Find the table entry used for OTP & Login')
-	let code =
+	const code =
 		(addr).toHex()
 	+	(6950).toHex()
 	;
@@ -122,15 +122,15 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 		throw Error("Table entry missing");
 
 	$$(_ + '1.4 - Save the needed details')
-	let otpAddr = Exe.Phy2Vir(addr);
-	let otpPort = otpAddr + 4;
-	let cinfoAddr = otpPort + 4;
-	let cinfoPort = cinfoAddr + 4;
+	const otpAddr = Exe.Phy2Vir(addr);
+	const otpPort = otpAddr + 4;
+	const cinfoAddr = otpPort + 4;
+	const cinfoPort = cinfoAddr + 4;
 
 	if (Exe.BuildDate < 20200630)
 	{
 		$$(_ + '1.5 - Find address of atoi function')
-		let AtoI = Exe.FindFunc("atoi");
+		const AtoI = Exe.FindFunc("atoi");
 		if (AtoI < 0)
 			throw Error("'atoi' function missing");
 
@@ -149,7 +149,8 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 		Exe.SetHex(ovrdAddr, code);
 
 		$$(_ + '2.2 - Find otp_addr usage')
-		code = [
+		code =
+		[
 			PUSH([otpAddr])          //push dword ptr [otp_addr]
 		,
 			isOld
@@ -186,12 +187,12 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 	else  //for most recent ones we use different approach
 	{
 		$$(_ + '3.1 - Find the kro-agency string')
-		let host = Exe.FindText("kro-agency.ragnarok.co.kr");
+		const host = Exe.FindText("kro-agency.ragnarok.co.kr");
 		if (host < 0)
 			throw Error("Kro agency string missing");
 
 		$$(_ + '3.2 - Find \'%s:%d\'')
-		let s_d = Exe.FindText("%s:%d");
+		const s_d = Exe.FindText("%s:%d");
 		if (s_d < 0)
 			throw Error("Format string missing");
 
@@ -205,20 +206,20 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 		+	PUSH(POS4WC)    //push <g_auth_host>
 		;
 
-		let offsetAuth = code.byteCount() - 4;
-		let offsetSNP = offsetAuth + 5;
+		const offsetAuth = code.byteCount() - 4;
+		const offsetSNP = offsetAuth + 5;
 
 		code +=
 			CALL(ALLWC)     //call <snprintf>
 		+	ADD(ESP, 0x18)  //add esp, 18h
 		;
-		let addr = Exe.FindHex(code);
+		const addr = Exe.FindHex(code);
 		if (addr < 0)
 			throw Error("snprintf_s CALL missing");
 
 		$$(_ + '3.4 - Extract the function address & g_auth_host')
-		let snprintf = Exe.GetTgtAddr(addr + offsetSNP);
-		let gAuthHost = Exe.GetInt32(addr + offsetAuth);
+		const snprintf = Exe.GetTgtAddr(addr + offsetSNP);
+		const gAuthHost = Exe.GetInt32(addr + offsetAuth);
 
 		$$(_ + '3.5 - Find \'%s:%s\'')
 		let s_s = Exe.FindText("%s:%s", false);
@@ -233,7 +234,7 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 		}
 
 		$$(_ + '3.8 - Create the replacement code')
-		let ovrdVir = Exe.Phy2Vir(ovrdAddr);
+		const ovrdVir = Exe.Phy2Vir(ovrdAddr);
 
 		code =
 			PUSH([cinfoPort])  //push dword ptr [clientinfo_port]
@@ -247,12 +248,12 @@ _NHCA_SwapWithCI = function(ovrdAddr, jnzAddr = -1)
 		+	JMP(Filler(2))     //jmp <jnzAddr>
 		;
 
-		code = SetFillTargets(code,
+		code = SetFillTargets( code, 1,
 		{
-			1: snprintf,
-			2: jnzAddr
-		},
-		ovrdVir, 1);
+			start : ovrdVir,
+			    1 : snprintf,
+			    2 : jnzAddr
+		});
 
 		$$(_ + '3.7 - Replace at ovrdAddr')
 		Exe.SetHex(ovrdAddr, code);

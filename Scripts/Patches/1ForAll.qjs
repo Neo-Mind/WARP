@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -58,12 +58,13 @@ GetImpTable = (skipDLL, impAddr) =>
 {
 	impAddr = impAddr ?? Exe.GetDirAddr(D_Import, PHYSICAL);
 
-	let lastEntry = ' 00'.repeat(20);
+	const lastEntry = ' 00'.repeat(20);
+
 	let dirEntries = '';
 	for (let curEntry, addr = impAddr; (curEntry = Exe.GetHex(addr, 20)) !== lastEntry; addr += 20)
 	{
 		// Ensure valid name
-		let nameAddr = Exe.Rva2Phy( curEntry.substr(12*3, 4*3).toInt() ); //4 bytes from 12th position
+		const nameAddr = Exe.Rva2Phy( curEntry.substr(12*3, 4*3).toInt() ); //4 bytes from 12th position
 		if (nameAddr <= 0)
 			break;
 
@@ -73,6 +74,7 @@ GetImpTable = (skipDLL, impAddr) =>
 
 		dirEntries += curEntry;
 	}
+
 	return dirEntries;
 };
 
@@ -81,7 +83,7 @@ GetImpTable = (skipDLL, impAddr) =>
 ///
 FetchTillEnd = (hookAddr, format, movIns, tgtReg, fetcher, endTester) =>
 {
-	let _ = 'FetchTillEnd : ';
+	const _ = 'FetchTillEnd : ';
 
 	let regAssigns = [];
 	let codes = [];
@@ -134,7 +136,7 @@ FetchTillEnd = (hookAddr, format, movIns, tgtReg, fetcher, endTester) =>
 					{
 						skip = true;
 
-						let idx = regAssigns[ins.MRM.RegO];
+						const idx = regAssigns[ins.MRM.RegO];
 						if (ins.Codes[0] === 0x89 && idx) //remove the assignment since it's only purpose was to temporarily hold the string address
 							codes[idx] = '';
 					}
