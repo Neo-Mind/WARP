@@ -235,7 +235,7 @@ IgnoreLuaErr = function()
 		throw Error("MessageBoxA function missing");
 
 	$$(_ + '1.2 - Find the LuaErrorMsg function code')
-	const cmn = LEA(R32, [ROC.StkReg, ROC.HasFP ? NEG2WC : WCp]; //lea regB, [LOCAL.x] ; where the displacement is -ve for EBP but +ve for ESP.
+	const cmn = LEA(R32, [ROC.StkReg, ROC.HasFP ? NEG2WC : WCp]); //lea regB, [LOCAL.x] ; where the displacement is -ve for EBP but +ve for ESP.
 
 	let parts =
 	[

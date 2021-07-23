@@ -164,7 +164,7 @@ _CEK_SetupObfuscate = function(index)
 	{
 		const parts =
 		[//0
-			MOV(EAX, [ROC.StkReg, ROC.HasFP ? 8 : 4] //mov eax, dword ptr [ARG.1] ;  ARG.1 = ebp+8 with FP & esp+4 without FP
+			MOV(EAX, [ROC.StkReg, ROC.HasFP ? 8 : 4]) //mov eax, dword ptr [ARG.1] ;  ARG.1 = ebp+8 with FP & esp+4 without FP
 
 		,//1
 
