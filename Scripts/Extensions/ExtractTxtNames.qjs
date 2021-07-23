@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : -, Neo-Mind                                            *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,14 +32,14 @@
 ///
 ExtractTxtNames = function()
 {
-	let _ = 'ExtractTxtNames : ';
+	const _ = 'ExtractTxtNames : ';
 	
 	$$(_ + '1.1 - Need a valid Exe loaded')
 	if (Exe.FileSize == 0)
 		throw NO_EXE;
 
 	$$(_ + '1.2 - Open output file for writing (Need ASCII encoding)')
-	let fileName = Exe.GetUserInput("$txtNames", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "loaded_Txt_files_" + ROC.BaseName + ".txt");
+	const fileName = Exe.GetUserInput("$txtNames", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "loaded_Txt_files_" + ROC.BaseName + ".txt");
 	if (fileName === false)
 		return true;
 
@@ -56,20 +56,20 @@ ExtractTxtNames = function()
 	fp.WriteLine("Txt Files:");
 
 	$$(_ + '2.2 - Find all locations of .txt')
-	let addrs = Exe.FindTextN(".txt", CaseInsensitive, PHYSICAL, false);
-	addrs.forEach( addr =>
+	const addrs = Exe.FindTextN(".txt", CaseInsensitive, PHYSICAL, false);
+	for (const addr of addrs)
 	{
-		$$(_ + '2.3 - Retrieve the starting location of each string (prepending each character along the way)')
-		let startAddr = Exe.FindLastHex('00', addr, addr - 0x100);//cant be that 256 bytes long...i hope
-		let atAddr = Exe.FindLastHex('40', addr, startAddr > 0 ? startAddr : addr - 0x100);
+		$$(_ + '2.3 - Retrieve the starting position of each string (right after either a NULL or an @)')
+		let startAddr = Exe.FindLastHex('00', addr, addr - 0x200); //cant be 512 bytes long...i hope
+		const atAddr = Exe.FindLastHex('40', addr, startAddr > 0 ? startAddr : addr - 0x200);
 		
 		if (atAddr > 0)
 			startAddr = atAddr;
 		
-		$$(_ + '2.4 - Write the string to file')
+		$$(_ + '2.4 - Extract & write the string to file')
 		if (startAddr > 0 && startAddr !== (addr - 1))
 			fp.WriteLine(" => " + Exe.GetText(startAddr + 1, addr - startAddr + 3));
-	});
+	}
 
 	$$(_ + '2.5 - Close the file')
 	fp.Close();

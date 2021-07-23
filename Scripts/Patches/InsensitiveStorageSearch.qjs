@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,7 @@
 ///
 InsensitiveStorageSearch = function()
 {
-	let _ = 'InsensitiveStorageSearch';
+	const _ = 'InsensitiveStorageSearch';
 
 	$$(_ + '1.1 - Ensure the required functions are available')
 	if (ROC.GetModHandle < 0)
@@ -41,7 +41,7 @@ InsensitiveStorageSearch = function()
 		throw Error("GetProcAddress not found");
 
 	$$(_ + '1.2 - Find string search for storage')
-	let prefix =
+	const prefix =
 		PUSH(ECX)               //push ecx
 	+	(Exe.Version > 11
 	?
@@ -52,7 +52,7 @@ InsensitiveStorageSearch = function()
 	+	PUSH_EAX                //push eax
 	;
 
-	let suffix =
+	const suffix =
 		CALL([POS4WC])          //call dword ptr [_mbsstr]
 	+	ADD(ESP, 8)             //add esp, 8
 	+	TEST(EAX, EAX)          //test eax, eax
@@ -61,19 +61,19 @@ InsensitiveStorageSearch = function()
 	+	JMP(WCp)                //jmp short _next
 	;
 
-	let addr = Exe.FindHex(prefix + suffix);
+	const addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("String search not found");
 
 	$$(_ + '1.3 - Extract the CALL & Stack restore afterwards i.e. add esp, 8')
-	let callOffset = prefix.byteCount();
-	let callNrestore = Exe.GetHex(addr + callOffset, 9);
+	const callOffset = prefix.byteCount();
+	const callNrestore = Exe.GetHex(addr + callOffset, 9);
 
 	$$(_ + '1.4 - Save the VIRTUAL address after the stack restore')
-	let retnAddr = Exe.Phy2Vir(addr + callOffset + 9);
+	const retnAddr = Exe.Phy2Vir(addr + callOffset + 9);
 
 	$$(_ + '2.1 - Prepare our code')
-	let parts =
+	const parts =
 	[
 		CMP([Filler(1)], 0)       //CMP dword ptr [StrStrIA], 0
 	+	JNE(Filler(4,1))          //JNE SHORT _strAvailable
@@ -98,35 +98,34 @@ InsensitiveStorageSearch = function()
 	+	RETN()                    //RETN
 	+	ALL00                     //will be used to store [StrStrIA]
 	];
-	let offsets = MapAddrs(0, parts);
 
 	$$(_ + '2.2 - Prepare the strings & total string size')
-	let strList = ["Shlwapi.dll", "StrStrIA"];
-	let strings = strList.join('\x00').toHex() + ' 00';
-	let ssize   = strings.byteCount();
+	const strList = ["Shlwapi.dll", "StrStrIA"];
+	const strings = strList.join('\x00').toHex() + ' 00';
+	const ssize   = strings.byteCount();
 
 	$$(_ + '3.1 - Allocate space to add our code')
-	let [free, freeVir] = Exe.FindSpace(offsets.last() + ssize, 0x10);
+	const [free, freeVir] = Exe.FindSpace(parts.byteCount() + ssize, 0x10);
 
 	$$(_ + '3.2 - Fill in the blanks')
 
-	// short jumps
-	let code = SetFillTargets(parts,
-	{
-		4: offsets[2], //_strAvailable
-		5: offsets[1], //_gotStr
-	},
-	0, 1, 1);
+	// All the jumps
+	const [,_gotStr, _strAvailable, lastAddr] = MapAddrs(freeVir, parts);
 
-	// [StrStrIA]
-	let strAddr = freeVir + offsets.last();
-	code = SwapFiller(code, 1, strAddr - 4);
+	let code = SetFillTargets( parts, 1,
+	{
+		start : freeVir,
+		'4,1' : _strAvailable,
+		'5,1' : _gotStr,
+	});
 
 	// String addrs
-	code = SwapFiller(code, 2, strAddr, 1);
-
-	strAddr += strList[0].length + 1;
-	code = SwapFiller(code, 3, strAddr, 1);
+	code = SwapFillers( code,
+	{
+		1: lastAddr - 4,                       //[StrStrIA]
+		2: lastAddr,                          //first string location
+		3: lastAddr + strList[0].length + 1,  //second one.
+	});
 
 	$$(_ + '3.3 - Add the code & strings at the allocated space')
 	Exe.AddHex(free, code + strings);

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,13 +33,13 @@
 ///
 IncrDigits = function()
 {
-	let _ = 'IncrDigits : ';
+	const _ = 'IncrDigits : ';
 
 	$$(_ + '1.1 - Find the location where 999999 is checked & extract the register containing the value')
 	let refAddr, refReg;
 	if (Exe.Version > 11)
 	{
-		let code =
+		const code =
 			MOV(R32, 0xF423F)        //mov regA, 0F423Fh ; 999999
 		+	MOV(R32, 1)              //mov regB, 1
 		+	CMP([EBP, 0xC], EDX)     //cmp dword ptr [ebp+0Ch], edx
@@ -113,9 +113,9 @@ IncrDigits = function()
 	_ID_UpdateStack(addr - 1 , 1);
 
 	$$(_ + '2.2 - Find the location of digit counter')
-	let StkReg = ROC.HasFP ? EBP : ESP;
+	const sreg = ROC.StkReg;
 
-	code = MOV([StkReg, WC], Exe.Version > 11 ? 6 : 1); //mov dword ptr [StkReg + disp8A], 1; disp8A is negative for StkReg == EBP
+	code = MOV([sreg, WC], Exe.Version > 11 ? 6 : 1); //mov dword ptr [sreg + disp8A], 1; disp8A is negative for sreg == EBP
 	addr = Exe.FindHex(code, refAddr + 0x10, refAddr + 0x28);
 	let stackAssign = true;
 
@@ -144,7 +144,7 @@ IncrDigits = function()
 		DigCntLoc = R32.List[Exe.GetUint8(addr + 2) - 0xB8];
 
 		$$(_ + '3.2 - Find regB getting assigned to stack location (if present)')
-		let addr2 = Exe.FindHex( MOV([StkReg, WC], DigCntLoc), addr, addr + 0x80); //mov dword ptr [StkReg + disp8B], regB ; disp8B is negative for EBP (instruction will be followed by LEA)
+		const addr2 = Exe.FindHex( MOV([sreg, WC], DigCntLoc), addr, addr + 0x80); //mov dword ptr [sreg + disp8B], regB ; disp8B is negative for EBP (instruction will be followed by LEA)
 
 		$$(_ + '3.3 - If found then save the stack displacement instead')
 		if (addr2 > 0)
@@ -157,7 +157,7 @@ IncrDigits = function()
 		throw Error("Digit extraction not found");
 
 	$$(_ + '4.2 - Find the first digit movement to stack location')
-	code = MOV([StkReg, WC], R32); //mov dword ptr [StkReg + disp8C], regC
+	code = MOV([sreg, WC], R32); //mov dword ptr [sreg + disp8C], regC
 	let addr2 = Exe.FindHex(code + " 8B", addr + 0x5, addr + 0x38); //followed by another MOV
 	if (addr2 < 0)
 	{
@@ -183,10 +183,10 @@ IncrDigits = function()
 		throw Error("g_modeMgr assignment not found");
 
 	$$(_ + '4.6 - Extract the assignment')
-	let MovModeMgr = Exe.GetHex(addr, 5);
+	const MovModeMgr = Exe.GetHex(addr, 5);
 
 	$$(_ + '4.7 - Now find the CModeMgr::GetGameMode CALL after it (we will jump to this location after digits have been counted and extracted)')
-	let ggmAddr = Exe.FindHex( CALL(NEG3WC), addr + 5, addr + 0x100 ); //call CModeMgr::GetGameMode
+	const ggmAddr = Exe.FindHex( CALL(NEG3WC), addr + 5, addr + 0x100 ); //call CModeMgr::GetGameMode
 	if (ggmAddr < 0)
 		throw Error("GetGameMode CALL not found");
 
@@ -205,21 +205,24 @@ IncrDigits = function()
 	}
 
 	$$(_ + '5.2 - Prepare our digit splitter + counter code to put at refAddr')
-	let parts = [
+	const parts =
+	[//0
 		MOV(ECX, refReg)             //mov ecx, refReg
 	+	MOV(ESI, FirstDigLoc)        //mov esi, FirstDigLoc
-	,
+
+	,//1
 		MOV(EAX, 0x66666667)         //mov eax, 66666667h ; _loop
 	+	IMUL(ECX)                    //imul ecx
 	+	SAR(EDX, 2)                  //sar edx, 2
 	+	LEA(EAX, [4, EDX, EDX])      //lea eax, [edx*4 + edx]
 	+	SHL(EAX, 1)                  //shl eax, 1
 	+	SUB(ECX, EAX)                //sub ecx, eax
-	+	MOV([ESI, StkReg], ECX)      //mov dword ptr [esi + StkReg], ecx
+	+	MOV([ESI, sreg], ECX)        //mov dword ptr [esi + sreg], ecx
 	+	ADD(ESI, 4)                  //add esi, 4
 	+	MOV(ECX, EDX)                //mov ecx, edx
 	+	TEST(ECX, ECX)               //test ecx, ecx
-	,
+
+	,//2
 		JNE(Filler(1,1))             //jne short _loop
 	+	SUB(ESI, FirstDigLoc)        //sub esi, FirstDigLoc ; Now ESI has number of digits * 4 bytes each
 	+	SAR(ESI, 2)                  //sar esi, 2
@@ -227,29 +230,36 @@ IncrDigits = function()
 	?
 		MOV(DigCntLoc, ESI)			 //mov DigCntLoc, esi
 	:								 //  OR
-		MOV([StkReg, DigCntLoc], ESI)//mov dword ptr [StkReg + DigCntLoc], esi
+		MOV([sreg, DigCntLoc], ESI)  //mov dword ptr [sreg + DigCntLoc], esi
 	)
 	+	MovModeMgr                   //mov ecx, <g_modeMgr>
-	,
+
+	,//3
 		JMP(Filler(2))               //jmp <ggmAddr>
 	];
 
-	code = SetFillTarget(parts.join(''), [1, 1], parts[0].byteCount(), 0, 1); //setting the JNE SHORT target
-	code = SetFillTarget(code, 2, ggmAddr, refAddr, 1);
+	code = SetFillTargets( parts, 1,
+	{
+		start : refAddr,
+		'1,1' : refAddr + parts.byteCount(0), //_loop
+		    2 : ggmAddr
+	});
 
 	$$(_ + '5.3 - Put the code at refAddr')
 	Exe.SetHex(refAddr, code);
 
 	$$(_ + '5.4 - Find the end of the function')
-	if (ROC.HasFP)
-		code = FP_STOP;       //mov esp, ebp
-		                      //pop ebp
-	else
-		code = ADD(ESP, WC);  //add esp, imm8A
+	code = (ROC.HasFP
+	?
+		FP_STOP       //mov esp, ebp
+		              //pop ebp
+	:
+		ADD(ESP, WC)  //add esp, imm8A
+	)
+	+	RETN(0x10)    //retn 10h
+	;
 
-	code += RETN(0x10);       //retn 10h
-
-	let endAddr = Exe.FindHex(code, ggmAddr, ggmAddr + 0x200);
+	const endAddr = Exe.FindHex(code, ggmAddr, ggmAddr + 0x200);
 	if (endAddr < 0)
 		throw Error("Function end not found");
 
@@ -258,12 +268,11 @@ IncrDigits = function()
 
 	$$(_ + '6 - Update all relevant stack offsets to incorporate the extra 4 digits between the ggmAddr and end of the function')
 	addr = ggmAddr + 5;
-	while (addr < endAddr)
-	{
-		$$(_ + '6.1 - Get the instruction at addr')
-		let ins = Instr.FromAddr(addr)
 
-		$$(_ + '6.2 - Update stack addr based on opcode')
+	let ins = Instr.FromAddr(addr);
+	while (ins.Addr < endAddr)
+	{
+		$$(_ + '6.1 - Update stack address based on opcode at : 0x' + ins.Addr.toHex(true))
 		switch (ins.Codes[0])
 		{
 			case 0x89: //various MOVs
@@ -301,8 +310,8 @@ IncrDigits = function()
 			}
 		}
 
-		$$(_ + '6.3 - Set addr to next instruction location')
-		addr = ins.NextAddr;
+		$$(_ + '6.2 - Move to the next instruction')
+		ins.moveToNext();
 	}
 
 	$$(_ + '7 - Extra steps for some clients')
@@ -362,10 +371,11 @@ IncrDigits.validate = () =>
 ///
 _ID_UpdateStack = (arg, sign) =>
 {
-	let stackOff = IsNum(sign)? sign * 16
-				: ROC.HasFP ? -16
-				: 16
-	;
+	const stackOff =
+		IsNum(sign) ? sign * 16
+		: ROC.HasFP ? -16
+		: 16
+		;
 
 	if (IsNum(arg))
 	{

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -52,7 +52,7 @@ if (typeof SRVRTYPE === 'undefined') // avoid redefinition
 		///
 		load : function()
 		{
-			let _ = "SRVRTYPE.load : ";
+			const _ = "SRVRTYPE.load : ";
 			
 			$$(_ + '1.1 - Check if load was already called')
 			if ('Valid' in this)

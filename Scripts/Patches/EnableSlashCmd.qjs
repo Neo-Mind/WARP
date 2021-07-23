@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Ai4rei/AN                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 ///
 EnableWho = function()
 {
-	let _ = 'EnableWho : ';
+	const _ = 'EnableWho : ';
 
 	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
@@ -90,7 +90,7 @@ EnableWho = function()
 	+	JNE(WCp)            //jne short _proceed
 	;
 
-	let cmpAddr = Exe.FindHex(code, addr - 0x60, addr);
+	const cmpAddr = Exe.FindHex(code, addr - 0x60, addr);
 	if (cmpAddr < 0)
 		throw Error("2nd Langtype comparison not found");
 
@@ -127,10 +127,10 @@ EnableWho = function()
 ///
 EnableShowName = function()
 {
-	let _ = 'EnableShowName : ';
+	const _ = 'EnableShowName : ';
 
 	$$(_ + '1 - Find the Langtype comparison (don\'t need the langtype value to look for the pattern)')
-	let code =
+	const code =
 		TEST(EAX, EAX) //test eax, eax
 	+	JZ(WCp)        //jz short _load -> loading setting for showname
 	+	CMP(EAX, 6)    //cmp eax, 6
@@ -138,7 +138,7 @@ EnableShowName = function()
 	+	CMP(EAX, 0xA)  //cmp eax, 0Ah
 	;
 
-	let addr = Exe.FindHex(code);
+	const addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Langtype comparison not found");
 
@@ -154,10 +154,10 @@ EnableShowName = function()
 ///
 EnableUnknCmds = function()
 {
-	let _ = 'EnableUnknCmds : ';
+	const _ = 'EnableUnknCmds : ';
 
 	$$(_ + '1.1 - Prep code to find the ending point of CSession::GetNoParamTalkType function. Also setup the register to be modified')
-	let cmn =
+	const cmn =
 		(ROC.HasFP
 	?
 		FP_STOP           //mov esp, ebp
@@ -276,7 +276,7 @@ EnableUnknCmds = function()
 		throw Error("Function start missing");
 
 	$$(_ + '1.4 - Save it\'s VIRTUAL address')
-	let funcAddr = Exe.Phy2Vir(addr, CODE);
+	const funcAddr = Exe.Phy2Vir(addr, CODE);
 
 	$$(_ + '2.1 - Find the location where the function is CALLed (the pattern would match multiple locations)')
 	if (Exe.Version === 6)
@@ -297,11 +297,11 @@ EnableUnknCmds = function()
 		;
 	}
 	suffix =
-		MOV(ECX, ROC.HasFP ? [EBP, WCn] : [ESP, WCp])     //mov ecx, dword ptr [LOCAL.x]
+		MOV(ECX, [ROC.StkReg, WC])                        //mov ecx, dword ptr [LOCAL.x]
 	+	PUSH_EAX                                          //push eax
 	+	CALL();                                           //call CSession::GetNoParamTalkType
 
-	let addrs = Exe.FindHexN(prefix + suffix);
+	const addrs = Exe.FindHexN(prefix + suffix);
 	if (addrs.isEmpty())
 		throw Error("Function CALL missing");
 
@@ -354,16 +354,21 @@ EnableUnknCmds = function()
 	;
 
 	$$(_ + '3.2 - Allocate space for it')
-	let [free, freeVir] = Exe.FindSpace(code.byteCount());
+	const [free, freeVir] = Exe.FindSpace(code.byteCount());
 
 	$$(_ + '3.3 - Fill in the blanks')
-	code = SetFillTarget(code, 1, retnAddr, freeVir, 2);
+	code = SetFillTargets( code, 2,
+	{
+		start : freeVir,
+		    1 : retnAddr
+	});
 
 	$$(_ + '3.4 - Add to allocated space')
 	Exe.AddHex(free, code);
 
 	$$(_ + '3.5 - Update the JMP targets')
-	hookAddrs.forEach(addr => Exe.SetTgtAddr(addr, freeVir));
+	for (const addr of hookAddrs)
+		Exe.SetTgtAddr(addr, freeVir);
 
 	return true;
 };

@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-07-04                                             #
+#   Last Modified : 2021-07-15                                             #
 #                                                                          #
 ############################################################################
 
@@ -1662,3 +1662,9 @@
             recommend : no
             author : Neo-Mind
             desc : Enables the use of Custom Homunculus (using Lua Files). The <b>'ReqJobName'</b> function is used for homunculus as well, so no extra files needed.
+
+        - AddLuaOverrides:
+            title : Add Chris' lua overrides [Experimental]
+            recommend : no
+            author : llchrisll
+            desc : Adds the lua files provided by llchrisll to override the existing lua tables and functions. Please check <b>"https://github.com/llchrisll/ROenglishRE/tree/master/Custom%20Lua%20Files"</b> for more details.

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 ///
 CashShopVis = function(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Ensure that \'Move Cash Shop Icon\' patch is not selected (unless in test mode)')
 	if (!Warp.TestMode && patchName === 'HideCashShop')
@@ -50,17 +50,17 @@ CashShopVis = function(patchName)
 	+	CALL()         //call UIWindowMgr::MakeWindow
 	;
 
-	let jmpAddr = Exe.FindHex(code);
+	const jmpAddr = Exe.FindHex(code);
 	if (jmpAddr < 0)
 		throw Error("Reference PUSH missing");
 
 	$$(_ + '1.3 - Now check if the code for cash shop creation is already present')
-	let code2 =
+	const code2 =
 		PUSH(0xBE)     //push 0BEh
 	+	WINMGR.MovECX  //mov ecx, <g_windowMgr>
 	+	CALL()         //call UIWindowMgr::MakeWindow
 	;
-	let addr = Exe.FindHex( code2, jmpAddr - 0x30, jmpAddr );
+	const addr = Exe.FindHex( code2, jmpAddr - 0x30, jmpAddr );
 
 	if (patchName === "HideCashShop")
 	{
@@ -78,7 +78,7 @@ CashShopVis = function(patchName)
 			Cancel("Icon is already shown");
 
 		$$(_ + '3.2 - Save the location after the CALL for 0x9F')
-		let retnAddr = jmpAddr + code.byteCount() + 4;
+		const retnAddr = jmpAddr + code.byteCount() + 4;
 
 		$$(_ + '3.3 - Prepare our code to create the icon.')
 		code +=
@@ -91,14 +91,15 @@ CashShopVis = function(patchName)
 		;
 
 		$$(_ + '3.4 - Allocate space to add our code')
-		let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
+		const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
 		$$(_ + '3.5 - Fill in the blanks')
-		code = SetFillTargets(code,
+		code = SetFillTargets( code,
 		{
-			1 : WINMGR.MakeWin,
-			2 : Exe.Phy2Vir(retnAddr, CODE)
-		}, freeVir);
+			start : freeVir,
+			    1 : WINMGR.MakeWin,
+			    2 : Exe.Phy2Vir(retnAddr, CODE)
+		});
 
 		$$(_ + '3.6 - Add the code at the allocated space')
 		Exe.AddHex(free, code);

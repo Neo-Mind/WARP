@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,7 @@
 ///
 CustomShields = function()
 {
-	let _ = 'CustomShields : ';
+	const _ = 'CustomShields : ';
 
 	//===========================================================//
 	// Find first inject & return locations - table loading area //
@@ -63,7 +63,7 @@ CustomShields = function()
 			MOV([R32, 4], sufAddr); //mov dword ptr [regA + 4], offset "_°¡µå"
 	}
 
-	let hookReq = Exe.FindHex(code);
+	const hookReq = Exe.FindHex(code);
 	if (hookReq < 0)
 		throw Error("Guard suffix not used");
 
@@ -86,10 +86,10 @@ CustomShields = function()
 		throw Error("Buckler suffix not used");
 
 	$$(_ + '1.6 - Return address is after code')
-	let retReq = Exe.Phy2Vir(addr + code.byteCount(), CODE);
+	const retReq = Exe.Phy2Vir(addr + code.byteCount(), CODE);
 
 	$$(_ + '1.7 - Obtain the new Max Shield count from the user')
-	let MaxShield = Exe.GetUserInput('$maxShield', D_Int8, "Shield Limit", "Enter the maximum number of shield types required", 10, {min: 6, saveDefault: true});
+	const MaxShield = Exe.GetUserInput('$maxShield', D_Int8, "Shield Limit", "Enter the maximum number of shield types required", 10, {min: 6, saveDefault: true});
 	if (MaxShield === false)
 		Cancel("Limit reverted to default");
 
@@ -98,15 +98,16 @@ CustomShields = function()
 
 	$$(_ + '2.2 - Construct the code to be injected')
 	let funcName = "ReqShieldName";
-	let [prep, main, restore] = LUA.createCaller(funcName, "d>s", EDI, EAX);
+	const [prep, main, restore] = LUA.createCaller(funcName, "d>s", EDI, EAX);
 
 	let parts =
-	[
+	[//0
 		PUSHAD                         //pushad
 	+	MOV(EBX, MaxShield)            //mov ebx, <MaxShield>
 	+	MOV(EDI, 1)                    //mov edi, 1
 	+	prep                           //Stack Prep
-	,
+
+	,//1
 		main                           //LUA Function call code ; _loop
 	+	MOV(CL, [EAX])                 //mov cl, byte ptr [eax]
 	+	TEST(CL, CL)                   //test cl, cl
@@ -115,7 +116,8 @@ CustomShields = function()
 	+	MOV([4, EDI, ECX], EAX)        //mov dword ptr [edi*4 + ecx], eax
 	+	INC(EDI)                       //inc edi ; _idxInc
 	+	CMP(EDI, EBX)                  //cmp edi, ebx
-	,
+
+	,//2
 		JLE(Filler(1,1))               //jle short _loop ; to start of the calling code
 	+	restore                        //Stack Restore
 	+	POPAD                          //popad
@@ -129,10 +131,12 @@ CustomShields = function()
 	let [free, freeVir] = Exe.FindSpace(csize + funcName.length + 1, 0x10); //extra 1 for a NULL suffix
 
 	$$(_ + '2.3 - Fill in the blanks')
-	code = LUA.finalize(parts, freeVir, freeVir + csize);
-
-	code = SetFillTarget(code, [1,1], parts.byteCount(0), 0, 1); //for jle short _loop
-	code = SetFillTarget(code, 2, retReq, freeVir, 1);
+	code = SetFillTargets( LUA.finalize(parts, freeVir, freeVir + csize),
+	{
+		start : freeVir,
+		'1,1' : freeVir + parts.byteCount(0), // _loop
+		    2 : retReq
+	});
 
 	$$(_ + '2.5 - Add the code at allocated space')
 	Exe.AddHex(free, code + funcName.toHex());
@@ -171,7 +175,7 @@ CustomShields = function()
 		+	CALL()           //call CSession::GetShieldType
 		;
 
-		let addrs = Exe.FindHexN(code);
+		const addrs = Exe.FindHexN(code);
 		if (addrs.isEmpty())
 			throw Error("GetShieldType call missing");
 
@@ -198,7 +202,7 @@ CustomShields = function()
 		)
 		;
 
-		let suffix =
+		const suffix =
 			CALL(ALLWC)                  //call CSession::GetShieldType
 		+	(Exe.Version === 11
 		?
@@ -217,7 +221,7 @@ CustomShields = function()
 	}
 
 	$$(_ + '3.5 - Extract the PHYSICAL address of the GetShieldType function')
-	let hookMap = Exe.GetTgtAddr(refAddr + 1, PHYSICAL);
+	const hookMap = Exe.GetTgtAddr(refAddr + 1, PHYSICAL);
 
 	$$(_ + '4.1 - Construct the code to be injected')
 	funcName = "GetShieldID";
@@ -292,7 +296,6 @@ CustomShields = function()
 		Exe.SetInt8(addr + 2, MaxShield);
 	}
 
-
 	let funcAddr;
 	if (Exe.BuildDate < 20170700)
 	{
@@ -358,7 +361,7 @@ CustomShields = function()
 	}
 
 	$$(_ + '6.4 - Now convert to VIRTUAL')
-	let funcVir = Exe.Phy2Vir(funcAddr, CODE);
+	const funcVir = Exe.Phy2Vir(funcAddr, CODE);
 
 	$$(_ + '6.5 - Prep the code to be replaced with')
 	funcName = "ValidateShieldID";
@@ -380,7 +383,7 @@ CustomShields = function()
 	Exe.SetHex(funcAddr, code + funcName.toHex() + " 00");
 
 	$$(_ + '7.1 - Find the extra comparison function that got added from 2012-04-18RE onwards. ugh')
-	let prefix =
+	const prefix =
 		(ROC.HasFP
 	?
 		FP_START                              //push ebp
@@ -389,7 +392,7 @@ CustomShields = function()
 		''
 	)
 	+	PUSH(ESI)                             //push esi
-	+	MOV(ESI, [ROC.HasFP ? EBP : ESP, 8])  //mov esi, dword ptr [ARG.1]
+	+	MOV(ESI, [ROC.StkReg, 8])             //mov esi, dword ptr [ARG.1]
 	+	PUSH(ESI)                             //push esi
 	+	CALL(ALLWC)                           //call func#1
 	;
@@ -439,13 +442,14 @@ CustomShields = function()
 	addr += prefix.byteCount();
 
 	$$(_ + '7.3 - Retrieve the displacement wrt EAX')
-	let disp = Exe.GetInt8(addr + dispLoc);
+	const disp = Exe.GetInt8(addr + dispLoc);
 
 	$$(_ + '7.4 - Retrieve the target address (this retrieve the weapon ID)')
 	funcAddr = Exe.GetTgtAddr(addr - 4);
 
 	$$(_ + '7.5 - Create our replacement code (At this point the earlier hookMap function has been called to retrieve the shield id)')
-	parts = [
+	parts =
+	[//0
 		TEST(EAX, EAX)         //test eax, eax
 	+	JZ(Filler(1,1))        //jz _skip_OR
 	+	OR(EAX, -1)            //or eax, FFFFFFFFh
@@ -457,7 +461,8 @@ CustomShields = function()
 		''
 	)
 	+	RETN(4)                //retn 4
-	,
+
+	,//1
 		PUSH(ESI)              //push esi ; _skip_OR
 	+	CALL(Filler(2))        //call <funcAddr>
 	+	ADD(ESP, 4)            //add esp, 4
@@ -473,8 +478,13 @@ CustomShields = function()
 	];
 
 	$$(_ + '7.6 - Fill the blanks')
-	code = SetFillTarget(parts, [1,1], parts.byteCount(0), 0, 1); //for jz _skip_OR
-	code = SetFillTarget(code, 2, funcAddr, Exe.Phy2Vir(addr, CODE), 1);
+	const firstAddr = Exe.Phy2Vir(addr, CODE);
+	code = SetFillTargets(parts,
+	{
+		start : firstAddr,
+		'1,1' : firstAddr + parts.byteCount(0), // _skip_OR
+		    2 : funcAddr
+	});
 
 	$$(_ + '7.7 - Replace the function being CALLed')
 	Exe.SetTgtAddr(addr - 4, newMapVir);
@@ -501,12 +511,12 @@ CustomShields.onApplied = function()
 {
 	if (!Warp.TestMode && Exe.GetSavedInput('$copyCSLub'))
 	{
-		let _ = 'CustomShields.onApplied : ';
+		const _ = 'CustomShields.onApplied : ';
 
 		$$(_ + '1.1 - Prepare the directory paths')
 
-		let suffix = "/LuaFiles514/Lua Files/DataInfo";
-		let srcDir = Warp.Path + "Inputs" + suffix;
+		const suffix = "/LuaFiles514/Lua Files/DataInfo";
+		const srcDir = Warp.Path + "Inputs" + suffix;
 		let tgtDir = System.DirPath(Warp.TgtExe) + "/data" + suffix;
 
 		$$(_ + '1.2 - For old clients the version prefix is not there')
@@ -514,12 +524,12 @@ CustomShields.onApplied = function()
 			tgtDir = tgtDir.replace("LuaFiles514/", '');
 
 		$$(_ + '1.3 - Create the target directory')
-		let ready = System.MkDir(tgtDir);
+		const ready = System.MkDir(tgtDir);
 		if (!ready)
 			return;
 
 		$$(_ + '1.4 - Retrieve the max shield value')
-		let MaxShield = Exe.GetSavedInput('$maxShield');
+		const MaxShield = Exe.GetSavedInput('$maxShield');
 
 		$$(_ + '2.1 - Copy the lua file containing the tables')
 		System.Copy(srcDir + "/ShieldTable.lub", tgtDir);

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2021-04-04                                             *
+*   Last Modified : 2021-07-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,31 +33,20 @@
 ///
 /// \brief Create functions for regular SSE instructions
 ///
-const _define_with = function(prefix)
+const _define_with = (prefix, ...sets) =>
 {
-	for (let idx = 1; idx < arguments.length; idx++)
-	{
-		let set = arguments[idx];
-		Assign(
-			set[0],
-			`function(){ return _xmm_cmd(${set[1]}, ${set[2]}, ${set[3]}, arguments, ${prefix}) }`
-		);
-	}
+	for (const [name, ocRP, ocPR, ocRR] of sets)
+		Assign(name, `function(){ return _xmm_cmd(${ocRP}, ${ocPR}, ${ocRR}, arguments, ${prefix}) }`);
 };
 
 ///
 /// \brief Create functions for SSE instructions with muxing
 ///
-const _define_mux_with = function(prefix)
+const _define_mux_with = (prefix, ...names) =>
 {
-	for (let idx = 1; idx < arguments.length; idx++)
-	{
-		let name = arguments[idx];
-		Assign(
-			name,
-			`function(){ return _xmm_cmd_Mux(${idx-1}, arguments, ${prefix}) }`
-		);
-	}
+	names.forEach( (name, idx) =>
+		Assign(name, `function(){ return _xmm_cmd_Mux(${idx}, arguments, ${prefix}) }`)
+	);
 }
 
   //=============================//
@@ -69,43 +58,44 @@ const _define_mux_with = function(prefix)
 ///
 _define_with(''  ,
 	['MOVUPS'    , 0x10, 0x11, 0x10],	//DQWORD PTR
-	['MOVLPS'    , 0x12, 0x13      ],	//QWORD PTR
-	['UNPCKLPS'  , 0x14,     , 0x14],	//DQWORD PTR
-	['UNPCKHPS'  , 0x15,     , 0x15],	//DQWORD PTR
-	['MOVHPS'    , 0x16, 0x17      ],	//QWORD PTR
+	['MOVLPS'    , 0x12, 0x13, null],	//QWORD PTR
+	['UNPCKLPS'  , 0x14, null, 0x14],	//DQWORD PTR
+	['UNPCKHPS'  , 0x15, null, 0x15],	//DQWORD PTR
+	['MOVHPS'    , 0x16, 0x17, null],	//QWORD PTR
 	['MOVAPS'    , 0x28, 0x29, 0x28],	//DQWORD PTR
-	['CVTPI2PS'  , 0x2A,     , 0x2A],	//QWORD PTR
-	['MOVNTPS'   ,     , 0x2B      ],	//DQWORD PTR
-	['CVTTPS2PI' , 0x2C,     , 0x2C],	//QWORD PTR
-	['CVTPS2PI'  , 0x2D,     , 0x2D],	//QWORD PTR
-	['UCOMISS'   , 0x2E,     , 0x2E],	//DWORD PTR
-	['COMISS'    , 0x2F,     , 0x2F],	//DWORD PTR
+	['CVTPI2PS'  , 0x2A, null, 0x2A],	//QWORD PTR
+	['MOVNTPS'   , null, 0x2B, null],	//DQWORD PTR
+	['CVTTPS2PI' , 0x2C, null, 0x2C],	//QWORD PTR
+	['CVTPS2PI'  , 0x2D, null, 0x2D],	//QWORD PTR
+	['UCOMISS'   , 0x2E, null, 0x2E],	//DWORD PTR
+	['COMISS'    , 0x2F, null, 0x2F],	//DWORD PTR
 
-	['SQRTPS'    , 0x51,     , 0x51],	//DQWORD PTR
-	['RSQRTPS'   , 0x52,     , 0x52],	//DQWORD PTR
-	['RCPPS'     , 0x53,     , 0x53],	//DQWORD PTR
-	['ANDPS'     , 0x54,     , 0x54],	//DQWORD PTR
-	['ANDNPS'    , 0x55,     , 0x55],	//DQWORD PTR
-	['ORPS'      , 0x56,     , 0x56],	//DQWORD PTR
-	['XORPS'     , 0x57,     , 0x57],	//DQWORD PTR
-	['ADDPS'     , 0x58,     , 0x58],	//DQWORD PTR
-	['MULPS'     , 0x59,     , 0x59],	//DQWORD PTR
-	['CVTPS2PD'  , 0x5A,     , 0x5A],	//QWORD PTR
-	['CVTDQ2PS'  , 0x5B,     , 0x5B],	//DQWORD PTR
-	['SUBPS'     , 0x5C,     , 0x5C],	//DQWORD PTR
-	['MINPS'     , 0x5D,     , 0x5D],	//DQWORD PTR
-	['DIVPS'     , 0x5E,     , 0x5E],	//DQWORD PTR
-	['MAXPS'     , 0x5F,     , 0x5F],	//DQWORD PTR
+	['SQRTPS'    , 0x51, null, 0x51],	//DQWORD PTR
+	['RSQRTPS'   , 0x52, null, 0x52],	//DQWORD PTR
+	['RCPPS'     , 0x53, null, 0x53],	//DQWORD PTR
+	['ANDPS'     , 0x54, null, 0x54],	//DQWORD PTR
+	['ANDNPS'    , 0x55, null, 0x55],	//DQWORD PTR
+	['ORPS'      , 0x56, null, 0x56],	//DQWORD PTR
+	['XORPS'     , 0x57, null, 0x57],	//DQWORD PTR
+	['ADDPS'     , 0x58, null, 0x58],	//DQWORD PTR
+	['MULPS'     , 0x59, null, 0x59],	//DQWORD PTR
+	['CVTPS2PD'  , 0x5A, null, 0x5A],	//QWORD PTR
+	['CVTDQ2PS'  , 0x5B, null, 0x5B],	//DQWORD PTR
+	['SUBPS'     , 0x5C, null, 0x5C],	//DQWORD PTR
+	['MINPS'     , 0x5D, null, 0x5D],	//DQWORD PTR
+	['DIVPS'     , 0x5E, null, 0x5E],	//DQWORD PTR
+	['MAXPS'     , 0x5F, null, 0x5F],	//DQWORD PTR
 
-	['PSHUFW'    , 0x70,     , 0x70],	//QWORD PTR
-	['SHUFPS'    , 0xC6,     , 0xC6],	//DQWORD PTR
+	['PSHUFW'    , 0x70, null, 0x70],	//QWORD PTR
+	['SHUFPS'    , 0xC6, null, 0xC6],	//DQWORD PTR
 
-	['MOVNTQ'    ,     , 0xE7      ] 	//QWORD PTR
+	['MOVNTQ'    , null, 0xE7, null] 	//QWORD PTR
 );
 
 ///
 /// \brief Instructions supporting Operand Override
 ///
+for (const [name, opcode] of
 [
 	['PUNPCKLBW' , 0x60],	//QWORD or DQWORD PTR
 	['PUNPCKLWD' , 0x61],	//QWORD or DQWORD PTR
@@ -169,13 +159,8 @@ _define_with(''  ,
 	['PADDB'     , 0xFC],	//QWORD or DQWORD PTR
 	['PADDW'     , 0xFD],	//QWORD or DQWORD PTR
 	['PADDD'     , 0xFE]	//QWORD or DQWORD PTR
-].forEach( pair =>
-	Assign(
-		pair[0],
-		`function() { return _xmm_cmd_OO(${pair[1]}, arguments)}`
-	)
-);
-
+])
+	Assign( name, `function() { return _xmm_cmd_OO(${opcode}, arguments)}` );
 
 ///
 /// \brief Mixed instructions (multiple operations in one)
@@ -192,30 +177,30 @@ _define_mux_with('',
 
 _define_with('REPN',
 	['MOVSS'       , 0x10, 0x11, 0x10],	//DWORD PTR
-	['MOVSLDUP'    , 0x12,     , 0x12],	//DQWORD PTR
-	['MOVSHDUP'    , 0x16,     , 0x16],	//DQWORD PTR
+	['MOVSLDUP'    , 0x12, null, 0x12],	//DQWORD PTR
+	['MOVSHDUP'    , 0x16, null, 0x16],	//DQWORD PTR
 
-	['CVTSI2SS'    , 0x2A,     , 0x2A],	//DWORD PTR
-	['MOVNTSS'     ,     , 0x2B      ],	//DWORD PTR
-	['CVTTSS2SI'   , 0x2C,     , 0x2C],	//DWORD PTR
-	['CVTSS2SI'    , 0x2D,     , 0x2D],	//DWORD PTR
+	['CVTSI2SS'    , 0x2A, null, 0x2A],	//DWORD PTR
+	['MOVNTSS'     , null, 0x2B, null],	//DWORD PTR
+	['CVTTSS2SI'   , 0x2C, null, 0x2C],	//DWORD PTR
+	['CVTSS2SI'    , 0x2D, null, 0x2D],	//DWORD PTR
 
-	['SQRTSS'      , 0x51,     , 0x51],	//DWORD PTR
-	['RSQRTSS'     , 0x52,     , 0x52],	//DWORD PTR
-	['RCPSS'       , 0x53,     , 0x53],	//DWORD PTR
-	['ADDSS'       , 0x58,     , 0x58],	//DWORD PTR
-	['MULSS'       , 0x59,     , 0x59],	//DWORD PTR
-	['CVTSS2SD'    , 0x5A,     , 0x5A],	//DWORD PTR
-	['CVTTPS2DQ'   , 0x5B,     , 0x5B],	//DQWORD PTR
-	['SUBSS'       , 0x5C,     , 0x5C],	//DWORD PTR
-	['MINSS'       , 0x5D,     , 0x5D],	//DWORD PTR
-	['DIVSS'       , 0x5E,     , 0x5E],	//DWORD PTR
-	['MAXSS'       , 0x5F,     , 0x5F],	//DWORD PTR
+	['SQRTSS'      , 0x51, null, 0x51],	//DWORD PTR
+	['RSQRTSS'     , 0x52, null, 0x52],	//DWORD PTR
+	['RCPSS'       , 0x53, null, 0x53],	//DWORD PTR
+	['ADDSS'       , 0x58, null, 0x58],	//DWORD PTR
+	['MULSS'       , 0x59, null, 0x59],	//DWORD PTR
+	['CVTSS2SD'    , 0x5A, null, 0x5A],	//DWORD PTR
+	['CVTTPS2DQ'   , 0x5B, null, 0x5B],	//DQWORD PTR
+	['SUBSS'       , 0x5C, null, 0x5C],	//DWORD PTR
+	['MINSS'       , 0x5D, null, 0x5D],	//DWORD PTR
+	['DIVSS'       , 0x5E, null, 0x5E],	//DWORD PTR
+	['MAXSS'       , 0x5F, null, 0x5F],	//DWORD PTR
 
 	['MOVDQU'      , 0x6F, 0x7F, 0x6F],	//DQWORD PTR
 
-	['PSHUFHW'     , 0x70,     , 0x70],	//DQWORD PTR
-	['CVTDQ2PD'    , 0xE6,     , 0xE6] 	//QWORD PTR
+	['PSHUFHW'     , 0x70, null, 0x70],	//DQWORD PTR
+	['CVTDQ2PD'    , 0xE6, null, 0xE6] 	//QWORD PTR
 );
 
 ///
@@ -236,46 +221,46 @@ _define_mux_with('REPN',
 ///
 _define_with('OPCH',
 	['MOVUPD'      , 0x10, 0x11, 0x10],	//DQWORD PTR
-	['MOVLPD'      , 0x12, 0x13      ],	//QWORD PTR
-	['UNPCKLPD'    , 0x14            ],	//DQWORD PTR
-	['UNPCKHPD'    , 0x15            ],	//DQWORD PTR
-	['MOVHPD'      , 0x16, 0x17      ],	//QWORD PTR
+	['MOVLPD'      , 0x12, 0x13, null],	//QWORD PTR
+	['UNPCKLPD'    , 0x14, null, null],	//DQWORD PTR
+	['UNPCKHPD'    , 0x15, null, null],	//DQWORD PTR
+	['MOVHPD'      , 0x16, 0x17, null],	//QWORD PTR
 	['MOVAPD'      , 0x28, 0x29, 0x28],	//DQWORD PTR
-	['CVTPI2PD'    , 0x2A,     , 0x2A],	//QWORD PTR
-	['MOVNTPD'     ,     , 0x2B      ],	//DQWORD PTR
-	['CVTTPD2PI'   , 0x2C,     , 0x2C],	//DQWORD PTR
-	['CVTPD2PI'    , 0x2D,     , 0x2D],	//DQWORD PTR
-	['UCOMISD'     , 0x2E,     , 0x2E],	//QWORD PTR
-	['COMISD'      , 0x2F,     , 0x2F],	//QWORD PTR
+	['CVTPI2PD'    , 0x2A, null, 0x2A],	//QWORD PTR
+	['MOVNTPD'     , null, 0x2B, null],	//DQWORD PTR
+	['CVTTPD2PI'   , 0x2C, null, 0x2C],	//DQWORD PTR
+	['CVTPD2PI'    , 0x2D, null, 0x2D],	//DQWORD PTR
+	['UCOMISD'     , 0x2E, null, 0x2E],	//QWORD PTR
+	['COMISD'      , 0x2F, null, 0x2F],	//QWORD PTR
 
-	['SQRTPD'      , 0x51,     , 0x51],	//DQWORD PTR
-	['ANDPD'       , 0x54,     , 0x54],	//DQWORD PTR
-	['ANDNPD'      , 0x55,     , 0x55],	//DQWORD PTR
-	['ORPD'        , 0x56,     , 0x56],	//DQWORD PTR
-	['XORPD'       , 0x57,     , 0x57],	//DQWORD PTR
-	['ADDPD'       , 0x58,     , 0x58],	//DQWORD PTR
-	['MULPD'       , 0x59,     , 0x59],	//DQWORD PTR
-	['CVTPD2PS'    , 0x5A,     , 0x5A],	//DQWORD PTR
-	['CVTPS2DQ'    , 0x5B,     , 0x5B],	//DQWORD PTR
-	['SUBPD'       , 0x5C,     , 0x5C],	//DQWORD PTR
-	['MINPD'       , 0x5D,     , 0x5D],	//DQWORD PTR
-	['DIVPD'       , 0x5E,     , 0x5E],	//DQWORD PTR
-	['MAXPD'       , 0x5F,     , 0x5F],	//DQWORD PTR
+	['SQRTPD'      , 0x51, null, 0x51],	//DQWORD PTR
+	['ANDPD'       , 0x54, null, 0x54],	//DQWORD PTR
+	['ANDNPD'      , 0x55, null, 0x55],	//DQWORD PTR
+	['ORPD'        , 0x56, null, 0x56],	//DQWORD PTR
+	['XORPD'       , 0x57, null, 0x57],	//DQWORD PTR
+	['ADDPD'       , 0x58, null, 0x58],	//DQWORD PTR
+	['MULPD'       , 0x59, null, 0x59],	//DQWORD PTR
+	['CVTPD2PS'    , 0x5A, null, 0x5A],	//DQWORD PTR
+	['CVTPS2DQ'    , 0x5B, null, 0x5B],	//DQWORD PTR
+	['SUBPD'       , 0x5C, null, 0x5C],	//DQWORD PTR
+	['MINPD'       , 0x5D, null, 0x5D],	//DQWORD PTR
+	['DIVPD'       , 0x5E, null, 0x5E],	//DQWORD PTR
+	['MAXPD'       , 0x5F, null, 0x5F],	//DQWORD PTR
 
-	['PUNPCKLQDQ'  , 0x6C,     , 0x6C],	//DQWORD PTR
-	['PUNPCKHQDQ'  , 0x6D,     , 0x6D],	//DQWORD PTR
+	['PUNPCKLQDQ'  , 0x6C, null, 0x6C],	//DQWORD PTR
+	['PUNPCKHQDQ'  , 0x6D, null, 0x6D],	//DQWORD PTR
 	['MOVDQA'      , 0x6F, 0x7F, 0x6F],	//DQWORD PTR
 
-	['PSHUFD'      , 0x70,     , 0x70],	//DQWORD PTR
+	['PSHUFD'      , 0x70, null, 0x70],	//DQWORD PTR
 
-	['HADDPD'      , 0x7C,     , 0x7C],	//DQWORD PTR
-	['HSUBPD'      , 0x7D,     , 0x7D],	//DQWORD PTR
+	['HADDPD'      , 0x7C, null, 0x7C],	//DQWORD PTR
+	['HSUBPD'      , 0x7D, null, 0x7D],	//DQWORD PTR
 
-	['SHUFPD'      , 0xC6,     , 0xC6],	//DQWORD PTR
-	['ADDSUBPD'    , 0xD0,     , 0xD0],	//DQWORD PTR
+	['SHUFPD'      , 0xC6, null, 0xC6],	//DQWORD PTR
+	['ADDSUBPD'    , 0xD0, null, 0xD0],	//DQWORD PTR
 
-	['CVTTPD2DQ'   , 0xE6,     , 0xE6],	//DQWORD PTR
-	['MOVNTDQ'     ,     , 0xE7      ]	//DQWORD PTR
+	['CVTTPD2DQ'   , 0xE6, null, 0xE6],	//DQWORD PTR
+	['MOVNTDQ'     , null, 0xE7, null]	//DQWORD PTR
 );
 
 ///

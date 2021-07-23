@@ -1,3 +1,67 @@
+# 2021-07-23 Changes
+
+## Patch Updates
+- Updated patches using the placeholder functions to remove the deprecated functions.
+- Minor cleanup also being done (using `const` and swapping out `forEach` with `for of`)
+
+## Extension Updates
+- A little bit of cleanup (using `const` and swapping out `forEach` with `for of`)
+
+
+# 2021-07-22 Changes
+
+## Patch Updates
+- Changed the placeholder functions to use `_` & `_.` instead of `?` to avoid clashing with regular wildcards.
+- Removed `SwapFiller` & `SetFillTarget` function (kind of redundant with the other one without much benefits).
+
+- Changed the way the byte count is sent to `SwapFillers` and `SetFillTargets`, now the byte count can be clubbed with the index as a string key => `"index, bc"`
+- Also, for `SetFillTargets`, the starting address needs to be provided in the map argument itself using the key `start`. If it's not there then `0` is assumed.
+
+- Converted a lot of `let` to `const`
+- Changed some of the `forEach` functions to `for of` loops.
+
+- Changed `LOCK`, `REPE` & `REPN` to `ILOCK`, `IREPE` & `IREPN` respectively. The first 3 are now functions instead to automatically prefix these values.
+  `REP` function has also been provided as an alias to `REPE`. Check the wiki for more details. 
+
+- Added string instructions to use with the `REP*` functions.
+
+- Updated **'Init'** scripts to reflect the changes in placeholder functions.
+
+
+# 2021-07-15 Changes
+
+## Patch Updates
+- Added patch for [Chris' lua overrides](https://github.com/llchrisll/ROenglishRE/tree/master/Custom%20Lua%20Files)
+
+## Extension Updates
+- Bug fix (Changed all the wrong `CaseInsensitive` names to `CASE_INSENSITIVE`).
+- Added the missing `_` variable in `GenMapEffectPlugin.qjs`
+
+
+# 2021-07-12 Changes
+
+## Patch Updates
+- Fixed bug in [Disable Multiple Windows](https://github.com/Neo-Mind/WARP/issues/52) patch.
+- Some minor cleanup.
+
+
+# 2021-07-10 Changes
+
+## Patch Updates
+- Fixed the ordering for **`D_Color`** in the **`Customize Chat Color` & `Customize Slot Highlight color`** patches.
+
+
+# 2021-07-07 Changes
+
+## Patch Updates
+- Changed the pattern for 1 byte fillers to use `?.` prefix . The earlier pattern was creating chaos when the bytes are clubbed together.
+- Fixed issue with doram palette in **`Increase Hairstyle`** patches.
+- (Hopefully) Fixed the rendering bug with [Increase Zoom](https://github.com/Neo-Mind/WARP/issues/44) patches.
+
+## Tool Updates
+- Updated thai language file with translations for the new entries.
+
+
 # 2021-07-06 Changes
 
 ## Tool Updates
