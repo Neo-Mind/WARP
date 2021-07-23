@@ -175,7 +175,7 @@ _define_mux_with('',
  // SSE Instructions - REPN (F3) prefix //
 //=====================================//
 
-_define_with('REPN',
+_define_with('IREPN',
 	['MOVSS'       , 0x10, 0x11, 0x10],	//DWORD PTR
 	['MOVSLDUP'    , 0x12, null, 0x12],	//DQWORD PTR
 	['MOVSHDUP'    , 0x16, null, 0x16],	//DQWORD PTR
