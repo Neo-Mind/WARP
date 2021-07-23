@@ -65,6 +65,7 @@ if (typeof ROC === 'undefined')
 				addr = Exe.FindHex(NOP.repeat(5) + FP_START, fromAddr, toAddr); //change each 'int3' to 'nop'
 
 			this.HasFP = (addr > 0);
+			this.StkReg = this.HasFP ? EBP : ESP;
 
 			$$(_ + '1.6 - Check the build date & Zero status for Hidden Login Window')
 			this.HasLWhidden = Exe.BuildDate > 20100803 && (Exe.BuildDate < 20171018 || (Exe.BuildDate < 20181114 && !this.IsZero));

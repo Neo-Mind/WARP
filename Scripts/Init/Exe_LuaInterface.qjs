@@ -397,10 +397,11 @@ if (typeof LUA === 'undefined') // avoid redefinition
 			if (nameAddr)
 				code = SwapFillers( code, {50: nameAddr} );
 
-			code = SetFillTargets( code, {
-				'start': at,
-				    51 : this.Allocator,
-				    52 : this.FnInvoker
+			code = SetFillTargets( code,
+			{
+				start : at,
+				   51 : this.Allocator,
+				   52 : this.FnInvoker
 			});
 
 			return code;

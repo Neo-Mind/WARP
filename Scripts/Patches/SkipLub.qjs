@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), X-EcutiOnner                            *
 *   Created Date  : 2021-01-23                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,16 +33,16 @@
 ///
 SkipSignBoard = function()
 {
-	let _ = 'SkipSignBoard : ';
+	const _ = 'SkipSignBoard : ';
 
     $$(_ + '1.1 - Prepare the template to search with')
-	let template =
+	const template =
 		PUSH(Filler(1)) //push <prefixAddr>
 	+	CALL()          //call CLua::Loader
 	;
 
 	$$(_ + '1.2 - Find the first reference')
-	let addr = Exe.FindHex(SwapFiller(template, 1, SSBR_Addr, 1));
+	let addr = Exe.FindHex( SwapFillers( template, {1: SSBR_Addr} ) );
 	if (addr < 0)
 		throw Error("SignBoardList_F not used");
 
@@ -55,26 +55,26 @@ SkipSignBoard = function()
 		throw Error("State PUSH missing");
 
 	$$(_ + '1.4 - Save the instruction & endAddr1')
-	let movECX = Instr.FromAddr(beginAddr1);
-	let endAddr1 = addr + 4; //after the CALL
+	const movECX = Instr.FromAddr(beginAddr1);
+	const endAddr1 = addr + 4; //after the CALL
 
 	$$(_ + '2.1 - Find \'Lua Files\\SignBoardList\'')
-    let prefAddr = Exe.FindText("Lua Files\\SignBoardList", CASE_INSENSITIVE);
+    const prefAddr = Exe.FindText("Lua Files\\SignBoardList", CASE_INSENSITIVE);
 	if (prefAddr < 0)
 		throw Error("SignBoardList not found");
 
 	$$(_ + '2.2 - Find it\'s reference after endAddr1')
-	addr = Exe.FindHex(SwapFiller(template, 1, prefAddr, 1), endAddr1, endAddr1 + 0x40);
+	addr = Exe.FindHex( SwapFillers( template, {1: prefAddr} ) , endAddr1 , endAddr1 + 0x40);
 	if (addr < 0)
 		throw Error("SignBoardList not used");
 
 	$$(_ + '2.3 - Find the state PUSH before it')
-	let beginAddr2 = Exe.FindLastHex(movECX, addr, addr - 0x10);
+	const beginAddr2 = Exe.FindLastHex(movECX, addr, addr - 0x10);
 	if (beginAddr2 < 0)
 		throw Error("State PUSH missing again");
 
 	$$(_ + '2.4 - Save the end address')
-	let endAddr2 = addr + 4;
+	const endAddr2 = addr + 4;
 
 	if (beginAddr2 === endAddr1)
 	{
@@ -105,16 +105,16 @@ SkipSignBoard.validate = function()
 ///
 SkipTownInfo = function()
 {
-	let _ = 'SkipTownInfo : ';
+	const _ = 'SkipTownInfo : ';
 
 	$$(_ + '1.1 - Find \'TownInfo file Init\'')
-    let strAddr = Exe.FindText("TownInfo file Init");
+    const strAddr = Exe.FindText("TownInfo file Init");
     if (strAddr < 0)
         throw Error("Init string missing");
 
     $$(_ + '1.2 - Use it to find TownInfo loading code')
-	let pushZero = Exe.Version > 10 ? PUSH_0 : PUSH(EBX);
-	let code =
+	const pushZero = Exe.Version > 10 ? PUSH_0 : PUSH(EBX);
+	const code =
 		TEST(AL, AL)  //test al, al ; result of the function which loads the towninfo
 	+	JNZ(WCp)      //jnz short _skip
 	+	pushZero      //push 0 OR ebx
@@ -122,16 +122,16 @@ SkipTownInfo = function()
 	+	PUSH(strAddr) //push offset "TownInfo file Init"
 	+	pushZero      //push 0 OR ebx
 	;
-	let addr = Exe.FindHex(code);
+
+	const addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Pattern not found");
 
 	$$(_ + '2.1 - Find the CALL before it')
-	let callAddr;
-	if (Exe.GetUint8(addr - 6) === 0x8B)
-		callAddr = addr - 11;
-	else
-		callAddr = addr - 5;
+	const callAddr = Exe.GetUint8(addr - 6) === 0x8B
+		? (addr - 11)
+		: (addr - 5)
+		;
 
 	if (Exe.GetUint8(callAddr) !== 0xE8)
 		throw Error("CALL not found");

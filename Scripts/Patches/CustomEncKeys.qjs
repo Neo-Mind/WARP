@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,22 +36,22 @@ PktKeyPatches = ["CustomFirstKey", "CustomSecondKey", "CustomThirdKey"];
 ///
 CustomEncKeys = function(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Ensure the \'Disable Packet Encryption\' patch is unselected. Not applicable for test mode')
 	if (!Warp.TestMode)
 		Warp.SetPatchState("NoPacketEncr", false);
 
 	$$(_ + '1.2 - Discern the Variable name and index based on patchName')
-	let index = PktKeyPatches.indexOf(patchName);
-	let varName = "$" + ["first", "second", "third"][index] + "key";
+	const index = PktKeyPatches.indexOf(patchName);
+	const varName = "$" + ["first", "second", "third"][index] + "key";
 
 	$$(_ + '1.3 - Ensure the PACKET object has been loaded')
 	PACKET.load();
 
 	$$(_ + '1.4 - Get the new key from user')
-	let oldKey = PACKET.Keys[index].toHex(4, true); //need in BE format
-	let newKey = Exe.GetUserInput(varName, D_Hex, "Packet Keys", "Enter the new packet key", oldKey, {minLen: 4, maxLen: 4});
+	const oldKey = PACKET.Keys[index].toHex(4, true); //need in BE format
+	const newKey = Exe.GetUserInput(varName, D_Hex, "Packet Keys", "Enter the new packet key", oldKey, {minLen: 4, maxLen: 4});
 
 	if (newKey === false || newKey === oldKey)
 		Cancel("No new key specified");
@@ -59,18 +59,17 @@ CustomEncKeys = function(patchName)
 	if (PACKET.KS_Mode === KeyMode.Push) //Direct PUSHes
 	{
 		$$(_ + '2.1 - For Direct Key PUSHes, find all locations where it occurs')
-		let code =
+		const code =
 			PUSH(PACKET.Keys[2])  //push <key3>
 		+	PUSH(PACKET.Keys[1])  //push <key2>
 		+	PUSH(PACKET.Keys[0])  //push <key1>
 		+	CALL()                //call CRagConnection::InitKeys
 		;
-		let csize = code.byteCount();
+		const csize = code.byteCount();
 
 		$$(_ + '2.2 - Update the respective PUSHed key with the new one in all such locations')
-		Exe.FindHexN(code).forEach( addr =>
-			Exe.SetFromVar(addr + csize - 5*(index + 1), varName)
-		);
+		for (const addr of Exe.FindHexN(code))
+			Exe.SetFromVar(addr + csize - 5*(index + 1), varName);
 
 		return true;
 	}
@@ -102,14 +101,14 @@ CustomEncKeys.validate = HasPktKeys;
 ///
 CustomEncKeys.cleanup = function(patchName)
 {
-	let _ = patchName + '.cleanup : ';
+	const _ = patchName + '.cleanup : ';
 
 	$$(_ + '1.1 - Check if the 4th element is defined. Skip if not defined')
 	if (PACKET.PatchData.isEmpty() || !PACKET.PatchData[3])
 		return;
 
 	$$(_ + '1.2 - Get the index')
-	let index = PktKeyPatches.indexOf(patchName);
+	const index = PktKeyPatches.indexOf(patchName);
 
 	$$(_ + '1.3 - Reset the specific key to default one')
 	PACKET.PatchData[index] = PACKET.Keys[index];
@@ -117,7 +116,7 @@ CustomEncKeys.cleanup = function(patchName)
 	$$(_ + '2.1 - Set one of the other Packet Key patches as active if they are selected')
 	if (PACKET.PatchData[4] === index)
 	{
-		let newIdx = PktKeyPatches.findIndex( name => Warp.GetPatchState(name) );
+		const newIdx = PktKeyPatches.findIndex( name => Warp.GetPatchState(name) );
 		if (newIdx < 0)
 		{
 			$$(_ + '2.2 - If no other patch is selected then clear the data')
@@ -151,10 +150,10 @@ CustomThirdKey  = CustomEncKeys;
 ///
 _CEK_SetupObfuscate = function(index)
 {
-	let _ = `_CEK_SetupObfuscate (${index}) : `;
+	const _ = `_CEK_SetupObfuscate (${index}) : `;
 
 	$$(_ + '1.1 - Prepare suffix with Stack restore & RETN')
-	let suffix =
+	const suffix =
 		(ROC.HasFP ? POP(EBP) : NOP)  //pop ebp / nop
 	+	RETN(4)                       //retn 4
 	;
@@ -163,13 +162,9 @@ _CEK_SetupObfuscate = function(index)
 	let code = "";
 	if (PACKET.KS_Mode === KeyMode.Virtual)
 	{
-		let parts =
-		[
-			ROC.HasFP
-		?
-			MOV(EAX, [EBP, 8])    //mov eax, dword ptr [ARG.1] ;  ARG.1 = ebp+8 with FP & esp+4 without FP
-		:
-			MOV(EAX, [ESP, 4])
+		const parts =
+		[//0
+			MOV(EAX, [ROC.StkReg, ROC.HasFP ? 8 : 4] //mov eax, dword ptr [ARG.1] ;  ARG.1 = ebp+8 with FP & esp+4 without FP
 
 		,//1
 
@@ -194,12 +189,12 @@ _CEK_SetupObfuscate = function(index)
 		                          //retn 4
 		];
 
-		let offsets = MapAddrs(0, parts);
-		code += SetFillTargets(parts,
+		const offsets = MapAddrs(0, parts);
+		code += SetFillTargets( parts, 1,
 		{
-			1: offsets[2], //_init
-			2: offsets[3]  //_assign
-		}, 0, 1, 1);
+			'1,1' : offsets[2], //_init
+			'2,1' : offsets[3]  //_assign
+		});
 	}
 
 	$$(_ + '1.3 - Add the code for assigning the Initial packet keys')
@@ -210,7 +205,7 @@ _CEK_SetupObfuscate = function(index)
 	+	XOR(EAX, EAX)                         //xor eax, eax
 	+	suffix
 	;
-	let csize = code.byteCount();
+	const csize = code.byteCount();
 
 	if (PACKET.PatchData[3] ?? false)
 	{

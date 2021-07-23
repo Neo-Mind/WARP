@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Neo-Mind                                      *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,7 +35,7 @@
 ///
 RelativeDelay4CharDel = function()
 {
-	let _ = 'RelativeDelay4CharDel : ';
+	const _ = 'RelativeDelay4CharDel : ';
 
 	$$(_ + '1.1 - Find the code which prepare character deletion time data')
 	let code;
@@ -66,18 +66,18 @@ RelativeDelay4CharDel = function()
 		;
 	}
 
-	let addr = Exe.FindHex(code);
+	const addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Char Del prep missing");
 
 	$$(_ + '1.2 - Get "MSVCR110._time32" address')
-	let time32Func = Exe.FindFunc("_time32");
+	const time32Func = Exe.FindFunc("_time32");
 	if (time32Func < 0)
 		throw Error("'_time32' function missing");
 
 	$$(_ + '2.1 - Prepare the replacement code')
-	let parts =
-	[
+	const parts =
+	[//0
 		PUSH(EBX)             //push ebx
 	+	PUSH(ESI)             //push esi
 	+	PUSH(ECX)             //push ecx
@@ -103,7 +103,8 @@ RelativeDelay4CharDel = function()
 	+	DIV(EBX)              //div ebx
 	+	MOV([ESI, 0x6], AX)   //mov word ptr [esi+6], ax
 	+	MOV([ESI, 0x8], DX)   //mov word ptr [esi+8], dx
-	,
+
+	,//1
 		POP(ESI)              //pop esi ; _skip
 	+	POP(EBX)              //pop ebx
 	+	FP_STOP               //mov esp, ebp
@@ -111,7 +112,7 @@ RelativeDelay4CharDel = function()
 	+	RETN(4)               //retn 4
 	];
 
-	code = SetFillTarget(parts, [1,1], parts.byteCount(0), 0, 1, 1);
+	code = SetFillTargets( parts, 1, {'1,1' : parts.byteCount(0)} );
 
 	$$(_ + '2.2 - Replace the original with our code')
 	Exe.SetHex(addr, code);

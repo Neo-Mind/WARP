@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ///
 CustomHomuns = function()
 {
-	let _ = 'CustomHomuns : ';
+	const _ = 'CustomHomuns : ';
 
 	$$(_ + '1.1 - Find \'LIF\'')
 	let addr = Exe.FindText("LIF");
@@ -40,7 +40,7 @@ CustomHomuns = function()
 		throw Error("'LIF' not found");
 
 	$$(_ + '1.2 - Find where it gets assigned. Serves as the hook address')
-	let hookAddr = Exe.FindHex(MOV([R32, 0x5DC4], addr)); //mov dword ptr [regA + 5DC4h], offset "LIF"
+	const hookAddr = Exe.FindHex(MOV([R32, 0x5DC4], addr)); //mov dword ptr [regA + 5DC4h], offset "LIF"
 	if (hookAddr < 0)
 		throw Error("'LIF' not used");
 
@@ -54,7 +54,7 @@ CustomHomuns = function()
 	LANGTYPE.load();
 
 	$$(_ + '2.2 - Now find the ending instruction while extracting all relevant instructions (not related to table loading) in between')
-	let [endIns, retainer, overflow] = FetchTillEnd(hookAddr, 1, ins.getNext(), refReg, -1, (ins) =>
+	const [endIns, retainer, overflow] = FetchTillEnd(hookAddr, 1, ins.getNext(), refReg, -1, (ins) =>
 	{
 		if (Exe.Version === 6) //VC6
 		{
@@ -86,7 +86,7 @@ CustomHomuns = function()
 		throw Error("Unable to find end of assignments");
 
 	$$(_ + '2.3 - Get the max homunculi limit from user')
-	let MaxHomun = Exe.GetUserInput('$maxHomun', D_Int16, "Limit Input", "Enter the maximum homunculus ID required", 6080, {min: 6080, max: 7000, saveDefault: true});
+	const MaxHomun = Exe.GetUserInput('$maxHomun', D_Int16, "Limit Input", "Enter the maximum homunculus ID required", 6080, {min: 6080, max: 7000, saveDefault: true});
 	if (MaxHomun === false)
 		Cancel("No Max Limit specified");
 
@@ -94,17 +94,18 @@ CustomHomuns = function()
 	LUA.load();
 
 	$$(_ + '2.5 - Prepare the code to call LUA function for loading tables')
-	let funcName = "ReqJobName";
-	let [prep, main, restore] = LUA.createCaller(funcName, "d>s", EDI, EAX);
+	const funcName = "ReqJobName";
+	const [prep, main, restore] = LUA.createCaller(funcName, "d>s", EDI, EAX);
 
-	let parts =
-	[
+	const parts =
+	[//0
 		PUSH(refReg)             //push regA ; it contains the starting table address
 	+	PUSHAD                   //pushad
 	+	MOV(EBX, MaxHomun)       //mov ebx, <MaxHomun>
 	+	MOV(EDI, 6001)           //mov edi, 1771h
 	+	prep                     //Stack Prep
-	,
+
+	,//1
 		main                     //Lua fn calling code ; _loop
 	+	MOV(CL, [EAX])           //mov cl, byte ptr [eax]
 	+	TEST(CL, CL)             //test cl, cl
@@ -114,21 +115,26 @@ CustomHomuns = function()
 	+	INC(EDI)                 //inc edi ; _idxInc
 	+	CMP(EDI, EBX)            //cmp edi, ebx
 	+	JLE(Filler(1,1))         //jle short _loop
-	,
+
+	,//2
 		restore                  //Stack restoration
 	+	POPAD                    //popad
 	+	ADD(ESP, 4)              //add esp, 4 ; for the initial push
-	,
+
+	,//3
 		retainer                 //Codes which were retrieved earlier
-	,
+
+	,//4
 		JMP(Filler(2))           //jmp endAddr; address of <endIns>
 	];
 
 	$$(_ + '2.6 - Fill in the blanks')
-	let code = LUA.finalize(parts, Exe.Phy2Vir(hookAddr, CODE), LUA.ReqJN);
-
-	code = SetFillTarget(code, [1,1], parts.byteCount(0), 0, 1);
-	code = SetFillTarget(code, 2, endIns.Addr, hookAddr, 1); //no VIRTUAL conversion needed since both are in CODE section
+	const code = SetFillTargets( LUA.finalize(parts, Exe.Phy2Vir(hookAddr, CODE), LUA.ReqJN),
+	{
+		start : hookAddr,
+		'1,1' : hookAddr + parts.byteCount(0), // _loop
+		    2 : endIns.Addr //no VIRTUAL conversion necessary start is also PHYSICAL address
+	});
 
 	$$(_ + '2.7 - Replace at the hook address')
 	Exe.SetHex(hookAddr, code);
@@ -136,7 +142,7 @@ CustomHomuns = function()
 	if (Exe.Version > 6)
 	{
 		$$(_ + '3.1 - Find the id checker function for VC9+')
-		parts =
+		let parts =
 		[
 			ADD(EAX, -0x1771) //add eax, -1771h
 		,
@@ -160,7 +166,7 @@ CustomHomuns = function()
 	else
 	{
 		$$(_ + '3.3 - Find the id checker function for VC6')
-		code =
+		const code =
 			CMP(EAX, 0x1770)  //cmp eax, 1770h
 		+	JLE(0x10)         //jle short _skip
 		+	CMP(EAX, 0x17A5)  //cmp eax, 17A5h ; need to change this one
@@ -177,7 +183,7 @@ CustomHomuns = function()
 	$$(_ + '3.5 - Find the additional checker before retrieval from table')
 	if (Exe.Version > 6)
 	{
-		code =
+		let code =
 			LEA(R32, [R32, -0x1771]) //lea regA, [regB - 1771h]
 		+	CMP(R32, 0x33)           //cmp regA, 33h ; need to change this one
 		;
@@ -185,7 +191,7 @@ CustomHomuns = function()
 		if (addr < 0)
 			throw Error("Table check missing");
 
-		let delta = MaxHomun - 6001;
+		const delta = MaxHomun - 6001;
 		if (delta <= 0x7F)
 		{
 			$$(_ + '3.6 - If the delta is 1 byte long, simply replace it')
@@ -194,7 +200,7 @@ CustomHomuns = function()
 		else
 		{
 			$$(_ + '3.7 - If it\'s more than a byte then we need to jump and do the change. First extract both the instructions')
-			let ins1 = Instr.FromAddr(addr);
+			const ins1 = Instr.FromAddr(addr);
 			let ins2 = ins1.getNext();
 
 			$$(_ + '3.8 - Adjust the delta value & the opcode (81 instead of 83 for dword)')
@@ -210,10 +216,14 @@ CustomHomuns = function()
 			;
 
 			$$(_ + '3.10 - Allocate space for it')
-			let [free, freeVir] = Exe.FindSpace(code.byteCount());
+			const [free, freeVir] = Exe.FindSpace(code.byteCount());
 
 			$$(_ + '3.10 - Fill in the blanks')
-			code = SetFillTarget(code, 1, Exe.Phy2Vir(ins2.NextAddr, CODE), freeVir, 1);
+			code = SetFillTargets( code, 1,
+			{
+				start : freeVir,
+				    1 : Exe.Phy2Vir(ins2.NextAddr, CODE)
+			});
 
 			$$(_ + '3.11 - Add at allocated space')
 			Exe.AddHex(free, code);

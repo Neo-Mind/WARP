@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 ///
 EnableDnsSupport = function()
 {
-	let _ = 'EnableDnsSupport : ';
+	const _ = 'EnableDnsSupport : ';
 
 	$$(_ + '1.1 - Ensure the WINMGR object has been loaded')
 	WINMGR.load();
@@ -49,7 +49,7 @@ EnableDnsSupport = function()
 		throw Error("g_accountAddr assignment not found");
 
 	$$(_ + '1.4 - Extract g_accountAddr')
-	let AccountAddr = Exe.GetHex(addr + 2, 4);
+	const AccountAddr = Exe.GetHex(addr + 2, 4);
 
 	$$(_ + '2.1 - Find the code to hook our function to')
 	let prefix =
@@ -82,22 +82,22 @@ EnableDnsSupport = function()
 		throw Error("Function not found");
 
 	$$(_ + '2.2 - Extract g_resMgr')
-	let gResMgr = Exe.GetTgtAddr(addr + 1);
+	const gResMgr = Exe.GetTgtAddr(addr + 1);
 
 	$$(_ + '3.1 - Find some essential addresses for our function')
 
 	// gethostbyname
-	let GetHostByName = Exe.FindFunc("gethostbyname", 52, "ws2_32.dll");//(#52 when imported by ordinal)
+	const GetHostByName = Exe.FindFunc("gethostbyname", 52, "ws2_32.dll");//(#52 when imported by ordinal)
 	if (GetHostByName < 0)
 		throw Error("gethostbyname function not found");
 
 	// wsprintfA
-	let WsprintfA = Exe.FindFunc("wsprintfA", "USER32.dll");
+	const WsprintfA = Exe.FindFunc("wsprintfA", "USER32.dll");
 	if (WsprintfA < 0)
 		throw Error("wsprintfA not found");
 
 	// IP address format
-	let IPformat = Exe.FindText("%d.%d.%d.%d");
+	const IPformat = Exe.FindText("%d.%d.%d.%d");
 	if (IPformat < 0)
 		throw Error("IP format not found");
 
@@ -131,17 +131,17 @@ EnableDnsSupport = function()
 
 	+	"127.000.000.001\x00".toHex()   //ipAddr ; Putting enough space for 4*3 digits  + 3 Dots + 1 NULL at the end
 	;
-	let fullSize = dnsCode.byteCount();
-	let csize = fullSize - (3*1 + 4*3 + 1); //(3 Dots, 4x3 digits, NULL)
+	const fullSize = dnsCode.byteCount();
+	const csize = fullSize - (3*1 + 4*3 + 1); //(3 Dots, 4x3 digits, NULL)
 
 	$$(_ + '3.3 - Allocate space to add our function')
-	let [free, freeVir] = Exe.FindSpace(fullSize, 0x10);
+	const [free, freeVir] = Exe.FindSpace(fullSize, 0x10);
 
 	$$(_ + '3.4 - Fill in the blanks')
-	dnsCode = SwapFillers(dnsCode,
+	dnsCode = SwapFillers( dnsCode,
 	{
-		1: gResMgr - (freeVir + 5),
-		2: freeVir + csize
+		1 : gResMgr - (freeVir + 5),
+		2 : freeVir + csize
 	});
 
 	$$(_ + '3.5 - Add the function at the allocated space')

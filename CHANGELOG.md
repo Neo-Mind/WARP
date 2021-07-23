@@ -1,3 +1,12 @@
+# 2021-07-23 Changes
+
+## Patch Updates
+- Updated patches using the placeholder functions to remove the deprecated functions.
+- Minor cleanup also being done (using `const` and swapping out `forEach` with `for of`)
+
+## Extension Updates
+- A little bit of cleanup (using `const` and swapping out `forEach` with `for of`)
+
 # 2021-07-22 Changes
 
 ## Patch Updates

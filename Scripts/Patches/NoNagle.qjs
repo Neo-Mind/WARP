@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,10 +31,10 @@
 ///
 NoNagle = function()
 {
-	let _ = 'NoNagle : ';
+	const _ = 'NoNagle : ';
 
 	$$(_ + '1.1 - Find \'ws2_32.dll\'')
-	let WS2_32 = Exe.FindText("ws2_32.dll");
+	const WS2_32 = Exe.FindText("ws2_32.dll");
 	if (WS2_32 < 0)
 		throw Error("'ws2_32.dll' not found");
 
@@ -46,14 +46,14 @@ NoNagle = function()
 		throw Error("GetProcAddress not found");
 
 	// socket function address
-	let WS2_socket = Exe.FindFunc("socket", 23, "ws2_32.dll");
+	const WS2_socket = Exe.FindFunc("socket", 23, "ws2_32.dll");
 	if (WS2_socket < 0)
 		throw Error("'socket' function not found");
 
-	let WS2_socHex = WS2_socket.toHex();
+	const WS2_socHex = WS2_socket.toHex();
 
 	$$(_ + '2.1 - Prepare the function to override with')
-	let parts =
+	const parts =
 	[
 		Filler(1)                 //Address to be used in CALL dword ptr and JMP dword ptr replacements
 	+	FP_START                  //push ebp <- Actual start of function
@@ -94,27 +94,27 @@ NoNagle = function()
 	+	RETN(0xC)                 //retn 0Ch
 	];
 
-	let retOff = parts.byteCount(0); //position of _return
+	const retOff = parts.byteCount(0); //position of _return
 
 	$$(_ + '2.2 - Allocate space for adding the function')
-	let [free, freeVir] = Exe.FindSpace(retOff + parts.byteCount(1), 0x10);
+	const [free, freeVir] = Exe.FindSpace(retOff + parts.byteCount(1), 0x10);
 
 	$$(_ + '2.3 - Fill in the blanks')
-	code = SetFillTarget(parts, [2,1], retOff, 0); //_return
-
-	code = SwapFiller(code, 1, freeVir + 4, 1); //Actual Function address
+	code = SetFillTargets( parts, {'2,1' : retOff} ); //_return
+	code = SwapFillers( code, 1, {1: freeVir + 4} ); //Actual Function address
 
 	$$(_ + '2.4 - Add the function in the allocated space')
 	Exe.AddHex(free, code);
 
 	$$(_ + '3.1 - Find all JMP dword ptr & CALL dword ptr to ws2_32.socket function')
-	let addrs = [
+	const addrs = [
 		...Exe.FindHexN( JMP([WS2_socHex])  ),
 		...Exe.FindHexN( CALL([WS2_socHex]) )
 	];
 
 	$$(_ + '3.2 - Change the called address with our function')
-	addrs.forEach( addr => Exe.SetInt32(addr + 2, freeVir) );
+	for (const addr of addrs)
+		Exe.SetInt32(addr + 2, freeVir);
 
 	return true;
 };

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Andrei                                   *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,22 +34,21 @@
 ///
 BossDropIdentified = function()
 {
-	let _ = 'BossDropIdentified : ';
+	const _ = 'BossDropIdentified : ';
 
 	$$(_ + '1.1 - Load the WINMGR object')
 	WINMGR.load();
 
 	$$(_ + '1.2 - Prepare the code to find the function (and the assignment to "identified")')
-	let zeroArg = Exe.Version > 10 ? 0 : EBX;
-	let zeroArg8 = Exe.Version > 10 ? 0 : BL;
+	const zeroArg = Exe.Version > 10 ? 0 : EBX;
+	const zeroArg8 = Exe.Version > 10 ? 0 : BL;
 
-	let stkLoc;
-	if (ROC.HasFP)
-		stkLoc = [EBP, Exe.BuildDate > 20131200 ? NEG1WC : WCn];
-	else
-		stkLoc = [ESP, POS1WC];
+	const stkLoc = ROC.HasFP
+		? [EBP, Exe.BuildDate > 20131200 ? NEG1WC : WCn]
+		: [ESP, POS1WC]
+		;
 
-	let parts =
+	const parts =
 	[
 		PUSH(zeroArg).repeat(4)         // push 0 OR ebx
 		                                // push 0 OR ebx
@@ -64,7 +63,7 @@ BossDropIdentified = function()
 		CALL()                          // call UIWindowMgr::SendMsg
 	];
 
-	let addr = Exe.FindHex(parts);
+	const addr = Exe.FindHex(parts);
 	if (addr < 0)
 		throw Error("'Identified' assignment missing");
 
@@ -95,11 +94,15 @@ BossDropIdentified = function()
 		;
 
 		$$(_ + '2.6 - Allocate space for it')
-		let [free, freeVir] = Exe.FindSpace(code.byteCount());
+		const [free, freeVir] = Exe.FindSpace(code.byteCount());
 
 		$$(_ + '2.7 - Fill in the blanks')
-		let sendMsg = Exe.GetTgtAddr(ins.NextAddr + 1);
-		code = SetFillTarget(code, 1, sendMsg, freeVir, 1);
+		const sendMsg = Exe.GetTgtAddr(ins.NextAddr + 1);
+		code = SetFillTargets(code, 1,
+		{
+			start : freeVir,
+			    1 : sendMsg
+		});
 
 		$$(_ + '2.8 - Add at allocated space')
 		Exe.AddHex(free, code);

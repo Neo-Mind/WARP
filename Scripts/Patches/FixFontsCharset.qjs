@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,7 @@
 ///
 FixFontsCharset = function()
 {
-	let _ = 'FixFontsCharset : ';
+	const _ = 'FixFontsCharset : ';
 
 	$$(_ + '1.1 - Find the g_fontCharSet assignment inside DrawDC::SetFont function')
 	let parts;
@@ -43,19 +43,17 @@ FixFontsCharset = function()
 			if (Exe.BuildDate < 20130000)
 			{
 				parts =
-				[
+				[//0
 					TEST(ESI, ESI)       //test esi, esi
 				+	POP(ESI)             //pop esi
 				+	JNZ(WCp)             //jnz short _skip
 				+	CMP(EAX, 0x14)       //cmp eax, 14h
 				+	JL(WCp)              //jl short _skip
 				+	MOV([ECX, WCp], EAX) //mov dword ptr [ecx + DrawDC.m_fontType], eax
-				+	MOV(EAX, ROC.HasFP   //mov eax, dword ptr [ARG.2]
-					? [EBP, 0xC]         //Where ARG.2 = ebp+0Ch OR esp+8
-					: [ESP, 0x8]
-					)
+				+	MOV(EAX, [ROC.StkReg, ROC.HasFP ? 0xC : 0x8]) //mov eax, dword ptr [ARG.2] ;  ARG.2 = ebp+0Ch with fp OR esp+8 without fp
 				+	MOV([ECX, WCp], EAX) //mov dword ptr [ecx + DrawDC.m_fontHeight], eax
-				,
+				
+				,//1
 					MOV(EDX, [POS4WC])   //mov dword ptr edx, [g_fontCharSet]
 				];
 				break;
@@ -63,7 +61,7 @@ FixFontsCharset = function()
 
 		case 10:
 			parts =
-			[
+			[//0
 				TEST(EDI, EDI)       //test edi, edi
 			+	POP(EDI)             //pop edi
 			+	POP(ESI)             //pop esi
@@ -71,35 +69,38 @@ FixFontsCharset = function()
 			+	CMP(EAX, 0x14)       //cmp eax, 14h
 			+	JL(POS1WC)           //jl _skip
 			+	MOV([ECX, WCp], EDX) //mov dword ptr [ecx + DrawDC.m_fontHeight], edx
-			+	MOV(DL, ROC.HasFP ? [EBP, 0x10] : [ESP, 0xC]) //mov dl, byte ptr [ARG.3]
+			+	MOV(DL, [ROC.StkReg, ROC.HasFP ? 0x10, 0xC]) //mov dl, byte ptr [ARG.3] ; where ARG.3 = ebp+0x10 with fp and esp+0xC without fp
 			+	MOV([ECX, WCp], EAX) //mov dword ptr [ecx + DrawDC.m_fontType], eax
-			,
+			
+			,//1
 				MOV(EAX, [POS4WC])   //mov dword ptr edx, [g_fontCharSet]
 			];
 			break;
 
 		case 11:
 			parts =
-			[
+			[//0
 				TEST(EDI, EDI)       //test edi, edi
 			+	JNZ(POS1WC)          //jnz _skip
 			+	CMP(EDX, 0x14)       //cmp edx, 14h
 			+	JL(POS1WC)           //jl _skip
 			+	MOV([ESI, WCp], EDX) //mov dword ptr [esi + DrawDC.m_fontType], edx
 			+	MOV([ESI, WCp], ECX) //mov dword ptr [esi + DrawDC.m_fontHeight], ecx
-			,
+			
+			,//1
 				MOV(EAX, [POS4WC])   //mov dword ptr eax, [g_fontCharSet]
 			];
 			break;
 
 		default: //VC14.16
 			parts =
-			[
+			[//0
 				MOV([ESI, WCp], EDX) //mov dword ptr [esi + DrawDC.m_fontType], edx
 			+	MOV([ESI, WCp], ECX) //mov dword ptr [esi + DrawDC.m_fontHeight], ecx
 			+	TEST(EDI, EDI)       //test edi, edi
 			+	JNZ(0xA)             //jnz short _skip
-			,
+			
+			,//1
 				MOV(EAX, [POS4WC])   //mov dword ptr eax, [g_fontCharSet]
 			+	CMP(EDX, 0x14)       //cmp edx, 14h
 			+	JGE(7)               //jge short _next
@@ -137,26 +138,31 @@ FixFontsCharset = function()
 	+	MOVZX(EAX, BYTE_PTR, [EDI, Filler(3)]) //movzx eax, byte ptr [edi + newCharsetTbl]
 	+	JMP(Filler(2))                         //jmp <retnAddr>
 	];
-	let csize = parts.byteCount();
+	const csize = parts.byteCount();
 
 	$$(_ + '2.3 - Construct our new charset table')
-	let csTbl = " 81 00 80 86 88 DE 00 00 00 00 00 00 00 00 CC A3 00 00 00 B2 00";
+	const csTbl = " 81 00 80 86 88 DE 00 00 00 00 00 00 00 00 CC A3 00 00 00 B2 00";
 
 	$$(_ + '2.4 - Allocate space for both')
-	let [free, freeVir] = Exe.FindSpace(csize + csTbl.byteCount());
+	const [free, freeVir] = Exe.FindSpace(csize + csTbl.byteCount());
 
 	$$(_ + '2.5 - Fill in the blanks')
-	let code = SetFillTarget(parts, [1,1], parts.byteCount(0), 0, 1);
+	const [,_next, newCharsetTbl] = MapAddrs(freeVir, parts);
 
-	code = SetFillTarget(code, 2, Exe.Phy2Vir(movIns.NextAddr, CODE), 2);
+	let code = SetFillTargets( parts,
+	{
+		start : freeVir,
+		'1,1' : _next,
+		    2 : Exe.Phy2Vir(movIns.NextAddr, CODE)
+	});
 
-	code = SwapFiller(code, 3, freeVir + csize, 1);
+	code = SwapFillers(code, 1, {3: newCharsetTbl});
 
 	$$(_ + '2.6 - Add at allocated space')
 	Exe.AddHex(free, code + csTbl);
 
 	$$(_ + '2.7 - Create a JMP to our code at the assignment location (NOPs appended at end for clean replacement)')
-	Exe.SetJMP(movIns.Addr, freeVir, movIns.size - 5);
+	Exe.SetJMP(movIns.Addr, freeVir, movIns.Size - 5);
 
 	return true;
 };
