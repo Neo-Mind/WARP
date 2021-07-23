@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-12                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,16 +32,16 @@
 ///
 NoMultiWindow = function()
 {
-	let _ = 'NoMultiWindow : ';
+	const _ = 'NoMultiWindow : ';
 
 	$$(_ + '1.1 - Find CoInitialize function address')
-	let CoInit = Exe.FindFunc("CoInitialize", "ole32.dll");
+	const CoInit = Exe.FindFunc("CoInitialize", "ole32.dll");
 	if (CoInit < 0)
 		throw Error("CoInitialize not found");
 
 	$$(_ + '1.2 - Find where it is CALLed from')
 	let prefix = PUSH_R;         //push regA
-	let suffix = CALL([CoInit]); //call dword ptr [<&ole32.CoInitialize>]
+	const suffix = CALL([CoInit]); //call dword ptr [<&ole32.CoInitialize>]
 
 	let addr = Exe.FindHex(prefix + suffix);
 
@@ -54,7 +54,7 @@ NoMultiWindow = function()
 		throw Error("CoInitialize not CALLed");
 
 	$$(_ + '1.3 - Point addr to location of the CALL')
-	let jmpAddr = addr + prefix.byteCount();
+	const jmpAddr = addr + prefix.byteCount();
 
 	$$(_ + '1.4 - Find CreateMutexA CALL after the CoInitialize CALL')
 	addr = Exe.FindFunc("CreateMutexA", "KERNEL32.dll");
@@ -85,7 +85,7 @@ NoMultiWindow = function()
 	if (ROC.GetProcAddr < 0)
 		throw Error("GetProcAddress not found");
 
-	let WaitSingle = Exe.FindFunc("WaitForSingleObject", "KERNEL32.dll");
+	const WaitSingle = Exe.FindFunc("WaitForSingleObject", "KERNEL32.dll");
 	if (WaitSingle < 0)
 		throw Error("WaitForSingleObject not found");
 
@@ -93,7 +93,7 @@ NoMultiWindow = function()
 		throw Error("'KERNEL32.dll' not found");
 
 	$$(_ + '2.2 - Prepare our function for mutex windows')
-	let parts =
+	const parts =
 	[
 		CALL([CoInit])                 //call dword ptr [&ole32.CoInitialize>] ; args are already pushed
 	+	PUSH(ESI)                      //push esi
@@ -132,21 +132,21 @@ NoMultiWindow = function()
 	+	JMP(Filler(3))                 //jmp <retnAddr> ; retnAddr = jmpAddr + 6
 	];
 
-	let offsets = MapAddrs(0, parts);
+	//let offsets = MapAddrs(0, parts);
 
 	$$(_ + '2.3 - Allocate space to add our function')
-	let [free, freeVir] = Exe.FindSpace(offsets.last(), 0x10);
+	const [free, freeVir] = Exe.FindSpace(parts.byteCount(), 0x10);
 
 	$$(_ + '2.4 - Fill in the blanks')
-	let code = SetFillTargets(parts, {
-		1: offsets[1], //_quit
-		2: offsets[2], //_return
-	},
-	0, 1, 1);
+	const [, _quit, _return] = MapAddrs(freeVir, parts);
+	const code = SetFillTargets( parts, 1,
+	{
+		start : freeVir,
+		'1,1' : _quit,
+		'2,1' : _return,
+		    3 : Exe.Phy2Vir(jmpAddr + 6, CODE)
+	});
 
-	code = SetFillTarget(code, 3, Exe.Phy2Vir(jmpAddr + 6, CODE), freeVir, 1);
-
-Debug(code);
 	$$(_ + '2.5 - Add function at the allocated space')
 	Exe.AddHex(free, code);
 

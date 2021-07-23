@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144), X-EcutiOnner, Ai4rei/AN        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@
 ///
 IgnoreRsrcErr = function()
 {
-	let _ = 'IgnoreRsrcErr : ';
+	const _ = 'IgnoreRsrcErr : ';
 
 	$$(_ + '1.1 - Find the common error string')
 	let addr = Exe.FindText("Failed to load Winsock library!");
@@ -67,7 +67,7 @@ IgnoreRsrcErr = function()
 		throw Error("'OutputDebugStringA' function missing");
 
 	code =
-		PUSH(ROC.HasFP ? [EBP, 8] : [ESP, 4]) //push dword ptr [ARG.1]
+		PUSH([ROC.StkReg, ROC.HasFP ? 8 : 4]) //push dword ptr [ARG.1] ; where ARG.1 = ebp+8 with fp and esp+4 without fp.
 	+	CALL([ROC.OutDbgStrA])                //call dword ptr [&KERNEL32.OutputDebugStringA]
 	+	XOR(EAX, EAX)                         //xor eax, eax
 	+  	(ROC.HasFP
@@ -89,14 +89,14 @@ IgnoreRsrcErr = function()
 ///
 IgnorePalErr = function()
 {
-	let _ = 'IgnorePalErr : ';
+	const _ = 'IgnorePalErr : ';
 
 	$$(_ + '1.1 - Ensure IgnoreRsrcErr is not already ON (it would already be covered in that case)')
 	if (!Warp.TestMode && Warp.GetPatchState("IgnoreRsrcErr"))
 		Cancel("'Ignore Resource Errors' is ON and covers Palette errors as well");
 
 	$$(_ + '1.2 - Find the error message')
-	let msgAddr = Exe.FindText("CPaletteRes :: Cannot find File : ");
+	const msgAddr = Exe.FindText("CPaletteRes :: Cannot find File : ");
 	if (msgAddr < 0)
 		throw Error("CPaletteRes string not found");
 
@@ -126,7 +126,7 @@ IgnorePalErr = function()
 		throw Error("CFile::Open CALL not found");
 
 	$$(_ + '2.2 - Save the location after the conditional jump')
-	let modAddr = addr + code.byteCount();
+	const modAddr = addr + code.byteCount();
 
 	$$(_ + '2.3 - Goto the location of the conditional jump')
 	addr = Exe.GetTgtAddr(modAddr - 4, PHYSICAL);
@@ -175,8 +175,8 @@ IgnorePalErr = function()
 	if (ROC.OutDbgStrA < 0)
 		throw Error("'OutputDebugStringA' function missing");
 
-	let parts =
-	[
+	const parts =
+	[//0
 		PUSH(EDX)              //push edx
 	+	SUB(ESP, 0x100)        //sub esp, 100h
 	+	MOV(ECX, ESP)          //mov ecx, esp
@@ -205,14 +205,13 @@ IgnorePalErr = function()
 	+	POP(EDX)               //pop edx
 	];
 
-	let offsets = MapAddrs(0, parts);
+	const [, _loop1, _loop2] = MapAddrs(0, parts);
 
-	code = SetFillTargets(parts,
+	code = SetFillTargets( parts, 1,
 	{
-		1: offsets[1],
-		2: offsets[2],
-	},
-	0, 1, 1);
+		'1,1' : _loop1,
+		'2,1' : _loop2,
+	});
 
 	$$(_ + '3.2 - Replace at the modAddr')
 	Exe.SetHex(modAddr, code);
@@ -228,19 +227,15 @@ IgnorePalErr = function()
 ///
 IgnoreLuaErr = function()
 {
-	let _ = 'IgnoreLuaErr : ';
+	const _ = 'IgnoreLuaErr : ';
 
 	$$(_ + '1.1 - Find "MessageBoxA" imported function')
-	let MBoxA = Exe.FindFunc("MessageBoxA");
+	const MBoxA = Exe.FindFunc("MessageBoxA");
 	if (MBoxA < 0)
 		throw Error("MessageBoxA function missing");
 
 	$$(_ + '1.2 - Find the LuaErrorMsg function code')
-	let cmn = ROC.HasFP ?
-		LEA(R32, [EBP, NEG2WC])  //lea regB, [EBP-dispA]
-	:
-		LEA(R32, [ESP, WCp])     //lea regB, [ESP+disp8A]
-	;
+	const cmn = LEA(R32, [ROC.StkReg, ROC.HasFP ? NEG2WC : WCp]; //lea regB, [LOCAL.x] ; where the displacement is -ve for EBP but +ve for ESP.
 
 	let parts =
 	[
@@ -285,18 +280,18 @@ IgnoreLuaErr = function()
 		throw Error("'OutputDebugStringA' function missing");
 
 	$$(_ + '2.2 - Calculate the addresses for each part')
-	let partAddrs = MapAddrs(addr, parts);
+	const offsets = MapAddrs(addr, parts);
 
 	$$(_ + '2.3 - NOP out any code in 2nd part')
 	if (!parts[1].isEmpty())
-		Exe.SetNOPs(partAddrs[1], partAddrs[2] - partAddrs[1]);
+		Exe.SetNOPs(offsets[1], offsets[2] - offsets[1]);
 
 	$$(_ + '2.4 - NOP out any code in 4th part')
 	if (!parts[3].isEmpty())
-		Exe.SetNOPs(partAddrs[3], partAddrs[4] - partAddrs[3]);
+		Exe.SetNOPs(offsets[3], offsets[4] - offsets[3]);
 
 	$$(_ + '2.5 - Change the MessageBoxA CALL to OutputDebugStringA CALL followed by xor eax, eax')
-	Exe.SetHex(partAddrs[4] + 1,
+	Exe.SetHex( offsets[4] + 1,
 		CALL([ROC.OutDbgStrA])  //call dword ptr [&KERNEL32.OutputDebugStringA]
 	+	XOR(EAX, EAX)           //xor eax, eax
 	);
@@ -314,15 +309,15 @@ IgnoreLuaErr.validate = IsPost2010;
 ///
 IgnoreQuestErr = function()
 {
-	let _ = 'IgnoreQuestErr : ';
+	const _ = 'IgnoreQuestErr : ';
 
 	$$(_ + '1.1 - Find "MessageBoxA" imported function')
-	let MBoxA = Exe.FindFunc("MessageBoxA");
+	const MBoxA = Exe.FindFunc("MessageBoxA");
 	if (MBoxA < 0)
 		throw Error("MessageBoxA function missing");
 
 	$$(_ + '1.2 - Find the MessageBoxA CALL inside QuestErrorMsg function')
-	let prefix =
+	const prefix =
 		PUSH(IQE_Addr)          //push offset "Not found Quest Info = %lu"
 	+	PUSH_EAX                //push eax
 	+	CALL(ALLWC)             //call std::string::sprintf
@@ -333,7 +328,7 @@ IgnoreQuestErr = function()
 	+	MOV(EAX, [EAX])         //mov eax, dword ptr [eax]
 	;
 
-	let suffix =
+	const suffix =
 		PUSH_0                  //push 0
 	+	PUSH(POS4WC)            //push offset "Error"
 	+	PUSH_EAX                //push eax
@@ -380,10 +375,10 @@ IgnoreQuestErr.validate = function()
 ///
 IgnoreEntryQueueErr = function()
 {
-	let _ = 'IgnoreEntryQueueErr : ';
+	const _ = 'IgnoreEntryQueueErr : ';
 
 	$$(_ + '1.1 - Find the location where the file is accessed')
-	let parts =
+	const parts =
 	[
 		PUSH(IEQE_Addr)  //push offset "Data\Table\EntryQueue.bex"
 	+	CALL([POS3WC])   //call dword ptr [&CreateFileA]
@@ -412,15 +407,15 @@ IgnoreEntryQueueErr = function()
 		throw Error("Pattern not found");
 
 	$$(_ + '1.2 - Calculate the positional addresses')
-	let addrs = MapAddrs(addr, parts);
+	const addrs = MapAddrs(addr, parts);
 
 	$$(_ + '1.3 - Prepare the error string')
-	let str = "EntryQueue Loading Failed\x00";
+	const str = "EntryQueue Loading Failed\x00";
 
 	$$(_ + '1.4 - Allocate space for it')
-	let [free, freeVir] = Exe.FindSpace(str.length);
+	const [free, strAddr] = Exe.FindSpace(str.length);
 
-	$$(_ + '1.5 - Add the string to it')
+	$$(_ + '1.5 - Add the string there')
 	Exe.AddText(free, str);
 
 	$$(_ + '2.1 - Check the OutputDebugStringA function address')
@@ -429,13 +424,13 @@ IgnoreEntryQueueErr = function()
 
 	$$(_ + '2.2 - Prepare the replacement code (CALLs OutputDebugStringA instead)')
 	let code =
-		PUSH(freeVir)           //push offset "EntryQueue Loading Failed"
+		PUSH(strAddr)           //push offset "EntryQueue Loading Failed"
 	+	CALL([ROC.OutDbgStrA])  //call dword ptr [&KERNEL32.OutputDebugStringA]
 	+	XOR(EAX, EAX)           //xor eax, eax
 	;
-	code += NOPs(addrs[4] - addrs[1] - code.byteCount());
+	code += NOPs( addrs.last() - (addrs[1] + code.byteCount()) );
 
-	$$(_ + '2.3 - Now Replace it')
+	$$(_ + '2.3 - Now replace it')
 	Exe.SetHex(addrs[1], code);
 
 	return true;

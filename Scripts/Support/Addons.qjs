@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-07-12                                             *
+*   Last Modified : 2021-07-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,7 +38,7 @@ Number.prototype.toBits = function(cnt = 32)
 	cnt = Math.min(cnt, 32);
 	if (this < 0)
 	{
-		let num = 0xFFFFFFFF + this + 1;
+		const num = 0xFFFFFFFF + this + 1;
 		return (num.toString(2)).slice(-cnt);
 	}
 	else
@@ -52,7 +52,7 @@ Number.prototype.toBits = function(cnt = 32)
 ///
 Number.prototype.toHex = function(cnt = 4, bigEndian = false)
 {
-	let _ = this + ".toHex : ";
+	const _ = this + ".toHex : ";
 
 	$$(_ + '1.1 - If only endian ness is specified then count is 4 so rearrange')
 	if (IsBool(cnt))
@@ -70,10 +70,10 @@ Number.prototype.toHex = function(cnt = 4, bigEndian = false)
 		num = 0xFFFFFFFF + num + 1;
 
 	$$(_ + '2.1 - Calculate the length using the cnt')
-	let len = cnt * 2;
+	const len = cnt * 2;
 
 	$$(_ + '2.2 - Use the toString method to generate the hex string (big endian)')
-	let hex = ("00000000" + num.toString(16).toUpperCase()).slice(-len);
+	const hex = ("00000000" + num.toString(16).toUpperCase()).slice(-len);
 
 	$$(_ + '2.3 - If big endian is needed, return the string')
 	if (bigEndian)
@@ -93,7 +93,7 @@ Number.prototype.toHex = function(cnt = 4, bigEndian = false)
 ///
 Number.prototype.toIEEE = function(bigEndian = false)
 {
-	let _ = this + ".toHex : ";
+	const _ = this + ".toHex : ";
 
 	$$(_ + '1.1 - Prefix the sign bit')
 	let bin = (this < 0 ? '1' : '0'); //sign bit
@@ -134,7 +134,7 @@ Number.prototype.toIEEE = function(bigEndian = false)
 ///
 String.prototype.toInt = function(cnt = 4, signed = true)
 {
-	let _ = "'" + this + "'.toInt : ";
+	const _ = "'" + this + "'.toInt : ";
 
 	$$(_ + '1.1 - If only signed is specified rearrang accordingly')
 	if (IsBool(cnt))
@@ -147,10 +147,10 @@ String.prototype.toInt = function(cnt = 4, signed = true)
 	cnt = Math.min(cnt, 4);
 
 	$$(_ + '1.3 - Calculate the max value possible (used for signed conversion)')
-	let max = Math.pow(0x100, cnt);
+	const max = Math.pow(0x100, cnt);
 
 	$$(_ + '2.1 - Convert to Big endian format')
-	let beHex = "0x" + this.le2be().slice(-cnt*2);
+	const beHex = "0x" + this.le2be().slice(-cnt*2);
 
 	$$(_ + '2.2 - Use parseInt to convert to integer')
 	let num = (-1 & parseInt(beHex, 16));
@@ -167,7 +167,7 @@ String.prototype.toInt = function(cnt = 4, signed = true)
 ///
 String.prototype.toHex = function()
 {
-	let _ = "'" + this + "'.toHex : ";
+	const _ = "'" + this + "'.toHex : ";
 
 	$$(_ + '1.1 - Initialize the result string')
 	let result = "";
@@ -194,10 +194,10 @@ String.prototype.toHex = function()
 ///
 String.prototype.toAscii = function()
 {
-	let _ = "'" + this + "'.toAscii : ";
+	const _ = "'" + this + "'.toAscii : ";
 
 	$$(_ + '1.1 - Split the hex string into the respective bytes (2chars each)')
-	let parts = this.trim().split(/ +/);
+	const parts = this.trim().split(/ +/);
 
 	$$(_ + '1.2 - Initialize the result')
 	let str = "";
@@ -205,7 +205,7 @@ String.prototype.toAscii = function()
 	for (let i = 0; i < parts.length; i++)
 	{
 		$$(_ + '1.3 - Convert each part to its equivalent number [' + i + ']')
-		let ccode = parseInt(parts[i], 16);
+		const ccode = parseInt(parts[i], 16);
 
 		$$(_ + '1.4 - Convert the number to equivalent ascii character and append')
 		str += String.fromCharCode(ccode);
@@ -220,7 +220,7 @@ String.prototype.toAscii = function()
 ///
 String.prototype.le2be = function()
 {
-	let _ = "'" + this + "'.le2be : ";
+	const _ = "'" + this + "'.le2be : ";
 
 	$$(_ + '1.1 - Split based on space and reverse it and join back')
 	let be = this.split(/ +/).reverse().join('');
@@ -274,7 +274,7 @@ String.prototype.isEmpty = function()
 ///
 String.prototype.isHex = function()
 {
-	return this.search(/[^ a-f0-9\?\.\[\]]/i) < 0;
+	return this.search(/[^ a-f0-9_\?\.\[\]]/i) < 0;
 };
 
   //==============//
@@ -294,7 +294,7 @@ String.prototype.remove = function(str)
 ///
 String.prototype.replaceAt = function(index, newstr, len = -1)
 {
-	let _ = "'" + this + "'.replaceAt : ";
+	const _ = "'" + this + "'.replaceAt : ";
 
 	$$(_ + '1.1 - Use the new string\'s length as default replacement length')
 	if (len <= 0)
@@ -322,10 +322,10 @@ String.prototype.insertAt = function(index, str)
 ///
 String.prototype.appendAsHex = function(data, bc, bigEndian)
 {
-	let _ = "'" + this + "'.appendAsHex : ";
+	const _ = "'" + this + "'.appendAsHex : ";
 
 	$$(_ + '1 - Get the type of the data provided')
-	let type = typeof data;
+	const type = typeof data;
 
 	$$(_ + '2.1 - If it is a number append the data converted to hex and return it')
 	if (type === 'number')
@@ -348,29 +348,29 @@ String.prototype.appendAsHex = function(data, bc, bigEndian)
 ///
 String.prototype.byteCount = function()
 {
-	let _ = "'" + this + "'.byteCount : ";
+	const _ = "'" + this + "'.byteCount : ";
 
 	$$(_ + '1 - Ensure string is a hex string (also supports bitwise parts i.e. [.]')
 	if (!this.isHex())
 		return -1;
 
 	$$(_ + '2.1 - Split the string into parts based on bit wrapper \'[\'')
-	let parts = this.replace(/\?\.(\w\w)\w*/g, '$1').replace(/ +/g, '').split('[');
+	const parts = this.replace(/_\.?(\w\w)\w*/g, '$1').replace(/ +/g, '').split('[');
 
 	$$(_ + '2.2 - Initialize the nibble length')
 	let nibLen = 0;
 
-	parts.forEach((part) =>
+	for (const part of parts)
 	{
 		$$(_ + '2.3 - Split based on bit wrapper end \']\' (' + part + ')')
-		let subParts = part.split(']');
+		const subParts = part.split(']');
 
 		$$(_ + '2.4 - If it was there then left of it is binary and right is hex . Otherwise its all hex')
 		if (subParts.length > 1)
 			nibLen += subParts[0].length/4 + subParts[1].length;
 		else
 			nibLen += subParts[0].length;
-	});
+	}
 
 	$$(_ + '3 - Return the half of the length')
 	return Math.round(nibLen/2);

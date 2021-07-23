@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 ///
 EnableProxy = function()
 {
-	let _ = 'EnableProxy : ';
+	const _ = 'EnableProxy : ';
 
 	$$(_ + '1.1 - Find \'Failed to setup select mode\'')
 	let addr = Exe.FindText("Failed to setup select mode");
@@ -64,18 +64,30 @@ EnableProxy = function()
 		);
 		if (addr < 0)
 			throw Error("New pattern not found");
-
-		addr += 0x280;
+		
+		$$(_ + '1.4 - Find the reference to 2733 after it')
+		addr = Exe.FindLastHex(CMP(EAX, 0x2733), addr + 0x280, addr + 0x100);
+		if (addr < 0)
+			throw Error("2733 comparison missing");
+		
+		addr += 5;
 	}
 	else
 		throw Error("Setup string not found");
 
 	let code, indirectCALL, callAddr;
-	if (Exe.Version === 6) //VC6
+	if (Exe.BuildDate < 20101000) //VC6 + Initial VC9 clients
 	{
 		$$(_ + '2.1 - Find connect call (Direct) within 90h bytes before the PUSH')
 		code =
 			CALL(ALLWC)          //call <&WS2_32.connect>
+		+	(Exe.Version > 6
+		?
+			POP_R                //pop regA
+		+	POP_R                //pop regB
+		:
+			''
+		)
 		+   CMP(EAX, -1)         //cmp eax, -1
 		+   JNZ(WCp)             //jnz short _proceed
 		+   CALL(ALLWC)          //call <&WS2_32.WSAGetLastError>
@@ -105,6 +117,7 @@ EnableProxy = function()
 		callAddr = Exe.FindHex(code, addr - 0x60, addr);
 	}
 
+	ShowAddr(addr);
 	if (callAddr < 0)
 		throw Error("'connect' CALL not found");
 
@@ -112,7 +125,7 @@ EnableProxy = function()
 	if (indirectCALL)
 	{
 		$$(_ + '2.3 - Extract the register used & move callAddr to the next instruction which is the actual CALL')
-		let ins = Instr.FromAddr(callAddr);
+		const ins = Instr.FromAddr(callAddr);
 		refReg = R32.List[ins.MRM.RegM];
 		callAddr = ins.NextAddr;
 
@@ -127,12 +140,10 @@ EnableProxy = function()
 	}
 
 	$$(_ + '2.5 - Extract address of ws2_32.connect')
-	let connAddr = indirectCALL
-	?
-		Exe.GetInt32(callAddr + 1)
-	:
-		Exe.GetTgtAddr(callAddr + 1)
-	;
+	const connAddr = indirectCALL
+		? Exe.GetInt32(callAddr + 1)
+		: Exe.GetTgtAddr(callAddr + 1)
+		;
 
 	$$(_ + '3.1 - Create the custom function (IP saver code)')
 	code =
@@ -150,14 +161,20 @@ EnableProxy = function()
 	);
 
 	$$(_ + '3.2 - Allocate space for the function')
-	let [free, freeVir] = Exe.FindSpace(4 + code.byteCount(), 0x10); //First 4 bytes are g_saveIP
+	const [free, freeVir] = Exe.FindSpace(4 + code.byteCount(), 0x10); //First 4 bytes are g_saveIP
 
 	$$(_ + '3.3 - Set g_saveIP for index 1')
-	code = SwapFiller(code, 1, freeVir, 2); //Occurs twice
+	code = SwapFillers( code, 2, {1: freeVir} ); //Occurs twice
 
-	$$(_ + '3.4 - Set connect address for Direct call')
 	if (!indirectCALL)
-		code = SetFillTarget(code, 2, connAddr, freeVir, 1);
+	{
+		$$(_ + '3.4 - Set connect address for Direct call')
+		code = SetFillTargets( code, 1,
+		{
+			start : freeVir,
+			    2 : connAddr
+		});
+	}
 
 	$$(_ + '3.5 - Add the function at the allocated space')
 	Exe.AddHex(free, ALL00 + code);

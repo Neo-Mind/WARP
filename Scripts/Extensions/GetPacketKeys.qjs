@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,14 +31,14 @@
 ///
 GetPacketKeys = function()
 {
-	let _ = "GetPacketKeys : "
+	const _ = "GetPacketKeys : "
 	
 	$$(_ + '1.1 - Need a valid Exe loaded')
 	if (Exe.FileSize == 0)
 		throw NO_EXE;
 
 	$$(_ + '1.2 - Open the output file for writing')
-	let fileName = Exe.GetUserInput("$$keyOutput", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "PacketKeys_" + ROC.BaseName + ".txt");
+	const fileName = Exe.GetUserInput("$$keyOutput", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "PacketKeys_" + ROC.BaseName + ".txt");
 	if (fileName === false)
 		return true;
 	
@@ -68,7 +68,7 @@ GetPacketKeys = function()
 			keys = [];
 			for (let i = 0; i < 3; i++)
 			{
-				let ins = Instr.FromAddr(addr);
+				const ins = Instr.FromAddr(addr);
 				keys[ins.Disp/4 - 1] = ins.Immd; //order can be any so this mechanism is needed
 				addr = ins.NextAddr;
 			}
@@ -76,16 +76,12 @@ GetPacketKeys = function()
 	}
 
 	$$(_ + '2.6 - Otherwise retrieve the packet keys found')
-	if (keys === undefined)
+	if (keys == undefined)
 		keys = PACKET.Keys;
 
 	$$(_ + '2.7 - Convert to hex')
-	let hexKeys = [];
-	keys.forEach( (val, idx) =>
-	{
-		hexKeys[idx] = "0x" + val.toHex(true)
-	});
-
+	const hexKeys = keys.map( (val, idx) => "0x" + val.toHex(true) );
+	
 	$$(_ + '3.1 - Write the essentials & the keys in hex to the file')
 	fp.WriteLine("Extracted with WARP")
 	fp.WriteLine("===================")

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,10 +33,10 @@
 ///
 function SkipCheatCheck(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1 - Find the comparisons after CSession::IsCheatName CALL')
-	let template =
+	const template =
 		TEST(EAX, EAX)   //test eax, eax
 	+	JZ(WCp)          //jz short _skip
 	+	PUSH_0           //push 0
@@ -45,16 +45,16 @@ function SkipCheatCheck(patchName)
 	+	PUSH(Filler(1))  //push <msgNum>
 	;
 
-	let code =
-		SwapFiller(template, 1, 0x395, 1)  //msgNum = 0x395 , for Friend List
-	+	JMP(WCp)                           //jmp short _to_MsgStr
-	+	PUSH_R                             //push regB
-	+	MOV(ECX, POS4WC)                   //mov ecx, <g_session>
-	+	CALL(POS3WC)                       //call CSession::IsGuildCheatName
-	+	SwapFiller(template, 1, 0x397, 1)  //msgNum = 0x397, for Guild List
+	const code =
+		SwapFillers( template, {1: 0x395} )  //msgNum = 0x395 , for Friend List
+	+	JMP(WCp)                             //jmp short _to_MsgStr
+	+	PUSH_R                               //push regB
+	+	MOV(ECX, POS4WC)                     //mov ecx, <g_session>
+	+	CALL(POS3WC)                         //call CSession::IsGuildCheatName
+	+	SwapFillers( template, {1: 0x397} )  //msgNum = 0x397, for Guild List
 	;
 
-	let addr = Exe.FindHex(code);
+	const addr = Exe.FindHex(code);
 
 	/* - Not needed apparently ... but keeping it for now in case i am missing something
 	if (addr < 0)

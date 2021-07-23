@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-12-11                                             *
-*   Last Modified : 2021-07-12                                             *
+*   Last Modified : 2021-07-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -42,7 +42,7 @@ if (typeof Log == 'undefined')
 			if ('Handle' in this)
 				return true;
 
-			file = file ?? "Comment_Log_" + System.LocalTime.toISOString().replace(/:/g, '_') + ".txt";
+			file = file ?? "Comment_Log_" + System.LocalTime.toISOString().replace(/:/g, '_') + ".log";
 
 			let fp = new TextFile(OUTDIR + file, "w");
 			if (fp.Valid)
@@ -74,7 +74,9 @@ if (typeof Log == 'undefined')
 			if ('Handle' in this)
 			{
 				Warp.Show(this.Handle.Path);
+				return true;
 			}
+			return false;
 		},
 
 		cc : function(state = true)
@@ -88,7 +90,7 @@ if (typeof Log == 'undefined')
 ///
 /// \brief Function for logging comments in patch & extension functions (including supporting functions) and console if requested
 ///
-$$ = function(txt)
+$$ = txt =>
 {
 	if (txt != undefined)
 	{
@@ -97,13 +99,17 @@ $$ = function(txt)
 
 		if (Log.Tee)
 			console.info(txt);
+
+		return true;
 	}
+
+	return false;
 };
 
 ///
 /// \brief Same as above but always reports to console as well
 ///
-$$$ = function(txt)
+$$$ = txt =>
 {
 	if (txt != undefined)
 	{
@@ -111,27 +117,35 @@ $$$ = function(txt)
 			Log.Handle.WriteLine(txt);
 
 		console.info(txt);
+
+		return true;
 	}
+
+	return false;
 };
 
 ///
 /// \brief Function for adding Headers or Just Underlines to Logs and console if requested.
 ///
-$_ = function(...args)
+$_ = (...args) =>
 {
-	let tee = args.take_if('boolean', Log.Tee);
+	const tee = args.take_if('boolean', Log.Tee);
 	let msg = args.shift();
-	let bold = args.take_if('boolean', false);
-	let chr = args.take_if('string', '+');
+	const bold = args.take_if('boolean', false);
+	const chr = args.take_if('string', '+');
 
-	let len = 0;
+	let len;
 	switch (typeof msg)
 	{
+		case 'undefined':
+			return false;
+
 		case 'number':
 			len = msg;
 			break;
 
-		case 'string':
+		default:
+			msg = msg.toString();
 			len = msg.length;
 
 			if ('Handle' in Log)
@@ -149,7 +163,7 @@ $_ = function(...args)
 
 	if (len > 0)
 	{
-		let line = chr.repeat(len);
+		const line = chr.repeat(len);
 		if ('Handle' in Log)
 			Log.Handle.WriteLine(line);
 
@@ -161,51 +175,70 @@ $_ = function(...args)
 				console.info(line);
 		}
 	}
-};
 
-//deprecated. will be removed later.
-$__ = () => {};
+	return true;
+};
 
 ///
 /// \brief Same as $_ but add the line on top and bottom
 ///
-_$_ = function(tee, msg, ...args)
+_$_ = (...args) =>
 {
-	if (typeof tee !== 'boolean')
+	const tee = args.take_if('boolean', Log.Tee);
+	let msg = args.shift();
+
+	if (IsNum(msg))
 	{
-		args.unshift(msg);
-		args.unshift(tee.length);
+		$_(tee, msg, ...args);
 	}
 	else
 	{
-		args.unshift(msg.length);
-		args.unshift(tee);
-	}
+		msg = msg.toString();
 
-	$_(...args);
-	$_(...arguments);
+		if (msg.length)
+		{
+			$_(tee, msg.length, ...args);
+			$_(tee, msg, ...args);
+		}
+	}
 };
 
 ///
 /// \brief Dump all the hex codes of a function in Output view and/or Log file
 ///
-DumpFunc = function(funcName, from)
+DumpFunc = (...args) =>
 {
-	$$(funcName + " = {");
+	const funcName = args.take_if('string', "UnknFunc");
+	let from = args.shift();
+	const atype = args.take_if('object', PHYSICAL);
+
+	if (!IsNum(from))
+		return;
+
+	if (atype === VIRTUAL)
+		from = Exe.Vir2Phy(from);
 
 	let to = Exe.GetSectEnd(CODE);
-	while (from < to)
+	if (from >= to)
+		to = Exe.GetSectEnd(DIFF);
+
+	$$$(funcName + " = {");
+
+	if (from >= to)
+		return;
+
+	let ins = Instr.FromAddr(from);
+	while (ins.Addr < to)
 	{
-		let ins = Instr.FromAddr(from);
-		if (ins.Codes[0] === 0xC3 || ins.Codes[0] === 0xC2)
+		$$$(TAB + ins);
+
+		if (ins.Codes[0] === 0xC3 || ins.Codes[0] === 0xC2) //retn
 			break;
 
-		$$(TAB + ins);
-
-		from = ins.NextAddr;
+		ins.moveToNext();
 	}
 
-	$$('}');
+	$$$('}');
 };
 
 // For all the following, the output will be send using 'console'
@@ -219,12 +252,13 @@ Info = console.info;
 ///
 /// \brief Write an empty line
 ///
-NewLine = () => console.info('') || true;
+NewLine = _ =>
+	console.info('') || true;
 
 ///
 /// \brief Dump the key and value pairs of an object.
 ///
-Dump = function(name, obj)
+Dump = (name, obj) =>
 {
 	if (obj == undefined) //can be 0 or false so cant use !obj
 	{
@@ -254,7 +288,7 @@ Dump = function(name, obj)
 
 	for (key in obj)
 	{
-		let val = obj[key]
+		const val = obj[key]
 		if (IsArr(val))
 		{
 			ShowArr(val, TAB, key, true);
@@ -276,15 +310,16 @@ Dump = function(name, obj)
 ///
 ShowArr = (...args) =>
 {
-	let arr = args.last();
+	const arr = args.last();
 	if (!IsArr(arr))
 		return false;
 
-	let useInfo = args.take_if('boolean', false);
-	let indent = args.take_if('number', 0);
-	let name = args.take_if('string', 'Array');
+	const useInfo = args.take_if('boolean', false);
+	const indent = args.take_if('number', 0);
+	const name = args.take_if('string', 'Array');
 
-	let prefix = TAB.repeat(indent);
+	const prefix = TAB.repeat(indent);
+
 	if (useInfo)
 		console.info(prefix, name, "= [");
 	else
@@ -315,16 +350,15 @@ ShowArr = (...args) =>
 ///
 ShowVar = (...args) =>
 {
-	let obj = args.last();
-
+	const obj = args.last();
 	if (typeof obj !== 'object')
 		return false;
 
-	let [varName] = Object.keys(obj);
+	const [varName] = Object.keys(obj);
 	if (!varName)
 		return false;
 
-	let prefix = args.take_if('string', '');
+	const prefix = args.take_if('string', '');
 
 	let value = obj[varName];
 	if (IsArr(value))
@@ -355,7 +389,8 @@ ShowVar = (...args) =>
 ShowAddr = (...args) =>
 {
 	let prompt, addr;
-	let obj = args.take_if('object', null);
+
+	const obj = args.take_if('object', null);
 	if (obj === null)
 	{
 		prompt = args.take_if('string', 'Addr');
@@ -367,7 +402,7 @@ ShowAddr = (...args) =>
 		addr = obj[prompt];
 	}
 
-	let type = args.take_if('object', PHYSICAL);
+	const type = args.take_if('object', PHYSICAL);
 
 	let phy, vir;
 	if (type === PHYSICAL)
@@ -410,7 +445,7 @@ ShowAddrs = (...args) =>
 	if (!IsArr(addrs))
 		return false;
 
-	let isPhy = (args.take_if('object', PHYSICAL) === PHYSICAL);
+	const isPhy = (args.take_if('object', PHYSICAL) === PHYSICAL);
 
 	console.info(prompt, "= [");
 	addrs.forEach( (addr, i) =>
@@ -447,14 +482,17 @@ ShowAddrs = (...args) =>
 ///
 /// \brief Reset the internal counter.
 ///
-ResetC = () => (console.cnt = 0) || true;
+ResetC = _ =>
+	(console.cnt = 0) || true;
 
 ///
 /// \brief Increment the counter.
 ///
-IncrC = () => (console.cnt = (console.cnt || 0) + 1) || true;
+IncrC = _ =>
+	(console.cnt = (console.cnt || 0) + 1) || true;
 
 ///
 /// \brief Display the current count along with version & build date.
 ///
-ShowC = () => console.log('cnt' in console ? console.cnt : 'Counter not set', Exe.Version, Exe.BuildDate) || true;
+ShowC = _ =>
+	console.log('cnt' in console ? console.cnt : 'Counter not set', Exe.Version, Exe.BuildDate) || true;

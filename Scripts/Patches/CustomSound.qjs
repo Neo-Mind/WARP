@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-07-12                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,18 +31,18 @@
 ///
 Enable44kHzAudio = function()
 {
-	let _ = 'Enable44kHzAudio : ';
+	const _ = 'Enable44kHzAudio : ';
 
 	$$(_ + '1 - Find the code assigning the sampling frequency')
-	let memLoc = Exe.BuildDate < 20131200 ? [POS3WC] : [ESI, POS2WC]; //[CDigitalRate] or [ESI + CSoundMgr.digitalrate]
-	let code =
+	const memLoc = Exe.BuildDate < 20131200 ? [POS3WC] : [ESI, POS2WC]; //[CDigitalRate] or [ESI + CSoundMgr.digitalrate]
+	const code =
 		MOV(memLoc, 8000)  //mov dword ptr [memLoc], 1F40h
 	+	JMP(0x16)          //jmp short _next
 	+	MOV(memLoc, 11025) //mov dword ptr [memLoc], 2B11h
 	+	JMP(0x0A)          //jmp short _next
 	+	MOV(memLoc, 22050) //mov dword ptr [memLoc], 5622h
 	;
-	let addr = Exe.FindHex(code);
+	const addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Frequency assignment missing");
 
@@ -67,7 +67,7 @@ Enable44kHzAudio = function()
 ///
 AutoMute = function()
 {
-	let _ = 'AutoMute : ';
+	const _ = 'AutoMute : ';
 
 	$$(_ + '1.1 - Find the reference code to retrieve Audio specific functions & global values.')
 	let parts =
@@ -115,12 +115,12 @@ AutoMute = function()
 	    throw Error("Reference pattern missing");
 
 	$$(_ + '1.2 - Extract all required values')
-	let addrs = MapAddrs(addr, parts);
+	const addrs = MapAddrs(addr, parts);
 
-	let SetStreamVol = Exe.GetTgtAddr(addrs[2] + 1);
-	let Set2DEffectVol = Exe.GetTgtAddr(addrs[3] + 1);
-	let Set3DEffectVol = Exe.GetTgtAddr(addrs[5] + 1);
-	let MovMgr = Instr.FromAddr(addrs[3]);
+	const SetStreamVol = Exe.GetTgtAddr(addrs[2] + 1);
+	const Set2DEffectVol = Exe.GetTgtAddr(addrs[3] + 1);
+	const Set3DEffectVol = Exe.GetTgtAddr(addrs[5] + 1);
+	const MovMgr = Instr.FromAddr(addrs[3]);
 
 	$$(_ + '2.1 - Find the CGameMode::OnUpdate function')
     parts = [
@@ -192,16 +192,16 @@ AutoMute = function()
 	*/
 
 	$$(_ + '2.3 - Save the location of the MOV ECX')
-	let hookAddr = addr + 5;
+	const hookAddr = addr + 5;
 
 	$$(_ + '3.1 - Find the GetActiveWindow function')
-	let GetActiveWindow = Exe.FindFunc("GetActiveWindow", "User32.dll");
+	const GetActiveWindow = Exe.FindFunc("GetActiveWindow", "User32.dll");
 	if (GetActiveWindow < 0)
 		throw Error("GetActiveWindow not found");
 
 	$$(_ + '3.2 - Prepare our function code')
+	const MovNRetn = Instr.FromAddr(hookAddr) + RETN();
 
-	let MovNRetn = Instr.FromAddr(hookAddr) + RETN();
 	parts =
 	[
 		CALL(EDI)                //call edi (timeGetTime)
@@ -262,10 +262,9 @@ AutoMute = function()
 		                         //retn
 	];
 
-	let offsets = MapAddrs(0, parts);
 
 	$$(_ + '3.2 - Prepare the initial values for the extra addresses we are using in the code')
-	let buffer =
+	const buffer =
 		" 00 00 00 00" //lastCheck
     +	" 00 00 00 00" //isMuted
     +	" 64 00 00 00" //bgmVol
@@ -273,34 +272,33 @@ AutoMute = function()
     ;
 
 	$$(_ + '3.3 - Allocate space to add them both')
-	let size = buffer.byteCount() + offsets.last() + 4;
-	let [free, freeVir] = Exe.FindSpace(size, 0x10);
+	const size = buffer.byteCount() + parts.byteCount() + 4;
+	const [free, freeVir] = Exe.FindSpace(size, 0x10);
 
 	$$(_ + '3.4 - Fill in the blanks')
 
-	//The local jumps
-	code = SetFillTargets(parts,
-	{
-		8: offsets[2], //_skipToCall
-		9: offsets[4], //_cmpMute
-	},
-	0, 1, 1);
+	//The jumps & CALLs
+	const firstAddr = freeVir + buffer.byteCount();
+	const [,,_skipToCall,,_cmpMute] = MapAddrs(firstAddr, parts);
 
-	//All the extra addresses
-	code = SwapFillers(code, {
-		 1: freeVir,
-		 2: freeVir + 4,
-		 3: freeVir + 8,
-		 4: freeVir + 0xC,
+	code = SetFillTargets( parts,
+	{
+		start : firstAddr,
+		    5 : Set2DEffectVol,
+		    6 : Set3DEffectVol,
+		    7 : SetStreamVol,
+		'8,1' : _skipToCall, //index = 2 in parts
+		'9,1' : _cmpMute,    //index = 4 in parts
 	});
 
-	//Now all the CALLs
-	code = SetFillTargets(code, {
-		 5: Set2DEffectVol,
-		 6: Set3DEffectVol,
-		 7: SetStreamVol,
-	},
-	freeVir + buffer.byteCount(), 2);
+	//All the extra addresses
+	code = SwapFillers( code,
+	{
+		1 : freeVir,
+		2 : freeVir + 4,
+		3 : freeVir + 8,
+		4 : freeVir + 0xC,
+	});
 
 	$$(_ + '3.5 - Add the code at allocated space')
 	Exe.AddHex(free, buffer + code);

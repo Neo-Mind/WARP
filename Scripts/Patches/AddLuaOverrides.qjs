@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : llchrisll                                              *
 *   Created Date  : 2021-07-15                                             *
-*   Last Modified : 2021-07-15                                             *
+*   Last Modified : 2021-07-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,10 +31,10 @@
 ///
 AddLuaOverrides = function()
 {
-	let _ = 'AddLuaOverrides : ';
-	
+	const _ = 'AddLuaOverrides : ';
+
 	$$(_ + '1 - Setup the file replacements. This is simpler since we dont have multiple files in the original\'s place')
-	let pairs1 = 
+	const pairs1 =
 	[
 		["Lua Files\\DataInfo\\accName_F", "lua files\\cls\\accname_f"],
 		["Lua Files\\DataInfo\\jobName_F", "lua files\\cls\\jobname_f"],
@@ -45,29 +45,29 @@ AddLuaOverrides = function()
 		["Lua Files\\transparentItem\\transparentItem_f", "lua files\\cls\\transparentitem_f"],
 		["Lua Files\\DataInfo\\WeaponTable_F", "lua files\\cls\\weapontable_f"],
 	];
-	
-	let failedPairs1 = pairs1.filter( (pair, idx) =>
+
+	const failedPairs1 = pairs1.filter( (pair, idx) =>
 	{
-		let __ = `${_} [${idx}] `;
-		
-		let [oldPre, newPre] = pair;
-		
+		const __ = `${_} [${idx}] `;
+
+		const [oldPre, newPre] = pair;
+
 		$$(__ + '1.1 - Find the original file prefix')
-		let addr = Exe.FindText(oldPre, CASE_INSENSITIVE, PHYSICAL);
+		const addr = Exe.FindText(oldPre, CASE_INSENSITIVE, PHYSICAL);
 		if (addr < 0)
 			return true;
-		
+
 		$$(__ + '1.2 - Replace with the new prefix')
 		Exe.SetText(addr, newPre);
-		
+
 		return false;
 	});
-	
+
 	$$(_ + '2 - Ensure LUA object is loaded')
 	LUA.load();
-	
+
 	$$(_ + '3 - Setup the additional file loading')
-	let pairs2 = 
+	const pairs2 =
 	[
 		//Existing file                                   The file to be loaded before it
 		["Lua Files\\DataInfo\\accName",                  "lua files\\cls\\accname"],
@@ -88,10 +88,10 @@ AddLuaOverrides = function()
 		["Lua Files\\transparentItem\\transparentItem",   "lua files\\cls\\transparentitem"],
 		["Lua Files\\DataInfo\\WeaponTable",              "lua files\\cls\\weapontable"]
 	];
-	
-	let failedPairs2 = pairs2.filter( pair =>
+
+	const failedPairs2 = pairs2.filter( pair =>
 	{
-		let [oldPre, newPre] = pair;
+		const [oldPre, newPre] = pair;
 		try {
 			return (LUA.addLoaders([newPre], oldPre) < 0);
 		}
@@ -99,23 +99,26 @@ AddLuaOverrides = function()
 			return true;
 		}
 	});
-	
+
 	if (pairs1.length === failedPairs1.length && pairs2.length === failedPairs2.length)
 		throw Error("Failed to find any files");
-	
+
 	if (!failedPairs1.isEmpty() || !failedPairs2.isEmpty())
 	{
-		let failedPres = [
+		const failedPres = [
 			...failedPairs1,
 			...failedPairs2
 		].map(pair => pair[0]);
-		
-		Warp.WarnUser(
-			"Add Chris' lua overrides",
-			"<b>The following file prefixes were not found :</b><br><br>" + failedPres.join('<br>')
-		);
+
+		if (Warp.TestMode)
+			return "<b>The following file prefixes were not found :</b> " + failedPres;
+		else
+			Warp.WarnUser(
+				"Add Chris' lua overrides",
+				"<b>The following file prefixes were not found :</b><br><br>" + failedPres.join('<br>')
+			);
 	}
-	
+
 	return true;
 };
 

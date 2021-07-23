@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -45,7 +45,7 @@ IsNumOrStr = v =>
 /// \brief Tests whether given variable contains a word either as number or hex string
 ///        (for hex string it will be 2 bytes inside)
 ///
-IsWord = function(v, signed = true)
+IsWord = (v, signed = true) =>
 {
 	switch (typeof v)
 	{
@@ -66,7 +66,7 @@ IsWord = function(v, signed = true)
 /// \brief Tests whether given variable contains a byte either as number of hex string
 ///        (for hex string it will be 1 byte inside)
 ///
-IsByte = function(v, signed = true)
+IsByte = (v, signed = true) =>
 {
 	switch (typeof v)
 	{
@@ -91,21 +91,20 @@ IsByte = function(v, signed = true)
 /// \brief Creates a filler hex string with the given index and byte count
 ///
 Filler = (idx, bc = 4) =>
-	bc > 1
-		? (' ??'.repeat(Math.abs(bc)) + (idx < 16 ? ' ?' : ' ') + idx.toString(16)).slice(-3 * Math.trunc(Math.abs(bc)))
-		: (' ?.' + (idx < 16 ? '0' : '') + idx.toString(16))
-		;
+	' __'.repeat(bc - 1) + (' _' + (bc === 1 ? '.' : '') + (idx < 16 ? '0' : '') + idx.toString(16))
+;
 
 ///
 /// \brief Background function for performing multiple swaps
 ///
-_swap_ = function(str, find, repl, cnt, bc)
+_swap_ = (str, find, repl, cnt, bc) =>
 {
 	if (repl == undefined)
 		return str;
 
 	let data, dataSet;
-	let needNext = Array.isArray(repl);
+
+	const needNext = Array.isArray(repl);
 	if (needNext)
 	{
 		dataSet = [...repl]; //create a deep copy
@@ -147,12 +146,13 @@ _swap_ = function(str, find, repl, cnt, bc)
 	return str;
 };
 
+/* - Deprecated . to be removed later.
 ///
 /// \brief Swaps out the filler hex string with the actual data. Input can be single hex string or split up into parts
 ///
 SwapFiller = function(str, idx, dataSet, cnt = -1)
 {
-	let _ = 'SwapFiller : ';
+	const _ = 'SwapFiller : ';
 
 	$$(_ + '1.1 - If specified as an array, then concatenate it')
 	if (IsArr(str))
@@ -175,41 +175,68 @@ SwapFiller = function(str, idx, dataSet, cnt = -1)
 		return str;
 
 	$$(_ + '2.1 - Create the filler string to search')
-	let find = Filler(idx, bc);
+	const find = Filler(idx, bc);
 
 	$$(_ + '2.2 - Return the updated string')
 	return(_swap_(str, find, dataSet, cnt, bc));
 };
+*/
 
 ///
-/// \brief Same as SwapFiller but with multiple substitutions at once.
+/// \brief Swaps out each filler hex string with the corresponding actual data. Input can be single hex string or split up into parts.
 ///
-SwapFillers = function(str, idMap, cnt = -1, bc = 4)
+SwapFillers = (str, ...args) =>
 {
-	let _ = 'SwapFillers : ';
+	const _ = 'SwapFillers : ';
 
-	$$(_ + '1.1 - If specified as an array, then concatenate it')
+	$$(_ + '1.1 - Retrieve the count if provided')
+	const cnt = args.take_if('number', -1);
+
+	$$(_ + '1.2 - If specified as an array, then concatenate it')
 	if (IsArr(str))
 		str = str.join('');
 
-	$$(_ + '1.2 - Ensure we actually have a string')
+	$$(_ + '1.3 - Ensure we actually have a string')
 	if (!IsStr(str))
+		return str;
+
+	$$(_ + '1.4 - Retrieve the id map')
+	const idMap = args.take_if('object', null);
+	if (!idMap)
 		return str;
 
 	for (key in idMap)
 	{
-		$$(_ + '2.1 - Get the idx and ensure it is a proper integer')
-		let idx = parseInt(key);
+		let idx, bc;
+		if (typeof key === 'string')
+		{
+			$$(_ + '2.1 - Split up the key to idx & bytecount if it is a string')
+			const parts = key.split(',');
+
+			idx = parseInt(parts[0]);
+			bc = parseInt(parts[1]);
+
+			if (Object.is(bc, NaN))
+				bc = 4;
+		}
+		else
+		{
+			$$(_ + '2.2 - Otherwise just get the idx alone and setup the default bytecount');
+			idx = parseInt(key);
+			bc = 4;
+		}
+
+		$$(_ + '2.3 - Ensure the idx is a proper integer')
 		if (Object.is(idx, NaN))
 			continue;
 
-		$$(_ + '2.2 - Get the dataSet corresponding to the id')
-		let dataSet = idMap[idx];
+		$$(_ + '2.4 - Get the dataSet corresponding to the id')
+		const dataSet = idMap[key];
 
-		$$(_ + '2.3 - Create the filler string to search')
-		let find = Filler(idx, bc);
+		$$(_ + '2.5 - Create the filler string to search')
+		const find = Filler(idx, bc);
 
-		$$(_ + '2.4 - Make the substitution')
+		$$(_ + '2.6 - Make the substitution')
 		str = _swap_(str, find, dataSet, cnt, bc);
 	}
 
@@ -219,22 +246,21 @@ SwapFillers = function(str, idMap, cnt = -1, bc = 4)
 ///
 /// \brief Background function for performing multiple swaps for same target address
 ///
-_settgt_ = function(strParts, pat, target, start, cnt, bc)
+_settgt_ = (strParts, pat, target, start, cnt, bc) =>
 {
-	let patParts = pat.trim().split(/ +/g);
-	let swapped = false;
+	const patParts = pat.trim().split(/ +/g);
 
-	let pos = 0;
+	let pos = 0, swapped = false;
 	while (pos <= strParts.length - patParts.length && cnt != 0)
 	{
 		if (patParts.find( (elem, i) => elem !== strParts[pos + i] ) == undefined)
 		{
 			swapped = true;
 
-			let repl = (target - (start + pos + bc)).toHex(bc).trim().split(' ');
+			const repl = (target - (start + pos + bc)).toHex(bc).trim().split(' ');
 			repl.forEach( (elem, i) => strParts[pos + i] = elem);
-			cnt--;
 
+			cnt--;
 			pos += bc;
 		}
 		else
@@ -246,12 +272,13 @@ _settgt_ = function(strParts, pat, target, start, cnt, bc)
 	return swapped;
 };
 
+/* - Deprecated. to be removed.
 ///
 /// \brief Swaps out the filler hex string with delta values (after JMPs & CALLs) for a target address
 ///
 SetFillTarget = function(str, idx, target, start, cnt = -1)
 {
-	let _ = 'SetFillTarget : ';
+	const _ = 'SetFillTarget : ';
 
 	$$(_ + '1.1 - If specified as an array, then concatenate it')
 	if (IsArr(str))
@@ -277,13 +304,13 @@ SetFillTarget = function(str, idx, target, start, cnt = -1)
 	bc = Math.min(bc, 4);
 
 	$$(_ + '2.1 - Create the filler string to search')
-	let find = Filler(idx, bc);
+	const find = Filler(idx, bc);
 
 	$$(_ + '2.2 - Split the string into parts based on spacing')
-	let strParts = str.trim().split(/ +/g);
+	const strParts = str.trim().split(/ +/g);
 
 	$$(_ + '2.3 - Update the array')
-	let swapped = _settgt_(strParts, find, target, start, cnt, bc);
+	const swapped = _settgt_(strParts, find, target, start, cnt, bc);
 
 	$$(_ + '2.4 - Reconstitute the string and return if any swap happened. Otherwise return the original')
 	if (swapped)
@@ -291,44 +318,74 @@ SetFillTarget = function(str, idx, target, start, cnt = -1)
 	else
 		return str;
 };
-
+*/
 
 ///
 /// \brief Same as SwapFiller but with multiple substitutions at once.
 ///
-SetFillTargets = function(str, idMap, start, cnt = -1, bc = 4)
+SetFillTargets = (str, ...args) =>
 {
-	let _ = 'SetFillTargets : ';
+	const _ = 'SetFillTargets : ';
 
-	$$(_ + '1.1 - If specified as an array, then concatenate it')
+	$$(_ + '1.1 - Retrieve the count if provided')
+	const cnt = args.take_if('number', -1);
+
+	$$(_ + '1.2 - If specified as an array, then concatenate it')
 	if (IsArr(str))
 		str = str.join('');
 
-	$$(_ + '1.2 - Ensure we actually have a string')
+	$$(_ + '1.3 - Ensure we actually have a string')
 	if (!IsStr(str))
 		return str;
 
-	$$(_ + '1.3 - Limit the byte count')
-	bc = Math.min(bc, 4);
+	$$(_ + '1.4 - Retrieve the id map')
+	let idMap = args.take_if('object', null);
+	if (!idMap)
+		return str;
 
-	$$(_ + '1.4 - Split the string into parts based on spacing')
+	$$(_ + '1.5 - Extract the start position');
+	const start = idMap['start'] ?? 0;
+	if (typeof start !== 'number')
+		return str;
+
+	delete idMap['start'];
+
+	$$(_ + '1.6 - Split the string into parts based on spacing')
 	let strParts = str.trim().split(/ +/g);
 
 	let swapped = false;
 	for (key in idMap)
 	{
-		$$(_ + '2.1 - Get the idx and ensure it is a proper integer . Key = ' + key)
-		let idx = parseInt(key);
+		let idx, bc;
+		if (typeof key === 'string')
+		{
+			$$(_ + '2.1 - Split up the key to idx & bytecount if it is a string')
+			const parts = key.split(',');
+
+			idx = parseInt(parts[0]);
+			bc = parseInt(parts[1]);
+
+			if (Object.is(bc, NaN) || bc < 0 || bc > 4)
+				bc = 4;
+		}
+		else
+		{
+			$$(_ + '2.2 - Otherwise just get the idx alone and setup the default bytecount');
+			idx = parseInt(key);
+			bc = 4;
+		}
+
+		$$(_ + '2.3 - Ensure the idx is a proper integer')
 		if (Object.is(idx, NaN))
 			continue;
 
-		$$(_ + '2.2 - Get the target corresponding to the id & ensure its an integer')
-		let target = idMap[idx];
+		$$(_ + '2.4 - Get the target corresponding to the id & ensure its an integer')
+		const target = idMap[key];
 		if (typeof target !== 'number')
 			continue;
 
 		$$(_ + '2.3 - Create the filler string to search')
-		let find = Filler(idx, bc);
+		const find = Filler(idx, bc);
 
 		$$(_ + '2.4 - Update the array')
 		swapped = _settgt_(strParts, find, target, start, cnt, bc) || swapped;
@@ -361,9 +418,9 @@ Wrap = v =>
 ///
 /// \brief Calculate the bit width of the argument which can be a number, string or register object
 ///
-BitWidth = function(v)
+BitWidth = v =>
 {
-	let _ = `BitWidth (${v}) : `;
+	const _ = `BitWidth (${v}) : `;
 
 	$$(_ + '1 - If the value provided is a register then simply return its width')
 	if (IsReg(v))
@@ -402,12 +459,12 @@ Distance = (tgt, src) =>
 ///
 /// \brief Calculate the addresses for various indices in the array of hex strings (instructions).
 ///
-MapAddrs = function(start, arr)
+MapAddrs = (start, arr) =>
 {
 	if (IsArr(arr))
 	{
 		let offset = 0;
-		let result = arr.map( hex =>
+		const result = arr.map( hex =>
 		{
 			let addr = start + offset;
 
@@ -432,30 +489,36 @@ MapAddrs = function(start, arr)
 ///
 /// \brief Extract the switch jump address for the specified case
 ///
-CaseAddr = function(num, movzxAddr, retnType = null, jmpDpAddr = null, reflect = false)
+CaseAddr = (num, ...args) =>
 {
-	let _ = 'CaseAddr : ';
+	const _ = 'CaseAddr : ';
 
-	$$(_ + '1.1 - Extract the MOVZX instruction')
-	let movzxIns = movzxAddr > 0 ? Instr.FromAddr(movzxAddr) : '';
+	$$(_ + '1.1 - Extract the arguments');
+	const retnType = args.take_if('object', PHYSICAL);
+	const movzxAddr = args.shift();
+	let jmpDpAddr = args.take_if('number', null);
+	const reflect = args.take_if('boolean', false);
 
-	$$(_ + '1.2 - Ensure the address for JMP DWORD PTR is valid')
+	$$(_ + '1.2 - Extract the MOVZX instruction')
+	const movzxIns = movzxAddr ? Instr.FromAddr(movzxAddr) : null;
+
+	$$(_ + '1.3 - Ensure the address for JMP DWORD PTR is valid')
 	if (!jmpDpAddr)
 	{
-		if (movzxIns === '')
+		if (!movzxIns)
 			return -1;
 
 		jmpDpAddr = movzxIns.NextAddr;
 	}
 
 	$$(_ + '1.3 - Extract the JMP DWORD PTR instruction')
-	let jmpDpIns = Instr.FromAddr(jmpDpAddr);
+	const jmpDpIns = Instr.FromAddr(jmpDpAddr);
 
 	$$(_ + '2.1 - Based on the case extract the byte being used in JMP DWORD PTR')
 	let caseByte = num;
-	if (movzxIns !== '')
+	if (movzxIns)
 	{
-		let offset = Exe.Vir2Phy(movzxIns.Disp);
+		const offset = Exe.Vir2Phy(movzxIns.Disp);
 		if (offset < 0)
 			return -1;
 
@@ -463,14 +526,69 @@ CaseAddr = function(num, movzxAddr, retnType = null, jmpDpAddr = null, reflect =
 	}
 
 	$$(_ + '2.2 - Use the byte retrieved to extract the case target address (VIRTUAL)')
-	let offset = Exe.Vir2Phy(jmpDpIns.Disp);
+	const offset = Exe.Vir2Phy(jmpDpIns.Disp);
 	if (offset < 0)
 		return -1;
 
-	let caseAddr = Exe.GetInt32(offset + caseByte*4, reflect);
+	const caseAddr = Exe.GetInt32(offset + caseByte*4, reflect);
 
 	$$(_ + '2.3 - Return the physical address if VIRTUAL is not explicity requested')
 	return (retnType === VIRTUAL ? caseAddr : Exe.Vir2Phy(caseAddr));
+};
+
+///
+/// \brief Search for a particular instruction using a testing function provided
+///
+FindInstr = (testFn, from, to) =>
+{
+	_$_(`FindInstr (${testFn}}, ${from}, ${to})`, true);
+
+	if (typeof testFn !== 'function' || typeof from !== 'number')
+		return null;
+
+	to = to ?? Exe.GetSectEnd(CODE);
+	if (from >= to)
+		to = Exe.GetSectEnd(DIFF);
+
+	if (from >= to)
+		return null;
+
+	let ins = Instr.FromAddr(from);
+
+	do
+	{
+		if (testFn(ins))
+			return ins;
+
+		ins.moveToNext();
+
+	} while (ins.Addr < to);
+
+	return null;
+};
+
+///
+/// \brief Get the 'nth' instruction after the specified one. You can specify either the address or the Instr object itself
+///
+GetInstr = (current, n) =>
+{
+	let result = typeof current === 'number'
+		? Instr.FromAddr(current)
+		: current
+		;
+
+	if (! (result instanceof Instr) )
+		return null;
+
+	if (n > 0)
+	{
+		result.moveToNext();
+
+		for (n--; n > 0; n--)
+			result.moveToNext();
+	}
+
+	return result;
 };
 
   //===========//
@@ -481,9 +599,9 @@ CaseAddr = function(num, movzxAddr, retnType = null, jmpDpAddr = null, reflect =
 /// \brief Parses the data provided into 4 part array (first 3 being either M,R,M or S,I,B)
 ///        Data could be number, string or array of 3 values
 ///
-ParseData = function(data, scaled)
+ParseData = (data, scaled) =>
 {
-	let _ = `ParseData (${data}, ${scaled}) : `;
+	const _ = `ParseData (${data}, ${scaled}) : `;
 
 	$$(_ + '1 - Initialize the parts')
 	let parts = [null, null, null, -1];
@@ -498,9 +616,9 @@ ParseData = function(data, scaled)
 			parts = data.slice();
 
 			$$(_ + '2.3 - Extract the numbers from the parts')
-			let p0 = scaled ? (Math.log(data[0]) / Math.log(2)) : data[0];
-			let p1 = IsReg(data[1]) ? data[1].Index : data[1];
-			let p2 = IsReg(data[2]) ? data[2].Index : data[2];
+			const p0 = scaled ? (Math.log(data[0]) / Math.log(2)) : data[0];
+			const p1 = IsReg(data[1]) ? data[1].Index : data[1];
+			const p2 = IsReg(data[2]) ? data[2].Index : data[2];
 
 			$$(_ + '2.4 - Construct the hex string and save as the 4th element')
 			if (p1 < 0 || p2 < 0) //when either is negative we need to use wildcards
@@ -579,8 +697,9 @@ ParseData = function(data, scaled)
 			}
 			else
 			{
-				let hb = parseInt(data[0], 16); //Higher byte
-				let bits = (hb >> 2) & 0b11; 	//First 2 bits
+				const hb = parseInt(data[0], 16); //Higher byte
+
+				let bits = (hb >> 2) & 0b11; 	  //First 2 bits
 				if (scaled)
 					bits = Math.pow(2, bits);
 
@@ -595,7 +714,7 @@ ParseData = function(data, scaled)
 			}
 			else
 			{
-				let lb = parseInt(data[1], 16);
+				const lb = parseInt(data[1], 16);
 
 				parts[1] += (lb >> 3).toBits(1); //Bit 3 (part of Middle 3 bits)
 				parts[2] = lb & 0b111;	//Last 3 bits
@@ -622,46 +741,6 @@ ParseData = function(data, scaled)
 	}
 
 	return parts;
-};
-
-///
-/// \brief Search for a particular instruction using a testing function provided
-///
-FindInstr = function(testFn, from, to)
-{
-	$$(`FindInstr (${testFn}}, ${from}, ${to})`, true);
-
-	if (typeof testFn !== 'function' || typeof from !== 'number')
-		return false;
-
-	to = to ?? Exe.GetSectEnd(CODE);
-
-	while (from < to)
-	{
-		let ins = Instr.FromAddr(from);
-		if (testFn(ins))
-			return ins;
-
-		from = ins.NextAddr;
-	}
-
-	return false;
-};
-
-///
-/// \brief Get the 'nth' instruction after the specified one. You can specify either the address or the Instr object itself
-///
-GetInstr = function(current, n)
-{
-	if (typeof(current) === 'number')
-		current = Instr.FromAddr(current);
-
-	for (; n > 0; n--)
-	{
-		current = Instr.FromAddr(current.NextAddr);
-	}
-
-	return current;
 };
 
 ///
@@ -713,20 +792,8 @@ IdentifyClass = (type, props = []) =>
 ///
 IdentifyObj = objName =>
 {
-	if (eval("typeof " + objName) != undefined)
+	if ( eval(`typeof ${objName}`) != undefined )
 		Warp.identify(objName, Object.getOwnPropertyNames(eval(objName)) );
-};
-
-///
-/// \brief Adds all provided objects to SyntaxAssistant
-///        for identification in the Script Editor
-///
-IdentifyMany = function()
-{
-	for (let i = 0; i < arguments.length; i++)
-	{
-		IdentifyObj(arguments[i]);
-	}
 };
 
 ///
@@ -751,20 +818,21 @@ AssignStr = (name, value) =>
  // Identifications //
 //=================//
 
-IdentifyMany(
+for (const name of
+[
 	'IsNum', 'IsStr', 'IsBool', 'IsArr',
 	'IsNumOrStr', 'IsWord', 'IsByte',
-	'Filler', 'SwapFiller', 'SwapFillers',
-	'SetFillTarget', 'SetFillTargets',
+	'Filler', 'SwapFillers', 'SetFillTargets',
 	'Wrap', 'BitWidth', 'Distance',
 	'CaseAddr', 'ParseData', 'FindInstr',
-	'Identify', 'IdentifyClass',
-	'IdentifyObj', 'IdentifyMany',
+	'Identify', 'IdentifyClass', 'IdentifyObj',
 	'Assign', 'AssignStr',
 
 //from AllDebug
-	"$$", "$$$", "$_", "$__", "Log",
+	"$$", "$$$", "$_", "_$_", "Log",
 	"Debug", "Info", "Dump", "NewLine",
 	"ShowAddr", "ShowAddrs", "ShowArr",
-	"ShowVar", "ShowC", "ResetC"
-);
+	"DumpFunc", "ShowVar",
+	"ResetC", "IncrC", "ShowC"
+])
+	IdentifyObj(name);

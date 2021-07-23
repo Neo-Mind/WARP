@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Neo-Mind, Andrei (4144)            *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@
 ///
 UseSSOLogin = function()
 {
-	let _ = 'UseSSOLogin : ';
+	const _ = 'UseSSOLogin : ';
 
 	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
@@ -42,7 +42,7 @@ UseSSOLogin = function()
 	if (Exe.Version === 6) //VC6
 	{
 		$$(_ + '1.2 - Find the Langtype comparison')
-		let code =
+		const code =
 			MOV(AL, [POS3WC])      //mov al, byte ptr [g_passwordencrypt]
 		+	WC + WC                //test al, al ; (could be checked with CMP also. hence using wildcard)
 		+	JNE(POS2WC)            //jne _skip
@@ -84,7 +84,7 @@ UseSSOLogin = function()
 		+	MOV(EAX, [LANGTYPE])       //mov eax, dword ptr [g_serviceType]
 		+	WC + WC                    //test eax, eax OR cmp eax, ebp
 		;
-		let suffix =
+		const suffix =
 			JZ(POS2WC)                 //jz _sendSSO -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
 		+	CMP(R32, 0x12)             //cmp regA, 12h ; ideally should be EAX but some clients have different register
 		+	JZ(POS2WC)                 //jz _sendSSO
@@ -112,13 +112,13 @@ UseSSOLogin = function()
 ///
 UseOldLogin = function()
 {
-	let _ = 'UseOldLogin : ';
+	const _ = 'UseOldLogin : ';
 
 	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
 	$$(_ + '1.2 - Find the langtype comparison for sending login packet inside CLoginMode::ChangeState')
-	let prefix =
+	const prefix =
 		CMP(BYTE_PTR, [POS4WC], 0) //cmp byte ptr [g_passwordencrypt], 0
 	+	JNE(POS2WC)                //jne _skip
 	+	MOV(Exe.Version > 10       //mov regA, dword ptr [g_serviceType]
@@ -127,7 +127,7 @@ UseOldLogin = function()
 			, [LANGTYPE]
 		)
 	;
-	let suffix =
+	const suffix =
 		WC + WC                    //test eax, eax OR cmp eax, ebp
 	+	JZ(POS2WC)                 //jz _sendSSO -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
 	+	CMP(R32, 0x12)             //cmp regA, 12h ; ideally should be EAX but some clients have different register
@@ -145,7 +145,7 @@ UseOldLogin = function()
 	let nopCount = suffix.byteCount();
 
 	$$(_ + '2.2 - Ensure the instruction after the code is not another comparison. If so update the nopCount')
-	let ins = Instr.FromAddr(addr + nopCount);
+	const ins = Instr.FromAddr(addr + nopCount);
 	if (ins.Codes[0] === 0x83 && ins.MRM.RegO === 7)
 		nopCount += 9; //3 for CMP, 6 for JZ
 
@@ -167,14 +167,15 @@ UseOldLogin.validate = () =>
 ///
 RestoreLoginWindow = function()
 {
-	let _ = 'RestoreLoginWindow : ';
+	const _ = 'RestoreLoginWindow : ';
 
 	$$(_ + '1 - Ensure the LANGTYPE & WINMGR has been loaded')
 	LANGTYPE.load();
 	WINMGR.load();
 
 	$$(_ + '2.1 - Find the location where we need to make client call the login window')
-	let parts = [
+	const parts =
+	[//0
 		PUSH_EAX                    //push eax
 	+ 	CALL(NEG3WC)                //call g_ResMgr
 	+ 	MOV(ECX, EAX)               //mov ecx, eax
@@ -182,14 +183,15 @@ RestoreLoginWindow = function()
 	+ 	PUSH_EAX                    //push eax
 	+ 	WINMGR.MovECX               //mov ecx, <g_windowMgr>
 	+ 	CALL(NEG3WC)                //call UIWindowMgr::SetWallpaper
-	,
+
+	,//1
 		CMP(BYTE_PTR, [POS4WC], 0)  //cmp byte ptr [g_Tparam], 0 <- The parameter push + call to UIWindowManager::MakeWindow originally here
 	+ 	JZ(0x13)                    //jz short _skip ; after the JMP
 	+ 	MOV(BYTE_PTR, [POS4WC], 0)  //mov byte ptr [g_Tparam], 0
 	+	MOV([R32, 0xC], 4)          //mov dword ptr [regB + 0Ch], 4 <- till here we need to overwrite. regB can be EBX or EDI
-	,
-		JMP()                       //JMP _next
 
+	,//2
+		JMP()                       //JMP _next
 		                            //_skip comes here
 	];
 
@@ -201,16 +203,16 @@ RestoreLoginWindow = function()
 	codeAddr += parts.byteCount(0);
 
 	$$(_ + '2.3 - Get the VIRTUAL address of the location')
-	let codeVir = Exe.Phy2Vir(codeAddr, CODE);
+	const codeVir = Exe.Phy2Vir(codeAddr, CODE);
 
 	$$(_ + '2.4 - Prepare code to overwrite with (originally present in old clients)')
-	code =
+	let code =
 		PUSH(3)                           //push 3
 	+	WINMGR.MovECX                     //mov ecx, <g_windowMgr>
 	+	CALL(WINMGR.MakeWin, codeVir + 7) //call UIWindowMgr::MakeWindow ; 2 + 5 bytes from previous 2 instructions
 	+	JMP(Filler(1,1))                  //jmp short _skip#2 ; skip over to the mov dword ptr [regB + 0C], 4
 	;
-	code = SetFillTarget(code, [1,1], parts.byteCount(1), 0, 1);
+	code = SetFillTargets( code, {'1,1': parts.byteCount(1)} );
 
 	$$(_ + '2.5 - Overwrite at codeAddr')
 	Exe.SetHex(codeAddr, code);
@@ -264,14 +266,14 @@ RestoreLoginWindow = function()
 	addr += code.byteCount();
 
 	$$(_ + '5.1 - Extract the reference and construct the code for getting g_modeMgr to ECX + C & mode setter to EDX (same as shown initially)')
-	let infix =
+	const infix =
 		Exe.GetHex(addr - 1, 6)  //mov ecx, dword ptr [Reference]
 	+ 	MOV(EAX, [ECX])          //mov eax, dword ptr [ecx]
 	+ 	MOV(EDX, [EAX, 0x18])    //mov edx, dword ptr [eax+18h]
 	;
 
 	$$(_ + '5.2 - Find how many push 0s are there. Older clients had 3 arguments but newer ones only have 3')
-	let pushes = Exe.FindHexN(PUSH_0, addr + 4, addr + 16);
+	const pushes = Exe.FindHexN(PUSH_0, addr + 4, addr + 16);
 
 	$$(_ + '5.3 - Find error handler (CModeMgr::Quit)')
 	code =
@@ -279,8 +281,13 @@ RestoreLoginWindow = function()
 	+ 	MOV(EAX, [ESI, 4])      //mov eax, dword ptr [esi+4]
 	+ 	MOV([EAX, 0x14], 0)     //mov dword ptr [eax+14h], 0
 	+ 	CMP([LANGTYPE], 0xB)    //cmp dword ptr [g_serviceType], 0Bh
-	+	JNE('[0001110.]')       //jne short _skip#4 -> after CALL instruction below (different delta for VC11+)
-	+ 	MOV(ECX, [POS3WC])      //mov ecx, dword ptr [g_hMainWnd]
+	+	JNE(' [0001110.]')      //jne short _skip#4 -> after CALL instruction below (different delta for VC11+)
+	+	(Exe.Version > 10
+	?
+		''
+	:
+		MOV(ECX, [POS3WC])      //mov ecx, dword ptr [g_hMainWnd] ; not there for VC11
+	)
 	+ 	PUSH_1                  //push 1
 	+ 	PUSH_0                  //push 0
 	+ 	PUSH_0                  //push 0
@@ -289,7 +296,7 @@ RestoreLoginWindow = function()
 	+	(Exe.Version > 10
 	?
 		PUSH([POS4WC])          //push dword ptr [g_hMainWnd] ; For recent client g_hMainWnd is directly pushed instead of assigning to ECX first
-	:                           //  or
+	:                           //  OR
 		PUSH(ECX)               //push ecx
 	)
 	+	CALL([POS3WC])          //call dword ptr [<&SHELL32.ShellExecuteA>]

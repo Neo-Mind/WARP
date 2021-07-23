@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ///
 CustomBarLimits = function()
 {
-	let _ = 'CustomBarLimits : ';
+	const _ = 'CustomBarLimits : ';
 
     $$(_ + '1.1 - Find the coordinate PUSHes for Base exp bar')
     let code =
@@ -40,7 +40,7 @@ CustomBarLimits = function()
     +	PUSH(-0xC8)  //push -0C8h
     ;
 
-    let refAddr = Exe.FindHex(code);
+    const refAddr = Exe.FindHex(code);
     if (refAddr < 0)
 		throw Error("Base coord PUSHes missing");
 
@@ -58,12 +58,12 @@ CustomBarLimits = function()
 		throw Error("JobID CALL not found");
 
     $$(_ + '1.3 - Extract g_session, GetJobID and save the addr to baseBegin variable')
-    let Session  = Exe.GetInt32(addr + 1);
-    let GetJobID = Exe.GetTgtAddr(addr + 6);// 5 from the MOV and 1 from opcode of CALL
-    let baseBegin = addr;
+    const Session  = Exe.GetInt32(addr + 1);
+    const GetJobID = Exe.GetTgtAddr(addr + 6);// 5 from the MOV and 1 from opcode of CALL
+    const baseBegin = addr;
 
     $$(_ + '1.4 - Save location after the 2nd CALL')
-    let afterBB = baseBegin + code.byteCount();
+    const afterBB = baseBegin + code.byteCount();
 
     $$(_ + '2.1 - Find the base level assignment/comparison after the CALLs')
     code =
@@ -88,7 +88,7 @@ CustomBarLimits = function()
 		throw Error("Base level address missing");
 
     $$(_ + '2.2 - Extract the address')
-    let BaseLevel = Instr.FromAddr(addr).Disp; //this is easier and will remain accurate even if some changes happen in later versions
+    const BaseLevel = Instr.FromAddr(addr).Disp; //this is easier and will remain accurate even if some changes happen in later versions
 
     $$(_ + '2.3 - Find the ESI + const assignment between afterBB & refAddr')
     addr = Exe.FindHex( MOV(ECX, [ESI, POS1WC]), afterBB, refAddr); //mov ecx, dword ptr [esi + dispA]
@@ -100,21 +100,12 @@ CustomBarLimits = function()
 		throw Error("First ESI ptr missing");
 
     $$(_ + '2.4 - Extract the const (which is HideBase)')
-    let HideBase = Instr.FromAddr(addr).Disp;
+    const HideBase = Instr.FromAddr(addr).Disp;
 
     $$(_ + '2.5 - Calculate remaining constants')
-    let HideJob  = HideBase + 0x04;
-	let ShowBars, FuncOff;
-    if (Exe.Version === 6)
-    {
-		ShowBars = HideBase + 0x10;
-		FuncOff = 0x18; //value added to [ECX] to retrieve the function address
-    }
-    else
-    {
-		ShowBars = HideBase + 0x08;
-		FuncOff = 0x10;
-    }
+    const HideJob  = HideBase + 4;
+	const FuncOff  = (Exe.Version === 6 ? 0x18 : 0x10);  //value added to [ECX] to retrieve the function address
+	const ShowBars = HideBase + FuncOff - 8;
 
     $$(_ + '3.1 - Find the end of the base exp display code after the ESI movement')
     code =
@@ -122,7 +113,7 @@ CustomBarLimits = function()
     +	(Exe.Version === 6 || Exe.Version === 11
 	?
 		CALL([R32, FuncOff])  //call dword ptr [regC + FuncOff] ; VC6 & VC11
-	:                         // or
+	:                         //   OR
 		CALL(R32)             //call regC ; all others
 	)
     +	MOV(ECX, Session)     //mov ecx, <g_session>
@@ -132,8 +123,8 @@ CustomBarLimits = function()
 		throw Error("End of Base missing");
 
     $$(_ + '3.2 - Save the location of MOV ECX')
-    let baseEnd = addr2 + code.byteCount() - 5;
-    let jobBegin = baseEnd; //MOV ECX also marks the beginning of Job Exp Display code so yea they are same
+    const baseEnd = addr2 + code.byteCount() - 5;
+    const jobBegin = baseEnd; //MOV ECX also marks the beginning of Job Exp Display code so yea they are same
 
     $$(_ + '3.3 - Find the job level comparison with 10')
 	let delta;
@@ -150,13 +141,13 @@ CustomBarLimits = function()
     }
 	else
 	{
-		let prefix = (Exe.BuildDate < 20100620 || Exe.BuildDate === 20101214 ||  Exe.BuildDate > 20110620
+		const prefix = (Exe.BuildDate < 20100620 || Exe.BuildDate === 20101214 ||  Exe.BuildDate > 20110620
 		?
 			JMP(WCp) //jmp short _next
-		:            // or
+		:            //  OR
 			RETN(4)  //retn 4
 		);
-		let suffix = CMP([POS3WC], 0xA); //cmp dword ptr [g_jobLevel], 0Ah
+		const suffix = CMP([POS3WC], 0xA); //cmp dword ptr [g_jobLevel], 0Ah
 
 		delta = prefix.byteCount();
 
@@ -166,7 +157,7 @@ CustomBarLimits = function()
 		throw Error("Job level comparison missing");
 
     $$(_ + '3.4 - Extract the Address')
-    let JobLevel = Instr.FromAddr(addr + delta).Disp;
+    const JobLevel = Instr.FromAddr(addr + delta).Disp;
 
     $$(_ + '3.5 - Find the coordinate PUSHes for Job exp bar (job End is just after it)')
     code =
@@ -175,7 +166,7 @@ CustomBarLimits = function()
     +	(Exe.Version === 9 || Exe.Version === 10
 	?
 		CALL(R32)			 //call regD ; for VC9, VC10
-	:
+	:                        //   OR
 		CALL([R32, FuncOff]) //call dword ptr [regD + FuncOff] ; for VC6, VC11, VC14.16
 	)
     ;
@@ -193,15 +184,15 @@ CustomBarLimits = function()
 		throw Error("Job coord PUSHes missing");
 
     $$(_ + '3.6 - Save location after the CALL as jobEnd')
-    let jobEnd = addr2 + code.byteCount();
+    const jobEnd = addr2 + code.byteCount();
 
     $$(_ + '4.1 - Get the input file from user')
-	let inFile = Exe.GetUserInput('$expBarSpec', D_InFile, "Exp Bar Spec", "Enter the Exp Bar Mapping file", "Inputs/ExpSpec.yml", {filters: YMLFILTER});
+	const inFile = Exe.GetUserInput('$expBarSpec', D_InFile, "Exp Bar Spec", "Enter the Exp Bar Mapping file", "Inputs/ExpSpec.yml", {filters: YMLFILTER});
     if (inFile === false)
 		Cancel("No mapping file specified");
 
     $$(_ + '4.2 - Load the input file which creates the hash table mapping the id ranges to max base & job levels')
-	let ExpSpec = Warp.LoadYaml(inFile);
+	const ExpSpec = Warp.LoadYaml(inFile);
 	if (ExpSpec === false)
 		return false;
 
@@ -209,10 +200,10 @@ CustomBarLimits = function()
 		throw Error("Need a list of Exp Bar specifications")
 
 	$$(_ + '4.3 - Calculate size of mapping table')
-    let identSize = ExpSpec.reduce( (acc, hash) => acc + hash.IDs.length*4 + 2, 0);
+    const identSize = ExpSpec.reduce( (acc, hash) => acc + (IsArr(hash.IDs) ? 4 * hash.IDs.length + 2 : 0), 0);
 
     $$(_ + '5.1 - Prepare code for base & job exp bars (will be replaced at baseBegin)')
-	let parts =
+	const parts =
 	[
 		PUSH(EDX)                  //push edx
     +	PUSH(EBX)                  //push ebx
@@ -291,58 +282,56 @@ CustomBarLimits = function()
     +	" FF 00 FF 00"             //part of the id to level mapping ; defAddr
 	];
 
-	let baseVir = Exe.Phy2Vir(baseBegin, CODE);
-	addrs = MapAddrs(baseVir, parts);
+	const baseVir = Exe.Phy2Vir(baseBegin, CODE);
 
-    $$(_ + '5.2 - Calculate mapTblAddr value (we will be placing it right after the JMP since we have space for it)')
-	let mapTblAddr = addrs.last(); //mapTblAddr comes right after the code
-    let defAddr = mapTblAddr - 4;    //Address for the default value.
+    $$(_ + '5.2 - Calculate the target addresses & the mapTblAddr value (we will be placing it right after the JMP since we have space for it)')
+	const [, _mapTblLoop, _idTblLoop, _fetchNextIDPair, _fetchNextIDTbl, _foundIDMatch, _noMatches, _lowBase, _common1, _lowJob, _common2, mapTblAddr] = MapAddrs(baseVir, parts);
+
+	const defAddr = mapTblAddr - 4; //Address for the default value.
 
     $$(_ + '5.3 - Fill in the blanks')
 
-	//First the short jumps
-	code = SetFillTargets(parts,
+	//First the Jumps & CALLs
+	code = SetFillTargets( parts,
 	{
-		10: addrs[6], //_noMatches
-		11: addrs[4], //_fetchNextIDTbl
-		12: addrs[3], //_fetchNextIDPair
-		14: addrs[5], //_foundIDMatch
-		15: addrs[2], //_idTblLoop
-		16: addrs[1], //_mapTblLoop
-		17: addrs[7], //_lowBase
-		18: addrs[8], //_common1
-		19: addrs[9], //_lowJob
-		20: addrs[10], //_common1
-	},
-	baseVir, 2, 1);
+		 start : baseVir,
+		     1 : GetJobID,
+		     4 : Exe.Phy2Vir(jobEnd, CODE),
+		'10,1' : _noMatches,
+		'11,1' : _fetchNextIDTbl,
+		'12,1' : _fetchNextIDPair,
+		'14,1' : _foundIDMatch,
+		'15,1' : _idTblLoop,
+		'16,1' : _mapTblLoop,
+		'17,1' : _lowBase,
+		'18,1' : _common1,
+		'19,1' : _lowJob,
+		'20,1' : _common2,
+	});
 
-	//Next the call & jmp
-	code = SetFillTargets(code,
+	//Secondly the assigned addresses
+    code = SwapFillers( code, 1,
 	{
-		1: GetJobID,
-		4: Exe.Phy2Vir(jobEnd, CODE)
-	},
-	baseVir, 1);
-
-	//Finally the assigned addresses
-    code = SwapFillers(code,
-	{
-		2: mapTblAddr,
-		3: defAddr
-	}, 1);
+		2 : mapTblAddr,
+		3 : defAddr
+	});
 
     $$(_ + '5.4 - Allocate space to add the id values')
-    let [free, freeVir] = Exe.FindSpace(identSize);
+    const [free, freeVir] = Exe.FindSpace(identSize);
 
     $$(_ + '5.5 - Concatenate all the ID values and prepare the mapping')
     let mapData   = ""; //will contain address pointing to set of IDs and base (16bit) & job (16bit) max levels after the address
     let identData = ""; //will contain the set of IDs
 
 	addr = 0;
-	ExpSpec.forEach( hash =>
+	for (const hash of ExpSpec)
     {
+		if (!IsArr(hash.IDs))
+			continue;
+
 		mapData += (freeVir + addr).toHex();
-		hash.IDs.forEach( elem =>
+
+		for (const elem of hash.IDs)
 		{
 			if (IsArr(elem))
 				identData += elem[0].toHex(2) + elem[1].toHex(2);
@@ -350,12 +339,13 @@ CustomBarLimits = function()
 				identData += elem.toHex(2).repeat(2);
 
 			addr += 2;
-		});
+		}
+
 		identData += " FF FF";
 		addr += 2;
 
 		mapData += hash.BaseLvl.toHex(2) + hash.JobLvl.toHex(2);
-    });
+    }
 
 	mapData += ALL00;
 
@@ -376,7 +366,7 @@ CustomBarLimits = function()
 ///
 ShowExpNumbers = function()
 {
-	let _ = 'ShowExpNumbers : ';
+	const _ = 'ShowExpNumbers : ';
 
     $$(_ + '1.1 - Find \'Alt+V, Ctrl+V\'')
     let addr = Exe.FindText("Alt+V, Ctrl+V", false);
@@ -423,13 +413,13 @@ ShowExpNumbers = function()
 		throw Error("Base Exp addresses not PUSHed");
 
 	$$(_ + '2.2 - Extract the Total Exp address')
-    let TotExpBase = Exe.GetInt32(pushAddr + totOffset);
+    const TotExpBase = Exe.GetInt32(pushAddr + totOffset);
 
     $$(_ + '2.3 - Set pushAddr to location after the CALL')
     pushAddr += code.byteCount() + 4;
 
     $$(_ + '2.4 - Extract the Current Exp address')
-    let CurExpBase = Exe.GetInt32(pushAddr - 9);
+    const CurExpBase = Exe.GetInt32(pushAddr - 9);
 
     $$(_ + '2.5 - Find the double/triple PUSH pattern again after the first one (this time it is for Job Exp values)')
     pushAddr = Exe.FindHex(code, pushAddr, pushAddr + 0x100);
@@ -437,12 +427,11 @@ ShowExpNumbers = function()
 		throw Error("Job Exp addrs not PUSHed");
 
     $$(_ + '2.6 - Extract the Total Exp & Current Exp addresses')
-    let TotExpJob = Exe.GetInt32(pushAddr + totOffset);
-    let CurExpJob = Exe.GetInt32(pushAddr + code.byteCount() - 5);
+    const TotExpJob = Exe.GetInt32(pushAddr + totOffset);
+    const CurExpJob = Exe.GetInt32(pushAddr + code.byteCount() - 5);
 
-    $$(_ + '3.1 - Find \'SP\'')
-    let addrs = Exe.FindTextN("SP");
-	let found = addrs.find(matchAddr =>
+    $$(_ + '3.1 - Find the correct \'SP\'')
+	const found = Exe.FindTextN("SP").find(matchAddr =>
 	{
 		$$(_ + '3.2 - Find where it is PUSHed inside OnDraw function (we need to inject after this location)')
 		code =
@@ -479,8 +468,8 @@ ShowExpNumbers = function()
     }
 
     $$(_ + '3.5 - Extract UIWindow::TextOutA and the location where the CALL is made (we will be hijacking the CALL)')
-    let UIW_TextOutA = Exe.GetTgtAddr(addr + 1);
-    let injectAddr = addr;
+    const UIW_TextOutA = Exe.GetTgtAddr(addr + 1);
+    const injectAddr = addr;
 
     $$(_ + '3.6 - Account for extra argument PUSHes (push 0) for more recent clients')
 	let extraPush = '';
@@ -503,7 +492,7 @@ ShowExpNumbers = function()
 		throw Error("No print functions found");
 
     // '%d / %d'
-    let ddAddr = Exe.FindText("%d / %d", false);
+    const ddAddr = Exe.FindText("%d / %d", false);
     if (ddAddr < 0)
 		throw Error("Format string for exp not found");
 
@@ -529,25 +518,25 @@ ShowExpNumbers = function()
     +	PUSH_1                //push 1        ; Arg5 = Font Index
     +	PUSH_0                //push 0        ; Arg4 = Char count (0 => calculate string size)
     +	PUSH_EAX              //push eax      ; Arg3 = String i.e. output from sprintf above
-    +	PUSH(Filler(4, 1))    //push y        ; Arg2 = y Coord
+    +	PUSH(Filler(4,1))     //push y        ; Arg2 = y Coord
     +	PUSH(0x56)            //push x        ; Arg1 = x Coord
     +	MovECX                //mov ecx, regA
     +	CALL(Filler(5))       //call UIWindow::TextOutA ; stdcall => No Stack restore required
     ;                         //_skipOut
 
-	template = SetFillTarget(template, [3, 1], template.byteCount(), 0, 1); //putting the distance in JE SHORT (this is needed since byteCount can vary)
+	template = SetFillTargets( template, 1, {'3,1': template.byteCount()} ); //putting the distance in JE SHORT (this is needed since byteCount can vary)
 
     $$(_ + '4.3 - Prepare the full code from the template')
     code =
 		CALL(Filler(5))         //call UIWindow::TextOutA
     +	PUSH_EAX                //push eax
     +	SUB(ESP, 0x20)          //sub esp, 20
-    +	SwapFillers(template,
+    +	SwapFillers( template,
 		{
 			1: TotExpBase,      //for Base Exp
 			2: CurExpBase
 		})
-    +	SwapFillers(template,
+    +	SwapFillers( template,
 		{
 			1: TotExpJob,       //for Job Exp
 			2: CurExpJob
@@ -556,23 +545,23 @@ ShowExpNumbers = function()
     +	POP_EAX                 //pop eax
     +	JMP(Filler(6))          //jmp <retAddr> ; i.e. (injectAddr + 5)
     ;
-    let csize = code.byteCount();
+    const csize = code.byteCount();
 
     $$(_ + '4.4 - Allocate space to add our code')
-    let [free, freeVir] = Exe.FindSpace(csize, 0x10);
+    const [free, freeVir] = Exe.FindSpace(csize, 0x10);
 
     $$(_ + '4.5 - Fill in the remaining blanks')
 
 	// CALLs & JMPs
-	code = SetFillTargets(code,
+	code = SetFillTargets( code,
 	{
-		 5 : UIW_TextOutA,
-		 6 : Exe.Phy2Vir(injectAddr + 5, CODE),
-	},
-	freeVir);
+		start : freeVir,
+		    5 : UIW_TextOutA,
+		    6 : Exe.Phy2Vir(injectAddr + 5, CODE),
+	});
 
 	// yCoords for Base & Job respectively
-	code = SwapFiller(code, [4, 1], [0x4E, 0x68], 2); // 4th filler (y coord) is 1 byte hence [4, 1]
+	code = SwapFillers( code, {'4,1' : [0x4E, 0x68]} ); // 4th filler (y coord) is 1 byte hence 4,1
 
     $$(_ + '4.6 - Add the code at the allocated space')
     Exe.AddHex(free, code);

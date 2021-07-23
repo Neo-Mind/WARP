@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 ///
 ShowRegisterBtn = function()
 {
-	let _ = 'ShowRegisterBtn : ';
+	const _ = 'ShowRegisterBtn : ';
 
 	$$(_ + '1.1 - Find the registration URL')
 	let addr = Exe.FindText("http://ro.hangame.com/login/loginstep.asp?prevURL=/NHNCommon/NHN/Memberjoin.asp");
@@ -68,7 +68,7 @@ ShowRegisterBtn = function()
 		jnePos = -2;
 	}
 
-	let suffix =
+	const suffix =
 		CMP([POS4WC], 1)          //cmp dword ptr [g_isGravityID], 1
 	+   JNE(WCp)                  //jne short _skip#2
 	;
@@ -84,8 +84,8 @@ ShowRegisterBtn = function()
 	Exe.SetJMP(cmpAddr + jnePos);
 
 	$$(_ + '3.1 - Goto the jumped address')
-	let travel = (jnePos === -2) ? 1 : 4;
-	let jmpedAddr = Exe.GetTgtAddr(cmpAddr - travel, PHYSICAL, travel);
+	const travel = (jnePos === -2) ? 1 : 4;
+	const jmpedAddr = Exe.GetTgtAddr(cmpAddr - travel, PHYSICAL, travel);
 
 	$$(_ + '3.2 - Prep new function code to use as replacement for CModeMgr::Quit (original one will get overwritten by RestoreLoginWindow)')
 	let code =
@@ -96,7 +96,7 @@ ShowRegisterBtn = function()
 	;
 
 	$$(_ + '3.3 - Allocate space to add the function')
-	let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
+	const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
 	$$(_ + '3.4 - Add the function there')
 	Exe.AddHex(free, code);
@@ -105,26 +105,18 @@ ShowRegisterBtn = function()
 	Exe.SetTgtAddr(jmpedAddr + 6, freeVir); //5 for the MOV ECX, g_modeMgr & 1 for opcode of CALL CModeMgr::Quit
 
 	$$(_ + '4.1 - Find \'btn_request_b\' (the prefix string for the button in pressed state)')
-	let btnAddr = Exe.FindText("btn_request_b");
+	const btnAddr = Exe.FindText("btn_request_b");
 	if (btnAddr < 0)
 		throw Error("'btn_request_b' not found");
 
 	$$(_ + '4.2 - Find where it is assigned')
 	if (Exe.Version === 9) //VC9
 	{
-		addr = Exe.FindHex( ROC.HasFP ?
-			MOV([EBP, WCp], btnAddr)    //mov dword ptr [ebp+disp8A], <btnAddr>
-		:                               //   OR
-			MOV([ESP, POS2WC], btnAddr) //mov dword ptr [esp+dispA], <btnAddr>
-		);
+		addr = Exe.FindHex( [ROC.StkReg, ROC.HasFP ? WCp : POS2WC], btnAddr ); //mov dword ptr [ebp+disp8A] / [esp+dispA], <btnAddr>
 	}
 	else //VC6, VC10, VC11
 	{
-		addr = Exe.FindHex( ROC.HasFP ?
-			MOV([EBP, NEG2WC], btnAddr) //mov dword ptr [ebp-dispB], <btnAddr>
-		:                               //   OR
-			MOV([ESP, WCn], btnAddr)    //mov dword ptr [esp-disp8B], <btnAddr>
-		);
+		addr = Exe.FindHex( [ROC.StkReg, ROC.HasFP ? NEG2WC : WCn], btnAddr ); //mov dword ptr [ebp-dispB] / [esp-disp8B], <btnAddr>
 	}
 
 	if (addr < 0)
@@ -158,19 +150,20 @@ ShowRegisterBtn.validate = () =>
 ///
 ShowCancelBtn = function()
 {
-	let _ = 'ShowCancelBtn : ';
+	const _ = 'ShowCancelBtn : ';
 
 	$$(_ + '1.1 - Find \'btn_intro_b\'')
-	let btnAddr = Exe.FindText("btn_intro_b");
+	const btnAddr = Exe.FindText("btn_intro_b");
 	if (btnAddr < 0)
 		throw Error("'btn_intro_b' not found");
 
 	$$(_ + '1.2 - Find where it is assigned (inside UILoginWnd::OnCreate)')
-	let code;
-	if (Exe.Version === 9) //VC9 didn't use FP
-		code = MOV([ESP, POS2WC], btnAddr);  //mov dword ptr [esp + dispC], <btnAddr>
-	else
-		code = MOV( ROC.HasFP ? [EBP, NEG2WC] : [ESP, WCn], btnAddr); //mov dword ptr [ebp/esp - dispC], <btnAddr>
+	let code = Exe.Version === 9
+	?
+		MOV([ESP, POS2WC], btnAddr)                            //mov dword ptr [esp + dispC], <btnAddr> ; VC9 didn't use FP
+	:                                                          //  OR
+		MOV( ROC.HasFP ? [EBP, NEG2WC] : [ESP, WCn], btnAddr)  //mov dword ptr [ebp/esp - dispC], <btnAddr>
+	;
 
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
@@ -180,7 +173,7 @@ ShowCancelBtn = function()
 	addr += code.byteCount();
 
 	$$(_ + '2.1 - Find the X-coord assignment of login button (btn_connect)')
-	let reg = ROC.HasFP ? EBP : ESP;
+	const reg = ROC.StkReg;
 	code = MOV([reg, WC], 0xBD); //mov dword ptr [ebp - disp8C], 0BDh OR mov dword ptr [esp + disp8C], 0BDh
 
 	let addr2 = Exe.FindHex(code, addr, addr + 0x40);
@@ -227,22 +220,23 @@ ShowCancelBtn.validate = HasHiddenLogWin;
 ///
 ShowReplayBtn = function()
 {
-	let _ = 'ShowReplayBtn : ';
+	const _ = 'ShowReplayBtn : ';
 
 	$$(_ + '1.1 - Move Select Server Button to visible area')
 	_SRB_FixupBtnCoords("replay_interface\\btn_selectserver_a", "Select Server - ", " C7", " 89");
 
 	$$(_ + '1.2 - Move Replay Button to visible area')
-	let jmpAddr = _SRB_FixupBtnCoords("replay_interface\\btn_replay_a", "Replay - ", " E8", " E8");
+	const jmpAddr = _SRB_FixupBtnCoords("replay_interface\\btn_replay_a", "Replay - ", " E8", " E8");
 
 	if (Exe.Version <= 11)
 	{
 		$$(_ + '2.1 - Service and Server select both use the same Window, so look for the mode comparison to distinguish')
-		let code =
+		const code =
 			CMP([EAX, 4], 0x1E)  //cmp dword ptr [eax+4], 1Eh
 		+   JNE(WCp)             //jne short _skip
 		;
-		let addr = Exe.FindHex(code, jmpAddr, jmpAddr + 0x40);
+
+		const addr = Exe.FindHex(code, jmpAddr, jmpAddr + 0x40);
 		if (addr < 0)
 			throw Error("Mode comparison not found");
 
@@ -269,10 +263,10 @@ ShowReplayBtn = function()
 		throw Error("Select Server case not found");
 
 	$$(_ + '3.2 - Save the location after last PUSH')
-	let retnAddr = addr + code.byteCount();
+	const retnAddr = addr + code.byteCount();
 
 	$$(_ + '3.3 - Find the Replay Mode Enable bit setting')
-	let parts = [
+	const parts = [
 		MOV(BYTE_PTR, [EAX, WCp], 1)	//mov byte ptr [eax + disp8A], 1
 	,
 		MOV(BYTE_PTR, [EAX, POS1WC], 1)	//mov byte ptr [eax + dispA], 1
@@ -306,7 +300,7 @@ ShowReplayBtn = function()
 		throw Error("Replay mode setter not found");
 
 	$$(_ + '3.4 - Get the Function address before the setter')
-	let funcAddr = Exe.GetTgtAddr(addr2 - 4);
+	const funcAddr = Exe.GetTgtAddr(addr2 - 4);
 
 	$$(_ + '3.5 - Extract the move instruction & change 1 to 0')
 	let ins = Instr.FromAddr(addr2);
@@ -323,15 +317,15 @@ ShowReplayBtn = function()
 	;
 
 	$$(_ + '4.2 - Allocate space to add the code')
-	let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
+	const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
 	$$(_ + '4.3 - Fill in the blanks')
-	code = SetFillTargets(code,
+	code = SetFillTargets( code, 1,
 	{
-		1 : funcAddr,
-		2 : Exe.Phy2Vir(retnAddr, CODE)
-	},
-	freeVir, 1);
+		start : freeVir,
+		    1 : funcAddr,
+		    2 : Exe.Phy2Vir(retnAddr, CODE)
+	});
 
 	$$(_ + '4.4 - Add the code at the allocated space')
 	Exe.AddHex(free, code);
@@ -352,7 +346,7 @@ ShowReplayBtn.validate = () => Exe.FindText("replay_interface\\btn_replay_b", PH
 ///
 _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 {
-	let _ = '_SRB_FixupBtnCoords : ';
+	const _ = '_SRB_FixupBtnCoords : ';
 
 	$$(_ + '1.1 - Find the Button Image path')
 	let addr = Exe.FindText(btnImg, CASE_INSENSITIVE, false);
@@ -373,13 +367,14 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 		throw Error(msgPrefix + "Second Button assignment not found");
 
 	$$(_ + '2.2 - Find the coordinate assignment for the button we need')
-	let reg = (ROC.HasFP ? EBP : ESP);
+	const memLoc = [ROC.StkReg, WC];
+
 	let code, type;
 	if (Exe.Version >= 11)//reg will be EBP since client has not done FPO since VC11
 	{
 		code =
-			MOV([reg, WC], -0x64)    //mov dword ptr [ebp/esp + dispX], -64 ; x-coord
-		+	MOV([reg, WC], -0x64)    //mov dword ptr [ebp/esp + dispY], -64 ; y-coord
+			MOV(memLoc, -0x64)    //mov dword ptr [ebp/esp + dispX], -64 ; x-coord
+		+	MOV(memLoc, -0x64)    //mov dword ptr [ebp/esp + dispY], -64 ; y-coord
 		+	(Exe.Version > 11 ? suffix : suffix2)
 		;
 		type = 1; //VC11+
@@ -387,19 +382,19 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 	else
 	{
 		code =
-			MOV([reg, WC], R32)      //mov dword ptr [ebp/esp + dispX], regA ; x-coord
-		+	MOV([reg, WC], R32)      //mov dword ptr [ebp/esp + dispY], regA ; y-coord
+			MOV(memLoc, R32)      //mov dword ptr [ebp/esp + dispX], regA ; x-coord
+		+	MOV(memLoc, R32)      //mov dword ptr [ebp/esp + dispY], regA ; y-coord
 		+	suffix
 		;
 		type = (ROC.HasFP ? 2 : 3) ; //2 for VC10 and 3 for VC9
 	}
 
-	let jmpAddr = Exe.FindHex(code, addr, addr + 0x50);
+	const jmpAddr = Exe.FindHex(code, addr, addr + 0x50);
 	if (jmpAddr < 0)
 		throw Error(msgPrefix + "Coordinate assignment not found");
 
 	$$(_ + '2.3 - Save the location after the match')
-	let retnAddr = jmpAddr + code.byteCount() - 1;
+	const retnAddr = jmpAddr + code.byteCount() - 1;
 
 	$$(_ + '3.1 - Prepare code to replace/insert')
 	let xOff, yOff, yOk;
@@ -448,7 +443,7 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 	}
 
 	$$(_ + '3.2 - For VC11+ we can simply replace at appropriate area after the match (there is enough space)')
-	let csize = code.byteCount();
+	const csize = code.byteCount();
 	if (type === 1) //VC11 & VC14.16
 	{
 		Exe.SetHex(retnAddr - csize, code);
@@ -456,10 +451,14 @@ _SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
 	else //VC9 & VC10
 	{
 		$$(_ + '3.3 - For the others, allocate space to add the code')
-		let [free, freeVir] = Exe.FindSpace(csize, 0x10);
+		const [free, freeVir] = Exe.FindSpace(csize, 0x10);
 
 		$$(_ + '3.4 - Fill in the blanks')
-		code = SetFillTarget(code, 1, Exe.Phy2Vir(retnAddr, CODE), freeVir, 1);
+		code = SetFillTargets(code, 1,
+		{
+			start : freeVir,
+			    1 : Exe.Phy2Vir(retnAddr, CODE)
+		});
 
 		$$(_ + '3.5 - Add the code at the allocated space')
 		Exe.AddHex(free, code);

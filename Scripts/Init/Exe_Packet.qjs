@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -73,7 +73,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 		///
 		load : function()
 		{
-			let _ = "PACKET.load : ";
+			const _ = "PACKET.load : ";
 
 			$$(_ + '1.1 - Check if load was already called')
 			if ('Valid' in this)
@@ -107,13 +107,13 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			if (addr < 0)
 			{
 				$$(_ + '1.7 - If not found then look for the CALL, MOV, CALL pattern')
-				let inb4 =
+				const inb4 =
 					CALL(ALLWC)   //call func#1
 				+	MOV(ECX, EAX) //mov ecx, eax
 				+	CALL(ALLWC)   //call func#2
 				;
 
-				let code =
+				const code =
 					inb4          //call CRagConnection::instanceR
 					              //mov ecx, eax
 					              //call CRagConnection::GetPacketSize
@@ -135,10 +135,10 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				$$(_ + '1.8 - In more recent clients the GetPacketSize & SendPacket sequences are not present,')
 				$$(_ + '      so we look for the RegSetValueExA CALL for CASH_CATEGORY as reference.')
 
-				let ccAddr = Exe.FindText("CASH_CATEGORY");
+				const ccAddr = Exe.FindText("CASH_CATEGORY");
 				if (ccAddr > 0)
 				{
-					let code =
+					const code =
 						PUSH(4)      //push 4                      ; Type = REG_DWORD
 					+	PUSH_0       //push 0                      ; Reserved
 					+	PUSH(ccAddr) //push offset "CASH_CATEGORY" ; SubKey 
@@ -206,10 +206,10 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			this.KeySetter = Exe.GetTgtAddr(callAddr);
 
 			$$(_ + '3.4 - Go inside the function')
-			let fnAddr = Exe.Vir2Phy(this.KeySetter, CODE);
+			const fnAddr = Exe.Vir2Phy(this.KeySetter, CODE);
 
 			$$(_ + '4.1 - First look for the individual key assignment pattern')
-			let reg = Exe.Version > 11 ? EAX : ECX;
+			const reg = Exe.Version > 11 ? EAX : ECX;
 			code = MOV([reg, ' 0?'], ALLWC).repeat(3) //mov dword ptr [ecx + dispA], <Key A> ;the keys could be assigned in any order
 			                                          //mov dword ptr [ecx + dispB], <Key B>
 			                                          //mov dword ptr [ecx + dispC], <Key C>
@@ -225,7 +225,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				$$(_ + '4.3 - Extract the keys being assigned')
 				for (let i = 0; i < 3; i++)
 				{
-					let ins = Instr.FromAddr(addr);
+					const ins = Instr.FromAddr(addr);
 					this.Keys[ins.Disp/4 - 1] = ins.Immd; //order can be any so this mechanism is needed
 					addr = ins.NextAddr;
 				}
@@ -236,7 +236,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			}
 
 			$$(_ + '5.1 - Next look for the shared key pattern')
-			let prefix =
+			const prefix =
 				CMP(EAX, 1)              //cmp eax, 1
 			+	JNE(WCp)                 //jne short _next
 			;
@@ -262,7 +262,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				$$(_ + '5.4 - Extract all the keys (little more tricky since there is a MOV EAX)')
 				for (let i = 0; i < 3; i++)
 				{
-					ins = Instr.FromAddr(ins.NextAddr);
+					ins.moveToNext();
 					this.Keys[ins.Disp/4 - 1] = (i < 2) ? sharedKey : ins.Immd;
 				}
 
@@ -288,7 +288,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				}
 
 				$$(_ + '6.4 - Retrieve the keys based on the date')
-				let arr = PktKeyMap[Exe.BuildDate];
+				const arr = PktKeyMap[Exe.BuildDate];
 
 				$$(_ + '6.5 - Ensure we have a valid array')
 				this.Valid = IsArr(arr) && arr.length === 3;

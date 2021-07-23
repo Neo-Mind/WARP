@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, Neo-Mind                                       *
 *   Created Date  : 2021-06-16                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 ///
 RestoreAutoFollow = function()
 {
-	let _ = 'RestoreAutoFollow : ';
+	const _ = 'RestoreAutoFollow : ';
 
 	$$(_ + '1.1 - Ensure that \'Disable auto follow\' patch is not selected (unless in test mode)')
 	if (!Warp.TestMode)
@@ -56,7 +56,7 @@ RestoreAutoFollow = function()
 		throw Error("ProcessAutoFollow not found");
 
 	$$(_ + '1.3 - Save it\'s VIRTUAL address')
-	let ProcessAutoFollow = Exe.Phy2Vir(addr, CODE);
+	const ProcessAutoFollow = Exe.Phy2Vir(addr, CODE);
 
 	$$(_ + '1.4 - Next find the common pattern inside CGameMode::OnUpdate function')
 	code =
@@ -67,12 +67,12 @@ RestoreAutoFollow = function()
 	+	MOV(ECX, [POS4WC])   //mov ecx, dword ptr [addr#4]
 	+	PUSH_0               //push 0
 	;
-	let addrs = Exe.FindHexN(code);
+	const addrs = Exe.FindHexN(code);
 	if (addrs.length !== 1)
 		throw Error("Unexpected number of matches");
 
 	$$(_ + '1.5 - Find the call to CGameMode::ProcessInput after the pattern (still inside the function)')
-	let parts =
+	const parts =
 	[
 		PUSH(0x3E8)         //push 3E8h
 	+	MOV(EAX, [ECX])     //mov eax, dword ptr [ecx]
@@ -87,11 +87,11 @@ RestoreAutoFollow = function()
 		throw Error("ProcessInput not called");
 
 	$$(_ + '1.6 - Save the MOV ECX instruction')
-	let movIns = Instr.FromAddr(addr + parts.byteCount(0));
+	const movIns = Instr.FromAddr(addr + parts.byteCount(0));
 
 	$$(_ + '1.7 - Save the hook position & the ProcessInput function address')
-	let hookAddr = movIns.NextAddr;
-	let ProcessInput = Exe.GetTgtAddr(hookAddr + 1);
+	const hookAddr = movIns.NextAddr;
+	const ProcessInput = Exe.GetTgtAddr(hookAddr + 1);
 
 	$$(_ + '2.1 - Construct our new code')
 	code =
@@ -102,16 +102,16 @@ RestoreAutoFollow = function()
 	;
 
 	$$(_ + '2.2 - Allocate space for it')
-	let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
+	const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
 
 	$$(_ + '2.3 - Fill in the blanks')
-	code = SwapFiller(code, 2, Exe.Phy2Vir(hookAddr + 5, CODE), 1);
-	code = SetFillTargets(code,
+	code = SwapFillers( code, 1, {2: Exe.Phy2Vir(hookAddr + 5, CODE)} );
+	code = SetFillTargets( code, 1,
 	{
-		1: ProcessInput,
-		3: ProcessAutoFollow
-	},
-	freeVir, 1);
+		start : freeVir,
+		    1 : ProcessInput,
+		    3 : ProcessAutoFollow
+	});
 
 	$$(_ + '2.4 - Add at allocated space')
 	Exe.AddHex(free, code);
