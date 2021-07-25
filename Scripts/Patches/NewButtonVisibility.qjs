@@ -150,7 +150,7 @@ NewButtonVis = function(patchName)
 			throw Error("Either String or ID missing");
 
 		$$(_ + '1.6 - Map & assign the IDs based on the strings PUSHed')
-		strPushers.forEach((addr, idx) =>
+		strPushers.forEach( (addr, idx) =>
 		{
 			const str = Exe.GetText(Exe.Vir2Phy(Exe.GetInt32(addr + 1))); //the string being pushed.
 			const name = NBV.Names[str];
