@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Secret                                        *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,67 +32,74 @@
 ///
 CallKoreaClientInfo = function()
 {
-	let _ = 'CallKoreaClientInfo : ';
+	const _ = 'CallKoreaClientInfo : ';
 
 	$$(_ + '1.1 - Find the error string')
-	let addr = Exe.FindText("Unknown ServiceType !!!");
+	const addr = Exe.FindText("Unknown ServiceType !!!");
 	if (addr < 0)
 		throw Error("Message string not found");
 
 	$$(_ + '1.2 - Find all locations where it is used in a PUSH')
-	let addrs = Exe.FindHexN( PUSH(addr) );
+	const addrs = Exe.FindHexN( PUSH(addr) );
 	if (addrs.isEmpty())
 		throw Error("Message string not used");
 
 	$$(_ + '1.3 - Prepare codes to be used in the foreach loop')
-	let codes = [
+	const codes =
+	[//0
 		MOVZX(R32, BYTE_PTR, [R32, POS3WC]) //movzx regA, byte ptr [regB + baseAddr]
 	+	JMP([4, R32, POS3WC])               //jmp dword ptr [regA*4 + tblAddr]
-	,
+
+	,//1
 		MOV(R8, BYTE_PTR, [R32, POS3WC])    //mov reg8_A, byte ptr [regB + baseAddr] ; Pattern for really old clients
 	+	JMP([4, R32, POS3WC])               //jmp dword ptr [regA*4 + tblAddr]
-	,
+
+	,//2
 		CALL(ALLWC)                         //call <SelectKoreaClientInfo>
 	+	JMP(ALLWC)                          //jmp _skip -> Skip calling SelectClientInfo
 	+	PUSH_0                              //push 0
 	+	CALL()                              //call <SelectClientInfo>
-	,
+
+	,//3
 		JNE(WCp)                            //jne short _skip -> Skip calling SelectKoreaClientInfo ; Pattern for 2017+ clients C/o Secret
 	+	CALL(POS3WC)                        //call <SelectKoreaClientInfo>
 	+	JMP(POS3WC)                         //jmp addr2
 	+	PUSH_0                              //push 0
-	,
+
+	,//4
 		JNE(POS2WC)                         //jne _skip -> Skip running SelectKoreaClientInfo code ; Pattern for VC14.16 clients
 	+	MOV(R32, [POS4WC])                  //mov regC, dword ptr [addr] ; start of SelectKoreaClientInfo
 	];
 
-	addrs.forEach( (memAddr, index) =>
+	addrs.forEach( (memAddr, idx) =>
 	{
-		$$(_ + '2.1 - Find the Switch case jump before each PUSH')
-		let csize;
+		const __ = `${i} [${idx}]`;
+
+		$$(__ + '2.1 - Find the Switch case jump before each PUSH')
+		let csize, addr;
 		if (Exe.Version === 6) //VC6
 		{
-			csize = codes[1].byteCount();
+			csize = codes.byteCount(0);
 			addr = Exe.FindHex(codes[1], memAddr - 0x50, memAddr);
 		}
 		else
 		{
-			csize = codes[0].byteCount();
+			csize = codes.byteCount(1);
 			addr = Exe.FindHex(codes[0], memAddr - (Exe.Version < 14 ? 0x50 : 0x200), memAddr);
 		}
 		if (addr < 0)
-			throw Error(`Switch Case not found for No.${index + 1}`);
+			throw Error(`Switch Case not found for No.${idx + 1}`);
 
-		$$(_ + '2.2 - Point addr to code after the JMP')
+		$$(__ + '2.2 - Point addr to code after the JMP')
 		addr += csize;
 
-		$$(_ + '2.3 - Extract the tblAddr')
-		let tblAddr = Exe.Vir2Phy(Exe.GetUint32(addr - 4), CODE);
+		$$(__ + '2.3 - Extract the tblAddr')
+		const tblAddr = Exe.Vir2Phy(Exe.GetUint32(addr - 4), CODE);
 
-		$$(_ + '2.3 - Make the 2nd entry in the table the same as first, so that all valid langtypes will use same case as 0 i.e. Korea')
+		$$(__ + '2.3 - Make the 2nd entry in the table the same as first, so that all valid langtypes will use same case as 0 i.e. Korea')
 		Exe.SetUint32(tblAddr + 4, Exe.GetUint32(tblAddr));
 
-		$$(_ + '2.4 - Find the Select*Info calls between the push and the Jump')
+		$$(__ + '2.4 - Find the Select*Info calls between the push and the Jump')
 		let nopCount = 5; //enough to NOP out the 2nd JMP
 		let nopLoc = 5;
 		let addr2 = Exe.FindHex(codes[2], addr, tblAddr);
@@ -118,9 +125,9 @@ CallKoreaClientInfo = function()
 			}
 		}
 		if (addr2 < 0)
-			throw Error("Select*Info CALLs not found for No." + (index + 1));
+			throw Error(`Select*Info CALLs not found for No.${idx + 1}`);
 
-		$$(_ + '2.5 - NOP out the JMP/JZ')
+		$$(__ + '2.5 - NOP out the JMP/JZ')
 		Exe.SetNOPs(addr2 + nopLoc, nopCount);
 	});
 

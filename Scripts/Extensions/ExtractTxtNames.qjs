@@ -33,7 +33,7 @@
 ExtractTxtNames = function()
 {
 	const _ = 'ExtractTxtNames : ';
-	
+
 	$$(_ + '1.1 - Need a valid Exe loaded')
 	if (Exe.FileSize == 0)
 		throw NO_EXE;
@@ -62,10 +62,10 @@ ExtractTxtNames = function()
 		$$(_ + '2.3 - Retrieve the starting position of each string (right after either a NULL or an @)')
 		let startAddr = Exe.FindLastHex('00', addr, addr - 0x200); //cant be 512 bytes long...i hope
 		const atAddr = Exe.FindLastHex('40', addr, startAddr > 0 ? startAddr : addr - 0x200);
-		
+
 		if (atAddr > 0)
 			startAddr = atAddr;
-		
+
 		$$(_ + '2.4 - Extract & write the string to file')
 		if (startAddr > 0 && startAddr !== (addr - 1))
 			fp.WriteLine(" => " + Exe.GetText(startAddr + 1, addr - startAddr + 3));

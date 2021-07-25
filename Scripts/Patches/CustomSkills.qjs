@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Unknown                                                *
 *   Created Date  : 2021-06-11                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -97,10 +97,10 @@ if (typeof CSk_Data === 'undefined') //avoid redefinition
 ///
 CustomSkills = function(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Retrieve the data corresponding to the patch')
-	let data = CSk_Data[patchName];
+	const data = CSk_Data[patchName];
 
 	$$(_ + '1.2 - Find the skill id checker function')
 	let prefix = ROC.HasFP
@@ -116,7 +116,7 @@ CustomSkills = function(patchName)
 	if (IsNum(suffix))
 		suffix = data[suffix]; //option to inherit from another version
 
-	let fnBegin = Exe.FindHex(prefix + suffix);
+	const fnBegin = Exe.FindHex(prefix + suffix);
 	if (fnBegin < 0)
 		throw Error("ID Checker missing");
 
@@ -124,7 +124,7 @@ CustomSkills = function(patchName)
 	LUA.load();
 
 	$$(_ + '1.4 - Construct the code to call the lua function & place the function name after it with a 4 byte gap')
-	let [prep, main, restore] = LUA.createCaller(data.funcName, "d>d", EAX, EAX);
+	const [prep, main, restore] = LUA.createCaller(data.funcName, "d>d", EAX, EAX);
 	prefix =
 		MOV(EAX, [ESP, 4]) //mov eax, [esp+4] ; ARG.1
 	+	prep               //Stack Prep
@@ -139,14 +139,14 @@ CustomSkills = function(patchName)
 	;
 
 	$$(_ + '2 - Diverge based on the patch name')
-	let nameOffset = prefix.byteCount();
+	const nameOffset = prefix.byteCount();
 
 	let luaLoadAddr; //address where the lua file loading code need to be placed
 	if (patchName === "CustomPlayerSkills")
 	{
 		$$(_ + '2.1 - Since this function is big we can place everything here itself. Fill the blanks with current values')
-		let fnVir = Exe.Phy2Vir(fnBegin, CODE);
-		let code = LUA.finalize(prefix + suffix, fnVir, fnVir + nameOffset);
+		const fnVir = Exe.Phy2Vir(fnBegin, CODE);
+		const code = LUA.finalize(prefix + suffix, fnVir, fnVir + nameOffset);
 
 		$$(_ + '2.2 - Replace the original')
 		Exe.SetHex(fnBegin, code);
@@ -157,10 +157,10 @@ CustomSkills = function(patchName)
 	else
 	{
 		$$(_ + '2.4 - For others there is not enough space, so we need to allocate space for it')
-		let [free, freeVir] = Exe.FindSpace(nameOffset + suffix.byteCount());
+		const [free, freeVir] = Exe.FindSpace(nameOffset + suffix.byteCount());
 
 		$$(_ + '2.5 - Fill in the blanks')
-		let code = LUA.finalize(prefix + suffix, freeVir, freeVir + nameOffset);
+		const code = LUA.finalize(prefix + suffix, freeVir, freeVir + nameOffset);
 
 		$$(_ + '2.6 - Add at allocated space')
 		Exe.AddHex(free, code);
@@ -209,7 +209,7 @@ CustomSkills.cleanup = function(patchName)
 	{
 		CSk_Data.loader = null;
 
-		for (name in CSk_Data)
+		for (const name in CSk_Data)
 		{
 			if (name === 'loader' || name === patchName)
 				continue;

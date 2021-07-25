@@ -33,7 +33,7 @@
 DumpImportTable = function()
 {
 	const _ = 'DumpImportTable : ';
-	
+
 	$$(_ + '1.1 - Need a valid Exe loaded')
 	if (Exe.FileSize == 0)
 		throw NO_EXE;

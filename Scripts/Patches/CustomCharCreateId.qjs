@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,10 +31,10 @@
 ///
 CustomCharCreateId = function()
 {
-	let _ = 'CustomCharCreateId : ';
+	const _ = 'CustomCharCreateId : ';
 
 	$$(_ + '1 - Find location where packet 0xA39 is being sent')
-	let prefix =
+	const prefix =
 		MOV(EAX, 0xA39)         //mov eax, 0A39h
 	+	MOV([EBP, NEG3WC], AX)  //mov word ptr [ebp + a39.packet_id], ax
 	+	MOVZX(EAX, [POS4WC])    //movzx eax, dword ptr [clrAddr]
@@ -45,12 +45,12 @@ CustomCharCreateId = function()
 	+	MOV([EBP, NEG3WC], AL)  //mov byte ptr [ebp + a39.slot], al
 	;
 
-	let suffix =
+	const suffix =
 		MOVSX(EAX, [POS4WC])    //movsx eax, dword ptr [jobIdAddr] <-- patch here
 	+	MOV([EBP, NEG3WC], EAX) //mov dword ptr [ebp + a39.starting_job_id], eax
 	;
 
-	let addrs = Exe.FindHexN(prefix + suffix);
+	const addrs = Exe.FindHexN(prefix + suffix);
 	if (addrs.isEmpty())
 		throw Error("No Match found for Char create");
 
@@ -58,7 +58,7 @@ CustomCharCreateId = function()
 		throw Error("More than 1 match found, which is too many");
 
 	$$(_ + '2.1 - Retrieve the new value from user')
-	let newId = Exe.GetUserInput('$newJobVal', D_Uint16, "Job Id Input", "Enter the new job id", 1, {saveDefault: true});
+	const newId = Exe.GetUserInput('$newJobVal', D_Uint16, "Job Id Input", "Enter the new job id", 1, {saveDefault: true});
 	if (newId === false)
 		Cancel("User didn't provide any inputs");
 

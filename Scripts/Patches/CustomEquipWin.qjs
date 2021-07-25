@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Functor, CH.C (jchcc), Andrei (4144), X-EcutiOnner     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,11 +35,11 @@
 ///
 NoEquipSwap = function()
 {
-	let _ = 'NoEquipSwap : ';
+	const _ = 'NoEquipSwap : ';
 
 	$$(_ + '1.1 - Find the location where equipment function is called')
-	let parts =
-	[
+	const parts =
+	[//0
 		CALL(NEG3WC)            //call func#1
 	+	MOV(EAX, [EDI, 0x18])   //mov eax, dword ptr [edi + 18h]
 	+	MOV(ECX, [EDI, POS2WC]) //mov ecx, dword ptr [edi + dispA]
@@ -62,10 +62,10 @@ NoEquipSwap = function()
 		throw Error("Equip Function CALL missing");
 
 	$$(_ + '1.2 - Change the SUB to ADD')
-	Exe.SetHex(addr + parts[0].byteCount(), ADD(EAX, 0x14));
+	Exe.SetHex(addr + parts.byteCount(0), ADD(EAX, 0x14));
 
 	$$(_ + '2.1 - Find the location where costume function is called')
-	let code =
+	const code =
 		MOV(ECX, [ESI, POS2WC]) //mov ecx, dword ptr [esi + dispB]
 	+	TEST(ECX, ECX)          //test ecx, ecx
 	+	JZ(0x6F)                //jz short _skip
@@ -88,7 +88,8 @@ NoEquipSwap = function()
 ///
 /// \brief Disable for Unsupported Clients - Check for Reference
 ///
-NoEquipSwap.validate = () => Exe.BuildDate >= 20170208;
+NoEquipSwap.validate = () =>
+	Exe.BuildDate >= 20170208;
 
 ///
 /// \brief Change the JNZ after comparison to remove title window button
@@ -96,15 +97,15 @@ NoEquipSwap.validate = () => Exe.BuildDate >= 20170208;
 ///
 NoEquipWinTitle = function()
 {
-	let _ = 'NoEquipWinTitle : ';
+	const _ = 'NoEquipWinTitle : ';
 
 	$$(_ + '1 - Find the location where equipment function is called')
-	let delta = Exe.BuildDate > 20170000 ? POS2WC : WCp;
-	let prefix =
+	const delta = Exe.BuildDate > 20170000 ? POS2WC : WCp;
+	const prefix =
 		CALL(NEG3WC)              //call UITabControl_AddTab
 	+	CMP([EDI, delta], 0)      //cmp dword ptr [edi + UIEquipWnd.m_typeWnd], 0
 	;
-	let suffix =
+	const suffix =
 		JNZ(0x19)                 //jnz short _valid
 	+	PUSH(0xA7D)               //push 0A7Dh
 	+	CALL(ALLWC)               //call MsgStr
@@ -115,13 +116,13 @@ NoEquipWinTitle = function()
 	;
 
 	/* - Used for debugging
-	let addTabOffsets = [1, 35];
-	let typeWndOffset = [7, 4];
-	let msgStrOffset = 20;
-	let tabControlOffset = [26, 4];
+	const addTabOffsets = [1, 35];
+	const typeWndOffset = [7, 4];
+	const msgStrOffset = 20;
+	const tabControlOffset = [26, 4];
 	*/
 
-	let addr = Exe.FindHex(prefix + suffix);
+	const addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("Pattern not found");
 
