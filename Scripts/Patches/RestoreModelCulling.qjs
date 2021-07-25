@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Curiosity, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,20 +32,24 @@
 ///
 RestoreModelCulling = function()
 {
-	let _ = 'RestoreModelCulling : ';
+	const _ = 'RestoreModelCulling : ';
 
 	$$(_ + '1.1 - Find C3dActor::CullByOBB')
-	let reg = (ROC.HasFP ? EBP : ESP);
-	let parts = [
+	const sreg = ROC.StkReg;
+	let parts =
+	[//0
 		JE(WCp)						//je short _skip
-	,
+
+	,//1
 		Exe.BuildDate < 20150000
-	?	MOV(ECX, [reg, 8])		    //mov ecx, dword ptr [reg+8] ; only for older clients
+	?	MOV(ECX, [sreg, 8])         //mov ecx, dword ptr [sreg+8] ; only for older clients
 	:	''
-	,
+
+	,//2
 		LEA(EAX, [ESI, 0x130])   	//lea eax, [esi+130h] (eax = &m_oBoundingBox)
 	+   PUSH_EAX                 	//push eax
-	,
+
+	,//3
 		Exe.BuildDate < 20150000
 	?	PUSH(ECX)             	    //push ecx OR
 	:	PUSH([EBP, 8]) 		        //push dword ptr [ebp+8] ; ARG.1

@@ -144,7 +144,7 @@ ResizeNpcBox = function()
 		const found = Exe.FindHex(code, memAddr - 0x80, memAddr);
 		if (found > 0)
 			return [found, memAddr];
-	}
+	});
 	if (!result)
 		throw Error("Zc_Say_Dialog not found");
 	
