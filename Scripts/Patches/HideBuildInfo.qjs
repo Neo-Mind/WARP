@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-01-23                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,14 +31,14 @@
 ///
 HideBuildInfo = function()
 {
-	let _ = 'HideBuildInfo : ';
+	const _ = 'HideBuildInfo : ';
 
     $$(_ + '1 - Find the format strings')
-    let verStr = Exe.FindText("ver : %d.%d.%d");
+    const verStr = Exe.FindText("ver : %d.%d.%d");
     if (verStr < 0)
         throw Error("Version format string missing");
 
-	let snStr = Exe.FindText("s/n : %s", false);
+	const snStr = Exe.FindText("s/n : %s", false);
     if (snStr < 0)
         throw Error("Serial format string missing");
 
@@ -91,7 +91,7 @@ HideBuildInfo = function()
 	);
 
 	$$(_ + '3.1 - Find the string containing \'myLog("\'')
-	let myStr = Exe.FindText("myLog(\"", false, false);
+	const myStr = Exe.FindText("myLog(\"", false, false);
 	if (myStr > 0)
 	{
 		$$(_ + '3.2 - Add to erase list')
@@ -99,7 +99,7 @@ HideBuildInfo = function()
 	}
 
     $$(_ + '3.3 - Find the string containing \'EnterTraceLog(\"\'')
-	let logStr = Exe.FindText("EnterTraceLog(\"", false, false);
+	const logStr = Exe.FindText("EnterTraceLog(\"", false, false);
 	if (logStr > 0)
 	{
 		$$(_ + '3.4 - Add to erase list')
@@ -108,16 +108,16 @@ HideBuildInfo = function()
 
 	$$(_ + '3.5 - Finally find all strings containing the year')
 	code = Math.floor(Exe.BuildDate / 10000) + "-";
-	let addrs = Exe.FindTextN(code, false, false);
+	const addrs = Exe.FindTextN(code, false, false);
 	eraseList.push(...addrs);
 
 	$$(_ + '4.1 - Zero out all the strings completely at the addresses in erase list')
-	eraseList.forEach( virAddr =>
+	for (const virAddr of eraseList)
 	{
-		let addr = Exe.Vir2Phy(virAddr);
-		let str = Exe.GetText(addr);
+		const addr = Exe.Vir2Phy(virAddr);
+		const str = Exe.GetText(addr);
 		Exe.SetHex(addr, ' 00'.repeat(str.length));
-	});
+	}
 
 	$$(_ + '4.2 - Finally \'NULL\' ify the timestamp & checksum in PE header')
 	addr = Exe.PEoffset + 0x18;

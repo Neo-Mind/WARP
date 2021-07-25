@@ -31,17 +31,17 @@
 ///
 NoGMSprite = function()
 {
-	let _ = 'NoGMSprite : ';
+	const _ = 'NoGMSprite : ';
 
 	$$(_ + '1.1 - Find the location where both functions are called')
-	let halfCode =
+	const halfCode =
 		PUSH(POS3WC)    //push offset actName / sprName
 	+	PUSH(5)         //push 5 ; layer
 	+	MOV(ECX, R32)   //mov ecx, regA
 	+	CALL(NEG2WC)    //call CPc::SetActNameList / CPc::SetSprNameList
 	;
-	let code = halfCode + halfCode;
-	let addr = Exe.FindHex(code);
+	const code = halfCode + halfCode;
+	const addr = Exe.FindHex(code);
 
 	/* - Seems to be not of any use
 	if (addr < 0)
@@ -55,30 +55,31 @@ NoGMSprite = function()
 		throw Error("Function CALLs not found");
 
 	$$(_ + '1.2 - Extract the Function addresses (PHYSICAL)')
-	let pos2 = code.byteCount() - 4;
-	let pos1 = pos2 - halfCode.byteCount();
+	const pos2 = code.byteCount() - 4;
+	const pos1 = pos2 - halfCode.byteCount();
 
-	let funcs = [
+	const funcs =
+	[
 		Exe.GetTgtAddr(addr + pos1, PHYSICAL), //CPc::SetActNameList PHYSICAL address
 		Exe.GetTgtAddr(addr + pos2, PHYSICAL)  //CPc::SetSprNameList PHYSICAL address
 	];
 
 	$$(_ + '2.1 - Prep code to look for IsNameYellow function call')
-	let prefix =
+	const prefix =
 		CALL(ALLWC)     //call IsNameYellow ; Compares accountID against GM IDs
 	+	ADD(ESP, 4)     //add esp, 4
 	+	TEST(AL, AL)    //test al, al
 	;
-	let csize = prefix.byteCount();
+	const csize = prefix.byteCount();
 
-	let suffix = JZ(Exe.Version === 9 ? WCp : POS2WC);
+	const suffix = JZ(Exe.Version === 9 ? WCp : POS2WC);
 
 	funcs.forEach( (fnAddr, i) =>
 	{
-		let __ = `${_} [${i}] `;
+		const __ = `${_} [${i}] `;
 
 		$$(__ + '2.2 - Find the CALL inside the Set*NameList functions')
-		let addr = Exe.FindHex(prefix + suffix, fnAddr, fnAddr + 0x80);
+		const addr = Exe.FindHex(prefix + suffix, fnAddr, fnAddr + 0x80);
 		if (addr < 0)
 			throw Error(`CALL not found for No. ${i+1}`);
 

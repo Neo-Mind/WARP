@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-07-21                                             *
+*   Last Modified : 2021-07-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -283,9 +283,16 @@ if (typeof OpData === 'undefined')
 						this.Disp = this.Disp || 0;
 					}
 				}
+				
+				/// 1.9 - Set the displacement size for scale > 1
+				if ('Disp' in this && this.Scale > 1)
+				{
+					this.DpSize = 32;
+					return;
+				}
 			}
 
-			/// 2.1 - If not a number check if its a register
+			/// 2 - If not a number check if its a register
 			else if(IsReg(first)) //reg + *
 			{
 				/// 2.1 - Save the register as index reg (may or may not be used as a SIB later on)
@@ -304,12 +311,7 @@ if (typeof OpData === 'undefined')
 				else if (this.Index.is(ESP))
 					this.Base = ESP;
 
-				/// 2.5 - Calculate the displacement size
-				if ('Disp' in this) //only defined for num or str displacements
-				{
-					const dsize = BitWidth(this.Disp);
-					this.DpSize = (dsize > 8) ? this.AdSize : dsize;
-				}
+				/// 2.5 - Setup the displacement
 				if ('Base' in this)
 				{
 					if (this.Base.is(EBP)) //Intentionally EBP then need a displacement of 0 atleast

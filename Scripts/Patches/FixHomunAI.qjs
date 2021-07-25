@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,12 +31,12 @@
 ///
 FixHomunAI = function()
 {
-	let _ = 'FixHomunAI : ';
+	const _ = 'FixHomunAI : ';
 
 	$$(_ + '1.1 - Find the homunculi\'s target select checker function')
-	let isNewType = Exe.BuildDate > 20200715;
+	const isNewType = Exe.BuildDate > 20200715;
 
-	let disp = isNewType ? 0xE4 : 0xE0;
+	const disp = isNewType ? 0xE4 : 0xE0;
 
 	let prefix =
 		FP_START              //push ebp
@@ -69,7 +69,7 @@ FixHomunAI = function()
 	+	RETN(4)               //retn 4
 	;
 
-	let addr = Exe.FindHex(prefix + suffix);
+	const addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("Checker function missing");
 
@@ -80,22 +80,22 @@ FixHomunAI = function()
 	prefix = PUSH_0.repeat(Exe.BuildDate >= 20191020 ? 9 : 4); // 9 x push 0 OR 4 x push 0 depending on the client date
 	suffix = PUSH(0x86); //push 86h
 
-	let count = isNewType ? 1 : 2; //latest clients only have 1 of these
+	const count = isNewType ? 1 : 2; //latest clients only have 1 of these
 
-	let addrs = Exe.FindHexN(prefix + suffix);
+	const addrs = Exe.FindHexN(prefix + suffix);
 	if (addrs.length !== count)
 		throw Error("Cursor code missing");
 
 	$$(_ + '2.2 - Enforce the conditional jump before it to skip it')
-	let pat = isNewType ? JNZ(WCp) : JZ(WCp); //newer clients have jnz
-	addrs.forEach( memAddr =>
+	const pat = isNewType ? JNZ(WCp) : JZ(WCp); //newer clients have jnz
+	for (const memAddr of addrs)
 	{
-		let addr = Exe.FindLastHex(pat, memAddr, memAddr - 6);
+		const addr = Exe.FindLastHex(pat, memAddr, memAddr - 6);
 		if (addr < 0)
 			throw Error("Found false match");
 
 		Exe.SetJMP(addr);
-	});
+	}
 
 	return true;
 };

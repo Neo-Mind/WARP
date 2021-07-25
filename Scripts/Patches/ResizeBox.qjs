@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,6 +39,7 @@ if (typeof RB_Data === 'undefined')
 		{
 			varName : '$chatBoxLen',
 			arg1 : 0xF0,
+			arg2 : 0xF0,
 			prefix : 'Chat'
 		},
 
@@ -46,6 +47,7 @@ if (typeof RB_Data === 'undefined')
 		{
 			varName : '$chatRoomBoxLen',
 			arg1 : 0xF2,
+			arg2 : 0xF2,
 			prefix : 'Chat Room'
 		},
 
@@ -65,10 +67,10 @@ if (typeof RB_Data === 'undefined')
 ///
 ResizeBox = function(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Retrieve the data corresponding to the patchName')
-	let {varName, arg1, arg2, prefix} = RB_Data[patchName];
+	const {varName, arg1, arg2, prefix} = RB_Data[patchName];
 
 	$$(_ + '1.2 - Find the limit setter (there will be atleast 4 matches)')
 	let addrs = Exe.FindHexN( MOV([EAX, WCp], 0x46) ); //mov dword ptr [eax + disp8A], 46h (70)
@@ -83,21 +85,19 @@ ResizeBox = function(patchName)
 		throw Error("Not enough MOVes found");
 
 	$$(_ + '2 - Get the new box length from user')
-	let boxLen = Exe.GetUserInput(varName, D_Uint32, prefix + " Box Length", "Enter the new box length in no of chars", 0x46, {min:1, max:255});
+	const boxLen = Exe.GetUserInput(varName, D_Uint32, prefix + " Box Length", "Enter the new box length in no of chars", 0x46, {min:1, max:255});
 	if (boxLen === false)
 		Cancel("Box Length", 70);
 
 	$$(_ + '3 - Find the correct address based on the arguments being PUSHed before it and set the value to boxLen')
-	arg2 = arg2 ?? arg1;
-
-	let pattern =
+	const pattern =
 		PUSH(arg1)  //push <arg1>
 	+	PUSH(arg2)  //push <arg2>
 	;
 
-	let found = addrs.find(addr =>
+	const found = addrs.find( addr =>
 	{
-		let tgtAddr = Exe.FindHex(pattern, addr - 0x20, addr)	;
+		const tgtAddr = Exe.FindHex(pattern, addr - 0x20, addr)	;
 		if (tgtAddr > 0)
 		{
 			Exe.SetFromVar(addr + delta, varName);
@@ -126,15 +126,15 @@ ResizePMBox       = ResizeBox;
 ///
 ResizeNpcBox = function()
 {
-	let _ = 'ResizeNpcBox : ';
+	const _ = 'ResizeNpcBox : ';
 
 	$$(_ + '1.1 - Find \'|%02x\'')
-	let addr = Exe.FindText("|%02x");
+	const addr = Exe.FindText("|%02x");
 	if (addr < 0)
 		throw Error("Format string not found");
 
 	$$(_ + '1.2 - Find all locations where it is PUSHed')
-	let addrs = Exe.FindHexN( PUSH(addr) );
+	const addrs = Exe.FindHexN( PUSH(addr) );
 	if (addrs.isEmpty())
 		throw Error("Format string not PUSHed");
 
@@ -142,7 +142,7 @@ ResizeNpcBox = function()
 	let code = SUB(ESP, " ?? 08 00 00"); //SUB ESP, const; where const = 804+x
 	let subAddr = -1;
 
-	let refAddr = addrs.find(addr =>
+	const refAddr = addrs.find(addr =>
 	{
 		subAddr = Exe.FindHex(code, addr - 0x80, addr);
 		return (subAddr > 0);
@@ -152,7 +152,7 @@ ResizeNpcBox = function()
 		throw Error("Zc_Say_Dialog not found");
 
 	$$(_ + '1.4 - Extract the allocated byte count (x in SUB ESP, x)')
-	let stackSub = Exe.GetInt32(subAddr + 2);
+	const stackSub = Exe.GetInt32(subAddr + 2);
 
 	$$(_ + '2.1 - Find the End of the Function')
 	if (ROC.HasFP)
@@ -170,12 +170,12 @@ ResizeNpcBox = function()
 		+   RETN(4)            //retn 4
 		;
 	}
-	let addr2 = Exe.FindHex(code, refAddr + 5, subAddr + 0x200);
+	const addr2 = Exe.FindHex(code, refAddr + 5, subAddr + 0x200);
 	if (addr2 < 0)
 		throw Error("Zc_Say_Dialog end not found");
 
 	$$(_ + '2.2 - Get new value from user')
-	let value = Exe.GetUserInput('$npcBoxLength', D_Int32, "NPC Dialog Size", "Enter new NPC Dialog box length", 0x804, {min:0x804, max:0x1000});
+	const value = Exe.GetUserInput('$npcBoxLength', D_Int32, "NPC Dialog Size", "Enter new NPC Dialog box length", 0x804, {min:0x804, max:0x1000});
 	if (value === false)
 		Cancel("Size", 2052);
 
@@ -187,10 +187,9 @@ ResizeNpcBox = function()
 		$$(_ + '3.1 - Update all EBP-x+i Stack references, for now we are limiting i to (0 - 3)')
 		for (let i = 0; i <= 3; i++)
 		{
-			code = (i - stackSub).toHex();//-x+i
-			Exe.FindHexN(code, subAddr + 6, addr2).forEach(
-				addr => Exe.SetInt32(addr, i - value)
-			);
+			const code = (i - stackSub).toHex();//-x+i
+			for (const addr of Exe.FindHexN(code, subAddr + 6, addr2))
+				Exe.SetInt32(addr, i - value);
 		}
 	}
 	else
@@ -200,9 +199,8 @@ ResizeNpcBox = function()
 		$$(_ + '3.2 - Update all ESP+i Stack references, where i is in (0x804 - 0x820)')
 		for (let i = 0x804; i <= 0x820; i += 4)
 		{
-			Exe.FindHexN(i.toHex(), subAddr + 6, addr2).forEach(
-				addr => Exe.SetInt32(addr, value + i - 0x804)
-			);
+			for (const addr of Exe.FindHexN(i.toHex(), subAddr + 6, addr2))
+				Exe.SetInt32(addr, value + i - 0x804);
 		}
 	}
 

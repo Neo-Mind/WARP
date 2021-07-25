@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, X-EcutiOnner, Neo-Mind                         *
 *   Created Date  : 2021-06-01                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@
 ///
 FixArrowsCharset = function()
 {
-	let _ = 'FixArrowsCharset : ';
+	const _ = 'FixArrowsCharset : ';
 
 	$$(_ + '1.1 - Find the Up, Right & Down arrow strings (they are always together)')
 	let code =
@@ -46,7 +46,7 @@ FixArrowsCharset = function()
     +   " 00 "      // 11 db 0
 	;
 
-	let addr = Exe.FindHex(code, Exe.GetSectBegin(DATA), Exe.GetSectEnd(DATA));
+	const addr = Exe.FindHex(code, Exe.GetSectBegin(DATA), Exe.GetSectEnd(DATA));
 	if (addr < 0)
 		throw Error("First set of arrows missing");
 
@@ -56,7 +56,7 @@ FixArrowsCharset = function()
     +   " 00 "      // db 0
 	;
 
-	let addrL = Exe.FindLastHex(code, addr, Exe.GetSectBegin(DATA));
+	const addrL = Exe.FindLastHex(code, addr, Exe.GetSectBegin(DATA));
 	if (addrL < 0)
 		throw Error("Left arrow missing");
 
@@ -66,26 +66,26 @@ FixArrowsCharset = function()
     +   " 00 "      // db 0
 	;
 
-	let addrM = Exe.FindHex(code, addr, Exe.GetSectEnd(DATA));
+	const addrM = Exe.FindHex(code, addr, Exe.GetSectEnd(DATA));
 	if (addrM < 0)
 		throw Error("Square missing");
 
 	$$(_ + '2 - Replace the strings'); //semicolon needed here
+	for (const [tgtAddr, val] of 
 	[
 		[addrL   , " 20 3C"], //left arrow
 		[addr    , " 20 5E"], //up arrow
 		[addr + 4, " 20 3E"], //right arrow
 		[addr + 8, " 20 76"], //down arrow
 		[addrM   , " 20 3D"]  //menu symbol (had to use '=' sadly)
-	].forEach(
-		pair => Exe.SetHex(pair[0], pair[1])
-	);
+	])
+		Exe.SetHex(tgtAddr, val);
 
     return true;
 };
 
 ///
-/// \brief Disable for unsupported client
+/// \brief Disable for unsupported clients
 ///
 FixArrowsCharset.validate = () =>
 	Exe.BuildDate >= 20170000;

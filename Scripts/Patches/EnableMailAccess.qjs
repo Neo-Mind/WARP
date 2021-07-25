@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,13 +31,13 @@
 ///
 EnableMailAccess = function()
 {
-	let _ = 'EnableMailAccess : ';
+	const _ = 'EnableMailAccess : ';
 
 	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
 	$$(_ + '1.2 - Prepare codes for finding short jumps')
-	let tc = " [.0.....1] [11000...]"; //Common match for test eax, eax AND cmp eax, regA
+	const tc = " [.0.....1] [11000...]"; //Common match for test eax, eax AND cmp eax, regA
 
 	let code =
 		tc           //test OR cmp
@@ -60,10 +60,11 @@ EnableMailAccess = function()
 		throw Error("Second comparison not found");
 
 	$$(_ + '1.5 - NOP out the entire "code" (since nopCount is large internally we will get a JMP automatically)'); //semicolon needed here
-	[addr, ...addrs].forEach( memAddr => Exe.SetNOPs(memAddr, nopCount) );
+	for (const memAddr of [addr, ...addrs])
+		Exe.SetNOPs(memAddr, nopCount);
 
 	$$(_ + '2.1 - Prepare codes for finding Long jumps')
-	let prefix = MOV(EAX, [LANGTYPE]);    //MOV EAX, dword ptr [g_serviceType]
+	const prefix = MOV(EAX, [LANGTYPE]);    //MOV EAX, dword ptr [g_serviceType]
 
 	code =
 		tc           //test OR cmp
@@ -83,7 +84,7 @@ EnableMailAccess = function()
 	if (addrs.length === 3)
 	{
 		$$(_ + '2.3 - If only 3 locations were found then one got missed, so we will use different pattern to look for it')
-		let addr = Exe.FindHex(code + PUSH(0x23)); //push 23h
+		const addr = Exe.FindHex(code + PUSH(0x23)); //push 23h
 		if (addr < 0)
 			throw Error("Fourth comparison not found");
 
@@ -92,7 +93,8 @@ EnableMailAccess = function()
 	}
 
 	$$(_ + '2.5 - NOP out the "code"')
-	addrs.forEach( addr => Exe.SetNOPs(addr + 5, nopCount) );
+	for (const addr of addrs)
+		Exe.SetNOPs(addr + 5, nopCount);
 
 	return true;
 };

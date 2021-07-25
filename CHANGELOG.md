@@ -1,3 +1,11 @@
+# 2021-07-24 Changes
+
+## Patch Updates
+- Corrected 1 bug in `OpData` class.
+- Fixed [issue in Packet key patches](https://github.com/Neo-Mind/WARP/issues/55) for latest clients.
+- Fixed [issue with Resize MVP health bar](https://github.com/Neo-Mind/WARP/issues/57).
+
+
 # 2021-07-23 Changes
 
 ## Patch Updates
