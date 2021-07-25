@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Andrei (4144)                                 *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,30 +33,30 @@
 ///
 FixActDelay = function()
 {
-	let _ = 'FixActDelay : ';
+	const _ = 'FixActDelay : ';
 
 	$$(_ + '1 - Find the GetDelay CALL')
-	let part1 =
+	const prefix =
 		FSTP([EBP, WCp])        //fstp dword ptr [ebp + actIndex]
 	+	MOVSS(XMM0, [EBP, WCp]) //movss xmm0, dword ptr [ebp + actIndex]
 	+	XORPS(XMM1, XMM1)       //xorps xmm1, xmm1
 	+	COMISS(XMM1, XMM0)      //comiss xmm1, xmm0
 	+	MOVSS([EBP, WCp], XMM0) //movss dword ptr [ebp + actIndex], xmm0
 	;
-	let part2 =
+	const suffix =
 		JB(WCp)                 //jb short _skip
 	+	PUSH(EDI)               //push edi
 	+	MOV(ECX, EBX)           //mov ecx, ebx
 	+	CALL()                  //call CActRes::GetDelay
 	;
 
-	let addr = Exe.FindHex(part1 + part2);
+	const addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("GetDelay CALL missing");
 
-	let addr2 = addr + part1.byteCount();
+	const addr2 = addr + prefix.byteCount();
 
-	let index = Exe.GetUint8(addr + 2);
+	const index = Exe.GetUint8(addr + 2);
 	if (index != Exe.GetUint8(addr + 7) || index != Exe.GetUint8(addr2 - 1))
 		throw Error("False match with different indices");
 

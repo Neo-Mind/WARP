@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,16 +32,16 @@
 ///
 EnableEotFonts = function()
 {
-	let _ = 'EnableEotFonts : ';
+	const _ = 'EnableEotFonts : ';
 
 	$$(_ + '1 - Find the Langtype comparison')
-	let code =
+	const code =
 		JNE(0xAE)    //jne _skip - Skips .eot loading
 	+   CALL(ALLWC)  //call func#1
 	+	PUSH(POS3WC) //push offset <ro url>
 	;
 
-	let addr = Exe.FindHex(code);
+	const addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Langtype comparison not found");
 

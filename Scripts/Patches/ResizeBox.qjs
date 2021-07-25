@@ -95,7 +95,7 @@ ResizeBox = function(patchName)
 	+	PUSH(arg2)  //push <arg2>
 	;
 
-	const found = addrs.find( addr =>
+	const found = addrs.some( addr =>
 	{
 		const tgtAddr = Exe.FindHex(pattern, addr - 0x20, addr)	;
 		if (tgtAddr > 0)
@@ -103,10 +103,8 @@ ResizeBox = function(patchName)
 			Exe.SetFromVar(addr + delta, varName);
 			return true;
 		}
-		else
-		{
-			return false;
-		}
+		
+		return false;
 	});
 	if (!found)
 		throw Error("No matches found for Arg PUSHes");
@@ -140,17 +138,18 @@ ResizeNpcBox = function()
 
 	$$(_ + '1.3 - Find the Stack allocation instruction within 80h bytes before the PUSH (only 1 location will have it)')
 	let code = SUB(ESP, " ?? 08 00 00"); //SUB ESP, const; where const = 804+x
-	let subAddr = -1;
-
-	const refAddr = addrs.find(addr =>
+	
+	const result = addrs.findAs( memAddr =>
 	{
-		subAddr = Exe.FindHex(code, addr - 0x80, addr);
-		return (subAddr > 0);
-	});
-
-	if (!refAddr)
+		const found = Exe.FindHex(code, memAddr - 0x80, memAddr);
+		if (found > 0)
+			return [found, memAddr];
+	}
+	if (!result)
 		throw Error("Zc_Say_Dialog not found");
-
+	
+	const [subAddr, refAddr] = result;
+	
 	$$(_ + '1.4 - Extract the allocated byte count (x in SUB ESP, x)')
 	const stackSub = Exe.GetInt32(subAddr + 2);
 

@@ -1,3 +1,10 @@
+# 2021-07-25 Changes
+
+## Patch Updates
+- Added `findAs` function to `Array` types as an extended version of `find`. The function provided as argument can return the result required instead of `true`.
+- Forgot to identify `GetInstr` function earlier. Fixed now.
+- Rearranging some codes and using `const` where appropriate.
+
 # 2021-07-24 Changes
 
 ## Patch Updates

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Secret, A.K.M., Neo-Mind                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ///
 Intravision = function()
 {
-	let _ = 'Intravision : ';
+	const _ = 'Intravision : ';
 
 	$$(_ + '1 - Find the comparison loop')
 	let code;
@@ -55,7 +55,7 @@ Intravision = function()
 		+	JNZ(WCn)					//jnz short _loop
 		;
 	}
-	let addrs = Exe.FindHexN(code);
+	const addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
 		throw Error("Comparison missing");
 
@@ -66,7 +66,7 @@ Intravision = function()
 	+	CALL()							//call func#1
 	;
 
-	let found = addrs.filter( addr =>
+	const found = addrs.filter( addr =>
 	{
 		if (Exe.FindHex(code, addr - 0x30, addr) > 0)
 		{

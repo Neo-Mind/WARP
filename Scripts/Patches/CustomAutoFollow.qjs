@@ -85,7 +85,7 @@ DecrAFDelay = function()
 	const _ = 'DecrAFDelay : ';
 
 	$$(_ + '1.1 - Find the delay comparisons')
-	const reg = Exe.Version > 6 ? EDI : EBX
+	const reg = Exe.Version > 6 ? EDI : EBX;
 	const code =
 		CALL(reg)           //call edi / call ebx           ; [<&WINMM.timeGetTime>]
 	+	SUB(EAX, [POS4WC])  //sub eax, dword ptr [offset#1] ; lastFollowTime

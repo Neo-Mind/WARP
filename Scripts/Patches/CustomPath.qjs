@@ -359,23 +359,21 @@ CustomClientInfo = function()
 		];
 	}
 
-	let addr = -1;
-	let hasMore; //indicates there are more addresses for replacement
-
-	const code = patterns.find( (pat, index) =>
+	const result = patterns.findAs( (pat, index) =>
 	{
-		addr = Exe.FindHex(pat, fromAddr, toAddr);
-		hasMore = index < patterns.length - 1; //false for the last index in both pattern list
-
-		return (addr > 0);
+		const found = Exe.FindHex(pat, fromAddr, toAddr);
+		if (found > 0)
+			return [found + pat.byteCount() - 4, index < patterns.length - 1]; //first element is the position of the CCI_Addr, second indicates there are more addresses for replacement
 	});
-
-	if (addr < 0)
+	
+	if (!result)
 		throw Error("clientinfo not used");
+	
+	const [addr, hasMore] = result;
 
 	$$(_ + '1.4 - Add the address & displacement offset to repLocs')
 	let repLocs = new Map();
-	repLocs.set(0, addr + code.byteCount() - 4);
+	repLocs.set(0, addr);
 
 	$$(_ + '1.5 - Find the additional references & save the locations where replacement need to be made')
 	if (hasMore)
@@ -385,7 +383,7 @@ CustomClientInfo = function()
 		{
 			if (CCI_Name === "sclientinfo.xml")
 			{
-				addr = Exe.FindHex(MOVSS(XMM$, [CCI_Addr + 8]), fromAddr, toAddr); //movss xmmA, qword ptr [CCI_Addr + 8]
+				let addr = Exe.FindHex(MOVSS(XMM$, [CCI_Addr + 8]), fromAddr, toAddr); //movss xmmA, qword ptr [CCI_Addr + 8]
 				if (addr < 0)
 				{
 					has4th = false; //already takes care of the 4th part because 8 bytes are retrieved
@@ -398,7 +396,7 @@ CustomClientInfo = function()
 			}
 			else
 			{
-				addr = Exe.FindHex(MOV(EAX, [CCI_Addr + 8]), fromAddr, toAddr); //mov eax, dword ptr [CCI_Addr + 8]
+				let addr = Exe.FindHex(MOV(EAX, [CCI_Addr + 8]), fromAddr, toAddr); //mov eax, dword ptr [CCI_Addr + 8]
 				if (addr < 0)
 					throw Error("2nd reference missing");
 
@@ -415,7 +413,7 @@ CustomClientInfo = function()
 		{
 			[4, 8, 0xC].forEach( (disp, idx) =>
 			{
-				addr = Exe.FindHex(MOV(R32, [CCI_Addr + disp]), fromAddr, toAddr); //mov regB, dword ptr [CCI_Addr + disp]
+				let addr = Exe.FindHex(MOV(R32, [CCI_Addr + disp]), fromAddr, toAddr); //mov regB, dword ptr [CCI_Addr + disp]
 				let offset = 2;
 
 				if (addr < 0)
@@ -432,7 +430,7 @@ CustomClientInfo = function()
 
 		if (has4th)
 		{
-			addr = Exe.FindHex(MOV(AL, [CCI_Addr + 0xE]), fromAddr, toAddr); //mov al, byte ptr [CCI_Addr + 0Eh]
+			let addr = Exe.FindHex(MOV(AL, [CCI_Addr + 0xE]), fromAddr, toAddr); //mov al, byte ptr [CCI_Addr + 0Eh]
 			let offset = 1;
 
 			if (addr < 0)
@@ -460,7 +458,8 @@ CustomClientInfo = function()
 	Exe.AddFromVar(free, varName);
 
 	$$(_ + '2.4 - Adjust the references')
-	repLocs.forEach( (addr, disp) => Exe.SetUint32(addr, freeVir + disp) );
+	for (const [disp, addr] of repLocs)
+		Exe.SetUint32(addr, freeVir + disp);
 
 	return true;
 };

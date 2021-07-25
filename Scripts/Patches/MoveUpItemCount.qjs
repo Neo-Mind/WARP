@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ///
 MoveUpItemCount = function()
 {
-	let _ = 'MoveUpItemCount : ';
+	const _ = 'MoveUpItemCount : ';
 
     $$(_ + '1 - Find the pattern after the comparison inside DrawItemWithCount function')
 	let code;
@@ -81,7 +81,7 @@ MoveUpItemCount = function()
 		}
 	}
 
-	let addrs = Exe.FindHexN(code);
+	const addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
         throw Error("No Patterns found");
 
@@ -128,13 +128,12 @@ MoveUpItemCount = function()
 	code += JE(WCp);                          //je short _next ; Common suffix
 
     $$(_ + '2.2 - Find the comparison within 50h bytes before one of the patterns')
-    let cmpAddr = -1;
-	addrs.find( addr =>
+    const cmpAddr = addrs.findAs( addr =>
     {
-        cmpAddr = Exe.FindHex(code, addr - 0x50, addr);
-        return (cmpAddr > 0);
+        const found = Exe.FindHex(code, addr - 0x50, addr);
+        if (found > 0)
+			return found;
     });
-
 	if (cmpAddr < 0)
         throw Error("Comparison not found");
 

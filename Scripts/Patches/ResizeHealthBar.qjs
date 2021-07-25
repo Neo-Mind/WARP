@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-24                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -73,26 +73,19 @@ ResizePlayerBar = function()
 		throw Error("Invalid no of matches found");
 
 	$$(_ + '1.3 - Now find the subtraction after it. The pattern changes a lot between 2008 - 2019 so this is the only foolproof way')
-
-	let halfAddr = -1;
 	const MovEAX = MOV(EAX, 0x88888889); //mov eax, 88888889h
 
-	addrs.find( addr =>
+	const halfAddr = addrs.findAs( memAddr =>
 	{
-		const addr2 = Exe.FindHex(MovEAX, addr + 10, addr + 0x80);
-		if (addr2 > 0)
+		const addr = Exe.FindHex(MovEAX, memAddr + 10, memAddr + 0x80);
+		if (addr > 0)
 		{
-			const result = FindInstr(_RPB_SubTest, addr, addr + 0x80);
-			if (result !== false)
-			{
-				halfAddr = result.Addr;
-				return true;
-			}
+			const result = FindInstr(_RPB_SubTest, memAddr, memAddr + 0x80);
+			if (result)
+				return result.Addr;
 		}
-		return false;
 	});
-
-	if (halfAddr < 0)
+	if (!halfAddr)
 		throw Error("Half Width subtraction missing");
 
 	$$(_ + '2.1 - Get the new dimensions from user')

@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Secret, Andrei (4144), X-EcutiOnner                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,13 +33,13 @@
 ///
 LoadKrExtSettings = function()
 {
-	let _ = 'LoadKrExtSettings : ';
+	const _ = 'LoadKrExtSettings : ';
 
 	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
 	$$(_ + '1.2 - Find where the string is PUSHed')
-	let refAddr = Exe.FindHex( PUSH(LKES_Addr) );
+	const refAddr = Exe.FindHex( PUSH(LKES_Addr) );
 	if (refAddr < 0)
 		throw Error("'ExternalSettings_kr' reference missing");
 
@@ -51,7 +51,7 @@ LoadKrExtSettings = function()
 	+	JA()                  //ja _skip
 	;
 
-	let addr = Exe.FindHex(code, refAddr - 0x80, refAddr);
+	const addr = Exe.FindHex(code, refAddr - 0x80, refAddr);
 	if (addr < 0)
 		throw Error("Langtype Comparison not found");
 
