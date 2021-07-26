@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,23 +31,25 @@
 ///
 NoHardCodedIP = function()
 {
-	let _ = 'NoHardCodedIP : ';
+	const _ = 'NoHardCodedIP : ';
 
 	$$(_ + '1 - Construct all the hardcoded ip addresses')
-	let ipAddrs = [
+	const ipAddrs = [
 		"http://112.175.128.140:3000",
 		"http://112.175.128.30:3000",
 		"http://192.168.5.54:3000"
 	];
 
 	$$(_ + '2 - Find all instances and replace with 0.0.0.0')
-	let found = ipAddrs.filter( ip =>
+	const found = ipAddrs.filter( ip =>
 	{
-		let addrs = Exe.FindTextN(ip, PHYSICAL, true, false);
+		const addrs = Exe.FindTextN(ip, PHYSICAL, true, false);
 		if (addrs.isEmpty())
 			return false;
 
-		addrs.forEach(addr => Exe.SetText(addr, "http://0.0.0.0/\x00"));
+		for (const addr of addrs)
+			Exe.SetText(addr, "http://0.0.0.0/\x00");
+
 		return true;
 	});
 
@@ -60,4 +62,6 @@ NoHardCodedIP = function()
 ///
 /// \brief Disable for unsupported clients
 ///
-NoHardCodedIP.validate = () => Exe.BuildDate >= 20170000;
+NoHardCodedIP.validate = () =>
+	Exe.BuildDate >= 20170000;
+

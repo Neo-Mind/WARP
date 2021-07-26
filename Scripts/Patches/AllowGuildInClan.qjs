@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Andrei (4144), Neo-Mind                       *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,16 +33,16 @@
 ///
 AllowGuildInClan = function()
 {
-	let _ = 'AllowGuildInClan : ';
+	const _ = 'AllowGuildInClan : ';
 
 	$$(_ + '1.1 - Find the original string (only valid for older VC10 clients before it got moved to msgstringtable)')
 	let addr = -1;
 	if (Exe.BuildDate < 20141020)
 	{
-		let strAddr = Exe.FindText("You are currently joined in CLan !!");
+		const strAddr = Exe.FindText("You are currently joined in CLan !!");
 		if (strAddr > 0)
 		{
-			let code =
+			const code =
 				JNE(WCp)                //jne short _skip
 			+	LEA(R32, [EBP, NEG3WC]) //lea regA, [LOCAL.x]
 			+	PUSH(strAddr)           //push offset "You are currently joined in CLan !!"
@@ -85,7 +85,7 @@ AllowGuildInClan = function()
 	Exe.SetJMP(addr);
 
 	$$(_ + '2.1 - Look for JNE followed by EAX assignment to 0x168 after the above')
-	let code =
+	const code =
 		JNZ(NEG3WC)              //jnz _skip#2
 	+	(Exe.Version < 11
 	?
@@ -97,7 +97,7 @@ AllowGuildInClan = function()
 	+	MOV(EAX, 0x168)          //mov eax, 168h
 	;
 
-	let jnzAddr = Exe.FindHex(code, addr + 20, addr + 0x200);
+	const jnzAddr = Exe.FindHex(code, addr + 20, addr + 0x200);
 	if (addr < 0)
 		throw Error("Magic jump not found");
 

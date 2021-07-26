@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : GreenBox, Neo-Mind                                     *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,13 +33,13 @@
 ///
 SendMD5Hash = function()
 {
-	let _ = 'SendMD5Hash : ';
+	const _ = 'SendMD5Hash : ';
 
 	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
 	$$(_ + '1.2 - Prep comparison patterns to look for')
-	let patterns =
+	const patterns =
 	[
 			MOV(R32, [LANGTYPE]) //mov regA, dword ptr [g_serviceType]
 		+   XOR(EAX, EAX)        //xor eax, eax
@@ -53,22 +53,22 @@ SendMD5Hash = function()
 			CMP(EAX, 6)          //cmp eax, 6  ; EAX has [g_serviceType]
 		+   JNE(WCp)             //jne short _skip
 	];
-	let delta = [2, 7, 2];
+	const delta = [2, 7, 2];
 
 	$$(_ + '2.1 - Set the starting addr as the beginning of CODE section')
 	let addr = Exe.GetSectBegin(CODE);
 
-	patterns.forEach( (pat, index) =>
+	patterns.forEach( (pat, idx) =>
 	{
-		let __ = `${_} [${index}] `;
+		const __ = `${_} [${idx}] `;
 
 		$$(__ + '2.2 - Find the Langtype comparison')
 		addr = Exe.FindHex(pat, addr);
 		if (addr < 0)
-			throw Error(`Comparison no. ${index+1} not found`);
+			throw Error(`Comparison no. ${idx+1} not found`);
 
 		$$(__ + '2.3 - Set addr to location after conditional jump')
-		addr += pat.byteCount() - delta[index];
+		addr += pat.byteCount() - delta[idx];
 
 		$$(__ + '2.4 - Change the conditional jump')
 		Exe.SetJMP(addr);

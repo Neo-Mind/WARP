@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ///
 No3DBoneLimit = function()
 {
-	let _ = 'No3DBoneLimit : ';
+	const _ = 'No3DBoneLimit : ';
 
 	$$(_ + '1.1 - Find the format string (used in sprintf for 3d mob bones)')
 	let addr = Exe.FindText("model\\3dmob_bone\\%d_%s.gr2", CASE_INSENSITIVE);
@@ -88,7 +88,7 @@ No3DBoneLimit = function()
 	+	JNE(" 2?")      //jne short _proceed ; distance can be 26, 27 or 28
 	;
 
-	let indexAddr = Exe.FindHex(code, limitAddr, limitAddr + 0x20);
+	const indexAddr = Exe.FindHex(code, limitAddr, limitAddr + 0x20);
 	if (indexAddr < 0)
 		throw Error("Index check not found");
 

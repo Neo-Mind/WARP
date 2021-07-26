@@ -26,7 +26,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144), X-EcutiOnner    *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -139,14 +139,14 @@ if (typeof CP_Data === 'undefined') //avoid redefinition
 ///
 CustomPath = function(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Ensure \'Disable BGM\' is not selected (unless in test mode)')
 	if (!Warp.TestMode && patchName === 'CustomDefaultBGM')
 		Warp.SetPatchState("NoBGMAudio", false);
 
 	$$(_ + '1.2 - Retrieve the data for the index')
-	let {varName, prefix, strType, addr, name} = CP_Data[patchName];
+	const {varName, prefix, strType, addr, name} = CP_Data[patchName];
 
 	$$(_ + '1.3 - Find location where the string is used in a PUSH')
 	addr = Exe.FindHex( PUSH(addr) );
@@ -154,8 +154,8 @@ CustomPath = function(patchName)
 		throw Error(`'${name} not used`);
 
 	$$(_ + '1.4 - Get the new file name from user')
-	let suf = strType === "Prefix" ? "without .lub" : "";
-	let newStr = Exe.GetUserInput(
+	const suf = strType === "Prefix" ? "without .lub" : "";
+	const newStr = Exe.GetUserInput(
 		varName, D_Text, `File ${strType}`,
 		`Enter the new <b>${prefix} ${strType}</b> (relative to RO folder) ${suf}`,
 		name, {minLen: 1, maxLen: 100}
@@ -165,7 +165,7 @@ CustomPath = function(patchName)
 		Cancel(strType, name);
 
 	$$(_ + '2.1 - Allocate space to add the file name')
-	let [free, freeVir] = Exe.FindSpace(varName);
+	const [free, freeVir] = Exe.FindSpace(varName);
 
 	$$(_ + '2.2 - Add the name there')
 	Exe.AddFromVar(free, varName);
@@ -185,7 +185,7 @@ CustomPath.validate = (patchName) =>
 
 	if ('parts' in data) //need to derive the name from parts and then find its address.
 	{
-		let [pref, sakSuf, truSuf, suf] = data.parts;
+		const [pref, sakSuf, truSuf, suf] = data.parts;
 
 		let name = pref + "_" + (ROC.IsRenewal ? sakSuf : truSuf);
 		let addr = Exe.FindText(name, CASE_INSENSITIVE);
@@ -205,8 +205,8 @@ CustomPath.validate = (patchName) =>
 	}
 	else //name is provided directly
 	{
-		let {name} = CP_Data[patchName];
-		let addr = Exe.FindText(name, CASE_INSENSITIVE);
+		const {name} = CP_Data[patchName];
+		const addr = Exe.FindText(name, CASE_INSENSITIVE);
 
 		if (addr > 0)
 		{
@@ -236,7 +236,7 @@ CustomRcmdQuestInfoLub = CustomPath;
 CustomMonSizeEffLub = patchName => CustomPath(patchName);
 CustomMonSizeEffLub.validate = (patchName) =>
 {
-	let suf = (ROC.IsRenewal ? "_sak" : "");
+	const suf = (ROC.IsRenewal ? "_sak" : "");
 
 	let name = "System/monster_size_effect" + suf + "_new.lub";
 	let addr = Exe.FindText(name, CASE_INSENSITIVE);
@@ -262,7 +262,7 @@ CustomMonSizeEffLub.validate = (patchName) =>
 Orig_LicTxt = "..\\licence.txt";
 CustomLicenseTxt = function()
 {
-	let _ = 'CustomLicenseTxt : ';
+	const _ = 'CustomLicenseTxt : ';
 
 	$$(_ + '1.1 - Find \'..\\licence.txt\'')
 	let addr = Exe.FindText(Orig_LicTxt, CASE_INSENSITIVE);
@@ -275,8 +275,8 @@ CustomLicenseTxt = function()
 		throw Error(`'${Orig_LicTxt}' not assigned`);
 
 	$$(_ + '2.1 - Get new Filename from user')
-	let varName = '$licenseTXT';
-	let newFile = Exe.GetUserInput(varName, D_Text, "License file", "Enter the name of the Txt file", Orig_LicTxt, {minLen: 9, maxLen: 14});
+	const varName = '$licenseTXT';
+	const newFile = Exe.GetUserInput(varName, D_Text, "License file", "Enter the name of the Txt file", Orig_LicTxt, {minLen: 9, maxLen: 14});
 	if (newFile === false)
 		Cancel("License file", Orig_LicTxt);
 
@@ -295,7 +295,7 @@ CustomLicenseTxt = function()
 		throw Error("EULA string not found");
 
 	$$(_ + '3.2 - Prepare the new EULA error string using the filename received')
-	let eulaString = "No EULA text file. (" + newFile.replace("..\\", "") + ")\x00";
+	const eulaString = "No EULA text file. (" + newFile.replace("..\\", "") + ")\x00";
 
 	$$(_ + '3.3 - Allocate space to add the EULA error string');
 	[free, freeVir] = Exe.FindSpace(eulaString.length);
@@ -304,18 +304,19 @@ CustomLicenseTxt = function()
 	Exe.AddText(free, eulaString);
 
 	$$(_ + '3.5 - Update all PUSHes & assigments using the original EULA error string')
-	let found = [
+	const found = [
 		PUSH(0x20) + PUSH(addr),
 		MOV(ESI, addr),
 		MOV(EDI, addr)
 	].filter( code =>
 	{
-		let addrs = Exe.FindHexN(code);
+		const addrs = Exe.FindHexN(code);
 		if (addrs.isEmpty())
 			return false;
 
-		let csize = code.byteCount();
-		addrs.forEach( addr => Exe.SetInt32(addr + csize - 4, freeVir) );
+		const csize = code.byteCount();
+		for (const addr of addrs)
+			Exe.SetInt32(addr + csize - 4, freeVir);
 
 		return true;
 	});
@@ -331,14 +332,14 @@ CustomLicenseTxt = function()
 ///
 CustomClientInfo = function()
 {
-	let _ = 'CustomClientInfo : ';
+	const _ = 'CustomClientInfo : ';
 
 	$$(_ + '1.1 - Ensure the DGRF object is loaded')
 	DGRF.load();
 
 	$$(_ + '1.2 - Retrieve the refAddr (PUSH location) & calculate the end address')
-	let fromAddr = DGRF.RefAddr;
-	let toAddr = fromAddr + 0x100; //may not need this much
+	const fromAddr = DGRF.RefAddr;
+	const toAddr = fromAddr + 0x100; //may not need this much
 
 	$$(_ + '1.3 - Find where the XML is referenced')
 	let patterns;
@@ -358,23 +359,21 @@ CustomClientInfo = function()
 		];
 	}
 
-	let addr = -1;
-	let hasMore; //indicates there are more addresses for replacement
-
-	let code = patterns.find( (pat, index) =>
+	const result = patterns.findAs( (pat, index) =>
 	{
-		addr = Exe.FindHex(pat, fromAddr, toAddr);
-		hasMore = index < patterns.length - 1; //false for the last index in both pattern list
-
-		return (addr > 0);
+		const found = Exe.FindHex(pat, fromAddr, toAddr);
+		if (found > 0)
+			return [found + pat.byteCount() - 4, index < patterns.length - 1]; //first element is the position of the CCI_Addr, second indicates there are more addresses for replacement
 	});
-
-	if (addr < 0)
+	
+	if (!result)
 		throw Error("clientinfo not used");
+	
+	const [addr, hasMore] = result;
 
 	$$(_ + '1.4 - Add the address & displacement offset to repLocs')
 	let repLocs = new Map();
-	repLocs.set(0, addr + code.byteCount() - 4);
+	repLocs.set(0, addr);
 
 	$$(_ + '1.5 - Find the additional references & save the locations where replacement need to be made')
 	if (hasMore)
@@ -384,7 +383,7 @@ CustomClientInfo = function()
 		{
 			if (CCI_Name === "sclientinfo.xml")
 			{
-				addr = Exe.FindHex(MOVSS(XMM$, [CCI_Addr + 8]), fromAddr, toAddr); //movss xmmA, qword ptr [CCI_Addr + 8]
+				let addr = Exe.FindHex(MOVSS(XMM$, [CCI_Addr + 8]), fromAddr, toAddr); //movss xmmA, qword ptr [CCI_Addr + 8]
 				if (addr < 0)
 				{
 					has4th = false; //already takes care of the 4th part because 8 bytes are retrieved
@@ -397,7 +396,7 @@ CustomClientInfo = function()
 			}
 			else
 			{
-				addr = Exe.FindHex(MOV(EAX, [CCI_Addr + 8]), fromAddr, toAddr); //mov eax, dword ptr [CCI_Addr + 8]
+				let addr = Exe.FindHex(MOV(EAX, [CCI_Addr + 8]), fromAddr, toAddr); //mov eax, dword ptr [CCI_Addr + 8]
 				if (addr < 0)
 					throw Error("2nd reference missing");
 
@@ -414,7 +413,7 @@ CustomClientInfo = function()
 		{
 			[4, 8, 0xC].forEach( (disp, idx) =>
 			{
-				addr = Exe.FindHex(MOV(R32, [CCI_Addr + disp]), fromAddr, toAddr); //mov regB, dword ptr [CCI_Addr + disp]
+				let addr = Exe.FindHex(MOV(R32, [CCI_Addr + disp]), fromAddr, toAddr); //mov regB, dword ptr [CCI_Addr + disp]
 				let offset = 2;
 
 				if (addr < 0)
@@ -431,7 +430,7 @@ CustomClientInfo = function()
 
 		if (has4th)
 		{
-			addr = Exe.FindHex(MOV(AL, [CCI_Addr + 0xE]), fromAddr, toAddr); //mov al, byte ptr [CCI_Addr + 0Eh]
+			let addr = Exe.FindHex(MOV(AL, [CCI_Addr + 0xE]), fromAddr, toAddr); //mov al, byte ptr [CCI_Addr + 0Eh]
 			let offset = 1;
 
 			if (addr < 0)
@@ -447,19 +446,20 @@ CustomClientInfo = function()
 	}
 
 	$$(_ + '2.1 - Get the new name from the user')
-	let varName = '$newclientinfo';
-	let newFile = Exe.GetUserInput(varName, D_Text, "Client Info XML", "Enter the new clientinfo path", CCI_Name, {minLen: 9, maxLen: 20});
+	const varName = '$newclientinfo';
+	const newFile = Exe.GetUserInput(varName, D_Text, "Client Info XML", "Enter the new clientinfo path", CCI_Name, {minLen: 9, maxLen: 20});
 	if (newFile === false)
 		Cancel("Filename", CCI_Name);
 
 	$$(_ + '2.2 - Allocate space for the new name')
-	let [free, freeVir] = Exe.FindSpace(varName);
+	const [free, freeVir] = Exe.FindSpace(varName);
 
 	$$(_ + '2.3 - Add the name there')
 	Exe.AddFromVar(free, varName);
 
 	$$(_ + '2.4 - Adjust the references')
-	repLocs.forEach( (addr, disp) => Exe.SetUint32(addr, freeVir + disp) );
+	for (const [disp, addr] of repLocs)
+		Exe.SetUint32(addr, freeVir + disp);
 
 	return true;
 };

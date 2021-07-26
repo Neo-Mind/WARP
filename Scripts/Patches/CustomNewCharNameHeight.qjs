@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-01-23                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,10 +31,10 @@
 ///
 CustomNewCharNameHeight = function()
 {
-	let _ = 'CustomNewCharNameHeight : ';
+	const _ = 'CustomNewCharNameHeight : ';
 
 	$$(_ + '1.1 - Find the string PUSH')
-	let code =
+	const code =
 		PUSH(2)          //push 2
 	+	PUSH(CNCNH_Addr) //push offset "À¯ÀúÀÎÅÍÆäÀÌ½º\\make_character_ver2\\bt_make_press.bmp"
 	+	MOV(ECX, R32)    //mov ecx, regA
@@ -83,10 +83,10 @@ CustomNewCharNameHeight = function()
 	addr += prefix.byteCount();
 
 	$$(_ + '2.1 - Extract the current height')
-	let oldHeight = Exe.GetInt8(addr + 1);
+	const oldHeight = Exe.GetInt8(addr + 1);
 
 	$$(_ + '2.2 - Retrieve the new value from user')
-    let height = Exe.GetUserInput("$newCharNameHeight", D_Uint8, "Field Height", "Enter new char name height", oldHeight);
+    const height = Exe.GetUserInput("$newCharNameHeight", D_Uint8, "Field Height", "Enter new char name height", oldHeight);
     if (height === false)
 		Cancel("Height", oldHeight);
 

@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), X-EcutiOnner, CH.C (jchcc)              *
 *   Created Date  : 2021-01-22                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@
 ///
 CustomFriendsLimit = function()
 {
-	let _ = 'CustomFriendsLimit : ';
+	const _ = 'CustomFriendsLimit : ';
 
     $$(_ + '1.1 - Search pattern for jump to the friends window')
 	let code;
@@ -69,12 +69,12 @@ CustomFriendsLimit = function()
 		;
 	}
 
-    let refAddr = Exe.FindHex(code);
+    const refAddr = Exe.FindHex(code);
     if (refAddr < 0)
         throw Error("Reference pattern missing");
 
     $$(_ + '1.2 - Now find the argument push for the max friends limit')
-	let prefix = PUSH(0x28);                                    //push 28h
+	const prefix = PUSH(0x28);                                    //push 28h
 	if (Exe.Version > 10) //VC11+
 	{
 		code =
@@ -97,9 +97,9 @@ CustomFriendsLimit = function()
 		+	LEA(R32, ROC.HasFP ? [EBP, NEG2WC] : [ESP, POS2WC]) //lea regC, [LOCAL.x]
 		;
 	}
-	let suffix = PUSH(CFL_Addr);                                //push offset "%s(%d/%d)"
+	const suffix = PUSH(CFL_Addr);                                //push offset "%s(%d/%d)"
 
-	let addr = Exe.FindHex(prefix + code + suffix, refAddr, refAddr + 0xBC);
+	const addr = Exe.FindHex(prefix + code + suffix, refAddr, refAddr + 0xBC);
 	if (addr < 0)
         throw Error("PUSH Pattern missing");
 
@@ -113,7 +113,7 @@ CustomFriendsLimit = function()
 	*/
 
 	$$(_ + '2.1 - Get the new limit from user')
-    let value = Exe.GetUserInput("$max_friends", D_Int8, "Max Friends", "Enter Max Friends Limit", 40, {min: 1});
+    const value = Exe.GetUserInput("$max_friends", D_Int8, "Max Friends", "Enter Max Friends Limit", 40, {min: 1});
 	if (value === false)
 		Cancel("Limit", 40);
 
@@ -139,7 +139,7 @@ CustomFriendsLimit.validate = function()
 ///
 CustomPartyLimit = function()
 {
-	let _ = 'CustomPartyLimit : ';
+	const _ = 'CustomPartyLimit : ';
 
 	$$(_ + '1.1 - Find the reference pattern')
 	let addr = Exe.FindHex( PUSH(0xC9F) );
@@ -147,7 +147,7 @@ CustomPartyLimit = function()
 		throw Error("Reference pattern missing");
 
 	$$(_ + '1.2 - Find the GetNumParty call below it.')
-	let code =
+	const code =
 		MOV(ECX, POS4WC)	// mov ecx, <g_session>
 	+	PUSH(0xC)			// push 0Ch
 	+	CALL()				// call CSession::GetNumParty
@@ -158,7 +158,7 @@ CustomPartyLimit = function()
 		throw Error("GetNumParty CALL missing");
 
 	$$(_ + '2.1 - Get new value from user')
-	let val = Exe.GetUserInput('$max_party_value', D_Uint8, "Party Limit", "Enter Max Party Value", 12, {min:1, max:127});
+	const val = Exe.GetUserInput('$max_party_value', D_Uint8, "Party Limit", "Enter Max Party Value", 12, {min:1, max:127});
 	if (val === false)
 		Cancel("Value", 12);
 

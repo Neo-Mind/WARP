@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ///
 SharedPal = function(patchName, oldPrefix, newFormat, optional)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + `1.1 - Find the original format string (${oldPrefix})`)
 	let addr = -1;
@@ -63,7 +63,7 @@ SharedPal = function(patchName, oldPrefix, newFormat, optional)
 		throw Error("Format string not used");
 
 	$$(_ + '2.1 - Allocate space for adding new string')
-	let [free, freeVir] = Exe.FindSpace(newFormat.length);
+	const [free, freeVir] = Exe.FindSpace(newFormat.length);
 
 	$$(_ + '2.2 - Add the string there')
 	Exe.AddText(free, newFormat);
@@ -80,6 +80,7 @@ SharedPal = function(patchName, oldPrefix, newFormat, optional)
 SHP_reloadIH = function()
 {
 	let patchName = null;
+	
 	if (Warp.GetPatchState("IncrHairStyles"))
 		patchName = "IncrHairStyles";
 

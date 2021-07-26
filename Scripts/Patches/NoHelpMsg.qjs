@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ///
 NoHelpMsg = function()
 {
-	let _ = 'NoHelpMsg : ';
+	const _ = 'NoHelpMsg : ';
 
 	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
@@ -64,7 +64,7 @@ NoHelpMsg = function()
 	+	JNE(WCp)                                     //jne short _skip
 	;
 
-	let cmpAddr = Exe.FindHex(code, addr - 0x20, addr);
+	const cmpAddr = Exe.FindHex(code, addr - 0x20, addr);
 	if (cmpAddr < 0)
 		throw Error("Langtype comparison not found");
 

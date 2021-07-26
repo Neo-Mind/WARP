@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,10 +32,10 @@
 ///
 DataFolderFirst = function()
 {
-	let _ = 'DataFolderFirst : ';
+	const _ = 'DataFolderFirst : ';
 
 	$$(_ + '1.1 - Find \'loading\'')
-	let addr = Exe.FindText("loading");
+	const addr = Exe.FindText("loading");
 	if (addr < 0)
 		throw Error("'loading' not found");
 
@@ -83,7 +83,7 @@ DataFolderFirst = function()
 		}
 	}
 
-	let addr2 = Exe.FindHex(code);
+	const addr2 = Exe.FindHex(code);
 	if (addr2 < 0)
 		throw Error("'loading' not PUSHed");
 
@@ -96,20 +96,20 @@ DataFolderFirst = function()
 	///===================================================================///
 
 	$$(_ + '2.1 - Extract g_readFolderFirst')
-	let ReadFolderFirst = Exe.GetHex(addr2 + gloc, 4);
+	const ReadFolderFirst = Exe.GetHex(addr2 + gloc, 4);
 	if (Exe.Version === 6)
 	{
 		$$(_ + '2.2 - Find the Comparison for VC6 Clients')
-		let addrs = Exe.FindHexN( MOV(AL, [ReadFolderFirst]) ); //mov al, byte ptr [g_readFolderFirst]
+		const addrs = Exe.FindHexN( MOV(AL, [ReadFolderFirst]) ); //mov al, byte ptr [g_readFolderFirst]
 		if (addrs.isEmpty())
 			throw Error("Comparisons not found (VC6)");
 
 		addrs.forEach( (memAddr, idx) =>
 		{
-			let __ = `${_} [${idx}] `;
+			const __ = `${_} [${idx}] `;
 
 			$$(__ + '2.3 - Find the conditional jump after each comparison')
-			addr = Exe.FindHex( JE(POS2WC), memAddr + 0x5, memAddr + 0x20);//jz _skip#2
+			const addr = Exe.FindHex( JE(POS2WC), memAddr + 0x5, memAddr + 0x20);//jz _skip#2
 			if (addr < 0)
 				throw Error(`No jump found for comparison No.${idx + 1} <b>for (VC6)</b>`);
 
@@ -120,17 +120,17 @@ DataFolderFirst = function()
 	else
 	{
 		$$(_ + '3.1 - Find the Comparison for VC9+ Clients')
-		let addrs = Exe.FindHexN( CMP(BYTE_PTR, [ReadFolderFirst], 0) ); //CMP byte ptr [g_readFolderFirst], 0
+		const addrs = Exe.FindHexN( CMP(BYTE_PTR, [ReadFolderFirst], 0) ); //CMP byte ptr [g_readFolderFirst], 0
 		if (addrs.isEmpty())
 			throw Error("Comparisons not found (VC9+)");
 
 		addrs.forEach( (memAddr, idx) =>
 		{
-			let __ = `${_} [${idx}] `;
+			const __ = `${_} [${idx}] `;
 
 			$$(__ + '3.2 - Find the conditional jump after each comparison')
-			addr = Exe.FindHex( JZ(WCp) + CALL(), memAddr + 0x7, memAddr + 0x20);//jz short _skip#3
-			                                                                     //call func#2
+			const addr = Exe.FindHex( JZ(WCp) + CALL(), memAddr + 0x7, memAddr + 0x20);//jz short _skip#3
+			                                                                           //call func#2
 			if (addr < 0)
 				throw Error(`No jump found for comparison No.${idx + 1} <b>for (VC9+)</b>`);
 

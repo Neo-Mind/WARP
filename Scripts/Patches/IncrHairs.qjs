@@ -142,7 +142,7 @@ IncrHairs = function(patchName)
 
 	strAddrs.forEach( (memAddr, idx) =>
 	{
-		const __ = `[${idx}] `;
+		const __ = `${_} [${idx}] `;
 
 		const isLast = idx === strAddrs.length-1;
 
@@ -281,7 +281,7 @@ IncrHairs = function(patchName)
 			throw Error("Table fetchers not found");
 
 		$$(__ + '4.12 - Fix the tables')
-		addrs.forEach(fixTbl);
+		addrs.forEach( fixTbl );
 
 		if (!isLast || !isPalShared)
 		{

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : X-EcutiOnner                                           *
 *   Created Date  : 2020-12-26                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,16 +31,17 @@
 ///
 NoAdminNeeded = function()
 {
-	let _ = 'NoAdminNeeded : ';
+	const _ = 'NoAdminNeeded : ';
 
 	$$(_ + '1 - Find the manifest string (Ideally we would traverse the resource directory but this is a faster mechanism)')
-	let addrs = Exe.FindTextN('<requestedExecutionLevel level="requireAdministrator"', PHYSICAL, false, false, Exe.GetSectBegin(RSRC));
+	const addrs = Exe.FindTextN('<requestedExecutionLevel level="requireAdministrator"', PHYSICAL, false, false, Exe.GetSectBegin(RSRC));
 	if (addrs.isEmpty())
 		throw Error("Manifest not found");
 
 	$$(_ + '2 - Replace the string with \'asInvoker\' privilege instead')
-	let newstr = 'asInvoker"           '; //the blank space is to keep the same length since there are other characters after it
-	addrs.forEach(addr => Exe.SetText(addr + 32, newstr));
+	const newstr = 'asInvoker"           '; //the blank space is to keep the same length since there are other characters after it
+	for (const addr of addrs)
+		Exe.SetText(addr + 32, newstr);
 
 	return true;
 };

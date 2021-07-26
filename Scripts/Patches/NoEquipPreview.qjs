@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : X-EcutiOnner                                           *
 *   Created Date  : 2021-01-23                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,10 +32,10 @@
 ///
 NoEquipPreview = function()
 {
-	let _ = 'NoEquipPreview : ';
+	const _ = 'NoEquipPreview : ';
 
 	$$(_ + '1 - Find the comparison')
-	let prefix =
+	const prefix =
 		PUSH(NEP_Addr)                   // push offset "IsEffectHatItem"
 	+	MOV(BYTE_PTR, [ECX], 0)          // mov byte ptr [ecx], 0
 	+	CALL(ALLWC)                      // call std::string::assign
@@ -47,7 +47,7 @@ NoEquipPreview = function()
 	+	CMP(BYTE_PTR, [EBP, NEG3WC], 1)  // cmp byte ptr [LOCAL.y], 1
 	;
 
-	let suffix =
+	const suffix =
 		JZ(POS3WC)                       // jz _skip
 	+	PUSH(POS2WC)                     // push immB
 	+	CALL(ALLWC)                      // call <operator_new>
@@ -61,18 +61,18 @@ NoEquipPreview = function()
 	+	JMP(WC)                          // jmp short _next
 	;
 
-    let addr = Exe.FindHex(prefix + suffix);
+    const addr = Exe.FindHex(prefix + suffix);
     if (addr < 0)
 		throw Error("Pattern not found");
 
     /*
-	let repLoc = 48;
-    let stringAssignOffset = 9;
-    let luaStateOffset = [22, 4];
-    let luaCallVaOffset = 34;
-    let UIBasicButtonSize = [55, 4];
-    let newOffset = 60;
-    let UIBasicButtonConstructorOffset = 87;
+	const repLoc = 48;
+    const stringAssignOffset = 9;
+    const luaStateOffset = [22, 4];
+    const luaCallVaOffset = 34;
+    const UIBasicButtonSize = [55, 4];
+    const newOffset = 60;
+    const UIBasicButtonConstructorOffset = 87;
 
     logRawFunc("std_string_assign", offset, stringAssignOffset);
     logField("CSession::m_lua_state", offset, luaStateOffset);

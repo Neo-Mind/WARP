@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-07-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -154,8 +154,22 @@ _CEK_SetupObfuscate = function(index)
 
 	$$(_ + '1.1 - Prepare suffix with Stack restore & RETN')
 	const suffix =
-		(ROC.HasFP ? POP(EBP) : NOP)  //pop ebp / nop
-	+	RETN(4)                       //retn 4
+		(Exe.Version > 11
+	?
+		POP(EDI)      //pop edi
+	+	POP(ESI)      //pop esi
+	+	POP(EBX)      //pop ebx
+	:
+		''
+	)
+	+
+		(ROC.HasFP
+	?
+		FP_STOP       //mov esp, ebp
+	:	              //pop ebp
+		''
+	)
+	+	RETN(4)       //retn 4
 	;
 
 	$$(_ + '1.2 - For virtualized function, add the encryption and zero assigning codes as well, since we need to replicate the entire function')
@@ -230,6 +244,18 @@ _CEK_SetupObfuscate = function(index)
 
 	$$(_ + '2.5 - Save the index as the 5th element')
 	PACKET.PatchData[4] = index;
+
+	if (Exe.Version > 11)
+	{
+		$$(_ + '3.1 - Check if the previous statement is an assignment of the struct to EAX (instead of ECX)')
+		let ins = Instr.FromAddr(PACKET.Assigner - 3);
+		if (ins.Codes[0] === 0x8B && ins.MRM.Data === 0x45)
+		{
+			$$(_ + '3.2 - Change it to assign to ECX instead')
+			ins.MRM.update(null, 1, null);
+			Exe.SetHex(ins.Addr, ins);
+		}
+	}
 
 	return true;
 };

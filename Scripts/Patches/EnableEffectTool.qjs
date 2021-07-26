@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,7 @@
 ///
 EnableEffectTool = function()
 {
-	let _ = 'EnableEffectTool : ';
+	const _ = 'EnableEffectTool : ';
 
 	$$(_ + '1.1 - Find Lua file prefix')
 	let addr = Exe.FindText("Lua Files\\EffectTool\\", CASE_INSENSITIVE);

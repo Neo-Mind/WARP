@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -42,15 +42,15 @@ FixItemDescBug = function()
 ///
 FixItemDescBug.validate = function()
 {
-	let _ = 'FixItemDescBug.validate : ';
+	const _ = 'FixItemDescBug.validate : ';
 
 	$$(_ + '1 - Find the pattern')
-	let code =
+	const code =
 		CMP(BYTE_PTR, [ESI], 0x5B)	//cmp byte ptr [ESI], 5Bh
 	+	JNE(0x31)					//jne short _skip
 	;
 
-	let addr = Exe.FindHex(code);
+	const addr = Exe.FindHex(code);
 	if (addr > 0)
 	{
 		$$(_ + '2 - Save the JNE address')

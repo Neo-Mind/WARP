@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), X-EcutiOnner                            *
 *   Created Date  : 2021-03-06                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,14 +33,14 @@
 ///
 NoMapInfo = function()
 {
-	let _ = 'NoMapInfo : ';
+	const _ = 'NoMapInfo : ';
 
 	$$(_ + '1 - Zero it out')
 	Exe.SetInt8(NMI_Addr, 0);
 
 	$$(_ + '2.1 - Find the CMapInfoMgr ErrorMsg function')
-	let parts =
-	[
+	const parts =
+	[//0
 		JZ(POS1WC)       //jz _skip
 
 	,//1
@@ -55,18 +55,18 @@ NoMapInfo = function()
 	]
 	;
 
-	let addr = Exe.FindHex(parts);
+	const addr = Exe.FindHex(parts);
 	if (addr < 0)
 		throw Error("ErrorMsg function missing");
 
 	$$(_ + '2.2 - Ensure the offsets are same')
-	let partAddrs = MapAddrs(addr, parts);
+	const partAddrs = MapAddrs(addr, parts);
 	if (Instr.FromAddr(partAddrs[1]).Disp !== Instr.FromAddr(partAddrs[2]).Disp)
 		throw Error("False match found");
 
 	/*
-	var openLibsOffset = 10;
-    var pushcclosureOffset = 25;
+	const openLibsOffset = 10;
+    const pushcclosureOffset = 25;
     logRawFunc("luaL_openlibs", addr, openLibsOffset);
     logRawFunc("lua_pushcclosure", addr, pushcclosureOffset);
 	*/

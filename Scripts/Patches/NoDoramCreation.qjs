@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Secret                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 ///
 NoDoramCreation = function()
 {
-	let _ = 'NoDoramCreation : ';
+	const _ = 'NoDoramCreation : ';
 
 	$$(_ + '1.1 - Find the first pattern')
 	let code =
@@ -72,7 +72,7 @@ NoDoramCreation = function()
 	+	LEA(ECX, [ECX, 0])		//lea ecx, [ecx + 0]
 	;
 
-	let addr2 = Exe.FindHex(code, addr + 2, addr + 0x300);
+	const addr2 = Exe.FindHex(code, addr + 2, addr + 0x300);
 	if (addr2 < 0)
 		throw Error("XOR pattern missing");
 

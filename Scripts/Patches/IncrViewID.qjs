@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,43 +33,44 @@
 ///
 IncrViewID = function()
 {
-	let _ = 'IncrViewID : ';
+	const _ = 'IncrViewID : ';
 
 	$$(_ + '1.1 - Find where ReqAccName is PUSHed (only done once in the entire client)')
-	let addr = Exe.FindHex( PUSH(IVID_Addr) ); //push offset "ReqAccName"
+	const addr = Exe.FindHex( PUSH(IVID_Addr) ); //push offset "ReqAccName"
 	if (addr < 0)
 		throw Error("'ReqAccName' not used");
 
 	$$(_ + '1.2 - Calculate the current limit in the client based on date')
-	let oldValue = (
+	const oldValue = (
 		Exe.BuildDate > 20200325 ? 3000 :
 		Exe.BuildDate > 20130000 ? 2000 :
 		                           1000
 	);
 
 	$$(_ + '2.1 - Find all occurrences of the old limit')
-	let addrs = [
+	let addrs = [];
+	for (const code of 
+	[
 		MOV(R32, oldValue),
 		MOV(EAX, oldValue),
 		CMP(R32, oldValue),
 		CMP(EAX, oldValue),
 		PUSH(oldValue)
-	].reduce( (acc, code) =>
-		acc.concat(Exe.FindHexN(code, addr - 0xA0, addr + 0x60)), []
-	);
+	])
+		addrs.push(...Exe.FindHexN(code, addr - 0xA0, addr + 0x60));
 
 	if (addrs.length < 2 || addrs.length > 3)
 		throw Error("Incorrect no of matches found for Old limit");
 
 	$$(_ + '2.2 - Get the new limit from user')
-
-	let varName = '$viewIDLimit';
-	let newValue = Exe.GetUserInput(varName, D_Uint32, "View ID Limit", "Enter the new Max Headgear View ID", oldValue, {min: oldValue, max: 64000});
+	const varName = '$viewIDLimit';
+	const newValue = Exe.GetUserInput(varName, D_Uint32, "View ID Limit", "Enter the new Max Headgear View ID", oldValue, {min: oldValue, max: 64000});
 	if (newValue === false)
 		Cancel("Limit", oldValue);
 
 	$$(_ + '2.3 - Replace old with new for all')
-	addrs.forEach( addr => Exe.SetFromVar(Instr.FromAddr(addr).NextAddr - 4, varName) );
+	for (const addr of addrs)
+		Exe.SetFromVar(Instr.FromAddr(addr).NextAddr - 4, varName);
 
 	return true;
 };

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 ///
 TildeForMatk = function()
 {
-	let _ = 'TildeForMatk : ';
+	const _ = 'TildeForMatk : ';
 
 	$$(_ + '1.1 - Find \'%d + %d\'')
 	let addr = Exe.FindText("%d + %d");
@@ -41,7 +41,7 @@ TildeForMatk = function()
 		throw Error("Format string not found");
 
 	$$(_ + '1.2 - Find all locations where its used in a PUSH (there should be 5)')
-	let addrs = Exe.FindHexN( PUSH(addr) );
+	const addrs = Exe.FindHexN( PUSH(addr) );
 	if (addrs.length !== 5)
 		throw Error("Incorrect no. of matches found");
 

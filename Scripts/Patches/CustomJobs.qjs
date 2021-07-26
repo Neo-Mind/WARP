@@ -53,7 +53,9 @@ CustomJobs = function()
 	let addrs = Exe.FindHexN(MOV([R32, 0x68], strAddr)); //mov dword ptr [regA + 68h], offset "»êÅ¸"
 	if (ROC.IsZero && addrs.length > 1)
 	{
-		const addr = addrs.find( memAddr => Exe.FindLastHex(PUSH(0x10AA) + MOV(ECX, ESI), memAddr, memAddr - 0x800) < 0 );
+		const addr = addrs.find( memAddr =>
+			Exe.FindLastHex(PUSH(0x10AA) + MOV(ECX, ESI), memAddr, memAddr - 0x800) < 0
+		);
 		if (!addr)
 			throw Error("Santa reference missing");
 
@@ -92,9 +94,13 @@ CustomJobs = function()
 
 		const code2 = PUSH(4); //PUSH 4 should be present before
 
-		refs[2] = addrs.find(memAddr => Exe.FindLastHex(code2, memAddr, memAddr - 0x6) > 0);
-		if (!refs[2])
+		const addr = addrs.find( memAddr => 	
+			Exe.FindLastHex(code2, memAddr, memAddr - 0x6) > 0
+		);
+		if (!addr)
 			throw Error("Archer reference missing (VC6)");
+		
+		refs[2] = addr;
 	}
 	else
 	{

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Curiosity, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,16 +32,16 @@
 ///
 IncrMapQuality = function()
 {
-	let _ = 'IncrMapQuality : ';
+	const _ = 'IncrMapQuality : ';
 
 	$$(_ + '1 - Find CTexMgr::CreateTexture CALL')
-	let reg = (Exe.Version < 10 ? ECX : EAX);
-	let part1 =
+	const reg = (Exe.Version < 10 ? ECX : EAX);
+	const part1 =
 		PUSH(reg)          //push ecx/eax ; imgData
 	+	PUSH(0x100)        //push 100h    ; h = 256
 	+	PUSH(0x100)        //push 100h    ; w = 256
 	;
-	let part2 =
+	const part2 =
 		MOV(ECX, POS3WC);  //mov ecx, <g_texMgr>
 
 	let addr = Exe.Version < 14 ?

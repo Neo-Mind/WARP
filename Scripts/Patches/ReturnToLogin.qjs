@@ -23,9 +23,11 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144)                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-05                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
+
+//TODO - Need to fix for the new login window
 
 ///
 /// \brief Change the PUSHed argument & mode value to Mode Setting calls after disconnection
@@ -33,7 +35,7 @@
 ///
 DisConnToLogin = function()
 {
-	let _ = 'DisConnToLogin : ';
+	const _ = 'DisConnToLogin : ';
 
 	$$(_ + '1.1 - Find all locations where the MsgString ID (635) is PUSHed for the specific error message')
 	///       "Sorry the character you are trying to use is banned for testing connection."
@@ -47,8 +49,8 @@ DisConnToLogin = function()
 		throw Error("Incorrect no of MsgString ID PUSHes found");
 
 	$$(_ + '1.2 - Save location after the PUSH for both addrs')
-	let mapAddr = addrs[0] + 5; //for Map
-	let lcAddr  = addrs[1] + 5; //for Login/Char
+	const mapAddr = addrs[0] + 5; //for Map
+	const lcAddr  = addrs[1] + 5; //for Login/Char
 
 	/******* First we will work on Disconnection from Login/Char Server ********/
 
@@ -85,7 +87,7 @@ DisConnToLogin = function()
 	let jmpAddr = Instr.FromAddr(addr2).NextAddr;
 
 	$$(_ + '2.5 - Extract the MOV instruction')
-	let MovECX = Exe.GetHex(jmpAddr, 6);
+	const MovECX = Exe.GetHex(jmpAddr, 6);
 
 	$$(_ + '3.1 - Find the Mode changer CALL after jmpAddr')
 	code =
@@ -103,11 +105,11 @@ DisConnToLogin = function()
 
 	$$(_ + '3.2 - Get the number of PUSH 0 instructions between the Mode Change and refAddr assignment before')
 	///       We need to push the same number in our code
-	let zeros = Exe.FindHexN( PUSH_0, jmpAddr + 6, addr );
+	const zeros = Exe.FindHexN( PUSH_0, jmpAddr + 6, addr );
 	if (zeros.isEmpty())
 		throw Error("PUSH 0s not found");
 
-	let PUSH0s = PUSH_0.repeat(zeros.length);
+	const PUSH0s = PUSH_0.repeat(zeros.length);
 
 	$$(_ + '3.3 - Save location after the CALL (the address we need to return to after Mode Changer call)')
 	let retnAddr = addr + code.byteCount();
@@ -245,7 +247,7 @@ DisConnToLogin = function()
 ///
 CancelToLogin = function()
 {
-	let _ = 'CancelToLogin : ';
+	const _ = 'CancelToLogin : ';
 
 	$$(_ + '1.1 - Find the case branch that occurs before the Cancel Button case.')
 	///       The pattern will match multiple locations of which first (or recently second) is the one we need
@@ -255,11 +257,11 @@ CancelToLogin = function()
 	+	PUSH(0x337)                 //push 337h
 	+	CALL()                      //call func#2
 	;
-	let addrs = Exe.FindHexN(code);
+	const addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
 		throw Error("Reference case branch not found");
 
-	let csize = code.byteCount() + 4;
+	const csize = code.byteCount() + 4;
 
 	$$(_ + '1.2 - Find CConnection::Disconnect & CRagConnection::instanceR CALLs')
 	code =
@@ -281,8 +283,8 @@ CancelToLogin = function()
 		throw Error("Disconnect & instanceR CALLs not found");
 
 	$$(_ + '1.3 - Extract the function addresses')
-	let InstR = Exe.GetTgtAddr(addr +  4, PHYSICAL);
-	let DConn = Exe.GetTgtAddr(addr + 11, PHYSICAL);
+	const InstR = Exe.GetTgtAddr(addr +  4, PHYSICAL);
+	const DConn = Exe.GetTgtAddr(addr + 11, PHYSICAL);
 
 	$$(_ + '2.1 - Find 메시지 => Korean version of "Message"')
 	addr = Exe.FindText("\xB8\xDE\xBD\xC3\xC1\xF6");
@@ -290,7 +292,7 @@ CancelToLogin = function()
 		throw Error("'Message' not found");
 
 	$$(_ + '2.2 - Prepare pattern of the Cancel case branch to look for. It creates the msgBox that shows the quit message')
-	let canceller =
+	const canceller =
 		PUSH(addr)  //push offset "메시지"
 	+	PUSH_R      //push regA ; contains 0
 	+	PUSH_R      //push regA
@@ -298,9 +300,9 @@ CancelToLogin = function()
 	+	PUSH_2      //push 2
 	+	PUSH(0x11)  //push 11h
 	;
-	let cancSize = canceller.byteCount();
+	const cancSize = canceller.byteCount();
 
-	let found = addrs.filter( memAddr =>
+	const found = addrs.filter( memAddr =>
 	{
 		/***** First we find all required addresses *****/
 
@@ -386,7 +388,6 @@ CancelToLogin = function()
 		return true;
 
 	});
-
 	$$(_ + '4.3 - Ensure we got atleast 1 match')
 	if (found.isEmpty())
 		throw Error("No references matched");
@@ -397,5 +398,7 @@ CancelToLogin = function()
 ///
 /// \brief Wrappers for individual patch validation
 ///
-DisConnToLogin.validate = HasHiddenLogWin;
+DisConnToLogin.validate = () =>
+	!ROC.HasLWhidden && Exe.Version > 10;
+
 CancelToLogin.validate  = HasHiddenLogWin;
