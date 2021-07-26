@@ -229,10 +229,9 @@ IgnoreLuaErr = function()
 {
 	const _ = 'IgnoreLuaErr : ';
 
-	$$(_ + '1.1 - Find "MessageBoxA" imported function')
-	const MBoxA = Exe.FindFunc("MessageBoxA");
-	if (MBoxA < 0)
-		throw Error("MessageBoxA function missing");
+	$$(_ + '1.1 - Ensure "MessageBoxA" has been imported')
+	if (ROC.MsgBoxA < 0)
+		throw Error("'MessageBoxA' function missing");
 
 	$$(_ + '1.2 - Find the LuaErrorMsg function code')
 	const cmn = LEA(R32, [ROC.StkReg, ROC.HasFP ? NEG2WC : WCp]); //lea regB, [LOCAL.x] ; where the displacement is -ve for EBP but +ve for ESP.
@@ -261,7 +260,7 @@ IgnoreLuaErr = function()
 	,//4
 			PUSH_R               //push regB
 		+	PUSH_0               //push 0
-		+	CALL([MBoxA])        //call dword ptr [<&USER32.MessageBoxA>]
+		+	CALL([ROC.MsgBoxA])  //call dword ptr [<&USER32.MessageBoxA>]
 	];
 
 	let addr = Exe.FindHex(parts);
@@ -311,10 +310,9 @@ IgnoreQuestErr = function()
 {
 	const _ = 'IgnoreQuestErr : ';
 
-	$$(_ + '1.1 - Find "MessageBoxA" imported function')
-	const MBoxA = Exe.FindFunc("MessageBoxA");
-	if (MBoxA < 0)
-		throw Error("MessageBoxA function missing");
+	$$(_ + '1.1 - Ensure "MessageBoxA" has been imported')
+	if (ROC.MsgBoxA < 0)
+		throw Error("'MessageBoxA' function missing");
 
 	$$(_ + '1.2 - Find the MessageBoxA CALL inside QuestErrorMsg function')
 	const prefix =
@@ -333,7 +331,7 @@ IgnoreQuestErr = function()
 	+	PUSH(POS4WC)            //push offset "Error"
 	+	PUSH_EAX                //push eax
 	+	PUSH([POS4WC])          //push dword ptr [g_hMainWnd]
-	+	CALL([MBoxA])           //call dword ptr [<&USER32.MessageBoxA>]
+	+	CALL([ROC.MsgBoxA])     //call dword ptr [<&USER32.MessageBoxA>]
 	;
 
 	let addr = Exe.FindHex(prefix + suffix);

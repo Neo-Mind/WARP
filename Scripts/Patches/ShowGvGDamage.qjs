@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, X-EcutiOnner                                   *
 *   Created Date  : 2021-06-01                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,15 +33,15 @@
 ///
 ShowGvGDamage = function(patchName)
 {
-	let _ = 'ShowGvGDamage : ';
+	const _ = 'ShowGvGDamage : ';
 
     $$(_ + '1 - Find the code responsible for checking GvG mapflag before showing Damage values')
-	let mct =
+	const mct =
 		MOV(ECX, POS4WC)
 	+	CALL(ALLWC)
 	+	TEST(EAX, EAX)
 	;
-	let code =
+	const code =
 		mct         //  0 mov ecx, <g_session>
 	                //  5 call CSession_IsSiegeMode
 	                // 10 test eax, eax
@@ -56,7 +56,7 @@ ShowGvGDamage = function(patchName)
 	                // 40 test eax, eax
 	+	JZ(POS2WC)  // 42 jz _next#2
 	;
-	let addr = Exe.FindHex(code);
+	const addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Pattern missing");
 
@@ -64,11 +64,11 @@ ShowGvGDamage = function(patchName)
 	Exe.SetNOPs(addr, code.byteCount());
 
     /* Keeping it around for reference later
-	let nopsStart = 0;
-    let nopsEnd = 48;
-    let IsSiegeModeOffset = 6;
-    let IsBattleFieldModeOffset = 20;
-    let isMasterAid = 36;
+	const nopsStart = 0;
+    const nopsEnd = 48;
+    const IsSiegeModeOffset = 6;
+    const IsBattleFieldModeOffset = 20;
+    const isMasterAid = 36;
 
     logRawFunc("CSession_IsSiegeMode", offset, IsSiegeModeOffset);
     logRawFunc("CSession_IsBattleFieldMode", offset, IsBattleFieldModeOffset);

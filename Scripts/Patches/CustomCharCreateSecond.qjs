@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, Neo-Mind                                       *
 *   Created Date  : 2021-06-16                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,10 +35,10 @@
 ///
 CustomCharCreateSecond = function()
 {
-	let _ = 'CustomCharCreateSecond : ';
+	const _ = 'CustomCharCreateSecond : ';
 
 	$$(_ + '1.1 - Search for doram character job id')
-	let code =
+	const code =
 		SUB(EAX, 0)         //sub eax, 0
 	+	JZ(WCp)             //jz short _skip
 	+	(Exe.Version > 11
@@ -56,7 +56,7 @@ CustomCharCreateSecond = function()
 		throw Error("Pattern not found");
 
 	$$(_ + '1.2 - Save the address where the job id is assigned')
-	let doramAddr = addr + code.byteCount() - 4;
+	const doramAddr = addr + code.byteCount() - 4;
 
 	let doramIconAddr = -1, doramHairAddr = -1;
 	if ((ROC.IsZero && Exe.BuildDate > 20171200) || Exe.BuildDate > 20180300)
@@ -112,8 +112,8 @@ CustomCharCreateSecond = function()
 	}
 
 	$$(_ + '2.1 - Get the new job id from user')
-	let varName = '$secondJob';
-	let newJob = Exe.GetUserInput(varName, D_Uint32, "Job ID input", "Enter the new second job id for char creation (character):", 0x107A, {max: 5000});
+	const varName = '$secondJob';
+	const newJob = Exe.GetUserInput(varName, D_Uint32, "Job ID input", "Enter the new second job id for char creation (character):", 0x107A, {max: 5000});
 	if (newJob === false)
 		Cancel('Job ID', 0x107A);
 
@@ -126,7 +126,7 @@ CustomCharCreateSecond = function()
 	{
 		$$(_ + '2.3 - Get the new hair limit from user')
 		varName = '$secondHairLimit';
-		let newHairLimit = Exe.GetUserInput(varName, D_Uint8, "Hair Limit", "Enter the new hair limit for the second job", 6, {min: 1, max: 30, saveDefault: true});
+		const newHairLimit = Exe.GetUserInput(varName, D_Uint8, "Hair Limit", "Enter the new hair limit for the second job", 6, {min: 1, max: 30, saveDefault: true});
 
 		$$(_ + '2.4 - If it has been changed, then replace at the saved address')
 		if (newHairLimit !== 6)

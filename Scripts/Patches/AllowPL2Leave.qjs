@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,7 +35,7 @@
 ///
 AllowPL2Leave = function()
 {
-	let _ = 'AllowPL2Leave : ';
+	const _ = 'AllowPL2Leave : ';
 
 	$$(_ + '1.1 - Find the PUSHes ')
 	let code =
@@ -47,7 +47,7 @@ AllowPL2Leave = function()
 	+	JMP()        //jmp _next
 	;
 
-	let refAddr = Exe.FindHex(code);
+	const refAddr = Exe.FindHex(code);
 	if (refAddr < 0)
 		throw Error("Reference pattern missing");
 
@@ -60,7 +60,7 @@ AllowPL2Leave = function()
 	+	CALL(ALLWC)               //call FRIEND_INFO_destructor
 	;
 
-	let addr = Exe.FindHex(code, refAddr - 0x40, refAddr);
+	const addr = Exe.FindHex(code, refAddr - 0x40, refAddr);
 	if (addr < 0)
 		throw Error("JZ/JNZ Pattern not found");
 

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,17 +33,17 @@
 ///
 EnableIcon = function(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Get the Root Resource Directory address')
-	let addr = Exe.GetDirAddr(D_Res, PHYSICAL);
+	const addr = Exe.GetDirAddr(D_Res, PHYSICAL);
 
 	$$(_ + '1.2 - Load the Resource tree if not done already')
 	if ('RsrcTree' in ROC === false)
 		ROC.RsrcTree = new RsrcEntry(0, addr, 0);
 
 	$$(_ + '2.1 - Get the Resource entry for RT_GROUP_ICON (0xE)')
-	let entry = ROC.RsrcTree.traverse(0xE)
+	const entry = ROC.RsrcTree.traverse(0xE)
 	if (entry === false)
 		throw Error("Unable to find icongrp");
 
@@ -72,24 +72,24 @@ EnableIcon = function(patchName)
 			throw Error("Bundle entry is not a file");
 
 		$$(_ + '3.2 - Extract the Data Address')
-		addr = subEntry2.DataAddr;
+		let addr = subEntry2.DataAddr;
 
 		$$(_ + '3.3 - Load the new icon')
-		let iconFile = Exe.GetUserInput('$inpIconFile', D_InFile, "Custom Icon", "Enter the icon file", "Inputs/Sample_32x32_8bpp.ico", {filters: "Icon files (*.ico)"});
+		const iconFile = Exe.GetUserInput('$inpIconFile', D_InFile, "Custom Icon", "Enter the icon file", "Inputs/Sample_32x32_8bpp.ico", {filters: "Icon files (*.ico)"});
 		if (iconFile === false)
 			Cancel("No icon file selected");
 
-		let iconObj = new Icon(iconFile);
+		const iconObj = new Icon(iconFile);
 
 		$$(_ + '3.4 - Find an image that meets the spec = 8bpp 32x32')
-		let imgEntry = iconObj.Entries.find( e =>
+		const imgEntry = iconObj.Entries.find( e =>
 			(e.bHeight === 32 && e.bWidth === 32 && e.wBitCount === 8 && e.bColorCount === 0)
 		);
 		if (!imgEntry)
 			throw Error("No images in the icon file satisfies the specifications");
 
 		$$(_ + '3.5 - Find a valid RT_ICON with same spec')
-		let count = Exe.GetInt16(addr + 4);
+		const count = Exe.GetInt16(addr + 4);
 		addr += 6;
 
 		let memEntry = false;
@@ -149,7 +149,7 @@ if (typeof Icon === 'undefined') //avoid redefinition
 	{
 		constructor(name)
 		{
-			let _ = 'Icon.constructor : ';
+			const _ = 'Icon.constructor : ';
 
 			$$(_ + '1.1 - Open the icon file')
 			let handle = new BinFile(name, 'r');
@@ -163,7 +163,7 @@ if (typeof Icon === 'undefined') //avoid redefinition
 			this.Entries = [];
 
 			$$(_ + '2.1 - Read all the image entry & data')
-			for (var i = 0; i < this.ImgCount; i++)
+			for (let i = 0; i < this.ImgCount; i++)
 			{
 				this.Entries[i] = {
 					bWidth:       handle.ReadUint8(),

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,7 @@
 ///
 CustomVendingLimit = function()
 {
-	let _ = 'CustomVendingLimit : ';
+	const _ = 'CustomVendingLimit : ';
 
 	$$(_ + '1.1 - Find where 1,000,000,000 is PUSHed')
 	if (typeof CVL_Vir === 'undefined')
@@ -42,8 +42,8 @@ CustomVendingLimit = function()
 		throw Error("'1,000,000,000' not PUSHed");
 
 	$$(_ + '1.2 - Find the comparison with 1Billion or 1Billion+1 before the PUSH')
-	let newStyle = Exe.BuildDate > 20130618;
-	let limiter = (1e9 + (newStyle ? 0 : 1)).toHex(); //1B or 1B+1 in hex
+	const newStyle = Exe.BuildDate > 20130618;
+	const limiter = (1e9 + (newStyle ? 0 : 1)).toHex(); //1B or 1B+1 in hex
 	let code =
 		limiter  //cmp regA, 3B9ACA00h or 3B9ACA01h ; easier to do without opcode since it changes when regA is EAX
 	+	(newStyle
@@ -95,19 +95,18 @@ CustomVendingLimit = function()
 	if (newStyle)
 	{
 		$$(_ + '1.7 - For new style look for the additional comparisons (can range from 0 to 3)')
-		let code1 = CMP(R32, limiter);
-		let code1a = CMP(EAX, limiter);
+		const code1 = CMP(R32, limiter);
+		const code1a = CMP(EAX, limiter);
 
-		let code2 =
+		const code2 =
 			PUSH_1      //push 1
 		+	PUSH_2      //push 2
 		+	PUSH(0x9A3) //push 9A3h ; Line no. 2468
 		;
 
-		let code3 = MOV(R32, limiter);
+		const code3 = MOV(R32, limiter);
 
-		let addrs = Exe.FindHexN(code2);
-		addrs.forEach( memAddr =>
+		for (const memAddr of Exe.FindHexN(code2))
 		{
 			let addr = Exe.FindLastHex(code1, memAddr - 9, memAddr - 0x20);
 			let offset = 2;
@@ -126,7 +125,7 @@ CustomVendingLimit = function()
 
 				limitAddrs.push(addr + 1);
 			}
-		});
+		}
 	}
 	else
 	{
@@ -141,12 +140,12 @@ CustomVendingLimit = function()
 	}
 
 	$$(_ + '2.1 - Get the new limit value from user')
-	let newLimit = Exe.GetUserInput('$vendingLimit', D_Int32, "Vending Limit", "Enter the new limit", 1e9, {min: 0});
+	const newLimit = Exe.GetUserInput('$vendingLimit', D_Int32, "Vending Limit", "Enter the new limit", 1e9, {min: 0});
 	if (newLimit === false)
 		Cancel("Vending Limit", 1e9);
 
 	$$(_ + '2.2 - Prepare string with commas for the newLimit similar to the original 1B string')
-	let str = newLimit.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '\0'; //Adding Commas every 3 digits like the original
+	const str = newLimit.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '\0'; //Adding Commas every 3 digits like the original
 
 	$$(_ + '2.3 - Change the 1B string')
 	Exe.SetText(CVL_Phy, str);
@@ -156,7 +155,8 @@ CustomVendingLimit = function()
 		newLimit++;
 
 	$$(_ + '2.5 - Replace the limit at all the comparison locations')
-	limitAddrs.forEach(addr => Exe.SetInt32(addr, newLimit));
+	for (const addr of limitAddrs)
+		Exe.SetInt32(addr, newLimit);
 
 	return true;
 };

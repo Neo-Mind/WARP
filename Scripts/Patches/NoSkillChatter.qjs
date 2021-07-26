@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,10 +32,10 @@
 ///
 NoSkillChatter = function(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Get the suffix based on patch name')
-	let suffix = patchName === "NoDancerScream" ? "DC_scream.txt" : "BA_frostjoke.txt";
+	const suffix = (patchName === "NoDancerScream" ? "DC_scream.txt" : "BA_frostjoke.txt");
 
 	$$(_ + '1.2 - Find the physical location of first text file name')
 	let addr = Exe.FindText("english\\" + suffix, CASE_INSENSITIVE, PHYSICAL);

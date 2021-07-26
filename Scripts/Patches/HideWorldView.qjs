@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,15 +31,15 @@
 ///
 HideWorldView = function()
 {
-	let _ = 'HideWorldView : ';
+	const _ = 'HideWorldView : ';
 
     $$(_ + '1.1 - Ensure the WINMGR object has been loaded')
 	WINMGR.load();
 
     $$(_ + '1.2 - Find 1st pattern of window creation (There should be exactly 2 matches for map button & shortcut)')
-    let id = (Exe.BuildDate < 20100616) ? 0x93 : 0x8C;
+    const id = (Exe.BuildDate < 20100616) ? 0x93 : 0x8C;
 
-    let prefix =
+    const prefix =
         PUSH(id)        //push 8Ch / 93h
     +   WINMGR.MovECX   //mov ecx, <g_winMgr>
     +   CALL(ALLWC)     //call UIWindowMgr::PrepWindow ; not sure what its called but this seems likely
@@ -56,42 +56,42 @@ HideWorldView = function()
     if (addrs.isEmpty())
         throw Error("First pattern not found");
 
-	let csize = prefix.byteCount();
+	const csize = prefix.byteCount();
 
 	$$(_ + '1.3 - Also find 2nd pattern with JNE changed to JNE SHORT')
-	let extraCheck = (Exe.BuildDate > 20141022 && Exe.BuildDate < 20170000);
+	const extraCheck = (Exe.BuildDate > 20141022 && Exe.BuildDate < 20170000);
 
 	if (extraCheck)
 	{
 		suffix = suffix.replace(JNE(POS2WC), JNE(WCp)); //change 'jne _skip' TO 'jne short _skip'
 
-		let addrs2 = Exe.FindHexN(prefix + suffix);
+		const addrs2 = Exe.FindHexN(prefix + suffix);
 		if (addrs2.isEmpty())
 			throw Error("Second pattern not found");
 
-		addrs = addrs.concat(addrs2);
+		addrs.push(...addrs2);
 	}
 
     $$(_ + '1.4 - NOP out the code till JNE & change JNE to JMP')
-    addrs.forEach( addr =>
+	for (const addr of addrs)
     {
         Exe.SetNOPs(addr, csize);
         Exe.SetJMP(addr + csize);
-    });
+    }
 
     $$(_ + '2.1 - Find the 3rd pattern (func calls functions from 1st pattern)')
     if (extraCheck)
 	{
-		prefix =
+		const prefix =
 			PUSH(id)        //push 8Ch / 93h
 		+   MOV(ECX, R32)   //mov ecx, regA
 		+   CALL(NEG3WC)    //call func#1
 		;
-		suffix =
-		    POP(ESI)        //pop esi
-		;
+		//const suffix =
+		//    POP(ESI)        //pop esi
+		//;
 
-		let addr = Exe.FindHex(prefix);
+		const addr = Exe.FindHex(prefix);
 		if (addr < 0)
 			throw Error("Third pattern not found");
 

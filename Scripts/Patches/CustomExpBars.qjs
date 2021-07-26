@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -431,20 +431,20 @@ ShowExpNumbers = function()
     const CurExpJob = Exe.GetInt32(pushAddr + code.byteCount() - 5);
 
     $$(_ + '3.1 - Find the correct \'SP\'')
-	const found = Exe.FindTextN("SP").find(matchAddr =>
+	code = 
+		PUSH(Filler(1)) //push offset "SP"
+	+	PUSH(0x41)      //push 41h
+	+	PUSH(0x11)      //push 11h
+	;
+	
+	addr = Exe.FindTextN("SP").findAs( matchAddr =>
 	{
 		$$(_ + '3.2 - Find where it is PUSHed inside OnDraw function (we need to inject after this location)')
-		code =
-			PUSH(matchAddr) //push offset "SP"
-		+	PUSH(0x41)      //push 41h
-		+	PUSH(0x11)      //push 11h
-		;
-
-		addr = Exe.FindHex(code);
-		return (addr > 0);
+		const found = Exe.FindHex( SwapFillers(code, 1, {1: matchAddr}) );
+		if (found > 0)
+			return found;
 	});
-
-	if (!found)
+	if (!addr)
 		throw Error("PUSH 'SP' missing");
 
     $$(_ + '3.3 - Set addr to location after PUSH 11')

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Secret                                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,7 @@
 ///
 LoadClientPlugins = function()
 {
-	let _ = 'LoadClientPlugins : ';
+	const _ = 'LoadClientPlugins : ';
 
 	$$(_ + '1.1 - Find \'SOUNDMODE\'')
 	let addr = Exe.FindText("SOUNDMODE");
@@ -39,7 +39,7 @@ LoadClientPlugins = function()
 		throw Error("'SOUNDMODE' not found");
 
 	$$(_ + '1.2 - Find where it is PUSHed')
-    var refAddr = Exe.FindHex(PUSH(addr)); //push offset "SOUNDMODE"
+    const refAddr = Exe.FindHex(PUSH(addr)); //push offset "SOUNDMODE"
     if (refAddr < 0)
         throw Error("'SOUNDMODE' not used");
 
@@ -62,7 +62,7 @@ LoadClientPlugins = function()
         throw Error("RegQueryValueEx CALL missing");
 
 	$$(_ + '2.2 - Extract the offset')
-	let soundMode = Exe.GetHex(addr + 1, 4);
+	const soundMode = Exe.GetHex(addr + 1, 4);
 
     $$(_ + '3.1 - Find soundMode comparison')
 	switch (Exe.Version)

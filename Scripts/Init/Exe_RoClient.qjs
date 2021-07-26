@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -82,6 +82,7 @@ if (typeof ROC === 'undefined')
 			this.GetModHandle = Exe.FindFunc("GetModuleHandleA", "KERNEL32.dll");
 			this.GetProcAddr  = Exe.FindFunc("GetProcAddress", "KERNEL32.dll");
 			this.OutDbgStrA   = Exe.FindFunc("OutputDebugStringA");
+			this.MsgBoxA      = Exe.FindFunc("MessageBoxA", "USER32.dll");
 
 			$$(_ + '2.3 - Get the address of "KERNEL32.dll"')
 			this.Kernel32 = Exe.FindText("KERNEL32.dll", CASE_INSENSITIVE);

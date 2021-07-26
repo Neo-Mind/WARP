@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : mrjnumber1                                             *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,11 +31,11 @@
 ///
 CustomQSDelay = function()
 {
-	let _ = 'CustomQSDelay : ';
+	const _ = 'CustomQSDelay : ';
 
 	$$(_ + '1.1 - Define the default values')
-	let old_tick = 10;
-	let old_tick_ms = old_tick * 1000;
+	const old_tick = 10;
+	const old_tick_ms = old_tick * 1000;
 
 	$$(_ + '1.2 - Find all the comparisons to old_tick in ms')
 	let code =
@@ -54,28 +54,28 @@ CustomQSDelay = function()
 		throw Error("Quickswitch Tick references missing");
 
 	$$(_ + '1.3 - Extract the "g_qsTick" address (needed later)')
-	let g_qsTick = Exe.GetUint32(addrs[0] + code.byteCount() - 4);
+	const g_qsTick = Exe.GetUint32(addrs[0] + code.byteCount() - 4);
 
 	$$(_ + '2.1 - Get the new delay from user in ticks')
-	let new_tick = Exe.GetUserInput('$myNewTick', D_Uint8, "Clock Ticks", "Enter the new quick switch delay", old_tick);
+	const new_tick = Exe.GetUserInput('$myNewTick', D_Uint8, "Clock Ticks", "Enter the new quick switch delay", old_tick);
 	if (new_tick === false)
 		Cancel("Delay", 10);
 
 	$$(_ + '2.2 - Calculate the new tick in ms')
-	let new_tick_ms = new_tick * 1000;
+	const new_tick_ms = new_tick * 1000;
 
 	$$(_ + '2.3 - Prepare code for searching old_tick assignment')
 	code = MOV(EAX, old_tick); //mov eax, 10
 
 	addrs.forEach( (addr, idx) =>
 	{
-		let __ = `${_} [${idx}] `;
+		const __ = `${_} [${idx}] `;
 
 		$$(__ + '2.4 - Replace the ms value')
 		Exe.SetUint32(addr + 1, new_tick_ms);
 
 		$$(__ + '2.5 - Look for the old_tick assignment after the ms (used for showing "n seconds to next quick switch ...")')
-		let addr2 = Exe.FindHex(code, addr + 17, addr + 67);
+		const addr2 = Exe.FindHex(code, addr + 17, addr + 67);
 		if (addr2 < 0)
 			throw Error(`Delay subtraction missing for No.${idx+1}`);
 
@@ -92,7 +92,7 @@ CustomQSDelay = function()
 		PUSH_R                // push regA
 	+	MOV(R32, [g_qsTick])  // mov regB, dword ptr [g_qsTick]
 	;
-	let ui_addr = Exe.FindHex(code);
+	const ui_addr = Exe.FindHex(code);
 	if (ui_addr < 0)
 		throw Error("UI quickswitch addr missing");
 

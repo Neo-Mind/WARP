@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Ai4rei/AN                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -305,7 +305,7 @@ EnableUnknCmds = function()
 	if (addrs.isEmpty())
 		throw Error("Function CALL missing");
 
-	let csize = prefix.byteCount() + suffix.byteCount();
+	const csize = prefix.byteCount() + suffix.byteCount();
 
 	$$(_ + '2.2 - Find the correct one by checking the function being called')
 	addr = addrs.find(memAddr => Exe.GetTgtAddr(memAddr + csize) === funcAddr);

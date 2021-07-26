@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ///
 EnableFlagEmotes = function()
 {
-	let _ = 'EnableFlagEmotes : ';
+	const _ = 'EnableFlagEmotes : ';
 
 	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
@@ -55,15 +55,15 @@ EnableFlagEmotes = function()
 		throw Error("Switch not found");
 
 	$$(_ + '1.3 - Extract the jmpTbl')
-	let jmpTbl = Exe.Vir2Phy(Exe.GetInt32(addr + code.byteCount() - 4), CODE);
+	const jmpTbl = Exe.Vir2Phy(Exe.GetInt32(addr + code.byteCount() - 4), CODE);
 
 	$$(_ + '2.1 - Get Input file containing the list of Flag Emotes per key')
-	let inFile = Exe.GetUserInput('$inpFlag', D_InFile, "Flag Emote Mapping", "Enter the Flag Emoticon mapping file", "Inputs/FlagSpec.yml", {filters: YMLFILTER});
+	const inFile = Exe.GetUserInput('$inpFlag', D_InFile, "Flag Emote Mapping", "Enter the Flag Emoticon mapping file", "Inputs/FlagSpec.yml", {filters: YMLFILTER});
 	if (inFile === false)
 		Cancel("No mapping file specified");
 
 	$$(_ + '2.2 - Load the input file which creates the hash table mapping the index to flag constants')
-	let FlagSpec = Warp.LoadYaml(inFile);
+	const FlagSpec = Warp.LoadYaml(inFile);
 	if (FlagSpec === false)
 		return false;
 
@@ -76,7 +76,7 @@ EnableFlagEmotes = function()
 	+   TEST(EAX, EAX)        //test eax, eax
 	;                         //jz short _next OR jz _next
 
-	let code2 =
+	const code2 =
 		PUSH_0      //push 0
 	+   PUSH_0      //push 0
 	+   PUSH(WC)    //push <emoteConstant>
@@ -84,12 +84,12 @@ EnableFlagEmotes = function()
 	+   " FF"       //call edx OR call dword ptr [eax + dispA]
 	;
 
-	let csize = code.byteCount();
-	let csize2 = code2.byteCount();
+	const csize = code.byteCount();
+	const csize2 = code2.byteCount();
 
 	for (let i = 1; i < 10; i++)
 	{
-		let __ = `${_} [${i}] `;
+		const __ = `${_} [${i}] `;
 
 		$$(__ + '3.2 - Get the starting address of the case')
 		let addr = Exe.Vir2Phy(Exe.GetInt32(jmpTbl + (i - 1) * 4), CODE);

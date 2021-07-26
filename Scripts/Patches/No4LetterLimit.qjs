@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,15 +32,16 @@
 ///
 No4LetterLimit = function(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Find all the size comparisons against 4')
-	let prefix =
+	const prefix =
 		CALL(NEG3WC) //call UIEditCtrl::GetTextSize
 	+	CMP(EAX, 4)  //cmp eax, 4
 	;
 
-	let addrs = [
+	let addrs =
+	[
 		...Exe.FindHexN(prefix + JL(WC)),    //jl short _proceed
 		...Exe.FindHexN(prefix + JL(POS2WC)) //jl _proceed
 	];
@@ -53,30 +54,30 @@ No4LetterLimit = function(patchName)
 	let userAddr = -1;
 	let passAddr = -1;
 	let GetTextSize = -1; //the function address
-	let psize = prefix.byteCount();
+	const psize = prefix.byteCount();
 
-	let prefixNew =
+	const prefixNew =
 		CALL(NEG3WC) //call UIEditCtrl::GetTextSize
 	+	CMP(EAX, 6)  //cmp eax, 6
 	;
 
-	addrs.find( addr =>
+	addrs.some( memAddr =>
 	{
-		let addr2 = Exe.FindHex(prefix, addr + psize, addr + psize * 2 + 0x30);
-		if (addr2 > 0)
+		let addr = Exe.FindHex(prefix, memAddr + psize, memAddr + psize * 2 + 0x30);
+		if (addr > 0)
 		{
-			userAddr = addr2;
-			passAddr = addr;
-			GetTextSize = Exe.GetTgtAddr(addr + 1);
+			userAddr = addr;
+			passAddr = memAddr;
+			GetTextSize = Exe.GetTgtAddr(memAddr + 1);
 			return true;
 		}
 
-		addr2 = Exe.FindHex(prefixNew, addr - 0x30, addr);
-		if (addr2 > 0)
+		addr = Exe.FindHex(prefixNew, memAddr - 0x30, memAddr);
+		if (addr > 0)
 		{
-			userAddr = addr;
-			passAddr = addr2;
-			GetTextSize = Exe.GetTgtAddr(addr + 1);
+			userAddr = memAddr;
+			passAddr = addr;
+			GetTextSize = Exe.GetTgtAddr(memAddr + 1);
 			return true;
 		}
 
@@ -90,7 +91,7 @@ No4LetterLimit = function(patchName)
 	{
 		case "NoCharnameLimit":
 		{
-			let found = addrs.filter( addr =>
+			const found = addrs.filter( addr =>
 			{
 				if (Exe.GetTgtAddr(addr + 1) === GetTextSize &&
 					addr !== userAddr &&
@@ -105,7 +106,6 @@ No4LetterLimit = function(patchName)
 					return false;
 				}
 			});
-
 			if (found.isEmpty())
 				throw Error("Address not found");
 

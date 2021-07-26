@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,7 +50,7 @@ if (typeof CMURL_Data === 'undefined')
 
 CustomMerchantURL = function()
 {
-	let _ = 'CustomMerchantURL : ';
+	const _ = 'CustomMerchantURL : ';
 
 	$$(_ + '1.1 - Extract the data objects')
 	let {Saver, Loader} = CMURL_Data;
@@ -73,11 +73,11 @@ CustomMerchantURL = function()
 	+	CALL()                  // call memcpy
 	];
 
-	let addr = Exe.FindHex(parts);
+	const addr = Exe.FindHex(parts);
 	if (addr > 0)
 	{
 		$$(_ + '1.3 - Save the locations where the values are PUSHed')
-		let csize = parts.byteCount(0);
+		const csize = parts.byteCount(0);
 
 		Saver.lenRefs.push(addr + 1);
 		Saver.urlRefs.push(addr + 3);
@@ -97,43 +97,48 @@ CustomMerchantURL = function()
 	+	MOV(EAX, Saver.addr)   // mov eax, offset <save url>
 	];
 
-	let addrs = Exe.FindHexN(parts);
-	let csize = parts.byteCount(0);
+	const addrs = Exe.FindHexN(parts);
+	const csize = parts.byteCount(0);
 
-	addrs.forEach(addr =>
+	for (const addr of addrs)
 	{
 		$$(_ + '1.5 - Save the locations from the 2nd reference')
 		Loader.urlRefs.push(addr + 1);
 
 		Saver.lenRefs.push(addr + csize + 1);
 		Saver.urlRefs.push(addr + csize + 3);
-	});
+	}
 
 	$$(_ + '2 - Next set of actions is common for both Saver & Loader')
-	let result = [Saver, Loader].filter( (obj, idx) =>
+	const result = [Saver, Loader].filter( (obj, idx) =>
 	{
-		let __ = `${_} [${idx}] `;
+		const __ = `${_} [${idx}] `;
 
 		$$(__ + '2.1 - Get the new URL from user')
-		let newURL = Exe.GetUserInput(obj.varName, D_Text, "MerchantStore URLs", "Enter the new " + obj.prefix + " URL", "http://", {minLen: 9, maxLen: 255, saveDefault: true});
+		const newURL = Exe.GetUserInput(obj.varName, D_Text, "MerchantStore URLs", "Enter the new " + obj.prefix + " URL", "http://", {minLen: 9, maxLen: 255, saveDefault: true});
 		if (newURL === false)
 			return false;
 
 		$$(__ + '2.2 - Allocate space for it')
-		let [free, urlAddr] = Exe.FindSpace(obj.varName);
+		const [free, urlAddr] = Exe.FindSpace(obj.varName);
 
 		$$(__ + '2.3 - Add the new url')
 		Exe.AddFromVar(free, obj.varName);
 
 		$$(__ + '2.4 - Get the length')
-		let len = newURL.length;
+		const len = newURL.length;
 
 		$$(__ + '2.5 - Replace all the lengths')
 		if (len !== 0x2E)
-			obj.lenRefs.forEach(addr => Exe.SetUint8(addr, len));
+		{
+			for (const addr of obj.lenRefs)
+				Exe.SetUint8(addr, len);
+		}
 
 		$$(__ + '2.6 - Replace the string addresses')
-		obj.urlRefs.forEach(addr => Exe.SetInt32(addr, urlAddr));
+		for (const addr of obj.urlRefs)
+			Exe.SetInt32(addr, urlAddr);
+
 		return true;
 	});
 
@@ -141,12 +146,11 @@ CustomMerchantURL = function()
 		Cancel('No New URLs entered');
 
 	$$(_ + '3 - Remove all the official ip addresses')
-	let find = "http://112.175.128.140:3000";
-	let repl = "http://0.0.0.0/\x00";
+	const find = "http://112.175.128.140:3000";
+	const repl = "http://0.0.0.0/\x00";
 
-	Exe.FindTextN(find, false, false).forEach(addr =>
-		Exe.SetText(addr, repl)
-	);
+	for (const addr of Exe.FindTextN(find, false, false))
+		Exe.SetText(addr, repl);
 
 	return true;
 };

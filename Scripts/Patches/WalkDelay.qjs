@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : MegaByte, X-EcutiOnner                                 *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,10 +34,10 @@
 ///
 WalkDelay = function(patchName)
 {
-	let _ = patchName + ' : ';
+	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Find the delay addition')
-	let reg = (Exe.Version === 6 ? EDX : ECX); //VC6 uses EDX
+	const reg = (Exe.Version === 6 ? EDX : ECX); //VC6 uses EDX
 	let code =
 		ADD(reg, 0x258)   //add regA, 258h ; 600ms
 	+   CMP(EAX, reg)     //cmp eax, regA ; regA is Either edx OR ecx
@@ -69,20 +69,20 @@ WalkDelay = function(patchName)
 	if (patchName === "NoWalkDelay")
 	{
 		$$(_ + '2.1 - NOP out the addition if no walk delay is desired')
-		tgtAddrs.forEach(addr => Exe.SetNOPs(addr, 6));
+		for (const addr of tgtAddrs)
+			Exe.SetNOPs(addr, 6);
 	}
 	else
 	{
 		$$(_ + '2.2 - Get the new delay value from user')
-		let varName = '$walkDelay';
-		let result = Exe.GetUserInput(varName, D_Uint16, "Walk Delay", "Enter the new walk delay (snaps to closest valid value)", 600, {min: 0, max: 1000});
+		const varName = '$walkDelay';
+		const result = Exe.GetUserInput(varName, D_Uint16, "Walk Delay", "Enter the new walk delay (snaps to closest valid value)", 600, {min: 0, max: 1000});
 		if (result === false)
 			Cancel("Delay", 600);
 
 		$$(_ + '2.3 - Replace the value')
-		tgtAddrs.forEach(addr =>
-			Exe.SetFromVar(addr + 2, varName)
-		);
+		for (const addr of tgtAddrs)
+			Exe.SetFromVar(addr + 2, varName);
 	}
 
 	return true;

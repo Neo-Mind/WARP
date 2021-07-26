@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,15 +32,15 @@
 ///
 TranslateClient = function()
 {
-	let _ = 'TranslateClient : ';
+	const _ = 'TranslateClient : ';
 
 	$$(_ + '1.1 - Get the translation map file from user')
-	let inFile = Exe.GetUserInput('$translationFile', D_InFile, "Translation Mapping", "Enter the translation file", "Inputs/Translations_EN.yml", {filters: YMLFILTER});
+	const inFile = Exe.GetUserInput('$translationFile', D_InFile, "Translation Mapping", "Enter the translation file", "Inputs/Translations_EN.yml", {filters: YMLFILTER});
 	if (inFile === false)
 		Cancel("No translation file specified");
 
 	$$(_ + '1.2 - Load the mapping')
-	let Translations = Warp.LoadYaml(inFile);
+	const Translations = Warp.LoadYaml(inFile);
 	if (Translations === false)
 		return false;
 
@@ -53,15 +53,15 @@ TranslateClient = function()
 		throw Error("Unable to create FailedTranslations Output file");
 
 	$$(_ + '2.1 - Retrieve the Section end point addresses')
-	let dbegin  = Exe.GetSectBegin(DATA);
-	let d2begin = Exe.GetSectBegin(DATA2);
-	let dend  = Exe.GetSectEnd(DATA);
-	let d2end = Exe.GetSectEnd(DATA2);
+	const dbegin  = Exe.GetSectBegin(DATA);
+	const d2begin = Exe.GetSectBegin(DATA2);
+	const dend  = Exe.GetSectEnd(DATA);
+	const d2end = Exe.GetSectEnd(DATA2);
 
 	$$(_ + '2.2 - Save the filtered array with successful translations')
-	let translated = Translations.filter( (hash, idx) =>
+	const translated = Translations.filter( (hash, idx) =>
 	{
-		let __ = `${_} [${idx}] `;
+		const __ = `${_} [${idx}] `;
 
 		$$(__ + '2.3 - Retrieve the 5 parts & verify if we are within the expected date range for the builddate')
 		let findPat = hash.find;
