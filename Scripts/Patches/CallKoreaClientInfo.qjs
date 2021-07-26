@@ -73,7 +73,7 @@ CallKoreaClientInfo = function()
 
 	addrs.forEach( (memAddr, idx) =>
 	{
-		const __ = `${i} [${idx}]`;
+		const __ = `${_} [${idx}]`;
 
 		$$(__ + '2.1 - Find the Switch case jump before each PUSH')
 		let csize, addr;
