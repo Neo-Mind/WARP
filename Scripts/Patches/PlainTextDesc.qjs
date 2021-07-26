@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 ///
 PlainTextDesc = function()
 {
-	let _ = 'PlainTextDesc : ';
+	const _ = 'PlainTextDesc : ';
 
 	$$(_ + '1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
@@ -91,7 +91,7 @@ PlainTextDesc = function()
 		}
 	}
 
-	let addr = Exe.FindHex(prefix + suffix);
+	const addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
 		throw Error("Langtype comparison missing");
 

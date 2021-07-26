@@ -1,6 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2020-2021 mrjnumber1                                     *
+*   Copyright (C) 2021 Andrei Karas (4144)                                 *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,37 +21,50 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : mrjnumber1                                             *
+*   Author(s)     : mrjnumber1, Andrei (4144)                              *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Zero out the website string to prevent the launch.
+/// \brief Zero out the website strings to prevent the launch.
 ///        When an in-game setting that requires a restart to take effect is changed,
 ///        the client tries to launch ro.gnjoy.com. This patch disables the behavior.
 ///
 NoGNJoyLaunch = function()
 {
-	let _ = 'NoGNJoyLaunch : ';
+	const _ = 'NoGNJoyLaunch : ';
 
-	$$(_ + '1 - Zero out the first string')
-	Exe.SetInt8(NGNJL_Addr, 0);
+	const found = 
+	[//all possible URLs that end up getting used.
+		"ro.gnjoy.com",
+        "http://ro.gnjoy.com",
+        "http://ro.gnjoy.com/",
+        "http://www.ragnarok.co.in/index.php",
+        "https://iro.ragnarokonline.com/member/memberjoin1.asp?mNum=1",
+        "http://t.kunlun.com/?act=voucher.main&cid=1000&pid=61",
+        "http://www.hangame.com",
+        "http://ragnarok.co.kr",
+        "http://roz.gnjoy.com",
+        "http://roz.gnjoy.com/"
+	].filter( str =>
+	{
+		$$(_ + `1 - Find '${str}'`)
+		const addr = Exe.FindText(str, PHYSICAL);
 
-	$$(_ + '2 - Look for the 2nd one and zero it out as well')
-	let addr = Exe.FindText("ro.gnjoy.com/", PHYSICAL, false);
-	if (addr > 0)
-		Exe.SetInt8(addr, 0);
+		if (addr > 0)
+		{
+			$$(_ + '2 - Zero out the string')
+			Exe.SetInt8(addr, 0);
+			return true;
+		}
+
+		return false;
+	});
+
+	if (found.isEmpty())
+		throw Error("None of the URLs were found");
 
 	return true;
-};
-
-///
-/// \brief Disable for clients without the string
-///
-NoGNJoyLaunch.validate = function()
-{
-	NGNJL_Addr = Exe.FindText("ro.gnjoy.com", PHYSICAL, false);
-	return (NGNJL_Addr > 0);
 };

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,7 +35,7 @@
 ///
 CustomInventoryLimit = function()
 {
-	let _ = 'CustomInventoryLimit : ';
+	const _ = 'CustomInventoryLimit : ';
 
 	$$(_ + '1 - Find the locations where the /%d string is referenced')
 	let code;
@@ -70,27 +70,28 @@ CustomInventoryLimit = function()
 		Cancel("No valid pattern known for older clients");
 	}
 
-	let addrs = Exe.FindHexN(code);
+	const addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
 		throw Error("Item count function missing");
 
 	$$(_ + '2.1 - Retrieve the new value from user')
-	let val = Exe.GetUserInput('$MaxItemCount', D_Uint32, "Limit Input", "Enter the max item count", 100, {max: 999});
+	const val = Exe.GetUserInput('$MaxItemCount', D_Uint32, "Limit Input", "Enter the max item count", 100, {max: 999});
 	if (val === true)
 		Cancel("Max Count", 100);
 
 	$$(_ + '2.2 - Prep the new string')
-	let newStr = "/" + val + "\x00";
+	const newStr = "/" + val + "\x00";
 
 	$$(_ + '2.3 - Allocate space for it')
-	let [free, freeVir] = Exe.FindSpace(newStr.length);
+	const [free, freeVir] = Exe.FindSpace(newStr.length);
 
 	$$(_ + '2.4 - Add the string there')
 	Exe.AddText(free, newStr);
 
 	$$(_ + '3 - Replace all the references')
-	let offset = code.byteCount() - 4;
-	addrs.forEach( matchAddr => Exe.SetInt32(matchAddr + offset, freeVir) );
+	const offset = code.byteCount() - 4;
+	for (const matchAddr of addrs)
+		Exe.SetInt32(matchAddr + offset, freeVir);
 
 	return true;
 };

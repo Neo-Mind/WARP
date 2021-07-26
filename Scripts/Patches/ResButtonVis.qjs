@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,10 +34,10 @@
 ///
 HideResButton = function()
 {
-	let _ = 'HideResButton : ';
+	const _ = 'HideResButton : ';
 
 	$$(_ + '1 - Find the "Token of Siegfried" id PUSH in CGameMode::HaveSiegfriedItem function')
-	let addr = Exe.FindHex( PUSH(0x1DC5) ); //PUSH 1DC5
+	const addr = Exe.FindHex( PUSH(0x1DC5) ); //PUSH 1DC5
 	if (addr < 0)
 		throw Error("Siegfried ID not PUSHed");
 
@@ -52,7 +52,7 @@ HideResButton = function()
 ///
 ShowResButton = function()
 {
-	let _ = 'ShowResButton : ';
+	const _ = 'ShowResButton : ';
 
 	$$(_ + '1.1 - Find the "Token of Siegfried" id PUSH in CGameMode::HaveSiegfriedItem function')
 	let addr = Exe.FindHex( PUSH(0x1DC5) ); //push 1DC5h

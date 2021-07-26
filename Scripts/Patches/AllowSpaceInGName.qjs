@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shakto                                                 *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-01                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,7 +31,7 @@
 ///
 AllowSpaceInGName = function()
 {
-	let _ = 'AllowSpaceInGName : ';
+	const _ = 'AllowSpaceInGName : ';
 
 	$$(_ + '1.1 - Find the character check')
 	let code =
@@ -55,7 +55,7 @@ AllowSpaceInGName = function()
 	addr += code.byteCount();
 
 	$$(_ + '2 - Overwrite conditional jump after TEST (NOP out JNE / change JZ to JMP)')
-	let ins = Instr.FromAddr(addr);
+	const ins = Instr.FromAddr(addr);
 	if (ins.Codes[0] === 0x74 || (ins.Codes[0] === 0x0F && ins.Codes[1] === 0x84))
 	{
 		Exe.SetJMP(addr); //Change JE to JMP
@@ -75,4 +75,6 @@ AllowSpaceInGName = function()
 ///
 /// \brief Disable for old clients
 ///
-AllowSpaceInGName.validate = () => Exe.BuildDate >= 20120207;
+AllowSpaceInGName.validate = () =>
+	Exe.BuildDate >= 20120207;
+

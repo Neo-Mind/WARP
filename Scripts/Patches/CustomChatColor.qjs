@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shakto                                      *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -182,13 +182,12 @@ CustomPublicColorSelf = function ()
 		throw Error("'Dark Green' reference missing");
 
 	$$(_ + '1.2 - Find the original color (Green) PUSH within the vicinity of one of the addrs')
-	let greenAddr = -1;
-	addrs.find(addr =>
+	const greenAddr = addrs.findAs( addr =>
 	{
-		greenAddr = Exe.FindHex( PUSH(0x00FF00), addr + 5, addr + 40);
-		return (greenAddr > 0);
+		const found = Exe.FindHex( PUSH(0x00FF00), addr + 5, addr + 40);
+		if (found > 0)
+			return found;
 	});
-
 	if (greenAddr < 0)
 		throw Error("'Green' reference missing");
 

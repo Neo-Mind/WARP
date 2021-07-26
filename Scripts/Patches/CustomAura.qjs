@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -124,7 +124,7 @@ CustomAuraSprites = function()
 		let offPP = -1;
 
 		$$(_ + '4.2 - Filter out the pattern that CALLs pikapika2 effect followed by JMP to ring_blue')
-		const found = addrs.find( patAddr =>
+		const found = addrs.some( patAddr =>
 		{
 			addr = Exe.GetTgtAddr(patAddr + 4, PHYSICAL);
 			offPP = Exe.FindHex( PUSH(ppika2), addr, addr + 0x100);
@@ -181,14 +181,13 @@ CustomAuraLimits = function()
 	+	CALL(POS3WC)             //call CPlayer::ReLaunchBlurEffects
 	;
 
-	let addr = -1;
-	addrs.find( memAddr =>
+	let addr = addrs.findAs( memAddr =>
 	{
-		addr = Exe.FindHex(code, memAddr + csize, memAddr + csize + 0x100);
-		return (addr > 0);
-	})
-
-	if (addr < 0)
+		const found = Exe.FindHex(code, memAddr + csize, memAddr + csize + 0x100);
+		if (found > 0)
+			return found;
+	});
+	if (!addr)
 		throw Error("ReLaunchBlurEffects CALL not found");
 
 	$$(_ + '1.3 - Go inside the function')

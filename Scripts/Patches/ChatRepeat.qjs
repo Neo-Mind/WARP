@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,15 +34,15 @@
 ///
 ChatRepeat = function(patchName)
 {
-	let _ = patchName + ' :';
+	const _ = patchName + ' :';
 
 	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
 	LANGTYPE.load();
 
 	$$(_ + '1.2 - Find the Langtype comparison to identify ::IsSameSentence')
-	let dist = Exe.Version === 6 ? POS1WC : WCp;
+	const dist = Exe.Version === 6 ? POS1WC : WCp;
 
-	let prefix =
+	const prefix =
 		CMP([LANGTYPE], 0xA) //cmp dword ptr [g_serviceType], 0Ah
 	+	JE(dist)             //je short _next / je _next
 	+	CMP(ROC.HasFP        //cmp dword ptr [ARG.1], 2 ; where ARG.1 =
@@ -53,7 +53,7 @@ ChatRepeat = function(patchName)
 		, 2
 	);
 
-	let suffix = JL(dist);   //jl short _skip / jl _skip
+	const suffix = JL(dist);   //jl short _skip / jl _skip
 
 	let addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0)
@@ -70,7 +70,7 @@ ChatRepeat = function(patchName)
 	else
 	{
 		$$(_ + '2.3 - Otherwise, get the new limit from the user')
-		let limit = Exe.GetUserInput('$chatFloodLimit', D_Uint8, "Chat Limit", "Enter the new limit", 2, {max: 127});
+		const limit = Exe.GetUserInput('$chatFloodLimit', D_Uint8, "Chat Limit", "Enter the new limit", 2, {max: 127});
 		if (limit === false)
 			Cancel("Chat Limit", 2);
 

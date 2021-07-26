@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -330,7 +330,7 @@ _MG_EMB = (callAddr, AddPak) =>
 	let funAddr = AddPak - (strAddr - 2);                   //Difference value for Last AddPak call location (first string needs to be loaded last)
 
 	let code = "";
-	grfNames.forEach( name =>
+	for (const name of grfNames)
 	{
 		code = SwapFillers( template,
 		{
@@ -341,7 +341,7 @@ _MG_EMB = (callAddr, AddPak) =>
 
 		strAddr += name.length + 1;  //Extra 1 for NULL byte
 		funAddr += tsize;            //Increasing the difference => call location is closer/lesser
-	});
+	}
 
 	code += RETN() + ' 00';//retn and 1 extra NULL byte
 

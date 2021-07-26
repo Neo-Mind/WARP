@@ -150,7 +150,7 @@ NewButtonVis = function(patchName)
 			throw Error("Either String or ID missing");
 
 		$$(_ + '1.6 - Map & assign the IDs based on the strings PUSHed')
-		strPushers.forEach((addr, idx) =>
+		strPushers.forEach( (addr, idx) =>
 		{
 			const str = Exe.GetText(Exe.Vir2Phy(Exe.GetInt32(addr + 1))); //the string being pushed.
 			const name = NBV.Names[str];
@@ -396,7 +396,7 @@ _NBV_Stage = index =>
 
 	$$(_ + '2.2 - Iterate through the current selection and change the value in table or add corresponding JE to code')
 	let prefix = '';
-	selection.forEach(key =>
+	for (const key of selection)
 	{
 		if (NBV.TblAddr[key])
 		{
@@ -413,11 +413,11 @@ _NBV_Stage = index =>
 			if (index === 1 && NBV.Type === 2)
 				onIDs.push(ID);
 		}
-	});
+	}
 
 	$$(_ + '2.3 - Repeat the process for the other selection')
 	let suffix = '';
-	otherSelection.forEach(key =>
+	for (const key of otherSelection)
 	{
 		if (NBV.TblAddr[key])
 		{
@@ -434,7 +434,7 @@ _NBV_Stage = index =>
 			if (otherIndex === 1 && NBV.Type === 2)
 				onIDs.push(ID);
 		}
-	});
+	}
 
 	if (!prefix.isEmpty() || !suffix.isEmpty())
 	{
@@ -455,7 +455,7 @@ _NBV_Stage = index =>
 		}
 		else
 		{
-			NBV.OffIDs.forEach(ID =>
+			for (const ID of NBV.OffIDs)
 			{
 				if (onIDs.includes(ID))
 					return;
@@ -464,7 +464,7 @@ _NBV_Stage = index =>
 					CMP(NBV.Reg, ID)       //cmp regA, ID
 				+	JZ(Filler(3))          //jz <offAddr>
 				;
-			});
+			}
 
 			code +=
 				JMP(Filler(4))             //jmp <onAddr>

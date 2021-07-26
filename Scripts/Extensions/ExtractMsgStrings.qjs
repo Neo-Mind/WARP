@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -109,7 +109,7 @@ ExtractMsgStrings = function()
 	$$(_ + '3.2 - Stop when the int32 at current Location is not matching current index')
 	for (let idx = 0; Exe.GetUint32(addr) === idx; idx++, addr += 8)
 	{
-		const __ = _ + `[${idx}] `;
+		const __ = `${_} [${idx}] `;
 		
 		$$(__ + '3.3 - Get the address of the string')
 		const strAddr = Exe.Vir2Phy(Exe.GetUint32(addr + 4));

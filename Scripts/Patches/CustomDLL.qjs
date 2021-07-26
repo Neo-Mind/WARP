@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,18 +34,18 @@
 ///
 CustomDLL = function()
 {
-	let _ = 'CustomDLL : ';
+	const _ = 'CustomDLL : ';
 
 	$$(_ + '1.1 - Extract the import table (if HShield patch is enabled then skip aossdk entry while extracting)')
-	let dirEntries = GetImpTable(Warp.GetPatchState("NoHShield") ? "aossdk.dll" : null);
+	const dirEntries = GetImpTable(Warp.GetPatchState("NoHShield") ? "aossdk.dll" : null);
 
 	$$(_ + '1.2 - Get the list file containing the dlls and functions to add')
-	let inFile = Exe.GetUserInput('$customDLL', D_InFile, "DLL Spec", "Enter the DLL specification file", "Inputs/DLLSpec.yml", {filters: YMLFILTER});
+	const inFile = Exe.GetUserInput('$customDLL', D_InFile, "DLL Spec", "Enter the DLL specification file", "Inputs/DLLSpec.yml", {filters: YMLFILTER});
 	if (inFile === false)
 		Cancel("No file specified");
 
 	$$(_ + '1.3 - Retrieve the specification')
-	let dllSpec = Warp.LoadYaml(inFile);
+	const dllSpec = Warp.LoadYaml(inFile);
 	if (!Array.isArray(dllSpec))
 		Cancel("Improper/Non-existent file specified");
 
@@ -54,7 +54,7 @@ CustomDLL = function()
 	let strData = "";                     //Holds all the dll and function names as one hex string
 	let strSize = 0;                      //Holds the size of strData
 
-	let found = dllSpec.filter( hash =>
+	const found = dllSpec.filter( hash =>
 	{
 		if ('Name' in hash === false || !Array.isArray(hash.Funcs))
 			return false;
@@ -65,7 +65,7 @@ CustomDLL = function()
 
 		dirSize += 20; //Increment for each entry
 
-		let found = hash.Funcs.filter( (func, idx) =>
+		const found = hash.Funcs.filter( (func, idx) =>
 		{
 			if ('Ordinal' in func)
 			{
@@ -102,14 +102,12 @@ CustomDLL = function()
 	dirSize += 20; //Accomodate for IAT End Entry
 
 	$$(_ + '3.1 - Allocate space to add the new table')
-	let free = Exe.FindSpace(strSize + dirSize);
-	if (free < 0)
-		throw NO_ALLOC;
-
+	const [free, freeVir] = Exe.FindSpace(strSize + dirSize);
+	
 	$$(_ + '3.2 - Construct the new Import table using the dllSpec object')
-	let strRVA = Exe.Phy2Rva(free, DIFF);
-	let baseRVA = strRVA + strSize;
-	let prefix = ' 00'.repeat(12);
+	const strRVA  = freeVir - Exe.ImageBase;
+	const baseRVA = strRVA + strSize;
+	const prefix  = ' 00'.repeat(12);
 
 	let dirEntryData = "";
 	let dirTableData = "";
@@ -117,7 +115,7 @@ CustomDLL = function()
 
 	dllSpec.forEach( (hash, idx) =>
 	{
-		let __ = `${_} [${idx}] `;
+		const __ = `${_} [${idx}] `;
 
 		$$(__ + '3.3 - Sanity check (skip empty function names - shouldnt happen but still)')
 		if ('Offset' in hash === false || hash.Funcs.isEmpty())
@@ -126,7 +124,7 @@ CustomDLL = function()
 		$$(__ + '3.4 - Append the 12 byte prefix along with the offset of the dllname & its entry')
 		dirTableData += prefix + (strRVA + hash.Offset).toHex() + (baseRVA + entryPtr).toHex();
 
-		hash.Funcs.forEach( func =>
+		for (const func of hash.Funcs)
 		{
 			if ('Ordinal' in func)
 				dirEntryData += func.Offset.toHex();
@@ -136,7 +134,7 @@ CustomDLL = function()
 				return;
 
 			entryPtr += 4;
-		});
+		}
 
 		$$(__ + '3.5- Append 0s as the end of entry table')
 		dirEntryData += " 00 00 00 00";
@@ -147,7 +145,7 @@ CustomDLL = function()
 	dirTableData = dirEntries + dirTableData + prefix + ' 00'.repeat(8);
 
 	$$(_ + '3.7 - Save the size of the entry data')
-	let entSize = dirEntryData.byteCount();
+	const entSize = dirEntryData.byteCount();
 
 	$$(_ + '4.1 - Load all the details to ImpInfo member of ROC')
 	ROC.ImpInfo =
@@ -181,7 +179,7 @@ CustomDLL.validate = () => Exe.BuildDate < 20140700 || Exe.BuildDate > 20170700 
 ///
 CustomDLL.cleanup = function()
 {
-	let patchName = "NoHShield";
+	const patchName = "NoHShield";
 	if (Warp.GetPatchState(patchName))
 	{
 		Exe.ClearPatch(patchName);
@@ -196,7 +194,7 @@ CustomDLL.cleanup = function()
 ///
 _CDLL_SetupImports = function(tblData)
 {
-	let _ = '_CDLL_SetupImports : ';
+	const _ = '_CDLL_SetupImports : ';
 
 	$$(_ + '1 - Add the strings, dll entries and import table (either tblData or ROC.ImpInfo.tblData) at the offset')
 	Exe.AddHex(

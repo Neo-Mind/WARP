@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Secret                                        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@
 ///
 No1and1Arg = function()
 {
-	let _ = 'No1and1Arg : ';
+	const _ = 'No1and1Arg : ';
 
 	$$(_ + '1 - Find \'1rag1\'')
 	let addr = Exe.FindText("1rag1");
@@ -41,7 +41,7 @@ No1and1Arg = function()
 		throw Error("'1rag1' not found");
 
 	$$(_ + '2 - Find where it is used in a PUSH')
-	let prefix =
+	const prefix =
 		PUSH(addr)      //push offset "1rag1"
 	+	PUSH_R          //push regA
 	+	(Exe.Version > 6 && Exe.Version < 14
@@ -79,7 +79,7 @@ No1and1Arg = function()
 ///
 IgnoreAccArg = function()
 {
-	let _ = 'IgnoreAccArg : ';
+	const _ = 'IgnoreAccArg : ';
 
 	$$(_ + '1.1 - Find \'/account:\'')
 	let addr = Exe.FindText("/account:");

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,18 +32,18 @@
 CQL_Prefix = "lua files\\quest\\";
 CustomQuestLua = function()
 {
-	let _ = 'CustomQuestLua : ';
+	const _ = 'CustomQuestLua : ';
 
 	$$(_ + '1.1 - Ensure LUA object is loaded')
 	LUA.load();
 
 	$$(_ + '1.2 - Get the list file with the quest file names')
-	let inFile = Exe.GetUserInput('$inpQuest', D_InFile, "Quest Lua List", "Enter the listing file", "Inputs/QuestLuaList.yml", {filters: YMLFILTER});
+	const inFile = Exe.GetUserInput('$inpQuest', D_InFile, "Quest Lua List", "Enter the listing file", "Inputs/QuestLuaList.yml", {filters: YMLFILTER});
 	if (inFile === false)
 		Cancel("No listing file specified");
 
 	$$(_ + '2.1 - Load the list')
-	let LuaFiles = Warp.LoadYaml(inFile);
+	const LuaFiles = Warp.LoadYaml(inFile);
 	if (LuaFiles === false)
 		return false
 
@@ -64,4 +64,3 @@ CustomQuestLua = function()
 ///
 CustomQuestLua.validate = () =>
 	Exe.FindText(CQL_Prefix + "Quest_function", PHYSICAL) > 0;
-

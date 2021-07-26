@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-03                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,7 +34,7 @@
 ///
 SkipServiceSelect = function()
 {
-	let _ = 'SkipServiceSelect : ';
+	const _ = 'SkipServiceSelect : ';
 
 	$$(_ + '1 - Find \'passwordencrypt\'')
 	let addr = Exe.FindText("passwordencrypt");

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-04                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,10 +31,10 @@
 ///
 NoGravityImages = function(patchName, suffix, idx, throwErr = true)
 {
-	let _ = patchName + ` : [${idx}] `;
+	const _ = patchName + ` : [${idx}] `;
 
 	$$(_ + '1 - Find the Image suffix')
-	let addr = Exe.FindText("\\T_" + suffix + ".tga", PHYSICAL, false);
+	const addr = Exe.FindText("\\T_" + suffix + ".tga", PHYSICAL, false);
 	if (addr < 0)
 	{
 		if (throwErr)

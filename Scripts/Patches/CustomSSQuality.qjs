@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-02                                             *
+*   Last Modified : 2021-07-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -31,10 +31,10 @@
 ///
 CustomSSQuality = function()
 {
-	let _ = 'CustomSSQuality : ';
+	const _ = 'CustomSSQuality : ';
 
 	$$(_ + '1.1 - Find the JPEG_CORE_PROPERTIES member assignments (DIBChannels & DIBColor)')
-	let tgt = ROC.HasFP ? [EBP, NEG2WC] : [ESP, WCp] ; //template for dword ptr [EBP-x] or dword ptr [ESP+x] as per frame pointer presence
+	let tgt = [ROC.StkReg, ROC.HasFP ? NEG2WC : WCp] ; //template for dword ptr [EBP-x] or dword ptr [ESP+x] as per frame pointer presence
 
 	let code =
 		MOV(tgt, 3)     //mov tgt, 3 ; DIBChannels
@@ -43,7 +43,7 @@ CustomSSQuality = function()
 	let addr = Exe.FindHex(code);
 	if (addr < 0) //x > 0x7F for ESP or x < 0x7F for EBP
 	{
-		tgt = ROC.HasFP ? [EBP, WCn] : [ESP, POS2WC];
+		tgt[1] = ROC.HasFP ? WCn : POS2WC;
 
 		code =
 			MOV(tgt, 3) //mov tgt, 3 ; DIBChannels
@@ -54,15 +54,15 @@ CustomSSQuality = function()
 	if (addr < 0)
 		throw Error("JPEG_CORE_PROPERTIES assignment not found");
 
-	let halfSize = code.byteCount() / 2; //Length of 1 assignment
+	const halfSize = code.byteCount() / 2; //Length of 1 assignment
 
 	$$(_ + '1.2 - Get new quality value from user')
-	let newValue = Exe.GetUserInput('$ssQuality', D_Int8, "Screenshot Quality", "Enter the new quality factor", 50, {min:0, max:100});
+	const newValue = Exe.GetUserInput('$ssQuality', D_Int8, "Screenshot Quality", "Enter the new quality factor", 50, {min:0, max:100});
 	if (newValue === false)
 		Cancel("Quality factor", 50);
 
 	$$(_ + '2.1 - Get the jquality addr = DIBChannels displacement + 60')
-	let jqAddr = Instr.FromAddr(addr).Disp + 60;
+	const jqAddr = Instr.FromAddr(addr).Disp + 60;
 
 	$$(_ + '2.2 - Prepare code to change DIBChannels member assignment to jquality member assignment.')
 	///       By default DIBChannels is 3 and DIBColor is 2 already, so overwriting their assignments doesnt matter
@@ -75,7 +75,7 @@ CustomSSQuality = function()
 	Exe.SetHex(addr, code);
 
 	$$(_ + '2.4 - NOP out all excess bytes after the code based on the size')
-	let codeSize = code.byteCount();
+	const codeSize = code.byteCount();
 
 	if (codeSize < halfSize)
 	{
