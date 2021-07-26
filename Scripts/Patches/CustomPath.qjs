@@ -146,10 +146,10 @@ CustomPath = function(patchName)
 		Warp.SetPatchState("NoBGMAudio", false);
 
 	$$(_ + '1.2 - Retrieve the data for the index')
-	const {varName, prefix, strType, addr, name} = CP_Data[patchName];
+	const {varName, prefix, strType, name} = CP_Data[patchName];
 
 	$$(_ + '1.3 - Find location where the string is used in a PUSH')
-	addr = Exe.FindHex( PUSH(addr) );
+	const addr = Exe.FindHex( PUSH(CP_Data[patchName].addr) );
 	if (addr < 0)
 		throw Error(`'${name} not used`);
 
