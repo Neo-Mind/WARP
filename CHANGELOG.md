@@ -1,6 +1,14 @@
 # 2021-07-25 Changes
 
 ## Patch Updates
+- Corrected 1 issue in "Add Chris' lua overrides" patch.
+- Divided the HP bar resize patch for mobs into 3 => 1 for Normal, 1 for Mini-Boss and 1 for Boss monster respectively.
+  Now no more [conflicts about the health bar](https://github.com/Neo-Mind/WARP/issues/57).
+
+
+# 2021-07-25 Changes
+
+## Patch Updates
 - Rearranging some codes and using `const` where appropriate.
 
 ## Tool Updates
