@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-07-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -51,7 +51,7 @@ CustomEncKeys = function(patchName)
 
 	$$(_ + '1.4 - Get the new key from user')
 	const oldKey = PACKET.Keys[index].toHex(4, true); //need in BE format
-	const newKey = Exe.GetUserInput(varName, D_Hex, "Packet Keys", "Enter the new packet key", oldKey, {minLen: 4, maxLen: 4});
+	const newKey = Exe.GetUserInput(varName, D_Hex, "Packet Keys", "Enter the new packet key", oldKey, {minLen: 4, maxLen: 4, reversed: true});
 
 	if (newKey === false || newKey === oldKey)
 		Cancel("No new key specified");
@@ -71,6 +71,20 @@ CustomEncKeys = function(patchName)
 		for (const addr of Exe.FindHexN(code))
 			Exe.SetFromVar(addr + csize - 5*(index + 1), varName);
 
+		return true;
+	}
+	else if (PACKET.KS_Mode === KeyMode.Move) //Since Packet Keys are moved individually inside ObfuscateOrInit, we can directly change those
+	{
+		$$(_ + '2.3 - Find the correct key movement')
+		let ins = Instr.FromAddr(PACKET.Assigner);
+		for (let i = 0; i < 3; i++, ins.moveToNext())
+		{
+			if (ins.Disp === 4*(index+1))
+			{
+				Exe.SetFromVar(ins.NextAddr - 4, varName);
+				break;
+			}
+		}
 		return true;
 	}
 	else //Keys are assigned inside ObfuscateOrInit mixed function

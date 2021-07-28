@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-07-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -141,7 +141,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 					const code =
 						PUSH(4)      //push 4                      ; Type = REG_DWORD
 					+	PUSH_0       //push 0                      ; Reserved
-					+	PUSH(ccAddr) //push offset "CASH_CATEGORY" ; SubKey 
+					+	PUSH(ccAddr) //push offset "CASH_CATEGORY" ; SubKey
 					;
 					addr = Exe.FindHex(code);
 				}
@@ -223,11 +223,11 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				this.KS_Mode = KeyMode.Move;
 
 				$$(_ + '4.3 - Extract the keys being assigned')
+				let ins = Instr.FromAddr(addr);
 				for (let i = 0; i < 3; i++)
 				{
-					const ins = Instr.FromAddr(addr);
 					this.Keys[ins.Disp/4 - 1] = ins.Immd; //order can be any so this mechanism is needed
-					addr = ins.NextAddr;
+					ins.moveToNext();
 				}
 
 				$$(_ + '4.4 - Set validity to true.')
@@ -236,19 +236,21 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 			}
 
 			$$(_ + '5.1 - Next look for the shared key pattern')
-			const prefix =
+			let parts =
+			[//0
 				CMP(EAX, 1)              //cmp eax, 1
 			+	JNE(WCp)                 //jne short _next
-			;
-			code =
-				prefix
-			+	MOV(EAX, ALLWC)          //mov eax, <Key A> ; shared key
-			+	MOV([ECX, ' 0?'], EAX)   //mov dword ptr [ecx + dispA], eax
+
+			,//1
+				MOV(EAX, ALLWC)          //mov eax, <Key A> ; shared key
+
+			,//2
+				MOV([ECX, ' 0?'], EAX)   //mov dword ptr [ecx + dispA], eax
 			+	MOV([ECX, ' 0?'], EAX)   //mov dword ptr [ecx + dispC], eax
 			+	MOV([ECX, ' 0?'], ALLWC) //mov dword ptr [ecx + dispB], <Key B>
-			;
+			];
 
-			addr = Exe.FindHex(code, fnAddr, fnAddr + 0x60);
+			addr = Exe.FindHex(parts, fnAddr, fnAddr + 0x60);
 			if (addr > 0)
 			{
 				$$(_ + '5.2 - If found then set the mode to \'Shared\' and save the location of the first MOV as the Assigner')
@@ -271,13 +273,35 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				return;
 			}
 
-			$$(_ + '6.1 - Since neither pattern matched we need to use explicit mapping')
+			$$(_ + '6.1 - Next look for patched version of a shared key pattern')
+			parts[1] = JMP(POS4WC);
+			addr = Exe.FindHex(parts, fnAddr, fnAddr + 0x60);
+			if (addr > 0)
+			{
+				$$(_ + '6.2 - If found then set the mode to \'Move\' and save the target location of the JMP (which is the first MOV) as the assigner')
+				this.Assigner = Exe.GetTgtAddr(addr + parts.byteCount(0, 1) - 4, PHYSICAL);
+				this.KS_Mode = KeyMode.Move;
+
+				$$(_ + '6.3 - Extract the keys being assigned')
+				let ins = Instr.FromAddr(this.Assigner);
+				for (let i = 0; i < 3; i++)
+				{
+					this.Keys[ins.Disp/4 - 1] = ins.Immd; //order can be any so this mechanism is needed
+					ins.moveToNext();
+				}
+
+				$$(_ + '6.4 - Set validity to true.')
+				this.Valid = true;
+				return;
+			}
+
+			$$(_ + '7.1 - Since neither pattern matched we need to use explicit mapping')
 			this.KS_Mode = KeyMode.Virtual;
 
-			$$(_ + '6.2 - Set the Assigner');
+			$$(_ + '7.2 - Set the Assigner');
 			this.Assigner = fnAddr + (ROC.HasFP ? 3 : 0);
 
-			$$(_ + '6.3 - For older clients we will try to look in the PktKeyMap')
+			$$(_ + '7.3 - For older clients we will try to look in the PktKeyMap')
 			if (Exe.BuildDate <= 20180308)
 			{
 				if (typeof PktKeyMap === 'undefined' || !PktKeyMap) //avoid redefinition & only load when required
@@ -287,10 +311,10 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 						throw Error("PKT - Packet Key Map file is invalid");
 				}
 
-				$$(_ + '6.4 - Retrieve the keys based on the date')
+				$$(_ + '7.4 - Retrieve the keys based on the date')
 				const arr = PktKeyMap[Exe.BuildDate];
 
-				$$(_ + '6.5 - Ensure we have a valid array')
+				$$(_ + '7.5 - Ensure we have a valid array')
 				this.Valid = IsArr(arr) && arr.length === 3;
 				if (this.Valid)
 				{
@@ -304,7 +328,7 @@ if (typeof PACKET === 'undefined') // avoid redefinition
 				}
 			}
 
-			$$(_ + '6.6 - For newer clients, the keys are 0 by default.')
+			$$(_ + '7.6 - For any other clients, the keys are 0 by default.')
 			this.Valid = true;
 		},
 	};
