@@ -1,3 +1,9 @@
+# 2021-07-31 Changes
+
+## Patch Updates
+- Fixed the remaining [issue with Increase Hair style patches](https://github.com/Neo-Mind/WARP/issues/56).
+
+
 # 2021-07-29 Changes
 
 ## Patch Updates
