@@ -240,7 +240,7 @@ Array.prototype.findAs = function( f )
 {
 	if (typeof f !== 'function')
 		throw TypeError("Function expected in 'findAs'");
-
+	
 	for (let i = 0; i < this.length; i++)
 	{
 		const result = f(this[i], i, this);
