@@ -283,7 +283,7 @@ if (typeof OpData === 'undefined')
 						this.Disp = this.Disp || 0;
 					}
 				}
-
+				
 				/// 1.9 - Set the displacement size for scale > 1
 				if ('Disp' in this && this.Scale > 1)
 				{
