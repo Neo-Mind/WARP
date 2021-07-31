@@ -1,3 +1,20 @@
+# 2021-07-31 Changes
+
+## Patch Updates
+- Fixed the remaining [issue with Increase Hair style patches](https://github.com/Neo-Mind/WARP/issues/56).
+
+
+# 2021-07-29 Changes
+
+## Patch Updates
+- Corrected 1 issue in "Add Chris' lua overrides" patch.
+- Divided the HP bar resize patch for mobs into 3 => 1 for Normal, 1 for Mini-Boss and 1 for Boss monster respectively.
+  Now no more [conflicts about the health bar](https://github.com/Neo-Mind/WARP/issues/57).
+
+- Fixed the [byte order issue in Packet Key patches](https://github.com/Neo-Mind/WARP/issues/55). 
+  The `PACKET` object now better recognizes patched clients and `Get Packet Keys` extension works correctly for patched clients too.
+
+
 # 2021-07-25 Changes
 
 ## Patch Updates
