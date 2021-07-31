@@ -288,7 +288,7 @@ Dump = (name, obj) =>
 
 	for (key in obj)
 	{
-		const val = obj[key]
+		let val = obj[key]
 		if (IsArr(val))
 		{
 			ShowArr(val, TAB, key, true);
