@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-07-15                                             #
+#   Last Modified : 2021-07-28                                             #
 #                                                                          #
 ############################################################################
 
@@ -871,13 +871,25 @@
             title : Resize Player HP/SP bar
             recommend : no
             author : CH.C (jchcc) , Neo-Mind
-            desc : Resize the HP/SP bar drawn under playing character as per user specified value.
+            desc : Resize the HP/SP bar drawn for playing character as per user specified value.
         
-        - ResizeBossBar:
-            title : Resize Boss (MVP) mob HP bar
+        - ResizeNormalBar:
+            title : Resize Normal mob HP bar
             recommend : no
             author : CH.C (jchcc) , Neo-Mind
-            desc : Resize the HP bar drawed under Boss monsters as per user specified value.
+            desc : Resize the HP bar drawn for regular monsters as per user specified value.
+        
+        - ResizeMiniBossBar:
+            title : Resize Mini-Boss mob HP bar
+            recommend : no
+            author : CH.C (jchcc) , Neo-Mind
+            desc : Resize the HP bar drawn for Mini-Boss monsters as per user specified value.
+        
+        - ResizeBossBar:
+            title : Resize Boss mob HP bar
+            recommend : no
+            author : CH.C (jchcc) , Neo-Mind
+            desc : Resize the HP bar drawn for Boss monsters as per user specified value.
 
 - CustomAutoFollow:
     title : AUTO FOLLOW CUSTOMIZATION
@@ -1666,5 +1678,5 @@
         - AddLuaOverrides:
             title : Add Chris' lua overrides [Experimental]
             recommend : no
-            author : llchrisll
+            author : llchrisll , Neo-Mind
             desc : Adds the lua files provided by llchrisll to override the existing lua tables and functions. Please check <b>"https://github.com/llchrisll/ROenglishRE/tree/master/Custom%20Lua%20Files"</b> for more details.
