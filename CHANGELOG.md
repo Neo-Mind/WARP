@@ -1,3 +1,21 @@
+# 2021-08-20 Changes
+
+## Tool Updates
+- to be added
+
+## Script Updates
+- Shifted `Log` and `OpCodeList` to module files
+
+- Added depth settings to `Log` for hiding unnecessary level of support function logs. All the support functions have been updated.
+
+- Added `getReg` functon to `ModRM` and `SIBase` classes to get their respective member registers quickly.
+  It accepts 1 letter as argument ('R' & 'O' for `ModRm` , `I` & `B` for `SIBase`)
+
+- Added `PH_Regs` map to get Placeholder registers quickly based on bit sizes.
+
+- Removed `TAB` constant since it is not needed anymore.
+
+
 # 2021-07-25 Changes
 
 ## Tool Updates

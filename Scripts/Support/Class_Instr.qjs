@@ -177,7 +177,7 @@ if (typeof Instr === 'undefined') //avoid redefinition
 				return -1;
 			}
 		}
-
+		
 		///
 		/// \brief 'Static' Method to extract all the instruction bytes at addr into an 'Instr' object
 		///
