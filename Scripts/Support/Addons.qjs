@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-20                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -52,7 +52,7 @@ Number.prototype.toBits = function(cnt = 32)
 ///
 Number.prototype.toHex = function(cnt = 4, bigEndian = false)
 {
-	const _ = this + ".toHex : ";
+	const _ = Log.dive(this, 'toHex');
 
 	$$(_ + '1.1 - If only endian ness is specified then count is 4 so rearrange')
 	if (IsBool(cnt))
@@ -77,7 +77,7 @@ Number.prototype.toHex = function(cnt = 4, bigEndian = false)
 
 	$$(_ + '2.3 - If big endian is needed, return the string')
 	if (bigEndian)
-		return hex;
+		return Log.rise(hex);
 
 	$$(_ + '2.4 - Otherwise convert it to little endian with spaces prefixed per byte')
 	let result = "";
@@ -85,7 +85,8 @@ Number.prototype.toHex = function(cnt = 4, bigEndian = false)
 	{
 		result = " " + hex.substr(index, 2) + result;
 	}
-	return result;
+	
+	return Log.rise(result);
 };
 
 ///
@@ -93,7 +94,7 @@ Number.prototype.toHex = function(cnt = 4, bigEndian = false)
 ///
 Number.prototype.toIEEE = function(bigEndian = false)
 {
-	const _ = this + ".toHex : ";
+	const _ = Log.dive(this, 'toIEEE');
 
 	$$(_ + '1.1 - Prefix the sign bit')
 	let bin = (this < 0 ? '1' : '0'); //sign bit
@@ -126,7 +127,7 @@ Number.prototype.toIEEE = function(bigEndian = false)
 	bin = (bin + '0'.repeat(23)).slice(0, 32);
 
 	$$(_ + '2.6 - Convert the binary to hex and return')
-	return parseInt(bin, 2).toHex(4, bigEndian);
+	return Log.rise(parseInt(bin, 2).toHex(4, bigEndian));
 };
 
 ///
@@ -134,7 +135,7 @@ Number.prototype.toIEEE = function(bigEndian = false)
 ///
 String.prototype.toInt = function(cnt = 4, signed = true)
 {
-	const _ = "'" + this + "'.toInt : ";
+	const _ = Log.dive(this, 'toInt');
 
 	$$(_ + '1.1 - If only signed is specified rearrang accordingly')
 	if (IsBool(cnt))
@@ -159,7 +160,7 @@ String.prototype.toInt = function(cnt = 4, signed = true)
 	if (signed && num > max/2)
 		num -= max;
 
-	return num;
+	return Log.rise(num);
 };
 
 ///
@@ -167,7 +168,7 @@ String.prototype.toInt = function(cnt = 4, signed = true)
 ///
 String.prototype.toHex = function()
 {
-	const _ = "'" + this + "'.toHex : ";
+	const _ = Log.dive(this, 'toHex');
 
 	$$(_ + '1.1 - Initialize the result string')
 	let result = "";
@@ -186,7 +187,7 @@ String.prototype.toHex = function()
 	}
 
 	$$(_ + '2 - Return the result')
-	return result;
+	return Log.rise(result);
 };
 
 ///
@@ -194,7 +195,7 @@ String.prototype.toHex = function()
 ///
 String.prototype.toAscii = function()
 {
-	const _ = "'" + this + "'.toAscii : ";
+	const _ = Log.dive(this, 'toAscii');;
 
 	$$(_ + '1.1 - Split the hex string into the respective bytes (2chars each)')
 	const parts = this.trim().split(/ +/);
@@ -212,7 +213,7 @@ String.prototype.toAscii = function()
 	}
 
 	$$(_ + '2 - Return the result')
-	return str;
+	return Log.rise(str);
 };
 
 ///
@@ -220,7 +221,7 @@ String.prototype.toAscii = function()
 ///
 String.prototype.le2be = function()
 {
-	const _ = "'" + this + "'.le2be : ";
+	const _ = Log.dive(this, 'le2be');
 
 	$$(_ + '1.1 - Split based on space and reverse it and join back')
 	let be = this.split(/ +/).reverse().join('');
@@ -230,7 +231,23 @@ String.prototype.le2be = function()
 		be = '0' + be;
 
 	$$(_ + '2 - Return the result')
-	return be;
+	return Log.rise(be);
+};
+
+///
+/// \brief Extended version of 'find' method to return a transformed value instead
+///
+Array.prototype.findAs = function( f )
+{
+	if (typeof f !== 'function')
+		throw TypeError("Function expected in 'findAs'");
+	
+	for (let i = 0; i < this.length; i++)
+	{
+		const result = f(this[i], i, this);
+		if ( result )
+			return result;
+	}
 };
 
 ///
@@ -310,7 +327,7 @@ String.prototype.remove = function(str)
 ///
 String.prototype.replaceAt = function(index, newstr, len = -1)
 {
-	const _ = "'" + this + "'.replaceAt : ";
+	const _ = Log.dive(this, 'replaceAt');
 
 	$$(_ + '1.1 - Use the new string\'s length as default replacement length')
 	if (len <= 0)
@@ -321,7 +338,7 @@ String.prototype.replaceAt = function(index, newstr, len = -1)
 		index += this.length;
 
 	$$(_ + '2 - Return the replaced string')
-	return (this.slice(0, index) + newstr + this.slice(index + len));
+	return Log.rise(this.slice(0, index) + newstr + this.slice(index + len));
 };
 
 ///
@@ -338,21 +355,21 @@ String.prototype.insertAt = function(index, str)
 ///
 String.prototype.appendAsHex = function(data, bc, bigEndian)
 {
-	const _ = "'" + this + "'.appendAsHex : ";
+	const _ = Log.dive(this, 'appendAsHex');
 
 	$$(_ + '1 - Get the type of the data provided')
 	const type = typeof data;
 
 	$$(_ + '2.1 - If it is a number append the data converted to hex and return it')
 	if (type === 'number')
-		return (this + data.toHex(bc, bigEndian));
+		return Log.rise(this + data.toHex(bc, bigEndian));
 
 	$$(_ + '2.2 - If it is a string append the data and return it')
 	if (type === 'string')
-		return (this + data);
+		return Log.rise(this + data);
 
 	$$(_ + '2.3 - Return the original if neither')
-	return this + '';
+	return Log.rise(this + '');
 };
 
   //=============//
@@ -364,11 +381,11 @@ String.prototype.appendAsHex = function(data, bc, bigEndian)
 ///
 String.prototype.byteCount = function()
 {
-	const _ = "'" + this + "'.byteCount : ";
+	const _ = Log.dive(this + 'byteCount');
 
 	$$(_ + '1 - Ensure string is a hex string (also supports bitwise parts i.e. [.]')
 	if (!this.isHex())
-		return -1;
+		return Log.rise(-1);
 
 	$$(_ + '2.1 - Split the string into parts based on bit wrapper \'[\'')
 	const parts = this.replace(/_\.?(\w\w)\w*/g, '$1').replace(/ +/g, '').split('[');
@@ -389,7 +406,7 @@ String.prototype.byteCount = function()
 	}
 
 	$$(_ + '3 - Return the half of the length')
-	return Math.round(nibLen/2);
+	return Log.rise(Math.round(nibLen/2));
 };
 
 ///
