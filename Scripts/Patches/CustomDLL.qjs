@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -103,7 +103,7 @@ CustomDLL = function()
 
 	$$(_ + '3.1 - Allocate space to add the new table')
 	const [free, freeVir] = Exe.FindSpace(strSize + dirSize);
-	
+
 	$$(_ + '3.2 - Construct the new Import table using the dllSpec object')
 	const strRVA  = freeVir - Exe.ImageBase;
 	const baseRVA = strRVA + strSize;
@@ -147,8 +147,8 @@ CustomDLL = function()
 	$$(_ + '3.7 - Save the size of the entry data')
 	const entSize = dirEntryData.byteCount();
 
-	$$(_ + '4.1 - Load all the details to ImpInfo member of ROC')
-	ROC.ImpInfo =
+	$$(_ + '4.1 - Load all the details to ImpInfo')
+	CACHE.put('ImpInfo',
 	{
 		Addr    : free,
 		Strings : strData,
@@ -157,10 +157,10 @@ CustomDLL = function()
 		TblData : dirTableData,
 		TblAddr : baseRVA + Exe.ImageBase + dirEntryData.byteCount(),
 		TblSize : dirTableData.byteCount() - 20
-	};
+	});
 
 	$$(_ + '4.2 - Call the helper function to setup the new Import table in the client')
-	_CDLL_SetupImports();
+	this.stage();
 
 	return true;
 };
@@ -177,34 +177,30 @@ CustomDLL.validate = () => Exe.BuildDate < 20140700 || Exe.BuildDate > 20170700 
 /// \brief Rerun the NoHShield function if the HShield patch is selected
 ///        so that it doesnt accomodate for Custom DLL
 ///
-CustomDLL.cleanup = function()
-{
-	const patchName = "NoHShield";
-	if (Warp.GetPatchState(patchName))
-	{
-		Exe.ClearPatch(patchName);
-		Exe.SetActivePatch(patchName);
-		NoHShield();
-	}
-};
+CustomDLL.cleanup = () =>
+	ReloadPatch("NoHShield");
 
 ///
 /// \brief Helper function which uses the data from ROC.ImpInfo hash
 ///        to create a new import table in the client
 ///
-_CDLL_SetupImports = function(tblData)
+CustomDLL.stage = tblData =>
 {
-	const _ = '_CDLL_SetupImports : ';
+	const _ = 'CustomDLL.stage : ';
 
 	$$(_ + '1 - Add the strings, dll entries and import table (either tblData or ROC.ImpInfo.tblData) at the offset')
-	Exe.AddHex(
-		ROC.ImpInfo.Addr,
-		ROC.ImpInfo.Strings +
-		ROC.ImpInfo.Entries +
-		(tblData ?? ROC.ImpInfo.TblData)
-	);
+	const impInfo = CACHE.get('ImpInfo');
+	if (impInfo)
+	{
+		Exe.AddHex(
+			impInfo.Addr,
+			impInfo.Strings +
+			impInfo.Entries +
+			(tblData ?? impInfo.TblData)
+		);
 
-	$$(_ + '2 - Update the PE Table Import Data Directory Address')
-	Exe.SetDirAddr(D_Import, ROC.ImpInfo.TblAddr);
-	Exe.SetDirSize(D_Import, ROC.ImpInfo.TblSize);
+		$$(_ + '2 - Update the PE Table Import Data Directory Address')
+		Exe.SetDirAddr(D_Import, impInfo.TblAddr);
+		Exe.SetDirSize(D_Import, impInfo.TblSize);
+	}
 };

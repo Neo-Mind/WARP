@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -82,9 +82,9 @@ FixHomunAI = function()
 
 	const count = isNewType ? 1 : 2; //latest clients only have 1 of these
 
-	const addrs = Exe.FindHexN(prefix + suffix);
-	if (addrs.length !== count)
-		throw Error("Cursor code missing");
+	const addrs = Exe.FindHexN(count, count, prefix + suffix);
+	if (addrs.isEmpty())
+		throw Error(`Expected exactly ${count} match for Cursor code`);
 
 	$$(_ + '2.2 - Enforce the conditional jump before it to skip it')
 	const pat = isNewType ? JNZ(WCp) : JZ(WCp); //newer clients have jnz

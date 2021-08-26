@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei                                                 *
 *   Created Date  : 2021-06-15                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@ SendClientFlags = function()
 {
 	const _ = 'SendClientFlags : ';
 
-	if (typeof SCF_Addrs === 'undefined')
+	if (!CACHE.has('SCF_Addrs'))
 	{
 		$$(_ + '1.1 - Find \'langtype\'')
 		let addr = Exe.FindText("langtype");
@@ -55,15 +55,18 @@ SendClientFlags = function()
 		const clientAddr = Exe.GetInt32(addr + 1);
 
 		$$(_ + '1.5 - Find all the register assignment using it\'s value as source. 6 occurences expected')
-		let tgtAddrs = [];
+		let SCF_Addrs = new Set();
 		for (const reg of [EAX, ECX, EDX])
-			tgtAddrs.push(...Exe.FindHexN(MOV(reg, [clientAddr])));
+		{
+			for (const addr of Exe.FindHexN(MOV(reg, [clientAddr])))
+				SCF_Addrs.add(addr);
+		}
 
-		if (tgtAddrs.length !== 6)
+		if (SCF_Addrs.size !== 6)
 			throw Error("Unexpected no of version address references");
 
 		$$(_ + '1.6 - Save the addresses')
-		SCF_Addrs = tgtAddrs;
+		CACHE.put('SCF_Addrs', SCF_Addrs);
 	}
 
 	$$(_ + '2.1 - Allocate space for our new version address')
@@ -73,20 +76,11 @@ SendClientFlags = function()
 	Exe.SetInt32(free, 0x80000000 | (Warp.GetPatchState("PreviewInShop") ? 1 : 0));
 
 	$$(_ + '2.3 - Change the address used in all the 6 assignments')
-	for (const addr of SCF_Addrs)
+	for (const addr of CACHE.get('SCF_Addrs'))
 	{
 		const ins = Instr.FromAddr(addr);
 		Exe.SetInt32(ins.NextAddr - 4, freeVir);
 	}
 
-	return true;
-};
-
-///
-/// \brief Delete the global variable used when client loads. Patch is always valid.
-///
-SendClientFlags.validate = () =>
-{
-	delete SCF_Addrs;
 	return true;
 };

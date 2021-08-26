@@ -23,72 +23,9 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shakto                                      *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
-
-///
-/// \brief Data to be used for the patches.
-///
-if (typeof CCC_Data === 'undefined') //avoid redefinition
-{
-	CCC_Data =
-	{
-		CustomGuildColor :
-		{
-			varName : '$guildChatColor',
-			pattern :
-				PUSH(0x4)                 //PUSH 4
-			+	LEA(R32, [EBP, NEG2WC])   //LEA regA, [EBP-x]
-			+	PUSH(0xB4FFB4)            //PUSH B4,FF,B4 (Light Green)
-			,
-			clrName : "Light Green",
-			title : "Guild Chat Color",
-			clrVal : 0xB4FFB4,
-			rmOnVC9 : true
-		},
-
-		CustomPartyColor :
-		{
-			varName : '$partyChatColor',
-			pattern :
-				PUSH(0x03)                //PUSH 3
-			+	LEA(R32, [EBP, NEG2WC])   //LEA regA, [EBP-x]
-			+	PUSH(0xC8C8FF)            //PUSH FF,C8,C8 (Light Pink)
-			,
-			clrName : "Light Pink",
-			title : "Party Chat Color",
-			clrVal : 0xC8C8FF,
-			rmOnVC9 : true
-		},
-
-		CustomPartyColorSelf :
-		{
-			varName : '$yourPartyChatColor',
-			pattern :
-				PUSH(0x03)                //PUSH 3
-			+	LEA(R32, [EBP, NEG2WC])   //LEA regA, [EBP-x]
-			+	PUSH(0x00C8FF)            //PUSH FF,C8,00 (Yellowish Brown)
-			,
-			clrName : "Yellowish Brown",
-			title : "Party Chat Color (Self)",
-			clrVal : 0x00C8FF,
-			rmOnVC9 : true
-		},
-
-		CustomPublicColor :
-		{
-			varName : '$publicChatColor',
-			pattern :
-					PUSH_1                //PUSH 1
-				+	PUSH(0xFFFFFF)        //PUSH FF,FF,FF (White)
-			,
-			clrName : "White",
-			title : "Public Chat Color",
-			clrVal : 0xFFFFFF,
-		},
-	};
-}
 
 ///
 /// \brief Replace Specific color PUSHed at the end of the pattern with user specified color
@@ -98,7 +35,7 @@ CustomChatColor = function(patchName)
 	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Retrieve the data to be used')
-	const data = CCC_Data[patchName];
+	const data = this.Data.get(patchName);
 	const {varName, clrName, clrVal} = data;
 
 	$$(_ + '1.2 - Calculate the pattern to be searched')
@@ -113,9 +50,9 @@ CustomChatColor = function(patchName)
 		throw Error(`'${clrName}' reference missing`);
 
 	$$(_ + '2.2 - Retrieve the new color from user')
-	const color = Exe.GetUserInput(varName, D_Color, data.title, "Select the new color", clrVal, {ignoreAlpha: true, keepAlpha: true, order: "RGBA"});
+	const color = Exe.GetUserInput(varName, D_Color, data.title, "Select the new color", clrVal, ROC.ClrSettings);
 	if (color === false)
-		Cancel("Color", clrName + " (0x" + clrVal.toHex(3, true) + ")");
+		Cancel("Color", `${clrName} (${clrVal})`);
 
 	$$(_ + '2.3 - Replace the color')
 	Exe.SetFromVar(addr + pattern.byteCount() - 4, varName);
@@ -132,6 +69,65 @@ CustomPartyColorSelf = CustomChatColor;
 CustomPublicColor    = CustomChatColor; //inside CGameMode ::Zc_Notify_Chat function
 
 ///
+/// \brief Data to be used for the 4 patches.
+///
+CustomChatColor.Data = MakeMap(
+	'CustomGuildColor',
+	{
+		varName : '$guildChatColor',
+		pattern :
+			PUSH(0x4)                 //PUSH 4
+		+	LEA(R32, [EBP, NEG2WC])   //LEA regA, [EBP-x]
+		+	PUSH(0xB4FFB4)            //PUSH B4,FF,B4 (Light Green)
+		,
+		clrName : "Light Green",
+		title : "Guild Chat Color",
+		clrVal : '#B4FFB4',
+		rmOnVC9 : true
+	},
+
+	'CustomPartyColor',
+	{
+		varName : '$partyChatColor',
+		pattern :
+			PUSH(0x03)                //PUSH 3
+		+	LEA(R32, [EBP, NEG2WC])   //LEA regA, [EBP-x]
+		+	PUSH(0xC8C8FF)            //PUSH FF,C8,C8 (Light Pink)
+		,
+		clrName : "Light Pink",
+		title : "Party Chat Color",
+		clrVal : '#FFC8C8',
+		rmOnVC9 : true
+	},
+
+	'CustomPartyColorSelf',
+	{
+		varName : '$yourPartyChatColor',
+		pattern :
+			PUSH(0x03)                //PUSH 3
+		+	LEA(R32, [EBP, NEG2WC])   //LEA regA, [EBP-x]
+		+	PUSH(0x00C8FF)            //PUSH FF,C8,00 (Yellowish Brown)
+		,
+		clrName : "Yellowish Brown",
+		title : "Party Chat Color (Self)",
+		clrVal : '#FFC800',
+		rmOnVC9 : true
+	},
+
+	'CustomPublicColor',
+	{
+		varName : '$publicChatColor',
+		pattern :
+				PUSH_1                //PUSH 1
+			+	PUSH(0xFFFFFF)        //PUSH FF,FF,FF (White)
+		,
+		clrName : "White",
+		title : "Public Chat Color",
+		clrVal : '#FFFFFF',
+	}
+);
+
+///
 /// \brief Replace all the colors assigned for GM inside
 ///        CGameMode ::Zc_Notify_Chat function with user specified value
 ///
@@ -144,26 +140,25 @@ CustomGMColor = function()
 	if (addr1 < 0)
 		throw Error("'Orange' reference missing");
 
-	$$(_ + '1.2 - Find the Cyan color (#FFFF00) PUSH in the vicinity of addr1')
+	$$(_ + '1.2 - Find the Yellow color (#FFFF00) PUSH in the vicinity of addr1')
 	const addr2 = Exe.FindHex( PUSH(0x00FFFF), addr1 - 0x30, addr1 + 0x30);
 	if (addr2 < 0)
-		throw Error("'Cyan' reference missing");
+		throw Error("'Yellow' reference missing");
 
-	$$(_ + '1.3 - Find the Yellow color (#00FFFF) PUSH in the vicinity of addr1')
+	$$(_ + '1.3 - Find the Cyan color (#00FFFF) PUSH in the vicinity of addr1')
 	const addr3 = Exe.FindHex( PUSH(0xFFFF00), addr1 - 0x30, addr1 + 0x30);
 	if (addr3 < 0)
-		throw Error("'Yellow' reference missing");
+		throw Error("'Cyan' reference missing");
 
 	$$(_ + '2.1 - Get the new color from user')
 	const varName = '$gmChatColor';
-	const color = Exe.GetUserInput(varName, D_Color, "GM Chat Color", "Select the new color", 0x00FFFF, {ignoreAlpha: true, keepAlpha: true, order: "RGBA"});
+	const color = Exe.GetUserInput(varName, D_Color, "GM Chat Color", "Select the new color", 0x00FFFF, ROC.ClrSettings);
 	if (color === false)
-		Cancel("Color", "Cyan (0x00FFFF)");
+		Cancel("Color", "Yellow (#FFFF00)");
 
 	$$(_ + '2.2 - Replace the PUSHed color at all 3 addrs found')
-	Exe.SetFromVar(addr1 + 1, varName);
-	Exe.SetFromVar(addr2 + 1, varName);
-	Exe.SetFromVar(addr3 + 1, varName);
+	for (const addr of [addr1, addr2, addr3])
+		Exe.SetFromVar(addr + 1, varName);
 
 	return true;
 };
@@ -193,9 +188,9 @@ CustomPublicColorSelf = function ()
 
 	$$(_ + '2.1 - Get the new color from user')
 	const varName = '$yourChatColor';
-	const color = Exe.GetUserInput(varName, D_Color, "Public Chat Color (Self)", "Select the new color", 0x00FF00, {ignoreAlpha: true, keepAlpha: true, order: "RGBA"});
+	const color = Exe.GetUserInput(varName, D_Color, "Public Chat Color (Self)", "Select the new color", 0x00FF00, ROC.ClrSettings);
 	if (color === false)
-		Cancel("Color", "Green (0x00FF00)");
+		Cancel("Color", "Green (#00FF00)");
 
 	$$(_ + '2.2 - Replace PUSHed color with new one')
 	Exe.SetFromVar(greenAddr + 1, varName);

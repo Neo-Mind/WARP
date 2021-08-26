@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -91,10 +91,9 @@ EnableDnsSupport = function()
 	if (GetHostByName < 0)
 		throw Error("gethostbyname function not found");
 
-	// wsprintfA
-	const WsprintfA = Exe.FindFunc("wsprintfA", "USER32.dll");
-	if (WsprintfA < 0)
-		throw Error("wsprintfA not found");
+	// printFunc
+	ROC.findImports();
+	const printFunc = ROC.SprintF;
 
 	// IP address format
 	const IPformat = Exe.FindText("%d.%d.%d.%d");
@@ -121,7 +120,7 @@ EnableDnsSupport = function()
 	+	PUSH(ECX)                       //push ecx
 	+	PUSH(IPformat)                  //push offset "%d.%d.%d.%d"
 	+	PUSH(Filler(2))                 //push <ipAddr>  ; location is at the end of the code with Initial value "127.0.0.1"
-	+	CALL([WsprintfA])               //call dword ptr [<&USER32.wsprintfA>]
+	+	CALL([printFunc])               //call dword ptr [<printFunc>] ; sprintf/wsprintfA
 	+	ADD(ESP, 0x18)                  //add esp, 18h
 	+	MOV([AccountAddr], Filler(2))   //mov dword ptr [g_accountAddr], <ipAddr> ; Replace g_accountAddr current value with its ip address
 	+	POPAD                           //popad

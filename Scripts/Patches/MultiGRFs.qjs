@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -112,9 +112,9 @@ MultiGRFs = function(patchName)
 	///       Only the uncommon activities are being done in the seperate functions
 	///
 	if (patchName === "GRFsFromIni")
-		_MG_INI(callAddr, AddPak);
+		this.useINI(callAddr, AddPak);
 	else
-		_MG_EMB(callAddr, AddPak);
+		this.embedList(callAddr, AddPak);
 
 	$$(_ + '3.2 - Find \'rdata.grf\' and zero it out if present')
 	if (ROC.IsRenewal)
@@ -132,16 +132,12 @@ GRFsEmbedded = MultiGRFs;
 ///
 /// \brief Adds the function to read INI and hacks AddPak call which loads data.grf to use it
 ///
-_MG_INI = (callAddr, AddPak) =>
+MultiGRFs.useINI = (callAddr, AddPak) =>
 {
-	const _ = '_MG_INI : ';
+	const _ = 'MultiGRFs.useINI : ';
 
 	$$(_ + '1.1 - Get the essential addresses for our function')
-	if (ROC.GetModHandle < 0)
-		throw Error("GetModuleHandleA not found");
-
-	if (ROC.GetProcAddr < 0)
-		throw Error("GetProcAddress not found");
+	ROC.findImports();
 
 	if (ROC.Kernel32 < 0)
 		throw Error("'KERNEL32.dll' not found");
@@ -206,7 +202,7 @@ _MG_INI = (callAddr, AddPak) =>
 	+	TEST(EDX, EDX)                  //test edx, edx
 	+	JNZ(Filler(1,1))                //jnz short _codeOver
 	+	PUSH(Filler(13))                //push offset <INI filename>
-	+	PUSH(DGRF.Addr)                 //push offset "data.grf"
+	+	PUSH(DGRF)                      //push offset "data.grf"
 	+	MOV(WORD_PTR, [EBP, -2], 0x32)  //mov word ptr [ebp-2], 32h
 	+	LEA(EAX, [EBP, -2])             //lea eax, [ebp-2]
 	+	PUSH_EAX                        //push eax
@@ -241,16 +237,15 @@ _MG_INI = (callAddr, AddPak) =>
 
 	// First the jumps & the CALL
 	const [, _loopOuter, _loopInner, _next, _codeOver, lastAddr] = MapAddrs(freeVir, parts);
-
 	let code = SetFillTargets( parts,
 	{
 		start : freeVir,
-		    1 : _codeOver, //for the long jump
+		 1    : _codeOver, //for the long jump
 		'1,1' : _codeOver, //for the short jump
 		'2,1' : _loopInner,
 		'3,1' : _loopOuter,
 		'4,1' : _next,
-		   14 : AddPak
+		14    : AddPak
 	});
 
 	// Next the strings
@@ -273,9 +268,9 @@ _MG_INI = (callAddr, AddPak) =>
 ///
 /// The grf file names are retrieved in order from user specified ini file
 ///
-_MG_EMB = (callAddr, AddPak) =>
+MultiGRFs.embedList = (callAddr, AddPak) =>
 {
-	const _ = '_MG_EMB : ';
+	const _ = 'MultiGRFs.embedList : ';
 
 	$$(_ + '1.1 - Get the INI file from user to read')
 	const file = Exe.GetUserInput('$inpMultGRF', D_InFile, "GRF List file", "Enter your INI file (containing GRF names) to embed", "Inputs/Sample_DATA.INI");

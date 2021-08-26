@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -52,7 +52,7 @@ FixFontsCharset = function()
 				+	MOV([ECX, WCp], EAX) //mov dword ptr [ecx + DrawDC.m_fontType], eax
 				+	MOV(EAX, [ROC.StkReg, ROC.HasFP ? 0xC : 0x8]) //mov eax, dword ptr [ARG.2] ;  ARG.2 = ebp+0Ch with fp OR esp+8 without fp
 				+	MOV([ECX, WCp], EAX) //mov dword ptr [ecx + DrawDC.m_fontHeight], eax
-				
+
 				,//1
 					MOV(EDX, [POS4WC])   //mov dword ptr edx, [g_fontCharSet]
 				];
@@ -71,7 +71,7 @@ FixFontsCharset = function()
 			+	MOV([ECX, WCp], EDX) //mov dword ptr [ecx + DrawDC.m_fontHeight], edx
 			+	MOV(DL, [ROC.StkReg, ROC.HasFP ? 0x10 : 0xC]) //mov dl, byte ptr [ARG.3] ; where ARG.3 = ebp+0x10 with fp and esp+0xC without fp
 			+	MOV([ECX, WCp], EAX) //mov dword ptr [ecx + DrawDC.m_fontType], eax
-			
+
 			,//1
 				MOV(EAX, [POS4WC])   //mov dword ptr edx, [g_fontCharSet]
 			];
@@ -86,7 +86,7 @@ FixFontsCharset = function()
 			+	JL(POS1WC)           //jl _skip
 			+	MOV([ESI, WCp], EDX) //mov dword ptr [esi + DrawDC.m_fontType], edx
 			+	MOV([ESI, WCp], ECX) //mov dword ptr [esi + DrawDC.m_fontHeight], ecx
-			
+
 			,//1
 				MOV(EAX, [POS4WC])   //mov dword ptr eax, [g_fontCharSet]
 			];
@@ -99,7 +99,7 @@ FixFontsCharset = function()
 			+	MOV([ESI, WCp], ECX) //mov dword ptr [esi + DrawDC.m_fontHeight], ecx
 			+	TEST(EDI, EDI)       //test edi, edi
 			+	JNZ(0xA)             //jnz short _skip
-			
+
 			,//1
 				MOV(EAX, [POS4WC])   //mov dword ptr eax, [g_fontCharSet]
 			+	CMP(EDX, 0x14)       //cmp edx, 14h
@@ -129,7 +129,7 @@ FixFontsCharset = function()
 	$$(_ + '2.2 - Construct our own code in parts')
 	parts =
 	[
-		CMP(R32.List[movIns.SIB.Index], 0x14)  //cmp dword ptr regA, 14h
+		CMP(movIns.SIB.getReg('I'), 0x14)      //cmp dword ptr regA, 14h
 	+	JGE(Filler(1,1))                       //jge short _next
 	+	movIns                                 //mov eax, dword ptr [regA*4 + g_fontCharSet]
 	+	JMP(Filler(2))                         //jmp <retnAddr>
@@ -153,7 +153,7 @@ FixFontsCharset = function()
 	{
 		start : freeVir,
 		'1,1' : _next,
-		    2 : Exe.Phy2Vir(movIns.NextAddr, CODE)
+		 2    : Exe.Phy2Vir(movIns.NextAddr, CODE)
 	});
 
 	code = SwapFillers(code, 1, {3: newCharsetTbl});

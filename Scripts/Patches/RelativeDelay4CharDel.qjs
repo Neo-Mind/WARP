@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Neo-Mind                                      *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -118,7 +118,7 @@ RelativeDelay4CharDel = function()
 	Exe.SetHex(addr, code);
 
 	$$(_ + '2.3 - Hide the text "X month X day" by changing coords (28h to 90h)')
-	Exe.SetUint8(RD4CD_Addr + 2, 0x90); //its not a NOP
+	Exe.SetUint8(this.PushAddr + 2, 0x90); //its not a NOP
 
 	return true;
 };
@@ -133,6 +133,8 @@ RelativeDelay4CharDel.validate = function()
 	+	PUSH(0x28)  //push 28h
 	+	PUSH_0      //push 0
 	,
+		''
+	,
 		PUSH(0xB)   //push 0Bh
 	+	PUSH_0      //push 0
 	,
@@ -146,13 +148,13 @@ RelativeDelay4CharDel.validate = function()
 		PUSH_0      //push 0
 	+	PUSH_R      //push regB ; ESI for VC11
 	];
-	RD4CD_Addr = Exe.FindHex(parts);
+	this.PushAddr = Exe.FindHex(parts);
 
-	if (RD4CD_Addr < 0) //Extra "push 0" after "push 28h" for newer clients
+	if (this.PushAddr < 0) //Extra "push 0" after "push 28h" for newer clients
 	{
-		parts[0] += PUSH_0
-		RD4CD_Addr = Exe.FindHex(parts);
+		parts[1] = PUSH_0;
+		this.PushAddr = Exe.FindHex(parts);
 	}
 
-	return (RD4CD_Addr > 0);
+	return (this.PushAddr > 0);
 };

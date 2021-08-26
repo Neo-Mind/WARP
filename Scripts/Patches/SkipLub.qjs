@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), X-EcutiOnner                            *
 *   Created Date  : 2021-01-23                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,12 +37,12 @@ SkipSignBoard = function()
 
     $$(_ + '1.1 - Prepare the template to search with')
 	const template =
-		PUSH(Filler(1)) //push <prefixAddr>
+		PUSH(Filler(1)) //push <pathAddr>
 	+	CALL()          //call CLua::Loader
 	;
 
 	$$(_ + '1.2 - Find the first reference')
-	let addr = Exe.FindHex( SwapFillers( template, {1: SSBR_Addr} ) );
+	let addr = Exe.FindHex( SwapFillers( template, {1: this.PathAddr} ) );
 	if (addr < 0)
 		throw Error("SignBoardList_F not used");
 
@@ -96,8 +96,8 @@ SkipSignBoard = function()
 ///
 SkipSignBoard.validate = function()
 {
-	SSBR_Addr = Exe.FindText("Lua Files\\SignBoardList_F");
-	return SSBR_Addr > 0;
+	this.PathAddr = Exe.FindText("Lua Files\\SignBoardList_F");
+	return (this.PathAddr > 0);
 };
 
 ///

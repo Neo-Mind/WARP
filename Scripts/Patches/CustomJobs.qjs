@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-08-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,269 +39,277 @@ CustomJobs = function()
 	if (!Warp.TestMode)
 		Warp.SetPatchState("TranslateTaekwon", false);
 
+	Exe.ProtectChanges();
+
 	//=====================================================//
 	// Find the table loading area (references to strings) //
 	//=====================================================//
-	let refs = [];
 
-	$$(_ + '1.2 - Find the spr/act path suffix for Santa costume')
-	let strAddr = Exe.FindText("\xBB\xEA\xC5\xB8");
-	if (strAddr < 0)
-		throw Error("Santa is missing");
-
-	$$(_ + '1.3 - Find it\'s references (there should only be 1) and add to "refs" array')
-	let addrs = Exe.FindHexN(MOV([R32, 0x68], strAddr)); //mov dword ptr [regA + 68h], offset "»êÅ¸"
-	if (ROC.IsZero && addrs.length > 1)
+	if (!CACHE.has('CJ_Infos'))
 	{
-		const addr = addrs.find( memAddr =>
-			Exe.FindLastHex(PUSH(0x10AA) + MOV(ECX, ESI), memAddr, memAddr - 0x800) < 0
-		);
-		if (!addr)
-			throw Error("Santa reference missing");
+		let refs = [];
 
-		refs[0] = addr;
-	}
-	else if (addrs.length === 1)
-	{
-		refs[0] = addrs[0];
-	}
-	else
-	{
-		throw Error("Unexpected no of Santa references");
-	}
+		$$(_ + '1.2 - Find the spr/act path suffix for Santa costume')
+		let strAddr = Exe.FindText("\xBB\xEA\xC5\xB8");
+		if (strAddr < 0)
+			throw Error("Santa is missing");
 
-	$$(_ + '1.4 - Find the imf suffix for Groom/Bride (used for Santa as well) and add to "refs" array')
-	strAddr = Exe.FindText("\xB0\xE1\xC8\xA5"); //"°áÈ¥"
-	if (strAddr < 0)
-		throw Error("Groom/Bride is missing");
-
-	addrs = Exe.FindHexN(MOV([R32, 0x68], strAddr)); //mov dword ptr [regA + 68h], offset "°áÈ¥"
-	if (addrs.length !== 1)
-		throw Error("Unexpected no of Wedding references");
-
-	refs[1] = addrs[0];
-
-	$$(_ + '1.5 - Find the palette suffix for Archer')
-	strAddr = Exe.FindText("\xB1\xC3\xBC\xF6"); //"±Ã¼ö"
-	if (strAddr < 0)
-		throw Error("Archer is missing");
-
-	if (Exe.Version === 6)
-	{
-		$$(_ + '1.6 - For VC6 find it\'s reference after a PUSH 4')
-		addrs = Exe.FindHexN(MOV([EAX], strAddr) + CALL()); // mov dword ptr [eax], offset "±Ã¼ö"
-		                                                    // call <fetcher>
-
-		const code2 = PUSH(4); //PUSH 4 should be present before
-
-		const addr = addrs.find( memAddr => 	
-			Exe.FindLastHex(code2, memAddr, memAddr - 0x6) > 0
-		);
-		if (!addr)
-			throw Error("Archer reference missing (VC6)");
-		
-		refs[2] = addr;
-	}
-	else
-	{
-		$$(_ + '1.7 - For VC9+ find all references with direct movement to table')
-		addrs = Exe.FindHexN(MOV([R32, 0xC], strAddr)); //mov dword ptr [regA + 0Ch], offset "±Ã¼ö"
-
-		const addr = addrs.find( memAddr =>
-			!refs.some(refAddr => memAddr >= (refAddr - 0x300) && memAddr <= (refAddr + 0x300))
-		);
-		if (!addr)
-			throw Error("Archer reference missing (VC9+)");
-
-		refs[2] = addr;
-	}
-
-	$$(_ + '1.8 - Find the hand prefix for Archer')
-	strAddr = Exe.FindText("\xB1\xC3\xBC\xF6\\\xB1\xC3\xBC\xF6"); // ±Ã¼ö\±Ã¼ö for Archer
-	if (strAddr < 0)
-		throw Error("Hand prefix missing");
-
-	$$(_ + '1.9- Find it\'s reference')
-	refs[3] = Exe.FindHex(MOV([R32, 0xC], strAddr)); //mov dword ptr [regA + 0Ch], offset "±Ã¼ö\±Ã¼ö"
-	if (refs[3] < 0)
-		throw Error("Hand reference missing");
-
-	$$(_ + '1.10 - Find the name for Acolyte (ok that sounds weird)')
-	strAddr = Exe.FindText("Acolyte"); //We use Acolyte here because Archer has a ( mov ecx, offset ) instruction before it in Older clients
-	if (strAddr < 0)
-		throw Error("Acolyte is missing");
-
-	$$(_ + '1.11 - Find it\'s reference')
-	refs[4] = Exe.FindHex(MOV([R32, 0x10], strAddr)); //mov dword ptr [regA + 10h], offset "Acolyte"
-	if (refs[4] < 0)
-		throw Error("Acolyte reference missing");
-
-	//==========================================================================================//
-	// Find the hook & end address for table loading & extract all non-related codes in between //
-	//==========================================================================================//
-
-	$$(_ + '2.1 - Ensure LANGTYPE is loaded . Needed by FetchTillEnd')
-	LANGTYPE.load();
-
-	let limits = Exe.BuildDate >= 20170700
-	? [
-		0x6D93,
-		0x6D93,
-		0x6D93,
-		0x6D93,
-		0x7D01
-	]
-	: [
-		0x524C,
-		0x524C,
-		0x524C,
-		0x524C,
-		0x61BA
-	]
-	;
-
-	let fetcher = -1;
-	const infos = refs.map( (addr, idx) =>
-	{
-		$$(_ + '2.2 - Prep variables for required info')
-		let hookAddr, movIns, baseReg, format; //baseReg contains address for index 0 of the table, movIns will contain the mov to baseReg
-
-		$$(_ + '2.3 - Find the limit usage before it')
-		const limitAddr = Exe.FindLastHex(limits[idx].toHex(), addr, addr - 0x800);
-		if (limitAddr < 0)
-			throw Error(`Limit missing for no.${idx + 1}`);
-
-		$$(_ + '2.4 - Extract the instruction after the reference')
-		let ins = Instr.FromAddr(addr).moveToNext();
-		if (ins.Codes[0] === 0xE8) //VC6
+		$$(_ + '1.3 - Find it\'s references (there should only be 1) and add to "refs" array')
+		let addrs = Exe.FindHexN(MOV([R32, 0x68], strAddr)); //mov dword ptr [regA + 68h], offset "»êÅ¸"
+		if (ROC.IsZero && addrs.length > 1)
 		{
-			$$(_ + '2.5 - Since there is no mov unset movIns')
-			movIns = null;
+			const addr = addrs.find( memAddr =>
+				Exe.FindLastHex(PUSH(0x10AA) + MOV(ECX, ESI), memAddr, memAddr - 0x800) < 0
+			);
+			if (!addr)
+				throw Error("Santa reference missing");
 
-			$$(_ + '2.6 - Calculate the CALL\'s address if not already found')
-			if (fetcher < 0)
-				fetcher = Exe.Phy2Vir(ins.NextAddr, CODE) + ins.Immd; //the target VIRTUAL address
-
-			$$(_ + '2.7 - Find the address for the first table assignment')
-			const code =
-				PUSH_0         //push 0
-			+	MOV(ECX, ESI)  //mov ecx, esi
-			+	CALL(ALLWC)    //call func#1
-			;
-			const firstAddr = Exe.FindHex(code, limitAddr + 4, limitAddr + 0x60);
-			if (firstAddr < 0)
-				throw Error(`First index assignment missing for no.${idx + 1}`);
-
-			$$(_ + '2.8 - Set the hook address after the CALL & set the base register')
-			hookAddr = firstAddr + code.byteCount();
-			baseReg = EAX;
-			format = 0;
+			refs[0] = addr;
 		}
-		else if (ins.Codes[0] === 0x8B && ins.MRM.Mode !== 3) //VC9+
+		else if (addrs.length === 1)
 		{
-			$$(_ + '2.9 - Set it as the mov instruction')
-			movIns = ins;
-
-			$$(_ + '2.10 - Extract the register used as source in mov tgtReg, dword ptr [srcReg + Disp]')
-			const srcReg = R32.List[ins.MRM.RegM];
-
-			$$(_ + '2.11 - Use it to construct the table assignment pattern & look for it after the limitAddr')
-			const prefix = MOV(R32, ins.Disp ? [srcReg, ins.Disp] : [srcReg]);
-			const addrs = [
-				...Exe.FindHexN(1, prefix + MOV([R32], POS3WC), limitAddr + 4, limitAddr + 0x60),        //mov dword ptr [regA], offset#1
-				...Exe.FindHexN(1, prefix + MOV([R32, WCp], POS3WC), limitAddr + 4, limitAddr + 0x60),   //mov dword ptr [regA + disp8], offset#1
-				...Exe.FindHexN(1, prefix + MOV([R32, POS2WC], POS3WC), limitAddr + 4, limitAddr + 0x60) //mov dword ptr [regA + disp32], offset#1
-			].sort();
-
-			if (addrs.isEmpty())
-				throw Error(`Starting index assignment missing for no.${idx + 1}`);
-
-			$$(_ + '2.12 - Hook at the location after the smallest')
-			hookAddr = addrs[0] + movIns.Size;
-
-			$$(_ + '2.13 - Use the next byte to calculate the base register')
-			baseReg = R32.List[Exe.GetInt8(hookAddr + 1) & 0x7];
-			format = 1;
+			refs[0] = addrs[0];
 		}
 		else
-			throw Error(`Unexpected opcode for no.${idx + 1}`);
-
-		$$(_ + '3.1 - Now find the ending instruction while extracting all relevant instructions (not related to table loading) in between')
-		let [endIns, retainer, overflow] = FetchTillEnd(hookAddr, format, movIns, baseReg, fetcher, (ins) =>
 		{
-			if (Exe.Version === 6) //VC6
+			throw Error("Unexpected no of Santa references");
+		}
+
+		$$(_ + '1.4 - Find the imf suffix for Groom/Bride (used for Santa as well) and add to "refs" array')
+		strAddr = Exe.FindText("\xB0\xE1\xC8\xA5"); //"°áÈ¥"
+		if (strAddr < 0)
+			throw Error("Groom/Bride is missing");
+
+		addrs = Exe.FindHexN(1, 1, MOV([R32, 0x68], strAddr)); //mov dword ptr [regA + 68h], offset "°áÈ¥"
+		if (addrs.isEmpty())
+			throw Error("Expected exactly 1 Wedding reference");
+
+		refs[1] = addrs[0];
+
+		$$(_ + '1.5 - Find the palette suffix for Archer')
+		strAddr = Exe.FindText("\xB1\xC3\xBC\xF6"); //"±Ã¼ö"
+		if (strAddr < 0)
+			throw Error("Archer is missing");
+
+		if (Exe.Version === 6)
+		{
+			$$(_ + '1.6 - For VC6 find it\'s reference after a PUSH 4')
+			addrs = Exe.FindHexN(MOV([EAX], strAddr) + CALL()); // mov dword ptr [eax], offset "±Ã¼ö"
+																// call <fetcher>
+
+			const code2 = PUSH(4); //PUSH 4 should be present before
+
+			const addr = addrs.find( memAddr =>
+				Exe.FindLastHex(code2, memAddr, memAddr - 0x6) > 0
+			);
+			if (!addr)
+				throw Error("Archer reference missing (VC6)");
+
+			refs[2] = addr;
+		}
+		else
+		{
+			$$(_ + '1.7 - For VC9+ find all references with direct movement to table')
+			addrs = Exe.FindHexN(MOV([R32, 0xC], strAddr)); //mov dword ptr [regA + 0Ch], offset "±Ã¼ö"
+
+			const addr = addrs.find( memAddr =>
+				!refs.some(refAddr => memAddr >= (refAddr - 0x300) && memAddr <= (refAddr + 0x300))
+			);
+			if (!addr)
+				throw Error("Archer reference missing (VC9+)");
+
+			refs[2] = addr;
+		}
+
+		$$(_ + '1.8 - Find the hand prefix for Archer')
+		strAddr = Exe.FindText("\xB1\xC3\xBC\xF6\\\xB1\xC3\xBC\xF6"); // ±Ã¼ö\±Ã¼ö for Archer
+		if (strAddr < 0)
+			throw Error("Hand prefix missing");
+
+		$$(_ + '1.9- Find it\'s reference')
+		refs[3] = Exe.FindHex(MOV([R32, 0xC], strAddr)); //mov dword ptr [regA + 0Ch], offset "±Ã¼ö\±Ã¼ö"
+		if (refs[3] < 0)
+			throw Error("Hand reference missing");
+
+		$$(_ + '1.10 - Find the name for Acolyte (ok that sounds weird)')
+		strAddr = Exe.FindText("Acolyte"); //We use Acolyte here because Archer has a ( mov ecx, offset ) instruction before it in Older clients
+		if (strAddr < 0)
+			throw Error("Acolyte is missing");
+
+		$$(_ + '1.11 - Find it\'s reference')
+		refs[4] = Exe.FindHex(MOV([R32, 0x10], strAddr)); //mov dword ptr [regA + 10h], offset "Acolyte"
+		if (refs[4] < 0)
+			throw Error("Acolyte reference missing");
+
+		//==========================================================================================//
+		// Find the hook & end address for table loading & extract all non-related codes in between //
+		//==========================================================================================//
+
+		$$(_ + '2.1 - Ensure LANGTYPE is loaded . Needed by FetchTillEnd')
+		LANGTYPE.load();
+
+		let limits = Exe.BuildDate >= 20170700
+		? [
+			0x6D93,
+			0x6D93,
+			0x6D93,
+			0x6D93,
+			0x7D01
+		]
+		: [
+			0x524C,
+			0x524C,
+			0x524C,
+			0x524C,
+			0x61BA
+		]
+		;
+
+		let fetcher = -1;
+		const infos = refs.map( (addr, idx) =>
+		{
+			$$(_ + '2.2 - Prep variables for required info')
+			let hookAddr, movIns, baseReg, format; //baseReg contains address for index 0 of the table, movIns will contain the mov to baseReg
+
+			$$(_ + '2.3 - Find the limit usage before it')
+			const limitAddr = Exe.FindLastHex(limits[idx].toHex(), addr, addr - 0x800);
+			if (limitAddr < 0)
+				throw Error(`Limit missing for no.${idx + 1}`);
+
+			$$(_ + '2.4 - Extract the instruction after the reference')
+			let ins = Instr.FromAddr(addr).moveToNext();
+			if (ins.Codes[0] === 0xE8) //VC6
 			{
-				switch (ins.Codes[0])
-				{
-					case 0x8D:
-						if (ins.MRM.Mode === 2) //lea regA, [regB + dispB]
-						{
-							return (Exe.GetUint16(ins.NextAddr) === 0x45C7); //followed by ( mov dword ptr [LOCAL.x], offset#1 )
-						}
-						else if (ins.MRM.Mode === 1) //lea regA, [LOCAL.y]
-						{
-							let bytes = Exe.GetUint16(ins.NextAddr);
+				$$(_ + '2.5 - Since there is no mov unset movIns')
+				movIns = null;
 
-							return (bytes === 0xB38D || //followed by ( add regA, immA )
-								    bytes === 0xC381 || //or by       ( lea regA, [regB + dispB] )
-									bytes === 0x5588 ); //or by       ( mov byte ptr [LOCAL.x], dl )
-						}
-						break;
+				$$(_ + '2.6 - Calculate the CALL\'s address if not already found')
+				if (fetcher < 0)
+					fetcher = Exe.Phy2Vir(ins.NextAddr, CODE) + ins.Immd; //the target VIRTUAL address
 
-					case 0x8B: //mov eax, dword ptr [edi+4]
-						return (ins.MRM.Data === 0x47 && ins.Disp === 4);
-				}
+				$$(_ + '2.7 - Find the address for the first table assignment')
+				const code =
+					PUSH_0         //push 0
+				+	MOV(ECX, ESI)  //mov ecx, esi
+				+	CALL(ALLWC)    //call func#1
+				;
+				const firstAddr = Exe.FindHex(code, limitAddr + 4, limitAddr + 0x60);
+				if (firstAddr < 0)
+					throw Error(`First index assignment missing for no.${idx + 1}`);
+
+				$$(_ + '2.8 - Set the hook address after the CALL & set the base register')
+				hookAddr = firstAddr + code.byteCount();
+				baseReg = EAX;
+				format = 0;
 			}
-			else if (Exe.Version <= 10) //VC9 & VC10
+			else if (ins.Codes[0] === 0x8B && ins.MRM.Mode !== 3) //VC9+
 			{
-				switch (ins.Codes[0])
-				{
-					case 0x2B: //sub regA, regB
-						return (ins.MRM.Mode === 3 && (Exe.GetInt32(ins.Addr + 2) & 0xFFF8FF) === 0x02F8C1); //followed by ( sar regA, 2 )
+				$$(_ + '2.9 - Set it as the mov instruction')
+				movIns = ins;
 
-					case 0x83: //or regA, -1
-						return (ins.MRM.RegO === 1 && ins.Immd === -1);
+				$$(_ + '2.10 - Extract the register used as source in mov tgtReg, dword ptr [srcReg + Disp]')
+				const srcReg = ins.MRM.getReg('M');
 
-					case 0xFF: //call dword ptr [funcPtr#1] //hopefully wont conflict later
-						return (ins.MRM.Data === 0x15);
-				}
+				$$(_ + '2.11 - Use it to construct the table assignment pattern & look for it after the limitAddr')
+				const prefix = MOV(R32, ins.Disp ? [srcReg, ins.Disp] : [srcReg]);
+				const addrs = [
+					...Exe.FindHexN(1, prefix + MOV([R32], POS3WC), limitAddr + 4, limitAddr + 0x60),        //mov dword ptr [regA], offset#1
+					...Exe.FindHexN(1, prefix + MOV([R32, WCp], POS3WC), limitAddr + 4, limitAddr + 0x60),   //mov dword ptr [regA + disp8], offset#1
+					...Exe.FindHexN(1, prefix + MOV([R32, POS2WC], POS3WC), limitAddr + 4, limitAddr + 0x60) //mov dword ptr [regA + disp32], offset#1
+				].sort();
+
+				if (addrs.isEmpty())
+					throw Error(`Starting index assignment missing for no.${idx + 1}`);
+
+				$$(_ + '2.12 - Hook at the location after the smallest')
+				hookAddr = addrs[0] + movIns.Size;
+
+				$$(_ + '2.13 - Use the next byte to calculate the base register')
+				baseReg = R32.List[Exe.GetInt8(hookAddr + 1) & 0x7];
+				format = 1;
 			}
-			else //VC11+
+			else
+				throw Error(`Unexpected opcode for no.${idx + 1}`);
+
+			$$(_ + '3.1 - Now find the ending instruction while extracting all relevant instructions (not related to table loading) in between')
+			let [endIns, retainer, overflow] = FetchTillEnd(hookAddr, format, movIns, baseReg, fetcher, (ins) =>
 			{
-				switch (ins.Codes[0])
+				if (Exe.Version === 6) //VC6
 				{
-					case 0x8D:
-						if (ins.MRM.Mode === 1 && ins.MRM.RegO === 0 && Exe.GetUint8(ins.NextAddr) === 0x50) //lea eax, [LOCAL.x]
-						{                                                                                    //push eax
-							let opcode = Exe.GetUint8(ins.NextAddr + 1);
+					switch (ins.Codes[0])
+					{
+						case 0x8D:
+							if (ins.MRM.Mode === 2) //lea regA, [regB + dispB]
+							{
+								return (Exe.GetUint16(ins.NextAddr) === 0x45C7); //followed by ( mov dword ptr [LOCAL.x], offset#1 )
+							}
+							else if (ins.MRM.Mode === 1) //lea regA, [LOCAL.y]
+							{
+								let bytes = Exe.GetUint16(ins.NextAddr);
 
-							return (opcode === 0x6A || //followed by ( push immA )
-							        opcode === 0x68 ||
-									opcode === 0x56 ); //or by ( push esi )
-						}
-						break;
+								return (bytes === 0xB38D || //followed by ( add regA, immA )
+										bytes === 0xC381 || //or by       ( lea regA, [regB + dispB] )
+										bytes === 0x5588 ); //or by       ( mov byte ptr [LOCAL.x], dl )
+							}
+							break;
 
-					case 0x8B:
-						if (ins.MRM.Mode === 0 && ins.MRM.RegO === 0) //mov eax, dword ptr [regA]
-						{
-							return (Exe.GetUint16(ins.NextAddr) === 0x048D); //followed by ( lea eax, [regB*4 + eax] )
-						}
-						break;
-
-					case 0xE8: //stop at the CALL
-						return true;
+						case 0x8B: //mov eax, dword ptr [edi+4]
+							return (ins.MRM.Data === 0x47 && ins.Disp === 4);
+					}
 				}
-			}
-			return false;
+				else if (Exe.Version <= 10) //VC9 & VC10
+				{
+					switch (ins.Codes[0])
+					{
+						case 0x2B: //sub regA, regB
+							return (ins.MRM.Mode === 3 && (Exe.GetInt32(ins.Addr + 2) & 0xFFF8FF) === 0x02F8C1); //followed by ( sar regA, 2 )
+
+						case 0x83: //or regA, -1
+							return (ins.MRM.RegO === 1 && ins.Immd === -1);
+
+						case 0xFF: //call dword ptr [funcPtr#1] //hopefully wont conflict later
+							return (ins.MRM.Data === 0x15);
+					}
+				}
+				else //VC11+
+				{
+					switch (ins.Codes[0])
+					{
+						case 0x8D:
+							if (ins.MRM.Mode === 1 && ins.MRM.RegO === 0 && Exe.GetUint8(ins.NextAddr) === 0x50) //lea eax, [LOCAL.x]
+							{                                                                                    //push eax
+								let opcode = Exe.GetUint8(ins.NextAddr + 1);
+
+								return (opcode === 0x6A || //followed by ( push immA )
+										opcode === 0x68 ||
+										opcode === 0x56 ); //or by ( push esi )
+							}
+							break;
+
+						case 0x8B:
+							if (ins.MRM.Mode === 0 && ins.MRM.RegO === 0) //mov eax, dword ptr [regA]
+							{
+								return (Exe.GetUint16(ins.NextAddr) === 0x048D); //followed by ( lea eax, [regB*4 + eax] )
+							}
+							break;
+
+						case 0xE8: //stop at the CALL
+							return true;
+					}
+				}
+				return false;
+			});
+			if (overflow)
+				throw Error(`Table end missing for no.${idx+1}`);
+
+			$$(_ + '3.2 - Return the set')
+			return [hookAddr, baseReg, endIns, retainer];
 		});
-		if (overflow)
-			throw Error(`Table end missing for no.${idx+1}`);
 
-		$$(_ + '3.2 - Return the set')
-		return [hookAddr, baseReg, endIns, retainer];
-	});
+		CACHE.put('CJ_Infos', infos);
+	}
 
-	$$(_ + '3.3 - Get the new max limit from user')
+	$$(_ + '4.1 - Get the new max limit from user')
 	const maxJob = Exe.GetUserInput('$maxJob', D_Uint16, "Limit Input", "Enter the maximum no of Job IDs", 4400, {min: 4400, max: 5000, saveDefault: true});
 	if (maxJob === false)
 		Cancel("No Max Limit specified");
@@ -310,36 +318,39 @@ CustomJobs = function()
 	// Add the Function Names into client //
 	//====================================//
 
-	$$(_ + '3.4 - Insert the Lua function names into the client (Since we wont be using the hardcoded JobNames, we will overwrite suitable ones and use their addresses)')
+	$$(_ + '4.2 - Insert the Lua function names into the client (Since we wont be using the hardcoded JobNames, we will overwrite suitable ones and use their addresses)')
 	const ReqFuncs =
 	[
-		_CJ_Overwrite("Professor",     "ReqPCPath"    ),
-		_CJ_Overwrite("Swordman",      "ReqPCImf"     ),
-		_CJ_Overwrite("Magician",      "ReqPCPal"     ),
-		_CJ_Overwrite("Swordman High", "ReqPCHandPath"),
-		_CJ_Overwrite("Baby Acolyte",  "ReqPCJobName" ),
+		this.overwrite("Professor",     "ReqPCPath"    ),
+		this.overwrite("Swordman",      "ReqPCImf"     ),
+		this.overwrite("Magician",      "ReqPCPal"     ),
+		this.overwrite("Swordman High", "ReqPCHandPath"),
+		this.overwrite("Baby Acolyte",  "ReqPCJobName" ),
 	];
 	const MapFuncs =
 	[
-		_CJ_Overwrite("Whitesmith",    "MapPCPath"    ),
-		_CJ_Overwrite("Assassin",      "MapPCImf"     ),
-		_CJ_Overwrite("Crusader",      "MapPCPal"     ),
-		_CJ_Overwrite("Magician High", "MapPCHandPath"),
-		_CJ_Overwrite("High Wizard_W", "MapPCJobName" ),
+		this.overwrite("Whitesmith",    "MapPCPath"    ),
+		this.overwrite("Assassin",      "MapPCImf"     ),
+		this.overwrite("Crusader",      "MapPCPal"     ),
+		this.overwrite("Magician High", "MapPCHandPath"),
+		this.overwrite("High Wizard_W", "MapPCJobName" ),
 	];
 	const AltFuncs =
 	[
-		_CJ_Overwrite("High Priest_W", "GetPCNameOvrd"),
-		_CJ_Overwrite("Alchemist",     "GetHalter"    ),
-		_CJ_Overwrite("Acolyte",       "IsDwarf"      ),
-		_CJ_Overwrite("High Wizard",   "GetSprScale"  ),
+		this.overwrite("High Priest_W", "GetPCNameOvrd"),
+		this.overwrite("Alchemist",     "GetHalter"    ),
+		this.overwrite("Acolyte",       "IsDwarf"      ),
+		this.overwrite("High Wizard",   "GetSprScale"  ),
 	];
+
+	$$(_ + '4.3 - Get the stored infos')
+	const infos = CACHE.get('CJ_Infos');
 
 	//=======================================//
 	// Add Table Loaders using LUA functions //
 	//=======================================//
 
-	$$(_ + '4.1 - Ensure LUA object is loaded')
+	$$(_ + '5.1 - Ensure LUA object is loaded')
 	LUA.load();
 
 	let fileHookAddr, //location where the file loading code will be placed
@@ -352,7 +363,7 @@ CustomJobs = function()
 		"PCJobName"
 	].forEach( (fnSuffix, index) =>
 	{
-		$$(_ + `4.2 - Setup the limits for ${fnSuffix}`)
+		$$(_ + `5.2 - Setup the limits for ${fnSuffix}`)
 		const reductor = (index === 4) ? 0 : 3950;
 		const limits =
 		[
@@ -360,8 +371,8 @@ CustomJobs = function()
 			[0xFA1 - reductor, maxJob - reductor]
 		];
 
-		$$(_ + '4.3 - Generate the templates first')
-		const templates = _CJ_Generate(
+		$$(_ + '5.3 - Generate the templates first')
+		const templates = this.generate(
 			[ReqFuncs[index], "Req" + fnSuffix, "dd>s", EDI, [LANGTYPE], EAX],
 			index === 4 //PCJobName
 		?
@@ -372,10 +383,10 @@ CustomJobs = function()
 			[ESP, 0x24]
 		);
 
-		$$(_ + '4.4 - Retrieve the info for this index')
+		$$(_ + '5.4 - Retrieve the info for this index')
 		const [hookAddr, baseReg, endIns, retainer] = infos[index];
 
-		$$(_ + '4.5 - Combine & construct the replacement code in parts')
+		$$(_ + '5.5 - Combine & construct the replacement code in parts')
 		let parts =
 		[
 			PUSH(baseReg)  //push <baseReg> ; contains address of first index in table
@@ -629,7 +640,7 @@ CustomJobs = function()
 		}
 
 		$$(_ + '5.16 - Generate the templates to be used')
-		const templates = _CJ_Generate(
+		const templates = this.generate(
 			[AltFuncs[0], "GetPCNameOvrd", ["ddd>s", Exe.Phy2Vir(ddd2sAddr, CODE)], EDI, ESI, [LANGTYPE], EAX],
 			[MapFuncs[4], "MapPCJobName", "dd>d", EDI, [LANGTYPE], EAX],
 			[JobName]
@@ -691,7 +702,7 @@ CustomJobs = function()
 	else //Newer form - Name overrides are setup along with the regular loading and it uses a seperate function for it
 	{
 		$$(_ + '6.1 - Retrieve the address after the ending instruction for the name table loading (ideally would be a CALL)')
-		const endIns = infos[4][2];
+		const [,,endIns] = infos.last();
 		const hookAddr = endIns.NextAddr;
 
 		$$(_ + '6.2 - Find the ECX assignment after it')
@@ -703,7 +714,7 @@ CustomJobs = function()
 		const leaECX = Instr.FromAddr(addr);
 
 		$$(_ + '6.4 - Find the string assignment to stack location')
-		addr = Exe.FindHex(MOV([EBP, WCn], tgAddr), hookAddr, hookAddr + 0x30);  //mov dword ptr [LOCAL.x], offset "TaeKwon Girl"
+		addr = Exe.FindHex(MOV([EBP, WCn], tgAddr), hookAddr, hookAddr + 0x90);  //mov dword ptr [LOCAL.x], offset "TaeKwon Girl"
 		if (addr < 0)
 			throw Error("Taekwon girl not referenced");
 
@@ -711,7 +722,7 @@ CustomJobs = function()
 		const strLoc = [EBP, Instr.FromAddr(addr).Disp];
 
 		$$(_ + '6.6 - Find the index assignment to stack location')
-		addr = Exe.FindHex(MOV([EBP, WCn], 0xFD2), hookAddr, hookAddr + 0x30); //mov dword ptr [LOCAL.x], 0FD2h
+		addr = Exe.FindHex(MOV([EBP, WCn], 0xFD2), hookAddr, hookAddr + 0x90); //mov dword ptr [LOCAL.x], 0FD2h
 		if (addr < 0)
 			throw Error("Index PUSH missing");
 
@@ -762,7 +773,7 @@ CustomJobs = function()
 		const endVir = Exe.Phy2Vir(addr, CODE);
 
 		$$(_ + '6.14 - Construct the template (the first one need to be done manually since the way we code is different)')
-		const templates = _CJ_Generate(
+		const templates = this.generate(
 			null,
 			[MapFuncs[4], "MapPCJobName", "dd>d", EDI, [LANGTYPE], EAX],
 			[ESP, 0x24]
@@ -812,7 +823,7 @@ CustomJobs = function()
 
 		templates[0] = SetFillTargets( parts, 1,
 		{
-			    5 : _loop,
+			 5    : _loop,
 			'6,1' : _idxInc
 		});
 
@@ -921,16 +932,15 @@ CustomJobs = function()
 		+	CMP(reg, 0xFBD)  //cmp regA, 0FBDh
 		;
 
-		const addrs = Exe.FindHexN(prefix + suffix);
-		if (addrs.length > 3)
-			throw Error("Unexpected no of matches");
+		const minCount = style === 1 ? 2 : 1;
+		const maxCount = style === 1 ? 3 : 1;
+		const addrs = Exe.FindHexN(minCount, maxCount, prefix + suffix);
+		if (addrs.isEmpty())
+			throw Error("Expected no of matches not found");
 
 		let testerAddr;
 		if (style === 1)
 		{
-			if (addrs.length < 2)
-				throw Error("Not enough matches for new client");
-
 			$$(_ + '8.3 - Identify each based on whether retn 4 followed by same suffix is there within same function')
 			for (const memAddr of addrs)
 			{
@@ -943,9 +953,6 @@ CustomJobs = function()
 		else //style 2 or 3
 		{
 			$$(_ + '8.4 - For 2nd form, only one match would be there for the tester function')
-			if (addrs.length !== 1)
-				throw Error("Expected single match for pattern");
-
 			testerAddr = addrs[0] + csize;
 		}
 
@@ -989,12 +996,9 @@ CustomJobs = function()
 			+	CALL(ALLWC)      //call CSession::GetJobID
 			+	CMP(EAX, 0xFBD)  //cmp eax, 0FBDh
 			;
-			shrinkAddrs = Exe.FindHexN(code);
+			shrinkAddrs = Exe.FindHexN(1, 3, code);
 			if (shrinkAddrs.isEmpty())
-				throw Error("Shrinking code missing");
-
-			if (shrinkAddrs.length > 3)
-				throw Error("Unexpected no of matches for shrinking");
+				throw Error("Expected no of shrinking code not found");
 		}
 		else if (style === 2)
 		{
@@ -1204,9 +1208,9 @@ CustomJobs.onApplied = function()
 ///
 /// \brief Helper function to replace the string with new function name and return it's VIRTUAL address
 ///
-_CJ_Overwrite = function(oldStr, newStr)
+CustomJobs.overwrite = (oldStr, newStr) =>
 {
-	const _ = '_CJ_Overwrite : ';
+	const _ = 'CustomJobs.overwrite : ';
 
 	$$(_ + `1 - Find the old string '${oldStr}'`)
 	const addr = Exe.FindText(oldStr, PHYSICAL);
@@ -1223,9 +1227,9 @@ _CJ_Overwrite = function(oldStr, newStr)
 ///
 /// \brief Helper function to generate the templates for Req/Get function & Map function
 ///
-_CJ_Generate = function(firstSet, secondSet, memPtr)
+CustomJobs.generate = (firstSet, secondSet, memPtr) =>
 {
-	const _ = '_CJ_Generate : ';
+	const _ = 'CustomJobs.generate : ';
 
 	$$(_ + '1 - Prepare the common parts')
 	const cmnPre =

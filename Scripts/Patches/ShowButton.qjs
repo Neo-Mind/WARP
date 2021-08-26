@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -112,11 +112,11 @@ ShowRegisterBtn = function()
 	$$(_ + '4.2 - Find where it is assigned')
 	if (Exe.Version === 9) //VC9
 	{
-		addr = Exe.FindHex( [ROC.StkReg, ROC.HasFP ? WCp : POS2WC], btnAddr ); //mov dword ptr [ebp+disp8A] / [esp+dispA], <btnAddr>
+		addr = Exe.FindHex( MOV([ROC.StkReg, ROC.HasFP ? WCp : POS2WC], btnAddr) ); //mov dword ptr [ebp+disp8A] / [esp+dispA], <btnAddr>
 	}
 	else //VC6, VC10, VC11
 	{
-		addr = Exe.FindHex( [ROC.StkReg, ROC.HasFP ? NEG2WC : WCn], btnAddr ); //mov dword ptr [ebp-dispB] / [esp-disp8B], <btnAddr>
+		addr = Exe.FindHex( MOV([ROC.StkReg, ROC.HasFP ? NEG2WC : WCn], btnAddr) ); //mov dword ptr [ebp-dispB] / [esp-disp8B], <btnAddr>
 	}
 
 	if (addr < 0)
@@ -140,10 +140,9 @@ ShowRegisterBtn = function()
 };
 
 ///
-/// \brief Disable for unsupported clients (Only needed if login window creation is inside)
+/// \brief Disable for unsupported clients (Only needed if login window is hidden)
 ///
-ShowRegisterBtn.validate = () =>
-	ROC.HasLWhidden || Exe.BuildDate <= 20100803;
+ShowRegisterBtn.validate = HasHiddenLogWin;
 
 ///
 /// \brief Modify the coordinates of Login and Cancel buttons to show both in Login Screen
@@ -223,10 +222,10 @@ ShowReplayBtn = function()
 	const _ = 'ShowReplayBtn : ';
 
 	$$(_ + '1.1 - Move Select Server Button to visible area')
-	_SRB_FixupBtnCoords("replay_interface\\btn_selectserver_a", "Select Server - ", " C7", " 89");
+	this.fixCoords("replay_interface\\btn_selectserver_a", "Select Server - ", " C7", " 89");
 
 	$$(_ + '1.2 - Move Replay Button to visible area')
-	const jmpAddr = _SRB_FixupBtnCoords("replay_interface\\btn_replay_a", "Replay - ", " E8", " E8");
+	const jmpAddr = this.fixCoords("replay_interface\\btn_replay_a", "Replay - ", " E8", " E8");
 
 	if (Exe.Version <= 11)
 	{
@@ -339,14 +338,15 @@ ShowReplayBtn = function()
 ///
 /// \brief Disable for Unsupported Clients (Should have the btn prefix string)
 ///
-ShowReplayBtn.validate = () => Exe.FindText("replay_interface\\btn_replay_b", PHYSICAL, false) > 0;
+ShowReplayBtn.validate = () =>
+	Exe.FindText("replay_interface\\btn_replay_b", PHYSICAL, false) > 0;
 
 ///
 /// \brief Helper Function for Fixing the coordinates of the specified button as part of ShowReplayBtn patch
 ///
-_SRB_FixupBtnCoords = function(btnImg, msgPrefix, suffix, suffix2)
+ShowReplayBtn.fixCoords = (btnImg, msgPrefix, suffix, suffix2) =>
 {
-	const _ = '_SRB_FixupBtnCoords : ';
+	const _ = 'ShowReplayBtn.fixCoords : ';
 
 	$$(_ + '1.1 - Find the Button Image path')
 	let addr = Exe.FindText(btnImg, CASE_INSENSITIVE, false);

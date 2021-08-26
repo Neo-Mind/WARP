@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -108,7 +108,7 @@ RemoveBookingJobs = function()
 	const MsgStr = Exe.GetTgtAddr(callAddr + 1);
 
 	$$(_ + '2.1 - Prepare Pattern for finding end of the loop')
-	///       (We need to RETN to the location before Loop counter increment which is what jmpDelta is for)
+	///          (We need to RETN to the location before Loop counter increment which is what jmpDelta is for)
 	///
 	let jmpDelta;
 	switch (type)
@@ -269,8 +269,8 @@ RemoveBookingJobs = function()
 	code = SetFillTargets( parts, 1,
 	{
 		start : freeVir,
-		    2 : MsgStr,
-		    3 : retnAddr,
+		 2    : MsgStr,
+		 3    : retnAddr,
 		'4,1' : _msgIt,
 		'5,1' : _return,
 		'6,1' : _next
@@ -293,4 +293,4 @@ RemoveBookingJobs = function()
 /// \brief Disable for Unsupported Clients
 ///
 RemoveBookingJobs.validate = () =>
-	Exe.BuildDate > 20100223;
+	Exe.FindText("map_list") > 0;

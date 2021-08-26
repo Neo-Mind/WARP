@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144)                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -41,12 +41,12 @@ DisConnToLogin = function()
 	///       "Sorry the character you are trying to use is banned for testing connection."
 	///       We expect 2 matches 1 for Login/Char & 1 for Map server disconnection
 
-	let addrs = Exe.FindHexN( PUSH(0x635) );
-	if (addrs.length !== 2)
-		addrs = Exe.FindHexN( PUSH(0x7E5) ); //new clients have different ID
+	let addrs = Exe.FindHexN(2, 2, PUSH(0x635) );
+	if (addrs.isEmpty())
+		addrs = Exe.FindHexN(2, 2, PUSH(0x7E5) ); //new clients have different ID
 
-	if (addrs.length !== 2)
-		throw Error("Incorrect no of MsgString ID PUSHes found");
+	if (addrs.isEmpty())
+		throw Error("Expected 2 MsgString ID PUSHes");
 
 	$$(_ + '1.2 - Save location after the PUSH for both addrs')
 	const mapAddr = addrs[0] + 5; //for Map
@@ -399,6 +399,6 @@ CancelToLogin = function()
 /// \brief Wrappers for individual patch validation
 ///
 DisConnToLogin.validate = () =>
-	!ROC.HasLWhidden && Exe.Version > 10;
+	ROC.HasLWhidden || Exe.Version > 10;
 
 CancelToLogin.validate  = HasHiddenLogWin;

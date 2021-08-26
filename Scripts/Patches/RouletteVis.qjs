@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -103,7 +103,8 @@ RouletteVis = function(patchName)
 ///
 /// \brief Only Enable for Clients that actually have the icon
 ///
-RouletteVis.validate = () => ROC.RouletteAddr > 0;
+RouletteVis.validate = () =>
+	ROC.RouletteAddr > 0;
 
 ///
 /// \brief Wrappers for individual patches

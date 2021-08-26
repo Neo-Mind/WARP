@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,12 +50,9 @@ CustomCharCreateId = function()
 	+	MOV([EBP, NEG3WC], EAX) //mov dword ptr [ebp + a39.starting_job_id], eax
 	;
 
-	const addrs = Exe.FindHexN(prefix + suffix);
+	const addrs = Exe.FindHexN(1, 1, prefix + suffix);
 	if (addrs.isEmpty())
-		throw Error("No Match found for Char create");
-
-	if (addrs.length > 1)
-		throw Error("More than 1 match found, which is too many");
+		throw Error("Expected exactly 1 match for Char create");
 
 	$$(_ + '2.1 - Retrieve the new value from user')
 	const newId = Exe.GetUserInput('$newJobVal', D_Uint16, "Job Id Input", "Enter the new job id", 1, {saveDefault: true});
