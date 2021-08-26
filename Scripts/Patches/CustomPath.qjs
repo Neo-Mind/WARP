@@ -26,7 +26,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144), X-EcutiOnner    *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-08-27                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -143,7 +143,7 @@ CustomMonSizeEffLub.validate = function(patchName)
 
 	if (addr > 0)
 	{
-		let data = this.Data.get(patchName);
+		let data = CustomPath.Data.get(patchName);
 		data.nameAddr = addr;
 		data.name = name;
 

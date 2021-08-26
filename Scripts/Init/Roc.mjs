@@ -135,6 +135,8 @@ export function load()
 		'GetModHandle', 'GetProcAddr', 'OutDbgStrA', 'MsgBoxA',
 		'Kernel32', 'BaseName'
 	]);
+	
+	Log.rise();
 }
 
 ///
