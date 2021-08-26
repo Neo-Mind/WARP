@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-07-24                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,10 +33,10 @@ if (typeof OpTypes === 'undefined') //avoid redefinition
 {
 	OpTypes = {
 		ERR : 0x0,  //Some illegal operation
-		A : 0x1,  //Accumulator, <optional Immediate>
-		R : 0x2,  //Reg, <optional Immediate>
-		P : 0x3,  //Ptr [*], <optional Immediate>
-		I : 0x4,  //<optional Immediate>
+		A   : 0x1,  //Accumulator, <optional Immediate>
+		R   : 0x2,  //Reg, <optional Immediate>
+		P   : 0x3,  //Ptr [*], <optional Immediate>
+		I   : 0x4,  //<optional Immediate>
 		R_R : 0x22, //Reg, Reg
 		D_A : 0x31, //[Displacement], Accumulator
 		P_R : 0x32, //Ptr [*], Reg
@@ -242,7 +242,7 @@ if (typeof OpData === 'undefined')
 
 			/// 1.2 - Retrieve the last value (serves as the displacement usually)
 			let last = ptr.last();
-			if (last.constructor.name === 'Object')
+			if (!last.constructor || last.constructor.name === 'Object') //Either Singleton or an Object
 				last = last.toString();
 
 			if (IsNumOrStr(last))
@@ -283,9 +283,9 @@ if (typeof OpData === 'undefined')
 						this.Disp = this.Disp || 0;
 					}
 				}
-				
+
 				/// 1.9 - Set the displacement size for scale > 1
-				if ('Disp' in this && this.Scale > 1)
+				if ('Disp' in this && this.Scale > 1 && !IsReg(this.Base))
 				{
 					this.DpSize = 32;
 					return;
