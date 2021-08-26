@@ -1,0 +1,231 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) ?-2021 *Various authors*                                 #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2020-08-26                                             #
+#   Last Modified : 2021-08-26                                             #
+#                                                                          #
+############################################################################
+
+ButtonVis:
+    title : BASIC BUTTON VISIBILITY
+    mutex : false
+    color : orangered
+    
+    patches:
+        - HideOldButtons:
+            title : Hide Buttons (Old UI)
+            recommend : no
+            author : Neo-Mind
+            desc : Hide the various buttons in the Basic Info Window under the HP/SP Bars.
+        
+        - HideNewButtons:
+            title : Hide Buttons (New UI)
+            recommend : no
+            author : Neo-Mind
+            desc : Hide the various buttons in the Basic Info Window under the HP/SP Bars.
+        
+        - ShowNewButtons:
+            title : Show Buttons (New UI)
+            recommend : no
+            author : Neo-Mind
+            desc : Shows some of the various hidden buttons in the Basic Info Window under the HP/SP Bars.
+
+CharCreation:
+    title : CHARACTER CREATION
+    mutex : false
+    
+    patches:
+        - CustomNewCharNameHeight:
+            title : Customize new Char Name field height
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Changes the height in input field of the new char creation dialog to user specified value.
+        
+        - IncrNewCharHairs:
+            title : Increase char create Hair limits
+            recommend : no
+            author : Neo-Mind
+            desc : Increase the Hair Style and Color limits used in Make Character Window to user specified values.
+        
+        - CustomCharCreateId:
+            title : Customize job id in char create dialog
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Override selected job id in character creation packet with user specified value.
+
+DoramCharCreation:
+    title: CHARACTER CREATION (DORAM)
+    mutex: true
+    
+    patches:
+        - CustomCharCreateSecond:
+            title : Customize second job id in char create dialog
+            recommend : no
+            author : Andrei Karas (4144) , Neo-Mind
+            desc : Change doram to user specified job id in character creation window.
+        
+        - NoDoramCreation:
+            title : Disable Doram character creation UI [Experimental]
+            recommend : no
+            author : Ai4rei/AN , Secret
+            desc : Disable Doram race in the character creation UI. Server-side disabling is also recommended.
+
+CustomFriendWin:
+    title : FRIEND/PARTY WINDOW CUSTOMIZATION
+    mutex : false
+    
+    patches:
+        - CustomFriendsLimit:
+            title : Customize max friends
+            recommend : no
+            author : Andrei Karas (4144) ,  X-EcutiOnner
+            desc : Change the maximum no of friends displayed on Alt+H to user specified value
+            
+        - CustomPartyLimit:
+            title : Customize party limit
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Change the maximum no of party members displayed on Alt+Z to user specified value.
+        
+        - NoAdvAgencyInParty:
+            title : Remove Adventurer Agency from Party
+            recommend : no
+            author : Andrei Karas (4144) ,  X-EcutiOnner
+            desc : Remove the Adventurer Agency button from the party window.
+            
+CustomEquipWin:
+    title : EQUIP WINDOW CUSTOMIZATION
+    mutex : false
+    
+    patches:
+        - NoEquipSwap:
+            title : Remove Eq Swap button
+            recommend : no
+            author : Functor , Andrei Karas (4144) ,  X-EcutiOnner
+            desc : Remove equipment swap button on the equipment window.
+        
+        - NoEquipWinTitle:
+            title : Remove Eq Window title
+            recommend : no
+            author : CH.C (jchcc), Andrei Karas (4144) , X-EcutiOnner
+            desc : Remove equipment UI title on the equipment window.
+
+CustomExpBars:
+    title : EXP BAR CUSTOMIZATION
+    mutex : false
+    
+    patches:
+        - CustomBarLimits:
+            title : Customize Experience bar limits
+            recommend : no
+            author : Neo-Mind
+            desc : Allows client to use custom limits for Base and Job experience bars as per user specified input file.
+        
+        - ShowExpNumbers:
+            title : Show Experience numbers
+            recommend : no
+            author : Neo-Mind
+            desc : Show Base and Job Experience numbers on top of the respective exp bars in Basic Info Window.
+
+ReturnToLogin:
+    title : RETURN TO LOGIN
+    mutex : false
+
+    patches:
+        - DisConnToLogin:
+            title : Disconnect to Login Window
+            recommend : no
+            author : Neo-Mind , Andrei Karas (4144)
+            desc : Make the client return to Login Window upon disconnection.
+        
+        - CancelToLogin:
+            title : Cancel to Login Window
+            recommend : yes
+            author : Neo-Mind , Andrei Karas (4144)
+            desc : Makes the Cancel button in Character selection window return to login window instead of Quitting.
+            needs : RestoreLoginWindow
+
+ShowButton:
+    title : SHOW BUTTON
+    mutex : false
+    color : darkorange
+    
+    patches:
+        - ShowReplayBtn:
+            title : Always show Replay button in Service Select
+            recommend : no
+            author : Neo-Mind
+            desc : Makes the client show Replay button on Service Select screen that opens the Replay File List window.
+        
+        - ShowCancelBtn:
+            title : Always show Cancel button in Login
+            recommend : no
+            author : Neo-Mind
+            desc : Restores the Cancel button in Login Window for switching back to Service Select Window. The button will be placed in between Login and Exit buttons.
+        
+        - ShowRegisterBtn:
+            title : Always show Register button in Login
+            recommend : no
+            author : Neo-Mind
+            desc : Makes the client always show register button on Login Window for all Langtypes. Clicking the button will open <registrationweb> from clientinfo and closes the client.
+
+No4LetterLimit:
+    title : 4 LETTER LIMIT REMOVAL
+    mutex : false
+    
+    patches:
+        - NoCharnameLimit:
+            title : Remove 4 letter Character Name limit
+            recommend : no
+            author : Shinryo
+            desc : Will allow people to use character names shorter than 4 letters.
+        
+        - NoUsernameLimit:
+            title : Remove 4 letter User Name limit
+            recommend : no
+            author : Shinryo
+            desc : Will allow people to use account names shorter than 4 letters.
+        
+        - NoPasswordLimit:
+            title : Remove 4 letter Password limit
+            recommend : no
+            author : Shinryo
+            desc : Will allow people to use passwords shorter than 4 letters.
+
+LicenseScreenVis:
+    title : LICENSE SCREEN VISIBILITY
+    mutex : true
+    color : darkorange
+    
+    patches:
+        - HideLicense:
+            title : Always hide License Screen
+            recommend : no
+            author : Shinryo , MS
+            desc : Make the client skip the license screen and go directly to the Service Select screen.
+        
+        - ShowLicense:
+            title : Always show License Screen
+            recommend : no
+            author : Neo-Mind
+            desc : Makes the client always show the license for all langtypes.

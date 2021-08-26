@@ -21,20 +21,37 @@
 ############################################################################
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
-#   Created Date  : 2020-11-06                                             #
+#   Created Date  : 2020-08-26                                             #
 #   Last Modified : 2021-08-26                                             #
 #                                                                          #
 ############################################################################
 
-include:
-    - Patches/Character.yml
-    - Patches/Client.yml
-    - Patches/Data.yml
-    - Patches/Env.yml
-    - Patches/Misc.yml
-    - Patches/Network.yml
-    - Patches/Sound.yml
-    - Patches/Special.yml
-    - Patches/UI.yml
-    - Patches/Window.yml
-    - Patches/Premium.yml
+
+CustomSound:
+    title : SOUND CUSTOMIZATION
+    mutex : false
+    
+    patches:
+        - Enable44kHzAudio:
+            title : Enable 44.1 kHz audio sampling frequency
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Boosts the audio sampling frequency to 44.1 kHz, improving the audio quality in the game.
+        
+        - AutoMute:
+            title : Auto mute audio [Experimental]
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Auto mute audio when game window is not active.
+        
+        - NoBGMAudio:
+            title : Disable BGM audio
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Disable the use of mp3NameTable.txt to pick & play audio files as BGM.
+
+        - RestoreSongsEffect:
+            title : Restore songs effect
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Restore ground effects of Bard/Dancer songs on latest clients.
