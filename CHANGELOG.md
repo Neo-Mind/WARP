@@ -5,6 +5,9 @@
 
 - Fixed [bug with Hide Packets from PEEK patch](https://github.com/Neo-Mind/WARP/issues/68)
 
+## Tool Updates
+- Added `Warp.BlockMsgs` & `Warp.AllowMsgs` function to allow partial logging.
+
 
 # 2021-08-26 Changes
 

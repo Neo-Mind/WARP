@@ -39,7 +39,7 @@ export var Tee = false;
 ///
 /// \brief Local data members
 ///
-export var Handle = null;
+var Handle = null;
 var Depth = 0;
 var UserDepth = 0;
 
