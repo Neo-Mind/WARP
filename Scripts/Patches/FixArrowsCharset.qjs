@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, X-EcutiOnner, Neo-Mind                         *
 *   Created Date  : 2021-06-01                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -71,7 +71,7 @@ FixArrowsCharset = function()
 		throw Error("Square missing");
 
 	$$(_ + '2 - Replace the strings'); //semicolon needed here
-	for (const [tgtAddr, val] of 
+	for (const [tgtAddr, val] of
 	[
 		[addrL   , " 20 3C"], //left arrow
 		[addr    , " 20 5E"], //up arrow

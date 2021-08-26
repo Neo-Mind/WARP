@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -64,12 +64,12 @@ EnableProxy = function()
 		);
 		if (addr < 0)
 			throw Error("New pattern not found");
-		
+
 		$$(_ + '1.4 - Find the reference to 2733 after it')
 		addr = Exe.FindLastHex(CMP(EAX, 0x2733), addr + 0x280, addr + 0x100);
 		if (addr < 0)
 			throw Error("2733 comparison missing");
-		
+
 		addr += 5;
 	}
 	else
@@ -117,7 +117,6 @@ EnableProxy = function()
 		callAddr = Exe.FindHex(code, addr - 0x60, addr);
 	}
 
-	ShowAddr(addr);
 	if (callAddr < 0)
 		throw Error("'connect' CALL not found");
 
@@ -126,7 +125,7 @@ EnableProxy = function()
 	{
 		$$(_ + '2.3 - Extract the register used & move callAddr to the next instruction which is the actual CALL')
 		const ins = Instr.FromAddr(callAddr);
-		refReg = R32.List[ins.MRM.RegM];
+		refReg = ins.MRM.getReg('M');
 		callAddr = ins.NextAddr;
 
 		$$(_ + '2.4 - Change indirect CALL to direct one before we proceed')

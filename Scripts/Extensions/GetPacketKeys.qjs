@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-08-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -32,7 +32,7 @@
 GetPacketKeys = function()
 {
 	const _ = "GetPacketKeys : "
-	
+
 	$$(_ + '1.1 - Need a valid Exe loaded')
 	if (Exe.FileSize == 0)
 		throw NO_EXE;
@@ -41,7 +41,7 @@ GetPacketKeys = function()
 	const fileName = Exe.GetUserInput("$$keyOutput", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "PacketKeys_" + ROC.BaseName + ".txt");
 	if (fileName === false)
 		return true;
-	
+
 	let fp = new TextFile(fileName, 'w');
 	if (!fp.Valid)
 		throw NO_OUTPUT;
@@ -50,7 +50,7 @@ GetPacketKeys = function()
 	PACKET.load();
 
 	let keys;
-	if (PACKET.KS_Mode === KeyMode.Virtual)
+	if (PACKET.KS_Type === PACKET.Virtual)
 	{
 		$$(_ + '2.2 - Check if it is a patched client')
 		let addr = Exe.FindHex(JMP(POS4WC), PACKET.Assigner, PACKET.Assigner + 6);
@@ -81,7 +81,7 @@ GetPacketKeys = function()
 
 	$$(_ + '2.7 - Convert to hex')
 	const hexKeys = keys.map( (val, idx) => "0x" + val.toHex(true) );
-	
+
 	$$(_ + '3.1 - Write the essentials & the keys in hex to the file')
 	fp.WriteLine("Extracted with WARP")
 	fp.WriteLine("===================")
@@ -93,7 +93,7 @@ GetPacketKeys = function()
 	fp.Close();
 
 	$$(_ + '3.3 - Show the success message or display the file requested')
-	if (!Exe.TestMode && UserChoice("Show File", "Display the generated file?"))
+	if (!Warp.TestMode && UserChoice("Show File", "Display the generated file?"))
 	{
 		Warp.Show(fp.Path);
 		return true;

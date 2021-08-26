@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -83,7 +83,7 @@ IncrDigits = function()
 		if (refAddr < 0)
 			throw Error("999999 comparison not found");
 
-		refReg = R32.List[Instr.FromAddr(refAddr).MRM.RegM];
+		refReg = Instr.FromAddr(refAddr).MRM.getReg('M');
 	}
 
 	$$(_ + '1.3 - Find the start of the function (Am_Make_Number)')
@@ -110,7 +110,7 @@ IncrDigits = function()
 	addr += code.byteCount();
 
 	$$(_ + '2.1 - Update the stack allocation "displacement" to hold 4 more nibbles(16 bits) - i.e. increase the value')
-	_ID_UpdateStack(addr - 1 , 1);
+	this.updateStack(addr - 1 , 1);
 
 	$$(_ + '2.2 - Find the location of digit counter')
 	const sreg = ROC.StkReg;
@@ -242,7 +242,7 @@ IncrDigits = function()
 	{
 		start : refAddr,
 		'1,1' : refAddr + parts.byteCount(0), //_loop
-		    2 : ggmAddr
+		 2    : ggmAddr
 	});
 
 	$$(_ + '5.3 - Put the code at refAddr')
@@ -288,7 +288,7 @@ IncrDigits = function()
 
 				ins.StackLimit = FirstDigLoc + stackOff;
 				if (ins.MRM.Mode === 1)
-					_ID_UpdateStack(ins);
+					this.updateStack(ins);
 
 				break;
 			}
@@ -331,13 +331,13 @@ IncrDigits = function()
 				throw Error("Stack movement not found");
 
 			$$(_ + '7.2 - Update the stack addr')
-			_ID_UpdateStack(addr + 2);
+			this.updateStack(addr + 2);
 		}
 	}
 	else
 	{
 		$$(_ + '7.3 - Update the stack addr for ADD ESP, x')
-		_ID_UpdateStack(endAddr + 2, 1);
+		this.updateStack(endAddr + 2, 1);
 
 		$$(_ + '7.4 - Find LEA instruction before refAddr which uses ESP')
 		addr = Exe.FindHex( LEA(EAX, [ESP, WCp]), refAddr - 0x28, refAddr); //lea eax, [LOCAL.x]
@@ -345,7 +345,7 @@ IncrDigits = function()
 			throw Error("LEA not found");
 
 		$$(_ + '7.5 - Update the stack addr')
-		_ID_UpdateStack(addr + 3, 1);
+		this.updateStack(addr + 3, 1);
 
 		$$(_ + '7.6 - Find the ARG.2 assignment before refAddr')
 		addr = Exe.FindHex( MOV(ECX, [ESP, WCp]), refAddr - 8, refAddr); //mov ecx, dword ptr [LOCAL.y]
@@ -353,7 +353,7 @@ IncrDigits = function()
 			throw Error("ARG.2 assignment not found");
 
 		$$(_ + '7.7 - Update the stack addr')
-		_ID_UpdateStack(addr + 3, 1);
+		this.updateStack(addr + 3, 1);
 	}
 
 	return true;
@@ -369,7 +369,7 @@ IncrDigits.validate = () =>
 /// \brief Helper function which adjusts the addr used w.r.t ESP/EBP
 ///        at the location/Instr provided by 16
 ///
-_ID_UpdateStack = (arg, sign) =>
+IncrDigits.updateStack = (arg, sign) =>
 {
 	const stackOff =
 		IsNum(sign) ? sign * 16

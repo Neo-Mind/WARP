@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2021-04-04                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,7 +50,7 @@ TranslateTaekwon = function()
 
 		$$(_ + '1.3 - Find where it is assigned for being used as job name (can be in multiple places)')
 		let addrs = [];
-		for (const assgn of 
+		for (const assgn of
 		[
 			[R32, 0x3F38],
 			[EAX, 0x3F38],
@@ -58,7 +58,7 @@ TranslateTaekwon = function()
 			[EBP, WCn]
 		])
 			addrs.push(...Exe.FindHexN( MOV(assgn, nameAddr)) ); //All possible combo of MOVs seen so far in clients.
-		
+
 		if (addrs.isEmpty())
 			throw Error(`Korean name reference missing for ${eng}`);
 

@@ -30,3 +30,54 @@
 /// \brief Initialize the Cache module
 ///
 CACHE.init();
+
+///
+/// \brief Load the ROC module with all the misc goodies from ROClient
+///
+ROC.load();
+
+///
+/// \brief Initialize the remaining modules
+///
+DGRF.init();
+WINMGR.init();
+LANGTYPE.init();
+SRVRTYPE.init();
+LUA.init();
+PACKET.init();
+MBAR.init();
+
+///
+/// \brief Set up options & tag for Custom Skill patches
+///
+CACHE.setup('CSK', 'SkillInfo',
+{
+	cleanTag_after_userDel: false,
+});
+
+///
+/// \brief Set up options & tag for Custom Encryption Key patches
+///
+CACHE.setup('PACKET', 'EncKeys',
+{
+	cleanTag_after_restore: false,
+	cleanTag_after_userDel: false,
+	dealloc_after_restore: false,
+});
+
+///
+/// \brief Set up options & tag for Resize Mob bar patches
+///
+CACHE.setup('MBAR', 'MobHP',
+{
+	cleanTag_after_restore: false,
+	dealloc_after_restore: false,
+});
+
+///
+/// \brief Set up options & tag for New Button visibility patches
+///
+CACHE.setup('NBV', 'ButtonTbl',
+{
+	dealloc_after_tagClean: true,
+});

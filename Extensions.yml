@@ -22,34 +22,34 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-18                                             #
-#   Last Modified : 2021-01-30                                             #
+#   Last Modified : 2021-08-20                                             #
 #                                                                          #
 ############################################################################
 
-- GetPacketKeys:
+GetPacketKeys:
     title : Get Packet Keys
     tooltip : Retrieves the packet keys used in the loaded client for Obfuscation
     author : Neo-Mind
     icon : Inputs/key.png
 
-- ExtractTxtNames:
+ExtractTxtNames:
     title : Extract txt file names
     tooltip : Extracts embedded txt file names in the loaded client
     icon : Inputs/files.png
 
-- ExtractMsgStrings:
+ExtractMsgStrings:
     title : Extract msgstringtable
     tooltip : Extracts embedded msgstringtable from the loaded client
     author : Neo-Mind
     icon : Inputs/files.png
 
-- DumpImportTable:
+DumpImportTable:
     title : Dump Import Table
     tooltip : Dumps the Full Import table (dll names and imported functions) for the loaded client
     author : Neo-Mind
     icon : Inputs/import.png
     
-- GenMapEffectPlugin:
+GenMapEffectPlugin:
     title : Generate MapEffect Plugin [Expt.]
     tooltip : Generates Curiosity's mapeffect plugin for the loaded client (as rdll2_<filename>.asi which needs to be placed in your client area)
     author : Neo-Mind

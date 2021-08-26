@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Secret                                        *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -79,12 +79,12 @@ CallKoreaClientInfo = function()
 		let csize, addr;
 		if (Exe.Version === 6) //VC6
 		{
-			csize = codes.byteCount(0);
+			csize = codes.byteCount(1);
 			addr = Exe.FindHex(codes[1], memAddr - 0x50, memAddr);
 		}
 		else
 		{
-			csize = codes.byteCount(1);
+			csize = codes.byteCount(0);
 			addr = Exe.FindHex(codes[0], memAddr - (Exe.Version < 14 ? 0x50 : 0x200), memAddr);
 		}
 		if (addr < 0)

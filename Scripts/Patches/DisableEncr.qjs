@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -47,15 +47,14 @@ NoLoginEncr = function()
 		throw Error("Encryptor CALL not found");
 
 	$$(_ + '1.2 - Extract the register PUSHed before the CALL (i.e. Arg.1). It has the unencrypted password')
-	const regNum = Exe.GetUint8(addr) - 0x50;
+	const regA = R32.List[Exe.GetUint8(addr) - 0x50];
 
 	$$(_ + '1.3 - Set addr to location of LEA')
 	addr += code.byteCount() - 1;
 
-	$$(_ + '2 - Change source argument in LEA from EBP-x to register specified by regNum')
+	$$(_ + '2 - Change source argument in LEA from EBP-x to extracted register ')
 	const ins = Instr.FromAddr(addr);
-	const regB = R32.List[ins.MRM.RegO];
-	const regA = R32.List[regNum];
+	const regB = ins.MRM.getReg('O');
 
 	code =
 		LEA(regB, [regA])         //lea regB, [regA]
@@ -76,7 +75,7 @@ NoPacketEncr = function()
 	$$(_ + '1.1 - Ensure all the Packet Key patches are deselected (unless in test mode)')
 	if (!Warp.TestMode)
 	{
-		for (const name of PktKeyPatches)
+		for (const name of CustomEncKeys.Members)
 			Warp.SetPatchState(name, false);
 	}
 
@@ -84,7 +83,7 @@ NoPacketEncr = function()
 	PACKET.load();
 
 	// Now we diverge a little based on how the keys are assigned.
-	if (PACKET.KS_Mode === KeyMode.Push)
+	if (PACKET.KS_Type === PACKET.Pusher)
 	{
 		$$(_ + '2.1 - Find the Packet Encryption CALL (may or may not be PACKET.KeySetter)')
 		const code =

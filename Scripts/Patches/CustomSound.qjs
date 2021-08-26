@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -284,9 +284,9 @@ AutoMute = function()
 	code = SetFillTargets( parts,
 	{
 		start : firstAddr,
-		    5 : Set2DEffectVol,
-		    6 : Set3DEffectVol,
-		    7 : SetStreamVol,
+		 5    : Set2DEffectVol,
+		 6    : Set3DEffectVol,
+		 7    : SetStreamVol,
 		'8,1' : _skipToCall, //index = 2 in parts
 		'9,1' : _cmpMute,    //index = 4 in parts
 	});
@@ -308,3 +308,9 @@ AutoMute = function()
 
 	return true;
 };
+
+///
+/// \brief Temporarily disabling for Pre-VC11 clients
+///
+AutoMute.validate = () =>
+	Exe.Version > 10;

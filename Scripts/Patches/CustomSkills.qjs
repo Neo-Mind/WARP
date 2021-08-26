@@ -22,74 +22,9 @@
 *                                                                          *
 *   Author(s)     : Unknown                                                *
 *   Created Date  : 2021-06-11                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
-
-///
-/// \brief Data to be used for the patches.
-///
-if (typeof CSk_Data === 'undefined') //avoid redefinition
-{
-	CSk_Data =
-	{
-		loader: null,
-
-		CustomPlayerSkills:
-		{
-			6:
-				CMP(EAX, 0x27D)  //CMP EAX, 27D
-			+	JG(POS2WC)       //JG skip
-			+	CMP(EAX, 0x27C)  //CMP EAX, 27C
-			,
-
-			default:
-				CMP(EAX, 0x106)  //CMP EAX, 106
-			+	JG(WC)           //JG SHORT skip
-			+	JE(POS2WC)       //JE valid
-			,
-
-			funcName: "IsPlayerSkill"
-		},
-
-		CustomHomunSkills:
-		{
-			6:
-				CMP(EAX, 0x1F40)
-			+	JL(WC)
-			+	CMP(EAX, 0x1F51)
-			,
-
-			14:
-				MOV(ECX, 0x2C)
-			+	ADD(EAX, -0x1F40)
-			,
-
-			default:
-				ADD(EAX, -0x1F40)
-			+	MOV(ECX, 0x2C)
-			,
-
-			funcName: "IsHomunSkill"
-		},
-
-		CustomMerceSkills:
-		{
-			6:
-				CMP(EAX, 0x2008)
-			+	JL(WC)
-			+	CMP(EAX, 0x2031)
-			,
-
-			default:
-				LEA(R32, [R32, -0x2008])
-			+	CMP(R32, ' [0010100.]') //28 or 29
-			,
-
-			funcName: "IsMercenarySkill"
-		}
-	};
-}
 
 ///
 /// \brief Modify the respective Skill ID checker function (returns 1)
@@ -100,7 +35,7 @@ CustomSkills = function(patchName)
 	const _ = patchName + ' : ';
 
 	$$(_ + '1.1 - Retrieve the data corresponding to the patch')
-	const data = CSk_Data[patchName];
+	const data = this.Data.get(patchName);
 
 	$$(_ + '1.2 - Find the skill id checker function')
 	let prefix = ROC.HasFP
@@ -112,7 +47,7 @@ CustomSkills = function(patchName)
 		MOV(R32, [ESP, 4]) //mov reg32_A, [esp+4] ; ARG.1
 	;
 
-	let suffix = Exe.Version in data ? data[Exe.Version] : data.default;
+	let suffix = data[Exe.Version] ?? data.default;
 	if (IsNum(suffix))
 		suffix = data[suffix]; //option to inherit from another version
 
@@ -172,10 +107,19 @@ CustomSkills = function(patchName)
 		luaLoadAddr = -1;
 	}
 
-	if (!CSk_Data.loader)
+	$$(_ + '3 - Add code to load the lua files (if not already done)')
+	const cacheKey = 'CSK';
+	const noPrevUsers = !CACHE.hasUsers(cacheKey);
+
+	CACHE.addUser(cacheKey, patchName);
+
+	if (noPrevUsers)  //if it's the first user then we need to perform the loading
 	{
-		$$(_ + '3.1 - Add code to load the lua files')
-		prefix = "Lua Files\\SkillInfo" + (Exe.BuildDate > 20100400 ? 'z\\' : '\\');
+		Exe.ActivateGlobal();
+
+		Exe.BeginTag(CACHE.getTag(cacheKey));
+
+		const prefix = "Lua Files\\SkillInfo" + (Exe.BuildDate > 20100400 ? 'z\\' : '\\');
 		LUA.addLoaders(
 			prefix + "SkillInfo_F",
 			[
@@ -184,44 +128,22 @@ CustomSkills = function(patchName)
 			],
 			luaLoadAddr
 		);
-
-		$$(_ + '3.2 - Assign the loader member')
-		CSk_Data.loader = patchName;
 	}
+
 	return true;
 };
 
 ///
-/// \brief Reset the loader member in the validator function . Need to check support for older clients
+/// \brief Enable only for 2010+ clients
 ///
-CustomSkills.validate = function()
-{
-	CSk_Data.loader = null;
-	return true;
-};
+CustomSkills.validate = IsPost2010;
 
 ///
-/// \brief Shift the Lua file loading mechanism to another active patch, when the current 'loader' is deselected.
+/// \brief Delete the patch name from the users list and clear out the tag if no users remain.
 ///
 CustomSkills.cleanup = function(patchName)
 {
-	if (CSk_Data.loader === patchName)
-	{
-		CSk_Data.loader = null;
-
-		for (const name in CSk_Data)
-		{
-			if (name === 'loader' || name === patchName)
-				continue;
-
-			if (Warp.GetPatchState(name))
-			{
-				Exe.ClearPatch(name);
-				Exe.SetActivePatch(name);
-				CustomSkills(name);
-			}
-		}
-	}
+	CACHE.delUser('CSK', patchName); //will auto-clean the tag if the last user has pulled out.
 };
 
 ///
@@ -230,3 +152,62 @@ CustomSkills.cleanup = function(patchName)
 CustomPlayerSkills = CustomSkills;
 CustomHomunSkills  = CustomSkills;
 CustomMerceSkills  = CustomSkills;
+
+///
+/// \brief Data to be used by the Patch function
+///
+CustomSkills.Data = MakeMap(
+	'CustomPlayerSkills',
+	{
+		6:
+			CMP(EAX, 0x27D)  //CMP EAX, 27D
+		+	JG(POS2WC)       //JG skip
+		+	CMP(EAX, 0x27C)  //CMP EAX, 27C
+		,
+
+		default:
+			CMP(EAX, 0x106)  //CMP EAX, 106
+		+	JG(WC)           //JG SHORT skip
+		+	JE(POS2WC)       //JE valid
+		,
+
+		funcName: "IsPlayerSkill"
+	},
+
+	'CustomHomunSkills',
+	{
+		6:
+			CMP(EAX, 0x1F40)
+		+	JL(WC)
+		+	CMP(EAX, 0x1F51)
+		,
+
+		14:
+			MOV(ECX, 0x2C)
+		+	ADD(EAX, -0x1F40)
+		,
+
+		default:
+			ADD(EAX, -0x1F40)
+		+	MOV(ECX, 0x2C)
+		,
+
+		funcName: "IsHomunSkill"
+	},
+
+	'CustomMerceSkills',
+	{
+		6:
+			CMP(EAX, 0x2008)
+		+	JL(WC)
+		+	CMP(EAX, 0x2031)
+		,
+
+		default:
+			LEA(R32, [R32, -0x2008])
+		+	CMP(R32, ' [0010100.]') //28 or 29
+		,
+
+		funcName: "IsMercenarySkill"
+	}
+);

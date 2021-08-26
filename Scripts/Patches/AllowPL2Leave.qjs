@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -69,3 +69,9 @@ AllowPL2Leave = function()
 
 	return true;
 };
+
+///
+/// \brief Temporarily disable for older clients
+///
+AllowPL2Leave.validate = () =>
+	Exe.BuildDate >= 20170700;
