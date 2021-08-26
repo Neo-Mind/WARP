@@ -195,7 +195,7 @@ String.prototype.toHex = function()
 ///
 String.prototype.toAscii = function()
 {
-	const _ = Log.dive(this, 'toAscii');;
+	const _ = Log.dive(this, 'toAscii');
 
 	$$(_ + '1.1 - Split the hex string into the respective bytes (2chars each)')
 	const parts = this.trim().split(/ +/);
