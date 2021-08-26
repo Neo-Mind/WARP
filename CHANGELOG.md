@@ -1,3 +1,9 @@
+# 2021-08-27 Changes
+
+## Tool Updates
+- Added `Warp.BlockMsgs` & `Warp.AllowMsgs` function to allow partial blocking of logging messages.
+
+
 # 2021-08-26 Changes
 
 ## Script Updates
