@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-08-21                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-08-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -56,6 +56,7 @@ export var GetModHandle; //will contain VIRTUAL address of 'GetModuleHandleA' im
 export var GetProcAddr;  //will contain VIRTUAL address of 'GetProcAddress' imported function
 export var OutDbgStrA;   //will contain VIRTUAL address of 'OutputDebugStringA' imported function
 export var MsgBoxA;      //will contain VIRTUAL address of 'MessageBoxA' imported function
+export var SprintF;      //will contain VIRTUAL address of either 'sprintf' or 'wsprintfA' imported function
 
 export var Kernel32;     //will contain VIRTUAL address of 'KERNEL32.dll'
 export var BaseName;     //will contain the basename of the loaded client. Can be useful in reports and such.
@@ -174,6 +175,18 @@ export function findImports()
 			throw Error("'MessageBoxA' function missing");
 
 		MsgBoxA = addr;
+	}
+	
+	if (SprintF < 0)
+	{
+		let addr = Exe.FindFunc("sprintf");
+		if (addr < 0)
+			addr = Exe.FindFunc("wsprintfA", "USER32.dll");
+
+		if (addr < 0)
+			throw Error("No print functions found");
+		
+		SprintF = addr;
 	}
 }
 
