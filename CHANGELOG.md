@@ -18,7 +18,8 @@
 
 - Fixed bugs in some instruction generators.
  
-- Cleaned up and started using all the new features in all the patches & extensions.
+## Patch/Extension Updates
+- Started using all the new features in all the patches & extensions.
 
 ## Tool Updates
 - Added 2 new options related to errors in [Test Bench].
@@ -89,6 +90,7 @@
 - Fixed issue with session file generation of **`Target Exe`** when the option is enabled.
 
 - Added support for fully encrypted scripts with the suffix **`.ejs`**. It can also have an optional disclaimer/license header.
+
   **Do not try to create this manually.**
   
 - Added **`Warp.EncryptFile`** function for generating **`.ejs`** files from the specified source file. Any disclaimer/license header present will be retained as is.
@@ -96,6 +98,7 @@
 - Added **`Warp.LoadEJS`** function for loading **`.ejs`** files explicitly from scripts or the **`Script Editor`**.
 
 - Added support for module scripts with the suffix **`.mjs`**.
+
 	- Modules are a handy way of encapsulating 'Singleton' objects and as such you are likely to see more use of these in future.
 
 	- The name of the module can be defined inside the **`.mjs`** file by adding the following in a seperate line:
@@ -143,6 +146,7 @@
 - Disabled the corner size-grips from going beyond specified `maxWidth` & `maxHeight` if any.
 
 - Added a **"Global"** patch that is now available by default when an exe is loaded.
+
 	- The purpose of this patch is to allow for a common patch to stage changes shared by multiple patches.
 
   	- Therefore it will not be available for selection in the **`Patch List`**.
@@ -156,7 +160,9 @@
   You can also set it directly instead of using **SetActivePatch** function.
 
 - **`Exe.ClearPatch` & `Exe.SetActivePatch`** can now be invoked without arguments. Behavior for empty argument is as follows:
+
 	- **`Exe.ClearPatch`** => will clear the changes in the active patch.
+	
 	- **`Exe.SetActivePatch`** => will keep no patch as active. Same thing happens if you assign **`Exe.ActivePatch`** member directly.
 
 - Added **`Exe.UndoChanges`** function to revert the changes setup for a range of addresses.
@@ -164,6 +170,7 @@
 - Added **`Exe.FreeUp`** function to revert the changes setup & free up a range of addresses from `DIFF` section.
 
 - Added **`Exe.BeginTag` , `Exe.EndTag` , `Exe.DelTag`** for associating tag names with set of changes & address reservations (in `DIFF` section) to tag names.
+
 	- The first 2 are used to mark the beginning & ending of the tagging process.
 
 	- If **`Exe.BeginTag`** is again invoked with the same name, the previous changes gets wiped (and you can optionally `FreeUp` any reservations too).
@@ -196,8 +203,10 @@
 
 - Fixed the issue with empty string auto-returning false for all the string types in **`Exe.GetUserInput`**
 
-- Modified the usage of **`D_Hex`** type. Now it only has 2 constraints to guide it 
+- Modified the usage of **`D_Hex`** type. Now it only has 2 constraints to guide it
+
 	- **`endian`** => Indicates the endianness of the displayed values. This can be either `little` or `big` . Default is `big` .
+	
 	- **`byteCount`** => The number of bytes expected to be stored. Default is 1
 
 - Added optional `stepSize0`, `stepSize1`, `stepSize2` & `stepSize3` constraints to use for the respective individual elements of **`D_Vec\*`** types.
@@ -377,7 +386,7 @@
 	
 	- **`Warp.WarnUser`**   = Used for warning messages
 
-- Added support for user interrupts with **`Ctrl+Q`** sequence while selecting multiple patches in [Main GUI](https://github.com/Neo-Mind/WARP/wiki/Main-GUI) and running tests in [Test Bench](https://github.com/Neo-Mind/WARP/wiki/Test-Bench).
+- Added support for user interrupts with **`Ctrl+Q`** sequence while selecting multiple patches in [Main GUI] and running tests in [Test Bench].
 
 - Added switches for **`RegEx`** & **`Case sensitivity`** in all the filter and search inputs.
 
@@ -484,11 +493,11 @@
 
 - Added [System.Trash](https://github.com/Neo-Mind/WARP/wiki/System-Object#modifications) command for moving files to `Recycle Bin`
 
-- Added an optional ***`Build Version`*** display in [Main GUI](https://github.com/Neo-Mind/WARP/wiki/Main-GUI)
+- Added an optional ***`Build Version`*** display in [Main GUI]
 
 - Added **`Settings`** dialog containing the following options & buttons :
 
-	- [Main GUI](https://github.com/Neo-Mind/WARP/wiki/Main-GUI)
+	- [Main GUI]
 
 		- Option to show `Build Version` along with `Build Date`.
 		- Option to enable/disable usage of EPI.
@@ -497,7 +506,7 @@
 		- Option to keep the inputs as-is while loading session files.
 		- Button for saving current resolution of **Main & Script** windows as the default.
 		
-	- [Test Bench]([Main GUI](https://github.com/Neo-Mind/WARP/wiki/Test-Bench)
+	- [Test Bench]
 
 		- Option to keep the inputs as-is while loading session files.
 		- Option to stop running tests when the first error is encountered.
@@ -530,7 +539,7 @@
 	- Fix Achievement Counters
 
 ## Tool Updates
-- Updated [SwapFiller & SetFillTarget](https://github.com/Neo-Mind/WARP/wiki/Scripted-Functions#filler-functions) functions to accept array of strings.
+- Updated [SwapFiller & SetFillTarget] functions to accept array of strings.
 
 - Added **`IsMain`** property to **ROC** object to indicate that the client is Main one (i.e. neither RE nor Zero type).
 
@@ -584,7 +593,7 @@
 - Added patch to [Enable Custom Player Skills](https://github.com/Neo-Mind/WARP/issues/25).
 
 ## Tool Updates
-- Updated signature of [SwapFiller & SetFillTarget](https://github.com/Neo-Mind/WARP/wiki/Scripted-Functions#filler-functions) functions to accept index & bytecount together as a tuple (2 element array).
+- Updated signature of [SwapFiller & SetFillTarget] functions to accept index & bytecount together as a tuple (2 element array).
 
 
 # 2021-06-11 Changes
@@ -659,3 +668,7 @@
 
 ## Extension Updates
 - Fixed problem with **`Get Packet Keys`** extension (now it is able to get the keys from patched clients as well).
+
+[Main GUI](https://github.com/Neo-Mind/WARP/wiki/Main-GUI)
+[Test Bench](https://github.com/Neo-Mind/WARP/wiki/Test-Bench)
+[SwapFiller & SetFillTarget](https://github.com/Neo-Mind/WARP/wiki/Scripted-Functions#filler-functions)
