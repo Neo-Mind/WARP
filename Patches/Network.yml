@@ -1,0 +1,129 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) ?-2021 *Various authors*                                 #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2020-08-26                                             #
+#   Last Modified : 2021-08-26                                             #
+#                                                                          #
+############################################################################
+
+CustomNW:
+    title : NETWORK CUSTOMIZATION
+    mutex : false
+    color : peru	
+    
+    patches:
+        - EnableDnsSupport:
+            title : Enable DNS support
+            recommend : yes
+            author : Shinryo
+            desc : Enable DNS support for URL specified in <b>clientinfo.xml</b>.
+
+        - SendMD5Hash:
+            title : Send MD5 hash packet
+            recommend : no
+            author : GreenBox , Neo-Mind
+            desc : Makes the client send a packet with it's MD5 hash for all LangTypes. Only use if you have enabled it in your server.
+        
+        - NoNagle:
+            title : Disable nagle algorithm
+            recommend : yes
+            author : Shinryo
+            desc : Disables the Nagle Algorithm which queues packets before they are sent in order to minimize protocol overhead. Disabling the algorithm will slightly increase network traffic, but it will decrease latency as well.
+        
+        - NoLoginOTP:
+            title : Disable OTP login packet
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Disable OTP Login Packet, which causes connection issue after disconnect.
+            
+        - EnableProxy:
+            title : Enable proxy support
+            recommend : no
+            author : Ai4rei/AN , Neo-Mind
+            desc : Ignores server-provided IP addresses when changing servers.
+                
+        - NoHardCodedIP:
+            title : Remove hardcoded HTTP IP
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Remove hardcoded HTTP service ip address to prevent client from sending HTTP request to official server.
+            
+        - NoHardCodedAddr:
+            title : Remove hardcoded address/port
+            recommend : yes
+            author :  Andrei Karas (4144)
+            desc : Remove hardcoded connection addresses and ports.
+        
+        - EnableHttpEmblem:
+            title : Enable HTTP emblem in client
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Enable HTTP Emblem on RO client (HTTP service is required).
+            
+        - NoGNJoyLaunch:
+            title : Disable kRO site launch
+            recommend : no
+            author : mrjnumber1
+            desc : Disable <b>ro.gnjoy.com</b> launching after in-game settings change.
+        
+        - CustomMerchantURL:
+            title : Customize Merchant store URLs
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Change the hardcoded URL used for MerchantStore save and load (HTTP service required).
+        
+        - SendClientFlags :
+            title : Send client flags
+            recommend : yes
+            author : Andrei Karas (4144)
+            desc : Update the version to send the clients flag to server. Helps to avoid flag incongruency between client & server.
+            
+        - HidePacketsFromPEEK:
+            title : Hide packets from PEEK & BPE
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Disable PEEK & BPE tools from discovering the essentials needed to track/extract packets.
+
+
+CustomEncKeys:
+    title : ENCRYPTION KEY CUSTOMIZATION
+    mutex : false
+
+    patches:
+        - CustomFirstKey:
+            title : Customize Packet Key (1st)
+            recommend : no
+            author : Shakto , Neo-Mind
+            desc : Change the 1st key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
+        
+        - CustomSecondKey:
+            title : Customize Packet Key (2nd)
+            recommend : no
+            author : Shakto , Neo-Mind
+            desc : Change the 2nd key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
+        
+        - CustomThirdKey:
+            title : Customize Packet Key (3rd)
+            recommend : no
+            author : Shakto , Neo-Mind
+            desc : Change the 3rd key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
