@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-07-21                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -720,9 +720,9 @@ _define_with('_arith_logic',
 ///
 _arith_logic = (oper, args) =>
 {
-	let alt = false;
-	if (args[0] === true)
-		[alt, ...args] = [...args];
+	args = [...args];
+
+	const alt = args.take_if('boolean', false);
 
 	let data = new OpData(args);
 	const addon = oper * 8;
@@ -745,6 +745,9 @@ _arith_logic = (oper, args) =>
 			break;
 
 		case OpTypes.A:
+			if (data.OpSize === 16) //override the immediate value size to match the operand (only for AX)
+				data.ImSize = 16;
+
 			if (data.ImSize > 8 || data.OpSize === 8)
 			{
 				opCode = addon + 5;//should be 4 for AL but it will decremented below

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-08-19                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -91,7 +91,7 @@ if (typeof Register === 'undefined') //avoid redefinition
 	/// \brief Map to hold the placeholder Registers for easy access.
 	///
 	PH_Regs = {};
-	
+
 	///
 	/// \brief Temporary function to create register object & identify it. Returns the created object
 	///
@@ -101,10 +101,10 @@ if (typeof Register === 'undefined') //avoid redefinition
 			`new Register('${name}', ${bitsize}, ${index})`
 		);
 		const result = eval(name);
-		
+
 		if (index == undefined)
 			PH_Regs[bitsize] = result;
-		
+
 		return result;
 	};
 
