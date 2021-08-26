@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-08-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -494,7 +494,7 @@ Array.prototype.last = function()
 ///
 Array.prototype.take_if = function(typeName, defVal)
 {
-	if (this.length == 0 || typeof this[0] != typeName)
+	if (this.length == 0 || typeof this[0] != typeName || (typeName === 'object' && this[0] == undefined))
 		return defVal;
 	else
 		return this.shift();
