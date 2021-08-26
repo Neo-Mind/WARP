@@ -22,21 +22,21 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-29                                             #
-#   Last Modified : 2020-11-29                                             #
+#   Last Modified : 2020-08-19                                             #
 #                                                                          #
 ############################################################################
 
-#Should contain a list of maps at top level like below.
+#Should contain a mapping of extension names to it's various details like below.
     
-#- Trial:
+#Trial:
 #    title : Trial Extension
 #    tooltip : Just intended for some trials with Exe & Warp
 #    author : Neo-Mind
 #    icon : Images/trial.png
  
-#- Trial2:
+#Trial2:
 #    tooltip : In this case, title will be Trial2, author will be 'Unknown' and no icon is shown.
 
-#- Trial3: #Now even the tooltip is missing.
+#Trial3: #Now even the tooltip is missing.
     
 

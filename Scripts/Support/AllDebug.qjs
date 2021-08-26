@@ -22,80 +22,20 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-12-11                                             *
-*   Last Modified : 2021-07-21                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
 // Contains various functions useful for debugging code.
 
 ///
-/// \brief Enable/Disable logging of comments
-///
-if (typeof Log == 'undefined')
-{
-	Log =
-	{
-		Tee : false,
-
-		start : function(file)
-		{
-			if ('Handle' in this)
-				return true;
-
-			file = file ?? "Comment_Log_" + System.LocalTime.toISOString().replace(/:/g, '_') + ".log";
-
-			let fp = new TextFile(OUTDIR + file, "w");
-			if (fp.Valid)
-			{
-				this.Handle = fp;
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		},
-
-		stop : function()
-		{
-			if ('Handle' in this)
-			{
-				this.Handle.Close();
-				Warp.Show(this.Handle.Path);
-			}
-
-			delete this.Handle;
-
-			return true;
-		},
-
-		show : function()
-		{
-			if ('Handle' in this)
-			{
-				Warp.Show(this.Handle.Path);
-				return true;
-			}
-			return false;
-		},
-
-		cc : function(state = true)
-		{
-			this.Tee = state;
-			return true;
-		}
-	};
-};
-
-///
 /// \brief Function for logging comments in patch & extension functions (including supporting functions) and console if requested
 ///
 $$ = txt =>
 {
-	if (txt != undefined)
+	if (txt != undefined && Log.valid())
 	{
-		if ('Handle' in Log)
-			Log.Handle.WriteLine(txt);
+		Log.write(txt);
 
 		if (Log.Tee)
 			console.info(txt);
@@ -111,11 +51,9 @@ $$ = txt =>
 ///
 $$$ = txt =>
 {
-	if (txt != undefined)
+	if (txt != undefined && Log.valid())
 	{
-		if ('Handle' in Log)
-			Log.Handle.WriteLine(txt);
-
+		Log.write(txt);
 		console.info(txt);
 
 		return true;
@@ -129,6 +67,9 @@ $$$ = txt =>
 ///
 $_ = (...args) =>
 {
+	if (!Log.valid())
+		return false;
+
 	const tee = args.take_if('boolean', Log.Tee);
 	let msg = args.shift();
 	const bold = args.take_if('boolean', false);
@@ -148,8 +89,7 @@ $_ = (...args) =>
 			msg = msg.toString();
 			len = msg.length;
 
-			if ('Handle' in Log)
-				Log.Handle.WriteLine(msg);
+			Log.write(msg);
 
 			if (tee)
 			{
@@ -164,8 +104,7 @@ $_ = (...args) =>
 	if (len > 0)
 	{
 		const line = chr.repeat(len);
-		if ('Handle' in Log)
-			Log.Handle.WriteLine(line);
+		Log.write(line);
 
 		if (tee)
 		{
@@ -184,6 +123,9 @@ $_ = (...args) =>
 ///
 _$_ = (...args) =>
 {
+	if (!Log.valid())
+		return false;
+
 	const tee = args.take_if('boolean', Log.Tee);
 	let msg = args.shift();
 
@@ -201,6 +143,8 @@ _$_ = (...args) =>
 			$_(tee, msg, ...args);
 		}
 	}
+
+	return true;
 };
 
 ///
@@ -230,7 +174,7 @@ DumpFunc = (...args) =>
 	let ins = Instr.FromAddr(from);
 	while (ins.Addr < to)
 	{
-		$$$(TAB + ins);
+		$$$("\t" + ins);
 
 		if (ins.Codes[0] === 0xC3 || ins.Codes[0] === 0xC2) //retn
 			break;
@@ -291,14 +235,14 @@ Dump = (name, obj) =>
 		let val = obj[key]
 		if (IsArr(val))
 		{
-			ShowArr(val, TAB, key, true);
+			ShowArr(val, "\t", key, true);
 		}
 		else
 		{
 			if (IsStr(val))
 				val = `"${val}"`;
 
-			console.info(TAB, key, "=>", val);
+			console.info("\t", key, "=>", val);
 		}
 	}
 
@@ -318,7 +262,7 @@ ShowArr = (...args) =>
 	const indent = args.take_if('number', 0);
 	const name = args.take_if('string', 'Array');
 
-	const prefix = TAB.repeat(indent);
+	const prefix = "\t".repeat(indent);
 
 	if (useInfo)
 		console.info(prefix, name, "= [");
@@ -336,7 +280,7 @@ ShowArr = (...args) =>
 			if (IsStr(item))
 				item = `"${item}"`;
 
-			console.info(prefix, TAB, index, "=>", item);
+			console.info(prefix, "\t", index, "=>", item);
 		}
 	});
 
@@ -366,7 +310,7 @@ ShowVar = (...args) =>
 		console.info(prefix, varName, "= [");
 
 		value.forEach( (elem, idx) =>
-			ShowVar(prefix + TAB, {[idx] : elem})
+			ShowVar(prefix + "\t", {[idx] : elem})
 		);
 
 		console.info(prefix, ']');
@@ -471,7 +415,7 @@ ShowAddrs = (...args) =>
 		if (vir >= 0)
 			vir = "0x" + vir.toString(16);
 
-		console.info(TAB, i, "=>", phy, '(', vir, ')');
+		console.info("\t", i, "=>", phy, '(', vir, ')');
 	});
 
 	console.info(']');
