@@ -374,7 +374,7 @@ BitWidth = v =>
 			if (typeof result !== 'number')
 				result = v.toString();
 
-			return BitWidth(result);
+			return Log.rise(BitWidth(result));
 
 		case 'number':
 
