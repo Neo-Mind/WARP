@@ -1,3 +1,11 @@
+# 2021-08-27 Changes
+
+## Patch Updates
+- Fixed [bug with MonSizeEffect lub patch](https://github.com/Neo-Mind/WARP/issues/70)
+
+- Fixed [bug with Hide Packets from PEEK patch](https://github.com/Neo-Mind/WARP/issues/68)
+
+
 # 2021-08-26 Changes
 
 ## Script Updates
