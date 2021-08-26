@@ -1,0 +1,265 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) ?-2021 *Various authors*                                 #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2020-08-26                                             #
+#   Last Modified : 2021-08-26                                             #
+#                                                                          #
+############################################################################
+
+ResizeHealthBar:
+    title : RESIZE HP BAR
+    mutex : false
+    
+    patches:
+        - ResizePlayerBar:
+            title : Resize Player HP/SP bar
+            recommend : no
+            author : CH.C (jchcc) , Neo-Mind
+            desc : Resize the HP/SP bar drawn for playing character as per user specified value.
+        
+        - ResizeNormalBar:
+            title : Resize Normal mob HP bar
+            recommend : no
+            author : CH.C (jchcc) , Neo-Mind
+            desc : Resize the HP bar drawn for regular monsters as per user specified value.
+        
+        - ResizeMiniBossBar:
+            title : Resize Mini-Boss mob HP bar
+            recommend : no
+            author : CH.C (jchcc) , Neo-Mind
+            desc : Resize the HP bar drawn for Mini-Boss monsters as per user specified value.
+        
+        - ResizeBossBar:
+            title : Resize Boss mob HP bar
+            recommend : no
+            author : CH.C (jchcc) , Neo-Mind
+            desc : Resize the HP bar drawn for Boss monsters as per user specified value.
+
+DisableEffect:
+    title : DISABLE EFFECT
+    mutex : false
+    
+    patches:
+        - NoEarthQuake:
+            title : Disable Quake skill effect
+            recommend : no
+            author : Ai4rei/AN
+            desc :  Disables the Earthquake skill effect.
+        
+        - NoWavyScreen:
+            title : Disable Hallucination wavy screen
+            recommend : yes
+            author : Shinryo
+            desc : Disables the Hallucination effect (screen becomes wavy and lags the client), used by baphomet, horongs, and such.
+        
+        - NoBlindness:
+            title : Disable Blind skills effect
+            recommend : no
+            author : X-EcutiOnner
+            desc : Disables the Blind skill effect (screen becomes dark).
+
+EnableSlashCmd:
+    title : SLASH COMMANDS
+    mutex : false
+    
+    patches:
+        - EnableWho:
+            title : Always enable '/who' command
+            recommend : yes
+            author : Neo-Mind
+            desc : Enable <b>/w</b> and <b>/who</b> command for all Langtypes.
+        
+        - EnableShowName:
+            title : Always enable '/showname' command
+            recommend : yes
+            author : Neo-Mind
+            desc : Enables <b>/showname</b> command for all Langtypes
+        
+        - EnableUnknCmds:
+            title : Allow unknown '/command's [Experimental]
+            recommend : no
+            author : Ai4rei/AN
+            desc : Sends all unknown '<b>/command</b>' sequences to server (for allowing server side '<b>/command</b>'s) instead of showing "Invalid command".
+
+NoSkillChatter:
+    title : SKILL CHATTER REMOVAL
+    mutex : false
+    
+    patches:
+        - NoDancerScream:
+            title : Remove Dancer's Scream chatter
+            recommend : no
+            author : Neo-Mind
+            desc : Disable the random chat appearing due to Dancer's Scream skill from file dc_scream.txt .
+        
+        - NoBardFrostJoke:
+            title : Remove Bard's Frost Joke chatter
+            recommend : no
+            author : Neo-Mind
+            desc : Disable the random chat appearing due to Bard's Frost Joke skill from file ba_frostjoke.txt .
+
+ResizeBox:
+    title : RESIZE BOX
+    mutex : false
+    
+    patches:
+        - ResizeChatBox:
+            title : Resize Chat Box
+            recommend : no
+            author : Shinryo
+            desc : Resize the Main/Battle chat box max input chars from <b>70</b> to user specified value (234 is usually used).
+        
+        - ResizeChatRoomBox:
+            title : Resize Chat Room Box
+            recommend : no
+            author : Shinryo
+            desc : Resize the chat room box max input chars from <b>70</b> to user specified value (234 is usually used).
+        
+        - ResizePMBox:
+            title : Resize PM Box
+            recommend : no
+            author : Shinryo
+            desc : Resize the PM chat box max input chars from <b>70</b> to user specified value (234 is usually used).
+        
+        - ResizeNpcBox:
+            title : Resize NPC Dialog Box
+            recommend : no
+            author : Ai4rei/AN
+            desc : Changes the Max input chars of NPC Dialog boxes to user specified value within (2052 - 4096).
+
+RouletteVis:
+    title : ROULETTE VISIBILITY
+    mutex : true
+    color : darkorange
+    
+    patches:
+        - HideRoulette:
+            title : Hide Roulette icon
+            recommend : no
+            author : Neo-Mind
+            desc : Hide Roulette Icon that is present in some clients.
+        
+        - ShowRoulette:
+            title : Show Roulette icon
+            recommend : no
+            author : Neo-Mind
+            desc : Restores the Roulette Icon that was removed in new clients.
+
+CashShop:
+    title : CASH SHOP CUSTOMIZATION
+    mutex : false
+    
+    patches:
+        - MoveShopIcon:
+            title : Move Cash Shop icon
+            recommend : no
+            author : Neo-Mind
+            desc : Move the Cash Shop icon to user specified co-ordinates. Positive values are relative to left and top, Negative values are relative to right and bottom.
+        
+        - ZeroCinShop:
+            title : Enforce 0 C in Cash Shop
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Enforce the <b>C</b> field to use 0 instead of random values in cash shop.
+        
+        - DefShopBrowser:
+            title : Use default web browser in Cash Shop
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Open URL in the cashshop window with default web browser instead of IExplore.
+        
+        - PreviewInShop:
+            title : Enable item preview in Cash Shop
+            recommend : no
+            author : Andrei Karas (4144) , Neo-Mind
+            desc: Add support for preview button in cash shop (right click the items to see the button)
+
+CashShopVis:
+    title : CASH SHOP VISIBILITY
+    mutex : true
+    color : darkorange
+    
+    patches:
+        - HideCashShop:
+            title : Hide Cash Shop icon
+            recommend : no
+            author : Neo-Mind
+            desc : Hide Cash Shop Icon in clients that already show them.
+            
+        - ShowCashShop:
+            title : Show Cash Shop icon
+            recommend : no
+            author : Neo-Mind
+            desc : Restores the Cash Shop Icon in clients that can have them. (Primarily RE clients hide them).
+
+IncrCamAngle:
+    title : CAMERA ANGLES
+    mutex : true
+    
+    patches:
+        - LowCamAngle:
+            title : Increase Camera Angles (LOW)
+            recommend : no
+            author : Shinryo
+            desc : Unlocks the possible camera angles to give more freedom of placement. Enables a lower range of around <b>30 degrees</b>.
+        
+        - MediumCamAngle:
+            title : Increase Camera Angles (MEDIUM)
+            recommend : yes
+            author : Shinryo
+            desc : Unlocks the possible camera angles to give more freedom of placement. Enables a medium range of around <b>42 degrees</b>.
+        
+        - HighCamAngle:
+            title : Increase Camera Angles (HIGH)
+            recommend : no
+            author : Shinryo
+            desc : Unlocks the possible camera angles to give more freedom of placement. Enables an almost ground-level camera of around <b>65 degrees</b>.
+
+IncrZoom:
+    title : ZOOM OUT
+    mutex : true
+
+    patches:
+        - Zoom25Percent:
+            title : Decrease Zoom Out (to 25%)
+            recommend : no
+            author : Shinryo , Andrei Karas (4144)
+            desc : Decreases the zoom-out range to approx. 25% of maximum.
+        
+        - Zoom50Percent:
+            title : Increase Zoom Out (to 50%)
+            recommend : no
+            author : Shinryo , Andrei Karas (4144)
+            desc : Increases the zoom-out range to approx. 50% of Maximum.
+        
+        - Zoom75Percent:
+            title : Increase Zoom Out (to 75%)
+            recommend : no
+            author : Shinryo , Andrei Karas (4144)
+            desc : Increases the zoom-out range to approx. 75% of Maximum.
+        
+        - ZoomMax:
+            title : Increase Zoom Out (to Max)
+            recommend : no
+            author : Shinryo , Andrei Karas (4144)
+            desc : Maximizes the zoom-out range.
