@@ -1,0 +1,289 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) 2021 Neo-Mind                                            #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2021-08-19                                             #
+#   Last Modified : 2021-08-19                                             #
+#                                                                          #
+############################################################################
+
+inputs:
+    $cashShopXY:
+        type: D_VecI16
+        target: [$cashShopX, $cashShopY]
+    
+    $chatFloodLimit:
+        type: D_Uint8
+        target: $allowChatFlood
+    
+    $agencyLimits:
+        type: D_VecI8
+        target: [$lowrangeVal, $upprangeVal]
+    
+    $auraSpec:
+        type: D_InFile
+    
+    $followDelay:
+        type: D_Uint32
+    
+    $newJobVal:
+        type: D_Uint16
+    
+    $secondJob:
+        type: D_Uint32
+    
+    $secondHairLimit:
+        type: D_Uint8
+    
+    $guildChatColor:
+        type: D_Color
+
+    $partyChatColor:
+        type: D_Color
+        
+    $yourPartyChatColor:
+        type: D_Color
+        
+    $publicChatColor:
+        type: D_Color
+    
+    $gmChatColor:
+        type: D_Color
+    
+    $yourChatColor:
+        type: D_Color
+    
+    $customDLL:
+        type: D_InFile
+    
+    $firstkey:
+        type: D_Hex
+    
+    $secondkey:
+        type: D_Hex
+    
+    $thirdkey:
+        type: D_Hex
+    
+    $expBarSpec:
+        type: D_InFile
+    
+    $warpFadeOutDelay:
+        type: D_Uint32
+
+    $newFontHgt:
+        type: D_FontSize
+    
+    $newFont:
+        type: D_FontName
+    
+    $maxFriends:
+        type: D_Int8
+        target: $max_friends_value
+    
+    $maxParty:
+        type: D_Uint8
+        target: $max_party_value
+    
+    $guildExpLimit:
+        type: D_Uint8
+    
+    $maxHomun:
+        type: D_Int16
+    
+    $MaxItemCount:
+        type: D_Uint32
+    
+    $maxJob:
+        type: D_Uint16
+    
+    $copyCJLub:
+        type: D_Bool
+    
+    $saveURL:
+        type: D_Text
+        target: $save
+    
+    $loadURL:
+        type: D_Text
+        target: $load
+    
+    $newScreenSize:
+        type: D_VecU32
+        target: [$newScreenWidth, $newScreenHeight]
+
+    $newCharNameHeight:
+        type: D_Uint8
+    
+    $newBGMPath:
+        type: D_Text
+    
+    $newItemInfo:
+        type: D_Text
+    
+    $newAchieveList:
+        type: D_Text
+        target: $AchievementListPath
+    
+    $newMonSizeEffect:
+        type: D_Text
+        target: $MonsterSizeEffectPath
+        
+    $newTownInfo:
+        type: D_Text
+        target: $TowninfoPath
+    
+    $newPetEvoCln:
+        type: D_Text
+        target: $PetEvolutionClnPath
+    
+    $newTipBox:
+        type: D_Text
+        target: $TipboxPath
+    
+    $newCheckAtt:
+        type: D_Text
+        target: $CheckAttendancePath
+    
+    $newPrivAirplane:
+        type: D_Text
+        target: $PrivateAirplanePath
+    
+    $newMapInfo:
+        type: D_Text
+        target: $MapInfoPath
+    
+    $newOngQInfoList:
+        type: D_Text
+        target: $OngoingQuestInfoListPath
+    
+    $newRcmdQInfoList:
+        type: D_Text
+        target: $RecommendedQuestInfoListPath
+    
+    $licenseTXT:
+        type: D_Text
+    
+    $newclientinfo:
+        type: D_Text
+    
+    $myNewTick:
+        type: D_Uint8
+        target: $my_new_tick
+    
+    $inpQuest:
+        type: D_InFile
+    
+    $maxShield:
+        type: D_Int8
+    
+    $copyCSLub:
+        type: D_Bool
+    
+    $HSkillSColor:
+        type: D_Color
+    
+    $ssQuality:
+        type: D_Int8
+        target: $uQuality
+    
+    $vendingLimit:
+        type: D_Int32
+        target: $vendingLimit
+    
+    $copyNCDdll:
+        type: D_Bool
+    
+    $inpFlag:
+        type: D_InFile
+    
+    $inpIconFile:
+        type: D_InFile
+    
+    $disableWindows:
+        type: D_InFile
+        target: $DisableWindows
+    
+    $hiddenButtons:
+        type: D_MultiChoice
+    
+    $maxHairs:
+        type: D_Uint16
+    
+    $newHairLimits:
+        type: D_VecU16
+        target: [$hairColorLimit, $hairStyleLimit]
+    
+    $viewIDLimit:
+        type: D_Uint32
+        target: $newValue
+
+    $dataINI:
+        type: D_Text
+    
+    $inpMultGRF:
+        type: D_InFile
+    
+    $newHiddenButtons:
+        type: D_MultiChoice
+        
+    $newShownButtons:
+        type: D_MultiChoice
+
+    $bookingList:
+        type: D_InFile
+    
+    $chatBoxLen:
+        type: D_Uint32
+        
+    $chatRoomBoxLen:
+        type: D_Uint32
+    
+    $pmBoxLen:
+        type: D_Uint32
+        
+    $npcBoxLength:
+        type: D_Int32
+    
+    $pcHPBarSize:
+        type: D_VecI8
+        target: [$hpWidth, $hpHeight]
+    
+    $normalBarSize:
+        type: D_VecU8
+    
+    $miniBossBarSize:
+        type: D_VecU8
+        target: [$mvpHpWidth, $mvpHpHeight]
+    
+    $bossBarSize:
+        type: D_VecU8
+        target: [$mvpHpWidth, $mvpHpHeight]    
+    
+    $customWindowTitle:
+        type: D_Text
+        
+    $translationFile:
+        type: D_InFile
+    
+    $walkDelay:
+        type: D_Uint16
