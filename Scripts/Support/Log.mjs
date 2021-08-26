@@ -22,9 +22,14 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-08-20                                             *
-*   Last Modified : 2021-08-20                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
+
+//
+// Stores all functions and manages values used for logging
+// ========================================================
+//
 
 ///
 /// \brief Exported data members
@@ -32,7 +37,7 @@
 export var Tee = false;
 
 ///
-/// \brief Private data members
+/// \brief Local data members
 ///
 var Handle = null;
 var Depth = 0;
@@ -45,16 +50,16 @@ export function start(file)
 {
 	if (Handle)
 		return true;
-	
+
 	file = file ?? "Comment_Log_" + System.LocalTime.toISOString().replace(/:/g, '_') + ".log";
-	
+
 	let fp = new TextFile(OUTDIR + file, "w");
 	if (fp.Valid)
 	{
 		Handle = fp;
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -65,13 +70,13 @@ export function stop(display = true)
 {
 	if (!Handle)
 		return Log;
-	
+
 	Handle.Close();
 	if (display)
 		Warp.Show(Handle.Path);
-	
+
 	Handle = null;
-	
+
 	return Log;
 }
 
@@ -82,7 +87,7 @@ export function show()
 {
 	if (!Handle)
 		return false;
-	
+
 	Warp.Show(Handle.Path);
 	return Log;
 }
@@ -95,7 +100,7 @@ export function write(msg)
 {
 	if (Handle)
 		Log.Handle.WriteLine(msg);
-	
+
 	return Log;
 }
 
@@ -140,7 +145,7 @@ export function setDepth(new_depth)
 {
 	if (IsNum(new_depth))
 		UserDepth = new_depth;
-	
+
 	return Log;
 }
 

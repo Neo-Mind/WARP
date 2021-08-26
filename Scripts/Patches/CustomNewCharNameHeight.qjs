@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-01-23                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,9 +35,9 @@ CustomNewCharNameHeight = function()
 
 	$$(_ + '1.1 - Find the string PUSH')
 	const code =
-		PUSH(2)          //push 2
-	+	PUSH(CNCNH_Addr) //push offset "À¯ÀúÀÎÅÍÆäÀÌ½º\\make_character_ver2\\bt_make_press.bmp"
-	+	MOV(ECX, R32)    //mov ecx, regA
+		PUSH(2)            //push 2
+	+	PUSH(this.BmpAddr) //push offset "À¯ÀúÀÎÅÍÆäÀÌ½º\\make_character_ver2\\bt_make_press.bmp"
+	+	MOV(ECX, R32)      //mov ecx, regA
 	;
 	let addr = Exe.FindHex(code);
 	if (addr < 0)
@@ -86,12 +86,13 @@ CustomNewCharNameHeight = function()
 	const oldHeight = Exe.GetInt8(addr + 1);
 
 	$$(_ + '2.2 - Retrieve the new value from user')
-    const height = Exe.GetUserInput("$newCharNameHeight", D_Uint8, "Field Height", "Enter new char name height", oldHeight);
+	const varName = '$newCharNameHeight';
+    const height = Exe.GetUserInput(varName, D_Uint8, "Field Height", "Enter new char name height", oldHeight);
     if (height === false)
 		Cancel("Height", oldHeight);
 
 	$$(_ + '2.3 - Replace the old value')
-    Exe.SetFromVar(addr + 1, "$newCharNameHeight");
+    Exe.SetFromVar(addr + 1, varName);
 
     return true;
 };
@@ -101,6 +102,6 @@ CustomNewCharNameHeight = function()
 ///
 CustomNewCharNameHeight.validate = function()
 {
-	CNCNH_Addr = Exe.FindText("À¯ÀúÀÎÅÍÆäÀÌ½º\\make_character_ver2\\bt_make_press.bmp");
-	return CNCNH_Addr > 0;
+	this.BmpAddr = Exe.FindText("À¯ÀúÀÎÅÍÆäÀÌ½º\\make_character_ver2\\bt_make_press.bmp");
+	return this.BmpAddr > 0;
 };

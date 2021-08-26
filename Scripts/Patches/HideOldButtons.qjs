@@ -22,133 +22,12 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
 // TODO - Need better way to zero out for zeroPrefix = true cases . Currently it flags missing files.
 
-///
-/// \brief Data to be used in patches
-///
-if (typeof HOB_Data === 'undefined') //avoid redefinition
-{
-	HOB_Data =
-	{
-		Stats : //also serves as Equip button for older clients
-		{
-			strings: ["info"],
-			zeroPrefix: true
-		},
-
-		Equipment :
-		{
-			strings: ["equip"],
-			zeroPrefix: true
-		},
-
-		Inventory :
-		{
-			strings: ["item"],
-			zeroPrefix: true
-		},
-
-		Skill :
-		{
-			strings: ["skill"],
-			zeroPrefix: true
-		},
-
-		Booking :
-		{
-			strings: [
-				"basic_interface\\booking",
-				"RO_menu_icon\\booking"
-			],
-			zeroPrefix: false
-		},
-
-		Party :
-		{
-			strings: ["party"],
-			zeroPrefix: true
-		},
-
-		Guild :
-		{
-			strings: ["guild"],
-			zeroPrefix: true
-		},
-
-		Battleground :
-		{
-			strings: [
-				"basic_interface\\btn_battle_field",
-				"RO_menu_icon\\battle"
-			],
-			zeroPrefix: false
-		},
-
-		Quest :
-		{
-			strings: ["quest"],
-			zeroPrefix: true
-		},
-
-		WorldMap :
-		{
-			strings: ["map"],
-			zeroPrefix: true
-		},
-
-		Navigation :
-		{
-			strings : [
-				"navigation_interface\\btn_Navigation",
-				"RO_menu_icon\\navigation"
-			],
-			zeroPrefix: false
-		},
-
-		Options :
-		{
-			strings: [
-				"basic_interface\\btn_option"
-			],
-			zeroPrefix: false
-		},
-
-		Bank :
-		{
-			strings: [
-				"basic_interface\\btn_bank",
-				"RO_menu_icon\\bank"
-			],
-			zeroPrefix: false
-		},
-
-		Record :
-		{
-			strings: [
-				"replay_interface\\rec",
-				"RO_menu_icon\\rec"
-			],
-			zeroPrefix: false
-		},
-
-		"Rodex (Mail)" :
-		{
-			strings: ["RO_menu_icon\\mail"],
-			zeroPrefix: false
-		},
-
-		Achievement :
-		{
-			strings: ["RO_menu_icon\\achievement"],
-			zeroPrefix: false
-		},
-	};
-}
 
 ///
 /// \brief Take necessary action to hide the button specified by the image suffix argument
@@ -160,19 +39,20 @@ HideOldButtons = function()
 	const _ = 'HideOldButtons : ';
 
 	$$(_ + '1 - Get the user\'s selection of buttons to hide')
-	const selection = Exe.GetUserInput('$hiddenButtons', D_MultiChoice, "Hide Buttons", "Choose the buttons to be hidden", [], {choices: HOB_Keys});
+	const selection = Exe.GetUserInput('$hiddenButtons', D_MultiChoice, "Hide Buttons", "Choose the buttons to be hidden", [], {choices: this.Keys});
 	if (selection === false || selection.isEmpty())
 		Cancel("No buttons hidden");
 
 	$$(_ + '2 - Iterate and zero out each button (depending on zeroPrefix)')
 	for (const key of selection)
 	{
-		$$(_ + `2.1 - Extract the essential data for key = ${key}`)
-		const {strings, zeroPrefix, strPhy} = HOB_Data[key];
-		if (!zeroPrefix)
+		$$(_ + `2.1 - Extract the essential data for ${key}`)
+		const data = this.Data.get(key);
+
+		if (!data.zeroPrefix)
 		{
 			$$(_ + '2.2 - If there is no zero prefix then we can simply zero it out (i.e. string itself can be manipulated)')
-			Exe.SetInt8(strPhy, 0);
+			Exe.SetInt8(data.strPhy, 0);
 		}
 		else
 		{
@@ -181,7 +61,7 @@ HideOldButtons = function()
 			// First we need to find that location
 			////////////////////////////////////////////////
 
-			if (typeof HOB_AssignSkill === 'undefined') //to avoid redundancy
+			if (!CACHE.has('HOB_AssignSkill'))
 			{
 				$$(_ + '2.3 - Find \'skill\' (needed since some prefixes are matching multiple areas)')
 				const refAddr = Exe.FindText("skill");
@@ -203,16 +83,17 @@ HideOldButtons = function()
 					throw Error("'skill' not assigned");
 
 				$$(_ + '2.5 - Save the address of the \'skill\' assignment & the code used as prefix')
-				HOB_AssignSkill = addr;
-				HOB_Prefix = code;
+				CACHE.put('HOB_AssignSkill', addr);
+				CACHE.put('HOB_Prefix', code);
 			}
 
 			$$(_ + '2.6 - Extract the Virtual address of the prefix')
-			const {strVir} = HOB_Data[key];
+			const {strings, strVir} = this.Data.get(key);
 
 			$$(_ + '2.7 - Find the prefix assignment after \'skill\' assignment')
 			const str = strings[0];
-			const addr = Exe.FindHex(strVir.toHex() + HOB_Prefix, HOB_AssignSkill - 0x80, HOB_AssignSkill + (Exe.BuildDate > 20140210 ? 0x200 : 0x50));
+			const HOB_AssignSkill = CACHE.get('HOB_AssignSkill');
+			const addr = Exe.FindHex(strVir.toHex() + CACHE.get('HOB_Prefix'), HOB_AssignSkill - 0x80, HOB_AssignSkill + (Exe.BuildDate > 20140210 ? 0x200 : 0x50));
 			if (addr < 0)
 				throw Error(`'${str}' not assigned`);
 
@@ -229,48 +110,160 @@ HideOldButtons = function()
 ///
 /// \brief Disable for Unsupported Clients - Check for Button bmp
 ///
-HideOldButtons.validate = function()
+HideOldButtons.validate = function(patchName)
 {
-	const _ = 'HideOldButtons.validate : ';
+	const _ = `${patchName}.validate : `;
 
 	$$(_ + '1.1 - Ensure the client is infact using the older style of buttons')
 	if (Exe.BuildDate > 20170000)
 		return false;
 
-	$$(_ + '1.2 - Undefine HOB_AssignSkill')
-	delete HOB_AssignSkill;
-
 	$$(_ + '2 - Iterate and test for string existence and keep the keys only for valid ones')
-	HOB_Keys = [];
+	this.Keys = [];
 
-	for (const key in HOB_Data)
+	for (const [key, data] of this.Data)
 	{
 		$$(_ + '2.1 - Quest is only valid for 2010+')
 		if (!ROC.Post2010 && key === "Quest")
 			return false;
 
-		$$(_ + `2.2 - Retrieve the essentials for key = ${key}`)
-		const {strings, zeroPrefix} = HOB_Data[key];
-
-		$$(_ + '2.3 - Find the first match amongst the strings specified')
-		for (const str of strings)
+		$$(_ + '2.2 - Find the first match amongst the strings specified for ' + key)
+		for (const str of data.strings)
 		{
-			const addr = Exe.FindText(str, PHYSICAL, zeroPrefix);
+			const addr = Exe.FindText(str, PHYSICAL, data.zeroPrefix);
 			if (addr > 0)
 			{
 				$$(_ + '2.4 - When found save it into HOB_Data . Also save the VIRTUAL address if zeroPrefix is ON since we need it')
-				HOB_Data[key].strPhy = addr;
-				if (zeroPrefix)
-					HOB_Data[key].strVir = Exe.Phy2Vir(addr);
+				data.strPhy = addr;
+				if (data.zeroPrefix)
+					data.strVir = Exe.Phy2Vir(addr);
 
 				$$(_ + '2.5 - Push the key into the list')
-				HOB_Keys.push(key);
-				
+				this.Keys.push(key);
+
 				break;
 			}
 		}
 	}
 
 	$$(_ + '3 - Patch is valid if atleast 1 button is present')
-	return !(HOB_Keys.isEmpty());
+	return !(this.Keys.isEmpty());
 };
+
+///
+/// \brief Data to be used in patches
+///
+HideOldButtons.Data = MakeMap(
+	'Stats', //also serves as Equip button for older clients
+	{
+		strings: ["info"],
+		zeroPrefix: true
+	},
+
+	'Equipment',
+	{
+		strings: ["equip"],
+		zeroPrefix: true
+	},
+
+	'Inventory',
+	{
+		strings: ["item"],
+		zeroPrefix: true
+	},
+
+	'Skill',
+	{
+		strings: ["skill"],
+		zeroPrefix: true
+	},
+
+	'Booking',
+	{
+		strings: [
+			"basic_interface\\booking",
+			"RO_menu_icon\\booking"
+		],
+		zeroPrefix: false
+	},
+
+	'Party',
+	{
+		strings: ["party"],
+		zeroPrefix: true
+	},
+
+	'Guild',
+	{
+		strings: ["guild"],
+		zeroPrefix: true
+	},
+
+	'Battleground',
+	{
+		strings: [
+			"basic_interface\\btn_battle_field",
+			"RO_menu_icon\\battle"
+		],
+		zeroPrefix: false
+	},
+
+	'Quest',
+	{
+		strings: ["quest"],
+		zeroPrefix: true
+	},
+
+	'WorldMap',
+	{
+		strings: ["map"],
+		zeroPrefix: true
+	},
+
+	'Navigation',
+	{
+		strings: [
+			"navigation_interface\\btn_Navigation",
+			"RO_menu_icon\\navigation"
+		],
+		zeroPrefix: false
+	},
+
+	'Options',
+	{
+		strings: [
+			"basic_interface\\btn_option"
+		],
+		zeroPrefix: false
+	},
+
+	'Bank',
+	{
+		strings: [
+			"basic_interface\\btn_bank",
+			"RO_menu_icon\\bank"
+		],
+		zeroPrefix: false
+	},
+
+	'Record',
+	{
+		strings: [
+			"replay_interface\\rec",
+			"RO_menu_icon\\rec"
+		],
+		zeroPrefix: false
+	},
+
+	'Rodex (Mail)',
+	{
+		strings: ["RO_menu_icon\\mail"],
+		zeroPrefix: false
+	},
+
+	'Achievement',
+	{
+		strings: ["RO_menu_icon\\achievement"],
+		zeroPrefix: false
+	}
+);

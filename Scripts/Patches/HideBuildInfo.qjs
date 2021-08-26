@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-01-23                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -44,9 +44,9 @@ HideBuildInfo = function()
 
 	$$(_ + '2.1 - Look for arg PUSHes for Build String (time & date values) in CGameMode::ProcessTalkType')
 	let code =
-        PUSH(POS4WC)   //push offset <timestring>
-	+	PUSH(POS4WC)   //push offset <datestring>
-	+	PUSH(HBI_Addr) //push offset "build : %s - %s"
+        PUSH(POS4WC)       //push offset <timestring>
+	+	PUSH(POS4WC)       //push offset <datestring>
+	+	PUSH(this.FmtAddr) //push offset "build : %s - %s"
 	;
     let addr = Exe.FindHex(code);
     if (addr < 0)
@@ -132,6 +132,6 @@ HideBuildInfo = function()
 ///
 HideBuildInfo.validate = function()
 {
-	HBI_Addr = Exe.FindText("build : %s - %s");
-	return HBI_Addr > 0;
+	this.FmtAddr = Exe.FindText("build : %s - %s");
+	return this.FmtAddr > 0;
 };

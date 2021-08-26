@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-30                                             *
-*   Last Modified : 2021-07-21                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -57,7 +57,7 @@ if (typeof IPrefix === 'undefined') //avoid redefinition
 			return this.Value.toHex(1);
 		}
 	};
-	
+
 	///
 	/// \brief Define all the prefixes
 	///
@@ -82,14 +82,14 @@ if (typeof IPrefix === 'undefined') //avoid redefinition
 		// String Manipulation
 		['IREPE' , 0xF2],
 		['IREPN' , 0xF3],
-	].map( ([name, value]) => 
+	].map( ([name, value]) =>
 	{
 		Assign( name, `new IPrefix(${value})` );
 		return value;
 	});
-	
+
 	IdentifyClass(IPrefix);
-	
+
 	///
 	/// \brief Define the functions for the last 3 prefixes.
 	///
@@ -97,14 +97,14 @@ if (typeof IPrefix === 'undefined') //avoid redefinition
 		ILOCK + (_ ? _ : '')
 	;
 	IdentifyObj('LOCK');
-	
+
 	for (const name of
 	[
 		'REPE',
 		'REPN'
 	])
 		Assign(name, `_ => _.replace(/^( 66)?/, '$1' + I${name})` );
-	
+
 	REP = REPE;
 	IdentifyObj('REP');
 }

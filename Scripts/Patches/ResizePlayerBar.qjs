@@ -1,0 +1,129 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020-2021 CH.C (jchcc), Neo-Mind                         *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2021-08-26                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - Pattern for the newer clients is changed again. Need to experiment with live client
+//        The PUSHes are still there though.
+
+///
+/// \brief Changes the dimensions being PUSHed for creating Player's HP/SP Bar
+///
+ResizePlayerBar = function()
+{
+	const _ = 'ResizePlayerBar : ';
+
+	$$(_ + '1.1 - Find the original size PUSHes')
+	let prefix =
+		MOV(ECX, [R32, POS2WC])  //mov ecx, dword ptr [regA + dispA]
+	+	PUSH(POS4WC)             //push immA
+	+	PUSH(POS4WC)             //push immB
+	+	CALL(ALLWC)              //call func#1
+	+	MOV(ECX, [R32, POS2WC])  //mov ecx, dword ptr [regA + dispA]
+	;
+
+	const suffix =
+		PUSH(9)                  //push 9
+	+	PUSH(0x3C)               //push 3Ch
+	;
+
+	let addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0 && Exe.Version === 6) //VC6 2nd form
+	{
+		prefix =
+			MOV([R32, POS1WC], R32) //mov dword ptr [regB + dispB], regC
+		+	MOV(ECX, [R32, POS2WC]) //mov ecx, dword ptr [regA + dispC]
+		;
+		addr = Exe.FindHex(prefix + suffix);
+	}
+	if (addr < 0)
+		throw Error("Size PUSHes missing");
+
+	const sizeAddr = addr + prefix.byteCount();
+
+	$$(_ + '1.2 - Find the reference assignment before the half width subtraction')
+	let addrs = Exe.FindHexN( 2, 2, MOV([EAX, WCp], 0x32FF32) ); //mov dword ptr [eax + disp8D], 32FF32h
+
+	if (addrs.isEmpty())
+		addrs = Exe.FindHexN( 2, 2, MOV([EAX, POS2WC], 0x32FF32) ); //mov dword ptr [eax + dispD], 32FF32h
+
+	if (addrs.isEmpty())
+		throw Error("Expected exactly 2 matches.");
+
+	$$(_ + '1.3 - Now find the subtraction after it. The pattern changes a lot between 2008 - 2019 so this is the only foolproof way')
+	const MovEAX = MOV(EAX, 0x88888889); //mov eax, 88888889h
+
+	const IsSub = this.isSub;
+	const halfAddr = addrs.findAs( memAddr =>
+	{
+		const addr = Exe.FindHex(MovEAX, memAddr + 10, memAddr + 0x80);
+		if (addr > 0)
+		{
+			const result = FindInstr(IsSub, memAddr, memAddr + 0x80);
+			if (result)
+				return result.Addr;
+		}
+	});
+	if (!halfAddr)
+		throw Error("Half Width subtraction missing");
+
+	$$(_ + '2.1 - Get the new dimensions from user')
+	const result = Exe.GetUserInput('$pcHPBarSize', D_VecI8, "Player HP Bar Dimensions", "Enter the new HP bar size for Player (in pixels)", [60, 9], {
+		min: 1,
+		name0: "Bar Width",
+		name1: "Bar Height"
+	});
+	if (result === false)
+		Cancel("Size", "(60 x 9)");
+
+	const [wid, hgt] = result;
+
+	$$(_ + '2.2 - Replace at all the locations')
+	if (wid !== 60)
+	{
+		Exe.SetInt8(sizeAddr + 3, wid);
+		Exe.SetUint8(halfAddr + 2, wid >> 1);
+	}
+
+	if (hgt !== 9)
+	{
+		Exe.SetInt8(sizeAddr + 1, hgt);
+	}
+
+	return true;
+};
+
+///
+/// \brief Temporarily disable for latest clients for which the pattern before the PUSH has changed
+///
+ResizePlayerBar.validate = () =>
+	Exe.BuildDate < 20200720;
+
+///
+/// \brief Testing function for finding the SUB reg32, 1E instruction
+///
+ResizePlayerBar.isSub = (ins) =>
+	ins.Codes[0] === 0x83 && ins.Immd === 0x1E && ins.MRM.RegO === 5;

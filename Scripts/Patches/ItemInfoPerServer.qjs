@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -69,7 +69,7 @@ function ItemInfoPerServer()
 	const allocInject = addr2 + 5;
 
 	$$(_ + '2.1 - Find where ItemInfo Error string is PUSHed')
-	addr = Exe.FindHex( PUSH(IIPS_Addr) );
+	addr = Exe.FindHex( PUSH(this.StrAddr) );
 	if (addr < 0)
 		throw Error("ItemInfo ErrStr not used");
 
@@ -289,6 +289,6 @@ function ItemInfoPerServer()
 ///
 ItemInfoPerServer.validate = function()
 {
-	IIPS_Addr = Exe.FindText("ItemInfo file Init");
-    return (IIPS_Addr > 0);
+	this.StrAddr = Exe.FindText("ItemInfo file Init");
+    return (this.StrAddr > 0);
 };

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), X-EcutiOnner                            *
 *   Created Date  : 2021-03-06                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,7 +36,7 @@ NoMapInfo = function()
 	const _ = 'NoMapInfo : ';
 
 	$$(_ + '1 - Zero it out')
-	Exe.SetInt8(NMI_Addr, 0);
+	Exe.SetInt8(this.LubAddr, 0);
 
 	$$(_ + '2.1 - Find the CMapInfoMgr ErrorMsg function')
 	const parts =
@@ -82,7 +82,7 @@ NoMapInfo = function()
 ///
 NoMapInfo.validate = function()
 {
-	NMI_Name = "system\\mapInfo_" + (ROC.IsRenewal ? "sak" : "true") + ".lub";
-	NMI_Addr = Exe.FindText(NMI_Name, CASE_INSENSITIVE, PHYSICAL);
-	return (NMI_Addr > 0);
+	const name = "system\\mapInfo_" + (ROC.IsRenewal ? "sak" : "true") + ".lub";
+	this.LubAddr = Exe.FindText(name, CASE_INSENSITIVE, PHYSICAL);
+	return (this.LubAddr > 0);
 };

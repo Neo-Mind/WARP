@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,13 +34,13 @@
 ExtractMsgStrings = function()
 {
 	const _ = 'ExtractMsgStrings : ';
-	
+
 	$$(_ + '1.1 - Need a valid Exe loaded')
 	if (Exe.FileSize === 0)
 		throw NO_EXE;
 
 	$$(_ + '1.2 - Find the string \'msgStringTable.txt\'')
-	let addr = Exe.FindText("msgStringTable.txt", CaseInsensitive);
+	let addr = Exe.FindText("msgStringTable.txt", CASE_INSENSITIVE);
 	if (addr < 0)
 		throw Error("'msgStringTable.txt' not found");
 
@@ -95,7 +95,7 @@ ExtractMsgStrings = function()
 	const inFile = Exe.GetUserInput("$$msgTranslations", D_InFile, "MsgString Translations", "Enter translation mapping file (Optional)", "Inputs/MsgStrMap_EN.yml");
 
 	$$(_ + '2.2 - Load the translation mapping if valid file provided')
-	const trMap = inFile ? _EMS_LoadTr(inFile) : null;
+	const trMap = inFile ? this.loadTr(inFile) : null;
 
 	$$(_ + '3.1 - Open output file for writing (Need ASCII encoding)')
 	const outFile = Exe.GetUserInput("$$msgStrTable", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "msgStringTable_" + ROC.BaseName + ".txt");
@@ -110,7 +110,7 @@ ExtractMsgStrings = function()
 	for (let idx = 0; Exe.GetUint32(addr) === idx; idx++, addr += 8)
 	{
 		const __ = `${_} [${idx}] `;
-		
+
 		$$(__ + '3.3 - Get the address of the string')
 		const strAddr = Exe.Vir2Phy(Exe.GetUint32(addr + 4));
 
@@ -118,8 +118,8 @@ ExtractMsgStrings = function()
 		let msgStr = Exe.GetText(strAddr);
 
 		$$(__ + '3.5 - Translate the string if mapping available, otherwise just escape the backslash in \n and \r')
-		if (trMap && msgStr in trMap)
-			msgStr = trMap[msgStr];
+		if (trMap && trMap.has(msgStr))
+			msgStr = trMap.get(msgStr);
 		else
 			msgStr = msgStr.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
 
@@ -131,7 +131,7 @@ ExtractMsgStrings = function()
 	fp.Close();
 
 	$$(_ + '4  - Show the success message or display the file if requested')
-	if (!Exe.TestMode && UserChoice("Show File", "Display the generated file?"))
+	if (!Warp.TestMode && UserChoice("Show File", "Display the generated file?"))
 	{
 		Warp.Show(fp.Path);
 		return true;
@@ -145,29 +145,29 @@ ExtractMsgStrings = function()
 ///
 /// \brief Helper function for loading translation YAML into 1 to 1 mapping
 ///
-_EMS_LoadTr = function(inFile)
+ExtractMsgStrings.loadTr = inFile =>
 {
-	const _ = "_EMS_LoadTr : "
-	
+	const _ = "ExtractMsgStrings.loadTr : ";
+
 	$$(_ + '1.1 - Load the YAML file (need it to be an array)')
 	const arr = Warp.LoadYaml(inFile);
 	if (!Array.isArray(arr))
 		return null;
 
 	$$(_ + '1.2 - Initialize the map')
-	let trMap = {};
+	let trMap = new Map();
 	for (const hash of arr)  //iterate through the array
 	{
 		$$(_ + '1.3 - Retrieve the \'find\' and \'replace\' values.')
 		let {find: findPat, replace: replStr} = hash;
-		
+
 		if (!findPat || !replStr)
 			continue;
 
 		$$(_ + '1.4 - Processing ' + findPat);
 		findPat = findPat.toString().replace(/\n/g, "\\n").replace(/\r/g, "\\r");
 		replStr = replStr.toString().replace(/\n/g, "\\n").replace(/\r/g, "\\r");
-		
+
 		$$(_ + '2.1 - If the pattern is a hex then convert to equivalent bytes, otherwise just extract the data within')
 		let result = findPat.match(/^\s*<(.*)>\s*$/);
 		if (result)
@@ -179,7 +179,7 @@ _EMS_LoadTr = function(inFile)
 			replStr = result[1].toAscii();
 
 		$$(_ + '2.3 - Add to the map')
-		trMap[findPat] = replStr;
+		trMap.set(findPat, replStr);
 	}
 
 	return trMap;

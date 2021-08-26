@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -48,42 +48,47 @@ CustomHomuns = function()
 	let ins = Instr.FromAddr(hookAddr);
 
 	$$(_ + '1.4 - Get the register containing the base address')
-	let refReg = R32.List[ins.MRM.RegM];
+	let refReg = ins.MRM.getReg('M');
 
-	$$(_ + '2.1 - Ensure LANGTYPE is loaded . Needed by FetchTillEnd')
-	LANGTYPE.load();
-
-	$$(_ + '2.2 - Now find the ending instruction while extracting all relevant instructions (not related to table loading) in between')
-	const [endIns, retainer, overflow] = FetchTillEnd(hookAddr, 1, ins.getNext(), refReg, -1, (ins) =>
+	if (!CACHE.has('CH_Infos'))
 	{
-		if (Exe.Version === 6) //VC6
+		$$(_ + '2.1 - Ensure LANGTYPE is loaded . Needed by FetchTillEnd')
+		LANGTYPE.load();
+
+		$$(_ + '2.2 - Now find the ending instruction while extracting all relevant instructions (not related to table loading) in between')
+		const [endIns, retainer, overflow] = FetchTillEnd(hookAddr, 1, ins.getNext(), refReg, -1, (ins) =>
 		{
-			if (ins.Codes[0] === 0x85 && ins.MRM.RegO === ins.MRM.RegM) //test regA, regA
+			if (Exe.Version === 6) //VC6
 			{
-				return (Exe.GetUint8(ins.NextAddr) === 0x74); //followed by ( jz short addr#1 )
+				if (ins.Codes[0] === 0x85 && ins.MRM.RegO === ins.MRM.RegM) //test regA, regA
+				{
+					return (Exe.GetUint8(ins.NextAddr) === 0x74); //followed by ( jz short addr#1 )
+				}
 			}
-		}
-		else if (Exe.Version <= 11) //VC9 to VC11
-		{
-			if (ins.Codes[0] === 0x2B) //sub regA, regB
+			else if (Exe.Version <= 11) //VC9 to VC11
 			{
-				return (ins.MRM.Mode === 3 && (Exe.GetInt32(ins.Addr + 2) & 0xFFF8FF) === 0x02F8C1); //followed by ( sar regA, 2 )
+				if (ins.Codes[0] === 0x2B) //sub regA, regB
+				{
+					return (ins.MRM.Mode === 3 && (Exe.GetInt32(ins.Addr + 2) & 0xFFF8FF) === 0x02F8C1); //followed by ( sar regA, 2 )
+				}
 			}
-		}
-		else //VC14.16
-		{
-			if (ins.Codes[0] === 0x8D && ins.MRM.Mode === 1 && ins.MRM.RegO === 0 && Exe.GetUint8(ins.NextAddr) === 0x50) //lea eax, [LOCAL.x]
-			{                                                                                                             //push eax
-				let opcode = Exe.GetUint8(ins.NextAddr + 1);
-				return (opcode === 0x6A || //followed by ( push immA )
-				        opcode === 0x68 ||
-				        opcode === 0x56 ); //OR by       ( push esi )
+			else //VC14.16
+			{
+				if (ins.Codes[0] === 0x8D && ins.MRM.Mode === 1 && ins.MRM.RegO === 0 && Exe.GetUint8(ins.NextAddr) === 0x50) //lea eax, [LOCAL.x]
+				{                                                                                                             //push eax
+					let opcode = Exe.GetUint8(ins.NextAddr + 1);
+					return (opcode === 0x6A || //followed by ( push immA )
+							opcode === 0x68 ||
+							opcode === 0x56 ); //OR by       ( push esi )
+				}
 			}
-		}
-		return false;
-	});
-	if (overflow)
-		throw Error("Unable to find end of assignments");
+			return false;
+		});
+		if (overflow)
+			throw Error("Unable to find end of assignments");
+
+		CACHE.put('CH_Infos', [endIns, retainer]);
+	}
 
 	$$(_ + '2.3 - Get the max homunculi limit from user')
 	const MaxHomun = Exe.GetUserInput('$maxHomun', D_Int16, "Limit Input", "Enter the maximum homunculus ID required", 6080, {min: 6080, max: 7000, saveDefault: true});
@@ -93,7 +98,10 @@ CustomHomuns = function()
 	$$(_ + '2.4 - Ensure LUA object is loaded')
 	LUA.load();
 
-	$$(_ + '2.5 - Prepare the code to call LUA function for loading tables')
+	$$(_ + '2.5 - Retrieve the infos from CACHE')
+	const [endIns, retainer] = CACHE.get('CH_Infos');
+
+	$$(_ + '2.6 - Prepare the code to call LUA function for loading tables')
 	const funcName = "ReqJobName";
 	const [prep, main, restore] = LUA.createCaller(funcName, "d>s", EDI, EAX);
 
@@ -128,15 +136,15 @@ CustomHomuns = function()
 		JMP(Filler(2))           //jmp endAddr; address of <endIns>
 	];
 
-	$$(_ + '2.6 - Fill in the blanks')
+	$$(_ + '2.7 - Fill in the blanks')
 	const code = SetFillTargets( LUA.finalize(parts, Exe.Phy2Vir(hookAddr, CODE), LUA.ReqJN),
 	{
 		start : hookAddr,
 		'1,1' : hookAddr + parts.byteCount(0), // _loop
-		    2 : endIns.Addr //no VIRTUAL conversion necessary start is also PHYSICAL address
+		 2    : endIns.Addr //no VIRTUAL conversion necessary start is also PHYSICAL address
 	});
 
-	$$(_ + '2.7 - Replace at the hook address')
+	$$(_ + '2.8 - Replace at the hook address')
 	Exe.SetHex(hookAddr, code);
 
 	if (Exe.Version > 6)

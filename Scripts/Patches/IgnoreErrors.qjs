@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144), X-EcutiOnner, Ai4rei/AN        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -63,8 +63,7 @@ IgnoreRsrcErr = function()
 	addr += 5;
 
 	$$(_ + '2.3 - Prep code to replace with (for calling OutputDebugStringA & stack restoration)')
-	if (ROC.OutDbgStrA < 0)
-		throw Error("'OutputDebugStringA' function missing");
+	ROC.findImports();
 
 	code =
 		PUSH([ROC.StkReg, ROC.HasFP ? 8 : 4]) //push dword ptr [ARG.1] ; where ARG.1 = ebp+8 with fp and esp+4 without fp.
@@ -172,8 +171,7 @@ IgnorePalErr = function()
 		throw Error("End code missing");
 
 	$$(_ + '3.1 - Prep new code to send the message to OutputDebugStringA function')
-	if (ROC.OutDbgStrA < 0)
-		throw Error("'OutputDebugStringA' function missing");
+	ROC.findImports();
 
 	const parts =
 	[//0
@@ -230,8 +228,7 @@ IgnoreLuaErr = function()
 	const _ = 'IgnoreLuaErr : ';
 
 	$$(_ + '1.1 - Ensure "MessageBoxA" has been imported')
-	if (ROC.MsgBoxA < 0)
-		throw Error("'MessageBoxA' function missing");
+	ROC.findImports();
 
 	$$(_ + '1.2 - Find the LuaErrorMsg function code')
 	const cmn = LEA(R32, [ROC.StkReg, ROC.HasFP ? NEG2WC : WCp]); //lea regB, [LOCAL.x] ; where the displacement is -ve for EBP but +ve for ESP.
@@ -311,12 +308,11 @@ IgnoreQuestErr = function()
 	const _ = 'IgnoreQuestErr : ';
 
 	$$(_ + '1.1 - Ensure "MessageBoxA" has been imported')
-	if (ROC.MsgBoxA < 0)
-		throw Error("'MessageBoxA' function missing");
+	ROC.findImports();
 
 	$$(_ + '1.2 - Find the MessageBoxA CALL inside QuestErrorMsg function')
 	const prefix =
-		PUSH(IQE_Addr)          //push offset "Not found Quest Info = %lu"
+		PUSH(this.FmtAddr)      //push offset "Not found Quest Info = %lu"
 	+	PUSH_EAX                //push eax
 	+	CALL(ALLWC)             //call std::string::sprintf
 	+	ADD(ESP, 0xC)           //add esp, 0Ch
@@ -364,8 +360,8 @@ IgnoreQuestErr = function()
 ///
 IgnoreQuestErr.validate = function()
 {
-	IQE_Addr = Exe.FindText("Not found Quest Info = %lu");
-	return (IQE_Addr > 0);
+	this.FmtAddr = Exe.FindText("Not found Quest Info = %lu");
+	return (this.FmtAddr > 0);
 };
 
 ///
@@ -378,26 +374,26 @@ IgnoreEntryQueueErr = function()
 	$$(_ + '1.1 - Find the location where the file is accessed')
 	const parts =
 	[
-		PUSH(IEQE_Addr)  //push offset "Data\Table\EntryQueue.bex"
-	+	CALL([POS3WC])   //call dword ptr [&CreateFileA]
-	+	MOV(R32, EAX)    //mov regA, eax
-	+	CMP(R32, -1)     //cmp regA, -1
-	+	JNZ(WCp)         //jne short _skip
+		PUSH(this.BexAddr)  //push offset "Data\Table\EntryQueue.bex"
+	+	CALL([POS3WC])      //call dword ptr [&CreateFileA]
+	+	MOV(R32, EAX)       //mov regA, eax
+	+	CMP(R32, -1)        //cmp regA, -1
+	+	JNZ(WCp)            //jne short _skip
 
 	,//1
-		PUSH(0x30)       //push 30h ; '0'
-	+	PUSH(POS3WC)     //push offset "Load Failed"
-	+	PUSH(IEQE_Addr)  //push offset "Data\Table\EntryQueue.bex"
+		PUSH(0x30)          //push 30h ; '0'
+	+	PUSH(POS3WC)        //push offset "Load Failed"
+	+	PUSH(this.BexAddr)  //push offset "Data\Table\EntryQueue.bex"
 
 	,//2
 		Exe.Version > 10
 	?
-		PUSH_0           //push 0
+		PUSH_0              //push 0
 	:
-		PUSH_R           //push regB
+		PUSH_R              //push regB
 
 	,//3
-		CALL([POS3WC])   //call dword ptr [<&USER32.MessageBoxA>]
+		CALL([POS3WC])      //call dword ptr [<&USER32.MessageBoxA>]
 	];
 
 	let addr = Exe.FindHex(parts);
@@ -417,8 +413,7 @@ IgnoreEntryQueueErr = function()
 	Exe.AddText(free, str);
 
 	$$(_ + '2.1 - Check the OutputDebugStringA function address')
-	if (ROC.OutDbgStrA < 0)
-		throw Error("'OutputDebugStringA' function missing");
+	ROC.findImports();
 
 	$$(_ + '2.2 - Prepare the replacement code (CALLs OutputDebugStringA instead)')
 	let code =
@@ -439,6 +434,6 @@ IgnoreEntryQueueErr = function()
 ///
 IgnoreEntryQueueErr.validate = function()
 {
-	IEQE_Addr = Exe.FindText("Data\\Table\\EntryQueue.bex");
-	return (IEQE_Addr > 0);
+	this.BexAddr = Exe.FindText("Data\\Table\\EntryQueue.bex");
+	return (this.BexAddr > 0);
 };

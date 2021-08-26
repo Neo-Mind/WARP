@@ -1,0 +1,83 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020-2021 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2021-08-21                                             *
+*   Last Modified : 2021-08-25                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Initialize the Cache module
+///
+CACHE.init();
+
+///
+/// \brief Load the ROC module with all the misc goodies from ROClient
+///
+ROC.load();
+
+///
+/// \brief Initialize the remaining modules
+///
+DGRF.init();
+WINMGR.init();
+LANGTYPE.init();
+SRVRTYPE.init();
+LUA.init();
+PACKET.init();
+MBAR.init();
+
+///
+/// \brief Set up options & tag for Custom Skill patches
+///
+CACHE.setup('CSK', 'SkillInfo',
+{
+	cleanTag_after_userDel: false,
+});
+
+///
+/// \brief Set up options & tag for Custom Encryption Key patches
+///
+CACHE.setup('PACKET', 'EncKeys',
+{
+	cleanTag_after_restore: false,
+	cleanTag_after_userDel: false,
+	dealloc_after_restore: false,
+});
+
+///
+/// \brief Set up options & tag for Resize Mob bar patches
+///
+CACHE.setup('MBAR', 'MobHP',
+{
+	cleanTag_after_restore: false,
+	dealloc_after_restore: false,
+});
+
+///
+/// \brief Set up options & tag for New Button visibility patches
+///
+CACHE.setup('NBV', 'ButtonTbl',
+{
+	dealloc_after_tagClean: true,
+});

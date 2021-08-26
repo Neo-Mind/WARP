@@ -23,50 +23,9 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
-
-///
-/// \brief Data to be used for the patches.
-///
-if (typeof NBV === 'undefined') //avoid redefinition
-{
-	NBV =
-	{
-		Names :
-		{
-			status      : "Stats",
-			equip       : "Equipment",
-			item        : "Inventory",
-			skill       : "Skill",
-			booking     : "Booking",
-			party       : "Party",
-			guild       : "Guild",
-			battle      : "Battleground",
-			quest       : "Quest",
-			map         : "WorldMap",
-			navigation  : "Navigation",
-			option      : "Options",
-			bank        : "Bank",
-			rec         : "Record",
-			mail        : "Rodex (Mail)",
-			achievement : "Achievement",
-			tip         : "Tip",
-			shop        : "Shop",
-			keyboard    : "Shortcut",
-			sns         : "Twitter (SNS)",
-			attendance  : "Attendance",
-			adventurerAgency : "AdventureAgency",
-			repute      : "Reputation",
-		},
-
-		Patches : [
-			"HideNewButtons",
-			"ShowNewButtons"
-		]
-	};
-}
 
 ///
 /// \brief Modify the switch case for displaying the various buttons to display/hide the ones we selected
@@ -76,7 +35,7 @@ NewButtonVis = function(patchName)
 {
 	const _ = patchName + ' : ';
 
-	if (!NBV.Loaded)
+	if ( !CACHE.has('NBV_Refs') )
 	{
 		$$(_ + '1.1 - Find \'status_doram\'')
 		let addr = Exe.FindText("status_doram");
@@ -121,6 +80,7 @@ NewButtonVis = function(patchName)
 				...Exe.FindHexN(PUSH(POS4WC) + " 8D [10...101]", beginAddr, refAddr)            //push offset#1; followed by LEA reg32, [LOCAL.x]
 			].sort();
 		}
+
 		if (idAssigners.isEmpty())
 			throw Error("ID assignments missing");
 
@@ -150,11 +110,14 @@ NewButtonVis = function(patchName)
 			throw Error("Either String or ID missing");
 
 		$$(_ + '1.6 - Map & assign the IDs based on the strings PUSHed')
+		let IDMap = new Map();
+
 		strPushers.forEach( (addr, idx) =>
 		{
-			const str = Exe.GetText(Exe.Vir2Phy(Exe.GetInt32(addr + 1))); //the string being pushed.
-			const name = NBV.Names[str];
-			NBV.IDs[name] = idList[idx];
+			const key = Exe.GetText(Exe.Vir2Phy(Exe.GetInt32(addr + 1))); //the string being pushed.
+			const name = this.Data.get(key);
+
+			IDMap.set(name, idList[idx]);
 		});
 
 		$$(_ + '2.1 - Find the Jump table used for switch')
@@ -165,71 +128,87 @@ NewButtonVis = function(patchName)
 		if (addr > 0)
 		{
 			$$(_ + '2.2 - If found then set the type to 1')
-			NBV.Type = 1;
+			const Type = 1;
 
 			$$(_ + '2.3 - Save the VIRTUAL location (serves as the returning address)')
-			NBV.RetnAddr = Exe.Phy2Vir(addr, CODE);
+			const RetnAddr = Exe.Phy2Vir(addr, CODE);
 
 			$$(_ + '2.4 - Extract the switchTbl address')
 			const jmpDpAddr = addr + prefix.byteCount();
 			const switchTbl = Exe.Vir2Phy(Exe.GetInt32(jmpDpAddr - 4), CODE);
 
 			$$(_ + '2.5 - Calculate the addresses for Hidden (OFF) & Visible (ON) states')
-			NBV.OffAddr = CaseAddr(0, addr, VIRTUAL, jmpDpAddr);
-			NBV.OnAddr  = CaseAddr(1, addr, VIRTUAL, jmpDpAddr);
+			const OffAddr = CaseAddr(0, addr, VIRTUAL, jmpDpAddr);
+			const OnAddr  = CaseAddr(1, addr, VIRTUAL, jmpDpAddr);
 
 			$$(_ + '2.6 - Now find the limiting comparison before the switch table')
 			prefix = LEA(EAX, [EBX, NEG2WC]); //lea eax, [ebx - limitL]
 			suffix = CMP(EAX, POS1WC);        //cmp eax, range
-			NBV.Reg = EBX;
+			let IDReg = EBX;
 
 			let addr2 = Exe.FindLastHex(prefix + suffix, addr, addr - 0x30);
 			if (addr2 < 0)
 			{
 				prefix = ADD(EAX, NEG2WC);    //add eax, -limitL
 				addr2 = Exe.FindLastHex(prefix + suffix, addr, addr - 0x30);
-				NBV.Reg = EAX;
+				IDReg = EAX;
 			}
+
 			if (addr2 < 0)
 				throw Error("Limiting comparison missing");
 
 			$$(_ + '2.7 - Save it as our hook address')
-			NBV.HookAddr = addr2;
+			const HookAddr = addr2;
 
 			$$(_ + '2.8 - Extract the limits')
 			addr2 += prefix.byteCount();
-			NBV.MinLimit = -Exe.GetInt32(addr2 - 4);
-			NBV.Range = Exe.GetInt32(addr2 + 1);
+			const MinLimit = -Exe.GetInt32(addr2 - 4);
+			const Range = Exe.GetInt32(addr2 + 1);
 
 			$$(_ + '2.9 - Isolate the visible & hidden button names. Also save the table address (PHYSICAL) when applicable for each button')
-			NBV.Visible = [];
-			NBV.Hidden = [];
-			NBV.TblAddr = {};
+			let Visible = [];
+			let Hidden = [];
+			let TblAddrs = new Map();
 
-			for (const key in NBV.IDs)
+			for (const [key, id] of IDMap)
 			{
-				const ID = NBV.IDs[key];
-				if (ID < NBV.MinLimit || ID > (NBV.MinLimit + NBV.Range))
+				if (id < MinLimit || id > (MinLimit + Range))
 				{
-					NBV.Visible.push(key);
+					Visible.push(key);
 				}
 				else
 				{
-					const tblAddr = switchTbl + ID - NBV.MinLimit;
-					NBV.TblAddr[key] = tblAddr;
+					const tblAddr = switchTbl + id - MinLimit;
+					TblAddrs.set(key, tblAddr);
 
 					const visible = (Exe.GetInt8(tblAddr) === 1);
 					if (visible)
-						NBV.Visible.push(key);
+						Visible.push(key);
 					else
-						NBV.Hidden.push(key);
+						Hidden.push(key);
 				}
 			}
+
+			$$(_ + '2.10 - Put everything in the CACHE')
+			CACHE.put('NBV_Refs', {
+				IDMap,
+				Type,
+				HookAddr,
+				RetnAddr,
+				OffAddr,
+				OnAddr,
+				IDReg,
+				TblAddrs,
+				Visible,
+				Hidden,
+				MinLimit,
+				Range
+			});
 		}
 		else
 		{
 			$$(_ + '3.1 - Since table is not there set the type. The switch gets implemented with direct comparisons')
-			NBV.Type = 2;
+			const Type = 2;
 
 			$$(_ + '3.2 - Find the comparisons')
 			prefix =
@@ -242,14 +221,15 @@ NewButtonVis = function(patchName)
 			+	CMP(EBX, POS2WC) //cmp ebx, 20Ah / 206h
 			+	JLE(POS2WC)      //jle <offAddr>
 			;
-			NBV.Reg = EBX;
+			let IDReg = EBX;
 
+			let OffIDs;
 			addr = Exe.FindHex(prefix + suffix, refAddr + 5, refAddr + 0x60);
 			if (addr > 0)
 			{
 				const first = Exe.GetInt32(addr + 2);
 				const third = Exe.GetInt32(addr + prefix.byteCount() + suffix.byteCount() - 10);
-				NBV.OffIDs = [first, third - 1, third];
+				OffIDs = [first, third - 1, third];
 			}
 			else
 			{
@@ -264,7 +244,7 @@ NewButtonVis = function(patchName)
 				{
 					const first = Exe.GetInt32(addr + 2);
 					const second = Exe.GetInt32(addr + prefix.byteCount() + 8); //6 for the JE
-					NBV.OffIDs = [first, second];
+					OffIDs = [first, second];
 				}
 			}
 			if (addr < 0)
@@ -279,14 +259,13 @@ NewButtonVis = function(patchName)
 				+	SUB(EAX, 0x30)   //sub eax, 30h
 				+	JZ(POS2WC)       //jz offAddr
 				;
-				NBV.Reg = EAX;
+				IDReg = EAX;
 
 				addr = Exe.FindHex(prefix + suffix, refAddr + 5, refAddr + 0x60);
 				if (addr > 0)
 				{
 					const first = Exe.GetInt32(addr + 1);
-					NBV.MinLimit = first;
-					NBV.OffIDs = [first, first + 0x8B, first + 0xBB];
+					OffIDs = [first, first + 0x8B, first + 0xBB];
 				}
 			}
 			if (addr < 0)
@@ -301,57 +280,68 @@ NewButtonVis = function(patchName)
 				if (addr > 0)
 				{
 					const first = Exe.GetInt32(addr + 1);
-					NBV.OffIDs = [first, first + 7];
+					OffIDs = [first, first + 7];
 				}
 			}
 			if (addr < 0)
 				throw Error("Switch case missing");
 
 			$$(_ + '3.3 - Save the location as our hook address')
-			NBV.HookAddr = addr;
+			const HookAddr = addr;
 
 			$$(_ + '3.4 - Calculate the addresses for Hidden (OFF) & Visible (ON) states')
 			addr += prefix.byteCount();
-			NBV.OffAddr = Exe.GetTgtAddr(addr + 2);
+			const OffAddr = Exe.GetTgtAddr(addr + 2);
 
 			addr += suffix.byteCount();
-			NBV.OnAddr = Exe.Phy2Vir(addr, CODE);
+			const OnAddr = Exe.Phy2Vir(addr, CODE);
+			const RetnAddr = OnAddr; //also serves as the return address.
 
 			$$(_ + '3.5 - Isolate the visible & hidden button names')
-			NBV.Visible = [];
-			NBV.Hidden = [];
-			NBV.TblAddr = {};
+			let Visible = [];
+			let Hidden = [];
 
-			for (const key in NBV.IDs)
+			for (const [key, id] of IDMap)
 			{
-				const ID = NBV.IDs[key];
-				if (NBV.OffIDs.includes(ID))
-					NBV.Hidden.push(key);
+				if (OffIDs.includes(id))
+					Hidden.push(key);
 				else
-					NBV.Visible.push(key);
+					Visible.push(key);
 			}
-		}
 
-		NBV.Loaded = true;
+			$$(_ + '3.6 - Put everything in the CACHE')
+			CACHE.put('NBV_Refs', {
+				IDMap,
+				Type,
+				HookAddr,
+				RetnAddr,
+				OffAddr,
+				OnAddr,
+				OffIDs,
+				IDReg,
+				Visible,
+				Hidden
+			});
+		}
 	}
 
 	$$(_ + '4.1 - Setup values based on patchName')
 	let varName, title, suffix, btnChoices;
 
-	const index = NBV.Patches.indexOf(patchName);
-	if (index === 0) //Hide New Buttons
+	const Refs = CACHE.get('NBV_Refs');
+	if (patchName === 'HideNewButtons')
 	{
 		varName = '$newHiddenButtons';
 		title = "Hide Buttons";
 		suffix = "hidden";
-		btnChoices = NBV.Visible;
+		btnChoices = Refs.Visible;
 	}
 	else //Show New Buttons
 	{
 		varName = '$newShownButtons';
 		title = "Show Buttons";
 		suffix = "shown";
-		btnChoices = NBV.Hidden;
+		btnChoices = Refs.Hidden;
 	}
 
 	$$(_ + '4.2 - Retrieve the user\'s selection')
@@ -360,10 +350,12 @@ NewButtonVis = function(patchName)
 		Cancel("No new buttons are " + suffix);
 
 	$$(_ + '4.3 - Save the selection')
-	NBV.Selection[index] = selection;
+	CACHE.put('Selection:' + patchName, selection);
 
 	$$(_ + '4.4 - Call the helper to stage the changes')
-	_NBV_Stage(index);
+	CACHE.addUser('NBV', patchName);
+
+	this.stage(patchName);
 
 	return true;
 };
@@ -371,151 +363,155 @@ NewButtonVis = function(patchName)
 ///
 /// \brief Supporting function to stage the changes for the specified patch
 ///
-_NBV_Stage = index =>
+NewButtonVis.stage = function(patchName)
 {
-	const _ = '_NBV_Stage : ';
+	const _ = `${patchName}.stage : `;
 
-	$$(_ + '1.1 - Get the other patch\'s index. Current index = ' + index)
-	const otherIndex = 1 - index;
+	$$(_ + '1.1 - Begin the common tag')
+	Exe.BeginTag(CACHE.getTag('NBV'), true);
 
-	$$(_ + '1.2 - Retrieve the other patch name')
-	const otherPatch = NBV.Patches[otherIndex];
-
-	$$(_ + '1.3 - Retrieve the selected names. Clear the other patch if its selected')
-	const selection = NBV.Selection[index];
-
-	let otherSelection = [];
-	if (Warp.GetPatchState(otherPatch))
-	{
-		otherSelection = NBV.Selection[otherIndex];
-		Exe.ClearPatch(otherPatch);
-	}
-
-	$$(_ + '2.1 - Prepare the array to store IDs of newly visible buttons (Used for Type 2)')
+	$$(_ + '1.2 - Prepare the array to store IDs of newly visible buttons (Used for Type 2)')
 	let onIDs = [];
 
+	$$(_ + '1.3 - Retrieve the stored reference db')
+	const Refs = CACHE.get('NBV_Refs');
+
+	const {Type, IDMap, IDReg, TblAddr} = Refs;
+
 	$$(_ + '2.2 - Iterate through the current selection and change the value in table or add corresponding JE to code')
+	const index = this.Members.indexOf(patchName);
+	let selection = CACHE.get('Selection:' + patchName);
+
 	let prefix = '';
 	for (const key of selection)
 	{
-		if (NBV.TblAddr[key])
+		if (TblAddr && TblAddr.has(key))
 		{
-			Exe.SetInt8(NBV.TblAddr[key], index);
+			Exe.SetInt8(TblAddr.get(key), index);
 		}
 		else
 		{
-			const ID = NBV.IDs[key];
+			const id = IDMap.get(key);
 			prefix +=
-				CMP(NBV.Reg, ID) //cmp regA, ID
-			+	JE(Filler(1))    //je <onAddr> / je <offAddr>
+				CMP(IDReg, id) //cmp regA, ID
+			+	JE(Filler(1))  //je <onAddr> / je <offAddr>
 			;
 
-			if (index === 1 && NBV.Type === 2)
-				onIDs.push(ID);
+			if (index === 1 && Type === 2)
+				onIDs.push(id);
 		}
 	}
 
 	$$(_ + '2.3 - Repeat the process for the other selection')
+	const otherIndex = 1 - index;
+	const otherPatch = this.Members[otherIndex];
+	selection = CACHE.get('Selection:' + otherPatch);
+
 	let suffix = '';
-	for (const key of otherSelection)
+	if (selection)
 	{
-		if (NBV.TblAddr[key])
+		for (const key of selection)
 		{
-			Exe.SetInt8(NBV.TblAddr[key], otherIndex);
-		}
-		else
-		{
-			const ID = NBV.IDs[key];
-			suffix +=
-				CMP(NBV.Reg, ID) //cmp regA, ID
-			+	JE(Filler(2))    //je <offAddr> / je <onAddr>
-			;
-
-			if (otherIndex === 1 && NBV.Type === 2)
-				onIDs.push(ID);
-		}
-	}
-
-	if (!prefix.isEmpty() || !suffix.isEmpty())
-	{
-		$$(_ + '2.4 - Now combine the parts')
-		let code =
-			prefix
-		+	suffix
-		;
-
-		if (NBV.Type === 1)
-		{
-			code +=
-				LEA(EAX, [NBV.Reg, -NBV.MinLimit]) //lea eax, [regA - minLimit]
-			+	CMP(EAX, NBV.Range)                //cmp eax, <range>
-			+	JA(Filler(3))                      //ja <onAddr>
-			+	JMP(Filler(4))                     //jmp <retnAddr> ; address of the MOVZX
-			;
-		}
-		else
-		{
-			for (const ID of NBV.OffIDs)
+			if (TblAddr && TblAddr.has(key))
 			{
-				if (onIDs.includes(ID))
-					return;
-
-				code +=
-					CMP(NBV.Reg, ID)       //cmp regA, ID
-				+	JZ(Filler(3))          //jz <offAddr>
-				;
+				Exe.SetInt8(TblAddr.get(key), otherIndex);
 			}
+			else
+			{
+				const id = IDMap.get(key);
+				suffix +=
+					CMP(IDReg, id) //cmp regA, ID
+				+	JE(Filler(2))  //je <offAddr> / je <onAddr>
+				;
+
+				if (otherIndex === 1 && Type === 2)
+					onIDs.push(id);
+			}
+		}
+	}
+
+	if (prefix.isEmpty() && suffix.isEmpty())
+		return;
+
+	$$(_ + '2.4 - Now combine the parts')
+	let code =
+		prefix
+	+	suffix
+	;
+
+	if (Type === 1)
+	{
+		const {MinLimit, Range} = Refs;
+		code +=
+			LEA(EAX, [IDReg, -MinLimit]) //lea eax, [regA - minLimit]
+		+	CMP(EAX, Range)              //cmp eax, <range>
+		+	JA(Filler(3))                //ja <onAddr>
+		+	JMP(Filler(4))               //jmp <retnAddr> ; address of the MOVZX
+		;
+	}
+	else
+	{
+		const {OffIDs} = Refs;
+
+		for (const id of OffIDs)
+		{
+			if (onIDs.includes(id))
+				continue;
 
 			code +=
-				JMP(Filler(4))             //jmp <onAddr>
+				CMP(IDReg, id)           //cmp regA, ID
+			+	JZ(Filler(3))            //jz <offAddr>
 			;
 		}
 
-		$$(_ + '2.5 - Find space for the code')
-		const [free, freeVir] = Exe.FindSpace(code.byteCount());
-
-		$$(_ + '2.6 - Fill in the blanks')
-		code = SetFillTargets( code,
-		{
-			start : freeVir,
-			    1 : index === 0 ? NBV.OffAddr : NBV.OnAddr,
-			    2 : index === 0 ? NBV.OnAddr : NBV.OffAddr,
-			    3 : NBV.Type === 1 ? NBV.OnAddr : NBV.OffAddr,
-			    4 : NBV.Type === 1 ? NBV.RetnAddr : NBV.OnAddr
-		});
-
-		$$(_ + '2.7 - Insert at allocated space')
-		Exe.AddHex(free, code);
-
-		$$(_ + '2.8 - Set a JMP to the code at HookAddr')
-		Exe.SetJMP(NBV.HookAddr, freeVir);
+		code +=
+			JMP(Filler(4))             //jmp <onAddr>
+		;
 	}
+
+	$$(_ + '2.5 - Find space for the code')
+	const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
+
+	$$(_ + '2.6 - Fill in the blanks')
+	const {OffAddr, OnAddr, HookAddr, RetnAddr} = Refs;
+	code = SetFillTargets( code,
+	{
+		start : freeVir,
+			1 : index === 0 ? OffAddr : OnAddr,
+			2 : index === 0 ? OnAddr : OffAddr,
+			3 : Type  === 1 ? OnAddr : OffAddr,
+			4 : RetnAddr
+	});
+
+	$$(_ + '2.7 - Insert at allocated space')
+	Exe.AddHex(free, code);
+
+	$$(_ + '2.8 - Set a JMP to the code at HookAddr')
+	Exe.SetJMP(HookAddr, freeVir);
 };
 
 ///
 /// \brief Disable for unsupported clients (uses the "adventurerAgency" string).
 ///
-NewButtonVis.validate = function()
-{
-	NBV.Loaded = false;
-	NBV.Selection = [];
-	NBV.IDs = {};
-	return (Exe.BuildDate > 20170000);
-};
+NewButtonVis.validate = () =>
+	Exe.BuildDate > 20170000;
 
 ///
 /// \brief Shift the patch data to the other patch when current one is deselected.
 ///
 NewButtonVis.cleanup = function(patchName)
 {
-	const otherIndex = 1 - NBV.Patches.indexOf(patchName);
-	const otherPatch = NBV.Patches[otherIndex];
+	/// 1 - Delete from UserRegistry & clear the selection
+	CACHE.delUser('NBV', patchName);
+	CACHE.del('Selection:' + patchName);
 
-	if (Warp.GetPatchState(otherPatch))
+	/// 2 - Restage the changes without the selections in the other patch if it is present.
+	if (CACHE.hasUsers('NBV'))
 	{
-		Exe.SetActivePatch(otherPatch);
-		Exe.ClearPatch(otherPatch);
-		_NBV_Stage(otherIndex);
+		patchName = CACHE.firstUser('NBV');
+
+		Exe.SetActivePatch(patchName);
+		this.stage(patchName);
 	}
 };
 
@@ -524,3 +520,34 @@ NewButtonVis.cleanup = function(patchName)
 ///
 HideNewButtons = NewButtonVis;
 ShowNewButtons = NewButtonVis;
+
+///
+/// \brief Data to be used for the patches
+///
+NewButtonVis.Data = MakeMap(
+	'status'           , "Stats",
+	'equip'            , "Equipment",
+	'item'             , "Inventory",
+	'skill'            , "Skill",
+	'booking'          , "Booking",
+	'party'            , "Party",
+	'guild'            , "Guild",
+	'battle'           , "Battleground",
+	'quest'            , "Quest",
+	'map'              , "WorldMap",
+	'navigation'       , "Navigation",
+	'option'           , "Options",
+	'bank'             , "Bank",
+	'rec'              , "Record",
+	'mail'             , "Rodex (Mail)",
+	'achievement'      , "Achievement",
+	'tip'              , "Tip",
+	'shop'             , "Shop",
+	'keyboard'         , "Shortcut",
+	'sns'              , "Twitter (SNS)",
+	'attendance'       , "Attendance",
+	'adventurerAgency' , "AdventureAgency",
+	'repute'           , "Reputation",
+);
+
+NewButtonVis.Members = ["HideNewButtons", "ShowNewButtons"];

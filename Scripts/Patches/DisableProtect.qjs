@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind, Andrei (4144), X-EcutiOnner       *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -137,8 +137,7 @@ NoHShield = function()
 		throw Error("'ERROR' not found");
 
 	$$(_ + '3.2 - Ensure "MessageBoxA" has been imported')
-	if (ROC.MsgBoxA < 0)
-		throw Error("'MessageBoxA' function missing");
+	ROC.findImports();
 
 	$$(_ + '3.3 - Find where \'ERROR\' is PUSHed as argument to MessageBoxA CALL')
 	code =
@@ -189,13 +188,17 @@ NoHShield = function()
 	if (Warp.GetPatchState("CustomDLL"))
 	{
 		// Since the patch is ON, the import table will be shifted to new location and now
-		// we need to get & set all the details from / to ROC.ImpInfo hash
+		// we need to get & set all the details from / to ImpInfo hash
 
 		$$(_ + '4.2 - Construct the Image Descriptor Pattern (Relative Virtual Address prefixed by 8 zeros) i.e. the import entry')
-		const aosEntry = ALL00 + ALL00 + NHS_Addr;
+		const aosEntry = ALL00 + ALL00 + this.StrRva;
 
 		$$(_ + '4.3 - Remove the aossdk import entry from the table and save it to newTblData')
-		const tblData = ROC.ImpInfo.TblData;
+		const impInfo = CACHE.get('ImpInfo');
+		if (!impInfo)
+			throw Error("CustomDLL data missing even though patch is ON");
+
+		const tblData = impInfo.TblData;
 		let newTblData = "";
 
 		for (let i = 0; i < tblData.length; i += 20*3) //20*3 because each byte in hex takes up 3 chars and each table entry is 20 bytes long
@@ -213,7 +216,7 @@ NoHShield = function()
 			Exe.ClearPatch("CustomDLL");
 
 			$$(_ + '4.5 - Setup the new Import table in the client with the updated tblData')
-			_CDLL_SetupImports(newTblData); //this function is defined in CustomDLL.js
+			CustomDLL.stage(newTblData); //this function is defined in CustomDLL.qjs
 		}
 	}
 	else
@@ -238,24 +241,16 @@ NoHShield.validate = function()
 	if (addr < 0)
 		return false;
 
-	NHS_Addr = (addr - Exe.ImageBase).toHex();
+	this.StrRva = (addr - Exe.ImageBase).toHex();
 	return true;
 };
 
 ///
-/// \brief Rerun the _CDLL_SetupImports function if CustomDLL is available
+/// \brief Rerun the CustomDLL.stage function if CustomDLL is selected
 ///        to reconstitute the import table with aossdk dll present.
 ///
-NoHShield.cleanup = function()
-{
-	const name = "CustomDLL";
-	if (Warp.GetPatchState(name))
-	{
-		Exe.ClearPatch(name);
-		Exe.SetActivePatch(name);
-		_CDLL_SetupImports();
-	}
-};
+NoHShield.cleanup = () =>
+	ReloadPatch('CustomDLL', 'CustomDLL.stage');
 
 ///
 /// \brief Skip the call to ProcessFindHack function and the
@@ -266,7 +261,7 @@ NoGGuard = function()
 	const _ = 'NoGGuard : ';
 
 	$$(_ + '1 - Find where the error string is used in a PUSH (inside ProcessFindHack)')
-	let addr = Exe.FindHex( PUSH(NGG_Addr) );
+	let addr = Exe.FindHex( PUSH(this.FmtAddr) );
 	if (addr < 0)
 		throw Error("GameGuard Error string not PUSHed");
 
@@ -367,8 +362,8 @@ NoGGuard = function()
 ///
 NoGGuard.validate = function()
 {
-	NGG_Addr = Exe.FindText("GameGuard Error: %lu");
-	return (NGG_Addr > 0);
+	this.FmtAddr = Exe.FindText("GameGuard Error: %lu");
+	return (this.FmtAddr > 0);
 };
 
 ///
@@ -399,9 +394,9 @@ NoCDefender = function()
 	if (Exe.Version > 11) //VC14.16
 		[parts[1], parts[2]] = [parts[2], parts[1]]; //Swap SETZ & PUSH
 
-	const addrs = Exe.FindHexN(parts);
-	if (addrs.length !== 2)
-		throw Error("Incorrect no of CD references");
+	const addrs = Exe.FindHexN(2, 2, parts);
+	if (addrs.isEmpty())
+		throw Error("Expected exactly 2 CD references");
 
 	$$(_ + '1.2 - Ensure we didn\'t get a false match')
 	const offset1 = 2;                      // position of first g_CCheatDefenderMgr reference

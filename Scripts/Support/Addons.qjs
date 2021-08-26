@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-08-20                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -85,7 +85,7 @@ Number.prototype.toHex = function(cnt = 4, bigEndian = false)
 	{
 		result = " " + hex.substr(index, 2) + result;
 	}
-	
+
 	return Log.rise(result);
 };
 
@@ -235,35 +235,15 @@ String.prototype.le2be = function()
 };
 
 ///
-/// \brief Extended version of 'find' method to return a transformed value instead
+/// \brief Method to return a Proxy of the Map which allows for destructuring
 ///
-Array.prototype.findAs = function( f )
+Map.prototype.open = function()
 {
-	if (typeof f !== 'function')
-		throw TypeError("Function expected in 'findAs'");
-	
-	for (let i = 0; i < this.length; i++)
-	{
-		const result = f(this[i], i, this);
-		if ( result )
-			return result;
-	}
-};
-
-///
-/// \brief Extended version of 'find' method to return a transformed value instead
-///
-Array.prototype.findAs = function( f )
-{
-	if (typeof f !== 'function')
-		throw TypeError("Function expected in 'findAs'");
-	
-	for (let i = 0; i < this.length; i++)
-	{
-		const result = f(this[i], i, this);
-		if ( result )
-			return result;
-	}
+	return new Proxy(this, {
+		get (obj, prop) {
+			return obj.get(prop)
+		}
+	});
 };
 
   //=========//
@@ -315,6 +295,22 @@ String.prototype.isHex = function()
 //==============//
 
 ///
+/// \brief Extended version of 'find' method to return a transformed value instead
+///
+Array.prototype.findAs = function( f )
+{
+	if (typeof f !== 'function')
+		throw TypeError("Function expected in 'findAs'");
+
+	for (let i = 0; i < this.length; i++)
+	{
+		const result = f(this[i], i, this);
+		if ( result )
+			return result;
+	}
+};
+
+///
 /// \brief Method to remove substring and return the modified string. Original is unaffected
 ///
 String.prototype.remove = function(str)
@@ -360,15 +356,31 @@ String.prototype.appendAsHex = function(data, bc, bigEndian)
 	$$(_ + '1 - Get the type of the data provided')
 	const type = typeof data;
 
-	$$(_ + '2.1 - If it is a number append the data converted to hex and return it')
-	if (type === 'number')
-		return Log.rise(this + data.toHex(bc, bigEndian));
+	switch(type)
+	{
+		case 'number':
 
-	$$(_ + '2.2 - If it is a string append the data and return it')
-	if (type === 'string')
-		return Log.rise(this + data);
+			$$(_ + '2.1 - If it is a number append the data converted to hex and return it')
+			return Log.rise(this + data.toHex(bc, bigEndian));
 
-	$$(_ + '2.3 - Return the original if neither')
+		case 'string':
+
+			$$(_ + '2.2 - If it is a string append the data and return it')
+			return Log.rise(this + data);
+
+		case 'object':
+
+			$$(_ + '2.3 - If it is an object, convert to hex and return it')
+			let result = data.valueOf();
+			if (typeof result === 'number')
+				return Log.rise(this + result.toHex(bc, bigEndian));
+
+			result = data.toString();
+			if (result.isHex())
+				return Log.rise(this + result);
+	}
+
+	$$(_ + '2.4 - Return the original if no expected values found')
 	return Log.rise(this + '');
 };
 
@@ -437,6 +449,39 @@ Array.prototype.byteCount = function(idx, endIdx)
 //===========//
 
 ///
+/// \brief Method to get the an element value directly
+///
+Set.prototype.get = function(idx)
+{
+	if (idx < 0 || idx > this.size-1)
+		return null;
+
+	let elem;
+	let iter = this.values();
+	do
+	{
+		elem = iter.next();
+		idx--;
+	}
+	while (idx >= 0);
+
+	return elem.value;
+}
+
+///
+/// \brief Method to check for existence of a value in a map
+///
+Map.prototype.hasValue = function(v)
+{
+	for (let [, val] of this)
+	{
+		if (val === v)
+			return true;
+	}
+	return false;
+}
+
+///
 /// \brief Method to get the last value easily
 ///
 Array.prototype.last = function()
@@ -453,7 +498,15 @@ Array.prototype.take_if = function(typeName, defVal)
 		return defVal;
 	else
 		return this.shift();
-}
+};
+
+///
+/// \brief Method to call the function with itself as 'this'
+///
+Function.prototype.call_self = function()
+{
+	return this.call(this, ...arguments);
+};
 
   //=================//
  // Identifications //

@@ -22,9 +22,30 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-08-20                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
+
+  //=====================//
+ // Special Function(s) //
+//=====================//
+
+///
+/// \brief Receives the information of a change from Warp tool for reporting purpose.
+///        You can override this function if you want to do something else with the data.
+///
+PatchReporter = (name, begin, end, changes) =>
+{
+	const from = begin.toHex(true);
+	const fromVir = Exe.Phy2Vir(begin).toHex(true)
+
+	const to   = end.toHex(true);
+	const toVir = Exe.Phy2Vir(end).toHex(true);
+
+	const msg = `Change for ${name} :\n\tPHY = [0x${from} , 0x${to}]\n\tVIR = (0x${fromVir} , 0x${toVir})\n\tDATA = ${changes}\n`;
+	Log.write(msg);
+	console.info(msg);
+};
 
   //=========//
  // Testers //
@@ -203,7 +224,7 @@ SwapFillers = (str, ...args) =>
 		$$(_ + '2.6 - Make the substitution')
 		str = _swap_(str, find, dataSet, cnt, bc);
 	}
-	
+
 	return Log.rise(str);
 };
 
@@ -296,7 +317,10 @@ SetFillTargets = (str, ...args) =>
 			continue;
 
 		$$(_ + '2.4 - Get the target corresponding to the id & ensure its an integer')
-		const target = idMap[key];
+		let target = idMap[key];
+		if (typeof target === 'object')
+			target = target.valueOf();
+
 		if (typeof target !== 'number')
 			continue;
 
@@ -345,6 +369,13 @@ BitWidth = v =>
 
 	switch (typeof v)
 	{
+		case 'object':
+			let result = v.valueOf();
+			if (typeof result !== 'number')
+				result = v.toString();
+
+			return BitWidth(result);
+
 		case 'number':
 
 			$$(_ + '2 - For numbers, check within specific limits for each size')
@@ -685,6 +716,42 @@ Cancel = (arg, defVal) =>
 UserChoice = (title, prompt) =>
 	Exe.GetUserInput('#choice', D_Bool, title, prompt, true);
 
+///
+/// \brief A slightly better syntax for creating maps
+///
+MakeMap = function() //since we need 'arguments' this is a regular function
+{
+	let result = new Map();
+	for (let i = 0; i < arguments.length; i+=2)
+	{
+		result.set(arguments[i], arguments[i+1]);
+	}
+	return result;
+};
+
+///
+/// \brief Wrapper function to reload a patch if it is already selected.
+///
+ReloadPatch = (name, ...args) =>
+{
+	if (Warp.GetPatchState(name))
+	{
+		const funcName = args.take_if('string', name);
+		const sendName = args.take_if('boolean', false);
+
+		Exe.SetActivePatch(name);
+		Exe.ClearPatch();
+
+		let cmd = `${funcName}.call(${name},`;
+		if (sendName)
+			cmd += `"${name}",`;
+
+		cmd += `${args})`;
+
+		eval(cmd);
+	}
+};
+
   //====================//
  // Syntax Identifiers //
 //====================//
@@ -745,6 +812,7 @@ for (const name of
 	'IsNumOrStr', 'IsWord', 'IsByte',
 	'Filler', 'SwapFillers', 'SetFillTargets',
 	'Wrap', 'BitWidth', 'Distance',
+	'PatchReporter', 'MakeMap', 'ReloadPatch',
 	'CaseAddr', 'ParseData', 'FindInstr', 'GetInstr',
 	'Identify', 'IdentifyClass', 'IdentifyObj',
 	'Assign', 'AssignStr',

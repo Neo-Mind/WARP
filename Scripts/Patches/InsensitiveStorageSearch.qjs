@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -34,11 +34,7 @@ InsensitiveStorageSearch = function()
 	const _ = 'InsensitiveStorageSearch';
 
 	$$(_ + '1.1 - Ensure the required functions are available')
-	if (ROC.GetModHandle < 0)
-		throw Error("GetModuleHandleA not found");
-
-	if (ROC.GetProcAddr < 0)
-		throw Error("GetProcAddress not found");
+	ROC.findImports();
 
 	$$(_ + '1.2 - Find string search for storage')
 	const prefix =
@@ -122,7 +118,7 @@ InsensitiveStorageSearch = function()
 	// String addrs
 	code = SwapFillers( code,
 	{
-		1: lastAddr - 4,                       //[StrStrIA]
+		1: lastAddr - 4,                      //[StrStrIA]
 		2: lastAddr,                          //first string location
 		3: lastAddr + strList[0].length + 1,  //second one.
 	});

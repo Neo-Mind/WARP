@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,14 +39,14 @@ CustomAuraSprites = function()
 {
 	const _ = 'CustomAuraSprites : ';
 
-	$$(_ + '1.1 - Find \'effect\ring_blue.tga\'')
+	$$(_ + '1.1 - Find \'effect\\ring_blue.tga\'')
 	let addr = Exe.FindText("effect\\ring_blue.tga", false); //Some clients dont have NULL prefix
 	if (addr < 0)
 		throw Error("'effect\\ring_blue.tga' not found");
 
 	const rblue = addr.toHex();
 
-	$$(_ + '1.2 - Find \'effect\pikapika2.bmp\'')
+	$$(_ + '1.2 - Find \'effect\\pikapika2.bmp\'')
 	addr = Exe.FindText("effect\\pikapika2.bmp", false); //same issue
 	if (addr < 0)
 		throw Error("'effect\\pikapika2.bmp' not found");
@@ -480,7 +480,7 @@ CustomAuraLimits = function()
 	code = SetFillTargets( parts,
 	{
 		 start : freeVir,
-		     1 : GetJobID,
+		  1    : GetJobID,
 		' 3,1' : _exit,
 		' 4,1' : _nextEntry,
 		' 5,1' : _nextID,
@@ -496,7 +496,7 @@ CustomAuraLimits = function()
 	code = SwapFillers( code, 1, {2: tblAddr} );
 
 	//////////////////////////////////////////////////
-	/// Now to construct the map and table to insert
+	// Now to construct the map and table to insert //
 	//////////////////////////////////////////////////
 	let mapData = "";
 	let tblData = "";

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -294,9 +294,9 @@ CustomBarLimits = function()
 	//First the Jumps & CALLs
 	code = SetFillTargets( parts,
 	{
-		 start : baseVir,
-		     1 : GetJobID,
-		     4 : Exe.Phy2Vir(jobEnd, CODE),
+		start  : baseVir,
+		  1    : GetJobID,
+		  4    : Exe.Phy2Vir(jobEnd, CODE),
 		'10,1' : _noMatches,
 		'11,1' : _fetchNextIDTbl,
 		'12,1' : _fetchNextIDPair,
@@ -431,12 +431,12 @@ ShowExpNumbers = function()
     const CurExpJob = Exe.GetInt32(pushAddr + code.byteCount() - 5);
 
     $$(_ + '3.1 - Find the correct \'SP\'')
-	code = 
+	code =
 		PUSH(Filler(1)) //push offset "SP"
 	+	PUSH(0x41)      //push 41h
 	+	PUSH(0x11)      //push 11h
 	;
-	
+
 	addr = Exe.FindTextN("SP").findAs( matchAddr =>
 	{
 		$$(_ + '3.2 - Find where it is PUSHed inside OnDraw function (we need to inject after this location)')
@@ -480,6 +480,9 @@ ShowExpNumbers = function()
 			extraPush += PUSH_0;
 	}
 
+	$$(_ + '3.7 - Get the text color from the user')
+	const txtColor = Exe.GetUserInput('$expTxtColor', D_Color, "Exp Num Color", "Select the color for the numbers", 0xFF0000, Object.assign({saveDefault: true}, ROC.ClrSettings));
+
     $$(_ + '4.1 - Get the essential addresses for our code')
 
     // sprintf/wsprintfA
@@ -511,15 +514,15 @@ ShowExpNumbers = function()
     +	CALL([printFunc])     //call dword ptr [<&MSVCR#.sprintf>] ; wsprintfA if sprintf is not found
     +	ADD(ESP, 0x10)        //add esp, 10
     +	MOV(EAX, ESP)         //mov eax, esp
-    +	extraPush             //push 0        ; Arg9 = unknown. Only for 2019+ clients
-		                      //push 0        ; Arg8 = unknown. Only for new clients
-    +	PUSH(0xFF0000)        //push 00,00,FF ; Arg7 = Color. Keeping blue for now
-    +	PUSH(0xD)             //push 0D       ; Arg6 = Font Height
-    +	PUSH_1                //push 1        ; Arg5 = Font Index
-    +	PUSH_0                //push 0        ; Arg4 = Char count (0 => calculate string size)
-    +	PUSH_EAX              //push eax      ; Arg3 = String i.e. output from sprintf above
-    +	PUSH(Filler(4,1))     //push y        ; Arg2 = y Coord
-    +	PUSH(0x56)            //push x        ; Arg1 = x Coord
+    +	extraPush             //push 0          ; Arg9 = unknown. Only for 2019+ clients
+		                      //push 0          ; Arg8 = unknown. Only for new clients
+    +	PUSH(txtColor)        //push <txtColor> ; Arg7 = Color. Blue by default
+    +	PUSH(0xD)             //push 0D         ; Arg6 = Font Height
+    +	PUSH_1                //push 1          ; Arg5 = Font Index
+    +	PUSH_0                //push 0          ; Arg4 = Char count (0 => calculate string size)
+    +	PUSH_EAX              //push eax        ; Arg3 = String i.e. output from sprintf above
+    +	PUSH(Filler(4,1))     //push y          ; Arg2 = y Coord
+    +	PUSH(0x56)            //push x          ; Arg1 = x Coord
     +	MovECX                //mov ecx, regA
     +	CALL(Filler(5))       //call UIWindow::TextOutA ; stdcall => No Stack restore required
     ;                         //_skipOut
