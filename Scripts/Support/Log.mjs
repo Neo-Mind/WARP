@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-08-20                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-08-27                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,7 +39,7 @@ export var Tee = false;
 ///
 /// \brief Local data members
 ///
-var Handle = null;
+export var Handle = null;
 var Depth = 0;
 var UserDepth = 0;
 
@@ -99,7 +99,7 @@ export function show()
 export function write(msg)
 {
 	if (Handle)
-		Log.Handle.WriteLine(msg);
+		Handle.WriteLine(msg);
 
 	return Log;
 }
