@@ -126,6 +126,7 @@ export function load()
 	GetProcAddr  = -1;
 	OutDbgStrA   = -1;
 	MsgBoxA      = -1;
+	SprintF      = -1;
 
 	IdentifyObj(self, [
 		'RGrfPhy', 'IsRenewal', 'IsZero', 'IsMain', 'Post2010',
