@@ -1,0 +1,82 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) ?-2021 *Various authors*                                 #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2020-08-26                                             #
+#   Last Modified : 2021-08-26                                             #
+#                                                                          #
+############################################################################
+
+CustomSpecials:
+    title : SPECIAL CUSTOMIZATIONS
+    mutex : false
+    color : deeppink
+    
+    patches:
+        - CustomShields:
+            title : Enable Custom Shields
+            recommend : no
+            author : Neo-Mind
+            desc : Enables the use of Custom Shield Types (using Lua Files similar to Xray).
+        
+        - CustomJobs:
+            title : Enable Custom Jobs
+            recommend : no
+            author : Neo-Mind
+            desc : Enables the use of Custom Jobs (using Lua Files similar to Xray).
+
+        - CustomHomuns:
+            title : Enable Custom Homunculi
+            recommend : no
+            author : Neo-Mind
+            desc : Enables the use of Custom Homunculus (using Lua Files). The <b>'ReqJobName'</b> function is used for homunculus as well, so no extra files needed.
+
+        - AddLuaOverrides:
+            title : Add Chris' lua overrides [Experimental]
+            recommend : no
+            author : llchrisll , Neo-Mind
+            desc : Adds the <a href="https://github.com/llchrisll/ROenglishRE/tree/master/Custom%20Lua%20Files">lua files provided by llchrisll</a> to override the existing lua tables and functions. Please check the link for more details.
+
+CustomSkills:
+    title : SKILL CUSTOMIZATIONS
+    mutex : false
+    color : deeppink
+    
+    patches:
+        - CustomPlayerSkills:
+            title : Enable Custom Player skills [Experimental]
+            recommend : no
+            author : Unknown
+            desc : Enables the use of custom skills castable on players (using Lua Files).
+        
+        - CustomHomunSkills:
+            title : Enable Custom Homunculus skills [Experimental]
+            recommend : no
+            author : Unknown
+            desc : Enables the use of custom skills for Homunculus (using Lua Files).
+        
+        - CustomMerceSkills:
+            title : Enable Custom Mercenary skills [Experimental]
+            recommend : no
+            author : Unknown
+            desc : Enables the use of custom skills for Mercenaries (using Lua Files).
+

@@ -1,0 +1,103 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) ?-2021 *Various authors*                                 #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2020-08-26                                             #
+#   Last Modified : 2021-08-26                                             #
+#                                                                          #
+############################################################################
+
+IgnoreErrors:
+    title : IGNORE ERRORS
+    mutex : false
+    
+    patches:
+        - IgnoreRsrcErr:
+            title : Ignore Resource errors
+            recommend : no
+            author : Shinryo, Andrei Karas (4144) , Ai4rei/AN
+            desc : Prevents the client from displaying a variety of Error messages (but not all of them) including missing files. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of missing files.
+        
+        - IgnorePalErr:
+            title : Ignore Palette errors
+            recommend : no
+            author : Shinryo , Ai4rei/AN
+            desc : Prevents the client from displaying error messages about missing palettes. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of missing files.
+        
+        - IgnoreLuaErr:
+            title : Ignore Lua errors
+            recommend : no
+            author : Andrei Karas (4144), X-EcutiOnner
+            desc : Prevents the client from displaying error messages from lua code like 'attempt to call nil value'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+        
+        - IgnoreQuestErr:
+            title : Ignore Quest errors
+            recommend : no
+            author : Andrei Karas (4144), X-EcutiOnner
+            desc : Prevents the client from displaying error messages like 'Not found Quest Info = XXXX'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+        
+        - IgnoreEntryQueueErr:
+            title : Ignore Entry Queue errors
+            recommend : no
+            author : X-EcutiOnner
+            desc : Prevents the client from displaying error messages related to Entry Queue. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+
+LoginMode:
+    title : LOGIN MODE
+    mutex : true
+    
+    patches:
+        - RestoreLoginWindow:
+            title : Restore Login Window
+            recommend : yes
+            author : Shinryo , Neo-Mind
+            desc : Circumvents Gravity's new token-based login system and restores the normal login window.
+        
+        - UseSSOLogin:
+            title : Use SSO Login Packet
+            recommend : no
+            author : Ai4rei/AN
+            desc : Enable using SSO packet on all Langtype (to use login and pass with a launcher).
+        
+        - UseOldLogin:
+            title : Use Old Login Packet
+            recommend : yes
+            author : Ai4rei/AN , Andrei Karas (4144)
+            desc : Enable the old login packet (0x64) used for Login Window. Intended for new clients which cannot restore the login window anymore.
+
+ChatRepeat:
+    title : CHAT REPEAT
+    mutex : true
+    
+    patches:     
+        - UnlimitedChatRepeat:
+            title : Allow unlimited chat repeat
+            recommend : no
+            author : Neo-Mind
+            desc : Remove the clientside limitation for maximum repeated lines.
+        
+        - LimitedChatRepeat:
+            title : Customize chat repeat limit
+            recommend : no
+            author : Shinryo
+            desc : Change the clientside limit for maximum repeated lines in chat box from 2 to user specified value.
+

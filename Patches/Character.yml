@@ -1,0 +1,250 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) ?-2021 *Various authors*                                 #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2020-08-26                                             #
+#   Last Modified : 2021-08-26                                             #
+#                                                                          #
+############################################################################
+
+            
+CustomChar:
+    title : CHARACTER CUSTOMIZATION
+    mutex : false
+    color : darkorchid
+    
+    patches:
+        - OfficialPal:
+            title : Use official cloth palettes
+            recommend : no
+            author : Neo-Mind
+            desc : Use Official Cloth Palette on all Langtypes. Cannot use this if you are using the <b>Enable Custom Jobs</b> patch.
+        
+        - NoGMSprite:
+            title : Disable GM sprite
+            recommend : no
+            author : Neo-Mind
+            desc : Disable GM sprites whilst keeping all the functionality intact like Yellow name and Admin right click menu.
+        
+        - ShowBGEmblem:
+            title : Enable Emblem hover for BG [Experimental]
+            recommend : no
+            author : Neo-Mind
+            desc : Makes the client show the Emblem on top of the character for Battleground mode as well along with GvG.
+        
+        - RestoreModelCulling:
+            title : Restore model culling
+            recommend: no
+            author : Curiosity , Neo-Mind
+            desc : Culls models in front of player by turning them transparent.
+        
+        - Intravision:
+            title : Always see hidden/cloaked objects
+            recommend : no
+            author : Secret, A.K.M. , Neo-Mind
+            desc : Always see black silhouette of hidden objects as if the player has intravision status.
+        
+        - CustomQSDelay:
+            title : Customize Quick Switch delay
+            recommend : no
+            author : mrjnumber1
+            desc : Change quick item switch delay ticks with user specified value.
+        
+        - AllowPL2Leave:
+            title : Allow party leader to leave
+            recommend : no
+            author : Andrei Karas (4144) , Neo-Mind
+            desc : Allow leader to leave the party if no members are on map.
+        
+        - AllowSkillSpam:
+            title : Allow spam skills by hotkey
+            recommend : no
+            author : Functor , Andrei Karas (4144)
+            desc : Allow spamming of skills by continuous press of hotkey.
+        
+        - AllowGuildInClan:
+            title : Allow guild activities in clan
+            recommend : no
+            author : Functor, Secret , Neo-Mind
+            desc : Remove restriction of guild functionality while being a member of a clan.
+        
+        - RestoreAutoFollow:
+            title : Restore auto follow
+            recommend : no
+            author : Andrei Karas (4144) , Neo-Mind
+            desc : Restore the auto follow functionality in RO-zero clients.
+            
+        - DrawShieldOnTop:
+            title : Draw Shield on top
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Moves the shield sprite closer to camera for drawing on top of other player sprites.
+        
+        - ShowGvGDamage:
+            title : Show Damage for GvG
+            recommend : no
+            author : Andrei Karas (4144) , X-EcutiOnner
+            desc : Enables the display of damage digits on GvG maps.
+
+IncrHairs:
+    title : INCREASE HAIRS
+    mutex : true
+    
+    patches:
+        - Allow65kHairs:
+            title: Allow 65k hair styles
+            recommend : no
+            author : Ai4rei/AN, Neo-Mind
+            desc : Raises the maximum hairstyle limit to 65535 from the default value.
+        
+        - IncrHairStyles:
+            title: Increase hair styles
+            recommend : no
+            author : Ai4rei/AN, Neo-Mind
+            desc : Raises the maximum hairstyle limit to user specified value (upto 65535).
+
+CustomAutoFollow:
+    title : AUTO FOLLOW CUSTOMIZATION
+    mutex : true
+    
+    patches:
+        - NoAutoFollow:
+            title : Disable auto follow
+            recommend : no
+            author : Functor , Neo-Mind
+            desc : Disables player auto follow on Shift + Right click.
+        
+        - DecrAFDelay:
+            title : Decrease auto follow delay
+            recommend : no
+            author : CH.C (jchcc)
+            desc : Decrease the auto follow delay to user specified value.
+
+CustomAura:
+    title : AURA CUSTOMIZATION
+    mutex : false
+    
+    patches:
+        - CustomAuraSprites:
+            title : Customize Aura sprites
+            recommend : no
+            author : Shinryo
+            desc : This option will make it so your warp portals will not be affected by your aura sprites. For this you will have to make aurafloat.tga and auraring.bmp and place them in your 'data\\texture\\effect' folder.
+        
+        - CustomAuraLimits:
+            title : Customize Aura display limits
+            recommend : no
+            author : Neo-Mind
+            desc : Allows the client to display standard auras within user specified limits for Classes and Levels.
+
+CustomChatColor:
+    title : <font color="#9F00EF">CHA</font><font color="#5F00FF">T CO</font><font color="blue">LOR </font><font color="green">CUS</font><font color="yellow">TOM</font><font color="orange">IZA</font><font color="red">TION</font>
+    mutex : false
+    
+    patches:
+        - CustomGMColor:
+            title : Customize chat color (GM)
+            recommend : no
+            author : Ai4rei/AN , Shakto
+            desc : Changes the GM Chat color to the specified value. Default value is ffff00 (Yellow).
+    
+        - CustomGuildColor:
+            title : Customize chat color (Guild)
+            recommend : no
+            author : Ai4rei/AN , Shakto
+            desc : Changes the Guild Chat color to the specified value. Default Value is b4ffb4 (Light Green).
+        
+        - CustomPartyColor:
+            title : Customize chat color (Party - Others)
+            recommend : no
+            author : Ai4rei/AN , Shakto
+            desc : Changes the Party Chat color for other members to the specified value. Default value is ffc8c8 (Pinkish).
+        
+        - CustomPartyColorSelf:
+            title : Customize chat color (Party - Self)
+            recommend : no
+            author : Ai4rei/AN , Shakto
+            desc : Changes the Party Chat color for the playing character to the specified value. Default value is ffc800 (Orange).
+        
+        - CustomPublicColor:
+            title : Customize chat color (Public - Others)
+            recommend : no
+            author : Ai4rei/AN , Shakto
+            desc : Changes the Public Chat color for other players to the specified value. Default value is ffffff (White).
+        
+        - CustomPublicColorSelf:
+            title : Customize chat color (Public - Self)
+            recommend : no
+            author : Ai4rei/AN , Shakto
+            desc : Changes the Public Chat color for the playing character to the specified value. Default value is 00ff00 (Green).
+
+SkipCheatCheck:
+    title : SKIP CHEATER CHECK
+    mutex : false
+    
+    patches:
+        - SkipInFriendList:
+            title : Skip Friend list cheat check
+            recommend : no
+            author : Ai4rei/AN
+            desc : Prevents warnings during PM's when the sender has similar name to one of your friends.
+        
+        - SkipInGuildList:
+            title : Skip Guild Member cheat check
+            recommend : no
+            author : Ai4rei/AN
+            desc : Prevents warnings during PMs when the sender has similar name to one of your guild members.
+
+WalkDelay:
+    title : WALK DELAY
+    mutex : true
+    
+    patches:
+        - NoWalkDelay:
+            title : Remove Walk Delay
+            recommend : no
+            author : MegaByte , X-EcutiOnner
+            desc : Add no delay to walking clicks. But client may likely send more/duplicated packets.
+        
+        - CustomWalkDelay:
+            title : Customize Walk Delay
+            recommend : no
+            author : MegaByte , X-EcutiOnner
+            desc : Change the delay for walking clicks to user specified value. But client may likely send more/duplicated packets.
+
+ResButtonVis:
+    title : RESURRECT BUTTON VISIBILITY
+    mutex : true
+    color : darkorange
+    
+    patches:
+        - HideResButton:
+            title : Skip Resurrection button
+            recommend : no
+            author : Shinryo
+            desc : Skip showing resurrection button when you die with Token of Ziegfried in inventory.
+        
+        - ShowResButton:
+            title : Always show Resurrection button
+            recommend : no
+            author : Neo-Mind
+            desc : Make the client always show Resurrection button with Token of Ziegfried in inventory irrespective of map type.
