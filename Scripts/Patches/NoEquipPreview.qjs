@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : X-EcutiOnner                                           *
 *   Created Date  : 2021-01-23                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,7 +36,7 @@ NoEquipPreview = function()
 
 	$$(_ + '1 - Find the comparison')
 	const prefix =
-		PUSH(NEP_Addr)                   // push offset "IsEffectHatItem"
+		PUSH(this.StrAddr)               // push offset "IsEffectHatItem"
 	+	MOV(BYTE_PTR, [ECX], 0)          // mov byte ptr [ecx], 0
 	+	CALL(ALLWC)                      // call std::string::assign
 	+	MOV([EBP, WCn], POS2WC)          // mov dword ptr [LOCAL.x], immA
@@ -93,6 +93,6 @@ NoEquipPreview = function()
 ///
 NoEquipPreview.validate = function()
 {
-	NEP_Addr = Exe.FindText("IsEffectHatItem");
-	return NEP_Addr > 0;
+	this.StrAddr = Exe.FindText("IsEffectHatItem");
+	return (this.StrAddr > 0);
 };

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -119,7 +119,7 @@ FetchTillEnd = (hookAddr, format, movIns, tgtReg, fetcher, endTester) =>
 		/// 1.3 - For newer clients check for the mov instruction used to get the table's starting address into the target Reg
 		else if (movIns && ins.Codes[0] === movIns.Codes[0] && ins.MRM.Mode === movIns.MRM.Mode && ins.MRM.RegM === movIns.MRM.RegM && ins.Disp === movIns.Disp)
 		{
-			tgtReg = R32.List[ins.MRM.RegO];
+			tgtReg = ins.MRM.getReg('O');
 			continue;
 		}
 

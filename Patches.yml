@@ -22,11 +22,11 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-06                                             #
-#   Last Modified : 2021-07-28                                             #
+#   Last Modified : 2021-08-21                                             #
 #                                                                          #
 ############################################################################
 
-- ChatRepeat:
+ChatRepeat:
     title : CHAT REPEAT
     mutex : true
     
@@ -43,7 +43,7 @@
             author : Shinryo
             desc : Change the clientside limit for maximum repeated lines in chat box from 2 to user specified value.
 
-- IncrCamAngle:
+IncrCamAngle:
     title : CAMERA ANGLES
     mutex : true
     
@@ -66,7 +66,7 @@
             author : Shinryo
             desc : Unlocks the possible camera angles to give more freedom of placement. Enables an almost ground-level camera of around <b>65 degrees</b>.
     
-- IncrZoom:
+IncrZoom:
     title : ZOOM OUT
     mutex : true
 
@@ -95,7 +95,7 @@
             author : Shinryo , Andrei Karas (4144)
             desc : Maximizes the zoom-out range.
 
-- EnableIcon:
+EnableIcon:
     title : ENABLE ICON
     mutex : true
     
@@ -112,7 +112,7 @@
             author : Neo-Mind
             desc : Makes the client use the User specified icon. The icon file should have an 8bpp (256 color) 32x32 image.
 
-- MultiGRFs:
+MultiGRFs:
     title : MULTIPLE GRFS
     mutex : true
     
@@ -129,7 +129,7 @@
             author : Neo-Mind
             desc : Enables the use of multiple grf files without needing INI file in client folder. Instead you specify the INI file as input to the patch so it can embed the names.
 
-- SharedBodyPal:
+SharedBodyPal:
     title : SHARED BODY PALETTES
     mutex : true
     
@@ -146,7 +146,7 @@
             author : Ai4rei/AN , Neo-Mind
             desc : Makes the client use a single cloth palette set (body_%d.pal) for all job classes & genders.
 
-- SharedHeadPal:
+SharedHeadPal:
     title : SHARED HEAD PALETTES
     mutex : true
     
@@ -163,7 +163,7 @@
             author : Ai4rei/AN , Neo-Mind
             desc : Makes the client use a single hair palette set (head_%d.pal) for all hair styles and genders.
 
-- SelectLoginBG:
+SelectLoginBG:
     title : LOGIN BACKGROUND
     mutex : true
 
@@ -181,7 +181,7 @@
             desc : Always display only the second login background.
 
 
-- CustomEncKeys:
+CustomEncKeys:
     title : ENCRYPTION KEY CUSTOMIZATION
     mutex : false
 
@@ -204,7 +204,7 @@
             author : Shakto , Neo-Mind
             desc : Change the 3rd key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
 
-- LoginMode:
+LoginMode:
     title : LOGIN MODE
     mutex : true
     
@@ -227,7 +227,7 @@
             author : Ai4rei/AN , Andrei Karas (4144)
             desc : Enable the old login packet (0x64) used for Login Window. Intended for new clients which cannot restore the login window anymore.
 
-- CashShopVis:
+CashShopVis:
     title : CASH SHOP VISIBILITY
     mutex : true
     color : darkorange
@@ -245,7 +245,7 @@
             author : Neo-Mind
             desc : Restores the Cash Shop Icon in clients that can have them. (Primarily RE clients hide them).
 
-- CashShop:
+CashShop:
     title : CASH SHOP CUSTOMIZATION
     mutex : false
     
@@ -274,7 +274,7 @@
             author : Andrei Karas (4144) , Neo-Mind
             desc: Add support for preview button in cash shop (right click the items to see the button)
 
-- RouletteVis:
+RouletteVis:
     title : ROULETTE VISIBILITY
     mutex : true
     color : darkorange
@@ -292,7 +292,7 @@
             author : Neo-Mind
             desc : Restores the Roulette Icon that was removed in new clients.
 
-- LicenseScreenVis:
+LicenseScreenVis:
     title : LICENSE SCREEN VISIBILITY
     mutex : true
     color : darkorange
@@ -310,7 +310,7 @@
             author : Neo-Mind
             desc : Makes the client always show the license for all langtypes.
 
-- ResButtonVis:
+ResButtonVis:
     title : RESURRECT BUTTON VISIBILITY
     mutex : true
     color : darkorange
@@ -328,7 +328,7 @@
             author : Neo-Mind
             desc : Make the client always show Resurrection button with Token of Ziegfried in inventory irrespective of map type.
 
-- WalkDelay:
+WalkDelay:
     title : WALK DELAY
     mutex : true
     
@@ -346,7 +346,7 @@
             desc : Change the delay for walking clicks to user specified value. But client may likely send more/duplicated packets.
 
 
-- CustomPath:
+CustomPath:
     title : PATH CUSTOMIZATION
     mutex : false
     
@@ -435,7 +435,7 @@
             author : Secret
             desc : Change the clientinfo XML file loaded from *clientinfo.xml to user specified name.
 
-- No4LetterLimit:
+No4LetterLimit:
     title : 4 LETTER LIMIT REMOVAL
     mutex : false
     
@@ -458,7 +458,7 @@
             author : Shinryo
             desc : Will allow people to use passwords shorter than 4 letters.
 
-- ResizeBox:
+ResizeBox:
     title : RESIZE BOX
     mutex : false
     
@@ -487,7 +487,7 @@
             author : Ai4rei/AN
             desc : Changes the Max input chars of NPC Dialog boxes to user specified value within (2052 - 4096).
 
-- NoGravityImages:
+NoGravityImages:
     title : GRAVITY IMAGE REMOVAL
     mutex : false
     
@@ -504,7 +504,7 @@
             author : Shinryo
             desc : Avoids displaying Gravity logo on the login background.
 
-- NoSkillChatter:
+NoSkillChatter:
     title : SKILL CHATTER REMOVAL
     mutex : false
     
@@ -521,7 +521,7 @@
             author : Neo-Mind
             desc : Disable the random chat appearing due to Bard's Frost Joke skill from file ba_frostjoke.txt .
 
-- SkipCheatCheck:
+SkipCheatCheck:
     title : SKIP CHEATER CHECK
     mutex : false
     
@@ -538,7 +538,7 @@
             author : Ai4rei/AN
             desc : Prevents warnings during PMs when the sender has similar name to one of your guild members.
 
-- CustomChatColor:
+CustomChatColor:
     title : <font color="#9F00EF">CHA</font><font color="#5F00FF">T CO</font><font color="blue">LOR </font><font color="green">CUS</font><font color="yellow">TOM</font><font color="orange">IZA</font><font color="red">TION</font>
     mutex : false
     
@@ -579,7 +579,7 @@
             author : Ai4rei/AN , Shakto
             desc : Changes the Public Chat color for the playing character to the specified value. Default value is 00ff00 (Green).
 
-- ShowButton:
+ShowButton:
     title : SHOW BUTTON
     mutex : false
     color : darkorange
@@ -603,7 +603,7 @@
             author : Neo-Mind
             desc : Makes the client always show register button on Login Window for all Langtypes. Clicking the button will open <registrationweb> from clientinfo and closes the client.
 
-- ReadTxtFile:
+ReadTxtFile:
     title : READ .txt FILE
     mutex : false
     
@@ -620,7 +620,7 @@
             author : Shinryo
             desc : Makes the client to load questid2display.txt on all Langtypes (instead of only 0).
 
-- IgnoreErrors:
+IgnoreErrors:
     title : IGNORE ERRORS
     mutex : false
     
@@ -655,7 +655,7 @@
             author : X-EcutiOnner
             desc : Prevents the client from displaying error messages related to Entry Queue. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
 
-- ClientArgs:
+ClientArgs:
     title : CLIENT ARGUMENTS
     mutex : false
     
@@ -672,7 +672,7 @@
             author : Secret
             desc : Makes the client ignore <b>/account:</b> command line argument to prevent custom clientinfo.xml from being used.
 
-- EnableSlashCmd:
+EnableSlashCmd:
     title : SLASH COMMANDS
     mutex : false
     
@@ -695,7 +695,7 @@
             author : Ai4rei/AN
             desc : Sends all unknown '<b>/command</b>' sequences to server (for allowing server side '<b>/command</b>'s) instead of showing "Invalid command".
 
-- SkipLub:
+SkipLub:
     title : SKIP LUB
     mutex : false
     
@@ -712,7 +712,7 @@
             author : Andrei Karas (4144) , X-EcutiOnner
             desc : Makes the client skip loading Towninfo.lub file
 
-- TitleBar:
+TitleBar:
     title : TITLE BAR CUSTOMIZATION
     mutex : false
     
@@ -729,7 +729,7 @@
             author : Shinryo
             desc : Changes the window title to user specified string.
             
-- CustomFont:
+CustomFont:
     title : FONT CUSTOMIZATION
     mutex : false
     
@@ -746,7 +746,7 @@
             author : Yommy , Neo-Mind
             desc : Resizes the height of the font used to the user specified value.
 
-- DisableEncr:
+DisableEncr:
     title : DISABLE ENCRYPTION
     mutex : false
     
@@ -763,7 +763,7 @@
             author : Ai4rei/AN
             desc : Disable kRO Packet ID encryption. Patch is also known as Skip Packet Obfuscation.
             
-- DisableProtect:
+DisableProtect:
     title : DISABLE PROTECTION
     mutex : false
     
@@ -786,7 +786,7 @@
             author : Andrei Karas (4144) , X-EcutiOnner
             desc : Disables Cheat Defender Game Guard from new clients.
 
-- ReturnToLogin:
+ReturnToLogin:
     title : RETURN TO LOGIN
     mutex : false
 
@@ -796,7 +796,6 @@
             recommend : no
             author : Neo-Mind , Andrei Karas (4144)
             desc : Make the client return to Login Window upon disconnection.
-            needs : RestoreLoginWindow
         
         - CancelToLogin:
             title : Cancel to Login Window
@@ -805,7 +804,7 @@
             desc : Makes the Cancel button in Character selection window return to login window instead of Quitting.
             needs : RestoreLoginWindow
 
-- DisableEffect:
+DisableEffect:
     title : DISABLE EFFECT
     mutex : false
     
@@ -828,7 +827,7 @@
             author : X-EcutiOnner
             desc : Disables the Blind skill effect (screen becomes dark).
 
-- CustomAura:
+CustomAura:
     title : AURA CUSTOMIZATION
     mutex : false
     
@@ -845,7 +844,7 @@
             author : Neo-Mind
             desc : Allows the client to display standard auras within user specified limits for Classes and Levels.
 
-- CustomExpBars:
+CustomExpBars:
     title : EXP BAR CUSTOMIZATION
     mutex : false
     
@@ -862,7 +861,7 @@
             author : Neo-Mind
             desc : Show Base and Job Experience numbers on top of the respective exp bars in Basic Info Window.
 
-- ResizeHealthBar:
+ResizeHealthBar:
     title : RESIZE HP BAR
     mutex : false
     
@@ -891,7 +890,7 @@
             author : CH.C (jchcc) , Neo-Mind
             desc : Resize the HP bar drawn for Boss monsters as per user specified value.
 
-- CustomAutoFollow:
+CustomAutoFollow:
     title : AUTO FOLLOW CUSTOMIZATION
     mutex : true
     
@@ -908,7 +907,7 @@
             author : CH.C (jchcc)
             desc : Decrease the auto follow delay to user specified value.
 
-- CustomUI:
+CustomUI:
     title : UI CUSTOMIZATION
     mutex : false
     color : orangered
@@ -1136,7 +1135,7 @@
             author : CH.C (jchcc)
             desc : Allows user to hide specific in-game windows. User needs to provide a YAML file containing the list of Window IDs to be hidden.
 
-- ButtonVis:
+ButtonVis:
     title : BASIC BUTTON VISIBILITY
     mutex : false
     color : orangered
@@ -1160,7 +1159,7 @@
             author : Neo-Mind
             desc : Shows some of the various hidden buttons in the Basic Info Window under the HP/SP Bars.
 
-- CustomData:
+CustomData:
     title : DATA CUSTOMIZATION
     mutex : false
     color : deepskyblue
@@ -1316,7 +1315,7 @@
             author : CH.C (jchcc)
             desc : Enforce MVP to drop item with the identified names.
             
-- CustomChar:
+CustomChar:
     title : CHARACTER CUSTOMIZATION
     mutex : false
     color : darkorchid
@@ -1388,7 +1387,7 @@
             author : Andrei Karas (4144)
             desc : Moves the shield sprite closer to camera for drawing on top of other player sprites.
 
-- CharCreation:
+CharCreation:
     title : CHARACTER CREATION
     mutex : false
     
@@ -1411,7 +1410,7 @@
             author : Andrei Karas (4144)
             desc : Override selected job id in character creation packet with user specified value.
 
-- DoramCharCreation:
+DoramCharCreation:
     title: CHARACTER CREATION (DORAM)
     mutex: true
     
@@ -1428,7 +1427,7 @@
             author : Ai4rei/AN , Secret
             desc : Disable Doram race in the character creation UI. Server-side disabling is also recommended.
 
-- IncrHairs:
+IncrHairs:
     title : INCREASE HAIRS
     mutex : true
     
@@ -1445,7 +1444,7 @@
             author : Ai4rei/AN, Neo-Mind
             desc : Raises the maximum hairstyle limit to user specified value (upto 65535).
 
-- CustomFriendWin:
+CustomFriendWin:
     title : FRIEND/PARTY WINDOW CUSTOMIZATION
     mutex : false
     
@@ -1468,7 +1467,7 @@
             author : Andrei Karas (4144) ,  X-EcutiOnner
             desc : Remove the Adventurer Agency button from the party window.
             
-- CustomEquipWin:
+CustomEquipWin:
     title : EQUIP WINDOW CUSTOMIZATION
     mutex : false
     
@@ -1485,7 +1484,7 @@
             author : CH.C (jchcc), Andrei Karas (4144) , X-EcutiOnner
             desc : Remove equipment UI title on the equipment window.
 
-- CustomEnv:
+CustomEnv:
     title : ENVIRONMENT CUSTOMIZATION
     mutex : false
     
@@ -1526,7 +1525,7 @@
             author : Secret
             desc : Makes the client load client plug-ins regardless of its sound settings.
    
-- CustomNW:
+CustomNW:
     title : NETWORK CUSTOMIZATION
     mutex : false
     color : peru	
@@ -1598,7 +1597,7 @@
             author : Andrei Karas (4144) , X-EcutiOnner
             desc : Disable PEEK & BPE tools from discovering the essentials needed to track/extract packets.
         
-- CustomSound:
+CustomSound:
     title : SOUND CUSTOMIZATION
     mutex : false
     
@@ -1627,7 +1626,7 @@
             author : CH.C (jchcc)
             desc : Restore ground effects of Bard/Dancer songs on latest clients.
 
-- CustomSkills:
+CustomSkills:
     title : SKILL CUSTOMIZATIONS
     mutex : false
     color : deeppink
@@ -1651,7 +1650,7 @@
             author : Unknown
             desc : Enables the use of custom skills for Mercenaries (using Lua Files).
 
-- CustomSpecials:
+CustomSpecials:
     title : SPECIAL CUSTOMIZATIONS
     mutex : false
     color : deeppink
@@ -1679,4 +1678,4 @@
             title : Add Chris' lua overrides [Experimental]
             recommend : no
             author : llchrisll , Neo-Mind
-            desc : Adds the lua files provided by llchrisll to override the existing lua tables and functions. Please check <b>"https://github.com/llchrisll/ROenglishRE/tree/master/Custom%20Lua%20Files"</b> for more details.
+            desc : Adds the <a href="https://github.com/llchrisll/ROenglishRE/tree/master/Custom%20Lua%20Files">lua files provided by llchrisll</a> to override the existing lua tables and functions. Please check the link for more details.

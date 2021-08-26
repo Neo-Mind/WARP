@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -59,12 +59,13 @@ CustomGuildExpLimit = function()
 		throw Error("Limit checker missing");
 
 	$$(_ + '2.1 - Get the new value from user')
-	const newLimit = Exe.GetUserInput('$guildExpLimit', D_Uint8, "Exp Limit", "Enter new guild exp limit", 50, {max: 120});
+	const varName = '$guildExpLimit';
+	const newLimit = Exe.GetUserInput(varName, D_Uint8, "Exp Limit", "Enter new guild exp limit", 50, {max: 120});
 	if (newLimit === false)
 		Cancel("Exp Limit", 50);
 
 	$$(_ + '2.2 - Set the new limit')
-	Exe.SetFromVar(addr + parts.byteCount(0) + 2, '$guildExpLimit');
+	Exe.SetFromVar(addr + parts.byteCount(0) + 2, varName);
 
 	return true;
 };
@@ -74,4 +75,3 @@ CustomGuildExpLimit = function()
 ///
 CustomGuildExpLimit.validate = () =>
 	Exe.BuildDate > 20180600;
-

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,26 +35,22 @@ EnableIcon = function(patchName)
 {
 	const _ = patchName + ' : ';
 
-	$$(_ + '1.1 - Get the Root Resource Directory address')
-	const addr = Exe.GetDirAddr(D_Res, PHYSICAL);
+	$$(_ + '1.1 - Get the Resource tree')
+	const tree = ROC.getRsrcTree();
 
-	$$(_ + '1.2 - Load the Resource tree if not done already')
-	if ('RsrcTree' in ROC === false)
-		ROC.RsrcTree = new RsrcEntry(0, addr, 0);
-
-	$$(_ + '2.1 - Get the Resource entry for RT_GROUP_ICON (0xE)')
-	const entry = ROC.RsrcTree.traverse(0xE)
+	$$(_ + '1.2 - Get the Resource entry for RT_GROUP_ICON (0xE)')
+	const entry = tree.traverse(0xE)
 	if (entry === false)
 		throw Error("Unable to find icongrp");
 
-	$$(_ + '2.2 - Get the subdir for 119 & 114')
+	$$(_ + '1.3 - Get the subdir for 119 & 114')
 	let subEntry1 = entry.traverse(119);
 	let subEntry2 = entry.traverse(114);
 
 	if (subEntry1 === false || subEntry2 === false)
 		throw Error("Unable to find icongrp subdirs (langs)");
 
-	$$(_ + '2.3 - Overwrite the entry for 114 with data from 119')
+	$$(_ + '1.4 - Overwrite the entry for 114 with data from 119')
 	Exe.SetHex(subEntry2.Pos + 4, Exe.GetHex(subEntry1.Pos + 4, 4), 4);
 
 	if (patchName === "CustomIcon")
@@ -63,7 +59,7 @@ EnableIcon = function(patchName)
 		// Now that icon is enabled lets overwrite it //
 		//============================================//
 
-		$$(_ + '3.1 - Find the entry for RT_GROUP_ICON/119/1042')
+		$$(_ + '2.1 - Find the entry for RT_GROUP_ICON/119/1042')
 		subEntry2 = subEntry1.traverse([1042]);
 		if (subEntry2 === false)
 			throw Error("Unable to find icongrp/lang/bundle");
@@ -71,24 +67,24 @@ EnableIcon = function(patchName)
 		if (!subEntry2.IsFile)
 			throw Error("Bundle entry is not a file");
 
-		$$(_ + '3.2 - Extract the Data Address')
+		$$(_ + '2.2 - Extract the Data Address')
 		let addr = subEntry2.DataAddr;
 
-		$$(_ + '3.3 - Load the new icon')
+		$$(_ + '2.3 - Load the new icon')
 		const iconFile = Exe.GetUserInput('$inpIconFile', D_InFile, "Custom Icon", "Enter the icon file", "Inputs/Sample_32x32_8bpp.ico", {filters: "Icon files (*.ico)"});
 		if (iconFile === false)
 			Cancel("No icon file selected");
 
 		const iconObj = new Icon(iconFile);
 
-		$$(_ + '3.4 - Find an image that meets the spec = 8bpp 32x32')
+		$$(_ + '2.4 - Find an image that meets the spec = 8bpp 32x32')
 		const imgEntry = iconObj.Entries.find( e =>
 			(e.bHeight === 32 && e.bWidth === 32 && e.wBitCount === 8 && e.bColorCount === 0)
 		);
 		if (!imgEntry)
 			throw Error("No images in the icon file satisfies the specifications");
 
-		$$(_ + '3.5 - Find a valid RT_ICON with same spec')
+		$$(_ + '2.5 - Find a valid RT_ICON with same spec')
 		const count = Exe.GetInt16(addr + 4);
 		addr += 6;
 
@@ -106,7 +102,7 @@ EnableIcon = function(patchName)
 				bColorCount === 0
 			)
 			{
-				memEntry = ROC.RsrcTree.traverse([0x3, Exe.GetInt16(addr + 12), 0x412]);
+				memEntry = tree.traverse([0x3, Exe.GetInt16(addr + 12), 0x412]);
 				if (memEntry !== false)
 				{
 					if (imgEntry.dwBytesInRes > Exe.GetInt32(addr+8))
@@ -122,11 +118,11 @@ EnableIcon = function(patchName)
 		if (memEntry === false)
 			throw Error("No suitable icon found in exe");
 
-		$$(_ + '3.6 - Modify the wPlanes and size in bytes from the icon')
+		$$(_ + '2.6 - Modify the wPlanes and size in bytes from the icon')
 		Exe.SetInt16(addr + 4, imgEntry.wPlanes);
 		Exe.SetInt16(addr + 8, imgEntry.dwBytesInRes);
 
-		$$(_ + '3.7 - Finally update the image itself')
+		$$(_ + '2.7 - Finally update the image itself')
 		Exe.SetInt16(memEntry.Addr + 4, imgEntry.dwBytesInRes);
 		Exe.SetHex(memEntry.DataAddr, imgEntry.iconImage);
 	}

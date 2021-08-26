@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), X-EcutiOnner                            *
 *   Created Date  : 2021-03-06                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,7 +39,7 @@ NoBGMAudio = function()
 		Warp.SetPatchState('CustomDefaultBGM', false);
 
 	$$(_ + '1.2 - Zero the string')
-	Exe.SetInt8(NBGMA_Addr, 0);
+	Exe.SetInt8(this.TxtAddr, 0);
 
 	$$(_ + '2.1 - Find \'bgm\\01.mp3\'')
 	const addr = Exe.FindText("bgm\\01.mp3", CASE_INSENSITIVE, PHYSICAL);
@@ -57,6 +57,6 @@ NoBGMAudio = function()
 ///
 NoBGMAudio.validate = function()
 {
-	NBGMA_Addr = Exe.FindText("mp3NameTable.txt", CASE_INSENSITIVE, PHYSICAL);
-	return (NBGMA_Addr > 0);
+	this.TxtAddr = Exe.FindText("mp3NameTable.txt", CASE_INSENSITIVE, PHYSICAL);
+	return (this.TxtAddr > 0);
 };

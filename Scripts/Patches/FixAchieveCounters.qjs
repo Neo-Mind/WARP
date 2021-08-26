@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei                                                 *
 *   Created Date  : 2021-06-15                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,7 +35,7 @@ FixAchieveCounters = function()
 	const _ = 'FixAchieveCounters : ';
 
 	$$(_ + '1.1 - Find the location where the image name is PUSHed')
-	const startAddr = Exe.FindHex(PUSH(FAC_Addr) + CALL());
+	const startAddr = Exe.FindHex(PUSH(this.BmpAddr) + CALL());
 	if (startAddr < 0)
 		throw Error("BG not pushed");
 
@@ -76,9 +76,9 @@ FixAchieveCounters = function()
 	+	MOV(EAX, [EDX, WCp]) //mov eax, dword ptr [edx + offset#1] <-- type2
 	;
 
-	const addrs = Exe.FindHexN(parts, addr1 ?? startAddr, startAddr + 0x500);
-	if (addrs.length !== 5)
-		throw Error("Unexpected no. of matches for 2nd pattern");
+	const addrs = Exe.FindHexN(5, 5, parts, addr1 ?? startAddr, startAddr + 0x500);
+	if (addrs.isEmpty())
+		throw Error("Expected exactly 5 matches for 2nd pattern");
 
 	$$(_ + '1.6 - Verify that global counter was found properly')
 	if (addr1 && (addr1 + 0x200) < addrs[0])
@@ -151,6 +151,6 @@ FixAchieveCounters.validate = function()
 	if (Exe.BuildDate > 20171000) //disabling for now
 		return false;
 
-	FAC_Addr = Exe.FindText("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\achievement_re\\bg_summary.bmp");
-	return (FAC_Addr > 0);
+	this.BmpAddr = Exe.FindText("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\achievement_re\\bg_summary.bmp");
+	return (this.BmpAddr > 0);
 };

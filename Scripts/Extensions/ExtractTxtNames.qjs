@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : -, Neo-Mind                                            *
 *   Created Date  : 2020-11-18                                             *
-*   Last Modified : 2021-07-23                                             *
+*   Last Modified : 2021-08-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,7 +39,7 @@ ExtractTxtNames = function()
 		throw NO_EXE;
 
 	$$(_ + '1.2 - Open output file for writing (Need ASCII encoding)')
-	const fileName = Exe.GetUserInput("$txtNames", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "loaded_Txt_files_" + ROC.BaseName + ".txt");
+	const fileName = Exe.GetUserInput("$$txtNames", D_OutFile, "Target File", "Enter the target file path", OUTDIR + "loaded_Txt_files_" + ROC.BaseName + ".txt");
 	if (fileName === false)
 		return true;
 
@@ -56,7 +56,7 @@ ExtractTxtNames = function()
 	fp.WriteLine("Txt Files:");
 
 	$$(_ + '2.2 - Find all locations of .txt')
-	const addrs = Exe.FindTextN(".txt", CaseInsensitive, PHYSICAL, false);
+	const addrs = Exe.FindTextN(".txt", CASE_INSENSITIVE, PHYSICAL, false);
 	for (const addr of addrs)
 	{
 		$$(_ + '2.3 - Retrieve the starting position of each string (right after either a NULL or an @)')
@@ -75,7 +75,7 @@ ExtractTxtNames = function()
 	fp.Close();
 
 	$$(_ + '3 - Show the success message or display the file if requested')
-	if (!Exe.TestMode && UserChoice("Show File", "Display the generated file?"))
+	if (!Warp.TestMode && UserChoice("Show File", "Display the generated file?"))
 	{
 		Warp.Show(fp.Path);
 		return true;

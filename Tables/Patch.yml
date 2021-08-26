@@ -1,0 +1,322 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) 2021 Neo-Mind                                            #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2021-08-19                                             #
+#   Last Modified : 2021-08-19                                             #
+#                                                                          #
+############################################################################
+
+1   : TildeForMatk
+2   : UnlimitedChatRepeat
+3   : LimitedChatRepeat
+4   : CustomAuraLimits
+5   : EnableProxy
+6   : SendMD5Hash
+
+#--- Didnt implement this in NEMO either. Maybe will implement in future.
+#7   : ChangeGravityErrorHandler
+#---------------------------------
+
+8   : CustomWindowTitle
+9   : No1and1Arg
+10  : NoCharnameLimit
+11  : NoUsernameLimit
+12  : NoPasswordLimit
+13  : NoFilenameCheck
+14  : NoWavyScreen
+15  : NoHShield
+16  : NoSwearFilter
+17  : EnableEotFonts
+18  : SkipServiceSelect
+19  : EnableSysMenu
+20  : ResizeChatBox
+21  : ResizeChatRoomBox
+22  : ResizePMBox
+23  : EnableWho
+24  : MediumCamAngle
+25  : LowCamAngle
+26  : HighCamAngle
+27  : HKLMtoHKCU
+28  : IncrViewID
+29  : NoGGuard
+30  : Zoom150Percent
+31  : Zoom175Percent
+32  : ZoomMax
+33  : CallKoreaClientInfo
+34  : EnableShowName
+35  : DataFolderFirst
+36  : MsgStrings
+37  : QuestDisplay
+38  : NoGravityAds
+39  : NoGravityLogo
+40  : RestoreLoginWindow
+41  : NoNagle
+42  : HideResButton
+43  : DeleteCharWithEmail
+44  : TranslateClient
+45  : CustomAuraSprites
+46  : GuildBrackets
+47  : RestoreIcon
+48  : PlainTextDesc
+49  : GRFsFromIni
+50  : HideLicense
+51  : ShowLicense
+52  : CustomFontName
+53  : AlwaysAscii
+54  : CustomGMColor
+55  : CustomPublicColor
+57  : CustomGuildColor
+58  : CustomPartyColor
+59  : CustomPartyColorSelf
+60  : CustomPublicColorSelf
+61  : NoPacketEncr
+62  : NoLoginEncr
+63  : OfficialPal
+64  : FixChatAt
+65  : CustomItemInfoLub
+66  : ItemInfoPerServer
+67  : NoEarthQuake
+68  : Allow65kHairs
+69  : ResizeNpcBox
+70  : CustomBarLimits
+71  : IgnoreRsrcErr
+72  : IgnorePalErr
+73  : NoHourly
+74  : CustomSSQuality
+75  : EnableFlagEmotes
+76  : AlwaysOfficialBG
+77  : No3DBoneLimit
+78  : MoveShopIcon
+79  : BodyPalUnisex
+80  : BodyPalMF
+81  : CustomLicenseTxt
+82  : HeadPalMF
+83  : HeadPalUnisex
+84  : NoSerialDisplay
+85  : ShowCancelBtn
+86  : OnlyFirstBG
+87  : OnlySecondBG
+88  : AllowSpaceInGName
+90  : EnableDnsSupport
+91  : DisConnToLogin
+92  : CustomFirstKey
+93  : CustomSecondKey
+94  : CustomThirdKey
+95  : UseSSOLogin
+96  : RemoveGMSprite
+97  : CancelToLogin
+98  : NoDancerScream
+99  : NoBardFrostJoke
+100 : NoMultiWindow
+101 : SkipInFriendList
+102 : SkipInGuildList
+103 : NoAutofollow
+104 : IncrNewCharHairs
+
+#--- Following patches have been merged into HideOldButtons patch ---
+105 : HideOldButtons # Originally HideNavButton
+106 : HideOldButtons # Originally HideBgButton
+107 : HideOldButtons # Originally HideBankButton
+108 : HideOldButtons # Originally HideBooking
+109 : HideOldButtons # Originally HideRodex
+110 : HideOldButtons # Originally HideAchieve
+111 : HideOldButtons # Originally HideRecButton
+112 : HideOldButtons # Originally HideMapButton
+113 : HideOldButtons # Originally HideQuest
+#--------------------------------------------------------------------
+
+114 : CustomVendingLimit
+115 : EnableEffectTool
+200 : GRFsEmbedded
+201 : CustomHomuns
+202 : CustomJobs
+203 : CustomShields
+204 : IncrDigits
+
+#--- Not sure if this is necessary hence not planning to implement
+# 205 : EnableMonsterTables
+#---------------------------------
+
+206 : CustomQuestLua
+207 : CustomFontSize
+208 : ShowCashShop
+209 : EnableMailAccess
+210 : CustomIcon
+211 : CustomDLL
+212 : ShowRoulette
+213 : NoHelpMsg
+214 : RestoreModelCulling
+215 : IncrMapQuality
+216 : HideCashShop
+217 : HideRoulette
+218 : ShowExpNumbers
+219 : ShowResButton
+220 : HideWorldView
+221 : RemoveBookingJobs
+222 : ShowReplayBtn
+223 : MoveUpItemCount
+
+#--- Didnt implement this in NEMO either. Maybe will implement in future.
+# 224 : IncrNpcIDs
+#---------------------------------
+
+225 : ShowRegisterBtn
+226 : NoWalkDelay
+227 : CustomWalkDelay
+228 : NoDoramCreation
+229 : ShowBGEmblem
+230 : LoadKrExtSettings
+231 : NoHardCodedAddr
+232 : UseOldLogin
+
+#--- Merged into HideNewButtons patch
+233 : HideNewButtons # Originally HideSNSButton
+#---------------------------------
+
+234 : IgnoreLuaErr
+235 : AllowGuildInClan
+236 : CustomPlayerSkills
+237 : CustomHomunSkills
+238 : CustomMerceSkills
+239 : IgnoreAccArg
+240 : CustomClientInfo
+241 : LoadClientPlugins
+242 : NoGNJoyLaunch
+243 : CustomQSDelay
+244 : NoCDefender
+245 : CustomCharCreateId
+246 : IncrHairStyles
+247 : CustomNewCharNameHeight
+248 : ZeroCinShop
+249 : CustomMinResolution
+250 : AllowPL2Leave
+251 : CloseCutinOnEsc
+252 : FixAchieveCounters
+
+#--- Not needed anymore hence will not be implemented ---
+# 253 : SkipHiddenMenuButtons
+#---------------------------------
+
+254 : CustomInventoryLimit
+255 : DecrAFDelay
+256 : DefShopBrowser
+257 : UseDefaultBrowser
+258 : ShortcutForAll
+
+259 : [HideNewButtons, ShowNewButtons] #Originally NavigationButton
+260 : [HideNewButtons, ShowNewButtons] #Originally BankButton
+261 : [HideNewButtons, ShowNewButtons] #Originally ReplayButton
+262 : [HideNewButtons, ShowNewButtons] #Originally MailButton
+263 : [HideNewButtons, ShowNewButtons] #Originally AchievementButton
+264 : [HideNewButtons, ShowNewButtons] #Originally TipButton
+265 : [HideNewButtons, ShowNewButtons] #Originally ShopButton
+266 : [HideNewButtons, ShowNewButtons] #Originally SNSButton
+267 : [HideNewButtons, ShowNewButtons] #Originally AttendanceButton
+
+268 : RestoreChatFocus
+269 : CustomDefaultBGM
+270 : CustomAchieveLub
+271 : CustomMonSizeEffLub
+272 : CustomTownInfoLub
+273 : CustomPetEvoClnLub
+274 : CustomTipboxLub
+275 : CustomCheckAttLub
+276 : CustomOngQuestInfoLub
+277 : CustomRcmdQuestInfoLub
+278 : CustomPrivAirplaneLub
+279 : FixItemDescBug
+280 : CustomGuildExpLimit
+281 : ResizePlayerBar
+282 : ResizeBossBar
+283 : CustomFadeDelay
+
+#--- This is now an addon step in NoCDefender when the patch is applied. Hence not required ---
+# 284 : CopyCDGuard
+#---------------------------------
+
+285 : FixActDelay
+286 : HideZeroDateInGuildWin
+287 : RelativeDelay4CharDel
+288 : DrawShieldOnTop
+289 : FixHomunAI
+290 : HideBuildInfo
+291 : HidePacketsFromPEEK
+
+#--- To be implemented in WARP ---
+# 292 : FixShortcutsInWine
+#---------------------------------
+
+293 : IncrHairStyles   #Old & New both are covered in same patch
+295 : CustomPartyLimit
+296 : UseStateLubIcon
+
+297 : HideNewButtons #Originally HideKeyboardButton
+298 : HideNewButtons #Originally HideStatusButton
+299 : HideNewButtons #Originally HideEquipButton
+300 : HideNewButtons #Originally HideItemButton
+301 : HideNewButtons #Originally HideSkillButton
+302 : HideNewButtons #Originally HidePartyButton
+303 : HideNewButtons #Originally HideGuildButton
+304 : HideNewButtons #Originally HideOptionButton
+305 : HideNewButtons #Originally HideTipButton
+306 : HideNewButtons #Originally HideShopButton
+307 : HideNewButtons #Originally HideAttendanceButton
+308 : HideNewButtons #Originally HideAdventurerAgencyButton
+
+309 : [HideNewButtons, ShowNewButtons] #Originally BookingButton
+310 : [HideNewButtons, ShowNewButtons] #Originally AdventurerAgencyButton
+
+311 : AllowSkillSpam
+312 : Intravision
+313 : CustomMapInfoLub
+315 : CustomSlotHLColor
+316 : NoEquipSwap
+317 : IgnoreQuestErr
+318 : FixCharsetForFonts
+319 : OpenToServiceSelect
+320 : SkipTownInfo
+321 : HideGameWindows
+322 : InsensitiveStorageSearch
+323 : RestoreSongsEffect
+324 : CustomCharCreateSecond
+325 : NoEquipWinTitle
+326 : NoLoginOTP
+327 : AutoMute
+328 : Enable44khzAudio
+329 : NoCameraLock
+330 : SkipSignBoard
+331 : NoBlindness
+
+#--- Tutorial patch? Need to think of one that suits WARP then --
+# 332 : SimpleReplaceDemo
+#----------------------------------------------------------------
+
+333 : CustomFriendsLimit
+334 : NoHardCodedIP
+335 : EnableHttpEmblem
+336 : NoEquipPreview
+337 : CustomAdvAgencyLimits
+
+#--- To be implemented in WARP ---
+# 338 : ValidateClient
+#---------------------------------

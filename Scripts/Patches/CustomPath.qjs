@@ -26,113 +26,9 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144), X-EcutiOnner    *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
-
-///
-/// \brief Data to be used for the patches.
-///
-if (typeof CP_Data === 'undefined') //avoid redefinition
-{
-	CP_Data =
-	{
-		CustomDefaultBGM :
-		{
-			strType : "Path",
-			varName : '$newBGMPath',
-			prefix : "Default BGM",
-			name : "bgm\\01.mp3"
-		},
-
-		CustomItemInfoLub :
-		{
-			strType : "Path",
-			varName : '$newItemInfo',
-			prefix : "ItemInfo Lua",
-			parts : ["System/iteminfo", "Sak.lub", "true.lub", ".lub"]
-		},
-
-		CustomAchieveLub :
-		{
-			strType : "Path",
-			varName : '$newAchieveList',
-			prefix : "Achievement List Lua",
-			name : "system\\Achievement_list.lub"
-		},
-
-		CustomMonSizeEffLub :
-		{
-			strType : "Path",
-			varName : '$newMonSizeEffect',
-			prefix : "Monster Size Effect Lua"
-		},
-
-		CustomTownInfoLub :
-		{
-			strType : "Path",
-			varName : '$newTownInfo',
-			prefix : "Town Info Lua",
-			name : "System/Towninfo.lub"
-		},
-
-		CustomPetEvoClnLub :
-		{
-			strType : "Path",
-			varName : '$newPetEvoCln',
-			prefix : "Pet Evolution Lua",
-			parts : ["system\\PetEvolutionCln", "sak.lub", "true.lub", ".lub"]
-		},
-
-		CustomTipboxLub :
-		{
-			strType : "Path",
-			varName : '$newTipBox',
-			prefix : "Tip Box Lua",
-			name : "System/tipbox.lub"
-		},
-
-		CustomCheckAttLub :
-		{
-			strType : "Path",
-			varName : '$newCheckAtt',
-			prefix : "Check Attendance Lua",
-			name : "System/CheckAttendance.lub"
-		},
-
-		CustomPrivAirplaneLub :
-		{
-			strType : "Path",
-			varName : '$newPrivAirplane',
-			prefix : "Private Airplane Lua",
-			parts : ["System\\PrivateAirplane", "Sakray.lub", "True.lub", ""]
-		},
-
-		CustomMapInfoLub :
-		{
-			strType : "Path",
-			varName : '$newMapInfo',
-			prefix : "MapInfo Lua",
-			parts : ["system\\mapInfo", "sak.lub", "true.lub", ""]
-		},
-
-		CustomOngQuestInfoLub :
-		{
-			strType : "Prefix",
-			varName : '$newOngQInfoList',
-			prefix : "Ongoing QuestInfoList Lua",
-			parts : ["system\\OngoingQuestInfoList", "Sakray", "True", ""]
-		},
-
-		CustomRcmdQuestInfoLub :
-		{
-			strType : "Prefix",
-			varName : '$newRcmdQInfoList',
-			prefix : "Recommended QuestInfoList Lua",
-			parts : ["system\\RecommendedQuestInfoList", "Sakray", "True", ""]
-		},
-	};
-}
 
 ///
 /// \brief Common function to change specific file paths
@@ -146,10 +42,10 @@ CustomPath = function(patchName)
 		Warp.SetPatchState("NoBGMAudio", false);
 
 	$$(_ + '1.2 - Retrieve the data for the index')
-	const {varName, prefix, strType, name} = CP_Data[patchName];
+	const {varName, prefix, strType, name, nameAddr} = this.Data.get(patchName);
 
 	$$(_ + '1.3 - Find location where the string is used in a PUSH')
-	const addr = Exe.FindHex( PUSH(CP_Data[patchName].addr) );
+	const addr = Exe.FindHex( PUSH(nameAddr) );
 	if (addr < 0)
 		throw Error(`'${name} not used`);
 
@@ -179,9 +75,9 @@ CustomPath = function(patchName)
 ///
 /// \brief Common functions to validate
 ///
-CustomPath.validate = (patchName) =>
+CustomPath.validate = function(patchName)
 {
-	let data = CP_Data[patchName];
+	let data = this.Data.get(patchName);
 
 	if ('parts' in data) //need to derive the name from parts and then find its address.
 	{
@@ -198,19 +94,17 @@ CustomPath.validate = (patchName) =>
 
 		if (addr > 0)
 		{
-			data.addr = addr;
+			data.nameAddr = addr;
 			data.name = name;
 			return true;
 		}
 	}
 	else //name is provided directly
 	{
-		const {name} = CP_Data[patchName];
-		const addr = Exe.FindText(name, CASE_INSENSITIVE);
-
+		const addr = Exe.FindText(data.name, CASE_INSENSITIVE);
 		if (addr > 0)
 		{
-			CP_Data[patchName].addr = addr;
+			data.nameAddr = addr;
 			return true;
 		}
 	}
@@ -233,8 +127,9 @@ CustomMapInfoLub       = CustomPath;
 CustomOngQuestInfoLub  = CustomPath;
 CustomRcmdQuestInfoLub = CustomPath;
 
-CustomMonSizeEffLub = patchName => CustomPath(patchName);
-CustomMonSizeEffLub.validate = (patchName) =>
+CustomMonSizeEffLub = patchName => CustomPath.self_call(patchName);
+
+CustomMonSizeEffLub.validate = function(patchName)
 {
 	const suf = (ROC.IsRenewal ? "_sak" : "");
 
@@ -248,13 +143,115 @@ CustomMonSizeEffLub.validate = (patchName) =>
 
 	if (addr > 0)
 	{
-		CP_Data[patchName].addr = addr;
-		CP_Data[patchName].name = name;
+		let data = this.Data.get(patchName);
+		data.nameAddr = addr;
+		data.name = name;
+
 		return true;
 	}
 
 	return false;
 };
+
+///
+/// \brief Data to be used for the above patches
+///
+CustomPath.Data = MakeMap(
+	'CustomDefaultBGM',
+	{
+		strType : "Path",
+		varName : '$newBGMPath',
+		prefix : "Default BGM",
+		name : "bgm\\01.mp3"
+	},
+
+	'CustomItemInfoLub',
+	{
+		strType : "Path",
+		varName : '$newItemInfo',
+		prefix : "ItemInfo Lua",
+		parts : ["System/iteminfo", "Sak.lub", "true.lub", ".lub"]
+	},
+
+	'CustomAchieveLub',
+	{
+		strType : "Path",
+		varName : '$newAchieveList',
+		prefix : "Achievement List Lua",
+		name : "system\\Achievement_list.lub"
+	},
+
+	'CustomMonSizeEffLub',
+	{
+		strType : "Path",
+		varName : '$newMonSizeEffect',
+		prefix : "Monster Size Effect Lua"
+	},
+
+	'CustomTownInfoLub',
+	{
+		strType : "Path",
+		varName : '$newTownInfo',
+		prefix : "Town Info Lua",
+		name : "System/Towninfo.lub"
+	},
+
+	'CustomPetEvoClnLub',
+	{
+		strType : "Path",
+		varName : '$newPetEvoCln',
+		prefix : "Pet Evolution Lua",
+		parts : ["system\\PetEvolutionCln", "sak.lub", "true.lub", ".lub"]
+	},
+
+	'CustomTipboxLub',
+	{
+		strType : "Path",
+		varName : '$newTipBox',
+		prefix : "Tip Box Lua",
+		name : "System/tipbox.lub"
+	},
+
+	'CustomCheckAttLub',
+	{
+		strType : "Path",
+		varName : '$newCheckAtt',
+		prefix : "Check Attendance Lua",
+		name : "System/CheckAttendance.lub"
+	},
+
+	'CustomPrivAirplaneLub',
+	{
+		strType : "Path",
+		varName : '$newPrivAirplane',
+		prefix : "Private Airplane Lua",
+		parts : ["System\\PrivateAirplane", "Sakray.lub", "True.lub", ""]
+	},
+
+	'CustomMapInfoLub',
+	{
+		strType : "Path",
+		varName : '$newMapInfo',
+		prefix : "MapInfo Lua",
+		parts : ["system\\mapInfo", "sak.lub", "true.lub", ""]
+	},
+
+	'CustomOngQuestInfoLub',
+	{
+		strType : "Prefix",
+		varName : '$newOngQInfoList',
+		prefix : "Ongoing QuestInfoList Lua",
+		parts : ["system\\OngoingQuestInfoList", "Sakray", "True", ""]
+	},
+
+	'CustomRcmdQuestInfoLub',
+	{
+		strType : "Prefix",
+		varName : '$newRcmdQInfoList',
+		prefix : "Recommended QuestInfoList Lua",
+		parts : ["system\\RecommendedQuestInfoList", "Sakray", "True", ""]
+	},
+);
 
 ///
 /// \brief Change the "..\\licence.txt" & the EULA error string reference to user specified file
@@ -306,6 +303,7 @@ CustomLicenseTxt = function()
 	$$(_ + '3.5 - Update all PUSHes & assigments using the original EULA error string')
 	const found = [
 		PUSH(0x20) + PUSH(addr),
+		JMP(0x10) + PUSH(addr),
 		MOV(ESI, addr),
 		MOV(EDI, addr)
 	].filter( code =>
@@ -342,20 +340,22 @@ CustomClientInfo = function()
 	const toAddr = fromAddr + 0x100; //may not need this much
 
 	$$(_ + '1.3 - Find where the XML is referenced')
+	const nameAddr = this.NameAddr;
+
 	let patterns;
 	if (Exe.Version > 10.0) //VC11+
 	{
 		patterns = [
-			MOVQ(XMM$, [CCI_Addr]),  //movq xmmA, qword ptr [CCI_Addr]
-			MOVUPS(XMM$, [CCI_Addr]) //movups xmmA, dword ptr [CCI_Addr]
+			MOVQ(XMM$, [nameAddr]),  //movq xmmA, qword ptr [nameAddr]
+			MOVUPS(XMM$, [nameAddr]) //movups xmmA, dword ptr [nameAddr]
 		];
 	}
 	else
 	{
 		patterns = [
-			MOV(R32, [CCI_Addr]), //mov regA, dword ptr [CCI_Addr]
-			MOV(EAX, [CCI_Addr]), //mov eax, dword ptr [CCI_Addr]
-			MOV(R32, CCI_Addr)    //mov regA, <CCI_Addr>
+			MOV(R32, [nameAddr]), //mov regA, dword ptr [nameAddr]
+			MOV(EAX, [nameAddr]), //mov eax, dword ptr [nameAddr]
+			MOV(R32, nameAddr)    //mov regA, <nameAddr>
 		];
 	}
 
@@ -363,12 +363,12 @@ CustomClientInfo = function()
 	{
 		const found = Exe.FindHex(pat, fromAddr, toAddr);
 		if (found > 0)
-			return [found + pat.byteCount() - 4, index < patterns.length - 1]; //first element is the position of the CCI_Addr, second indicates there are more addresses for replacement
+			return [found + pat.byteCount() - 4, index < patterns.length - 1]; //first element is the position of the nameAddr, second indicates there are more addresses for replacement
 	});
-	
+
 	if (!result)
 		throw Error("clientinfo not used");
-	
+
 	const [addr, hasMore] = result;
 
 	$$(_ + '1.4 - Add the address & displacement offset to repLocs')
@@ -381,13 +381,13 @@ CustomClientInfo = function()
 		let has4th = true;
 		if (Exe.Version > 10.0)//VC11+
 		{
-			if (CCI_Name === "sclientinfo.xml")
+			if (this.Name === "sclientinfo.xml")
 			{
-				let addr = Exe.FindHex(MOVSS(XMM$, [CCI_Addr + 8]), fromAddr, toAddr); //movss xmmA, qword ptr [CCI_Addr + 8]
+				let addr = Exe.FindHex(MOVSS(XMM$, [nameAddr + 8]), fromAddr, toAddr); //movss xmmA, qword ptr [nameAddr + 8]
 				if (addr < 0)
 				{
 					has4th = false; //already takes care of the 4th part because 8 bytes are retrieved
-					addr = Exe.FindHex(MOVQ(XMM$, [CCI_Addr + 8]), fromAddr, toAddr); //movq xmmA, qword ptr [CCI_Addr + 8]
+					addr = Exe.FindHex(MOVQ(XMM$, [nameAddr + 8]), fromAddr, toAddr); //movq xmmA, qword ptr [nameAddr + 8]
 				}
 				if (addr < 0)
 					throw Error("2nd reference missing");
@@ -396,13 +396,13 @@ CustomClientInfo = function()
 			}
 			else
 			{
-				let addr = Exe.FindHex(MOV(EAX, [CCI_Addr + 8]), fromAddr, toAddr); //mov eax, dword ptr [CCI_Addr + 8]
+				let addr = Exe.FindHex(MOV(EAX, [nameAddr + 8]), fromAddr, toAddr); //mov eax, dword ptr [nameAddr + 8]
 				if (addr < 0)
 					throw Error("2nd reference missing");
 
 				repLocs.set(8, addr + 1);
 
-				addr = Exe.FindHex(MOV(AX, [CCI_Addr + 0xC]), fromAddr, toAddr); //mov ax, word ptr [CCI_Addr + 0Ch]
+				addr = Exe.FindHex(MOV(AX, [nameAddr + 0xC]), fromAddr, toAddr); //mov ax, word ptr [nameAddr + 0Ch]
 				if (addr < 0)
 					throw Error("3rd reference missing");
 
@@ -413,12 +413,12 @@ CustomClientInfo = function()
 		{
 			[4, 8, 0xC].forEach( (disp, idx) =>
 			{
-				let addr = Exe.FindHex(MOV(R32, [CCI_Addr + disp]), fromAddr, toAddr); //mov regB, dword ptr [CCI_Addr + disp]
+				let addr = Exe.FindHex(MOV(R32, [nameAddr + disp]), fromAddr, toAddr); //mov regB, dword ptr [nameAddr + disp]
 				let offset = 2;
 
 				if (addr < 0)
 				{
-					addr = Exe.FindHex(MOV(EAX, [CCI_Addr + disp]), fromAddr, toAddr); //mov eax, dword ptr [CCI_Addr + disp]
+					addr = Exe.FindHex(MOV(EAX, [nameAddr + disp]), fromAddr, toAddr); //mov eax, dword ptr [nameAddr + disp]
 					offset = 1;
 				}
 				if (addr < 0)
@@ -430,12 +430,12 @@ CustomClientInfo = function()
 
 		if (has4th)
 		{
-			let addr = Exe.FindHex(MOV(AL, [CCI_Addr + 0xE]), fromAddr, toAddr); //mov al, byte ptr [CCI_Addr + 0Eh]
+			let addr = Exe.FindHex(MOV(AL, [nameAddr + 0xE]), fromAddr, toAddr); //mov al, byte ptr [nameAddr + 0Eh]
 			let offset = 1;
 
 			if (addr < 0)
 			{
-				addr = Exe.FindHex(MOV(R8, [CCI_Addr + 0xE]), fromAddr, toAddr); //mov reg8A, byte ptr [CCI_Addr + 0Eh]
+				addr = Exe.FindHex(MOV(R8, [nameAddr + 0xE]), fromAddr, toAddr); //mov reg8A, byte ptr [nameAddr + 0Eh]
 				offset = 2;
 			}
 			if (addr < 0)
@@ -447,9 +447,9 @@ CustomClientInfo = function()
 
 	$$(_ + '2.1 - Get the new name from the user')
 	const varName = '$newclientinfo';
-	const newFile = Exe.GetUserInput(varName, D_Text, "Client Info XML", "Enter the new clientinfo path", CCI_Name, {minLen: 9, maxLen: 20});
+	const newFile = Exe.GetUserInput(varName, D_Text, "Client Info XML", "Enter the new clientinfo path", this.Name, {minLen: 9, maxLen: 20});
 	if (newFile === false)
-		Cancel("Filename", CCI_Name);
+		Cancel("Filename", this.Name);
 
 	$$(_ + '2.2 - Allocate space for the new name')
 	const [free, freeVir] = Exe.FindSpace(varName);
@@ -469,15 +469,18 @@ CustomClientInfo = function()
 ///
 CustomClientInfo.validate = function()
 {
-	/// 1.1 - Check if the client is Sakray (clientinfo file name is "sclientinfo.xml" for some Sakray clients)
-	CCI_Name = "sclientinfo.xml";
-	CCI_Addr = Exe.FindText(CCI_Name, CASE_INSENSITIVE);
+	if (Exe.BuildDate < 20081100) //skip for really old clients
+		return false;
 
-	if (CCI_Addr < 0) // if sclientinfo.xml does not exist then it is a main server exe
+	/// 1.1 - Check if the client is Sakray (clientinfo file name is "sclientinfo.xml" for some Sakray clients)
+	this.Name = "sclientinfo.xml";
+	this.NameAddr = Exe.FindText(this.Name, CASE_INSENSITIVE);
+
+	if (this.NameAddr < 0) // if sclientinfo.xml does not exist then it is a main server exe
 	{
-		CCI_Name = "clientinfo.xml";
-		CCI_Addr = Exe.FindText(CCI_Name, CASE_INSENSITIVE);
+		this.Name = "clientinfo.xml";
+		this.NameAddr = Exe.FindText(this.Name, CASE_INSENSITIVE);
 	}
 
-	return (CCI_Addr > 0);
+	return (this.NameAddr > 0);
 };

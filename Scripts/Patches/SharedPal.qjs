@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -71,28 +71,23 @@ SharedPal = function(patchName, oldPrefix, newFormat, optional)
 	$$(_ + '2.3 - Update the PUSHed address')
 	Exe.SetInt32(addr + 1, freeVir);
 
+	$$(_ + '2.4 - Reload the increase hairs patch if selected')
+	if (patchName.indexOf("HeadPal") >= 0)
+		this.reloader();
+
 	return true;
 };
 
 ///
 /// \brief Common sub function for reloading IncrHairStyles / Allow65kHairs patches
 ///
-SHP_reloadIH = function()
+SharedPal.reloader = () =>
 {
-	let patchName = null;
-	
 	if (Warp.GetPatchState("IncrHairStyles"))
-		patchName = "IncrHairStyles";
+		ReloadPatch("IncrHairStyles");
 
 	else if (Warp.GetPatchState("Allow65kHairs"))
-		patchName = "Allow65kHairs";
-
-	if (patchName)
-	{
-		Exe.ClearPatch(patchName);
-		Exe.SetActivePatch(patchName);
-		IncrHairs();
-	}
+		ReloadPatch("Allow65kHairs");
 };
 
 ///
@@ -100,7 +95,7 @@ SHP_reloadIH = function()
 ///        Changes "赣府\赣府%s_%s_%d.pal" => "赣府\head%.s_%s_%d.pal" or "赣府\head%.s%.s_%d.pal"
 ///
 SharedHeadPal = patchName =>
-	SharedPal(patchName, "\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE",
+	SharedPal.call_self(patchName, "\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE",
 		patchName === "HeadPalUnisex" ?
 			"\xB8\xD3\xB8\xAE\\head%.s%.s_%d.pal\x00" // %.s is required. Skips hairnum & gender
 		:
@@ -108,38 +103,37 @@ SharedHeadPal = patchName =>
 	);
 
 ///
-/// \brief Setup IncrHairs reloading when selection changes
+/// \brief Setup IncrHairs reloading when deselected
 ///
-SharedHeadPal.onSelected = SHP_reloadIH;
-SharedHeadPal.onDeselected = SHP_reloadIH; //cleanup will work just as well but this looks more homogenous?
+SharedHeadPal.cleanup = SharedPal.reloader;
 
 ///
 /// \brief Common function for Body Palette patches
 ///        Changes "个\%s_%s_%d.pal" => "个\body%.s_%s_%d.pal" or "个\body%.s%.s_%d.pal"
 ///
 SharedBodyPal = patchName =>
-	SharedPal(patchName, "\xB8\xF6\\", //for regular clothes
+	SharedPal.call_self(patchName, "\xB8\xF6\\", //for regular clothes
 		patchName === "BodyPalUnisex" ?
 			"\xB8\xF6\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
 			"\xB8\xF6\\body%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
 	) &&
 
-	SharedPal(patchName, "\xB8\xF6\\costume_%d\\", //for costumes
+	SharedPal.call_self(patchName, "\xB8\xF6\\costume_%d\\", //for costumes
 		patchName === "BodyPalUnisex" ?
 			"\xB8\xF6\\costume_%d\\body%.s%.s_%d_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
 			"\xB8\xF6\\costume_%d\\body%.s_%s_%d_%d.pal\x00" // %.s is required. Skips jobname
 	, true) &&
 
-	SharedPal(patchName, "%s\\body\\costume_%d\\", //for costumes - part 2
+	SharedPal.call_self(patchName, "%s\\body\\costume_%d\\", //for costumes - part 2
 		patchName === "BodyPalUnisex" ?
 			"%s\\costume_%d\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
 			"%s\\costume_%d\\body%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
 	, true) &&
 
-	SharedPal(patchName, "%s\\body\\", //for doram races
+	SharedPal.call_self(patchName, "%s\\body\\", //for doram races
 		patchName === "BodyPalUnisex" ?
 			"%s\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:

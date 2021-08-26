@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -239,11 +239,11 @@ CloseCutinOnEsc = function()
 	code = SetFillTargets( parts, 1,
 	{
 		start : freeVir,
-		    1 : DeleteWindow,
+		 1    : DeleteWindow,
 		'2,1' : freeVir + parts.byteCount(0), //_skip#3
-		    3 : FirstFunc,
-		    4 : GetGameMode,
-		    5 : jmpVir
+		 3    : FirstFunc,
+		 4    : GetGameMode,
+		 5    : jmpVir
 	});
 
 	$$(_ + '3.4 - Add the code at the allocated space')
@@ -254,3 +254,8 @@ CloseCutinOnEsc = function()
 
 	return true;
 };
+
+///
+/// \brief Enable only for 2010+ clients
+///
+CloseCutinOnEsc.validate = IsPost2010;

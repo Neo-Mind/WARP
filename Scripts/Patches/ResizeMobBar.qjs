@@ -1,0 +1,193 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2020-2021 CH.C (jchcc), Neo-Mind                         *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2021-08-26                                             *
+*                                                                          *
+\**************************************************************************/
+
+// TODO - No matching code found for clients before 2012-04-10RE . Looks like its using PUSH 5 & PUSH 3C again
+//        Need to try in live client to find the correct one.
+
+///
+/// \brief Modifies the size values being pushed to create the health bar of Mobs based on the mob type flag.
+///
+ResizeMobBar = function(patchName)
+{
+	const _ = patchName + ' : ';
+
+	$$(_ + '1.1 - Load the MBAR object')
+	MBAR.load();
+
+	$$(_ + '1.2 - Setup the cache')
+	const cacheKey = 'MBAR';
+	CACHE.load(cacheKey, this.Members, MBAR.Sizes);
+
+	$$(_ + '1.3 - Retrieve the default dimesions for the bar');
+	const idx = this.Members.indexOf(patchName);
+	const [oldW, oldH] = MBAR.Sizes[idx];
+
+	$$(_ + '2.1 - Get the new dimensions from user')
+	const {prefix, varName} = this.Data.get(patchName);
+	const result = Exe.GetUserInput(varName, D_VecU8, `${prefix} Mob HP Bar Dimensions`, `Enter the new HP bar size for ${prefix} monsters (in pixels)`, [oldW, oldH], {
+		min: 1,
+		name0: "Bar Width",
+		name1: "Bar Height"
+	});
+	if (result === false)
+		Cancel("Size", `(${oldW} x ${oldH})`);
+
+	$$(_ + '2.2 - Set up the new size')
+	CACHE.setEntry(cacheKey, patchName, result);
+
+	$$(_ + '2.3 - Call the helper function to stage the changes')
+	this.stage(patchName);
+
+	return true;
+};
+
+///
+/// \brief Unset the width & height overrides and transfers the staged changes to one of the other active patches.
+///
+ResizeMobBar.cleanup = function(patchName)
+{
+	const _ = patchName + '.cleanup : ';
+
+	$$(_ + '1.1 - Reset the dimensions to default')
+	const cacheKey = 'MBAR';
+	CACHE.restoreEntry(cacheKey, patchName);
+
+	$$(_ + '1.2 - Check if any users are still present')
+	if (!CACHE.hasUsers(cacheKey))
+		return;
+
+	$$(_ + '2.1 - Get the first remaining patch')
+	patchName = CACHE.firstUser(cacheKey);
+
+	$$(_ + '2.2 - Activate the patch')
+	Exe.SetActivePatch(patchName);
+
+	$$(_ + '2.3 - Rerun the stage function')
+	this.stage(patchName);
+};
+
+///
+/// \brief Helper function to stage the changes (helpful with transference in case 1 patch gets disabled)
+///
+ResizeMobBar.stage = function(patchName)
+{
+	const _ = `${patchName}.stage : `;
+
+	$$(_ + '1.1 - Construct our code')
+	const cacheKey = 'MBAR';
+	const [
+		[normW, normH],
+		[miniBossW, miniBossH],
+		[bossW, bossH]
+	] = this.Members.map(name => CACHE.entry(cacheKey, name));
+
+	const parts =
+	[//0
+		CMP(BYTE_PTR, MBAR.MobType, 2)  //cmp byte ptr [regC + mobType], 2  OR  cmp regC, 2
+	+	JNE(Filler(1,1))                //jne _checkMini
+	+	PUSH(bossH)                     //push <bossHeight>
+	+	PUSH(bossW)                     //push <bossWidth>
+	+	MBAR.MovECX                     //mov ecx, regA
+	+	JMP(Filler(3))                  //jmp <retnAddr>
+
+	,//1
+		CMP(BYTE_PTR, MBAR.MobType, 1)  //cmp byte ptr [regC + mobType], 1  OR  cmp regC, 1 ; _checkMini
+	+	JNE(Filler(2,1))                //jne _isNormal
+	+	PUSH(miniBossH)                 //push <miniBossHeight>
+	+	PUSH(miniBossW)                 //push <miniBossWidth>
+	+	MBAR.MovECX                     //mov ecx, regA
+	+	JMP(Filler(3))                  //jmp <retnAddr>
+
+	,//2
+		PUSH(normH)                     //push <normalHeight> ; _isNormal
+	+	PUSH(normW)                     //push <normalWidth>
+	+	MBAR.MovECX                     //mov ecx, regA
+	+	JMP(Filler(3))                  //jmp <retnAddr>
+	];
+
+	$$(_ + '1.2 - Activate the tag')
+	Exe.BeginTag(CACHE.getTag(cacheKey));
+
+	$$(_ + '2.1 - Allocate space for it')
+	const [free, freeVir] = CACHE.allocate(cacheKey, 'TblBuilder', parts, 0x10);
+
+	$$(_ + '2.2 - Fill in the blanks')
+	const [,_checkMini, _isNormal] = MapAddrs(freeVir, parts);
+	const code = SetFillTargets( parts,
+	{
+		start : freeVir,
+		'1,1' : _checkMini,
+		'2,1' : _isNormal,
+		 3    : MBAR.RetnAddr
+	});
+
+	$$(_ + '2.3 - Add at allocated space')
+	Exe.AddHex(free, code);
+
+	$$(_ + '2.4 - Setup a JMP to it at hook address')
+	Exe.SetJMP(MBAR.HookAddr, freeVir, MBAR.OvrdSize - 5); //NOPs at the end to keep it clean.
+};
+
+///
+/// \brief Temporarily disable for Pre-2012 clients (and some in 2012 too)
+///
+ResizeMobBar.validate = () =>
+	Exe.BuildDate > 20120400;
+
+
+///
+/// \brief Wrappers over the individual patches
+///
+ResizeNormalBar   = ResizeMobBar;
+ResizeMiniBossBar = ResizeMobBar;
+ResizeBossBar     = ResizeMobBar;
+
+///
+/// \brief Data to be used for the mob patches
+///
+ResizeMobBar.Data = MakeMap(
+	'ResizeNormalBar',
+	{
+		varName: "$normalBarSize",
+		prefix: "Normal",
+	},
+
+	'ResizeMiniBossBar',
+	{
+		varName: "$miniBossBarSize",
+		prefix: "Mini-Boss",
+	},
+
+	'ResizeBossBar',
+	{
+		varName: "$bossBarSize",
+		prefix: "Boss",
+	}
+);
+
+ResizeMobBar.Members = ['ResizeNormalBar', 'ResizeMiniBossBar', 'ResizeBossBar'];

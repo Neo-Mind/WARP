@@ -22,14 +22,13 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-24                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Hijack Quest_function lua file loading to load lua files specified in the input file first before loading Quest_function
 ///
-CQL_Prefix = "lua files\\quest\\";
 CustomQuestLua = function()
 {
 	const _ = 'CustomQuestLua : ';
@@ -54,7 +53,7 @@ CustomQuestLua = function()
 		Cancel("Empty list provided");
 
 	$$(_ + '2.2 - Inject the loading procedure for all the files specified')
-	LUA.addLoaders(LuaFiles, CQL_Prefix + "Quest_function");
+	LUA.addLoaders(LuaFiles, this.Prefix + "Quest_function");
 
 	return true;
 };
@@ -64,3 +63,8 @@ CustomQuestLua = function()
 ///
 CustomQuestLua.validate = () =>
 	Exe.FindText(CQL_Prefix + "Quest_function", PHYSICAL) > 0;
+
+///
+/// \brief Data for the patch
+///
+CustomQuestLua.Prefix = "lua files\\quest\\";

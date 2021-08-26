@@ -77,4 +77,3 @@ AllowSpaceInGName = function()
 ///
 AllowSpaceInGName.validate = () =>
 	Exe.BuildDate >= 20120207;
-
