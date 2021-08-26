@@ -150,12 +150,6 @@ export function setDepth(new_depth)
 }
 
 ///
-/// \brief Function for retrieving current user depth
-///
-export const getDepth = () =>
-	UserDepth;
-
-///
 /// \brief Function to test active depth against user depth (the level which user wants to see)
 ///
 export const valid = () =>
