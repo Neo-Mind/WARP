@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-08-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -470,7 +470,7 @@ CaseAddr = (num, ...args) =>
 		if (offset < 0)
 			return Log.rise(-1);
 
-		caseByte = Exe.GetInt8(offset + num, reflect);
+		caseByte = Exe.GetUint8(offset + num, reflect);
 	}
 
 	$$(_ + '2.2 - Use the byte retrieved to extract the case target address (VIRTUAL)')
