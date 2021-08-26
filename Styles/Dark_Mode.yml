@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2021-01-01                                             #
-#   Last Modified : 2021-07-05                                             #
+#   Last Modified : 2021-08-19                                             #
 #                                                                          #
 ############################################################################
 
@@ -74,30 +74,30 @@ colors:
 
     # Colors for drop down menus (ContextMenu & ChoiceButton uses it)
     dropDown:
-        background: [30, 43, 49, 255]
-        border: [58, 85, 120, 255]
+        background: [30, 43, 49]
+        border: [58, 85, 120]
     
     # Colors for pages in Tester
     page:
-        background: [50, 52, 59, 255]
-        border: [68, 75, 100, 255]
+        background: [50, 52, 59]
+        border: [68, 75, 100]
     
     # Colors for Text Editor
     editor:
-        background: [55, 56, 70, 255]
+        background: [55, 56, 70]
     
     # Colors for Message Boxes
     successBox:
-        border: [70, 158, 230, 255]
+        border: [70, 158, 230]
     
     warnBox:
-        border: [214, 119, 35, 255]
+        border: [214, 119, 35]
     
     errBox:
-        border: [233, 30, 99, 255]
+        border: [233, 30, 99]
     
     queryBox:
-        border: [40, 200, 160, 255]
+        border: [40, 200, 160]
 
     aboutBox:
         border: steelblue
@@ -108,8 +108,8 @@ colors:
     
     # Colors for Delegates
     delegate:
-        text: [120, 150, 190, 255]
-        background: [63, 63, 75, 255]
+        text: [120, 150, 190]
+        background: [63, 63, 75]
 
     # Override Color for the 'Quick Actions' frame. Best to keep it transparent
     actionFrame:

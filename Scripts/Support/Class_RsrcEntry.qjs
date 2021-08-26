@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-04-04                                             *
-*   Last Modified : 2021-07-21                                             *
+*   Last Modified : 2021-08-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,7 @@ if (typeof RsrcEntry === 'undefined') //avoid redefinition
 	///
 	RsrcEntry = class
 	{
-		constructor(id, rootAddr, offset, isFile = false)
+		constructor(id, rootAddr, offset = 0, isFile = false)
 		{
 			this.ID = id;
 			this.Addr = rootAddr + offset;

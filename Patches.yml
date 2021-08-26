@@ -22,28 +22,36 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-11-29                                             #
-#   Last Modified : 2021-01-28                                             #
+#   Last Modified : 2021-08-19                                             #
 #                                                                          #
 ############################################################################
 
-#- GroupName1:
-#    title : Group 1
-#    mutex : true
-#    color : red
-#    
-#    patches:
-#        - PatchName1:
-#            title : Patch No. 1
-#            recommend : yes
-#            author : Neo-Mind
-#            desc : Just a template to show how to define patches. Still need the function defined though. In this case it is 'PatchName1'
-#        
-#        - PatchName2:
-#            desc : Alright you get the gist. In this one PatchName2 will become the title, it will not be 'recommend'ed and author is 'Unknown'
+#Should contain a mapping of patch names to it's various details like below.
+ 
+#GroupName1:
+#  title : Group 1
+#  mutex : true
+#  color : red
+#  allowSkip : true
+#  
+#  patches:
+#      - PatchName1:
+#          title : Patch No. 1
+#          recommend : yes
+#          author : Neo-Mind
+#          desc : Just a template to show how to define patches. Still need the function defined though. In this case it is 'PatchName1'
+#          allowSkip : false
+#      
+#      - PatchName2:
+#          desc : Alright you get the gist. In this one PatchName2 will become the title, it will not be 'recommend'ed and author is 'Unknown'
 #
-#- GroupName2 #In this one, group's title will be GroupName2, mutex will be true and color will be the default set as per Style.
+#GroupName2: #In this one, group's title will be GroupName2, mutex will be true and color will be the default set as per Style.
 #
-#    patches:
-#        -PatchName3: Now even the description becomes empty
+#  patches:
+#      -PatchName3: Now even the description becomes empty
 #
 # ... and so forth
+#
+#
+#
+#include: <filename> #For including additional patch definition files like this one. This can also be a list
