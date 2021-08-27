@@ -8,7 +8,7 @@
 - Fixed [bug with Restore model culling patch](https://github.com/Neo-Mind/WARP/issues/67)
 
 ## Script Updates
-- Removed the `self_call` function since it does not work.
+- Renamed the `self_call` sub function to `self`
 
 ## Tool Updates
 - Added `Warp.BlockMsgs` & `Warp.AllowMsgs` function to allow partial logging.

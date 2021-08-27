@@ -95,7 +95,7 @@ SharedPal.reloader = () =>
 ///        Changes "赣府\赣府%s_%s_%d.pal" => "赣府\head%.s_%s_%d.pal" or "赣府\head%.s%.s_%d.pal"
 ///
 SharedHeadPal = patchName =>
-	SharedPal.call_self(patchName, "\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE",
+	SharedPal.self(patchName, "\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE",
 		patchName === "HeadPalUnisex" ?
 			"\xB8\xD3\xB8\xAE\\head%.s%.s_%d.pal\x00" // %.s is required. Skips hairnum & gender
 		:
@@ -112,28 +112,28 @@ SharedHeadPal.cleanup = SharedPal.reloader;
 ///        Changes "个\%s_%s_%d.pal" => "个\body%.s_%s_%d.pal" or "个\body%.s%.s_%d.pal"
 ///
 SharedBodyPal = patchName =>
-	SharedPal.call_self(patchName, "\xB8\xF6\\", //for regular clothes
+	SharedPal.self(patchName, "\xB8\xF6\\", //for regular clothes
 		patchName === "BodyPalUnisex" ?
 			"\xB8\xF6\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
 			"\xB8\xF6\\body%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
 	) &&
 
-	SharedPal.call_self(patchName, "\xB8\xF6\\costume_%d\\", //for costumes
+	SharedPal.self(patchName, "\xB8\xF6\\costume_%d\\", //for costumes
 		patchName === "BodyPalUnisex" ?
 			"\xB8\xF6\\costume_%d\\body%.s%.s_%d_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
 			"\xB8\xF6\\costume_%d\\body%.s_%s_%d_%d.pal\x00" // %.s is required. Skips jobname
 	, true) &&
 
-	SharedPal.call_self(patchName, "%s\\body\\costume_%d\\", //for costumes - part 2
+	SharedPal.self(patchName, "%s\\body\\costume_%d\\", //for costumes - part 2
 		patchName === "BodyPalUnisex" ?
 			"%s\\costume_%d\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
 			"%s\\costume_%d\\body%.s_%s_%d.pal\x00" // %.s is required. Skips jobname
 	, true) &&
 
-	SharedPal.call_self(patchName, "%s\\body\\", //for doram races
+	SharedPal.self(patchName, "%s\\body\\", //for doram races
 		patchName === "BodyPalUnisex" ?
 			"%s\\body%.s%.s_%d.pal\x00" // %.s is required. Skips jobname & gender
 		:
