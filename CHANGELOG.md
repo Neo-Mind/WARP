@@ -5,6 +5,9 @@
 
 - Fixed [bug with Hide Packets from PEEK patch](https://github.com/Neo-Mind/WARP/issues/68)
 
+## Script Updates
+- Removed the `self_call` function since it does not work.
+
 ## Tool Updates
 - Added `Warp.BlockMsgs` & `Warp.AllowMsgs` function to allow partial logging.
 
