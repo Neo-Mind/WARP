@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-08-26                                             *
+*   Last Modified : 2021-08-27                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -498,14 +498,6 @@ Array.prototype.take_if = function(typeName, defVal)
 		return defVal;
 	else
 		return this.shift();
-};
-
-///
-/// \brief Method to call the function with itself as 'this'
-///
-Function.prototype.call_self = function()
-{
-	return this.call(this, ...arguments);
 };
 
   //=================//
