@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-08-27                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -138,8 +138,8 @@ NewButtonVis = function(patchName)
 			const switchTbl = Exe.Vir2Phy(Exe.GetInt32(jmpDpAddr - 4), CODE);
 
 			$$(_ + '2.5 - Calculate the addresses for Hidden (OFF) & Visible (ON) states')
-			const OffAddr = CaseAddr(0, addr, VIRTUAL, jmpDpAddr);
-			const OnAddr  = CaseAddr(1, addr, VIRTUAL, jmpDpAddr);
+			const OffAddr = CaseAddr(0, VIRTUAL, addr, jmpDpAddr);
+			const OnAddr  = CaseAddr(1, VIRTUAL, addr, jmpDpAddr);
 
 			$$(_ + '2.6 - Now find the limiting comparison before the switch table')
 			prefix = LEA(EAX, [EBX, NEG2WC]); //lea eax, [ebx - limitL]

@@ -7,6 +7,8 @@
 
 - Fixed [bug with Restore model culling patch](https://github.com/Neo-Mind/WARP/issues/67)
 
+- Fixed [bug with New Button visibility patch](https://github.com/Neo-Mind/WARP/issues/72)
+
 ## Script Updates
 - Renamed the `self_call` sub function to `self`
 
