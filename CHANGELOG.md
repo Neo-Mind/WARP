@@ -5,6 +5,8 @@
 
 - Fixed [bug with Hide Packets from PEEK patch](https://github.com/Neo-Mind/WARP/issues/68)
 
+- Fixed [bug with Restore model culling patch](https://github.com/Neo-Mind/WARP/issues/67)
+
 ## Script Updates
 - Removed the `self_call` function since it does not work.
 
