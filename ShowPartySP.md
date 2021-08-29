@@ -15,7 +15,7 @@
 > Party member's SP color can be customized
 
 ## Server side
-> Diff available for rAthena (Hercules to be added based on demand).
+> Diff file available for rAthena (Hercules to be added based on demand).
 
 ## What's included?
 
@@ -41,23 +41,25 @@
 
 ### Script (only for Option 2 mentioned below)
 
-- A QJS file containing the encrypted patch function will be provided.
+- An encrypted script (EJS) file will be provided which defines the patch function specific for your client date.
 
-- The `Premium.yml` file will be provided which gets imported by `Patches.yml` by default.
+- `Premium.yml` file will be provided which is automatically imported by `Patches.yml`.
 
-- If the file is already present for some reason, you can simply add the entries there.
+- If the YAML file is already present, you can simply add the entries there.
+
+  Feel free to ask me or consult the [Wiki](https://github.com/Neo-Mind/WARP/wiki/Writing-Patches#defining-patches) for the same.
 
 ## Pricing
 There are 2 options available:
 
 ### Option 1:
 
-- Client of specified date will be patched and provided => 60$
+- Client of specified date will be patched and provided => **60$**
 
-- If you need the same for different dates in future => +10$
+- If you need the same for different dates in future => **+10$**
 
 ### Option 2:
 
-- Script to patch the specified client date will be provided => 70$
+- Script to patch the specified client date will be provided => **70$**
 
-- If you need the same for different dates in future => +10$
+- If you need the same for different dates in future => **+10$**
