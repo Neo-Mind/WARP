@@ -3,11 +3,11 @@
 
 ## Demo
 
-<video src=”https://raw.githubusercontent.com/Neo-Mind/WARP/gh-pages/clips/SpBar_Demo.mp4” controls></video>
+<video src="https://raw.githubusercontent.com/Neo-Mind/Wikages/base/WARP/Clips/SpBar_Demo.mp4" width="800" controls></video>
 
 **`@spbar` Command**
 
-<video src="https://raw.githubusercontent.com/Neo-Mind/WARP/gh-pages/SpBar_cmdDemo.mp4" controls></video>
+<video src="https://raw.githubusercontent.com/Neo-Mind/Wikages/base/WARP/Clips/SpBar_cmdDemo.mp4" width="800" controls></video>
 
 ## Client side
 > Available for all dates from 2010-08 to 2021-01
