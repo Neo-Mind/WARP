@@ -1,5 +1,5 @@
 
-# Add SP Bar for party members
+# Customize Color for character names
 
 ## Demo
 
