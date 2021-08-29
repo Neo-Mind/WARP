@@ -1,59 +1,63 @@
 
-## Add SP Bar for party members
+# Add SP Bar for party members
 
-### Demo
+## Demo
 
+<video src=”https://raw.githubusercontent.com/Neo-Mind/WARP/gh-pages/clips/SpBar_Demo.mp4” controls></video>
 
-### Client side
+**`@spbar` Command**
+
+<video src="https://raw.githubusercontent.com/Neo-Mind/WARP/gh-pages/SpBar_cmdDemo.mp4" controls></video>
+
+## Client side
 > Available for all dates from 2010-08 to 2021-01
 
 > Party member's SP color can be customized
 
-### Server side
+## Server side
 > Diff available for rAthena (Hercules to be added based on demand).
 
-### What's included?
+## What's included?
 
-- Server-side modifications
+### Server-side modifications
 
-	- You can control the visibility of the SP bar with a new config => `party_sp_on` which can take either 0 or 1.
+- You can control the visibility of the SP bar with a new config => `party_sp_on` which can take either 0 or 1.
 
-	- You can also change the visibility in game using `@spbar` command.
+- You can also change the visibility in game using `@spbar` command.
 
-	- Diff file provided can be easily added to your server with `git apply` command.
+- Diff file provided can be easily added to your server with `git apply` command.
 
-- Modified client (only for Option 1 mentioned below)
+### Modified client (only for Option 1 mentioned below)
 
-	- A fresh client with the specified date will be patched and provided.
+- A fresh client with the specified date will be patched and provided.
 
-	- If you need the patch on your own modified client, the charges may or may not vary depending on the client provided.
+- If you need the patch on your own modified client, the charges may or may not vary depending on the client provided.
 
-	- As shown in the demo, the SP bar color is kept different for party members. 
+- As shown in the demo, the SP bar color is kept different for party members. 
 
-	- You can opt to either keep it same as the current player or customize it.
+- You can opt to either keep it same as the current player or customize it.
 
-	- There will be no additional charge for it (even if you decide to change the color later).
+- There will be no additional charge for it (even if you decide to change the color later).
 
-- Script (only for Option 2 mentioned below)
+### Script (only for Option 2 mentioned below)
 
-	- A QJS file containing the encrypted patch function will be provided.
+- A QJS file containing the encrypted patch function will be provided.
 
-	- The `Premium.yml` file will be provided which gets imported by `Patches.yml` by default.
+- The `Premium.yml` file will be provided which gets imported by `Patches.yml` by default.
 
-	- If the file is already present for some reason, you can simply add the entries there.
+- If the file is already present for some reason, you can simply add the entries there.
 
-### Pricing
+## Pricing
 There are 2 options available:
 
-- Option 1:
+### Option 1:
 
-	- Client of specified date will be patched and provided => 60$
+- Client of specified date will be patched and provided => 60$
 
-	- If you need the same for different dates in future => +10$
+- If you need the same for different dates in future => +10$
 
-- Option 2:
+### Option 2:
 
-	- Script to patch the specified client date will be provided => 70$
+- Script to patch the specified client date will be provided => 70$
 
-	- If you need the same for different dates in future => +10$
-
+- If you need the same for different dates in future => +10$
