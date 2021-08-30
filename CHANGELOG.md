@@ -1,3 +1,8 @@
+# 2021-08-31 Changes
+
+## Patch Updates
+- Fixed bug with Custom Font Name patch
+
 # 2021-08-27 Changes
 
 ## Patch Updates

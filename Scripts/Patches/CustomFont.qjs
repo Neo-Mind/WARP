@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Yommy, Neo-Mind                             *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-08-31                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -122,6 +122,7 @@ CustomFontName = function()
 	{
 		$$(_ + '2.4 - Allocate space to add the font since its not already present') ;//semicolon needed here
 		[free, freeVir] = Exe.FindSpace(varName);
+		Exe.AddFromVar(free, varName);
 	}
 
 	$$(_ + '3.1 - Overwrite all entries in the font table with this one (all the entries will be an address in DATA section)')
