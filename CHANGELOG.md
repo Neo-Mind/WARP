@@ -3,6 +3,9 @@
 ## Patch Updates
 - Fixed bug with Custom Font Name patch
 
+## Tool Updates
+- Fixed 1 non-critical issue with the GATE dll
+
 # 2021-08-27 Changes
 
 ## Patch Updates
