@@ -1,3 +1,11 @@
+# 2021-08-31 Changes
+
+## Patch Updates
+- Fixed bug with Custom Font Name patch
+
+## Tool Updates
+- Fixed 1 non-critical issue with the GATE dll
+
 # 2021-08-27 Changes
 
 ## Patch Updates
@@ -5,8 +13,12 @@
 
 - Fixed [bug with Hide Packets from PEEK patch](https://github.com/Neo-Mind/WARP/issues/68)
 
+- Fixed [bug with Restore model culling patch](https://github.com/Neo-Mind/WARP/issues/67)
+
+- Fixed [bug with New Button visibility patch](https://github.com/Neo-Mind/WARP/issues/72)
+
 ## Script Updates
-- Removed the `self_call` function since it does not work.
+- Renamed the `self_call` sub function to `self`
 
 ## Tool Updates
 - Added `Warp.BlockMsgs` & `Warp.AllowMsgs` function to allow partial logging.

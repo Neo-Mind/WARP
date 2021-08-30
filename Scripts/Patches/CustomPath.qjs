@@ -127,7 +127,7 @@ CustomMapInfoLub       = CustomPath;
 CustomOngQuestInfoLub  = CustomPath;
 CustomRcmdQuestInfoLub = CustomPath;
 
-CustomMonSizeEffLub = patchName => CustomPath.call(CustomPath, patchName);
+CustomMonSizeEffLub = patchName => CustomPath.self(patchName);
 
 CustomMonSizeEffLub.validate = function(patchName)
 {

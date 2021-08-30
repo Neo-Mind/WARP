@@ -500,6 +500,14 @@ Array.prototype.take_if = function(typeName, defVal)
 		return this.shift();
 };
 
+///
+/// \brief Quick method to call with the function itself as 'this' pointer.
+///
+Function.prototype.self = function()
+{
+	return this.call(this, ...arguments);
+};
+
   //=================//
  // Identifications //
 //=================//
