@@ -1,3 +1,9 @@
+# 2021-08-31 Changes
+
+## Tool Updates
+- Fixed 1 non-critical issue with the GATE dll.
+
+
 # 2021-08-27 Changes
 
 ## Tool Updates
