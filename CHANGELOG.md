@@ -3,8 +3,14 @@
 ## Patch Updates
 - Fixed bug with Custom Font Name patch
 
+- Fixed bug with Send Client Flags patch
+
+## Script Updates
+- Updated `LUA` module functions & related patches
+
 ## Tool Updates
 - Fixed 1 non-critical issue with the GATE dll
+
 
 # 2021-08-27 Changes
 

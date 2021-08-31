@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-08-26                                             *
+*   Last Modified : 2021-08-31                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -373,12 +373,12 @@ CustomJobs = function()
 
 		$$(_ + '5.3 - Generate the templates first')
 		const templates = this.generate(
-			[ReqFuncs[index], "Req" + fnSuffix, "dd>s", EDI, [LANGTYPE], EAX],
+			[["Req" + fnSuffix, ReqFuncs[index]], "dd>s", EDI, [LANGTYPE], EAX],
 			index === 4 //PCJobName
 		?
 			null //dont call Map for JobName since it is done later anyways (avoid redundancy)
 		:
-			[MapFuncs[index], "Map" + fnSuffix, "dd>d", EDI, [LANGTYPE], EAX]
+			[["Map" + fnSuffix, MapFuncs[index]], "dd>d", EDI, [LANGTYPE], EAX]
 		,
 			[ESP, 0x24]
 		);
@@ -417,29 +417,17 @@ CustomJobs = function()
 			parts.push(JMP(Filler(3))); //jmp endAddr ; address of endIns
 
 		$$(_ + '4.6 - Fill in the blanks')
-		let code = LUA.finalize(parts, Exe.Phy2Vir(hookAddr, CODE));
-		if (endIns)
+		let code = LUA.finalize(parts, Exe.Phy2Vir(hookAddr, CODE),
 		{
-			code = SetFillTargets( code, 1,
-			{
-				start : hookAddr,
-				    3 : endIns.Addr //no VIRTUAL conversion needed since both are in CODE section
-			});
-		}
+			3 : endIns ? Exe.Phy2Vir(endIns.addr, CODE) : ''
+		});
 
 		$$(_ + '4.7 - Replace at hook address')
 		Exe.SetHex(hookAddr, code);
 
-		if (index === 0)
+		if (index === 4)
 		{
-			$$(_ + '4.8 - Add the format string "ddd>s" for later (we will use the first table loading space)')
-			ddd2sAddr = hookAddr + code.byteCount();
-			Exe.SetText(ddd2sAddr, "ddd>s\x00");
-		}
-
-		else if (index === 4)
-		{
-			$$(_ + '4.9 - Save the location afterwards to use for file loading (picked name table loader since it is the largest)')
+			$$(_ + '4.8 - Save the location afterwards to use for file loading (picked name table loader since it is the largest)')
 			fileHookAddr = hookAddr + code.byteCount();
 		}
 	});
@@ -641,8 +629,8 @@ CustomJobs = function()
 
 		$$(_ + '5.16 - Generate the templates to be used')
 		const templates = this.generate(
-			[AltFuncs[0], "GetPCNameOvrd", ["ddd>s", Exe.Phy2Vir(ddd2sAddr, CODE)], EDI, ESI, [LANGTYPE], EAX],
-			[MapFuncs[4], "MapPCJobName", "dd>d", EDI, [LANGTYPE], EAX],
+			[["GetPCNameOvrd", AltFuncs[0]], "ddd>s", EDI, ESI, [LANGTYPE], EAX],
+			[["MapPCJobName",  MapFuncs[4]], "dd>d",  EDI, [LANGTYPE], EAX],
 			[JobName]
 		);
 
@@ -686,15 +674,10 @@ CustomJobs = function()
 		$$(_ + '5.18 - Fill in the blanks')
 		const hookVir = Exe.Phy2Vir(hookAddr, CODE);
 
-		code = LUA.finalize(parts, hookVir);
-		if (endAddr)
+		code = LUA.finalize( parts, hookVir,
 		{
-			code = SetFillTargets( code,
-			{
-				start : hookVir,
-				    3 : endAddr
-			});
-		}
+			3 : endAddr
+		});
 
 		$$(_ + '5.19 - Replace at hook address')
 		Exe.SetHex(hookAddr, code);
@@ -775,48 +758,48 @@ CustomJobs = function()
 		$$(_ + '6.14 - Construct the template (the first one need to be done manually since the way we code is different)')
 		const templates = this.generate(
 			null,
-			[MapFuncs[4], "MapPCJobName", "dd>d", EDI, [LANGTYPE], EAX],
+			[["MapPCJobName", MapFuncs[4]], "dd>d", EDI, [LANGTYPE], EAX],
 			[ESP, 0x24]
 		);
 
-		const [, mainM,] = LUA.createCaller("GetPCNameOvrd", ["ddd>s", Exe.Phy2Vir(ddd2sAddr, CODE)], EDI, 1, [LANGTYPE], EAX);
-		const [prep, mainF, restore] = LUA.createCaller("GetPCNameOvrd", ["ddd>s", Exe.Phy2Vir(ddd2sAddr, CODE)], EDI, 0, [LANGTYPE], EAX);
+		const [    , mainM,        ] = LUA.createCaller(["GetPCNameOvrd", AltFuncs[0]], "ddd>s", EDI, 1, [LANGTYPE], EAX);
+		const [prep, mainF, restore] = LUA.createCaller(["GetPCNameOvrd", AltFuncs[0]], "ddd>s", EDI, 0, [LANGTYPE], EAX);
 
 		let parts =
 		[//0
-			MOV(EDI, Filler(1))                   //mov edi, <startingValue> ; serves as idx
-		+	MOV(ESI, Filler(2))                   //mov esi, <endingValue>
-		+	prep                                  //Stack Prep
+			MOV(EDI, Filler(1))      //mov edi, <startingValue> ; serves as idx
+		+	MOV(ESI, Filler(2))      //mov esi, <endingValue>
+		+	prep                     //Stack Prep
 
 		,//1
-			SwapFillers( mainM, 1, {50: AltFuncs[0]} ) //LUA function caller for Male ; _loop
-		+	MOV(CL, [EAX])                        //mov cl, dword ptr [eax]
-		+	TEST(CL, CL)                          //test cl, cl
-		+	JE(7)                                 //je short _skip
-		+	MOV(ECX, [ESP, 0x24])                 //mov ecx, dword ptr [esp+24h]
-		+	MOV([4, EDI, ECX], EAX)               //mov dword ptr [4*edi + ecx], eax
+			mainM                    //LUA function caller for Male ; _loop
+		+	MOV(CL, [EAX])           //mov cl, dword ptr [eax]
+		+	TEST(CL, CL)             //test cl, cl
+		+	JE(7)                    //je short _skip
+		+	MOV(ECX, [ESP, 0x24])    //mov ecx, dword ptr [esp+24h]
+		+	MOV([4, EDI, ECX], EAX)  //mov dword ptr [4*edi + ecx], eax
 
-		+	SwapFillers( mainF, 1, {50: AltFuncs[0]} ) //LUA function caller for Female ; _skip
-		+	MOV(CL, [EAX])                        //mov cl, dword ptr [eax]
-		+	TEST(CL, CL)                          //test cl, cl
-		+	JE(Filler(6,1))                       //je short _idxInc
-		+	MOV(strLoc, EAX)                      //mov dword ptr [LOCAL.z], eax
+		+	mainF                    //LUA function caller for Female ; _skip
+		+	MOV(CL, [EAX])           //mov cl, dword ptr [eax]
+		+	TEST(CL, CL)             //test cl, cl
+		+	JE(Filler(6,1))          //je short _idxInc
+		+	MOV(strLoc, EAX)         //mov dword ptr [LOCAL.z], eax
 
-		+	PUSH_EAX                              //push eax   ; the name
-		+	LEA(EAX, idxLoc)                      //lea eax, [LOCAL.x]
-		+	MOV([EAX], EDI)                       //mov dword ptr [eax], edi
-		+	PUSH_EAX                              //push eax   ; the index location
-		+	PUSH_0                                //push 0
-		+	pushMEM                               //lea eax, [LOCAL.y]
-			                                      //push eax   ; the mem location
-		+	leaECX                                //lea ecx, [ebx + dispA]
-		+	CALL(Filler(4))                       //call <Overrider>
+		+	PUSH_EAX                 //push eax   ; the name
+		+	LEA(EAX, idxLoc)         //lea eax, [LOCAL.x]
+		+	MOV([EAX], EDI)          //mov dword ptr [eax], edi
+		+	PUSH_EAX                 //push eax   ; the index location
+		+	PUSH_0                   //push 0
+		+	pushMEM                  //lea eax, [LOCAL.y]
+			                         //push eax   ; the mem location
+		+	leaECX                   //lea ecx, [ebx + dispA]
+		+	CALL(Filler(4))          //call <Overrider>
 
 		,//2
-			INC(EDI)                              //inc edi ; _idxInc
-		+	CMP(EDI, ESI)                         //cmp edi, esi
-		+	JLE(Filler(5))                        //jle _loop ; to start of the first 'main' code i.e. mainM
-		+	restore                               //Stack restore
+			INC(EDI)                 //inc edi ; _idxInc
+		+	CMP(EDI, ESI)            //cmp edi, esi
+		+	JLE(Filler(5))           //jle _loop ; to start of the first 'main' code i.e. mainM
+		+	restore                  //Stack restore
 		];
 
 		const [,_loop, _idxInc] = MapAddrs(0, parts);
@@ -855,11 +838,10 @@ CustomJobs = function()
 		$$(_ + '6.16 - Fill in the blanks')
 		const hookVir = Exe.Phy2Vir(hookAddr, CODE);
 
-		code = SetFillTargets( LUA.finalize(parts, hookVir),
+		code = LUA.finalize(parts, hookVir,
 		{
-			start : hookVir,
-			    3 : endVir,
-			    4 : Overrider
+			3 : endVir,
+			4 : Overrider
 		});
 
 		$$(_ + '6.17 - Replace at hook address')
@@ -883,7 +865,7 @@ CustomJobs = function()
 			throw Error("Mount assignment missing");
 
 		$$(_ + '7.2 - Construct the LUA caller code')
-		const [prep, main, restore] = LUA.createCaller("GetHalter", "d>d", EAX, EAX);
+		const [prep, main, restore] = LUA.createCaller(["GetHalter", AltFuncs[1]], "d>d", EAX, EAX);
 
 		$$(_ + '7.3 - Replace at the address')
 		Exe.SetHex( addr
@@ -902,7 +884,7 @@ CustomJobs = function()
 			)
 			+	RETN(4)    //retn 4
 			,
-				Exe.Phy2Vir(addr, CODE), AltFuncs[1]
+				Exe.Phy2Vir(addr, CODE)
 			)
 		);
 	}
@@ -961,16 +943,14 @@ CustomJobs = function()
 			reg = R32.List[Exe.GetInt8(testerAddr + 1) & 0x7];
 
 		$$(_ + '8.6 - Construct the LUA caller code for Dwarf test')
-		const [prep, main, restore] = LUA.createCaller("IsDwarf", "d>d", reg, EAX);
+		const luaCaller = LUA.createCaller(["IsDwarf", AltFuncs[2]], "d>d", reg, EAX).join('');
 
 		$$(_ + '8.7 - Replace at the address')
 		Exe.SetHex( testerAddr
 		,
 			LUA.finalize(
 				PUSH(EDX)  //push edx ; Backup
-			+	prep       //Stack Prep
-			+	main       //LUA function CALL
-			+	restore    //Stack Restore
+			+	luaCaller  //LUA function CALL
 			+	POP(EDX)   //pop edx ; Restore it
 			+	(ROC.HasFP
 			?
@@ -980,7 +960,8 @@ CustomJobs = function()
 			)
 			+	RETN(4)    //retn 4
 			,
-				Exe.Phy2Vir(testerAddr, CODE), AltFuncs[2])
+				Exe.Phy2Vir(testerAddr, CODE)
+			)
 		);
 	}
 
@@ -996,6 +977,7 @@ CustomJobs = function()
 			+	CALL(ALLWC)      //call CSession::GetJobID
 			+	CMP(EAX, 0xFBD)  //cmp eax, 0FBDh
 			;
+
 			shrinkAddrs = Exe.FindHexN(1, 3, code);
 			if (shrinkAddrs.isEmpty())
 				throw Error("Expected no of shrinking code not found");
@@ -1044,7 +1026,7 @@ CustomJobs = function()
 			              R32.List[Exe.GetUint8(shrinkAddr + 1) & 0x7];
 
 		$$(__ + '9.2 - Use it to create the LUA function Calling code')
-		const luaCaller = LUA.createCaller("GetSprScale", "d>d", reg, [scaleAddr]).join('');
+		const luaCaller = LUA.createCaller(["GetSprScale", AltFuncs[3]], "d>d", reg, [scaleAddr]).join('');
 
 		if (style > 2) //Individual comparisons
 		{
@@ -1054,10 +1036,10 @@ CustomJobs = function()
 			if (ins.Codes[0] !== 0x7E && ins.Codes[1] !== 0x8E)
 				return false;
 
-			$$(__ + '9.4 - Extract the instruction at the address. It would be either an fld dword ptr or MOVSS XMM0, dword ptr')
+			$$(__ + '9.4 - Extract the instruction at the address. It would be either an FLD DWORD PTR or MOVSS XMM0, DWORD PTR')
 			const tgtLoader = ins.getNext(ins.Immd);
 
-			$$(__ + '9.5 - Extract the instruction after it. Would be a FMUL dword ptr or MULSS XMM0, dword ptr')
+			$$(__ + '9.5 - Extract the instruction after it. Would be a FMUL dword ptr or MULSS XMM0, DWORD PTR')
 			let multiplier = tgtLoader.getNext();
 
 			$$(__ + '9.6 - Save the next address (if it\'s a JMP go to it\'s target instead)')
@@ -1099,7 +1081,7 @@ CustomJobs = function()
 				;
 
 				$$(__ + '9.11 - Replace at the address')
-				Exe.SetHex(shrinkAddr, LUA.finalize(code, Exe.Phy2Vir(shrinkAddr, CODE), AltFuncs[3]));
+				Exe.SetHex(shrinkAddr, LUA.finalize(code, Exe.Phy2Vir(shrinkAddr, CODE)));
 			}
 			else
 			{
@@ -1112,10 +1094,9 @@ CustomJobs = function()
 				;
 
 				$$(__ + '9.14 - Fill in the blanks')
-				code = SetFillTargets( LUA.finalize(code, freeVir, AltFuncs[3]), 1,
+				code = LUA.finalize(code, freeVir,
 				{
-					start : freeVir,
-					    1 : Exe.Phy2Vir(endAddr, CODE)
+					1 : Exe.Phy2Vir(endAddr, CODE)
 				});
 
 				$$(__ + '9.15 - Add at allocated space')
@@ -1147,8 +1128,9 @@ CustomJobs = function()
 			;
 
 			$$(__ + '9.18 - Replace at shrinkAddr')
-			Exe.SetHex(shrinkAddr, LUA.finalize(code, Exe.Phy2Vir(shrinkAddr, CODE), AltFuncs[3]));
+			Exe.SetHex(shrinkAddr, LUA.finalize(code, Exe.Phy2Vir(shrinkAddr, CODE)));
 		}
+
 		return true;
 	});
 
@@ -1248,14 +1230,12 @@ CustomJobs.generate = (firstSet, secondSet, memPtr) =>
 	const templates = [
 		firstSet,
 		secondSet
-	].map( (set, idx) =>
+	].map( (args, idx) =>
 	{
-		if (!set)
+		if (!args)
 			return '';
 
-		const [fnameAddr, ...args] = set; //each set has the first element as the VIRTUAL address of the function name
-
-		const [prep, main, restore] = LUA.createCaller(...args); ///remaining are the arguments to be fed to createCaller
+		const [prep, main, restore] = LUA.createCaller(...args); ///feed the arguments to createCaller
 
 		const prefix =
 			cmnPre                    //edi & ebx assignment
@@ -1263,7 +1243,7 @@ CustomJobs.generate = (firstSet, secondSet, memPtr) =>
 		;
 
 		const infix =
-			SwapFillers(main, 1, {50: fnameAddr}) //LUA caller code with string address properly set
+			main                     //LUA caller code
 		+	(idx === 0
 
 		? //for Req/Get
