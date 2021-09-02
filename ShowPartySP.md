@@ -10,7 +10,7 @@
 <video src="https://raw.githubusercontent.com/Neo-Mind/Wikages/base/WARP/Clips/SpBar_cmdDemo.mp4" width="800" controls></video>
 
 ## Client side
-> Available for all dates from 2010-08 to 2021-01
+> Available for all dates from **2010-08** to **2021-01**
 
 > Party member's SP color can be customized
 

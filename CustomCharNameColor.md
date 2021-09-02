@@ -10,7 +10,7 @@
 <video src="https://raw.githubusercontent.com/Neo-Mind/Wikages/base/WARP/Clips/NameColor_cmdDemo.mp4" width="800" controls></video>
 
 ## Client side
-> Available for all dates from 2010-08 to 2021-01
+> Available for all dates from **2010-08** to **2021-01**
 
 > Color is controlled completely server-side, hence no additional files needed.
 
@@ -19,7 +19,7 @@
 
 > Each character's color can be configured in anyway you want.
 
-  By default, a new SQL table is used for connecting character IDs to their colors.
+> By default, a new SQL table is used for connecting character IDs to their colors.
 
 ## What's included?
 
