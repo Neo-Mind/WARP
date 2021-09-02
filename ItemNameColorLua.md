@@ -1,8 +1,6 @@
 
 # Customize item name color (LUA)
 
-There is also a server-controlled version of this patch currently in progress.
-
 ## Demo
 
 <video src="https://raw.githubusercontent.com/Neo-Mind/Wikages/base/WARP/Clips/INameClr_Demo.mp4" width="800" controls></video>
