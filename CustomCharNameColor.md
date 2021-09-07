@@ -31,7 +31,7 @@
 
 - Similarly you can use `@unsetnamecolor` for erasing the color.
 
-- Diff file provided can be easily added to your server with `git apply` command.
+- Diff file will be provided to make the source changes required and it can be easily added to your server with `git apply` command.
 
 - SQL file will be provided for creating the aformentioned color database for the characters.
 
