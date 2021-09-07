@@ -1,5 +1,5 @@
 
-# Customize item name color (Server-based)
+# Customize item name color (Server-controlled)
 
 ## Demo
 
