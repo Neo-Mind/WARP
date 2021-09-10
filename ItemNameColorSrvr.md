@@ -7,15 +7,19 @@
 
 **Example With slots**
 
-<video src="https://raw.githubusercontent.com/Neo-Mind/Wikages/base/WARP/Clips/INameClrSrvr_slotDemo.mp4" width="800" controls></video>
+<video src="https://raw.githubusercontent.com/Neo-Mind/Wikages/base/WARP/Clips/INameClrRa_slotDemo.mp4" width="800" controls></video>
+
+**Example for Herc**
+
+<video src="https://raw.githubusercontent.com/Neo-Mind/Wikages/base/WARP/Clips/INameClrHerc_slotDemo.mp4" width="800" controls></video>
 
 ## Client side
 > Available for all dates from **2010-08** to **2021-01**
 
 ## Server side
-> Currently only available for rA. WIP for Herc.
+> Available for both rA & Herc.
 
-> All the colors are read from a new db file (YAML file for rA).
+> All the colors are read from a new db file (YAML file for rA, Conf file for Herc).
 
 > Colors for all item names can be customized in the file irrespective of slotted or not.
 
@@ -29,9 +33,11 @@
 
 ### Server-side modifications
 
-- Diff file will be provided to make the source changes required and it can be easily added to your server with `git apply` command.
+- Diff file will be provided to make the minimum source changes required and it can be easily added to your server with `git apply` command.
 
-- As stated above the colors for the items are read from a seperate db file (`db/item_colors.yml` for rA).
+- In addition, custom source & header files will also be provided which needs to be put inside your server's `src` folder.
+
+- As stated above the colors for the items are read from a seperate db file (`db/item_colors.yml` for rA, `db/item_colors.conf` for Herc).
 
 - Just like the other db files, this one also gets loaded when the server starts. You can also reload the database using `@reloaditemcolors` command.
 
