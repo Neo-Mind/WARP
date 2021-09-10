@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-08-31                                             *
+*   Last Modified : 2021-09-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -39,7 +39,7 @@ CustomJobs = function()
 	if (!Warp.TestMode)
 		Warp.SetPatchState("TranslateTaekwon", false);
 
-	Exe.ProtectChanges();
+	// Exe.ProtectChanges();
 
 	//=====================================================//
 	// Find the table loading area (references to strings) //
@@ -310,10 +310,12 @@ CustomJobs = function()
 	}
 
 	$$(_ + '4.1 - Get the new max limit from user')
-	const maxJob = Exe.GetUserInput('$maxJob', D_Uint16, "Limit Input", "Enter the maximum no of Job IDs", 4400, {min: 4400, max: 5000, saveDefault: true});
-	if (maxJob === false)
+	let MaxJob = Exe.GetUserInput('$maxJob', D_Uint16, "Limit Input", "Enter the maximum no of Job IDs", 4400, {min: 4400, max: 5000, saveDefault: true});
+	if (MaxJob === false)
 		Cancel("No Max Limit specified");
 
+	MaxJob = parseInt(MaxJob); //temporary fix for strings
+	
 	//====================================//
 	// Add the Function Names into client //
 	//====================================//
@@ -368,7 +370,7 @@ CustomJobs = function()
 		const limits =
 		[
 			[0, 0x2C],
-			[0xFA1 - reductor, maxJob - reductor]
+			[0xFA1 - reductor, MaxJob - reductor]
 		];
 
 		$$(_ + '5.3 - Generate the templates first')
@@ -395,8 +397,11 @@ CustomJobs = function()
 
 		for (const template of templates)
 		{
+			ShowVar({template});
+			
 			for (const [min, max] of limits)
 			{
+				Debug("PROCESSING LIMITS :", min, " & ", max);
 				parts.push( SwapFillers( template,
 				{
 					1 : min,
@@ -419,9 +424,9 @@ CustomJobs = function()
 		$$(_ + '4.6 - Fill in the blanks')
 		let code = LUA.finalize(parts, Exe.Phy2Vir(hookAddr, CODE),
 		{
-			3 : endIns ? Exe.Phy2Vir(endIns.addr, CODE) : ''
+			3 : endIns ? Exe.Phy2Vir(endIns.Addr, CODE) : ''
 		});
-
+Debug("ROVER HERE");
 		$$(_ + '4.7 - Replace at hook address')
 		Exe.SetHex(hookAddr, code);
 
@@ -458,7 +463,7 @@ CustomJobs = function()
 	limits =
 	[
 		[0, 0x2C],
-		[0xFA1, maxJob]
+		[0xFA1, MaxJob]
 	];
 
 	$$(_ + '5.1 - Find \'TaeKwon Girl\'')
@@ -834,6 +839,7 @@ CustomJobs = function()
 		+	ADD(ESP, 4)      //add esp, 4
 		+	JMP(Filler(3))   //jmp <endVir>
 		);
+//ShowArr(parts);
 
 		$$(_ + '6.16 - Fill in the blanks')
 		const hookVir = Exe.Phy2Vir(hookAddr, CODE);

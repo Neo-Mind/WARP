@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2021-02-24                                             *
-*   Last Modified : 2021-08-22                                             *
+*   Last Modified : 2021-09-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -79,6 +79,8 @@ IncrHairs.stage1 = patchName =>
 		IH_Max = Exe.GetUserInput('$maxHairs', D_Uint16, "Limit input", "Enter the maximum no of hairstyles", 100, {saveDefault: true});
 		if (IH_Max === false)
 			Cancel("Limit reverted to default");
+		
+		IH_Max = parseInt(IH_Max); //temporary fix for strings
 	}
 	else if (patchName === "Allow65kHairs")
 	{
