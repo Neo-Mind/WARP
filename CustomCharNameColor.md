@@ -15,7 +15,7 @@
 > Color is controlled completely server-side, hence no additional files needed.
 
 ## Server side
-> Diff & SQL Files available for rAthena (Hercules to be added based on demand).
+> Available for both rAthena & Hercules.
 
 > Each character's color can be configured in anyway you want.
 

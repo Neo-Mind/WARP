@@ -17,7 +17,7 @@
 > Available for all dates from **2010-08** to **2021-01**
 
 ## Server side
-> Available for both rA & Herc.
+> Available for both rAthena & Hercules.
 
 > All the colors are read from a new db file (YAML file for rA, Conf file for Herc).
 
