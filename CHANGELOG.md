@@ -1,9 +1,41 @@
+# 2021-09-26 Changes
+
+## Patch Updates
+- Added patch to `Customize Auto follow stop delay`.
+
+# 2021-09-11 Changes
+
+## Patch Updates
+- Added temporary fix for integers being loaded as strings from session files.
+  Fixes [bug with Custom Jobs patch](https://github.com/Neo-Mind/WARP/issues/73)
+
+# 2021-08-31 Changes
+
+## Patch Updates
+- Fixed bug with Custom Font Name patch
+
+- Fixed bug with Send Client Flags patch
+
+## Script Updates
+- Updated `LUA` module functions & related patches
+
+## Tool Updates
+- Fixed 1 non-critical issue with the GATE dll
+
+
 # 2021-08-27 Changes
 
 ## Patch Updates
 - Fixed [bug with MonSizeEffect lub patch](https://github.com/Neo-Mind/WARP/issues/70)
 
 - Fixed [bug with Hide Packets from PEEK patch](https://github.com/Neo-Mind/WARP/issues/68)
+
+- Fixed [bug with Restore model culling patch](https://github.com/Neo-Mind/WARP/issues/67)
+
+- Fixed [bug with New Button visibility patch](https://github.com/Neo-Mind/WARP/issues/72)
+
+## Script Updates
+- Renamed the `self_call` sub function to `self`
 
 ## Tool Updates
 - Added `Warp.BlockMsgs` & `Warp.AllowMsgs` function to allow partial logging.

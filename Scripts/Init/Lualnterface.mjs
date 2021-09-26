@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-08-20                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-08-31                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -254,15 +254,33 @@ export function createCaller(name, format)
 	{
 		PUSH_fmt = Pushers.get(format);
 	}
-	else
-		throw Log.rise(Error(`${self} - Unknown format specified`));
+	else //not a pre-existing one so use a CALL to PUSH the next few bytes as the string
+	{
+		PUSH_fmt = CALL(format.length + 1) + format.toHex() + ' 00';
+	}
 
 	$$(_ + '1.3 - Calculate the number of arguments for input & output')
 	const [icnt, ocnt] = format.split(">").map(e => e.length);
 
 	$$(_ + '1.4 - Split up the inputs & outputs')
 	const inputs = Array.prototype.slice.call(arguments, 2, 2 + icnt).reverse();
-	const outputs = Array.prototype.slice.call(arguments, 2 + icnt, 2 + icnt + ocnt).reverse();
+	const outputs = Array.prototype.slice.call(arguments, 2 + icnt, 2 + icnt + ocnt);
+
+	$$(_ + '1.5 - Prepare the PUSH instruction for the function name')
+	let PUSH_name;
+	if (IsArr(name)) //[name, nameAddr] form
+	{
+		PUSH_name = PUSH(name[1]);
+		name = name[0];
+	}
+	else
+	{
+		const addr = Exe.FindText(name, CASE_INSENSITIVE, false);
+		if (addr > 0)
+			PUSH_name = PUSH(addr);
+		else
+			PUSH_name = CALL(name.length + 1) + name.toHex() + ' 00';
+	}
 
 	$$(_ + '2 - Now we construct the code in stages')
 	let pre = Al_Type === NormFn ? PUSH(name.length) : '';
@@ -292,7 +310,7 @@ export function createCaller(name, format)
 	$$(_ + '2.3 - PUSH the format, and prepare ECX for the allocator')
 	code +=
 		PUSH_fmt                         //push offset <argFormat>
-	+	SUB(ESP, StkConst)          //sub esp, <StkConst>
+	+	SUB(ESP, StkConst)               //sub esp, <StkConst>
 	+	MOV(ECX, ESP)                    //mov ecx, esp
 	;
 
@@ -302,18 +320,18 @@ export function createCaller(name, format)
 		case ZInit :
 			code +=
 				PUSH(name.length)        //push <funcNameLength>
-			+	PUSH(Filler(50))         //push offset <funcName>
+			+	PUSH_name                //push offset <funcName>
 			+	MOV([ECX, 0x14], 0xF)    //mov dword ptr [ecx + 14h], 0f
 			+	MOV([ECX, 0x10], 0x0)    //MOV dword ptr [ecx + 10h], 0
 			+	MOV(BYTE_PTR, [ECX], 0)  //mov byte ptr [ecx], 0
-			+	CALL(Filler(51))         //call Allocator
+			+	CALL(Filler(50))         //call Allocator
 			;
 			break;
 
 		case PtrFn :
 			code +=
-				PUSH(Filler(50))         //push offset <funcName>
-			+	CALL([Allocator])   //call dword ptr [Allocator]
+				PUSH_name                //push offset <funcName>
+			+	CALL([Allocator])        //call dword ptr [Allocator]
 			;
 			break;
 
@@ -321,8 +339,8 @@ export function createCaller(name, format)
 			code +=
 				LEA(EAX, [ESP, StkConst + 4 * (icnt + ocnt + 2)]) //lea eax, [esp + StkConst + constL]; contains funcName length
 			+	PUSH_EAX                 //push eax
-			+	PUSH(Filler(50))         //push offset <funcName>
-			+	CALL(Filler(51))         //call Allocator
+			+	PUSH_name                //push offset <funcName>
+			+	CALL(Filler(50))         //call Allocator
 			;
 			break;
 	}
@@ -330,7 +348,7 @@ export function createCaller(name, format)
 	$$(_ + '2.5 - PUSH the state and Call the FnInvoker')
 	code +=
 		PushState                        //push dword ptr [GlobLuaState]
-	+	CALL(Filler(52))                 //call FnInvoker
+	+	CALL(Filler(51))                 //call FnInvoker
 	+	ADD(ESP, StkConst + 8 + 4*icnt)  //add esp, StkConst + 8 + constI
 	;
 
@@ -364,25 +382,18 @@ export function createCaller(name, format)
 ///
 /// \brief Replace all the known fillers to finalize the code created with createCaller function
 ///
-export function finalize(code, at, nameAddr)
+export function finalize(code, at, tgtMap = {})
 {
 	if (IsArr(code))
 		code = code.join('');
 
-	if (IsStr(nameAddr))
-		nameAddr = Exe.FindText(nameAddr, CASE_INSENSITIVE, false);
-
-	if (nameAddr)
-		code = SwapFillers( code, {50: nameAddr} );
-
-	code = SetFillTargets( code,
-	{
+	Object.assign(tgtMap, {
 		start : at,
-		   51 : Allocator,
-		   52 : FnInvoker
+		   50 : Allocator,
+		   51 : FnInvoker
 	});
 
-	return code;
+	return SetFillTargets(code, tgtMap);
 }
 
 ///

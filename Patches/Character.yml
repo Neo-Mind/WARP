@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2021-08-26                                             #
+#   Last Modified : 2021-09-26                                             #
 #                                                                          #
 ############################################################################
 
@@ -93,6 +93,12 @@ CustomChar:
             author : Andrei Karas (4144) , Neo-Mind
             desc : Restore the auto follow functionality in RO-zero clients.
             
+        - CustomAFStopDelay:
+            title : Customize auto follow stop delay
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Set the auto-follow stopping delay (not starting delay) to user specified value.
+        
         - DrawShieldOnTop:
             title : Draw Shield on top
             recommend : no

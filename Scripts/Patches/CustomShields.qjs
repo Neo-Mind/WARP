@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-09-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -89,16 +89,17 @@ CustomShields = function()
 	const retReq = Exe.Phy2Vir(addr + code.byteCount(), CODE);
 
 	$$(_ + '1.7 - Obtain the new Max Shield count from the user')
-	const MaxShield = Exe.GetUserInput('$maxShield', D_Int8, "Shield Limit", "Enter the maximum number of shield types required", 10, {min: 6, saveDefault: true});
+	let MaxShield = Exe.GetUserInput('$maxShield', D_Int8, "Shield Limit", "Enter the maximum number of shield types required", 10, {min: 6, saveDefault: true});
 	if (MaxShield === false)
 		Cancel("Limit reverted to default");
 
+	MaxShield = parseInt(MaxShield); //temporary fix for strings
+	
 	$$(_ + '2.1 - Ensure LUA object is loaded')
 	LUA.load();
 
 	$$(_ + '2.2 - Construct the code to be injected')
-	let funcName = "ReqShieldName";
-	const [prep, main, restore] = LUA.createCaller(funcName, "d>s", EDI, EAX);
+	const [prep, main, restore] = LUA.createCaller("ReqShieldName", "d>s", EDI, EAX);
 
 	let parts =
 	[//0
@@ -128,25 +129,21 @@ CustomShields = function()
 	let csize = parts.byteCount();
 
 	$$(_ + '2.2 - Allocate space for the code')
-	let [free, freeVir] = Exe.FindSpace(csize + funcName.length + 1, 0x10); //extra 1 for a NULL suffix
+	let [free, freeVir] = Exe.FindSpace(csize, 0x10); //extra 1 for a NULL suffix
 
 	$$(_ + '2.3 - Fill in the blanks')
-	code = SetFillTargets( LUA.finalize(parts, freeVir, freeVir + csize),
+	code = LUA.finalize(parts, freeVir,
 	{
-		start : freeVir,
 		'1,1' : freeVir + parts.byteCount(0), // _loop
 		 2    : retReq
 	});
 
 	$$(_ + '2.5 - Add the code at allocated space')
-	Exe.AddHex(free, code + funcName.toHex());
+	Exe.AddHex(free, code);
 
 	$$(_ + '2.6 - Setup a JMP to our code at hookReq')
-	code =
-		argSetup                                                         //push the base address of the table
-	+	JMP(freeVir, Exe.Phy2Vir(hookReq + argSetup.byteCount(), CODE))  //jmp <freeVir>
-	;
-	Exe.SetHex(hookReq, code);
+	Exe.SetHex(hookReq, argSetup);                        //push the base address of the table
+	Exe.SetJMP(hookReq + argSetup.byteCount(), freeVir);  //jmp <freeVir>
 
 	//=========================//
 	// Inject Lua file loading //
@@ -224,8 +221,7 @@ CustomShields = function()
 	const hookMap = Exe.GetTgtAddr(refAddr + 1, PHYSICAL);
 
 	$$(_ + '4.1 - Construct the code to be injected')
-	funcName = "GetShieldID";
-	parts = LUA.createCaller(funcName, "d>d", EDX, EAX);
+	parts = LUA.createCaller("GetShieldID", "d>d", EDX, EAX);
 
 	code =
 		PUSH(EDX)            //push edx
@@ -238,13 +234,13 @@ CustomShields = function()
 
 	$$(_ + '4.2 - Allocate space for the code')
 	let newMapVir;
-	[free, newMapVir] = Exe.FindSpace(csize + funcName.length + 1, 0x10);
+	[free, newMapVir] = Exe.FindSpace(csize, 0x10);
 
 	$$(_ + '4.3 - Fill in the blanks')
-	code = LUA.finalize(code, newMapVir, newMapVir + csize);
+	code = LUA.finalize(code, newMapVir);
 
 	$$(_ + '4.4 - Add the code at allocated space')
-	Exe.AddHex(free, code + funcName.toHex());
+	Exe.AddHex(free, code);
 
 	$$(_ + '4.5 - Create a JMP to the code at hookMap')
 	Exe.SetJMP(hookMap, newMapVir);
@@ -371,8 +367,7 @@ CustomShields = function()
 	const funcVir = Exe.Phy2Vir(funcAddr, CODE);
 
 	$$(_ + '6.5 - Prep the code to be replaced with')
-	funcName = "ValidateShieldID";
-	parts = LUA.createCaller(funcName, "dd>d", [EBP, 0xC], [EBP, 8], EAX); //dd>b would have been more apt but its not present in older clients.
+	parts = LUA.createCaller("ValidateShieldID", "dd>b", [EBP, 0xC], [EBP, 8], AL);
 
 	code =
 		FP_START       //push ebp
@@ -384,10 +379,10 @@ CustomShields = function()
 	;
 
 	$$(_ + '6.6 - Fill in the blanks')
-	code = LUA.finalize(code, funcVir, funcVir + code.byteCount());
+	code = LUA.finalize(code, funcVir);
 
-	$$(_ + '6.7 - Replace the function with our code + the function name')
-	Exe.SetHex(funcAddr, code + funcName.toHex() + " 00");
+	$$(_ + '6.7 - Replace the function with our code')
+	Exe.SetHex(funcAddr, code);
 
 	$$(_ + '7.1 - Find the extra comparison function that got added from 2012-04-18RE onwards. ugh')
 	const prefix =
