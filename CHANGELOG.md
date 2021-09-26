@@ -2,8 +2,11 @@
 
 ## Tool Updates
 - Fixed number input issue in session files.
+
 - Modified `Exe.FindSpace` function to include the size allocated as the 3rd element in the returned list.
+
 - Added `Exe.Reserve` function for performing allocation + reserve address in DIFF section without needing to set any data.
+
 - Added variants of `Exe.Add*` functions which performs the allocation along with insertion and returns the addr & size list identical to `Exe.FindSpace`.
 
 
