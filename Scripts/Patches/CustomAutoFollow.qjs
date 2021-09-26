@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Neo-Mind, CH.C (jchcc)                        *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-08-24                                             *
+*   Last Modified : 2021-09-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -78,7 +78,7 @@ NoAutoFollow = function()
 };
 
 ///
-/// \brief Change the limit value used for comparison against lastFollowTime
+/// \brief Decrease the limit value used for comparison against lastFollowTime
 ///
 DecrAFDelay = function()
 {
@@ -94,7 +94,7 @@ DecrAFDelay = function()
 
 	const addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
-		throw Error("Delay comparison missing");
+		throw Error("No delay comparisons found");
 
 	$$(_ + '1.2 - Find the register movement before it to find the correct match')
 	const movReg = MOV(reg, [POS3WC]); //mov regA, dword ptr [<&WINMM.timeGetTime>] ; regA is edi / ebx
@@ -109,6 +109,49 @@ DecrAFDelay = function()
 	const newDelay = Exe.GetUserInput(varName, D_Uint32, "Delay Value", "Enter the new autofollow delay", 1000, {max: 1000});
 	if (newDelay === false)
 		Cancel("Delay", 1000);
+
+	$$(_ + '2.2 - Replace the old value')
+	Exe.SetFromVar(addr + code.byteCount() - 4, varName);
+
+	return true;
+};
+
+///
+/// \brief Change the limit value used for comparison against lastDisappearTime
+///
+CustomAFStopDelay = function()
+{
+	const _ = 'CustomAFStopDelay : ';
+
+	$$(_ + '1.1 - Ensure \'No Auto follow\' patch is not selected (unless in test mode)')
+	if (!Warp.TestMode)
+		Warp.SetPatchState('NoAutoFollow', false);
+
+	$$(_ + '1.2 - Find the delay comparisons')
+	const reg = Exe.Version > 6 ? EDI : EBX;
+	const code =
+		CALL(reg)           //call edi / call ebx           ; [<&WINMM.timeGetTime>]
+	+	SUB(EAX, [POS4WC])  //sub eax, dword ptr [offset#1] ; lastDisappearTime
+	+	CMP(EAX, 0x2710)    //cmp eax, 2710h                ; 10000ms
+	;
+
+	const addrs = Exe.FindHexN(code);
+	if (addrs.isEmpty())
+		throw Error("No delay comparisons found");
+
+	$$(_ + '1.3 - Find the register movement before it to find the correct match')
+	const movReg = MOV(reg, [POS3WC]); //mov regA, dword ptr [<&WINMM.timeGetTime>] ; regA is edi / ebx
+	const addr = addrs.find( memAddr =>
+		Exe.FindLastHex(movReg, memAddr, memAddr - 0x20) > 0
+	);
+	if (!addr)
+		throw Error("No matches found");
+
+	$$(_ + '2.1 - Get the new value from the user')
+	const varName = '$followStopDelay';
+	const newDelay = Exe.GetUserInput(varName, D_Uint32, "Delay Value", "Enter the new autofollow stop delay", 10000);
+	if (newDelay === false)
+		Cancel("Stop Delay", 10000);
 
 	$$(_ + '2.2 - Replace the old value')
 	Exe.SetFromVar(addr + code.byteCount() - 4, varName);

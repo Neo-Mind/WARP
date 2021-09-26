@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Curiosity, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-08-27                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -71,7 +71,7 @@ RestoreModelCulling = function()
 
 	if (addr < 0)
 		throw Error("CullByOBB not found");
-
+	
 	$$(_ + '1.2 - NOP out the conditional jump')
 	Exe.SetNOPs(addr, 2);
 
@@ -96,7 +96,29 @@ RestoreModelCulling = function()
 
 		Exe.SetHex(addr, code);
 	}
-
+	else
+	{
+		$$(_ + '3.1 - Find the comparison before it')
+		const cmpAddr = Exe.FindLastHex(CMP(BYTE_PTR, [ESI, POS2WC], 1), addr, addr - 10);
+		if (addr < 0)
+			throw Error("Vital comparison missing");
+		
+		$$(_ + '3.2 - Extract the displacement')
+		const disp = Instr.FromAddr(cmpAddr).Disp;
+		
+		$$(_ + '3.3 - Find other such comparisons followed by JNE & NOP the jump') //m_isHideCheck tests
+		const jne = JNE(WCp);
+		for (const memAddr of Exe.FindHexN( CMP(BYTE_PTR, [ESI, disp], 1) ))
+		{
+			if (memAddr === cmpAddr)
+				continue;
+			
+			addr = Exe.FindHex(jne, memAddr, memAddr + 14);
+			if (addr > 0)
+				Exe.SetNOPs(addr, 2);
+		}
+	}
+	
 	return true;
 };
 

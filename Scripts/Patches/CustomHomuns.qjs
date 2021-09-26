@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-09-11                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -91,10 +91,12 @@ CustomHomuns = function()
 	}
 
 	$$(_ + '2.3 - Get the max homunculi limit from user')
-	const MaxHomun = Exe.GetUserInput('$maxHomun', D_Int16, "Limit Input", "Enter the maximum homunculus ID required", 6080, {min: 6080, max: 7000, saveDefault: true});
+	let MaxHomun = Exe.GetUserInput('$maxHomun', D_Int16, "Limit Input", "Enter the maximum homunculus ID required", 6080, {min: 6080, max: 7000, saveDefault: true});
 	if (MaxHomun === false)
 		Cancel("No Max Limit specified");
 
+	MaxHomun = parseInt(MaxHomun); //temporary fix for strings
+	
 	$$(_ + '2.4 - Ensure LUA object is loaded')
 	LUA.load();
 
@@ -103,7 +105,7 @@ CustomHomuns = function()
 
 	$$(_ + '2.6 - Prepare the code to call LUA function for loading tables')
 	const funcName = "ReqJobName";
-	const [prep, main, restore] = LUA.createCaller(funcName, "d>s", EDI, EAX);
+	const [prep, main, restore] = LUA.createCaller([funcName, LUA.ReqJN], "d>s", EDI, EAX);
 
 	const parts =
 	[//0
@@ -137,11 +139,11 @@ CustomHomuns = function()
 	];
 
 	$$(_ + '2.7 - Fill in the blanks')
-	const code = SetFillTargets( LUA.finalize(parts, Exe.Phy2Vir(hookAddr, CODE), LUA.ReqJN),
+	const hookVir = Exe.Phy2Vir(hookAddr, CODE);
+	const code = LUA.finalize(parts, hookVir,
 	{
-		start : hookAddr,
-		'1,1' : hookAddr + parts.byteCount(0), // _loop
-		 2    : endIns.Addr //no VIRTUAL conversion necessary start is also PHYSICAL address
+		'1,1' : hookVir + parts.byteCount(0),  // _loop
+		 2    : Exe.Phy2Vir(endIns.Addr, CODE)
 	});
 
 	$$(_ + '2.8 - Replace at the hook address')

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-01                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-09-17                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -206,10 +206,46 @@ _define_with('IREPN',
 ///
 /// \brief Mixed instructions (multiple operations in one)
 ///
-_define_mux_with('REPN',
+_define_mux_with('IREPN',
 	'CMPEQSS', 'CMPLTSS', 'CMPLESS', 'CMPUNORDSS',
 	'CMPNEQSS', 'CMPNLTSS', 'CMPNLESS', 'CMPORDSS',
 	'CMPSS'
+);
+
+  //=====================================//
+ // SSE Instructions - REPE (F2) prefix //
+//=====================================//
+
+_define_with('IREPE',
+	['MOVSD'       , 0x10, 0x11, 0x10],	//QWORD PTR
+	['MOVDDUP'     , 0x12, null, 0x12],	//QWORD PTR
+
+	['CVTSI2SD'    , 0x2A, null, 0x2A],	//QWORD PTR
+	['MOVNTSD'     , null, 0x2B, null],	//QWORD PTR
+	['CVTTSD2SI'   , 0x2C, null, 0x2C],	//QWORD PTR
+	['CVTSD2SI'    , 0x2D, null, 0x2D],	//QWORD PTR
+
+	['SQRTSD'      , 0x51, null, 0x51],	//QWORD PTR
+	['ADDSD'       , 0x58, null, 0x58],	//QWORD PTR
+	['MULSD'       , 0x59, null, 0x59],	//QWORD PTR
+	['CVTSD2SS'    , 0x5A, null, 0x5A],	//QWORD PTR
+	
+	['SUBSD'       , 0x5C, null, 0x5C],	//QWORD PTR
+	['MINSD'       , 0x5D, null, 0x5D],	//QWORD PTR
+	['DIVSD'       , 0x5E, null, 0x5E],	//QWORD PTR
+	['MAXSD'       , 0x5F, null, 0x5F],	//QWORD PTR
+
+	['PSHUFLW'     , 0x70, null, 0x70],	//DQWORD PTR
+	['CVTPD2DQ'    , 0xE6, null, 0xE6] 	//DQWORD PTR
+);
+
+///
+/// \brief Mixed instructions (multiple operations in one)
+///
+_define_mux_with('IREPE',
+	'CMPEQSD', 'CMPLTSD', 'CMPLESD', 'CMPUNORDSD',
+	'CMPNEQSD', 'CMPNLTSD', 'CMPNLESD', 'CMPORDSD',
+	'CMPSD'
 );
 
   //===================================================//
