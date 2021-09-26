@@ -1,10 +1,13 @@
+# 2021-09-26 Changes
+
+## Patch Updates
+- Added patch to `Customize Auto follow stop delay`.
+
 # 2021-09-11 Changes
 
 ## Patch Updates
 - Added temporary fix for integers being loaded as strings from session files.
   Fixes [bug with Custom Jobs patch](https://github.com/Neo-Mind/WARP/issues/73)
-
-
 
 # 2021-08-31 Changes
 
