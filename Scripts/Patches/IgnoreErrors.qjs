@@ -412,7 +412,7 @@ IgnoreEntryQueueErr = function()
 	$$(_ + '1.5 - Add the string there')
 	Exe.AddText(free, str);
 
-	$$(_ + '2.1 - Check the OutputDebugStringA function address')
+	$$(_ + '2.1 - Get the OutputDebugStringA function address')
 	ROC.findImports();
 
 	$$(_ + '2.2 - Prepare the replacement code (CALLs OutputDebugStringA instead)')

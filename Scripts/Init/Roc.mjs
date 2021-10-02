@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-08-21                                             *
-*   Last Modified : 2021-08-26                                             *
+*   Last Modified : 2021-10-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -57,6 +57,7 @@ export var GetProcAddr;  //will contain VIRTUAL address of 'GetProcAddress' impo
 export var OutDbgStrA;   //will contain VIRTUAL address of 'OutputDebugStringA' imported function
 export var MsgBoxA;      //will contain VIRTUAL address of 'MessageBoxA' imported function
 export var SprintF;      //will contain VIRTUAL address of either 'sprintf' or 'wsprintfA' imported function
+export var CreateWin;    //will contain VIRTUAL address of 'CreateWindowExA'
 
 export var Kernel32;     //will contain VIRTUAL address of 'KERNEL32.dll'
 export var BaseName;     //will contain the basename of the loaded client. Can be useful in reports and such.
@@ -127,6 +128,7 @@ export function load()
 	OutDbgStrA   = -1;
 	MsgBoxA      = -1;
 	SprintF      = -1;
+	CreateWin    = -1;
 
 	IdentifyObj(self, [
 		'RGrfPhy', 'IsRenewal', 'IsZero', 'IsMain', 'Post2010',
@@ -135,7 +137,7 @@ export function load()
 		'GetModHandle', 'GetProcAddr', 'OutDbgStrA', 'MsgBoxA',
 		'Kernel32', 'BaseName'
 	]);
-	
+
 	Log.rise();
 }
 
@@ -179,7 +181,7 @@ export function findImports()
 
 		MsgBoxA = addr;
 	}
-	
+
 	if (SprintF < 0)
 	{
 		let addr = Exe.FindFunc("sprintf");
@@ -188,8 +190,17 @@ export function findImports()
 
 		if (addr < 0)
 			throw Error("No print functions found");
-		
+
 		SprintF = addr;
+	}
+
+	if (CreateWin < 0)
+	{
+		let addr = Exe.FindFunc("CreateWindowExA", "USER32.dll");
+		if (addr < 0)
+			throw Error("'CreateWindowExA' function missing");
+
+		CreateWin = addr;
 	}
 }
 
