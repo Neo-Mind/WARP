@@ -1,3 +1,9 @@
+# 2021-10-02 Changes
+	
+## Script Updates
+	- Added new function `GetImpRefs` to get references of Imported function
+
+
 # 2021-09-26 Changes
 
 ## Tool Updates
