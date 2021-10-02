@@ -1,0 +1,115 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2021 Andrei Karas (4144)                                 *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Andre (4144)                                           *
+*   Created Date  : 2020-10-02                                             *
+*   Last Modified : 2021-10-02                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Data needed for the 2 patches
+///
+CPr_Pairs = {
+	Idle2NormalPriority: [0x40, 0x20],
+	Normal2HighPriority: [0x20, 0x80]
+};
+
+///
+/// \brief Changes the SetPriority function references to custom function which alters the priorityclass value provided before jumping to SetPriority
+///
+AlterPriority = function(patchName)
+{
+	CACHE.put('CP_' + patchName, true);
+
+	this.setup();
+	return true;
+};
+
+///
+/// \brief Undo the staging
+///
+AlterPriority.cleanup = function(patchName)
+{
+	CACHE.del('CP_' + patchName);
+	this.setup();
+};
+
+///
+/// \brief Helper function which does the staging process
+///
+AlterPriority.setup = function()
+{
+	const _ = 'AlterPriority.setup : ';
+
+	$$(_ + '1 - Get the function address & references')
+	const {funcAddr, refAddrs} = GetImpRefs("SetPriorityClass", "KERNEL32.dll");
+	if (funcAddr < 0)
+		throw Error("SetPriority missing");
+
+	if (refAddrs.isEmpty())
+		throw Error("SetPriority never used");
+
+	$$(_ + '2.1 - Construct the new function by parts')
+	let parts = [ MOV(EAX, [ESP, 8]) ];  //mov eax, dword ptr [ARG.2]
+	for (const name in CPr_Pairs)
+	{
+		if (CACHE.has('CP_' + name))
+		{
+			const [from, to] = CPr_Pairs[name];
+			parts.push(
+				CMP(EAX, from)           //cmp eax, <oldValue>
+			+	JNE(7)                   //jne short _skip
+			+	MOV(EAX, to)             //mov eax, <newValue>
+			+	JMP(Filler(1,1))         //jmp short _next
+			);
+		}
+	}
+
+	if (parts.length === 1) //no extra code added.
+		return true;
+
+	let code = SetFillTargets(parts, {'1,1' : parts.byteCount()});
+	code +=
+		MOV([ESP, 8], EAX)               //mov dword ptr [ARG.2], eax
+	+	JMP([funcAddr])                  //jmp dword ptr [<&KERNEL32.SetPriority>]
+	;
+
+	$$(_ + '2.2 - Start the tag')
+	Exe.BeginTag("Adjust_Sleep", true);
+
+	$$(_ + '2.3 - Allocate the space for it')
+	const [free, freeVir] = Exe.FindSpace(4 + code.byteCount());
+
+	$$(_ + '2.4 - Add at allocated space')
+	Exe.AddHex(free, (freeVir + 4).toHex() + code);
+
+	$$(_ + '2.5 - Change the references to access our function instead')
+	for (const addr of refAddrs)
+		Exe.SetInt32(addr, freeVir);
+};
+
+///
+/// \brief Wrappers for individual patches
+///
+Idle2NormalPriority = AlterPriority;
+Normal2HighPriority = AlterPriority;

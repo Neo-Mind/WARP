@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020-2021 Neo-Mind                                       *
+*   Copyright (C) 2021 Andrei Karas (4144)                                 *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -20,66 +20,39 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Neo-Mind                                               *
-*   Created Date  : 2021-08-21                                             *
+*   Author(s)     : Andre (4144)                                           *
+*   Created Date  : 2020-10-02                                             *
 *   Last Modified : 2021-10-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Initialize the Cache module
+/// \brief Change all references of IsDebuggerPresent function to a custom one which simply returns with EAX = 0;
 ///
-CACHE.init();
-
-///
-/// \brief Load the ROC module with all the misc goodies from ROClient
-///
-ROC.load();
-
-///
-/// \brief Initialize the remaining modules
-///
-DGRF.init();
-WINMGR.init();
-LANGTYPE.init();
-SRVRTYPE.init();
-LUA.init();
-PACKET.init();
-MBAR.init();
-FONTAIN.init();
-WINMKR.init();
-
-///
-/// \brief Set up options & tag for Custom Skill patches
-///
-CACHE.setup('CSK', 'SkillInfo',
+IgnoreDebugger = function()
 {
-	cleanTag_after_userDel: false,
-});
+	const _ = 'IgnoreDebugger : ';
 
-///
-/// \brief Set up options & tag for Custom Encryption Key patches
-///
-CACHE.setup('PACKET', 'EncKeys',
-{
-	cleanTag_after_restore: false,
-	cleanTag_after_userDel: false,
-	dealloc_after_restore: false,
-});
+	$$(_ + '1 - Find IsDebuggerPresent function')
+	const funcAddr = Exe.FindFunc("IsDebuggerPresent", "KERNEL32.dll");
+	if (funcAddr < 0)
+		Cancel("Debugger not being checked");
 
-///
-/// \brief Set up options & tag for Resize Mob bar patches
-///
-CACHE.setup('MBAR', 'MobHP',
-{
-	cleanTag_after_restore: false,
-	dealloc_after_restore: false,
-});
+	$$(_ + '2 - Allocate space & add our function')
+	const [, newFuncAddr] = Exe.AddHex(XOR(EAX, EAX) + RETN()); //xor eax, eax followed by retn
 
-///
-/// \brief Set up options & tag for New Button visibility patches
-///
-CACHE.setup('NBV', 'ButtonTbl',
-{
-	dealloc_after_tagClean: true,
-});
+	$$(_ + '3 - Replace the references')
+	for (const pat of [
+		CALL([funcAddr]),
+		PUSH([funcAddr]),
+		MOV(R32, [funcAddr]),
+		MOV(EAX, [funcAddr]),
+	])
+	{
+		let addrs = Exe.FindHexN(pat);
+		for (const addr of addrs)
+			Exe.SetInt32(Instr.FromAddr(addr).NextAddr - 4, newFuncAddr);
+	}
+
+	return true;
+};

@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2021-08-26                                             #
+#   Last Modified : 2021-10-01                                             #
 #                                                                          #
 ############################################################################
 
@@ -276,7 +276,114 @@ CustomFont:
             desc : Makes the client use the user specified font for all Langtypes. The Langtype specific charset is still being enforced, so if the selected font does not support it, the system falls back to a font that does.
         
         - CustomFontHeight:
-            title : Customize Font height
+            title : Customize Font height (Character)
             recommend : no
             author : Yommy , Neo-Mind
-            desc : Resizes the height of the font used to the user specified value.
+            desc : Changes the height of all fonts used to the user specified value (expressed as character height).
+
+        - CustomFontCellHeight:
+            title : Customize Font Height (Cell)
+            recommend : no
+            author : Neo-Mind
+            desc : Changes the height of all fonts used to the user specified value (expressed as cell height).
+          
+        - CustomFontHgtOffset:
+            title : Customize Font Height (Offset)
+            recommend : no
+            author : Neo-Mind
+            desc : Adds the user specified value to all the font heights used.
+        
+        - CustomFontHgtLimits:
+            title : Enable Font Height Limits
+            recommend : no
+            author : Neo-Mind
+            desc : Restricts the font heights used to user specified values.
+        
+        - CustomFontWeight:
+            title : Customize Font Weight (All)
+            recommend : no
+            author : Neo-Mind
+            desc : Changes the weight value (boldness) of all fonts used to the user specified value.
+        
+        - CustomNormalFontWeight:
+            title : Customize Font Weight (Normal)
+            recommend : no
+            author : Neo-Mind
+            desc : Changes the weight value (boldness) of all normal fonts used to the user specified value.
+        
+        - CustomBoldFontWeight:
+            title : Customize Font Weight (Bold)
+            recommend : no
+            author : Neo-Mind
+            desc : Changes the weight value (boldness) of all Bold fonts used to the user specified value.
+        
+        - CustomFontWgtOffset:
+            title : Customize Font Weight (Offset)
+            recommend : no
+            author : Neo-Mind
+            desc : Adds the user specified value to all the weights used.
+        
+        - CustomFontCharset:
+            title : Customize Font charset
+            recommend : no
+            author : Neo-Mind
+            desc : Changes the charset used for all fonts to user specified one.
+
+IgnoreErrors:
+    title : IGNORE ERRORS
+    mutex : false
+    
+    patches:
+        - IgnoreRsrcErr:
+            title : Ignore Resource errors
+            recommend : no
+            author : Shinryo, Andrei Karas (4144) , Ai4rei/AN
+            desc : Prevents the client from displaying a variety of Error messages (but not all of them) including missing files. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of missing files.
+        
+        - IgnorePalErr:
+            title : Ignore Palette errors
+            recommend : no
+            author : Shinryo , Ai4rei/AN
+            desc : Prevents the client from displaying error messages about missing palettes. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of missing files.
+        
+        - IgnoreLuaErr:
+            title : Ignore Lua errors
+            recommend : no
+            author : Andrei Karas (4144), X-EcutiOnner
+            desc : Prevents the client from displaying error messages from lua code like 'attempt to call nil value'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+        
+        - IgnoreQuestErr:
+            title : Ignore Quest errors
+            recommend : no
+            author : Andrei Karas (4144), X-EcutiOnner
+            desc : Prevents the client from displaying error messages like 'Not found Quest Info = XXXX'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+        
+        - IgnoreEntryQueueErr:
+            title : Ignore Entry Queue errors
+            recommend : no
+            author : X-EcutiOnner
+            desc : Prevents the client from displaying error messages related to Entry Queue. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+
+
+MessageBox:
+    title : MSGBOX CUSTOMIZATIONS
+    mutex : true
+    
+    patches:
+        - MsgBox2Beep:
+            title : Change MessageBox to Beep
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Makes the client produce the user specified sound (using MessageBeep function) instead of showing a MessageBox.
+        
+        - ShowMsgIcon:
+            title : Show icon in MessageBox
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Makes the client show the user specified icon inside MessageBoxes along with the message text.
+        
+        - NoMsgBox:
+            title : Disable MessageBoxes
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Disables all MessageBoxes from appearing to show any errors/warnings/informations etc.

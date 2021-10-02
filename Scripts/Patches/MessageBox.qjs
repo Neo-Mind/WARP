@@ -1,0 +1,202 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2021 Andrei Karas (4144)                                 *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Andrei (4144)                                          *
+*   Created Date  : 2021-10-01                                             *
+*   Last Modified : 2021-10-01	                                           *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Data to be used for MessageBox patches
+///
+MB_Types =
+{
+	INFO_ASTERISK    : 0x40,
+	WARN_EXCLAMATION : 0x30,
+	QUESTION         : 0x20,
+	ERROR_STOP       : 0x10,
+	OK_DEFAULT       : 0x00,
+	SIMPLE_BEEP      : 0xFFFFFFFF
+};
+
+///
+/// \brief Changes MessageBoxA calls to custom function which calls MessageBeep instead.
+///
+MsgBox2Beep = function()
+{
+	const _ = 'MsgBox2Beep : ';
+
+	$$(_ + '1.1 - Find references of  MessageBoxA function')
+	let hookAddrs = _MB_getRefs();
+
+	$$(_ + '1.2 - Find "USER32.dll"')
+	let User32 = Exe.FindText("USER32.dll", CASE_INSENSITIVE);
+	if (User32 < 0)
+		throw Error("USER32 missing");
+
+	$$(_ + '2.1 - Get the beep type from user')
+	const key = Exe.GetUserInput('$beepType', D_Choice, "MessageBox Change", "Enter the beep type expected", 'OK_DEFAULT', {choices: Object.getOwnPropertyNames(MB_Types), saveDefault: true});
+	if (key === false)
+		Cancel("MessageBox reverted");
+
+	$$(_ + '2.2 - Construct the replacement function')
+	const parts =
+	[
+		MOV(EAX, [Filler(1)])      //mov eax, dword ptr [funcAddr]
+	+	TEST(EAX, EAX)             //test eax, eax
+	+	JNZ(Filler(2,1))           //jnz short _loaded
+	+	PUSH(User32)               //push "USER32.dll"
+	+	CALL([ROC.GetModHandle])   //call dword ptr [<&KERNEL32.GetModuleHandle>]
+	+	CALL(12)                   //push <nextAddr> + jmp
+	+	"MessageBeep\x00".toHex()  //ASCII "MessageBeep"
+	+	PUSH_EAX                   //push eax
+	+	CALL([ROC.GetProcAddr])    //call dword ptr [<&KERNEL32.GetProcAddress>]
+	+	MOV([Filler(1)], EAX)      //mov dword ptr [funcAddr], eax
+	,
+		PUSH(MB_Types[key])        //push <beepType> ; _loaded
+	+	CALL(EAX)                  //call eax ; [USER32.MessageBeep]
+	+	XOR(EAX, EAX)              //xor eax, eax
+	+	INC(EAX)                   //inc eax
+	+	RETN(0x10)                 //retn 10h
+	];
+	const [, _loaded, csize] = MapAddrs(0, parts);
+
+	$$(_ + '2.3 - Allocate space for it')
+	const [free, freeVir] = Exe.FindSpace(8 + csize, 0x10);
+
+	$$(_ + '2.4 - Fill in the blanks')
+	let code = SetFillTargets(parts, 1, {'2,1' : _loaded});
+	code = SwapFillers(code, 2, {1 : freeVir + 4});
+
+	$$(_ + '2.5 - Add at allocated space')
+	Exe.AddHex(free, (freeVir + 8).toHex() + ALL00 + code);
+
+	$$(_ + '2.6 - Replace the references')
+	for (const addr of hookAddrs)
+		Exe.SetInt32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
+
+	return true;
+};
+
+///
+/// \brief Changes the calls to MessageBoxA to a custom function which changes the 4th argument to incorporate the icon needed.
+///
+ShowMsgIcon = function()
+{
+	const _ = 'ShowMsgIcon : ';
+
+	$$(_ + '1 - Find references of  MessageBoxA function')
+	let hookAddrs = _MB_getRefs();
+
+	$$(_ + '2.1 - Get the icon type from user')
+	const choices = Object.getOwnPropertyNames(MB_Types).filter(v => v !== "SIMPLE_BEEP");
+	const key = Exe.GetUserInput('$msgIconType', D_Choice, "MessageBox Change", "Enter the beep type expected", 'OK_DEFAULT', {choices});
+	if (key === false)
+		Cancel("MessageBox reverted");
+
+	$$(_ + '2.2 - Prepare the new function')
+	const code =
+		MOV(EAX, [ESP, 0x10])   //mov eax, dword ptr [ARG.4]
+	+	AND(EAX, ~0x70)         //and eax, FFFFFF8Fh ; masking off
+	+	OR(EAX, MB_Types[key])  //or eax, <msgIconType>
+	+	MOV([ESP, 0x10], EAX)   //mov dword ptr [ARG.4], eax
+	+	JMP([ROC.MsgBoxA])      //jmp dword ptr [<&USER32.MessageBoxA>]
+	;
+
+	$$(_ + '2.3 - Allocate space & add it')
+	const [free, freeVir] = Exe.FindSpace(4 + code.byteCount());
+	Exe.AddHex(free, (freeVir + 4).toHex() + code);
+
+	$$(_ + '2.4 - Replace the references')
+	for (const addr of hookAddrs)
+		Exe.SetInt32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
+
+	return true;
+};
+
+///
+/// \brief Changes the calls to MessageBoxA to simply return without doing anything
+///
+NoMsgBox = function()
+{
+	const _ = 'NoMsgBox : ';
+
+	if (!Warp.TestMode)
+	{
+		$$(_ + '1.1 - Deactivate all the "Ignore*Error" patches')
+		for (const name of ["IgnoreRsrcErr", "IgnorePalErr", "IgnoreQuestErr", "IgnoreLuaErr", "IgnoreEntryQueueErr"])
+			Warp.SetPatchState(name, false);
+	}
+
+	$$(_ + '1.2 - Find references of  MessageBoxA function')
+	let hookAddrs = _MB_getRefs();
+
+	$$(_ + '2.1 - Prepare the new function')
+	const code =
+		XOR(EAX, EAX) //xor eax, eax
+	+	INC(EAX)      //inc eax
+	+	RETN(0x10)    //retn 10h
+	;
+
+	$$(_ + '2.2 - Allocate space & add it')
+	const [free, freeVir] = Exe.FindSpace(4 + code.byteCount());
+	Exe.AddHex(free, (freeVir + 4).toHex() + code);
+
+	$$(_ + '2.3 - Replace the references')
+	for (const addr of hookAddrs)
+		Exe.SetInt32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
+
+	return true;
+};
+
+///
+/// \brief Supporting function to get all references to MessageBoxA imported function
+///
+_MB_getRefs = function()
+{
+	const _ = '_MB_getRefs : ';
+
+	if (CACHE.has("MB_Refs"))
+		return CACHE.get("MB_Refs");
+
+	$$(_ + '1 - Get MessageBoxA function')
+	ROC.findImports();
+
+	$$(_ + '2 - Find it\'s references')
+	let hookAddrs = [];
+	for (const pat of [
+		CALL([ROC.MsgBoxA]),     //call dword ptr [<&USER32.MessageBoxA>]
+		MOV(R32, [ROC.MsgBoxA]), //mov regA, [<&USER32.MessageBoxA>]
+		MOV(EAX, [ROC.MsgBoxA])  //mov eax, [<&USER32.MessageBoxA>]
+	])
+		hookAddrs = hookAddrs.concat( Exe.FindHexN(pat) );
+
+	if (hookAddrs.isEmpty())
+		throw Error("MessageBox not used");
+
+	$$(_ + '3 - Put in CACHE')
+	CACHE.put("MB_Refs", hookAddrs);
+
+	$$(_ + '4 - Return the addresses found')
+	return hookAddrs;
+};
