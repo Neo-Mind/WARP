@@ -1,9 +1,8 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) ?-2015 Ai4rei/AN, Yommy                                  *
-*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*   Copyright (C) 2021 Neo-Mind                                            *
 *                                                                          *
-*   This file is a part of WARP project (specific to RO clients)           *
+*   This file is a part of WARP project                                    *
 *                                                                          *
 *   WARP is free software: you can redistribute it and/or modify           *
 *   it under the terms of the GNU General Public License as published by   *
@@ -16,134 +15,415 @@
 *   GNU General Public License for more details.                           *
 *                                                                          *
 *   You should have received a copy of the GNU General Public License      *
-*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*   along with program.  If not, see <http://www.gnu.org/licenses/>.       *
 *                                                                          *
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Ai4rei/AN, Yommy, Neo-Mind                             *
-*   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-08-31                                             *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2021-09-28                                             *
+*   Last Modified : 2021-10-01                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Hijack CreateFontA function calls to change the pushed Font Height
-///        before Jumping to actual CreateFontA
+/// \brief Data for Font height patches
 ///
-CustomFontHeight = function()
+FH_Data =
 {
-	const _ = 'CustomFontHeight : ';
-
-	$$(_ + '1.1 - Find CreateFontA imported function')
-	const CreateFontA = Exe.FindFunc("CreateFontA", "GDI32.dll");
-	if (CreateFontA < 0)
-		throw Error("CreateFontA not found");
-
-	$$(_ + '1.2 - Find all its CALLed locations')
-	let addrs = Exe.FindHexN( CALL([CreateFontA]) ); //CALL dword ptr [<&GDI32.CreateFontA>]
-	if (addrs.isEmpty())
-		throw Error("CreateFontA not CALLed");
-
-	$$(_ + '2.1 - Get the new Font height from user')
-	const newHeight = Exe.GetUserInput('$newFontHgt', D_FontSize, "Font Height", "Enter the new height (snaps to closest valid value)", 10);//, {sampleName: "Tahoma"});
-	if (newHeight === false)
-		Cancel("Font height", 10);
-
-	$$(_ + '2.2 - Prepare our function which swaps out the FontHeight')
-	let code =
-		Filler(1)                 //This will contain VIRTUAL address of 4 bytes later (needed since we are hijacking indirect CALL)
-	+	MOV([ESP, 4], Filler(2))  //mov dword ptr [esp+4], newHeight
-	+	JMP([CreateFontA])        //jmp dword ptr [<&GDI32.CreateFontA>]
-	;
-	const csize = code.byteCount();
-
-	$$(_ + '2.3 - Allocate space for our function')
-	const [free, freeVir] = Exe.FindSpace(csize);
-
-	$$(_ + '2.4 - Fill in the Blanks')
-	code = SwapFillers( code, 1,
+	CustomFontHeight :
 	{
-		1: freeVir + 4,
-		2: -newHeight
-	});
+		varName : '$newFontHgt',
+		prompt : "Character height",
+		defVal : 10
+	},
 
-	$$(_ + '2.5 - Add the function at the allocated space')
-	Exe.AddHex(free, code);
+	CustomFontCellHeight :
+	{
+		varName : '$newFontCellHgt',
+		prompt : "Character cell height",
+		defVal : 10
+	},
 
-	$$(_ + '3.1 - Swap out the CreateFontA CALLs with out function\'s address')
-	for (const addr of addrs)
-		Exe.SetInt32(addr + 2, freeVir);
+	CustomFontHgtOffset:
+	{
+		varName : '$fontHgtOff',
+		prompt : "Height adjustment",
+		defVal : 0
+	},
 
-	$$(_ + '3.2 - Find any JMP dword ptrcalls to CreateFontA (fail safe)')
-	let addr = Exe.FindHex( PUSH([CreateFontA]) );
-
-	$$(_ + '3.3 - Update the address')
-	if (addr > 0)
-		Exe.SetInt32(addr + 2, freeVir);
-
-	return true;
+	CustomFontHgtLimits :
+	{
+		varName : ['$fontHgtLimitL', '$fontHgtLimitH'],
+		prompt : ["Min Character cell height", "Max Character cell height"],
+		defVal : 10
+	},
 };
 
 ///
-/// \brief Overwrite all entries in the Fontname array with user specified name
+/// \brief Modifies the height being fed to CreateFontA function in the client.
 ///
-CustomFontName = function()
+FontHeight = function(patchName)
 {
-	const _ = 'CustomFontName : ';
+	const _ = patchName + ' : ';
 
-	$$(_ + '1.1 - Find \'Gulim\' (Korean language font which serves as the first entry of the array)')
-	const gulAddr = Exe.FindText("Gulim", false);
-	if (gulAddr < 0)
-		throw Error("'Gulim' not found");
-
-	$$(_ + '1.2 - Find where the address itself is stored (which will be start of the table)')
-	///       Usually it is within .data section (but just in case we will look at all offsets after CODE section)
-	let addr = Exe.FindHex( gulAddr.toHex(), Exe.GetSectEnd(CODE), Exe.FileSize);
-	if (addr < 0)
-		throw Error("Font table not found");
-
-	$$(_ + '2.1 - Get the Font name from user')
-	const varName = '$newFont';
-	const newFont = Exe.GetUserInput(varName, D_FontName, "Font input", "Select the new Font Family", "Arial", {sampleSize: 10});
-	if (newFont === false)
-		Cancel("Font Family", "Arial");
-
-	$$(_ + '2.2 - Find the Font name (could be already existing one)')
-	let free = Exe.FindText(newFont, PHYSICAL);
-	let freeVir;
-
-	if (free > 0)
+	if (!Warp.TestMode)
 	{
-		$$(_ + '2.3 - Get the VIRTUAL address')
-		freeVir = Exe.Phy2Vir(free);
+		$$(_ + '1.1 - Deactivate other patches')
+		for (const name in FH_Data)
+		{
+			if (name !== patchName)
+				Warp.SetPatchState(name, false);
+		}
+	}
+
+	$$(_ + '1.2 - Ensure FONTAIN is loaded')
+	FONTAIN.load();
+
+
+	const {varName, prompt, defVal} = FH_Data[patchName];
+	if (patchName === "CustomFontHgtLimits")
+	{
+		$$(_ + '2.1 - Retrieve the limits from user')
+		const [limitL, limitH] = varName.filter( (name, idx) =>
+		{
+			return Exe.GetUserInput(name, D_FontSize, "Font Height Limit", "Enter the new " + prompt[idx], defVal, {sampleName: "Tahoma"});
+		});
+		if ( limitL === false && limitH === false)
+			Cancel("No limits set");
+
+		$$(_ + '2.2 - Setup min height limit if defined')
+		if (limitL !== false)
+			FONTAIN.setMinHgt(limitL);
+
+		$$(_ + '2.3 - Setup max height limit if defined')
+		if (limitH !== false)
+			FONTAIN.setMaxHgt(limitH);
 	}
 	else
 	{
-		$$(_ + '2.4 - Allocate space to add the font since its not already present') ;//semicolon needed here
-		[free, freeVir] = Exe.FindSpace(varName);
-		Exe.AddFromVar(free, varName);
+		$$(_ + '3.1 - Get the new height/height offset from user')
+		const newVal = Exe.GetUserInput(varName, patchName === '$fontHgtOff' ? D_Int8 : D_FontSize, "Font Height", "Enter the new " + prompt, defVal, {sampleName: "Tahoma"});
+		if (newVal === false)
+			Cancel("Height reverted");
+
+		$$(_ + '3.2 - Setup the height/height offset')
+		switch (patchName)
+		{
+			case "CustomFontHeight" :
+			{
+				FONTAIN.setHeight(-newVal);
+				break;
+			}
+			case "CustomFontCellHeight" :
+			{
+				FONTAIN.setHeight(newVal);
+				break;
+			}
+			case "CustomFontHgtOffset" :
+			{
+				FONTAIN.setHgtOff(newVal);
+				break;
+			}
+		}
 	}
 
-	$$(_ + '3.1 - Overwrite all entries in the font table with this one (all the entries will be an address in DATA section)')
-	for (let dataBegin = Exe.GetSectBegin(DATA); Exe.GetInt32(addr) >= dataBegin; addr += 4)
-	{
-		Exe.SetInt32(addr, freeVir);
-	}
-
+	$$(_ + '4 - Stage the changes')
+	FONTAIN.stage(patchName);
 	return true;
 };
 
-/**==================================================================
-//Old procedure
-gulAddr &= 0xFFF00000;
-do
+///
+/// \brief Cleans up the staging done in the patch.
+///
+FontHeight.cleanup = function(patchName)
 {
-    Exe.SetInt32(addr, freeVir);
-    addr += 4;
-} while((Exe.GetInt32(addr) & gulAddr) === gulAddr);
+	switch (patchName)
+	{
+		case "CustomFontHeight" :
+		case "CustomFontCellHeight" :
+		{
+			FONTAIN.setHeight();
+			break;
+		}
+		case "CustomFontHgtOffset" :
+		{
+			FONTAIN.setHgtOff();
+			break;
+		}
+		case "CustomFontHgtLimits" :
+		{
+			FONTAIN.setMinHgt;
+			FONTAIN.setMaxHgt;
+			break;
+		}
+	}
 
-NOTE: this might not be entirely fool-proof, but we cannot depend
-on the fact the array ends with 0x00000081 (CHARSET_HANGUL).
-It can change in any client.
-==================================================================**/
+	FONTAIN.unstage(patchName);
+};
+
+///
+/// \brief Wrappers for individual patches
+///
+CustomFontHeight     = FontHeight;
+CustomFontCellHeight = FontHeight;
+CustomFontHgtOffset  = FontHeight;
+CustomFontHgtLimits  = FontHeight;
+
+///
+/// \brief Data for Font weight patches
+///
+FW_Data =
+{
+	CustomFontWeight :
+	{
+		varName : '$newfontWgt',
+		limits : [0, 1000],
+		prompt : "Font Weight",
+		defVal : 400
+	},
+
+	CustomFontWgtOffset :
+	{
+		varName : '$newFontWgtOff',
+		limits : [-1000, 1000],
+		prompt : "Font Weight adjustment",
+		defVal : 0
+	},
+
+	CustomNormalFontWeight :
+	{
+		varName : '$newNormFontWgt',
+		limits : [100, 540],
+		prompt : "Normal Font Weight",
+		defVal : 400
+	},
+
+	CustomBoldFontWeight :
+	{
+		varName : '$newBoldFontWgt',
+		limits : [550, 900],
+		prompt : "Bold Font Weight",
+		defVal : 700
+	}
+};
+
+///
+/// \brief Modifies the font weight being fed to CreateFontA function in the client.
+///
+FontWeight = function(patchName)
+{
+	const _ = patchName + ' : ';
+
+	if (!Warp.TestMode)
+	{
+		$$(_ + '1.1 - Deactivate other patches')
+		for (const name in FW_Data)
+		{
+			if (name !== patchName &&
+				!((name === "CustomNormalFontWeight" && patchName === "CustomBoldFontWeight") || (patchName === "CustomNormalFontWeight" && name === "CustomBoldFontWeight"))
+			)
+				Warp.SetPatchState(name, false);
+		}
+	}
+
+	$$(_ + '1.2 - Ensure FONTAIN is loaded')
+	FONTAIN.load();
+
+	$$(_ + '2.1 - Get the new weight/weight offset from user')
+	const {varName, limits, defVal, prompt} = FW_Data[patchName];
+	const val = Exe.GetUserInput(varName, D_Int16, "Font Weight", "Enter the new " + prompt, defVal, {
+		min: limits[0],
+		max: limits[1],
+		saveDefault: (patchName === "CustomFontWeight")
+	});
+
+	if (val === false)
+		Cancel("Weight reverted");
+
+	$$(_ + '2.2 - Setup the weight/weight offset obtained')
+	switch (patchName)
+	{
+		case "CustomFontWgtOffset" :
+		{
+			FONTAIN.setWgtOff(val);
+			break;
+		}
+
+		case "CustomFontWeight" :
+		{
+			FONTAIN.setWeight(val);
+			break;
+		}
+
+		case "CustomNormalFontWeight" :
+		case "CustomBoldFontWeight" :
+		{
+			FONTAIN.changeWeight(defVal, val);
+			break;
+		}
+	}
+
+	$$(_ + '2.3 - Stage the changes')
+	FONTAIN.stage(patchName);
+	return true;
+};
+
+///
+/// \brief Cleanup the staging done in the patch.
+///
+FontWeight.cleanup = function(patchName)
+{
+	switch(patchName)
+	{
+		case "CustomFontWgtOffset" :
+		{
+			FONTAIN.setWgtOff();
+			break;
+		}
+		case "CustomFontWeight" :
+		{
+			FONTAIN.setWeight();
+			break;
+		}
+		case "CustomNormalFontWeight" :
+		case "CustomBoldFontWeight" :
+		{
+			FONTAIN.changeWeight(FW_Data[patchName].defVal);
+			break;
+		}
+	}
+
+	FONTAIN.unstage(patchName);
+};
+
+///
+/// \brief Wrappers for individual patches
+///
+CustomFontWeight       = FontHeight;
+CustomBoldFontWeight   = FontWeight;
+CustomNormalFontWeight = FontWeight;
+CustomFontWgtOffset    = FontWeight;
+
+
+/* For reference
+Weight_Values = {
+	Thin : 100,
+	ExtraLight : 200,
+	Light : 300,
+	Normal : 400,
+	Medium : 500,
+	SemiBold : 600,
+	Bold : 700
+	UltraBold : 800,
+	Heavy : 900
+};
+*/
+
+///
+/// \brief Modify the family/face name being fed to CreateFontA function in the client.
+///
+CustomFontName = function(patchName)
+{
+	const _ = patchName + ' : ';
+
+	$$(_ + '1.1 - Ensure FONTAIN is loaded')
+	FONTAIN.load();
+
+	$$(_ + '1.2 - Get the new name from user')
+	const varName = '$newFont';
+	const newFont = Exe.GetUserInput(varName, D_FontName, "Font input", "Select the new Font Family", "Arial", {saveDefault: true, sampleSize: 10});
+	if (newFont === false)
+		Cancel("Font name reverted");
+
+	$$(_ + '2.2 - Find the Font name (could be already existing one)')
+	const phy = Exe.FindText(newFont, PHYSICAL);
+	if (phy > 0)
+	{
+		$$(_ + '2.3 - Get the VIRTUAL address')
+		FONTAIN.setNameAddr(Exe.Phy2Vir(phy));
+	}
+	else
+	{
+		$$(_ + '2.4 - Allocate space & add the font since its not already present');
+		FONTAIN.setNameAddr(Exe.AddFromVar(varName)[1]);
+	}
+
+	FONTAIN.stage(patchName);
+	return true;
+};
+
+///
+/// \brief Cleanup the staging done in the patch
+///
+CustomFontName.cleanup = patchName =>
+{
+	FONTAIN.setNameAddr();
+	FONTAIN.unstage(patchName);
+};
+
+///
+/// \brief Data used by Charset patch
+///
+FC_Data =
+{
+	ANSI : 0,
+	BALTIC : 186,
+	CHINESEBIG5 : 136,
+	DEFAULT : 1,
+	EASTEUROPE : 238,
+	GB2312 : 134,
+	GREEK : 161,
+	HANGUL : 129,
+	MAC : 77,
+	OEM : 255,
+	RUSSIAN : 204,
+	SHIFTJIS : 128,
+	SYMBOL : 2,
+	TURKISH : 162,
+	VIETNAMESE : 163,
+
+	///Needs Korean language edition
+	JOHAB : 130,
+
+	///Needs Middle East language edition
+	ARABIC : 178,
+	HEBREW : 177,
+
+	///Needs Thai language edition
+	THAI : 222,
+};
+
+///
+/// \brief Modify the charset fed to CreateFontA function in the client
+///
+
+CustomFontCharset = function(patchName)
+{
+	const _ = patchName + ' : ';
+
+	$$(_ + '1.1 - Ensure FONTAIN is loaded')
+	FONTAIN.load();
+
+	$$(_ + '1.2 - Get the Font charset from user')
+	const varName = '$newFontCharset';
+	const key = Exe.GetUserInput(varName, D_Choice, "Font input", "Select the new Font Charset", "DEFAULT", {choices: Object.getOwnPropertyNames(FC_Data)});
+	if (key === false)
+		Cancel("Font charset reverted");
+
+	$$(_ + '2.1 - Setup the value')
+	FONTAIN.setCharset(FC_Data[key]);
+
+	$$(_ + '2.2 - Stage the changes')
+	FONTAIN.stage(patchName);
+	return true;
+};
+
+///
+/// \brief Cleanup the staging done by the patch
+///
+CustomFontCharset.cleanup = patchName =>
+{
+	FONTAIN.setCharset();
+	FONTAIN.unstage(patchName);
+};

@@ -1,3 +1,56 @@
+# 2021-10-02 Changes
+
+## Patch Updates
+- Updated `Customize Walk delay` patch to set individual delays.
+
+- Added patches for the following:
+
+	- More `Font customization` options i.e. weight (fixed and specific to normal & bold), charset, relative height & weight
+	
+	- Play sound instead of displaying `MessageBox`
+	
+	- Show icon inside `MessageBox`
+	
+	- Skip showing `MessageBox` altogether
+	
+	- Borderless full screen
+	
+	- Setting Mini title bar
+	
+	- Ignoring Debugger presence
+
+	- Add Input Delay
+	
+	- Change Game Loop delay
+
+	- Altering priority from (Idle to Normal) or (Normal to High)
+	
+## Script Updates
+	- Added new function `GetImpRefs` to get references of Imported function
+	
+	
+# 2021-09-26 Changes
+
+## Patch Updates
+- Added patch to `Customize Auto follow stop delay`.
+
+## Tool Updates
+- Fixed number input issue in session files.
+
+- Modified `Exe.FindSpace` function to include the size allocated as the 3rd element in the returned list.
+
+- Added `Exe.Reserve` function for performing allocation + reserve address in DIFF section without needing to set any data.
+
+- Added variants of `Exe.Add*` functions which performs the allocation along with insertion and returns the addr & size list identical to `Exe.FindSpace`.
+
+
+# 2021-09-11 Changes
+
+## Patch Updates
+- Added temporary fix for integers being loaded as strings from session files.
+  Fixes [bug with Custom Jobs patch](https://github.com/Neo-Mind/WARP/issues/73)
+
+
 # 2021-08-31 Changes
 
 ## Patch Updates
