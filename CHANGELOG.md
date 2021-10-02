@@ -25,6 +25,8 @@
 
 	- Altering priority from (Idle to Normal) or (Normal to High)
 	
+	- Changing Captcha decompression size
+	
 ## Script Updates
 	- Added new function `GetImpRefs` to get references of Imported function
 	
