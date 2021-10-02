@@ -1,0 +1,76 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2021 Asheraf                                             *
+*   Copyright (C) 2021 Andrei Karas (4144)                                 *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Asheraf, Andre (4144)                                  *
+*   Created Date  : 2020-10-02                                             *
+*   Last Modified : 2021-10-02                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the zlib decompression size for downloaded captcha images
+///
+CustomCaptchaDecomp = function()
+{
+	const _ = 'CustomCaptchaDecomp : ';
+
+	$$(_ + '1 - Find the image decomp allocations')
+	const oldSize = 0x9AB0;
+	const parts =
+	[
+		PUSH(POS4WC)              //push <new2_flag>
+	+	PUSH(oldSize)             //push 9AB0h
+	,
+		MOV([EBP, WCn], oldSize)  //mov dword ptr [LOCAL.size], 9AB0h
+	,
+		CALL()                    //call <dc_func>
+	];
+
+	let addrs = Exe.FindHexN(parts);
+	if (addrs.isEmpty())
+		throw Error("Captcha decompressions missing");
+
+	$$(_ + '2 - Get the new decomp size from user')
+	const varName = '$captchaDcSize';
+	const newSize = Exe.GetUserInput(varName, D_Uint32, "Captcha Decompression", "Enter the new maximum decompression size", oldSize, {min: 1, max: 100000});
+	if (newSize === false)
+		Cancel("Captcha decomp size", 39600);
+
+	$$(_ + '3 - Change the values')
+	const pos1 = parts.byteCount(0) - 4;
+	const pos2 = pos1 + parts.byteCount(1);
+
+	for (const addr of addrs)
+	{
+		Exe.SetFromVar(addr + pos1, varName);
+		Exe.SetFromVar(addr + pos2, varName);
+	}
+
+	return true;
+};
+
+///
+/// \brief Disable for clients without the captcha download
+///
+CustomCaptchaDecomp.validate = () =>
+	Exe.FindText("/macro_preview", PHYSICAL) > 0;
