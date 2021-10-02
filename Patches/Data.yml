@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2021-08-26                                             #
+#   Last Modified : 2021-10-02                                             #
 #                                                                          #
 ############################################################################
 
@@ -187,6 +187,12 @@ CustomData:
             recommend : yes
             author : Ai4rei/AN , Neo-Mind
             desc : Translates the korean names of the Taekwon branch to English.
+        
+        - CustomCaptchaDecomp:
+            title : Customize Captcha Decomp size
+            recommend : no
+            author : Andrei Karas (4144), Asheraf
+            desc : Changes the default zlib max decompression size used for captcha images to user specified value.
 
 DisableEncr:
     title : DISABLE ENCRYPTION
