@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : MegaByte, X-EcutiOnner                                 *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-10-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -75,14 +75,23 @@ WalkDelay = function(patchName)
 	else
 	{
 		$$(_ + '2.2 - Get the new delay value from user')
-		const varName = '$walkDelay';
-		const result = Exe.GetUserInput(varName, D_Uint16, "Walk Delay", "Enter the new walk delay (snaps to closest valid value)", 600, {min: 0, max: 1000});
+		let varName = '$walkDelay';
+		let result = Exe.GetUserInput(varName, D_Uint16, "Walk Delay", "Enter the first new walk delay (snaps to closest valid value)", 600, {min: 0, max: 1000});
 		if (result === false)
 			Cancel("Delay", 600);
 
 		$$(_ + '2.3 - Replace the value')
-		for (const addr of tgtAddrs)
-			Exe.SetFromVar(addr + 2, varName);
+		Exe.SetFromVar(tgtAddrs[0] + 2, varName);
+
+		if (tgtAddrs[1])
+		{
+			$$(_ + '2.4 - Repeat the steps for the 2nd location')
+			varName = '$walkDelay2';
+			result = Exe.GetUserInput(varName, D_Uint16, "Walk Delay", "Enter the second new walk delay (snaps to closest valid value)", result, {min: 0, max: 1000, saveDefault: true});
+
+			if (result !== false)
+				Exe.SetFromVar(tgtAddrs[1] + 2, varName);
+		}
 	}
 
 	return true;

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-08-26                                             *
+*   Last Modified : 2021-10-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -541,6 +541,48 @@ GetInstr = (current, n) =>
 	}
 
 	return result;
+};
+
+///
+/// \brief Retrieves the references of an imported function
+///
+GetImpRefs = (funcName, dllName = null) =>
+{
+	if (CACHE.has(funcName + '_Refs'))
+	{
+		return {
+			funcAddr : CACHE.get(funcName + '_Addr'),
+			refAddrs : CACHE.get(funcName + '_Refs')
+		};
+	}
+
+	let funcAddr;
+	if (CACHE.has(funcName + '_Addr'))
+	{
+		funcAddr = CACHE.get(funcName + '_Addr');
+	}
+	else
+	{	funcAddr = Exe.FindFunc(funcName, dllName ?? "");
+		if (funcAddr < 0)
+			return {funcAddr};
+
+		CACHE.put(funcName + '_Addr', funcAddr);
+	}
+
+	let refAddrs = [];
+	for (const pat of [
+		CALL([funcAddr]),       //call dword ptr [<&func>]
+		MOV(R32, [funcAddr]),   //mov regA, dword ptr [<&func>]
+		MOV(EAX, [funcAddr]),   //mov eax, dword ptr [<&func>]
+		PUSH([funcAddr])        //push dword ptr [<&func>]
+	])
+	{
+		refAddrs = refAddrs.concat( Exe.FindHexN(pat) );
+	}
+	if (!refAddrs.isEmpty())
+		CACHE.put(funcName + '_Refs', refAddrs.map(addr => Instr.FromAddr(addr).NextAddr - 4));
+
+	return {funcAddr, refAddrs};
 };
 
   //===========//

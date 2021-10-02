@@ -2,6 +2,7 @@
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
 *   Copyright (C) 2013-2021 Neo-Mind                                       *
+*   Copyright (C) 2021 Andrei Karas (4144)                                 *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -21,9 +22,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Shinryo, Neo-Mind                                      *
+*   Author(s)     : Shinryo, Neo-Mind, Andre (4144)                        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -81,39 +82,117 @@ CustomWinTitle = function()
 ///
 /// \brief Change the Style parameter used for CreateWindowExA CALL to include WS_SYSMENU
 ///
-EnableSysMenu = function()
+EnableSysMenu = function(patchName)
 {
-	const _ = 'EnableSysMenu : ';
+	const _ = patchName + ' : ';
 
-	$$(_ + '1.1 - Find the "CreateWindowExA" imported function')
-	const addr = Exe.FindFunc("CreateWindowExA", "USER32.dll");
-	if (addr < 0)
-		throw Error("CreateWindowExA not found");
+	$$(_ + '1 - Ensure WINMKR is loaded')
+	WINMKR.load();
 
-	$$(_ + '1.2 - Find the locations where it is called')
-	const addrs = Exe.FindHexN( CALL([addr]) ); //CALL DWORD PTR DS:[<CreateWindowExA>]
-	if (addrs.isEmpty())
-		throw Error("CreateWindowExA CALLs not found");
+	$$(_ + '2 - Construct the code to insert')
+	const code =
+		MOV(EAX, [ESP, 0x10])  //mov eax, dword ptr [ARG.4] ; Style
+	+	OR(EAX, 0x80000)       //or eax, <WS_SYSMENU>
+	+	MOV([ESP, 0x10], EAX)  //mov dword ptr [ARG.4], eax
+	;
 
-	$$(_ + '2.1 - Find the one where the client window is created (current style will be 0x02C20000)')
-	const code = PUSH(0x02C20000);
-
-	const styleAddr = addrs.findAs( addr =>
-	{
-		const found = Exe.FindHex(code, addr - 0x20, addr);
-		if (found > 0)
-			return found;
-	});
-	if (!styleAddr)
-		throw Error("Style not PUSHed");
-
-	$$(_ + '2.2 - Change 0x02C2 => 0x02C2 | WS_SYSMENU = 0x02CA')
-	Exe.SetUint8(styleAddr + 3, 0xCA);
+	$$(_ + '3 - Stage it')
+	WINMKR.stage(patchName, code);
 
 	return true;
 };
 
 ///
+/// \brief Undo the staging
+///
+EnableSysMenu.cleanup = patchName =>
+	WINMKR.unstage(patchName);
+
+///
 /// \brief Disable for old clients which already uses 0x02CA
 ///
 EnableSysMenu.validate = IsPost2010;
+
+///
+/// \brief Change the Style parameter used for CreateWindowExA CALL to include WS_EX_TOOLWINDOW
+///
+UseMiniTitle = function(patchName)
+{
+	const _ = patchName + ' : ';
+
+	$$(_ + '1 - Ensure WINMKR is loaded')
+	WINMKR.load();
+
+	$$(_ + '2 - Construct the code to insert')
+	const code =
+		MOV(EAX, [ESP, 4])  //mov eax, dword ptr [ARG.1] ; ExtStyle
+	+	OR(EAX, 0x80)       //or eax, <WS_EX_TOOLWINDOW>
+	+	MOV([ESP, 4], EAX)  //mov dword ptr [ARG.1], eax
+	;
+
+	$$(_ + '3 - Stage it')
+	WINMKR.stage(patchName, code);
+
+	return true;
+};
+
+
+///
+/// \brief Changes the parameters for CreateWindowExA call to achieve borderless fullscreen window (skips adding border & frame
+///        as well as positioning at 0,0 when resolution requested == screen resolution)
+///
+BorderlessFSW = function(patchName)
+{
+	const _ = patchName + ' : ';
+
+	$$(_ + '1.1 - Ensure WINMKR is loaded')
+	WINMKR.load();
+
+	$$(_ + '1.2 - Find the GetSystemMetrics function')
+	const GetSysMetrics = Exe.FindFunc("GetSystemMetrics", "USER32.dll");
+	if (GetSysMetrics < 0)
+		throw Error("GetSystemMetrics missing");
+
+	$$(_ + '2.1 - Construct the code to insert')
+	let code =
+		PUSH_0                        //push <SM_CXSCREEN>
+	+	CALL([GetSysMetrics])         //call dword ptr [<&USER32.GetSysMetrics>]
+	+	CMP([ESP, 0x1C], EAX)         //cmp dword ptr [ARG.7], eax  ; Width
+	+	JL(Filler(1,1))               //jl short _next
+	+	MOV([Filler(2)], EAX)         //mov dword ptr [tmpLoc], eax
+	+	PUSH_1                        //push <SM_CYSCREEN>
+	+	CALL([GetSysMetrics])         //call dword ptr [<&USER32.GetSysMetrics>]
+	+	CMP([ESP, 0x20], EAX)         //cmp dword ptr [ARG.8], eax  ; height
+	+	JL(Filler(1,1))               //jl short _next
+	+	MOV([ESP, 0x20], EAX)         //mov dword ptr [ARG.8], eax
+	+	MOV(EAX, [Filler(2)])         //mov eax, dword ptr [tmpLoc]
+	+	MOV([ESP, 0x1C], EAX)         //mov dword ptr [ARG.7], eax  ; Width
+	+	MOV([ESP, 0x10], 0x90000000)  //mov dword ptr [ARG.4], WS_POPUP | WS_VISIBLE
+	+	XOR(EAX, EAX)                 //xor eax, eax
+	+	MOV([ESP, 0x14], EAX)         //mov dword ptr [ARG.5], eax ; X
+	+	MOV([ESP, 0x18], EAX)         //mov dword ptr [ARG.6], eax ; Y
+	+	JMP(4)                        //jmp short _next
+	+	ALL00                         //<tmpLoc>
+	;                                 // ; _next
+	const csize = code.byteCount();
+	const tmpLoc = csize - 4; //relative offset
+
+	$$(_ + '2.2 - Fill in the blanks')
+	code = SetFillTargets(code, 2, {'1,1' : csize});
+
+	$$(_ + '3 - Stage it')
+	WINMKR.stage(patchName, code, {2 : tmpLoc});
+
+	return true;
+};
+
+
+///
+/// \brief Undo the staging
+///
+_WMK_unstage = patchName =>
+	WINMKR.unstage(patchName);
+
+EnableSysMenu.cleanup = _WMK_unstage;
+UseMiniTitle.cleanup  = _WMK_unstage;
+BorderlessFSW.cleanup = _WMK_unstage;
