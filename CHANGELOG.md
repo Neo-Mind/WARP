@@ -1,3 +1,9 @@
+# 2021-10-03 Changes
+
+## Patch Updates
+- Updated the Lua files used with `Custom Jobs` patch
+
+
 # 2021-10-02 Changes
 
 ## Patch Updates
