@@ -1,3 +1,9 @@
+# 2021-10-04 Changes
+
+## Patch Updates
+- Added patch to disable pkt encryption for login/char
+
+
 # 2021-10-03 Changes
 
 ## Patch Updates
