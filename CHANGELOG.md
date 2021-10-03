@@ -3,6 +3,8 @@
 ## Patch Updates
 - Updated the Lua files used with `Custom Jobs` patch
 
+- Added patch to fix the alignment & bg issue with recent 'New Character' window.
+
 
 # 2021-10-02 Changes
 
