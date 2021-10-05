@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -120,7 +120,7 @@ AutoMute = function()
 	const SetStreamVol = Exe.GetTgtAddr(addrs[2] + 1);
 	const Set2DEffectVol = Exe.GetTgtAddr(addrs[3] + 1);
 	const Set3DEffectVol = Exe.GetTgtAddr(addrs[5] + 1);
-	const MovMgr = Instr.FromAddr(addrs[3]);
+	const MovMgr = Instr.FromAddr(addrs[4]);
 
 	$$(_ + '2.1 - Find the CGameMode::OnUpdate function')
     parts = [
@@ -194,17 +194,21 @@ AutoMute = function()
 	$$(_ + '2.3 - Save the location of the MOV ECX')
 	const hookAddr = addr + 5;
 
-	$$(_ + '3.1 - Find the GetActiveWindow function')
-	const GetActiveWindow = Exe.FindFunc("GetActiveWindow", "User32.dll");
+	$$(_ + '3.1 - Find the needed imported functions')
+	const GetActiveWindow = Exe.FindFunc("GetActiveWindow", "USER32.dll");
 	if (GetActiveWindow < 0)
 		throw Error("GetActiveWindow not found");
+
+	const timeGetTime = Exe.FindFunc("timeGetTime");
+	if (timeGetTime < 0)
+		throw Error("timeGetTime missing");
 
 	$$(_ + '3.2 - Prepare our function code')
 	const MovNRetn = Instr.FromAddr(hookAddr) + RETN();
 
 	parts =
 	[
-		CALL(EDI)                //call edi (timeGetTime)
+		CALL([timeGetTime])      //call dword ptr [<&WINMM.timeGetTime>]
 	+	CMP(EAX, [Filler(1)])    //cmp eax, dword ptr [lastCheck]
 	+	JGE(6)                   //jge short _proceed1
 	+	MovNRetn                 //mov ecx, <g_Weather>

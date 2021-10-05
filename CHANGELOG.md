@@ -3,6 +3,8 @@
 ## Patch Updates
 - Added patch to disable pkt encryption for login/char
 
+- Fixed issue with `Auto mute` patch
+
 
 # 2021-10-03 Changes
 
