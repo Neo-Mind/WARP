@@ -1,3 +1,9 @@
+# 2021-10-06 Changes
+
+## Patch Updates
+- Minor correction in `Font Height` patch script
+
+
 # 2021-10-04 Changes
 
 ## Patch Updates
