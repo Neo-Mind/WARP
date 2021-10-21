@@ -1,3 +1,9 @@
+# 2021-10-22 Changes
+
+## Script Updates
+	- Added new function `AttachCode` to group together all the common steps involved in hooking & addition of code.
+
+
 # 2021-10-02 Changes
 	
 ## Script Updates
