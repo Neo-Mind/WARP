@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,7 +37,11 @@ CustomEncKeys = function(patchName)
 
 	$$(_ + '1.1 - Ensure the \'Disable Packet Encryption\' patch is unselected. Not applicable for test mode')
 	if (!Warp.TestMode)
+	{
 		Warp.SetPatchState("NoPacketEncr", false);
+		Warp.SetPatchState("NoEncrForLC", true); //temporary fix for needs
+		Exe.ActivePatch = patchName; //temporary fix for active patch not changing back
+	}
 
 	$$(_ + '1.2 - Discern the Variable name and index based on patchName')
 	const index = this.Members.indexOf(patchName);

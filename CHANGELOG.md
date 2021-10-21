@@ -1,3 +1,25 @@
+# 2021-10-06 Changes
+
+## Patch Updates
+- Minor correction in `Font Height` patch script
+
+
+# 2021-10-04 Changes
+
+## Patch Updates
+- Added patch to disable pkt encryption for login/char
+
+- Fixed issue with `Auto mute` patch
+
+
+# 2021-10-03 Changes
+
+## Patch Updates
+- Updated the Lua files used with `Custom Jobs` patch
+
+- Added patch to fix the alignment & bg issue with recent 'New Character' window.
+
+
 # 2021-10-02 Changes
 
 ## Patch Updates
