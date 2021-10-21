@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-10-02                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -403,7 +403,6 @@ BitWidth = v =>
 Distance = (tgt, src) =>
 	typeof tgt === 'number' && typeof src === 'number' ? tgt - src : tgt;
 
-
 ///
 /// \brief Calculate the addresses for various indices in the array of hex strings (instructions).
 ///
@@ -548,26 +547,12 @@ GetInstr = (current, n) =>
 ///
 GetImpRefs = (funcName, dllName = null) =>
 {
-	if (CACHE.has(funcName + '_Refs'))
-	{
-		return {
-			funcAddr : CACHE.get(funcName + '_Addr'),
-			refAddrs : CACHE.get(funcName + '_Refs')
-		};
-	}
+	if (typeof FnStore !== 'undefined' && FnStore.has(funcName))
+		return FnStore.get(funcName);
 
-	let funcAddr;
-	if (CACHE.has(funcName + '_Addr'))
-	{
-		funcAddr = CACHE.get(funcName + '_Addr');
-	}
-	else
-	{	funcAddr = Exe.FindFunc(funcName, dllName ?? "");
-		if (funcAddr < 0)
-			return {funcAddr};
-
-		CACHE.put(funcName + '_Addr', funcAddr);
-	}
+	const funcAddr = Exe.FindFunc(funcName, dllName ?? "");
+	if (funcAddr < 0)
+		return {funcAddr};
 
 	let refAddrs = [];
 	for (const pat of [
@@ -579,10 +564,82 @@ GetImpRefs = (funcName, dllName = null) =>
 	{
 		refAddrs = refAddrs.concat( Exe.FindHexN(pat) );
 	}
-	if (!refAddrs.isEmpty())
-		CACHE.put(funcName + '_Refs', refAddrs.map(addr => Instr.FromAddr(addr).NextAddr - 4));
 
-	return {funcAddr, refAddrs};
+	const result = {funcAddr, refAddrs};
+	if (typeof FnStore !== 'undefined')
+		FnStore.put(funcName, result);
+
+	return result;
+};
+
+///
+/// \brief Initializes the reference storage map used above. Invoke this in some 'Init' script
+///
+InitFnStore = () =>
+	(typeof FnStore !== 'undefined' && FnStore.clear() === undefined) || (FnStore = new Map());
+
+
+  //=======================//
+ // Modification Wrappers //
+//=======================//
+
+///
+/// \brief Higher level wrapper for insert the provided code(s) and creating a JMP/CALL to it from a specific location in the Exe
+///        Extra arguments can be provided for processing the provided code before insertion
+///
+AttachCode = (fromAddr, codes, argMap) =>
+{
+	const _ = Log.dive(`AttachCode from ${fromAddr}`);
+
+	$$(_ + '1.1 - Retrieve the arguments')
+	let {csize, localFills, localTgts, fills, targets, postproc, iscall, nops, snap} = argMap;
+	if (csize === undefined)
+		csize = codes.byteCount();
+
+	$$(_ + '1.2 - Allocate space')
+	const allocation = Exe.Allocate(csize, snap ?? 1);
+	const [free, freeVir] = allocation;
+
+	$$(_ + '2.1 - Fill in the blanks')
+	let finalCode;
+	if (localFills)
+	{
+		for (const key in localFills)
+			localFills[key] += freeVir;
+
+		finalCode = SwapFillers(codes, localFills);
+	}
+	else
+	{
+		finalCode = codes;
+	}
+	if (fills)
+		finalCode = SwapFillers(finalCode, fills);
+
+	if (localTgts)
+		finalCode = SetFillTargets(finalCode, localTgts);
+
+	if (targets)
+	{
+		targets.start = freeVir;
+		finalCode = SetFillTargets(finalCode, targets);
+	}
+
+	$$(_ + '2.2 - Call any post processing function defined')
+	if (typeof postproc === 'function')
+		finalCode = postproc(finalCode, freeVir, fromAddr);
+
+	$$(_ + '2.3 - Put the final code at allocated space')
+	Exe.SetHex(free, finalCode);
+
+	$$(_ + '2.4 - Call/Jump from specified address to the code')
+	if (iscall)
+		Exe.SetCALL(fromAddr, freeVir, nops ?? 0);
+	else
+		Exe.SetJMP(fromAddr, freeVir, nops ?? 0);
+
+	$$(_ + '2.5 - Return the allocated addresses & size')
+	return Log.rise(allocation);
 };
 
   //===========//
@@ -793,6 +850,7 @@ ReloadPatch = (name, ...args) =>
 		eval(cmd);
 	}
 };
+
 
   //====================//
  // Syntax Identifiers //
