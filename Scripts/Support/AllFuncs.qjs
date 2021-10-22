@@ -589,15 +589,15 @@ InitFnStore = () =>
 ///
 AttachCode = (fromAddr, codes, argMap) =>
 {
-	const _ = Log.dive(`AttachCode from ${fromAddr}`);
+	const _ = Log.dive(`AttachCode at [${fromAddr}] :`);
 
 	$$(_ + '1.1 - Retrieve the arguments')
-	let {csize, localFills, localTgts, fills, targets, postproc, iscall, nops, snap} = argMap;
-	if (csize === undefined)
-		csize = codes.byteCount();
+	let {allocSize, localFills, localTgts, fills, targets, postProc, isCall, nops, snap} = argMap;
+	if (allocSize === undefined)
+		allocSize = codes.byteCount();
 
 	$$(_ + '1.2 - Allocate space')
-	const allocation = Exe.Allocate(csize, snap ?? 1);
+	const allocation = Exe.Allocate(allocSize, snap ?? 1);
 	const [free, freeVir] = allocation;
 
 	$$(_ + '2.1 - Fill in the blanks')
@@ -626,17 +626,20 @@ AttachCode = (fromAddr, codes, argMap) =>
 	}
 
 	$$(_ + '2.2 - Call any post processing function defined')
-	if (typeof postproc === 'function')
-		finalCode = postproc(finalCode, freeVir, fromAddr);
+	if (typeof postProc === 'function')
+		finalCode = postProc(finalCode, freeVir, fromAddr);
 
 	$$(_ + '2.3 - Put the final code at allocated space')
 	Exe.SetHex(free, finalCode);
 
 	$$(_ + '2.4 - Call/Jump from specified address to the code')
-	if (iscall)
-		Exe.SetCALL(fromAddr, freeVir, nops ?? 0);
-	else
-		Exe.SetJMP(fromAddr, freeVir, nops ?? 0);
+	if (fromAddr)
+	{
+		if (isCall)
+			Exe.SetCALL(fromAddr, freeVir, nops ?? 0);
+		else
+			Exe.SetJMP(fromAddr, freeVir, nops ?? 0);
+	}
 
 	$$(_ + '2.5 - Return the allocated addresses & size')
 	return Log.rise(allocation);
