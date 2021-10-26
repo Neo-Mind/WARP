@@ -1,3 +1,34 @@
+# 2021-10-27 Changes
+
+## Tool Updates (v1.5.2)
+- Added Drag & Drop support for the tools.
+	- You can drop `Exe files` or `Session YAMLs` directly on the [Main GUI] for them to be loaded. 
+
+	- Similarly you can drop the `Test Folder` or `Session YAMLs` in  [Test Bench]
+
+	- Also, you can drop any files/folders into the various editor frames and text boxes to get their paths added directly.
+
+- `Exe.FindSpace` function has been changed to `Exe.Allocate` and it always reserves the space allocated now. 
+
+- Continuing from the above change, `Exe.Add*` functions no longer takes the target address as an argument. Please use the `Exe.Set*` functions instead on `allocated` addresses.
+
+- If the value going to be added is already known, then use the `Exe.Add*` functions to stage the addition to the `DIFF` section and use it's return value (addresses & size - similar to `Exe.Allocate`). 
+
+- `Exe.ProtectChanges` function has been split into `Exe.ConcealChanges` and `Exe.RevealChanges` respectively and they both take a password now.
+
+- Added caching support to `Exe.FindFunc` to avoid repetitive searches for the same function later.
+
+- Fixed bug with dependency chain not ignoring invalidated patches.
+
+- Added type information to input values in Session files.
+
+- Added support for `init` member function on Patch functions which will get executed when a client is loaded.
+
+- Added support for `initvars` and `clearvars` member arrays on Patch functions to hold the name of member variables to be initialized/purged when a client is loaded.
+
+  `initvars` need to be of the form `["name1", value1, "name2", value2...]`
+
+
 # 2021-10-26 Changes
 
 ## Script Updates
