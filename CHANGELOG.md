@@ -1,3 +1,9 @@
+# 2021-10-26 Changes
+
+## Script Updates
+	- Added new function `AutoHook` to group together all the common steps involved in hooking & addition of code.
+
+
 # 2021-10-02 Changes
 	
 ## Script Updates
