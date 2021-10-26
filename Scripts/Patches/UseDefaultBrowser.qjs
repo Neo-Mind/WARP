@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-08-26                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -82,7 +82,7 @@ UseDefaultBrowser = function()
 	if (OpenStr < 0)
 		throw Error("'open' not found");
 
-	$$(_ + '2.3 - Prep the code for CALL ShellExecuteA')
+	$$(_ + '2.3 - Construct the code for CALLing ShellExecuteA')
 	code =
 		PUSH_EAX         //push eax
 	+	MOV(EAX, [EAX])  //mov eax, dword ptr [eax]
@@ -98,13 +98,10 @@ UseDefaultBrowser = function()
 	+	RETN()           //retn
 	;
 
-	$$(_ + '2.4 - Allocate space to add our code')
-	const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
+	$$(_ + '2.4 - Add the code')
+	const [, freeVir] = Exe.AddHex(code, 0x10);
 
-	$$(_ + '2.5 - Prep CALL instruction and insert everything')
-	Exe.AddHex(free, code);
-
-	$$(_ + '2.6 - Create a CALL to the function from the MOV DWORD location')
+	$$(_ + '2.5 - Create a CALL to the function from the MOV DWORD location')
 	Exe.SetCALL(jmpAddr, freeVir, saveIns.Size - 5); //Extra NOPs at the end
 
 	$$(_ + '3.1 - Find offset where ROWebBrowser is CALLed')

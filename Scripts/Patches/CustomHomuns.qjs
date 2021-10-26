@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-09-11                                             *
+*   Last Modified : 2021-10-27                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -225,21 +225,17 @@ CustomHomuns = function()
 			+	JMP(Filler(1)) //jmp <retnAddr>
 			;
 
-			$$(_ + '3.10 - Allocate space for it')
-			const [free, freeVir] = Exe.FindSpace(code.byteCount());
-
-			$$(_ + '3.10 - Fill in the blanks')
-			code = SetFillTargets( code, 1,
+			$$(_ + '3.10 - Prepare the arguments for auto-hook')
+			const args =
 			{
-				start : freeVir,
-				    1 : Exe.Phy2Vir(ins2.NextAddr, CODE)
-			});
+				targets : {
+					1 : Exe.Phy2Vir(ins2.NextAddr, CODE)
+				},
+				nops : ins2.NextAddr - ins1.Addr - 5 //for clean edit
+			};
 
-			$$(_ + '3.11 - Add at allocated space')
-			Exe.AddHex(free, code);
-
-			$$(_ + '3.12 - Change the code at the found location to a JMP (add NOPs afterwards for a clean edit).')
-			Exe.SetJMP(ins1.Addr, freeVir, ins2.NextAddr - ins1.Addr - 5);
+			$$(_ + '3.11 - Add our code and jump to it from ins1.Addr')
+			AutoHook(ins1.Addr, code, args);
 		}
 	}
 

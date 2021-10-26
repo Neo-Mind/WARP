@@ -22,17 +22,9 @@
 *                                                                          *
 *   Author(s)     : Andre (4144)                                           *
 *   Created Date  : 2020-10-02                                             *
-*   Last Modified : 2021-10-02                                             *
+*   Last Modified : 2021-10-24                                             *
 *                                                                          *
 \**************************************************************************/
-
-///
-/// \brief Data needed for the 2 patches
-///
-CPr_Pairs = {
-	Idle2NormalPriority: [0x40, 0x20],
-	Normal2HighPriority: [0x20, 0x80]
-};
 
 ///
 /// \brief Changes the SetPriority function references to custom function which alters the priorityclass value provided before jumping to SetPriority
@@ -43,6 +35,14 @@ AlterPriority = function(patchName)
 
 	this.setup();
 	return true;
+};
+
+///
+/// \brief Data needed for the 2 patches
+///
+AlterPriority.pairs = {
+	Idle2NormalPriority: [0x40, 0x20],
+	Normal2HighPriority: [0x20, 0x80]
 };
 
 ///
@@ -71,11 +71,11 @@ AlterPriority.setup = function()
 
 	$$(_ + '2.1 - Construct the new function by parts')
 	let parts = [ MOV(EAX, [ESP, 8]) ];  //mov eax, dword ptr [ARG.2]
-	for (const name in CPr_Pairs)
+	for (const name in this.pairs)
 	{
 		if (CACHE.has('CP_' + name))
 		{
-			const [from, to] = CPr_Pairs[name];
+			const [from, to] = this.pairs[name];
 			parts.push(
 				CMP(EAX, from)           //cmp eax, <oldValue>
 			+	JNE(7)                   //jne short _skip
@@ -98,14 +98,14 @@ AlterPriority.setup = function()
 	Exe.BeginTag("Adjust_Sleep", true);
 
 	$$(_ + '2.3 - Allocate the space for it')
-	const [free, freeVir] = Exe.FindSpace(4 + code.byteCount());
+	const [free, freeVir] = Exe.Allocate(4 + code.byteCount());
 
 	$$(_ + '2.4 - Add at allocated space')
-	Exe.AddHex(free, (freeVir + 4).toHex() + code);
+	Exe.SetHex(free, (freeVir + 4).toHex() + code);
 
 	$$(_ + '2.5 - Change the references to access our function instead')
 	for (const addr of refAddrs)
-		Exe.SetInt32(addr, freeVir);
+		Exe.SetUint32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
 };
 
 ///

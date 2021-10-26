@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-10-04                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -149,31 +149,7 @@ NoEncrForLC = function()
 
 	addr += parts.byteCount(0);
 
-	$$(_ + '2.1 - Prepare the new function & table')
-	parts =
-	[
-		MOV(EAX, [EBP, 0xC]) //mov eax, dword ptr [ARG.2]
-	+	MOV(AX, [EAX])       //mov ax, word ptr [eax]
-	+	PUSH(ECX)            //push ecx
-	+	PUSH(EDI)            //push edi
-	+	MOV(ECX, Filler(1))  //mov ecx, <tblBegin>
-	+	MOV(EDI, Filler(2))  //mov edi, <tblEnd>
-	,
-		CMP(AX, [ECX])       //cmp ax, word ptr [ecx] ; _loop
-	+	JE(Filler(3,1))      //je short _skip
-	+	ADD(ECX, 2)          //add ecx, 2
-	+	CMP(ECX, EDI)        //cmp ecx, edi
-	+	JL(Filler(4,1))      //jl short _loop
-	+	POP(EDI)             //pop edi
-	+	POP(ECX)             //pop ecx
-	+	JMP(Filler(5))       //jmp <ObfuscateOrInit>
-	,
-		POP(EDI)             //pop edi
-	+	POP(ECX)             //pop ecx
-	+	XOR(EAX, EAX)        //xor eax, eax
-	+	RETN(4)              //retn 4
-	];
-
+	$$(_ + '2.1 - Add the id table')
 	const tbl = [
 		0x64, 0x277, 0x2b0, 0x27c, 0x825,
 		0x1db, 0xacf, 0x200, 0x204,
@@ -183,32 +159,54 @@ NoEncrForLC = function()
 		0x28f, 0x8fc, 0x7e5, 0x7e7, 0x8b8,
 		0x8c5, 0x8be, 0x8ba, 0x8d4, 0x9a1
 	];
-	const tblSize = tbl.length * 2;
+	const [, tblBegin, tblSize] = Exe.AddHex(tbl.map(v => v.toHex(2)));
+	const tblEnd = tblBegin + tblSize;
 
-	$$(_ + '2.2 - Allocate space for them')
-	const [free, freeVir] = Exe.FindSpace(parts.byteCount() + tblSize, 0x10);
+	$$(_ + '2.2 - Construct the new function')
+	parts =
+	[//0
+		MOV(EAX, [EBP, 0xC]) //mov eax, dword ptr [ARG.2]
+	+	MOV(AX, [EAX])       //mov ax, word ptr [eax]
+	+	PUSH(ECX)            //push ecx
+	+	PUSH(EDI)            //push edi
+	+	MOV(ECX, tblBegin)   //mov ecx, <tblBegin>
+	+	MOV(EDI, tblEnd)     //mov edi, <tblEnd>
 
-	$$(_ + '2.3 - Fill in the blanks')
-	const [, _loop, _skip, tblBegin] = MapAddrs(freeVir, parts);
+	,//1
+		CMP(AX, [ECX])       //cmp ax, word ptr [ecx] ; _loop
+	+	JE(Filler(3,1))      //je short _skip
+	+	ADD(ECX, 2)          //add ecx, 2
+	+	CMP(ECX, EDI)        //cmp ecx, edi
+	+	JL(Filler(4,1))      //jl short _loop
+	+	POP(EDI)             //pop edi
+	+	POP(ECX)             //pop ecx
+	+	JMP(Filler(5))       //jmp <ObfuscateOrInit>
 
-	let code = SwapFillers(parts, 1,
+	,//2
+		POP(EDI)             //pop edi ; _skip
+	+	POP(ECX)             //pop ecx
+	+	XOR(EAX, EAX)        //xor eax, eax
+	+	RETN(4)              //retn 4
+	];
+
+	$$(_ + '2.2 - Prepare the arguments for auto-hook')
+	const [, _loop, _skip, allocSize] = MapAddrs(parts);
+	const args =
 	{
-		1 : tblBegin,
-		2 : tblBegin + tblSize
-	});
-	code = SetFillTargets(code, 1,
-	{
-		start : freeVir,
-		'3,1' : _skip,
-		'4,1' : _loop,
-		    5 : Exe.GetTgtAddr(addr + 1)
-	});
+		allocSize,
+		localTgts : {
+			'3,1' : _skip,
+			'4,1' : _loop,
+		},
+		targets : {
+			5 : Exe.GetTgtAddr(addr + 1)
+		},
+		isCall : true
+	};
 
-	$$(_ + '2.4 - Add at allocated space')
-	Exe.AddHex(free, code + tbl.map(v => v.toHex(2)).join(''));
+	$$(_ + '2.3 - Add our code and call it from addr')
+	AutoHook(addr, parts, args);
 
-	$$(_ + '2.5 - Change the target to our function')
-	Exe.SetTgtAddr(addr + 1, freeVir);
 	return true;
 };
 

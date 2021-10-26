@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-09-11                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -98,7 +98,7 @@ CustomShields = function()
 	$$(_ + '2.1 - Ensure LUA object is loaded')
 	LUA.load();
 
-	$$(_ + '2.2 - Construct the code to be injected')
+	$$(_ + '2.2 - Construct the code to be added')
 	const [prep, main, restore] = LUA.createCaller("ReqShieldName", "d>s", EDI, EAX);
 
 	let parts =
@@ -126,24 +126,23 @@ CustomShields = function()
 	+	JMP(Filler(2))                 //jmp <retReq>
 	];
 
-	let csize = parts.byteCount();
-
-	$$(_ + '2.2 - Allocate space for the code')
-	let [free, freeVir] = Exe.FindSpace(csize, 0x10); //extra 1 for a NULL suffix
-
-	$$(_ + '2.3 - Fill in the blanks')
-	code = LUA.finalize(parts, freeVir,
+	$$(_ + '2.2 - Prepare the arguments for auto-hook')
+	let args =
 	{
-		'1,1' : freeVir + parts.byteCount(0), // _loop
-		 2    : retReq
-	});
+		localTgts : {
+			'1,1' : parts.byteCount(0), // _loop
+		},
+		postProc : LUA.finalize,
+		procArgs : {
+			2 : retReq
+		}
+	};
 
-	$$(_ + '2.5 - Add the code at allocated space')
-	Exe.AddHex(free, code);
+	$$(_ + '2.3 - Put the argument setup')
+	Exe.SetHex(hookReq, argSetup);
 
-	$$(_ + '2.6 - Setup a JMP to our code at hookReq')
-	Exe.SetHex(hookReq, argSetup);                        //push the base address of the table
-	Exe.SetJMP(hookReq + argSetup.byteCount(), freeVir);  //jmp <freeVir>
+	$$(_ + '2.4 - Add our code and jump to it after hookReq')
+	AutoHook(hookReq + argSetup.byteCount(), parts, args);
 
 	//=========================//
 	// Inject Lua file loading //
@@ -214,7 +213,7 @@ CustomShields = function()
 			throw Error("GetShieldType call missing (New)");
 
 		$$(_ + '3.4 - Save the location of the CALL')
-		refAddr = addr += code.byteCount();
+		refAddr = addr + code.byteCount();
 	}
 
 	$$(_ + '3.5 - Extract the PHYSICAL address of the GetShieldType function')
@@ -230,20 +229,9 @@ CustomShields = function()
 	+	POP(EDX)             //pop edx
 	+	RETN(4)              //retn 4
 	;
-	csize = code.byteCount();
 
-	$$(_ + '4.2 - Allocate space for the code')
-	let newMapVir;
-	[free, newMapVir] = Exe.FindSpace(csize, 0x10);
-
-	$$(_ + '4.3 - Fill in the blanks')
-	code = LUA.finalize(code, newMapVir);
-
-	$$(_ + '4.4 - Add the code at allocated space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '4.5 - Create a JMP to the code at hookMap')
-	Exe.SetJMP(hookMap, newMapVir);
+	$$(_ + '4.2 - Add our code and jump to it from hookMap')
+	let [, newMapVir] = AutoHook(hookMap, code, { postProc : LUA.finalize });
 
 	if (Exe.Version === 9 || Exe.Version === 10)
 	{

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-10-01                                             *
-*   Last Modified : 2021-10-01	                                           *
+*   Last Modified : 2021-10-26	                                           *
 *                                                                          *
 \**************************************************************************/
 
@@ -46,13 +46,10 @@ MsgBox2Beep = function()
 {
 	const _ = 'MsgBox2Beep : ';
 
-	$$(_ + '1.1 - Find references of  MessageBoxA function')
-	let hookAddrs = _MB_getRefs();
-
-	$$(_ + '1.2 - Find "USER32.dll"')
-	let User32 = Exe.FindText("USER32.dll", CASE_INSENSITIVE);
-	if (User32 < 0)
-		throw Error("USER32 missing");
+	$$(_ + '1 - Find references of  MessageBoxA function')
+	const {refAddrs} = GetImpRefs("MessageBoxA");
+	if (refAddrs == undefined)
+		throw Error("MessageBoxA not used");
 
 	$$(_ + '2.1 - Get the beep type from user')
 	const key = Exe.GetUserInput('$beepType', D_Choice, "MessageBox Change", "Enter the beep type expected", 'OK_DEFAULT', {choices: Object.getOwnPropertyNames(MB_Types), saveDefault: true});
@@ -61,39 +58,53 @@ MsgBox2Beep = function()
 
 	$$(_ + '2.2 - Construct the replacement function')
 	const parts =
-	[
-		MOV(EAX, [Filler(1)])      //mov eax, dword ptr [funcAddr]
+	[//0
+		Filler(1)                  //points to function below
+
+	,//1
+		ALL00                      //; beepFnAddr
+
+	,//2
+		MOV(EAX, [Filler(2)])      //mov eax, dword ptr [beepFnAddr]
 	+	TEST(EAX, EAX)             //test eax, eax
-	+	JNZ(Filler(2,1))           //jnz short _loaded
-	+	PUSH(User32)               //push "USER32.dll"
+	+	JNZ(Filler(3,1))           //jnz short _loaded
+	+	CALL(11)                   //push <nextAddr> + jmp
+	+	"USER32.dll\x00".toHex()   //ASCII "USER32.dll"
 	+	CALL([ROC.GetModHandle])   //call dword ptr [<&KERNEL32.GetModuleHandle>]
 	+	CALL(12)                   //push <nextAddr> + jmp
 	+	"MessageBeep\x00".toHex()  //ASCII "MessageBeep"
 	+	PUSH_EAX                   //push eax
 	+	CALL([ROC.GetProcAddr])    //call dword ptr [<&KERNEL32.GetProcAddress>]
-	+	MOV([Filler(1)], EAX)      //mov dword ptr [funcAddr], eax
-	,
+	+	MOV([Filler(2)], EAX)      //mov dword ptr [beepFnAddr], eax
+
+	,//3
 		PUSH(MB_Types[key])        //push <beepType> ; _loaded
 	+	CALL(EAX)                  //call eax ; [USER32.MessageBeep]
 	+	XOR(EAX, EAX)              //xor eax, eax
 	+	INC(EAX)                   //inc eax
 	+	RETN(0x10)                 //retn 10h
 	];
-	const [, _loaded, csize] = MapAddrs(0, parts);
+	const [, beepFnAddr, newFnAddr, _loaded, allocSize] = MapAddrs(parts);
 
-	$$(_ + '2.3 - Allocate space for it')
-	const [free, freeVir] = Exe.FindSpace(8 + csize, 0x10);
+	$$(_ + '2.3 - Prepare the arguments for auto-hook')
+	const args =
+	{
+		allocSize,
+		localVals : {
+			1 : newFnAddr,
+			2 : beepFnAddr
+		},
+		localTgts : {
+			'3,1' : _loaded
+		}
+	};
 
-	$$(_ + '2.4 - Fill in the blanks')
-	let code = SetFillTargets(parts, 1, {'2,1' : _loaded});
-	code = SwapFillers(code, 2, {1 : freeVir + 4});
+	$$(_ + '2.4 - Add our code')
+	const [, freeVir] = AutoHook(null, parts, args);
 
-	$$(_ + '2.5 - Add at allocated space')
-	Exe.AddHex(free, (freeVir + 8).toHex() + ALL00 + code);
-
-	$$(_ + '2.6 - Replace the references')
-	for (const addr of hookAddrs)
-		Exe.SetInt32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
+	$$(_ + '2.5 - Replace the references')
+	for (const addr of refAddrs)
+		Exe.SetUint32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
 
 	return true;
 };
@@ -106,7 +117,9 @@ ShowMsgIcon = function()
 	const _ = 'ShowMsgIcon : ';
 
 	$$(_ + '1 - Find references of  MessageBoxA function')
-	let hookAddrs = _MB_getRefs();
+	const {refAddrs} = GetImpRefs("MessageBoxA");
+	if (refAddrs == undefined)
+		throw Error("MessageBoxA not used");
 
 	$$(_ + '2.1 - Get the icon type from user')
 	const choices = Object.getOwnPropertyNames(MB_Types).filter(v => v !== "SIMPLE_BEEP");
@@ -114,7 +127,7 @@ ShowMsgIcon = function()
 	if (key === false)
 		Cancel("MessageBox reverted");
 
-	$$(_ + '2.2 - Prepare the new function')
+	$$(_ + '2.2 - Construct the new function')
 	const code =
 		MOV(EAX, [ESP, 0x10])   //mov eax, dword ptr [ARG.4]
 	+	AND(EAX, ~0x70)         //and eax, FFFFFF8Fh ; masking off
@@ -123,13 +136,13 @@ ShowMsgIcon = function()
 	+	JMP([ROC.MsgBoxA])      //jmp dword ptr [<&USER32.MessageBoxA>]
 	;
 
-	$$(_ + '2.3 - Allocate space & add it')
-	const [free, freeVir] = Exe.FindSpace(4 + code.byteCount());
-	Exe.AddHex(free, (freeVir + 4).toHex() + code);
+	$$(_ + '2.3 - Add the code')
+	const [free, freeVir] = Exe.Allocate(4 + code.byteCount());
+	Exe.SetHex(free, (freeVir + 4).toHex() + code);
 
 	$$(_ + '2.4 - Replace the references')
-	for (const addr of hookAddrs)
-		Exe.SetInt32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
+	for (const addr of refAddrs)
+		Exe.SetUint32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
 
 	return true;
 };
@@ -149,7 +162,9 @@ NoMsgBox = function()
 	}
 
 	$$(_ + '1.2 - Find references of  MessageBoxA function')
-	let hookAddrs = _MB_getRefs();
+	const {refAddrs} = GetImpRefs("MessageBoxA");
+	if (refAddrs == undefined)
+		throw Error("MessageBoxA not used");
 
 	$$(_ + '2.1 - Prepare the new function')
 	const code =
@@ -158,45 +173,13 @@ NoMsgBox = function()
 	+	RETN(0x10)    //retn 10h
 	;
 
-	$$(_ + '2.2 - Allocate space & add it')
-	const [free, freeVir] = Exe.FindSpace(4 + code.byteCount());
-	Exe.AddHex(free, (freeVir + 4).toHex() + code);
+	$$(_ + '2.2 - Add the code')
+	const [free, freeVir] = Exe.Allocate(4 + code.byteCount());
+	Exe.SetHex(free, (freeVir + 4).toHex() + code);
 
 	$$(_ + '2.3 - Replace the references')
-	for (const addr of hookAddrs)
-		Exe.SetInt32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
+	for (const addr of refAddrs)
+		Exe.SetUint32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
 
 	return true;
-};
-
-///
-/// \brief Supporting function to get all references to MessageBoxA imported function
-///
-_MB_getRefs = function()
-{
-	const _ = '_MB_getRefs : ';
-
-	if (CACHE.has("MB_Refs"))
-		return CACHE.get("MB_Refs");
-
-	$$(_ + '1 - Get MessageBoxA function')
-	ROC.findImports();
-
-	$$(_ + '2 - Find it\'s references')
-	let hookAddrs = [];
-	for (const pat of [
-		CALL([ROC.MsgBoxA]),     //call dword ptr [<&USER32.MessageBoxA>]
-		MOV(R32, [ROC.MsgBoxA]), //mov regA, [<&USER32.MessageBoxA>]
-		MOV(EAX, [ROC.MsgBoxA])  //mov eax, [<&USER32.MessageBoxA>]
-	])
-		hookAddrs = hookAddrs.concat( Exe.FindHexN(pat) );
-
-	if (hookAddrs.isEmpty())
-		throw Error("MessageBox not used");
-
-	$$(_ + '3 - Put in CACHE')
-	CACHE.put("MB_Refs", hookAddrs);
-
-	$$(_ + '4 - Return the addresses found')
-	return hookAddrs;
 };

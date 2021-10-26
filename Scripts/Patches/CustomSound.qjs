@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-10-04                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -203,7 +203,7 @@ AutoMute = function()
 	if (timeGetTime < 0)
 		throw Error("timeGetTime missing");
 
-	$$(_ + '3.2 - Prepare our function code')
+	$$(_ + '3.2 - Construct our function code')
 	const MovNRetn = Instr.FromAddr(hookAddr) + RETN();
 
 	parts =
@@ -267,48 +267,42 @@ AutoMute = function()
 	];
 
 
-	$$(_ + '3.2 - Prepare the initial values for the extra addresses we are using in the code')
+	$$(_ + '3.3 - Prepare the initial values for the extra addresses we are using in the code')
 	const buffer =
 		" 00 00 00 00" //lastCheck
     +	" 00 00 00 00" //isMuted
     +	" 64 00 00 00" //bgmVol
     +	" 64 00 00 00" //effVol
     ;
+	const bufSize = 16;
 
-	$$(_ + '3.3 - Allocate space to add them both')
-	const size = buffer.byteCount() + parts.byteCount() + 4;
-	const [free, freeVir] = Exe.FindSpace(size, 0x10);
+	$$(_ + '3.4 - Prepare the arguments for auto-hook')
+	const [,, _skipToCall,, _cmpMute,, csize] = MapAddrs(bufSize, parts);
 
-	$$(_ + '3.4 - Fill in the blanks')
-
-	//The jumps & CALLs
-	const firstAddr = freeVir + buffer.byteCount();
-	const [,,_skipToCall,,_cmpMute] = MapAddrs(firstAddr, parts);
-
-	code = SetFillTargets( parts,
+	const args =
 	{
-		start : firstAddr,
-		 5    : Set2DEffectVol,
-		 6    : Set3DEffectVol,
-		 7    : SetStreamVol,
-		'8,1' : _skipToCall, //index = 2 in parts
-		'9,1' : _cmpMute,    //index = 4 in parts
-	});
+		allocSize : bufSize + csize,
+		localVals : {
+			1 :  0, //lastCheck
+			2 :  4, //isMuted
+			3 :  8, //bgmVol
+			4 : 12  //effVol
+		},
+		localTgts : {
+			'8,1' : _skipToCall, //index = 2 in parts
+			'9,1' : _cmpMute,    //index = 4 in parts
+		},
+		targets : {
+			5 : Set2DEffectVol,
+			6 : Set3DEffectVol,
+			7 : SetStreamVol
+		},
+		jcOffset : bufSize, //offset of starting code in the provided hex
+		isCall : true
+	}
 
-	//All the extra addresses
-	code = SwapFillers( code,
-	{
-		1 : freeVir,
-		2 : freeVir + 4,
-		3 : freeVir + 8,
-		4 : freeVir + 0xC,
-	});
-
-	$$(_ + '3.5 - Add the code at allocated space')
-	Exe.AddHex(free, buffer + code);
-
-	$$(_ + '3.6 - Create the CALL at hookAddr')
-	Exe.SetCALL(hookAddr, freeVir + 16);
+	$$(_ + '3.5 - Add our code and call it from hookAddr')
+	AutoHook(hookAddr, buffer + parts.join(''), args);
 
 	return true;
 };

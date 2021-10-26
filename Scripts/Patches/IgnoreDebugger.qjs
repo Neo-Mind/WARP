@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andre (4144)                                           *
 *   Created Date  : 2020-10-02                                             *
-*   Last Modified : 2021-10-02                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,26 +33,17 @@ IgnoreDebugger = function()
 {
 	const _ = 'IgnoreDebugger : ';
 
-	$$(_ + '1 - Find IsDebuggerPresent function')
-	const funcAddr = Exe.FindFunc("IsDebuggerPresent", "KERNEL32.dll");
-	if (funcAddr < 0)
+	$$(_ + '1 - Find IsDebuggerPresent function & it\'s references')
+	const {funcAddr, refAddrs} = GetImpRefs("IsDebuggerPresent", "KERNEL32.dll");
+	if (funcAddr < 0 || refAddrs == undefined)
 		Cancel("Debugger not being checked");
 
-	$$(_ + '2 - Allocate space & add our function')
+	$$(_ + '2 - Add our function')
 	const [, newFuncAddr] = Exe.AddHex(XOR(EAX, EAX) + RETN()); //xor eax, eax followed by retn
 
 	$$(_ + '3 - Replace the references')
-	for (const pat of [
-		CALL([funcAddr]),
-		PUSH([funcAddr]),
-		MOV(R32, [funcAddr]),
-		MOV(EAX, [funcAddr]),
-	])
-	{
-		let addrs = Exe.FindHexN(pat);
-		for (const addr of addrs)
-			Exe.SetInt32(Instr.FromAddr(addr).NextAddr - 4, newFuncAddr);
-	}
+	for (const addr of refAddrs)
+		Exe.SetUint32(Instr.FromAddr(addr).NextAddr - 4, newFuncAddr);
 
 	return true;
 };

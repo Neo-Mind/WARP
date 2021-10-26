@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2021-06-10                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -135,10 +135,10 @@ RestoreSongsEffect = function()
 
 	$$(_ + '3.2 - Allocate space for it and the new jump table & case codes')
 	const size = case1Offset + effectIDs.length * (tsize + 4); //4 for the jump table itself
-	const [free, freeVir] = Exe.FindSpace(size, 0x10);
+	const [free, freeVir] = Exe.Allocate(size, 0x10);
 
 	$$(_ + '3.3 - Fill in the blanks')
-	ins = SwapFillers( ins, {1: freeVir + case1Offset + effectIDs.length * tsize} );
+	ins = SwapFillers( ins, {1: freeVir + case1Offset + effectIDs.length * tsize} ); //newJmpAddrs
 
 	$$(_ + '3.4 - Construct the new switch cases & jump table')
 	let caseCodes = "";
@@ -154,18 +154,18 @@ RestoreSongsEffect = function()
 	}
 
 	$$(_ + '3.5 - Add at allocated space')
-	Exe.AddHex(free, ins + caseCodes + newJmpAddrs);
+	Exe.SetHex(free, ins + caseCodes + newJmpAddrs);
 
 	$$(_ + '3.6 - Add a Jump to this at the patch address')
 	Exe.SetJMP(patchAddr, freeVir);
 
 	$$(_ + '3.7 - Modify the indirect switch table to always goto our patched code')
 	const firstUnitID = 126;
-	const LPUnirID = 157;
+	const LPUnitID = 157;
 	const firstSongUnitID = 158;
 
 	const idxPhy = Exe.Vir2Phy(idxTbl, CODE);
-	const LPtblOffset = Exe.GetHex(idxPhy + (LPUnirID - firstUnitID), 1);
+	const LPtblOffset = Exe.GetHex(idxPhy + (LPUnitID - firstUnitID), 1);
 
 	Exe.SetHex(idxPhy + (firstSongUnitID - firstUnitID), LPtblOffset.repeat(effectIDs.length - 1));
 

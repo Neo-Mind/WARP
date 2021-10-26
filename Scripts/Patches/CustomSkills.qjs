@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Unknown                                                *
 *   Created Date  : 2021-06-11                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -66,44 +66,37 @@ CustomSkills = function(patchName)
 	+	main               //Lua function call & result retrieval to 'eax'
 	+	restore            //Stack Restoration
 	+	RETN()             //retn
-	+	ALL00              //4 NULLs to seperate
 	;
-	suffix =
-		data.funcName.toHex() //ASCII <funcName>
-	+	ALL00                 //1 NULL for termination + 3 as a gap
-	;
+
+	const csize = prefix.byteCount();
 
 	$$(_ + '2 - Diverge based on the patch name')
-	const nameOffset = prefix.byteCount();
-
 	let luaLoadAddr; //address where the lua file loading code need to be placed
 	if (patchName === "CustomPlayerSkills")
 	{
 		$$(_ + '2.1 - Since this function is big we can place everything here itself. Fill the blanks with current values')
 		const fnVir = Exe.Phy2Vir(fnBegin, CODE);
-		const code = LUA.finalize(prefix + suffix, fnVir, fnVir + nameOffset);
+		const code = LUA.finalize(prefix + ALL00, fnVir);
 
 		$$(_ + '2.2 - Replace the original')
 		Exe.SetHex(fnBegin, code);
 
-		$$(_ + '2.3 - Set luaLoadAddr to address after the suffix')
-		luaLoadAddr = fnBegin + nameOffset + suffix.byteCount();
+		$$(_ + '2.3 - Set luaLoadAddr to address after the code')
+		luaLoadAddr = fnBegin + csize;
 	}
 	else
 	{
-		$$(_ + '2.4 - For others there is not enough space, so we need to allocate space for it')
-		const [free, freeVir] = Exe.FindSpace(nameOffset + suffix.byteCount());
+		$$(_ + '2.4 - Prepare the arguments for auto-hook (not enough space to put at original location)')
+		const args =
+		{
+			allocSize : csize,
+			postProc : LUA.finalize,
+		};
 
-		$$(_ + '2.5 - Fill in the blanks')
-		const code = LUA.finalize(prefix + suffix, freeVir, freeVir + nameOffset);
+		$$(_ + '2.5 - Add our code and jump to it from fnBegin')
+		AutoHook(fnBegin, prefix, args);
 
-		$$(_ + '2.6 - Add at allocated space')
-		Exe.AddHex(free, code);
-
-		$$(_ + '2.7 - Create a JMP to it from fnBegin')
-		Exe.SetJMP(fnBegin, freeVir);
-
-		$$(_ + '2.8 -  Set luaLoadAddr to -1 (function will allocate space on it\'s own)')
+		$$(_ + '2.6 - Set luaLoadAddr to -1 (function will allocate space on it\'s own)')
 		luaLoadAddr = -1;
 	}
 

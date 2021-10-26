@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -127,14 +127,10 @@ EnableProxy = function()
 		const ins = Instr.FromAddr(callAddr);
 		refReg = ins.MRM.getReg('M');
 		callAddr = ins.NextAddr;
-
-		$$(_ + '2.4 - Change indirect CALL to direct one before we proceed')
-		Exe.SetUint16(callAddr, 0xE890); //NOP + CALL opcodes
-		callAddr++;
 	}
 	else
 	{
-		$$(_ + '2.5 - If direct CALL, it means they are older clients and only ESI was used')
+		$$(_ + '2.4 - If direct CALL, it means they are older clients and only ESI was used')
 		refReg = ESI;
 	}
 
@@ -144,9 +140,10 @@ EnableProxy = function()
 		: Exe.GetTgtAddr(callAddr + 1)
 		;
 
-	$$(_ + '3.1 - Create the custom function (IP saver code)')
+	$$(_ + '3.1 - Construct our function (IP saver code)')
 	code =
-		MOV(EAX, [Filler(1)])   //mov eax, dword ptr [g_saveIP]
+		ALL00                   // ; g_saveIP
+	+	MOV(EAX, [Filler(1)])   //mov eax, dword ptr [g_saveIP]
 	+   TEST(EAX, EAX)          //test eax, eax
 	+   JNZ(0x08)               //jnz short _skip
 	+   MOV(EAX, [refReg, 0xC]) //mov eax, dword ptr [refReg + 0C] ; usually ESI
@@ -159,27 +156,19 @@ EnableProxy = function()
 		JMP(Filler(2))          //jmp <&WS2_32.connect>; will be filled later since we need relative addr
 	);
 
-	$$(_ + '3.2 - Allocate space for the function')
-	const [free, freeVir] = Exe.FindSpace(4 + code.byteCount(), 0x10); //First 4 bytes are g_saveIP
-
-	$$(_ + '3.3 - Set g_saveIP for index 1')
-	code = SwapFillers( code, 2, {1: freeVir} ); //Occurs twice
-
-	if (!indirectCALL)
+	$$(_ + '3.2 - Prepare the arguments for auto-hook')
+	const args =
 	{
-		$$(_ + '3.4 - Set connect address for Direct call')
-		code = SetFillTargets( code, 1,
-		{
-			start : freeVir,
-			    2 : connAddr
-		});
-	}
+		snap : 1,
+		localVals : {1 : 0},         //g_saveIP
+		targets : {2 : connAddr},
+		isCall : true,
+		nops : indirectCALL ? 1 : 0, //need a NOP for indirect CALL since we are converting it to a direct one
+		jcOffset : 4                 //code starts 4 bytes afterwards
+	};
 
-	$$(_ + '3.5 - Add the function at the allocated space')
-	Exe.AddHex(free, ALL00 + code);
-
-	$$(_ + '3.6 - Redirect the connect call to use our function')
-	Exe.SetTgtAddr(callAddr + 1, freeVir + 4);
+	$$(_ + '3.3 - Add our code and redirect the connect call to use it instead')
+	AutoHook(callAddr, code, args);
 
 	return true;
 };

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei Karas (4144)                                    *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-08-24                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -225,12 +225,8 @@ NoHardCodedAddr.swapCI = (ovrdAddr, jnzAddr = -1) =>
 		let s_s = Exe.FindText("%s:%s", false);
 		if (s_s < 0)
 		{
-			$$(_ + '3.6 - If not found then allocate space for adding it')
-			let free;
-			[free, s_s] = Exe.FindSpace(6);
-
-			$$(_ + '3.7 - Add the string there')
-			Exe.AddText(free, "%s:%s");
+			$$(_ + '3.6 - If not found then add it')
+			s_s = Exe.AddText("%s:%s")[1];
 		}
 
 		$$(_ + '3.8 - Create the replacement code')

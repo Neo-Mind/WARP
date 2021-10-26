@@ -20,9 +20,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Andrei                                                 *
+*   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-06-15                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -144,13 +144,10 @@ DrawShieldOnTop = function()
 
 	const cntLoc = Instr.FromAddr(addr + 5).Disp;
 
-	$$(_ + '2.1 - Allocate space for storing 0.001')
-	const [free, floatAddr] = Exe.FindSpace(4);
+	$$(_ + '2.1 - Add the value 0.001')
+	const [, floatAddr] = Exe.AddFloat(0.001);
 
-	$$(_ + '2.3 - Add the value there')
-	Exe.AddHex(free, (0.001).toIEEE());
-
-	$$(_ + '2.4 - Construct the new code to be added')
+	$$(_ + '2.2 - Construct the new code to be added')
 	parts =
 	[
         MOV(EAX, [EBP, cntLoc])  // mov eax, dword ptr [ebp + cnt]
@@ -169,27 +166,24 @@ DrawShieldOnTop = function()
     +	MOV(EAX, Filler(3))      // mov eax, <CRenderObject::RenderSprite/RenderSprite2>
 	+	JMP(EAX)                 // jmp eax
 	];
-	const [ , _skip, csize] = MapAddrs(0, parts);
+	const [, _skip, allocSize] = MapAddrs(parts);
 
 	const template = SetFillTargets( parts, 1, {'1,1' : _skip} );
 
 	for (const hookAddr of [hookAddr1, hookAddr2] )
 	{
-		$$(_ + `2.5 - Allocate space for it (hookAddr = ${hookAddr})`)
-		const [free, freeVir] = Exe.FindSpace(csize, 0x10);
-
-		$$(_ + '2.6 - Fill in the blanks')
-		const code = SwapFillers( template, 1,
+		$$(_ + `2.5 - Prepare the arguments for auto-hook at ${hookAddr}`)
+		const args =
 		{
-			2: Exe.Phy2Vir(hookAddr + 5, CODE),
-			3: Exe.GetTgtAddr(hookAddr + 1)
-		});
+			allocSize,
+			values : {
+				2 : Exe.Phy2Vir(hookAddr + 5, CODE),
+				3 : Exe.GetTgtAddr(hookAddr + 1)
+			}
+		};
 
-		$$(_ + '2.7 - Add at allocated space')
-		Exe.AddHex(free, code);
-
-		$$(_ + '2.8 - Create a JMP at hookAddr to our code')
-		Exe.SetJMP(hookAddr, freeVir);
+		$$(_ + '2.6 - Add our code and jump to it from hookAddr')
+		AutoHook(hookAddr, code, args);
 	}
 
 	return true;
