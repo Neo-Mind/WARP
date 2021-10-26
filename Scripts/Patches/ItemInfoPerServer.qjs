@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-08-22                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -190,53 +190,48 @@ function ItemInfoPerServer()
 	$$(_ + '5.2 - Extract the Function address')
 	const strPushFunc = Exe.GetTgtAddr(addr);
 
-	$$(_ + '6.1 - Prep code to Push String after "main" push')
+	$$(_ + '6.1 - Construct code to Push String after "main" push')
 	code =
 		CALL(Filler(1))    //call <LuaFnNamePusher>
 	+	ADD(ESP, 8)        //add esp, 8
 	+	PUSH([Filler(2)])  //push dword ptr [serverAddr]
 	+	SUB(ESP, 4)        //sub esp, 4
 	+	CALL(Filler(3))    //call <StringPusher>
-	+	JMP(Filler(4))     //jmp addr -> after original CALL LuaFnNamePusher
+	+	JMP(Filler(4))     //jmp <retnAddr> -> after original CALL LuaFnNamePusher
 	+	ALL00              //<-serverAddr
 	;
-	let csize = code.byteCount();
+	const allocSize = code.byteCount();
 
-	$$(_ + '6.2 - Allocate space for it')
-	let [free, freeVir] = Exe.FindSpace(csize, 0x10);
-
-	$$(_ + '6.3 - Fill in the blanks')
-
-	// CALLs & JMPs
-	code = SetFillTargets( code, 1,
+	$$(_ + '6.2 - Prepare the arguments for auto-hook')
+	let args =
 	{
-		start : freeVir,
-		    1 : Exe.GetTgtAddr(mainInject + 1),
-		    3 : strPushFunc,
-		    4 : Exe.Phy2Vir(mainInject + 5, CODE)
-	});
+		allocSize,
+		localVals : {
+			2 : allocSize - 4 //serverAddr
+		},
+		targets : {
+			1 : Exe.GetTgtAddr(mainInject + 1), //LuaFnNamePusher
+		    3 : strPushFunc,                    //StringPusher
+		    4 : Exe.Phy2Vir(mainInject + 5, CODE) //retnAddr
+		}
+	};
 
-	// serverAddr
-	const servAddr = freeVir + csize - 4;
-	code = SwapFillers(code, 1, {2: servAddr});
+	$$(_ + '6.3 - Add our code and jump to it from mainInject')
+	AutoHook(mainInject, code, args);
 
-	$$(_ + '6.4 - Change the LuaFnNamePusher call to a JMP to our code')
-	Exe.SetJMP(mainInject, freeVir);
-
-	$$(_ + '6.5 - Inject to allocated space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '7.1 - Prep code for calling the iteminfo loader upon server select')
-	code = (directCALL
+	$$(_ + '7.1 - Construct code for calling the iteminfo loader upon server select')
+	code =
+		ALL00                 // ; serverAddr
+	+	(directCALL
 	?
 		CALL(Filler(1))       //call <StringAllocator> - This function also does stack restore but the servername argument is not wiped off the stack
 	:                         //   OR
 		CALL([Filler(1)])     //call dword ptr [StringAllocator] - This function also does stack restore but the servername argument is not wiped off the stack
 	)
 	+	MOV(EAX, [ESP, -4])   //mov eax, dword ptr [esp-4]
-	+	CMP(EAX, [servAddr])  //cmp eax, dword ptr [serverAddr] ; need to improve this - better would be to do strcmp on the string addresses
+	+	CMP(EAX, [Filler(5)]) //cmp eax, dword ptr [serverAddr] ; need to improve this - better would be to do strcmp on the string addresses
 	+	JE(Filler(4))         //je <retnAddr> ; to after original function call
-	+	MOV([servAddr], EAX)  //mov dword ptr [serverAddr], EAX
+	+	MOV([Filler(5)], EAX) //mov dword ptr [serverAddr], EAX
 	+	refMOV                //mov ecx, dword ptr [refAddr]
 	+	CALL(Filler(2))       //call <iiLoaderFunc>
 	+	refMOV                //mov ecx, dword ptr [refAddr] ;You can also add checking before this
@@ -244,42 +239,28 @@ function ItemInfoPerServer()
 	+	CALL(Filler(3))       //call <iiCopierFunc>
 	+	JMP(Filler(4))        //jmp <retnAddr> ; to after original function call
 	;
-	csize = code.byteCount();
 
-	$$(_ + '7.2 - Allocate space for it');
-	[free, freeVir] = Exe.FindSpace(csize);
-
-	$$(_ + '7.3 - Fill in the blanks')
-	code = directCALL
-	?
-		SetFillTargets( code, 1,
-		{
-			start : freeVir,
-			    1 : Exe.GetTgtAddr(allocInject + 1),
-		})
-	:
-		SwapFillers( code, 1,
-		{
-			1: Exe.GetUint32(allocInject + 2)
-		})
-	;
-
-	code = SetFillTargets( code,
+	$$(_ + '7.2 - Prepare the arguments for auto-hook')
+	args =
 	{
-		start : freeVir,
-		    2 : iiLoaderFunc,
+		localVals : {
+			5 : 0 //serverAddr
+		},
+		values : directCALL ? null : {
+			1 : Exe.GetUint32(allocInject + 2)
+		},
+		targets : {
+			1 : directCALL ? Exe.GetTgtAddr(allocInject + 1) : null,
+			2 : iiLoaderFunc,
 		    3 : iiCopierFunc,
 		    4 : Exe.Phy2Vir(allocInject + 5, CODE)
-	});
+		},
+		jcOffset : 4, //function starts after serverAddr
+		nops : directCALL ? 0 : 1  //Add 1 NOP for indirect CALL since it will have 6 bytes
+	};
 
-	$$(_ + '7.4 - Change the function call to a JMP to our custom code')
-	Exe.SetJMP(allocInject, freeVir);
-
-	if (!directCALL)
-		Exe.SetNOPs(allocInject + 5, 1);
-
-	$$(_ + '7.5 - Inject to allocated space')
-	Exe.AddHex(free, code);
+	$$(_ + '7.3 - Add our code and jump to it from allocInject')
+	AutoHook(allocInject, code, args);
 
 	return true;
 };

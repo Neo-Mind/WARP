@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), Neo-Mind                                *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -174,7 +174,7 @@ CloseCutinOnEsc = function()
 	$$(_ + '2.3 - Extract the necessary stuff')
 	const FirstFunc = Exe.GetTgtAddr(addr + funcOffset);  //VIRTUAL address of the first function (check_close or unknownFunc)
 	const MovECX    = Instr.FromAddr(addr + 1);           //The 'mov ecx, * ' instruction
-	const hookLoc   = addr + funcOffset - 1;              //CALL location
+	const hookAddr  = addr + funcOffset - 1;              //CALL location
 	const retnVir   = Exe.Phy2Vir(addr + funcOffset + 4); //VIRTUAL address of location after the CALL
 
 	$$(_ + '2.4 - Position addr after part1')
@@ -200,9 +200,9 @@ CloseCutinOnEsc = function()
 	$$(_ + '2.8 - Extract the DeleteWindow function address')
 	const DeleteWindow = Exe.GetTgtAddr(addr + dwinOffset); //VIRTUAL address of DeleteWindow
 
-	$$(_ + '3.1 - Prepare our code')
+	$$(_ + '3.1 - Construct our code')
 	const parts =
-	[
+	[//0
 		PUSH(78)            //push 78h ; window id
 	+	CALL(Filler(1))     //call UIWindowMgr::DeleteWindow
 	+	CMP(AL, 0)          //cmp al, 0
@@ -210,7 +210,8 @@ CloseCutinOnEsc = function()
 	+	MovECX              //mov ecx, regA / mov ecx, offset
 	+	PUSH(retnVir)       //push retnVir
 	+	JMP(Filler(3))      //jmp UIWindowMgr::check_close ; equivalent to CALL intended for return to retnVir
-	,
+
+	,//1
 		PUSH(EDX)           //push edx ; _skip#3
 	+	MOV(ECX, gModeMgr)  //mov ecx, <g_modeMgr>
 	+	CALL(Filler(4))     //call CModeMgr::GetGameMode
@@ -232,25 +233,22 @@ CloseCutinOnEsc = function()
 	+	JMP(Filler(5))      //jmp <jmpVir>
 	];
 
-	$$(_ + '3.2 - Allocate space for the code')
-	const [free, freeVir] = Exe.FindSpace(parts.byteCount(), 0x10);
-
-	$$(_ + '3.3 - Fill in the blanks')
-	code = SetFillTargets( parts, 1,
+	$$(_ + '3.2 - Prepare the arguments for auto-hook')
+	const args =
 	{
-		start : freeVir,
-		 1    : DeleteWindow,
-		'2,1' : freeVir + parts.byteCount(0), //_skip#3
-		 3    : FirstFunc,
-		 4    : GetGameMode,
-		 5    : jmpVir
-	});
+		targets : {
+			1 : DeleteWindow,
+			3 : FirstFunc,
+			4 : GetGameMode,
+			5 : jmpVir
+		},
+		localTgts : {
+			'2,1' : parts.byteCount(0) //_skip#3
+		}
+	};
 
-	$$(_ + '3.4 - Add the code at the allocated space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '3.5 - Change the check_close CALL into JMP to the code above')
-	Exe.SetJMP(hookLoc, freeVir);
+	$$(_ + '3.3 -  Add our code & jump to it from hookAddr')
+	AutoHook(hookAddr, parts, args);
 
 	return true;
 };

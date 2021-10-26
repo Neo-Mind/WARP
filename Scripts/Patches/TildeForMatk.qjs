@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-08-24                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -49,15 +49,11 @@ TildeForMatk = function()
 	addr = Exe.FindText("%d ~ %d", false);
 	if (addr < 0)
 	{
-		$$(_ + '2.2 - If not present, allocate space for adding the string')
-		let phyAddr;
-		[phyAddr, addr] = Exe.FindSpace(8);
-
-		$$(_ + '2.3 - Add the string there')
-		Exe.AddText(phyAddr, "%d ~ %d");
+		$$(_ + '2.2 - If not present, add the string')
+		addr = Exe.AddText("%d ~ %d")[1];
 	}
 
-	$$(_ + '2.4 - Replace the PUSHed string for the 2nd location out of the 5')
+	$$(_ + '2.3 - Replace the PUSHed string for the 2nd location out of the 5')
 	Exe.SetInt32(addrs[1] + 1, addr);
 
 	return true;

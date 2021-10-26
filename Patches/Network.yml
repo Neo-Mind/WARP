@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2021-10-04                                             #
+#   Last Modified : 2021-10-26                                             #
 #                                                                          #
 ############################################################################
 
@@ -115,21 +115,21 @@ CustomEncKeys:
             recommend : no
             author : Shakto , Neo-Mind
             desc : Change the 1st key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
-            # needs : NoEncrForLC # uncomment in future once dependency chain has been fixed to ignore invalid patch names
+            needs : NoEncrForLC
         
         - CustomSecondKey:
             title : Customize Packet Key (2nd)
             recommend : no
             author : Shakto , Neo-Mind
             desc : Change the 2nd key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
-            # needs : NoEncrForLC
+            needs : NoEncrForLC
         
         - CustomThirdKey:
             title : Customize Packet Key (3rd)
             recommend : no
             author : Shakto , Neo-Mind
             desc : Change the 3rd key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
-            # needs : NoEncrForLC
+            needs : NoEncrForLC
 
 DisableEncr:
     title : DISABLE ENCRYPTION

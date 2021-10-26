@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -77,10 +77,7 @@ CashShopVis = function(patchName)
 		if (addr > 0)
 			Cancel("Icon is already shown");
 
-		$$(_ + '3.2 - Save the location after the CALL for 0x9F')
-		const retnAddr = jmpAddr + code.byteCount() + 4;
-
-		$$(_ + '3.3 - Prepare our code to create the icon.')
+		$$(_ + '3.2 - Prepare our code to create the icon.')
 		code +=
 			Filler(1)        //Remaining parts are already used for search above
 
@@ -90,22 +87,17 @@ CashShopVis = function(patchName)
 		+	JMP(Filler(2))   //jmp <retnAddr>
 		;
 
-		$$(_ + '3.4 - Allocate space to add our code')
-		const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
-
-		$$(_ + '3.5 - Fill in the blanks')
-		code = SetFillTargets( code,
+		$$(_ + '3.3 - Prepare the arguments for auto-hook')
+		const args =
 		{
-			start : freeVir,
-			    1 : WINMGR.MakeWin,
-			    2 : Exe.Phy2Vir(retnAddr, CODE)
-		});
+			targets : {
+				1 : WINMGR.MakeWin,
+				2 : Exe.Phy2Vir(jmpAddr + code.byteCount() + 4, CODE) //Location after the CALL for 0x9F
+			},
+		};
 
-		$$(_ + '3.6 - Add the code at the allocated space')
-		Exe.AddHex(free, code);
-
-		$$(_ + '3.7 - Create a jump to it at <jmpAddr>')
-		Exe.SetJMP(jmpAddr, freeVir);
+		$$(_ + '3.4 - Add our code and jump to it from jmpAddr')
+		AutoHook(jmpAddr, code, args);
 	}
 
 	return true;

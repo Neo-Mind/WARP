@@ -26,7 +26,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144), X-EcutiOnner    *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-08-27                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -60,13 +60,10 @@ CustomPath = function(patchName)
 	if (newStr === false)
 		Cancel(strType, name);
 
-	$$(_ + '2.1 - Allocate space to add the file name')
-	const [free, freeVir] = Exe.FindSpace(varName);
+	$$(_ + '2.1 - Add the file name')
+	const [, freeVir] = Exe.AddFromVar(varName);
 
-	$$(_ + '2.2 - Add the name there')
-	Exe.AddFromVar(free, varName);
-
-	$$(_ + '2.3 - Update the PUSHed address')
+	$$(_ + '2.2 - Update the PUSHed address')
 	Exe.SetUint32(addr + 1, freeVir);
 
 	return true;
@@ -277,13 +274,10 @@ CustomLicenseTxt = function()
 	if (newFile === false)
 		Cancel("License file", Orig_LicTxt);
 
-	$$(_ + '2.2 - Allocate space to add new file name')
-	let [free, freeVir] = Exe.FindSpace(varName);
+	$$(_ + '2.2 - Add the new file name')
+	let [, freeVir] = Exe.AddFromVar(varName);
 
-	$$(_ + '2.3 - Add the file name there')
-	Exe.AddFromVar(free, varName);
-
-	$$(_ + '2.4 - Change the address in the assignment')
+	$$(_ + '2.3 - Change the address in the assignment')
 	Exe.SetInt32(addr + 6, freeVir);
 
 	$$(_ + '3.1 - Find EULA string')
@@ -292,13 +286,10 @@ CustomLicenseTxt = function()
 		throw Error("EULA string not found");
 
 	$$(_ + '3.2 - Prepare the new EULA error string using the filename received')
-	const eulaString = "No EULA text file. (" + newFile.replace("..\\", "") + ")\x00";
+	const eulaString = "No EULA text file. (" + newFile.replace("..\\", "") + ")";
 
-	$$(_ + '3.3 - Allocate space to add the EULA error string');
-	[free, freeVir] = Exe.FindSpace(eulaString.length);
-
-	$$(_ + '3.4 - Add the EULA error string')
-	Exe.AddText(free, eulaString);
+	$$(_ + '3.3 - Add the new ELA error string');
+	[, freeVir] = Exe.AddText(eulaString);
 
 	$$(_ + '3.5 - Update all PUSHes & assigments using the original EULA error string')
 	const found = [
@@ -451,13 +442,10 @@ CustomClientInfo = function()
 	if (newFile === false)
 		Cancel("Filename", this.Name);
 
-	$$(_ + '2.2 - Allocate space for the new name')
-	const [free, freeVir] = Exe.FindSpace(varName);
+	$$(_ + '2.2 - Add the new name')
+	const [, freeVir] = Exe.AddFromVar(varName);
 
-	$$(_ + '2.3 - Add the name there')
-	Exe.AddFromVar(free, varName);
-
-	$$(_ + '2.4 - Adjust the references')
+	$$(_ + '2.3 - Adjust the references')
 	for (const [disp, addr] of repLocs)
 		Exe.SetUint32(addr, freeVir + disp);
 

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2021-08-27                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -433,21 +433,23 @@ NewButtonVis.stage = function(patchName)
 	if (prefix.isEmpty() && suffix.isEmpty())
 		return;
 
-	$$(_ + '2.4 - Now combine the parts')
-	let code =
+	$$(_ + '2.4 - Now fill up the rest')
+	let parts =
+	[
 		prefix
-	+	suffix
-	;
+		,
+		suffix
+	];
 
 	if (Type === 1)
 	{
 		const {MinLimit, Range} = Refs;
-		code +=
+		parts.push(
 			LEA(EAX, [IDReg, -MinLimit]) //lea eax, [regA - minLimit]
 		+	CMP(EAX, Range)              //cmp eax, <range>
 		+	JA(Filler(3))                //ja <onAddr>
 		+	JMP(Filler(4))               //jmp <retnAddr> ; address of the MOVZX
-		;
+		);
 	}
 	else
 	{
@@ -458,36 +460,32 @@ NewButtonVis.stage = function(patchName)
 			if (onIDs.includes(id))
 				continue;
 
-			code +=
+			parts.push(
 				CMP(IDReg, id)           //cmp regA, ID
 			+	JZ(Filler(3))            //jz <offAddr>
-			;
+			);
 		}
 
-		code +=
+		parts.push(
 			JMP(Filler(4))             //jmp <onAddr>
-		;
+		);
 	}
 
-	$$(_ + '2.5 - Find space for the code')
-	const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
-
-	$$(_ + '2.6 - Fill in the blanks')
+	$$(_ + '2.5 - Prepare the arguments for auto-hook')
 	const {OffAddr, OnAddr, HookAddr, RetnAddr} = Refs;
-	code = SetFillTargets( code,
+
+	const args =
 	{
-		start : freeVir,
+		targets : {
 			1 : index === 0 ? OffAddr : OnAddr,
 			2 : index === 0 ? OnAddr : OffAddr,
 			3 : Type  === 1 ? OnAddr : OffAddr,
 			4 : RetnAddr
-	});
+		}
+	};
 
-	$$(_ + '2.7 - Insert at allocated space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '2.8 - Set a JMP to the code at HookAddr')
-	Exe.SetJMP(HookAddr, freeVir);
+	$$(_ + '2.6 - Add our code and jump to it from HookAddr')
+	AutoHook(HookAddr, parts, args);
 };
 
 ///

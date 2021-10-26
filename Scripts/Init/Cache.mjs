@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-08-23                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -239,7 +239,7 @@ export function allocate(key, subKey, code, snap = 0x10)
 
 	let hash = AllocVault.get(key);
 	if (!hash.has(subKey))
-		hash.set(subKey, Exe.FindSpace(code.byteCount(), snap));
+		hash.set(subKey, Exe.Allocate(code.byteCount(), snap));
 
 	const {saveUser_after_alloc} = Switches.get(key);
 	if (saveUser_after_alloc)

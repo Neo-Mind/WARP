@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-08-22                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -61,7 +61,7 @@ RouletteVis = function(patchName)
 		if (Exe.GetUint8(retnAddr) === 0x68 && Exe.GetInt32(retnAddr + 1) === id)
 			Cancel("Roulette Icon is already shown");
 
-		$$(_ + '2.2 - Prepare our code to create the icon')
+		$$(_ + '2.2 - Construct our code to create the icon')
 		code +=
 			Filler(1)        //call UIWindowMgr::MakeWindow ; E8 opcode is already there
 		+	PUSH(id)         //push 11Dh / 10Ch
@@ -70,22 +70,17 @@ RouletteVis = function(patchName)
 		+	JMP(Filler(2))   //jmp <retnAddr> ; jump back to retnAddr
 		;
 
-		$$(_ + '2.3 - Allocate space to add our code')
-		const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
-
-		$$(_ + '2.4 - Fill in the blanks')
-		code = SetFillTargets( code,
+		$$(_ + '2.3 - Prepare the arguments for auto-hook')
+		const args =
 		{
-			start : freeVir,
-			    1 : WINMGR.MakeWin,
-			    2 : Exe.Phy2Vir(retnAddr, CODE)
-		});
+			targets : {
+				1 : WINMGR.MakeWin,
+				2 : Exe.Phy2Vir(retnAddr, CODE)
+			}
+		};
 
-		$$(_ + '2.5 - Add the code at the allocated space')
-		Exe.AddHex(free, code);
-
-		$$(_ + '2.6 - Create a jump to it at jmpAddr')
-		Exe.SetJMP(jmpAddr, freeVir);
+		$$(_ + '2.4 - Add our code and jump to it from jmpAddr')
+		AutoHook(jmpAddr, code, args);
 	}
 	else
 	{

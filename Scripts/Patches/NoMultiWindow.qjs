@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -88,7 +88,7 @@ NoMultiWindow = function()
 	if (ROC.Kernel32 < 0)
 		throw Error("'KERNEL32.dll' not found");
 
-	$$(_ + '2.2 - Prepare our function for mutex windows')
+	$$(_ + '2.2 - Construct our function for mutex windows')
 	const parts =
 	[
 		CALL([CoInit])                 //call dword ptr [&ole32.CoInitialize>] ; args are already pushed
@@ -128,24 +128,24 @@ NoMultiWindow = function()
 	+	JMP(Filler(3))                 //jmp <retnAddr> ; retnAddr = jmpAddr + 6
 	];
 
-	$$(_ + '2.3 - Allocate space to add our function')
-	const [free, freeVir] = Exe.FindSpace(parts.byteCount(), 0x10);
+	const [, _quit, _return, allocSize] = MapAddrs(parts);
 
-	$$(_ + '2.4 - Fill in the blanks')
-	const [, _quit, _return] = MapAddrs(freeVir, parts);
-	const code = SetFillTargets( parts, 1,
+	$$(_ + '2.3 - Prepare the arguments for auto hook')
+	const args =
 	{
-		start : freeVir,
-		'1,1' : _quit,
-		'2,1' : _return,
-		 3    : Exe.Phy2Vir(jmpAddr + 6, CODE)
-	});
+		allocSize,
+		localTgts : {
+			'1,1' : _quit,
+			'2,1' : _return,
+		},
+		targets : {
+			3 : Exe.Phy2Vir(jmpAddr + 6, CODE) //retnAddr
+		},
+		nops : 1 //since the original code is 6 bytes
+	};
 
-	$$(_ + '2.5 - Add function at the allocated space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '2.6 - Create JMP followed by 1 NOP to the function at jmpAddr')
-	Exe.SetJMP(jmpAddr, freeVir, 1);
+	$$(_ + '2.4 - Add our code and jump to it from jmpAddr')
+	AutoHook(jmpAddr, parts, args);
 
 	return true;
 };

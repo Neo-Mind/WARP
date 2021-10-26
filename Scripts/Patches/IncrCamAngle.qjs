@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -116,13 +116,10 @@ IncrCamAngle = function(patchName)
 		$$(_ + '2.5 - Set angleAddr to the memory location assigned')
 		angleAddr += code.byteCount() - 4;
 
-		$$(_ + '3.1 - Allocate space for adding new angle')
-		const [free, freeVir] = Exe.FindSpace(4);
+		$$(_ + '3.1 - Add the new angle there')
+		const [, freeVir] = Exe.AddFloat(this.Data.get(patchName));
 
-		$$(_ + '3.2 - Put the new angle there')
-		Exe.AddFloat(free, this.Data.get(patchName));
-
-		$$(_ + '3.3 - Update the contents of angleAddr')
+		$$(_ + '3.2 - Update the contents of angleAddr')
 		Exe.SetUint32(angleAddr, freeVir);
 	}
 

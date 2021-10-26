@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2021-08-26                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -223,7 +223,7 @@ RemoveBookingJobs = function()
 	$$(_ + '3.4 - Finish off with NULL at end of the Array')
 	idList.push(0);
 
-	$$(_ + '4.1 - Prepare our function to check the ID')
+	$$(_ + '4.1 - Construct our function to check the ID')
 	const parts =
 	[
 		PUSH_EAX               //push eax
@@ -258,33 +258,32 @@ RemoveBookingJobs = function()
 	+	" 00 00"               //2 NULL byte gap
 	];
 
-	$$(_ + '4.2 - Allocate space to add our function and the IDs')
-	const size = parts.byteCount() + idList.length * 2; //each ID is 2 bytes long
-	const [free, freeVir] = Exe.FindSpace(size, 0x10);
+	const [, _next, _msgIt, _return, listAddr] = MapAddrs(parts);
 
-	$$(_ + '4.3 - Fill in the blanks')
+	$$(_ + '4.2 - Construct the id table at the end')
+	parts.push(idList.map( id => id.toHex(2) ).join(''));
 
-	//The jumps
-	const [, _next, _msgIt, _return, listAddr] = MapAddrs(freeVir, parts);
-	code = SetFillTargets( parts, 1,
+	$$(_ + '4.3 - Prepare the arguments for auto-hook')
+	const args =
 	{
-		start : freeVir,
-		 2    : MsgStr,
-		 3    : retnAddr,
-		'4,1' : _msgIt,
-		'5,1' : _return,
-		'6,1' : _next
-	});
+		allocSize : listAddr + idList.length * 2,
+		localVals : {
+			1 : listAddr
+		},
+		localTgts : {
+			'4,1' : _msgIt,
+			'5,1' : _return,
+			'6,1' : _next
+		},
+		targets : {
+			2 : MsgStr,
+			3 : retnAddr,
+		},
+		isCall : true
+	};
 
-	//The listAddr
-	code = SwapFillers( code, 1, {1: listAddr} );
-
-	$$(_ + '4.4 - Add the ids and the function at the allocated space')
-	const idHex = idList.map( id => id.toHex(2) ).join('');
-	Exe.AddHex(free, code + " 00 00" + idHex);
-
-	$$(_ + '4.5 - Change the CALL target in the MsgStr CALL to our function')
-	Exe.SetTgtAddr(callAddr + 1, freeVir);
+	$$(_ + '4.4 - Add our code and call it from callAddr')
+	AutoHook(callAddr, parts, args);
 
 	return true;
 };

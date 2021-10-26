@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-10-04                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,11 +37,7 @@ CustomEncKeys = function(patchName)
 
 	$$(_ + '1.1 - Ensure the \'Disable Packet Encryption\' patch is unselected. Not applicable for test mode')
 	if (!Warp.TestMode)
-	{
 		Warp.SetPatchState("NoPacketEncr", false);
-		Warp.SetPatchState("NoEncrForLC", true); //temporary fix for needs
-		Exe.ActivePatch = patchName; //temporary fix for active patch not changing back
-	}
 
 	$$(_ + '1.2 - Discern the Variable name and index based on patchName')
 	const index = this.Members.indexOf(patchName);
@@ -221,7 +217,7 @@ CustomEncKeys.obfuscate = function(patchName)
 	const [free, freeVir] = CACHE.allocate(cacheKey, 'Obfuscate', code);
 
 	$$(_ + '2.3 - Add the code at allocated space')
-	Exe.AddHex(free, code);
+	Exe.SetHex(free, code);
 
 	$$(_ + '2.4 - Create a JMP to the allocated space from PACKET.Assigner')
 	Exe.SetJMP(PACKET.Assigner, freeVir);

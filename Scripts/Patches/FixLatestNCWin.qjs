@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-10-03                                             *
-*   Last Modified : 2021-10-03	                                           *
+*   Last Modified : 2021-10-23	                                           *
 *                                                                          *
 \**************************************************************************/
 
@@ -57,32 +57,28 @@ FixLatestNCWin = function()
 	$$(_ + '2.2 - Extract the original function')
 	const origFunc = Exe.GetTgtAddr(addr);
 
-	$$(_ + '2.3 - Construct our function')
+	$$(_ + '3.1 - Construct our function')
 	code =
 		CMP(ECX, [Filler(1)])  //cmp ecx, dword ptr [prevAddr]
 	+	JE(Filler(2))          //je <origFunc>
 	+	ADD([ECX, 0x20], 0x40) //add dword ptr [ecx + 20h], 40h
 	+	MOV([Filler(1)], ECX)  //mov dword ptr [prevAddr], ecx
 	+	JMP(Filler(2))         //jmp <origFunc>
+	+	ALL00                  // ; prevAddr
 	;
-	const csize = code.byteCount();
+	const allocSize = code.byteCount();
 
-	$$(_ + '2.4 - Allocate space for it')
-	const [free, freeVir] = Exe.FindSpace(csize + 4, 0x10);
-
-	$$(_ + '2.5 - Fill in the blanks')
-	code = SwapFillers(code, 2, {1 : freeVir + csize});
-	code = SetFillTargets(code, 2,
+	$$(_ + '3.2 - Prepare the arguments for auto-hook')
+	const args =
 	{
-		start : freeVir,
-		    2 : origFunc
-	});
+		allocSize,
+		localVals : { 1 : allocSize - 4 },  // prevAddr
+		targets : { 2 : origFunc },
+		isCall : true
+	};
 
-	$$(_ + '2.6 - Add at allocated space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '2.7 - Update the target')
-	Exe.SetTgtAddr(addr, freeVir);
+	$$(_ + '3.3 - Add our code and call it from addr')
+	AutoHook(addr - 1, code, args);
 
 	return true;
 };

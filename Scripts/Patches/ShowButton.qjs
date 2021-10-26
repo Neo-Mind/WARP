@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -87,7 +87,7 @@ ShowRegisterBtn = function()
 	const travel = (jnePos === -2) ? 1 : 4;
 	const jmpedAddr = Exe.GetTgtAddr(cmpAddr - travel, PHYSICAL, travel);
 
-	$$(_ + '3.2 - Prep new function code to use as replacement for CModeMgr::Quit (original one will get overwritten by RestoreLoginWindow)')
+	$$(_ + '3.2 - Construct new function code to use as replacement for CModeMgr::Quit (original one will get overwritten by RestoreLoginWindow)')
 	let code =
 		MOV(EAX, [ECX, 4])   //mov eax, dword ptr [ecx+4]
 	+   MOV([EAX, 0x14], 0)  //mov dword ptr [eax+14h], 0
@@ -95,13 +95,10 @@ ShowRegisterBtn = function()
 	+   RETN()               //retn
 	;
 
-	$$(_ + '3.3 - Allocate space to add the function')
-	const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
+	$$(_ + '3.3 - Add the function')
+	const [, freeVir] = Exe.AddHex(code, 0x10);
 
-	$$(_ + '3.4 - Add the function there')
-	Exe.AddHex(free, code);
-
-	$$(_ + '3.5 - Change the CALLed address from CModeMgr::Quit to our function')
+	$$(_ + '3.4 - Change the CALLed address from CModeMgr::Quit to our function')
 	Exe.SetTgtAddr(jmpedAddr + 6, freeVir); //5 for the MOV ECX, g_modeMgr & 1 for opcode of CALL CModeMgr::Quit
 
 	$$(_ + '4.1 - Find \'btn_request_b\' (the prefix string for the button in pressed state)')
@@ -305,7 +302,7 @@ ShowReplayBtn = function()
 	let ins = Instr.FromAddr(addr2);
 	ins.Imm = 0;
 
-	$$(_ + '4.1 - Prep code to disable the Replay Mode and send 2722h instead of 2729h')
+	$$(_ + '4.1 - Construct the code to disable the Replay Mode and send 2722h instead of 2729h')
 	code =
 		PUSHAD           //pushad
 	+	CALL(Filler(1))  //call <funcAddr>
@@ -315,22 +312,16 @@ ShowReplayBtn = function()
 	+	JMP(Filler(2))   //jmp <retnAddr>
 	;
 
-	$$(_ + '4.2 - Allocate space to add the code')
-	const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
-
-	$$(_ + '4.3 - Fill in the blanks')
-	code = SetFillTargets( code, 1,
-	{
-		start : freeVir,
-		    1 : funcAddr,
+	$$(_ + '4.2 - Prepare the arguments for auto-hook')
+	const args = {
+		targets : {
+			1 : funcAddr,
 		    2 : Exe.Phy2Vir(retnAddr, CODE)
-	});
+		}
+	};
 
-	$$(_ + '4.4 - Add the code at the allocated space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '4.5 - Create a JMP to our code from ShowMsg')
-	Exe.SetJMP(addr - 5, freeVir);
+	$$(_ + '4.3 - Add our code and jump to it from before addr')
+	AutoHook(addr - 5, code, args);
 
 	return true;
 };
@@ -450,21 +441,14 @@ ShowReplayBtn.fixCoords = (btnImg, msgPrefix, suffix, suffix2) =>
 	}
 	else //VC9 & VC10
 	{
-		$$(_ + '3.3 - For the others, allocate space to add the code')
-		const [free, freeVir] = Exe.FindSpace(csize, 0x10);
+		$$(_ + '3.3 - For the others, prepare the arguments for auto-hook')
+		const args = {
+			allocSize : csize,
+			targets : { 1 : Exe.Phy2Vir(retnAddr, CODE) }
+		};
 
-		$$(_ + '3.4 - Fill in the blanks')
-		code = SetFillTargets(code, 1,
-		{
-			start : freeVir,
-			    1 : Exe.Phy2Vir(retnAddr, CODE)
-		});
-
-		$$(_ + '3.5 - Add the code at the allocated space')
-		Exe.AddHex(free, code);
-
-		$$(_ + '3.6 - Create a JMP to our code at jmpAddr')
-		Exe.SetJMP(jmpAddr, freeVir);
+		$$(_ + '3.4 - Add the code and jump to it from jmpAddr')
+		AutoHook(jmpAddr, code, args);
 	}
 
 	return jmpAddr;//We return the address since we need it for the Mode comparison
