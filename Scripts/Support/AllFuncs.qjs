@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-10-02                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -217,6 +217,8 @@ SwapFillers = (str, ...args) =>
 
 		$$(_ + '2.4 - Get the dataSet corresponding to the id')
 		const dataSet = idMap[key];
+		if (dataSet == undefined)
+			continue;
 
 		$$(_ + '2.5 - Create the filler string to search')
 		const find = Filler(idx, bc);
@@ -318,6 +320,9 @@ SetFillTargets = (str, ...args) =>
 
 		$$(_ + '2.4 - Get the target corresponding to the id & ensure its an integer')
 		let target = idMap[key];
+		if (target == undefined) //undefined or null
+			continue;
+
 		if (typeof target === 'object')
 			target = target.valueOf();
 
@@ -403,31 +408,33 @@ BitWidth = v =>
 Distance = (tgt, src) =>
 	typeof tgt === 'number' && typeof src === 'number' ? tgt - src : tgt;
 
-
 ///
 /// \brief Calculate the addresses for various indices in the array of hex strings (instructions).
 ///
 MapAddrs = (start, arr) =>
 {
-	if (IsArr(arr))
+	if (IsArr(start))
 	{
-		let offset = 0;
-		const result = arr.map( hex =>
-		{
-			let addr = start + offset;
-
-			if (typeof hex === 'string')
-				offset += hex.byteCount();
-
-			return addr;
-		});
-
-		return [...result, start + offset];
+		arr = start;
+		start = 0;
 	}
-	else
-	{
+	if (!IsArr(arr))
 		return [];
-	}
+
+	let offset = 0;
+	let result = arr.map( hex =>
+	{
+		const addr = start + offset;
+
+		if (typeof hex === 'string')
+			offset += hex.byteCount();
+
+		return addr;
+	});
+
+	result.push(start + offset);
+
+	return result;
 };
 
   //============//
@@ -546,28 +553,17 @@ GetInstr = (current, n) =>
 ///
 /// \brief Retrieves the references of an imported function
 ///
-GetImpRefs = (funcName, dllName = null) =>
+GetImpRefs = (funcName, dllName = null, ordinal = null) =>
 {
-	if (CACHE.has(funcName + '_Refs'))
-	{
-		return {
-			funcAddr : CACHE.get(funcName + '_Addr'),
-			refAddrs : CACHE.get(funcName + '_Refs')
-		};
-	}
+	if (typeof FnStore !== 'undefined' && FnStore.has(funcName))
+		return FnStore.get(funcName);
 
-	let funcAddr;
-	if (CACHE.has(funcName + '_Addr'))
-	{
-		funcAddr = CACHE.get(funcName + '_Addr');
-	}
-	else
-	{	funcAddr = Exe.FindFunc(funcName, dllName ?? "");
-		if (funcAddr < 0)
-			return {funcAddr};
-
-		CACHE.put(funcName + '_Addr', funcAddr);
-	}
+	const funcAddr = IsNum(ordinal)
+	?	Exe.FindFunc(funcName, ordinal, dllName ?? "")
+	:	Exe.FindFunc(funcName, dllName ?? "")
+	;
+	if (funcAddr < 0)
+		return {funcAddr};
 
 	let refAddrs = [];
 	for (const pat of [
@@ -579,10 +575,102 @@ GetImpRefs = (funcName, dllName = null) =>
 	{
 		refAddrs = refAddrs.concat( Exe.FindHexN(pat) );
 	}
-	if (!refAddrs.isEmpty())
-		CACHE.put(funcName + '_Refs', refAddrs.map(addr => Instr.FromAddr(addr).NextAddr - 4));
 
-	return {funcAddr, refAddrs};
+	const result = {funcAddr, refAddrs};
+	if (typeof FnStore !== 'undefined')
+		FnStore.set(funcName, result);
+
+	return result;
+};
+
+///
+/// \brief Initializes the reference storage map used above. Invoke this in some 'Init' script
+///
+InitFnStore = () =>
+	(typeof FnStore !== 'undefined' && FnStore.clear() === undefined) || (FnStore = new Map());
+
+
+  //=======================//
+ // Modification Wrappers //
+//=======================//
+
+///
+/// \brief Higher level wrapper for insert the provided code(s) and creating a JMP/CALL to it from a specific location in the Exe
+///        Extra arguments can be provided for processing the provided code before insertion
+///
+AutoHook = (fromAddr, codes, argMap) =>
+{
+	const _ = Log.dive(`AutoHook at [${fromAddr}] :`);
+
+	$$(_ + '1.1 - Retrieve the arguments')
+	const {allocSize, localVals, localTgts, values, targets, postProc, procArgs, isCall, nops, snap, jcOffset} = argMap;
+
+	$$(_ + '1.2 - Allocate space')
+	const allocation = Exe.Allocate(allocSize ?? codes.byteCount(), snap ?? 0x10);
+	const [free, freeVir] = allocation;
+
+	$$(_ + '2.1 - Fill in the blanks')
+	let finalCode;
+	if (localVals)
+	{
+		for (const key in localVals)
+		{
+			if (IsNum(localVals[key]))
+			{
+				localVals[key] += freeVir;
+			}
+			else if (IsArr(localVals[key]))
+			{
+				let arr = localVals[key];
+				for (let idx = 0; idx < arr.length; idx++)
+				{
+					if (IsNum(arr[idx]))
+						arr[idx] += freeVir;
+				}
+			}
+		}
+
+		finalCode = SwapFillers(codes, localVals);
+	}
+	else
+	{
+		finalCode = codes;
+	}
+
+	if (values)
+		finalCode = SwapFillers(finalCode, values);
+
+	if (localTgts)
+		finalCode = SetFillTargets(finalCode, localTgts);
+
+	if (targets)
+	{
+		targets.start = freeVir;
+		finalCode = SetFillTargets(finalCode, targets);
+	}
+
+	$$(_ + '2.2 - Call any post processing function defined')
+	if (typeof postProc === 'function')
+		finalCode = postProc(finalCode, freeVir, procArgs, fromAddr);
+
+	$$(_ + '2.3 - Put the final code at allocated space')
+	Exe.SetHex(free, finalCode);
+
+	$$(_ + '2.4 - Call/Jump from specified address to the code')
+	if (fromAddr)
+	{
+		const tgtOff = jcOffset ?? 0;
+
+		if (Exe.GetUint8(fromAddr) === (0xE8 + (isCall ? 0 : 1)))
+			Exe.SetTgtAddr(fromAddr + 1, freeVir + tgtOff);
+		else if (isCall)
+			Exe.SetCALL(fromAddr, freeVir + tgtOff, nops ?? 0);
+		else
+			Exe.SetJMP(fromAddr, freeVir + tgtOff, nops ?? 0);
+	}
+
+	$$(_ + '2.5 - Return the allocated addresses & size')
+	return Log.rise(allocation);
 };
 
   //===========//
@@ -794,6 +882,7 @@ ReloadPatch = (name, ...args) =>
 	}
 };
 
+
   //====================//
  // Syntax Identifiers //
 //====================//
@@ -855,7 +944,8 @@ for (const name of
 	'Filler', 'SwapFillers', 'SetFillTargets',
 	'Wrap', 'BitWidth', 'Distance',
 	'PatchReporter', 'MakeMap', 'ReloadPatch',
-	'CaseAddr', 'ParseData', 'FindInstr', 'GetInstr',
+	'CaseAddr', 'ParseData', 'GetImpRefs',
+	'FindInstr', 'GetInstr', 'AutoHook',
 	'Identify', 'IdentifyClass', 'IdentifyObj',
 	'Assign', 'AssignStr',
 

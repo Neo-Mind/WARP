@@ -1,40 +1,47 @@
+# 2021-10-27 Changes
+
+## Tool Updates (v1.5.2)
+- Added Drag & Drop support for the tools.
+	- You can drop `Exe files` or `Session YAMLs` directly on the [Main GUI] for them to be loaded. 
+
+	- Similarly you can drop the `Test Folder` or `Session YAMLs` in  [Test Bench]
+
+	- Also, you can drop any files/folders into the various editor frames and text boxes to get their paths added directly.
+
+- `Exe.FindSpace` function has been changed to `Exe.Allocate` and it always reserves the space allocated now. 
+
+- Continuing from the above change, `Exe.Add*` functions no longer takes the target address as an argument. Please use the `Exe.Set*` functions instead on `allocated` addresses.
+
+- If the value going to be added is already known, then use the `Exe.Add*` functions to stage the addition to the `DIFF` section and use it's return value (addresses & size - similar to `Exe.Allocate`). 
+
+- `Exe.ProtectChanges` function has been split into `Exe.ConcealChanges` and `Exe.RevealChanges` respectively and they both take a password now.
+
+- Added caching support to `Exe.FindFunc` to avoid repetitive searches for the same function later.
+
+- Fixed bug with dependency chain not ignoring invalidated patches.
+
+- Added type information to input values in Session files.
+
+- Added support for `init` member function on Patch functions which will get executed when a client is loaded.
+
+- Added support for `initvars` and `clearvars` member arrays on Patch functions to hold the name of member variables to be initialized/purged when a client is loaded.
+
+  `initvars` need to be of the form `["name1", value1, "name2", value2...]`
+
+
+# 2021-10-26 Changes
+
+## Script Updates
+- Added new function `AutoHook` to group together all the common steps involved in hooking & addition of code.
+
+
 # 2021-10-02 Changes
-
-## Patch Updates
-- Updated `Customize Walk delay` patch to set individual delays.
-
-- Added patches for the following:
-
-	- More `Font customization` options i.e. weight (fixed and specific to normal & bold), charset, relative height & weight
-	
-	- Play sound instead of displaying `MessageBox`
-	
-	- Show icon inside `MessageBox`
-	
-	- Skip showing `MessageBox` altogether
-	
-	- Borderless full screen
-	
-	- Setting Mini title bar
-	
-	- Ignoring Debugger presence
-
-	- Add Input Delay
-	
-	- Change Game Loop delay
-
-	- Altering priority from (Idle to Normal) or (Normal to High)
-	
-	- Changing Captcha decompression size
 	
 ## Script Updates
-	- Added new function `GetImpRefs` to get references of Imported function
-	
-	
-# 2021-09-26 Changes
+- Added new function `GetImpRefs` to get references of Imported function
 
-## Patch Updates
-- Added patch to `Customize Auto follow stop delay`.
+
+# 2021-09-26 Changes
 
 ## Tool Updates
 - Fixed number input issue in session files.
@@ -46,37 +53,16 @@
 - Added variants of `Exe.Add*` functions which performs the allocation along with insertion and returns the addr & size list identical to `Exe.FindSpace`.
 
 
-# 2021-09-11 Changes
-
-## Patch Updates
-- Added temporary fix for integers being loaded as strings from session files.
-  Fixes [bug with Custom Jobs patch](https://github.com/Neo-Mind/WARP/issues/73)
-
-
 # 2021-08-31 Changes
 
-## Patch Updates
-- Fixed bug with Custom Font Name patch
-
 ## Tool Updates
-- Fixed 1 non-critical issue with the GATE dll
+- Fixed 1 non-critical issue with the GATE dll.
+
 
 # 2021-08-27 Changes
 
-## Patch Updates
-- Fixed [bug with MonSizeEffect lub patch](https://github.com/Neo-Mind/WARP/issues/70)
-
-- Fixed [bug with Hide Packets from PEEK patch](https://github.com/Neo-Mind/WARP/issues/68)
-
-- Fixed [bug with Restore model culling patch](https://github.com/Neo-Mind/WARP/issues/67)
-
-- Fixed [bug with New Button visibility patch](https://github.com/Neo-Mind/WARP/issues/72)
-
-## Script Updates
-- Renamed the `self_call` sub function to `self`
-
 ## Tool Updates
-- Added `Warp.BlockMsgs` & `Warp.AllowMsgs` function to allow partial logging.
+- Added `Warp.BlockMsgs` & `Warp.AllowMsgs` function to allow partial blocking of logging messages.
 
 
 # 2021-08-26 Changes
@@ -98,15 +84,12 @@
 - Fixed bug in `OpData` class for 1 of the Scale index forms.
 
 - Fixed bugs in some instruction generators.
- 
-## Patch/Extension Updates
-- Started using all the new features in all the patches & extensions.
 
 ## Tool Updates
 - Added 2 new options related to errors in [Test Bench].
 
 	- `Show only errors & warnings` => As the name sounds, it allows for skipping 'success' & 'ignored' messages for each individual patch/extension during tests.
-	
+
 	- `Show lines with error` => Option to display the linenumber & filename from where the error originated.
 
 - Modified the way the exe file names are displayed during test => Now the test directory being used is displayed first and only the filenames are reported seperately.
@@ -115,12 +98,10 @@
 # 2021-08-22 Changes
 
 ## Script Updates
-- Added `PatchReporter` function which uses the logging mechanism to report the changes staged by the tool. 
-
-- Moved most of the `Init` scripts into Modules.
+- Added `PatchReporter` function which uses the logging mechanism to report the changes staged by the tool.
 
 - Added a new `CACHE` module for storing data persistent per session i.e. It will remain in there as long as you don't load a new client.
-  
+
   The module also helps with setting up shared data & changes amongst related patches by means of multiple Vaults & a User Registration system.
 
 ## Tool Updates
@@ -148,8 +129,6 @@
 
 - Removed `TAB` constant since it is not needed anymore.
 
-- Shifted some of the content in initialization scripts into modules.
-
 
 # 2021-08-19 Changes
 
@@ -158,8 +137,8 @@
 
 - Added support for including/importing additional YAML files into current one for **`Style` & `Language`** files as well as **`Patches.yml`** by means of the **`include`** key.
 
-  It can be either 1 name of list of names. 
-  
+  It can be either 1 name of list of names.
+
   **`Extensions.yml` do not have it yet since it will rarely get big enough to split into multiple files.**
 
 - Session files now also records the selected **`extensions`**, the **`Test Dir`** as well as the selected **`tester exes`** when saving the file in [Test Bench].
@@ -173,7 +152,7 @@
 - Added support for fully encrypted scripts with the suffix **`.ejs`**. It can also have an optional disclaimer/license header.
 
   **Do not try to create this manually.**
-  
+
 - Added **`Warp.EncryptFile`** function for generating **`.ejs`** files from the specified source file. Any disclaimer/license header present will be retained as is.
 
 - Added **`Warp.LoadEJS`** function for loading **`.ejs`** files explicitly from scripts or the **`Script Editor`**.
@@ -205,7 +184,7 @@
 	- `format` => Previously called `order`. Indicates the format in which the components need to be kept from MSB to LSB.
 
 	- `R`, `G`, `B` & `A` => Optional keys to set the default value for any missing components in the format (need this for the color `ColorPanel` being displayed).
-	
+
 - Similarly the color value can be provided in one of 3 forms:
 
 	- `[component list]` => The components need to follow the `format` specified. i.e. for `RGB`, it should be [r,g,b]
@@ -214,7 +193,7 @@
 
 	- `'#hexcode'` => Standard coloring hex code . The `format` is only used for determining the internal byte representation.
 
-- Changed `align` constraint to `pad` for string types. 
+- Changed `align` constraint to `pad` for string types.
 
 - `align` constraint now represents the horizontal alignment of the string values inside the respective textboxes of the **`Input Dialog`**
 
@@ -243,7 +222,7 @@
 - **`Exe.ClearPatch` & `Exe.SetActivePatch`** can now be invoked without arguments. Behavior for empty argument is as follows:
 
 	- **`Exe.ClearPatch`** => will clear the changes in the active patch.
-	
+
 	- **`Exe.SetActivePatch`** => will keep no patch as active. Same thing happens if you assign **`Exe.ActivePatch`** member directly.
 
 - Added **`Exe.UndoChanges`** function to revert the changes setup for a range of addresses.
@@ -287,7 +266,7 @@
 - Modified the usage of **`D_Hex`** type. Now it only has 2 constraints to guide it
 
 	- **`endian`** => Indicates the endianness of the displayed values. This can be either `little` or `big` . Default is `big` .
-	
+
 	- **`byteCount`** => The number of bytes expected to be stored. Default is 1
 
 - Added optional `stepSize0`, `stepSize1`, `stepSize2` & `stepSize3` constraints to use for the respective individual elements of **`D_Vec\*`** types.
@@ -310,37 +289,14 @@
 ## Tool Updates
 - Added option in the **`Settings`** dialog to show the modifications setup via **`Exe.Set\*` & `Exe.Add\*`** functions.
 
-- Added **`Exe.ProtectChanges`** function to selectively avoid the above switch when needed. It gets automatically re-enabled when the patch/extension function call is over. 
+- Added **`Exe.ProtectChanges`** function to selectively avoid the above switch when needed. It gets automatically re-enabled when the patch/extension function call is over.
 
 - Added **`Exe.SetFloat` & `Exe.GetFloat`** functions. Also added **`Exe.SetBytes`** function for list of bytes.
 
 - Added **`Exe.Add\*`** variants of all the numeric types (including float) as well as list of bytes.
 
 
-# 2021-07-31 Changes
-
-## Patch Updates
-- Fixed the remaining [issue with Increase Hair style patches](https://github.com/Neo-Mind/WARP/issues/56).
-
-
-# 2021-07-29 Changes
-
-## Patch Updates
-- Corrected 1 issue in "Add Chris' lua overrides" patch.
-
-- Divided the HP bar resize patch for mobs into 3 => 1 for Normal, 1 for Mini-Boss and 1 for Boss monster respectively.
-
-  Now no more [conflicts about the health bar](https://github.com/Neo-Mind/WARP/issues/57).
-
-- Fixed the [byte order issue in Packet Key patches](https://github.com/Neo-Mind/WARP/issues/55). 
-
-  The `PACKET` object now better recognizes patched clients and `Get Packet Keys` extension works correctly for patched clients too.
-
-
 # 2021-07-25 Changes
-
-## Patch Updates
-- Rearranging some codes and using `const` where appropriate.
 
 ## Tool Updates
 - Added `findAs` function to `Array` types as an extended version of `find`. The function provided as argument can return the result required instead of `true`.
@@ -350,32 +306,11 @@
 
 # 2021-07-24 Changes
 
-## Patch Updates
-- Fixed [issue in Packet key patches](https://github.com/Neo-Mind/WARP/issues/55) for latest clients.
-
-- Fixed [issue with Resize MVP health bar](https://github.com/Neo-Mind/WARP/issues/57).
-
 ## Tool Updates
 - Corrected 1 bug in `OpData` class.
 
 
-# 2021-07-23 Changes
-
-## Patch Updates
-- Updated patches using the placeholder functions to remove the deprecated functions.
-
-- Minor cleanup also being done (using `const` and swapping out `forEach` with `for of`)
-
-## Extension Updates
-- A little bit of cleanup (using `const` and swapping out `forEach` with `for of`)
-
-
 # 2021-07-22 Changes
-
-## Patch Updates
-- Converted a lot of `let` to `const`
-
-- Changed some of the `forEach` functions to `for of` loops.
 
 ## Tool Updates
 - Changed the placeholder functions to use `_` & `_.` instead of `?` to avoid clashing with regular wildcards.
@@ -392,38 +327,12 @@
 
 - Changed `LOCK`, `REPE` & `REPN` to `ILOCK`, `IREPE` & `IREPN` respectively. The first 3 are now functions instead to automatically prefix these values.
 
-  `REP` function has also been provided as an alias to `REPE`. Check the wiki for more details. 
+  `REP` function has also been provided as an alias to `REPE`. Check the wiki for more details.
 
 - Added string instructions to use with the `REP*` functions.
 
-- Updated **'Init'** scripts to reflect the changes in placeholder functions.
-
-
-# 2021-07-15 Changes
-
-## Patch Updates
-- Added patch for [Chris' lua overrides](https://github.com/llchrisll/ROenglishRE/tree/master/Custom%20Lua%20Files)
-
-## Extension Updates
-- Bug fix (Changed all the wrong `CaseInsensitive` names to `CASE_INSENSITIVE`).
-
-- Added the missing `_` variable in `GenMapEffectPlugin.qjs`
-
-
-# 2021-07-12 Changes
-
-## Patch Updates
-- Fixed bug in [Disable Multiple Windows](https://github.com/Neo-Mind/WARP/issues/52) patch.
-
-- Some minor cleanup.
-
 
 # 2021-07-07 Changes
-
-## Patch Updates
-- Fixed issue with doram palette in **`Increase Hairstyle`** patches.
-
-- (Hopefully) Fixed the rendering bug with [Increase Zoom](https://github.com/Neo-Mind/WARP/issues/44) patches.
 
 ## Tool Updates
 - Added thai language file with translations for the new entries.
@@ -441,20 +350,17 @@
 
 # 2021-07-05 Changes
 
-## Patch Updates
-- Converted comments in all the patch scripts to use `$$` function for optional reporting.
-
 ## Tool Updates
 - Added few instruction constants.
 
 	- **`FP_START`** = Frame pointer begins (`push ebp` followed by `mov ebp, esp`)
-	
+
 	- **`FP_STOP`**  = Frame pointer ends (`mov esp, ebp` followed by `pop ebp`)
-	
+
 	- **`POP_EAX`**  = Obvious no?
-	
+
 	- **`CDQ`**
-	
+
 	- **`INT3`**
 
 - Changed [Exe.IsSelected](https://github.com/Neo-Mind/WARP/wiki/Exe-Object#patch-related) function to [Warp.GetPatchState](https://github.com/Neo-Mind/WARP/wiki/Warp-Object#functions) for logical reasons.
@@ -464,7 +370,7 @@
 - Added 2 functions for displaying messages from patch/extension scripts.
 
 	- **`Warp.InformUser`** = Used for information messages
-	
+
 	- **`Warp.WarnUser`**   = Used for warning messages
 
 - Added support for user interrupts with **`Ctrl+Q`** sequence while selecting multiple patches in [Main GUI] and running tests in [Test Bench].
@@ -497,11 +403,6 @@
 
 - Added **`UserChoice`** function as a quick wrapper for yes/no questions to user. Primarily used in extensions.
 
-- Converted comments in all the initialization scripts to use `$$` function for optional reporting. Should be helpful for debugging in future.
-
-## Extension Updates
-- Converted comments in all the extension to use `$$` function for optional reporting. Should be helpful for debugging in future.
-
 
 # 2021-06-30 Changes
 
@@ -523,11 +424,10 @@
 	- **`D_VecI8, D_VecI16, D_VecU32`**
 
 	- **`D_VecF`**
-	
+
 - All the **`D_Vec`** can have upto `4` elements. The size is determined by the default value provided.
 
 - All of them have individual constraints for setting **`min & max`** values as well as specifying a **`name`**.
-
   For e.g. `index 1` can be setup as `min1: 3, name1: "X Coord"`. If the `name` is not provided then it defaults to `Index1`
 
 
@@ -547,7 +447,7 @@
 	- i.e. any existing changes staged by patches can now be `reflected` while retrieving the values.
 
 	- To do this an additional (optional) boolean argument has been added to all of the **`Exe.Get`** functions.
-	
+
 - Renamed **`D_List & D_MultiList`** types to [D_Choice & D_MultiChoice](https://github.com/Neo-Mind/WARP/wiki/Inbuilt-API#datatype) respectively.
 
 	- Also added `Selected value` display and filtering support (similar to `Patch List`) for both of them.
@@ -586,7 +486,7 @@
 		- Option to enable/disable generation of session files along with **Target Exe**.
 		- Option to keep the inputs as-is while loading session files.
 		- Button for saving current resolution of **Main & Script** windows as the default.
-		
+
 	- [Test Bench]
 
 		- Option to keep the inputs as-is while loading session files.
@@ -606,63 +506,11 @@
 
 # 2021-06-20 Changes
 
-## Patch Updates
-- Slightly changed the title of **`OpenToServiceSelect`** patch.
-
-- Added patches to
-
-	- Restore Auto Follow
-
-	- Hide Ingame Windows
-
-	- Draw Shield on Top
-
-	- Fix Achievement Counters
-
 ## Tool Updates
 - Updated [SwapFiller & SetFillTarget] functions to accept array of strings.
 
-- Added **`IsMain`** property to **ROC** object to indicate that the client is Main one (i.e. neither RE nor Zero type).
-
-
-# 2021-06-17 Changes
-
-## Patch Updates
-- Added patches to
-
-	- Enable Custom Homunculi
-
-	- [Fix homunculus attack AI](https://github.com/Neo-Mind/WARP/issues/38)
-
-	- Send client flags
-
-	- Allow all items in Shortcut
-
-	- Remove Adventurer Agency from Party
-
-	- Fix Charset for Fonts
-
-	- Customize Merchant store URL
-
-	- Hide packets from PEEK
-
-	- Use 'identified' drops for Boss (MVP) mob
-	
-- Added cleanup function to PreviewInShop to work with Send Client Flags patch
-
-- Started fine tuning & comment fixes in scripts
-
-- Updated some of the entries in Patch list (Patches.yml)
-
 
 # 2021-06-14 Changes
-
-## Patch Updates
-- Added patch to [Enable item preview in Cash Shop](https://github.com/Neo-Mind/WARP/issues/17).
-
-- Added patch to Decrease the zoom to 25% of Maximum.
-
-- Fixed 1 remaining bug with Hide Buttons patch for new UI for slightly older clients.
 
 ## Tool Updates
 - Fixed 1 bug in **`<number>.toIEEE`** function for conversion of float to IEEE hex string.
@@ -670,85 +518,14 @@
 
 # 2021-06-12 Changes
 
-## Patch Updates
-- Added patch to [Enable Custom Player Skills](https://github.com/Neo-Mind/WARP/issues/25).
-
 ## Tool Updates
 - Updated signature of [SwapFiller & SetFillTarget] functions to accept index & bytecount together as a tuple (2 element array).
 
 
-# 2021-06-11 Changes
-
-## Patch Updates
-- Added patch for [Opening to Service Select from login screen](https://github.com/Neo-Mind/WARP/issues/35) in latest clients.
-
-- Added patch for [Restoring Songs Effects](https://github.com/Neo-Mind/WARP/issues/36)
-
-- Fixed bug in [Selected Login Background](https://github.com/Neo-Mind/WARP/issues/33) patch.
-
-- Fixed bug in [Hide Buttons patch for new UI](https://github.com/Neo-Mind/WARP/issues/32).
-
-- Fixed bug in [Custom Shields patch](https://github.com/Neo-Mind/WARP/issues/37) related to showing two handed weapons.
-
-- Fixed bugs in **`Show Exp Numbers`** patch. Thanks [@Haziel](https://github.com/SirHaziel) for pointing it out.
-
-## Tool Updates
-- Slight update to **`LUA.addLoaders`** function to report the reference lua file name (in case it fails)
-
-
-# 2021-06-10 Changes
-
-## Patch Updates
-- Made the higher limit of **`Custom Jobs`** patch a user input (restricted to max of `5000`).
-
-- Fixed the [arrow translations](https://github.com/Neo-Mind/WARP/issues/24). Since we are restricted to ASCII table, the best resembling values were picked from them.
-
-- Fixed remaining [bugs in Increase Hairstyle patches](https://github.com/Neo-Mind/WARP/issues/16) (hopefully I have covered all the missed tables now)
-
-- Updated **`Shared Head palette`** patches to work well with **`Increase Hairstyle`** patches. 
-
-- Fixed the **`Shared Body palette`** patches for costume palettes and doram palettes. 
-
-- Corrected descriptions for **`Shared Head palette`** patches & **`Translate Arrows`** patch.
-
-## Tool Updates
-- Updated **`LUA.addLoaders`** with option to load the reference lua file either before or after the new ones. You can also completely skip it.
-
-
 # 2021-06-05 Changes
-
-## Patch Updates
-- Fixed final [bug with Custom Vending Limit](https://github.com/Neo-Mind/WARP/issues/15) patch that was present in newer clients.
-
-- Fixed 1 typo in **`Patches.yml`** (thanks [@Everade](https://github.com/Everade) for pointing it out).
-
-- Fixed titles for user inputs in **`Resize \* Box`** patches.
-
-- Fixed 1 typo in [Translate arrows to English](https://github.com/Neo-Mind/WARP/issues/24) patch. But still the arrows arent correct.
 
 ## Tool Updates
 - Added link to Changelog in [README](README.md).
-
-
-# 2021-06-03 Changes
-
-## Patch Updates
-- Added patch to [Show Damage for GvG](https://github.com/Neo-Mind/WARP/issues/23).
-
-- Added patch to [Translate arrows to English](https://github.com/Neo-Mind/WARP/issues/24).
-
-- Fixed issues with **`Packet Key`** patches.
-
-- Fixed [issue with Custom Vending Limit](https://github.com/Neo-Mind/WARP/issues/15) patch.
-
-- Fixed [issue with Custom Walk Delay](https://github.com/Neo-Mind/WARP/issues/26) patch.
-
-- Fixed [issue with Close Cutin on Esc key](https://github.com/Neo-Mind/WARP/issues/28) patch.
-
-- Updated the translation made by [@Everade](https://github.com/Everade).
-
-## Extension Updates
-- Fixed problem with **`Get Packet Keys`** extension (now it is able to get the keys from patched clients as well).
 
 [Main GUI](https://github.com/Neo-Mind/WARP/wiki/Main-GUI)
 [Test Bench](https://github.com/Neo-Mind/WARP/wiki/Test-Bench)
