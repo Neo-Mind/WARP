@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-02                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -388,11 +388,8 @@ IncrNewCharHairs.addCmp = function(loc, min, newLimit, opsize)
 	+	RETN()                  //retn ; _skip#2
 	;
 
-	$$(_ + '2 - Allocate space for it')
-	const [free, freeVir] = Exe.FindSpace(code.byteCount());
-
-	$$(_ + '3 - Add at allocated space')
-	Exe.AddHex(free, code);
+	$$(_ + '2 - Add the code and return it\'s VIRTUAL address')
+	const [, freeVir] = Exe.AddHex(code, 0x10);
 
 	return freeVir;
 };
@@ -428,7 +425,7 @@ IncrNewCharHairs.fixSB = function(type, oldLimit, newLimit)
 	const csize = code.byteCount();
 	const SB_Create = Exe.GetTgtAddr(addrs[0] + csize);
 
-	$$(_ + '2.1 - Prepare the code to call the function with the updated limits')
+	$$(_ + '2.1 - Construct the code to call the function with the updated limits')
 	code =
 		PUSH(newLimit + 1)  //push newLimit+1
 	+	PUSH_1              //push 1
@@ -437,20 +434,16 @@ IncrNewCharHairs.fixSB = function(type, oldLimit, newLimit)
 	+	RETN()              //retn
 	;
 
-	$$(_ + '2.2 - Allocate space for it')
-	const [free, freeVir] = Exe.FindSpace(code.byteCount());
+	$$(_ + '2.2 - Prepare the arguments for auto-hook')
+	const args = {
+		snap : 1,
+		targets : { 1 : SB_Create }
+	}
 
-	$$(_ + '2.3 - Fill in the blanks')
-	code = SetFillTargets( code, 1,
-	{
-		start : freeVir,
-		    1 : SB_Create
-	});
+	$$(_ + '2.3 - Add our code')
+	const [, freeVir] = AutoHook(null, code, args);
 
-	$$(_ + '2.4 - Add at allocated space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '2.5 - Create a NOP sequence & change the CALL target to our code')
+	$$(_ + '2.4 - Create a NOP sequence & change the CALL target to our code')
 	for (const addr of addrs)
 	{
 		Exe.SetNOPs(addr, csize - 1);

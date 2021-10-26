@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -64,6 +64,12 @@ NoLoginEncr = function()
 	Exe.SetHex(addr, code);
 	return true;
 };
+
+///
+/// \brief Disable for unsupported clients
+///
+NoLoginEncr.validate  = () =>
+	Exe.BuildDate > 20080600 && Exe.BuildDate < 20100803;
 
 ///
 /// \brief Find call to the encryption function and substitute it with XOR EAX, EAX
@@ -114,7 +120,98 @@ NoPacketEncr = function()
 ///
 /// \brief Disable for unsupported clients
 ///
-NoLoginEncr.validate  = () =>
-	Exe.BuildDate > 20080600 && Exe.BuildDate < 20100803;
-
 NoPacketEncr.validate = HasPktKeys;
+
+///
+/// \brief Disable usage of Packet obfuscation for Login & Char packets in latest clients
+///
+NoEncrForLC = function()
+{
+	const _ = 'NoEncrForLC : ';
+
+	$$(_ + '1 - Find the Obfuscation Call')
+	let parts =
+	[
+		MOV([POS4WC], EAX)    //mov dword ptr [addr#1], eax
+	,
+		CALL(ALLWC)           //call ObfuscateOrInit
+	+	MOV(R32, [EBP, 0xC])  //mov regA, dword ptr [ARG.2]
+	];
+
+	let addr = Exe.FindHex(parts);
+	if (addr < 0)
+	{
+		parts[0] = PUSH_0;   //push 0
+		addr = Exe.FindHex(parts);
+	}
+	if (addr < 0)
+		throw Error("Function call missing");
+
+	addr += parts.byteCount(0);
+
+	$$(_ + '2.1 - Add the id table')
+	const tbl = [
+		0x64, 0x277, 0x2b0, 0x27c, 0x825,
+		0x1db, 0xacf, 0x200, 0x204,
+
+		0x827, 0x829, 0x82b, 0x65, 0x66,
+		0x68, 0x1fb, 0xa39, 0x187, 0x28d,
+		0x28f, 0x8fc, 0x7e5, 0x7e7, 0x8b8,
+		0x8c5, 0x8be, 0x8ba, 0x8d4, 0x9a1
+	];
+	const [, tblBegin, tblSize] = Exe.AddHex(tbl.map(v => v.toHex(2)));
+	const tblEnd = tblBegin + tblSize;
+
+	$$(_ + '2.2 - Construct the new function')
+	parts =
+	[//0
+		MOV(EAX, [EBP, 0xC]) //mov eax, dword ptr [ARG.2]
+	+	MOV(AX, [EAX])       //mov ax, word ptr [eax]
+	+	PUSH(ECX)            //push ecx
+	+	PUSH(EDI)            //push edi
+	+	MOV(ECX, tblBegin)   //mov ecx, <tblBegin>
+	+	MOV(EDI, tblEnd)     //mov edi, <tblEnd>
+
+	,//1
+		CMP(AX, [ECX])       //cmp ax, word ptr [ecx] ; _loop
+	+	JE(Filler(3,1))      //je short _skip
+	+	ADD(ECX, 2)          //add ecx, 2
+	+	CMP(ECX, EDI)        //cmp ecx, edi
+	+	JL(Filler(4,1))      //jl short _loop
+	+	POP(EDI)             //pop edi
+	+	POP(ECX)             //pop ecx
+	+	JMP(Filler(5))       //jmp <ObfuscateOrInit>
+
+	,//2
+		POP(EDI)             //pop edi ; _skip
+	+	POP(ECX)             //pop ecx
+	+	XOR(EAX, EAX)        //xor eax, eax
+	+	RETN(4)              //retn 4
+	];
+
+	$$(_ + '2.2 - Prepare the arguments for auto-hook')
+	const [, _loop, _skip, allocSize] = MapAddrs(parts);
+	const args =
+	{
+		allocSize,
+		localTgts : {
+			'3,1' : _skip,
+			'4,1' : _loop,
+		},
+		targets : {
+			5 : Exe.GetTgtAddr(addr + 1)
+		},
+		isCall : true
+	};
+
+	$$(_ + '2.3 - Add our code and call it from addr')
+	AutoHook(addr, parts, args);
+
+	return true;
+};
+
+///
+/// \brief Disable for older clients which didnt have the issue (will be uncommented in future)
+///
+NoEncrForLC.validate = () =>
+	Exe.BuildDate > 20180309;

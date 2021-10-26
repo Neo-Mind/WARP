@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Ai4rei/AN                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -345,30 +345,27 @@ EnableUnknCmds = function()
 			retnAddr += 3;
 	}
 
-	$$(_ + '3.1 - Prep new code to setup TT_NORMAL & chatStartOffset')
-	let code =
+	$$(_ + '3.1 - Construct the code to setup TT_NORMAL & chatStartOffset')
+	const code =
 		DEC(tgtReg)    //dec regA ; for TT_NORMAL reg value becomes 0
 	+	JZ(Filler(1))  //jz <retnAddr>
 	+	OR(tgtReg, -1) //or regA, FFFFFFFFh ; for all others reg value is -1
 	+	JMP(Filler(1)) //jmp <retnAddr>
 	;
 
-	$$(_ + '3.2 - Allocate space for it')
-	const [free, freeVir] = Exe.FindSpace(code.byteCount());
-
-	$$(_ + '3.3 - Fill in the blanks')
-	code = SetFillTargets( code, 2,
+	$$(_ + '3.2 - Prepare the arguments for auto-hook')
+	const args =
 	{
-		start : freeVir,
-		    1 : retnAddr
-	});
+		snap : 1,
+		targets : {1 : retnAddr}
+	};
 
-	$$(_ + '3.4 - Add to allocated space')
-	Exe.AddHex(free, code);
+	$$(_ + '3.3 - Add our code')
+	const [, fnVir] = AutoHook(null, code, args);
 
-	$$(_ + '3.5 - Update the JMP targets')
+	$$(_ + '3.4 - Update the JMP targets')
 	for (const addr of hookAddrs)
-		Exe.SetTgtAddr(addr, freeVir);
+		Exe.SetTgtAddr(addr, fnVir);
 
 	return true;
 };

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei                                                 *
 *   Created Date  : 2021-06-15                                             *
-*   Last Modified : 2021-08-31                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -69,13 +69,10 @@ SendClientFlags = function()
 		CACHE.put('SCF_Addrs', SCF_Addrs);
 	}
 
-	$$(_ + '2.1 - Allocate space for our new version address')
-	const [free, freeVir] = Exe.FindSpace(4);
+	$$(_ + '2.1 - Add the flag')
+	const [, freeVir] = Exe.AddUint32(0x80000000 | (Warp.GetPatchState("PreviewInShop") ? 1 : 0));
 
-	$$(_ + '2.2 - Setup the flag there')
-	Exe.AddUint32(free, 0x80000000 | (Warp.GetPatchState("PreviewInShop") ? 1 : 0));
-
-	$$(_ + '2.3 - Change the address used in all the 6 assignments')
+	$$(_ + '2.2 - Change the address used in all the 6 assignments')
 	for (const addr of CACHE.get('SCF_Addrs'))
 	{
 		const ins = Instr.FromAddr(addr);

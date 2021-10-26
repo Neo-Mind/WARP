@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -126,43 +126,33 @@ FixFontsCharset = function()
 	$$(_ + '2.1 - Load the LANGTYPE object')
 	LANGTYPE.load();
 
-	$$(_ + '2.2 - Construct our own code in parts')
+	$$(_ + '2.2 - Add the charsets')
+	const [, csTbl] = Exe.AddHex(" 81 00 80 86 88 DE 00 00 00 00 00 00 00 00 CC A3 00 00 00 B2 00");
+
+	$$(_ + '2.3 - Construct our code in parts')
 	parts =
 	[
-		CMP(movIns.SIB.getReg('I'), 0x14)      //cmp dword ptr regA, 14h
-	+	JGE(Filler(1,1))                       //jge short _next
-	+	movIns                                 //mov eax, dword ptr [regA*4 + g_fontCharSet]
-	+	JMP(Filler(2))                         //jmp <retnAddr>
+		CMP(movIns.SIB.getReg('I'), 0x14)   //cmp dword ptr regA, 14h
+	+	JGE(Filler(1,1))                    //jge short _next
+	+	movIns                              //mov eax, dword ptr [regA*4 + g_fontCharSet]
+	+	JMP(Filler(2))                      //jmp <retnAddr>
 	,
-		MOV(EDI, [LANGTYPE])                   //mov edi, dword ptr [g_serviceType] ; _next
-	+	MOVZX(EAX, BYTE_PTR, [EDI, Filler(3)]) //movzx eax, byte ptr [edi + newCharsetTbl]
-	+	JMP(Filler(2))                         //jmp <retnAddr>
+		MOV(EDI, [LANGTYPE])                //mov edi, dword ptr [g_serviceType] ; _next
+	+	MOVZX(EAX, BYTE_PTR, [EDI, csTbl])  //movzx eax, byte ptr [edi + csTbk]
+	+	JMP(Filler(2))                      //jmp <retnAddr>
 	];
-	const csize = parts.byteCount();
+	const [, _next, allocSize] = MapAddrs(parts);
 
-	$$(_ + '2.3 - Construct our new charset table')
-	const csTbl = " 81 00 80 86 88 DE 00 00 00 00 00 00 00 00 CC A3 00 00 00 B2 00";
-
-	$$(_ + '2.4 - Allocate space for both')
-	const [free, freeVir] = Exe.FindSpace(csize + csTbl.byteCount());
-
-	$$(_ + '2.5 - Fill in the blanks')
-	const [,_next, newCharsetTbl] = MapAddrs(freeVir, parts);
-
-	let code = SetFillTargets( parts,
+	$$(_ + '2.4 - Prepare the arguments for auto-hook')
+	const args =
 	{
-		start : freeVir,
-		'1,1' : _next,
-		 2    : Exe.Phy2Vir(movIns.NextAddr, CODE)
-	});
+		localTgts : { '1,1' : _next },
+		targets : { 2 : Exe.Phy2Vir(movIns.NextAddr, CODE) },
+		nops : movIns.Size - 5 //for clean replacement
+	};
 
-	code = SwapFillers(code, 1, {3: newCharsetTbl});
-
-	$$(_ + '2.6 - Add at allocated space')
-	Exe.AddHex(free, code + csTbl);
-
-	$$(_ + '2.7 - Create a JMP to our code at the assignment location (NOPs appended at end for clean replacement)')
-	Exe.SetJMP(movIns.Addr, freeVir, movIns.Size - 5);
+	$$(_ + '2.5 - Add our code and jump to it from movIns.Addr')
+	AutoHook(movIns.Addr, parts, args);
 
 	return true;
 };

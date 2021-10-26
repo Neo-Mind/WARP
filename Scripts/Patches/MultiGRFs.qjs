@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -142,79 +142,84 @@ MultiGRFs.useINI = (callAddr, AddPak) =>
 	if (ROC.Kernel32 < 0)
 		throw Error("'KERNEL32.dll' not found");
 
-	$$(_ + '1.2 - Create the function code')
-	const parts =
+	$$(_ + '1.2 - Construct the function code')
+	let parts =
 	[
-		ENTER(0x80, 0)                  //enter 80h, 0
-	+	PUSHAD                          //pushad
-	+	PUSH(ROC.Kernel32)              //push offset "KERNEL32"
-	+	CALL([ROC.GetModHandle])        //call dword ptr [<&KERNEL32.GetModuleHandleA>]
-	+	TEST(EAX, EAX)                  //test eax, eax
-	+	JZ(Filler(1))                   //jz _codeOver
-	+	MOV(EDI, [ROC.GetProcAddr])     //mov edi, dword ptr [<&KERNEL32.GetProcAddress>]
-	+	PUSH(Filler(10))                //push offset "GetPrivateProfileStringA"
-	+	MOV(EBX, EAX)                   //mov ebx, eax
-	+	PUSH_EAX                        //push eax ; hModule
-	+	CALL(EDI)                       //call edi ; GetProcAddress
-	+	TEST(EAX, EAX)                  //test eax, eax
-	+	JZ(Filler(1))                   //jz _codeOver
-	+	MOV([EBP, -0xA], EAX)           //mov dword ptr [ebp-0Ah], eax
-	+	PUSH(Filler(11))                //push offset "WritePrivateProfileStringA"
-	+	MOV(EAX, EBX)                   //mov eax, EBX
-	+	PUSH_EAX                        //push eax ; hModule
-	+	CALL(EDI)                       //call edi ; GetProcAddress
-	+	TEST(EAX, EAX)                  //test eax, eax
-	+	JZ(Filler(1,1))                 //jz short _codeOver
-	+	MOV([EBP, -6], EAX)             //mov dword ptr [ebp-6], eax
-	+	XOR(EDX, EDX)                   //xor edx, edx
+		ENTER(0x80, 0)                           //enter 80h, 0
+	+	PUSHAD                                   //pushad
+	+	PUSH(ROC.Kernel32)                       //push "KERNEL32"
+	+	CALL([ROC.GetModHandle])                 //call dword ptr [<&KERNEL32.GetModuleHandleA>]
+	+	TEST(EAX, EAX)                           //test eax, eax
+	+	JZ(Filler(1))                            //jz _codeOver
+	+	MOV(EDI, [ROC.GetProcAddr])              //mov edi, dword ptr [<&KERNEL32.GetProcAddress>]
+	+	CALL(25)                                 //push <nextAddr> + jmp
+	+	"GetPrivateProfileStringA\x00".toHex()   //ASCII "GetPrivateProfileStringA"
+	+	MOV(EBX, EAX)                            //mov ebx, eax
+	+	PUSH_EAX                                 //push eax ; hModule
+	+	CALL(EDI)                                //call edi ; GetProcAddress
+	+	TEST(EAX, EAX)                           //test eax, eax
+	+	JZ(Filler(1))                            //jz _codeOver
+	+	MOV([EBP, -0xA], EAX)                    //mov dword ptr [ebp-0Ah], eax
+	+	CALL(27)                                 //push <nextAddr> + jmp
+	+	"WritePrivateProfileStringA\x00".toHex() //ASCII "WritePrivateProfileStringA"
+	+	MOV(EAX, EBX)                            //mov eax, ebx
+	+	PUSH_EAX                                 //push eax ; hModule
+	+	CALL(EDI)                                //call edi ; GetProcAddress
+	+	TEST(EAX, EAX)                           //test eax, eax
+	+	JZ(Filler(1,1))                          //jz short _codeOver
+	+	MOV([EBP, -6], EAX)                      //mov dword ptr [ebp-6], eax
+	+	XOR(EDX, EDX)                            //xor edx, edx
 
 	,//1
-		MOV(WORD_PTR, [EBP, -2], 0x39)  //mov word ptr [ebp-2], '9' ; _loopOuter
+		MOV(WORD_PTR, [EBP, -2], 0x39)           //mov word ptr [ebp-2], '9' ; _loopOuter
 
 	,//2
-		PUSH(EDX)                       //push edx ; _loopInner
-	+	PUSH(Filler(13))                //push offset <INI filename>
-	+	PUSH(0x74)                      //push 74h
-	+	LEA(EBX, [EBP, -0x7F])          //lea ebx, [ebp-7Fh]
-	+	PUSH(EBX)                       //push ebx
-	+	LEA(EAX, [EBP, -2])             //lea eax, [ebp-2]
-	+	PUSH_EAX                        //push eax
-	+	PUSH_EAX                        //push eax
-	+	PUSH(Filler(12))                //push offset "Data"
-	+	CALL([EBP, -0xA])               //call dword ptr [ebp-0Ah]
-	+	LEA(ECX, [EBP, -2])             //lea ecx, [ebp-2]
-	+	MOV(CX, [ECX])                  //mov cx, word ptr [ecx]
-	+	LEA(EBX, [EBP, -0x7F])          //lea ebx, [ebp-7Fh]
-	+	CMP(CX, [EBX])                  //cmp cx, word ptr [ebx]
-	+	POP(EDX)                        //pop edx
-	+	JZ(Filler(4,1))                 //jz short _next
-	+	PUSH(EDX)                       //push edx
-	+	PUSH(EBX)                       //push ebx
-	+	DGRF.MovFMgr                    //mov ecx, offset <g_fileMgr>
-	+	CALL(Filler(14))                //call CFileMgr::AddPak
-	+	POP(EDX)                        //pop edx
-	+	INC(EDX)                        //inc edx
+		PUSH(EDX)                                //push edx ; _loopInner
+	+	PUSH(Filler(10))                         //push offset <INI filename>
+	+	PUSH(0x74)                               //push 74h
+	+	LEA(EBX, [EBP, -0x7F])                   //lea ebx, [ebp-7Fh]
+	+	PUSH(EBX)                                //push ebx
+	+	LEA(EAX, [EBP, -2])                      //lea eax, [ebp-2]
+	+	PUSH_EAX                                 //push eax
+	+	PUSH_EAX                                 //push eax
+	+	PUSH(Filler(11))                         //push "Data"
+	+	CALL([EBP, -0xA])                        //call dword ptr [ebp-0Ah]
+	+	LEA(ECX, [EBP, -2])                      //lea ecx, [ebp-2]
+	+	MOV(CX, [ECX])                           //mov cx, word ptr [ecx]
+	+	LEA(EBX, [EBP, -0x7F])                   //lea ebx, [ebp-7Fh]
+	+	CMP(CX, [EBX])                           //cmp cx, word ptr [ebx]
+	+	POP(EDX)                                 //pop edx
+	+	JZ(Filler(4,1))                          //jz short _next
+	+	PUSH(EDX)                                //push edx
+	+	PUSH(EBX)                                //push ebx
+	+	DGRF.MovFMgr                             //mov ecx, offset <g_fileMgr>
+	+	CALL(Filler(5))                          //call CFileMgr::AddPak
+	+	POP(EDX)                                 //pop edx
+	+	INC(EDX)                                 //inc edx
 
 	,//3
-		DEC(BYTE_PTR, [EBP, -2])        //dec byte ptr [ebp-2] ; _next
-	+	CMP(BYTE_PTR, [EBP, -2], 0x30)  //cmp byte ptr [ebp-2], 30h
-	+	JNB(Filler(2,1))                //jnb short _loopInner
-	+	TEST(EDX, EDX)                  //test edx, edx
-	+	JNZ(Filler(1,1))                //jnz short _codeOver
-	+	PUSH(Filler(13))                //push offset <INI filename>
-	+	PUSH(DGRF)                      //push offset "data.grf"
-	+	MOV(WORD_PTR, [EBP, -2], 0x32)  //mov word ptr [ebp-2], 32h
-	+	LEA(EAX, [EBP, -2])             //lea eax, [ebp-2]
-	+	PUSH_EAX                        //push eax
-	+	PUSH(Filler(12))                //push offset "Data"
-	+	CALL([EBP, -6])                 //call dword ptr [EBP-6]
-	+	TEST(EAX, EAX)                  //test eax, eax
-	+	JNZ(Filler(3,1))                //jnz short _loopOuter
+		DEC(BYTE_PTR, [EBP, -2])                 //dec byte ptr [ebp-2] ; _next
+	+	CMP(BYTE_PTR, [EBP, -2], 0x30)           //cmp byte ptr [ebp-2], 30h
+	+	JNB(Filler(2,1))                         //jnb short _loopInner
+	+	TEST(EDX, EDX)                           //test edx, edx
+	+	JNZ(Filler(1,1))                         //jnz short _codeOver
+	+	PUSH(Filler(10))                         //push <INI filename>
+	+	PUSH(DGRF)                               //push "data.grf"
+	+	MOV(WORD_PTR, [EBP, -2], 0x32)           //mov word ptr [ebp-2], 32h
+	+	LEA(EAX, [EBP, -2])                      //lea eax, [ebp-2]
+	+	PUSH_EAX                                 //push eax
+	+	PUSH(Filler(11))                         //push "Data"
+	+	CALL([EBP, -6])                          //call dword ptr [EBP-6]
+	+	TEST(EAX, EAX)                           //test eax, eax
+	+	JNZ(Filler(3,1))                         //jnz short _loopOuter
 
 	,//4
-		POPAD                           //popad ; _codeOver
-	+	LEAVE                           //leave
-	+	RETN() + ' 00'                  //retn ; followed by 1 byte gap before strings begin
+		POPAD                                    //popad ; _codeOver
+	+	LEAVE                                    //leave
+	+	RETN() + ' 00'                           //retn ; followed by 1 byte gap before strings begin
+	
+	, //5
+		"Data\x00".toHex()                       //ASCII "Data"
 	];
 
 	$$(_ + '2.1 - Get the INI file name from user')
@@ -222,45 +227,32 @@ MultiGRFs.useINI = (callAddr, AddPak) =>
 	if (iniFile === false || iniFile.trim().isEmpty())
 		Cancel("No File name specified");
 
-	iniFile = ".\\" + iniFile;
+	parts.push(" 2E 5C" + iniFile.toHex()); // .\<INI Filename>
 
-	$$(_ + '2.2 - Put all the strings in an array (we need their individual lengths later)')
-	const strList = ["GetPrivateProfileStringA", "WritePrivateProfileStringA", "Data", iniFile];
-
-	$$(_ + '2.3 - Join the strings with NULL in between and convert to Hex')
-	const strings = strList.join("\x00").toHex() + " 00";
-
-	$$(_ + '2.4 - Allocate space to add our function')
-	const [free, freeVir] = Exe.FindSpace(parts.byteCount() + strings.byteCount(), 0x10);
-
-	$$(_ + '2.5 - Fill in the blanks')
-
-	// First the jumps & the CALL
-	const [, _loopOuter, _loopInner, _next, _codeOver, lastAddr] = MapAddrs(freeVir, parts);
-	let code = SetFillTargets( parts,
+	$$(_ + '2.2 - Prepare the arguments for auto-hook')
+	const [, _loopOuter, _loopInner, _next, _codeOver, dataStrAddr, iniFileAddr, allocSize] = MapAddrs(parts);
+	const args =
 	{
-		start : freeVir,
-		 1    : _codeOver, //for the long jump
-		'1,1' : _codeOver, //for the short jump
-		'2,1' : _loopInner,
-		'3,1' : _loopOuter,
-		'4,1' : _next,
-		14    : AddPak
-	});
+		allocSize,
+		localVals : {
+			10 : iniFileAddr,
+			11 : dataStrAddr
+		},
+		localTgts : {
+			 1    : _codeOver, //for the long jump
+			'1,1' : _codeOver, //for the short jump
+			'2,1' : _loopInner,
+			'3,1' : _loopOuter,
+			'4,1' : _next
+		},
+		targets : {
+			5 : AddPak
+		},
+		isCall : true
+	};
 
-	// Next the strings
-	let strPos = lastAddr;
-	strList.forEach( (str, idx) =>
-	{
-		code = SwapFillers( code, 2, {[idx + 10] : strPos} );
-		strPos += str.length + 1;     //1 for null
-	});
-
-	$$(_ + '3.1 - Add the function at the allocated space')
-	Exe.AddHex(free, code + strings);
-
-	$$(_ + '3.2 - Change the AddPak call to use our function')
-	Exe.SetTgtAddr(callAddr + 1, freeVir);
+	$$(_ + '2.3 - Add our code and call it from callAddr')
+	AutoHook(callAddr, parts, args);
 };
 
 ///
@@ -305,46 +297,32 @@ MultiGRFs.embedList = (callAddr, AddPak) =>
 	$$(_ + '1.4 - Remove empty indices')
 	grfNames = grfNames.filter( name => name ?? false );
 
-	$$(_ + '2.1 - Prepare template for load 1 GRF (same needs to be repeated for all GRF files)')
-	const template =
-		PUSH(Filler(1))  //push offset <GRF name>
-	+	DGRF.MovFMgr     //mov ecx, <g_fileMgr>
-	+	CALL(Filler(2))  //call CFileMgr::AddPak
+	$$(_ + '2.1 - Construct the loading code in parts')
+	const suffix =
+		DGRF.MovFMgr     //mov ecx, <g_fileMgr>
+	+	CALL(Filler(1))  //call CFileMgr::AddPak
 	;
-	const tsize = template.byteCount();
 
-	$$(_ + '2.2 - Join the strings with NULL in between and convert to Hex')
-	const strings = grfNames.join("\x00").toHex() + " 00";
-
-	$$(_ + '2.3 - Allocate space to add our function')
-	const fullSize = grfNames.length * tsize + 2 + strings.byteCount(); //2 is for RETN & a null to leave a gap between the function and the strings
-	const [free, freeVir] = Exe.FindSpace(fullSize, 0x10);
-
-	$$(_ + '2.4 - Prepare the full code using the template with proper values')
-	let strAddr = freeVir + grfNames.length * tsize + 2;    //Address of first string
-	let funAddr = AddPak - (strAddr - 2);                   //Difference value for Last AddPak call location (first string needs to be loaded last)
-
-	let code = "";
-	for (const name of grfNames)
+	let parts = [];
+	for (const name of grfNames )
 	{
-		code = SwapFillers( template,
-		{
-			1: strAddr,
-			2: funAddr
-		})
-		+ code;
-
-		strAddr += name.length + 1;  //Extra 1 for NULL byte
-		funAddr += tsize;            //Increasing the difference => call location is closer/lesser
+		parts.push(
+			CALL(name.length + 1) //push <nextAddr> + jmp
+		+	name.toHex() + ' 00'  //ASCII <name>
+		+	suffix
+		);
 	}
 
-	code += RETN() + ' 00';//retn and 1 extra NULL byte
+	parts.push(RETN());
 
-	$$(_ + '2.5 - Add the function at the gap')
-	Exe.AddHex(free, code + strings);
+	$$(_ + '2.2 - Prepare the arguments for auto-hook')
+	const args = {
+		targets : { 1 : AddPak },
+		isCall : true
+	};
 
-	$$(_ + '2.6 - Change the AddPak call to use our function')
-	Exe.SetTgtAddr(callAddr + 1, freeVir);
+	$$(_ + '2.3 - Add our code and call it from callAddr')
+	AutoHook(callAddr, parts, args);
 };
 
 /**

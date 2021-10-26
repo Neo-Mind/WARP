@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind, Andre (4144)                        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-10-02                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -37,7 +37,7 @@ CustomWinTitle = function()
 	const _ = 'CustomWinTitle : ';
 
 	$$(_ + '1.1 - Find the physical location of the unused URL string')
-	let free = Exe.FindText("http://ro.hangame.com/login/loginstep.asp?prevURL=/NHNCommon/NHN/Memberjoin.asp", PHYSICAL);
+	let titlePhy = Exe.FindText("http://ro.hangame.com/login/loginstep.asp?prevURL=/NHNCommon/NHN/Memberjoin.asp", PHYSICAL);
 
 	$$(_ + '1.2 - Find \'Ragnarok\' or \'Ragnarok : Zero\'')
 	let oldTitle = "Ragnarok" + (ROC.IsZero ? " : Zero" : "");
@@ -63,18 +63,23 @@ CustomWinTitle = function()
 	if (title === false)
 		Cancel("Title", oldTitle);
 
-	$$(_ + '2.2 - In case the URL was not found, allocate space for the string')
-	let freeVir;
-	if (free < 0)
-		[free, freeVir] = Exe.FindSpace(title.length + 1);
+	let titleVir;
+	if (titlePhy > 0)
+	{
+		$$(_ + '2.2 - Overwrite URL with the received string')
+		Exe.SetFromVar(titlePhy, varName);
+
+		$$(_ + '2.3 - Get it\'s VIRTUAL address')
+		titleVir = Exe.Phy2Vir(titlePhy);
+	}
 	else
-		freeVir = Exe.Phy2Vir(free);
+	{
+		$$(_ + '2.4 - In case the URL was not found, Add the string instead')
+		titleVir = Exe.AddFromVar(varName)[1];
+	}
 
-	$$(_ + '2.3 - Overwrite URL with the received string')
-	Exe.SetFromVar(free, varName);
-
-	$$(_ + '2.4 - Update the string reference')
-	Exe.SetInt32(addr + 6, freeVir);
+	$$(_ + '2.5 - Update the string reference')
+	Exe.SetInt32(addr + 6, titleVir);
 
 	return true;
 };

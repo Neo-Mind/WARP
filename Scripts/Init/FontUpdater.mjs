@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-09-28                                             *
-*   Last Modified : 2021-10-01                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -259,10 +259,10 @@ function setup()
 	Exe.BeginTag("Fontain", true);
 
 	$$(_ + '2.1 - Find space for the code')
-	const [free, freeVir] = Exe.FindSpace(4 + parts.byteCount());
+	const [free, freeVir] = Exe.Allocate(4 + parts.byteCount());
 
 	$$(_ + '2.2 - Add at allocated address')
-	Exe.AddHex(free, (freeVir + 4).toHex() + parts.join(''));
+	Exe.SetHex(free, (freeVir + 4).toHex() + parts.join(''));
 
 	$$(_ + '2.3 - Change the references')
 	for (const addr of HookAddrs)

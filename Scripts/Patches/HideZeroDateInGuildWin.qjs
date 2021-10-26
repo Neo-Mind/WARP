@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-03-06                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -84,7 +84,7 @@ HideZeroDateInGuildWin = function()
 	$$(_ + '1.4 - Extract the localTime32 function address')
 	const localTime32 = Exe.GetInt32(addr + 2);
 
-	$$(_ + '2.1 - Prepare the new code')
+	$$(_ + '2.1 - Construct the new code')
 	let code =
 		CMP([EAX], 0)       //cmp dword ptr [eax], 0
 	+	JZ(0xB)             //jz short _skip
@@ -96,22 +96,17 @@ HideZeroDateInGuildWin = function()
 	+	JMP(Filler(2))      //jmp <retnPos2>
 	;
 
-	$$(_ + '2.2 - Allocate space for it')
-	const [free, freeVir] = Exe.FindSpace(code.byteCount());
-
-	$$(_ + '2.3 - Fill in the blanks')
-	code = SetFillTargets( code, 1,
+	$$(_ + '2.2 - Prepare the arguments for auto-hook')
+	const args =
 	{
-		start : freeVir,
-		    1 : Exe.Phy2Vir(retnPos1, CODE),
+		targets : {
+			1 : Exe.Phy2Vir(retnPos1, CODE),
 		    2 : Exe.Phy2Vir(retnPos2, CODE)
-	});
+		}
+	};
 
-	$$(_ + '2.4 - Add to allocated space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '2.5 - Setup a JMP to our code at the starting address')
-	Exe.SetJMP(addr, freeVir);
+	$$(_ + '2.3 - Add our code and jump to it from addr')
+	AutoHook(addr, code, args);
 
 	return true;
 };

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -62,16 +62,13 @@ SharedPal = function(patchName, oldPrefix, newFormat, optional)
 	if (addr < 0)
 		throw Error("Format string not used");
 
-	$$(_ + '2.1 - Allocate space for adding new string')
-	const [free, freeVir] = Exe.FindSpace(newFormat.length);
+	$$(_ + '2.1 - Add the new format string')
+	const [, freeVir] = Exe.AddText(newFormat);
 
-	$$(_ + '2.2 - Add the string there')
-	Exe.AddText(free, newFormat);
-
-	$$(_ + '2.3 - Update the PUSHed address')
+	$$(_ + '2.2 - Update the PUSHed address')
 	Exe.SetInt32(addr + 1, freeVir);
 
-	$$(_ + '2.4 - Reload the increase hairs patch if selected')
+	$$(_ + '2.3 - Reload the increase hairs patch if selected')
 	if (patchName.indexOf("HeadPal") >= 0)
 		this.reloader();
 
