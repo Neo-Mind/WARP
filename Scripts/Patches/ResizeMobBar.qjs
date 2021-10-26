@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-08-26                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -147,7 +147,7 @@ ResizeMobBar.stage = function(patchName)
 	});
 
 	$$(_ + '2.3 - Add at allocated space')
-	Exe.AddHex(free, code);
+	Exe.SetHex(free, code);
 
 	$$(_ + '2.4 - Setup a JMP to it at hook address')
 	Exe.SetJMP(MBAR.HookAddr, freeVir, MBAR.OvrdSize - 5); //NOPs at the end to keep it clean.

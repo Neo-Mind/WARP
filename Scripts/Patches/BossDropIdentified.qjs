@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Andrei                                   *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-07-22                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -87,28 +87,23 @@ BossDropIdentified = function()
 		if (!ROC.HasFP)
 			ins.Disp += 4;
 
-		$$(_ + '2.5 - Prepare the new code to be added')
+		$$(_ + '2.5 - Construct the new code to be added')
 		let code =
 			ins             //mov dword ptr [ebp/esp + item.identified], 0
 		+	JMP(Filler(1))  //jmp UIWindowMgr::SendMsg
 		;
 
-		$$(_ + '2.6 - Allocate space for it')
-		const [free, freeVir] = Exe.FindSpace(code.byteCount());
-
-		$$(_ + '2.7 - Fill in the blanks')
-		const sendMsg = Exe.GetTgtAddr(ins.NextAddr + 1);
-		code = SetFillTargets(code, 1,
+		$$(_ + '2.6 - Prepare the arguments for auto-hook')
+		const args =
 		{
-			start : freeVir,
-			    1 : sendMsg
-		});
+			targets : {
+				1 : Exe.GetTgtAddr(ins.NextAddr + 1)  //UIWindowMgr::SendMsg
+			},
+			isCall : true,
+		};
 
-		$$(_ + '2.8 - Add at allocated space')
-		Exe.AddHex(free, code);
-
-		$$(_ + '2.9 - Hijack the CALL to target our code instead.')
-		Exe.SetTgtAddr(ins.NextAddr + 1, freeVir);
+		$$(_ + '2.7 - Add our code & call it from ins.NextAddr')
+		AutoHook(ins.NextAddr, code, args);
 	}
 
 	return true;

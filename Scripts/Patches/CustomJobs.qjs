@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-09-11                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,8 +38,6 @@ CustomJobs = function()
 	$$(_ + '1.1 - Ensure the \'Translate Taekwon\' patch is unselected. Not applicable for test mode')
 	if (!Warp.TestMode)
 		Warp.SetPatchState("TranslateTaekwon", false);
-
-	// Exe.ProtectChanges();
 
 	//=====================================================//
 	// Find the table loading area (references to strings) //
@@ -315,7 +313,7 @@ CustomJobs = function()
 		Cancel("No Max Limit specified");
 
 	MaxJob = parseInt(MaxJob); //temporary fix for strings
-	
+
 	//====================================//
 	// Add the Function Names into client //
 	//====================================//
@@ -397,11 +395,8 @@ CustomJobs = function()
 
 		for (const template of templates)
 		{
-			ShowVar({template});
-			
 			for (const [min, max] of limits)
 			{
-				Debug("PROCESSING LIMITS :", min, " & ", max);
 				parts.push( SwapFillers( template,
 				{
 					1 : min,
@@ -426,7 +421,7 @@ CustomJobs = function()
 		{
 			3 : endIns ? Exe.Phy2Vir(endIns.Addr, CODE) : ''
 		});
-Debug("ROVER HERE");
+
 		$$(_ + '4.7 - Replace at hook address')
 		Exe.SetHex(hookAddr, code);
 
@@ -839,7 +834,6 @@ Debug("ROVER HERE");
 		+	ADD(ESP, 4)      //add esp, 4
 		+	JMP(Filler(3))   //jmp <endVir>
 		);
-//ShowArr(parts);
 
 		$$(_ + '6.16 - Fill in the blanks')
 		const hookVir = Exe.Phy2Vir(hookAddr, CODE);
@@ -1017,9 +1011,7 @@ Debug("ROVER HERE");
 	}
 
 	$$(_ + '8.11 - Setup space to store the scale value')
-	const [free, scaleAddr] = Exe.FindSpace(4);
-
-	Exe.AddHex(free, ALL00);
+	const [, scaleAddr] = Exe.AddInt32(0);
 
 	const found = shrinkAddrs.filter( (shrinkAddr, idx) =>
 	{
@@ -1091,25 +1083,21 @@ Debug("ROVER HERE");
 			}
 			else
 			{
-				$$(__ + '9.12 - If space is not there then allocate it')
-				const [free, freeVir] = Exe.FindSpace(csize + 5);
-
-				$$(__ + '9.13 - Append the JMP')
+				$$(__ + '9.12 - Append the JMP')
 				code +=
 					JMP(Filler(1)) //jmp <endAddr>
 				;
-
-				$$(__ + '9.14 - Fill in the blanks')
-				code = LUA.finalize(code, freeVir,
+				
+				$$(__ + '9.14 - Prepare the arguments for auto-hook')
+				const args =
 				{
-					1 : Exe.Phy2Vir(endAddr, CODE)
-				});
+					allocSize : csize + 5,
+					postProc : LUA.finalize,
+					procArgs : {1 : Exe.Phy2Vir(endAddr, CODE)} //serves as 3rd argument to postProc
+				};
 
-				$$(__ + '9.15 - Add at allocated space')
-				Exe.AddHex(free, code);
-
-				$$(__ + '9.16 - Create JMP to the code')
-				Exe.SetJMP(shrinkAddr, freeVir);
+				$$(_ + '9.15 - Add our code and jump to it from shrinkAddr')
+				AutoHook(shrinkAddr, code, args);
 			}
 		}
 		else //seperate function return after FLD

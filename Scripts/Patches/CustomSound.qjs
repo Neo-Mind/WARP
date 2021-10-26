@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -120,7 +120,7 @@ AutoMute = function()
 	const SetStreamVol = Exe.GetTgtAddr(addrs[2] + 1);
 	const Set2DEffectVol = Exe.GetTgtAddr(addrs[3] + 1);
 	const Set3DEffectVol = Exe.GetTgtAddr(addrs[5] + 1);
-	const MovMgr = Instr.FromAddr(addrs[3]);
+	const MovMgr = Instr.FromAddr(addrs[4]);
 
 	$$(_ + '2.1 - Find the CGameMode::OnUpdate function')
     parts = [
@@ -194,17 +194,21 @@ AutoMute = function()
 	$$(_ + '2.3 - Save the location of the MOV ECX')
 	const hookAddr = addr + 5;
 
-	$$(_ + '3.1 - Find the GetActiveWindow function')
-	const GetActiveWindow = Exe.FindFunc("GetActiveWindow", "User32.dll");
+	$$(_ + '3.1 - Find the needed imported functions')
+	const GetActiveWindow = Exe.FindFunc("GetActiveWindow", "USER32.dll");
 	if (GetActiveWindow < 0)
 		throw Error("GetActiveWindow not found");
 
-	$$(_ + '3.2 - Prepare our function code')
+	const timeGetTime = Exe.FindFunc("timeGetTime");
+	if (timeGetTime < 0)
+		throw Error("timeGetTime missing");
+
+	$$(_ + '3.2 - Construct our function code')
 	const MovNRetn = Instr.FromAddr(hookAddr) + RETN();
 
 	parts =
 	[
-		CALL(EDI)                //call edi (timeGetTime)
+		CALL([timeGetTime])      //call dword ptr [<&WINMM.timeGetTime>]
 	+	CMP(EAX, [Filler(1)])    //cmp eax, dword ptr [lastCheck]
 	+	JGE(6)                   //jge short _proceed1
 	+	MovNRetn                 //mov ecx, <g_Weather>
@@ -263,48 +267,42 @@ AutoMute = function()
 	];
 
 
-	$$(_ + '3.2 - Prepare the initial values for the extra addresses we are using in the code')
+	$$(_ + '3.3 - Prepare the initial values for the extra addresses we are using in the code')
 	const buffer =
 		" 00 00 00 00" //lastCheck
     +	" 00 00 00 00" //isMuted
     +	" 64 00 00 00" //bgmVol
     +	" 64 00 00 00" //effVol
     ;
+	const bufSize = 16;
 
-	$$(_ + '3.3 - Allocate space to add them both')
-	const size = buffer.byteCount() + parts.byteCount() + 4;
-	const [free, freeVir] = Exe.FindSpace(size, 0x10);
+	$$(_ + '3.4 - Prepare the arguments for auto-hook')
+	const [,, _skipToCall,, _cmpMute,, csize] = MapAddrs(bufSize, parts);
 
-	$$(_ + '3.4 - Fill in the blanks')
-
-	//The jumps & CALLs
-	const firstAddr = freeVir + buffer.byteCount();
-	const [,,_skipToCall,,_cmpMute] = MapAddrs(firstAddr, parts);
-
-	code = SetFillTargets( parts,
+	const args =
 	{
-		start : firstAddr,
-		 5    : Set2DEffectVol,
-		 6    : Set3DEffectVol,
-		 7    : SetStreamVol,
-		'8,1' : _skipToCall, //index = 2 in parts
-		'9,1' : _cmpMute,    //index = 4 in parts
-	});
+		allocSize : bufSize + csize,
+		localVals : {
+			1 :  0, //lastCheck
+			2 :  4, //isMuted
+			3 :  8, //bgmVol
+			4 : 12  //effVol
+		},
+		localTgts : {
+			'8,1' : _skipToCall, //index = 2 in parts
+			'9,1' : _cmpMute,    //index = 4 in parts
+		},
+		targets : {
+			5 : Set2DEffectVol,
+			6 : Set3DEffectVol,
+			7 : SetStreamVol
+		},
+		jcOffset : bufSize, //offset of starting code in the provided hex
+		isCall : true
+	}
 
-	//All the extra addresses
-	code = SwapFillers( code,
-	{
-		1 : freeVir,
-		2 : freeVir + 4,
-		3 : freeVir + 8,
-		4 : freeVir + 0xC,
-	});
-
-	$$(_ + '3.5 - Add the code at allocated space')
-	Exe.AddHex(free, buffer + code);
-
-	$$(_ + '3.6 - Create the CALL at hookAddr')
-	Exe.SetCALL(hookAddr, freeVir + 16);
+	$$(_ + '3.5 - Add our code and call it from hookAddr')
+	AutoHook(hookAddr, buffer + parts.join(''), args);
 
 	return true;
 };

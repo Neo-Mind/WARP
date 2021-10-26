@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, Neo-Mind                                       *
 *   Created Date  : 2021-06-16                                             *
-*   Last Modified : 2021-08-24                                             *
+*   Last Modified : 2021-10-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -101,23 +101,20 @@ RestoreAutoFollow = function()
 	+	JMP(Filler(3))   //jmp CGameMode::ProcessAutoFollow
 	;
 
-	$$(_ + '2.2 - Allocate space for it')
-	const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
-
-	$$(_ + '2.3 - Fill in the blanks')
-	code = SwapFillers( code, 1, {2: Exe.Phy2Vir(hookAddr + 5, CODE)} );
-	code = SetFillTargets( code, 1,
+	$$(_ + '2.2 - Prepare the arguments for auto-hook')
+	const args =
 	{
-		start : freeVir,
-		    1 : ProcessInput,
+		values : {
+			2 : Exe.Phy2Vir(hookAddr + 5, CODE)
+		},
+		targets : {
+			1 : ProcessInput,
 		    3 : ProcessAutoFollow
-	});
+		}
+	};
 
-	$$(_ + '2.4 - Add at allocated space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '2.5 - Setup a JMP to it from hookAddr')
-	Exe.SetJMP(hookAddr, freeVir);
+	$$(_ + '2.3 - Add our code and jump to it from hookAddr')
+	AutoHook(hookAddr, code, args);
 
 	return true;
 };

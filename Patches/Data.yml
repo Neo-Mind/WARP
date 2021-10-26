@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2021-10-02                                             #
+#   Last Modified : 2021-10-04                                             #
 #                                                                          #
 ############################################################################
 
@@ -193,23 +193,6 @@ CustomData:
             recommend : no
             author : Andrei Karas (4144), Asheraf
             desc : Changes the default zlib max decompression size used for captcha images to user specified value.
-
-DisableEncr:
-    title : DISABLE ENCRYPTION
-    mutex : false
-    
-    patches:
-        - NoLoginEncr:
-            title : Disable Login encryption
-            recommend : true
-            author : Neo-Mind
-            desc : Disable encryption in Login Packet 0x2b0.
-        
-        - NoPacketEncr:
-            title : Disable Packet encryption
-            recommended : false
-            author : Ai4rei/AN
-            desc : Disable kRO Packet ID encryption. Patch is also known as Skip Packet Obfuscation.
 
 DisableProtect:
     title : DISABLE PROTECTION

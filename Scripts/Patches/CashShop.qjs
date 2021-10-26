@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144), CH.C (jchcc)                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -92,44 +92,49 @@ MoveShopIcon = function()
 	const [xCoord, yCoord] = result;
 
 	$$(_ + '3.2 - Prepare code to add based on the sign of each coordinate (negative values are relative to width and height respectively)')
-	code = "";
+	let parts = [];
 
 	if (yCoord < 0)
 	{
-		code +=
+		parts.push(
 			MOV(ECX, [ScreenStats])  //mov ecx, dword ptr [g_ScreenStats]
 		+	MOV(ECX, [ECX, 0x28])    //mov ecx, dword ptr [ecx + 28h]
 		+	ADD(ECX, yCoord)         //add ecx, <yCoord>; where yCoord is negative
-		;
+		);
 	}
 	else
 	{
-		code += MOV(ECX, yCoord);    //mov ecx, <yCoord>
+		parts.push(
+			MOV(ECX, yCoord)         //mov ecx, <yCoord>
+		);
 	}
-	code += MOV([ESP, 4], ECX);      //mov dword ptr [esp+4], ecx
+
+	parts.push(
+		MOV([ESP, 4], ECX)           //mov dword ptr [esp+4], ecx
+	)
 
 	if (xCoord < 0)
 	{
-		code +=
+		parts.push(
 			MOV(ECX, [ScreenStats])  //mov ecx, dword ptr [g_ScreenStats]
 		+	MOV(ECX, [ECX, 0x24])    //mov ecx, dword ptr [ecx + 24h]
 		+	ADD(ECX, xCoord)         //add ecx, <xCoord>; where xCoord is negative
-		;
+		);
 	}
 	else
 	{
-		code += MOV(ECX, xCoord);    //mov ecx, <xCoord>
+		parts.push(
+			MOV(ECX, xCoord)         //mov ecx, <xCoord>
+		);
 	}
-	code +=
+
+	parts.push(
 		MOV(tgtReg, ECX)             //mov <tgtReg>, ecx
 	+	RETN()                       //retn
-	;
+	);
 
-	$$(_ + '3.3 - Allocate space to add our code')
-	const [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
-
-	$$(_ + '3.4 - Add the code at the allocated space')
-	Exe.AddHex(free, code);
+	$$(_ + '3.3 - Add the code to Exe')
+	const [, freeVir] = Exe.AddHex(parts, 0x10);
 
 	$$(_ + '3.5 - Create a CALL to our code at addr (originally will have the substraction)')
 	Exe.SetCALL(addr, freeVir);
@@ -371,23 +376,19 @@ PreviewInShop = function()
 		;
 	}
 
-	$$(_ + '3.1 - Allocate space for the code')
-	const [free, freeVir] = Exe.FindSpace(parts.byteCount());
-
-	$$(_ + '3.2 - Fill in the blanks')
-	code = SetFillTargets( parts, 1,
+	$$(_ + '3.1 - Prepare the arguments for auto-hook')
+	const args =
 	{
-		start : freeVir,
-		    1 : Exe.Phy2Vir(leaIns.NextAddr, CODE)
-	});
+		targets : {
+			1 : Exe.Phy2Vir(leaIns.NextAddr, CODE)
+		},
+		nops : 1
+	};
 
-	$$(_ + '3.3 - Add at allocated space')
-	Exe.AddHex(free, code);
+	$$(_ + '3.2 -  Add our code & jump to it from hookAddr')
+	AutoHook(hookAddr, parts, args);
 
-	$$(_ + '3.4 - Setup the jump to it')
-	Exe.SetJMP(hookAddr, freeVir, 1); //1 NOP afterwards to keep it clean.
-
-	$$(_ + '3.5 - Update the block size (4 bytes for the location & 2 for viewSprite)')
+	$$(_ + '3.3 - Update the block size (4 bytes for the location & 2 for viewSprite)')
 	Exe.SetInt8(sizeAdd.NextAddr - 1, sizeAdd.Immd + 6);
 
 	return true;

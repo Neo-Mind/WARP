@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2021-08-26                                             #
+#   Last Modified : 2021-10-04                                             #
 #                                                                          #
 ############################################################################
 
@@ -72,6 +72,12 @@ CharCreation:
             recommend : no
             author : Andrei Karas (4144)
             desc : Override selected job id in character creation packet with user specified value.
+        
+        - FixLatestNCWin:
+            title : Fix latest new char window
+            recommend : yes
+            author : Neo-Mind
+            desc : Fix the latest new character window (removes the misaligned background and centers the actual window)
 
 DoramCharCreation:
     title: CHARACTER CREATION (DORAM)

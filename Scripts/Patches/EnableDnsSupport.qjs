@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-08-26                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -82,7 +82,7 @@ EnableDnsSupport = function()
 		throw Error("Function not found");
 
 	$$(_ + '2.2 - Extract g_resMgr')
-	const gResMgr = Exe.GetTgtAddr(addr + 1);
+	const g_resMgr = Exe.GetTgtAddr(addr + 1);
 
 	$$(_ + '3.1 - Find some essential addresses for our function')
 
@@ -93,16 +93,18 @@ EnableDnsSupport = function()
 
 	// printFunc
 	ROC.findImports();
-	const printFunc = ROC.SprintF;
 
 	// IP address format
 	const IPformat = Exe.FindText("%d.%d.%d.%d");
 	if (IPformat < 0)
 		throw Error("IP format not found");
 
-	$$(_ + '3.2 - Prepare our function')
-	let dnsCode =
-		CALL(Filler(1))                 //call g_ResMgr ; call the actual function that was supposed to be run
+	$$(_ + '3.2 - Setup the ipaddress')
+	const [, ipAddr] = Exe.Allocate(15); //3 dots + 4 * 3 digits
+
+	$$(_ + '3.3 - Construct our code')
+	prefix =
+		CALL(Filler(1))                 //call g_resMgr ; call the actual function that was supposed to be run
 	+	PUSHAD                          //pushad
 	+	MOV(ESI, [AccountAddr])         //mov esi, dword ptr [g_accountAddr]
 	+	PUSH(ESI)                       //push esi
@@ -119,35 +121,23 @@ EnableDnsSupport = function()
 	+	MOVZX(ECX, BYTE_PTR, [EAX])     //movzx ecx, byte ptr [eax]
 	+	PUSH(ECX)                       //push ecx
 	+	PUSH(IPformat)                  //push offset "%d.%d.%d.%d"
-	+	PUSH(Filler(2))                 //push <ipAddr>  ; location is at the end of the code with Initial value "127.0.0.1"
-	+	CALL([printFunc])               //call dword ptr [<printFunc>] ; sprintf/wsprintfA
+	+	PUSH(ipAddr)                    //push <ipAddr>
+	+	CALL([ROC.SprintF])             //call dword ptr [<printFunc>] ; sprintf/wsprintfA
 	+	ADD(ESP, 0x18)                  //add esp, 18h
-	+	MOV([AccountAddr], Filler(2))   //mov dword ptr [g_accountAddr], <ipAddr> ; Replace g_accountAddr current value with its ip address
+	+	MOV([AccountAddr], ipAddr)      //mov dword ptr [g_accountAddr], <ipAddr> ; Replace g_accountAddr current value with its ip address
 	+	POPAD                           //popad
 	+	RETN()                          //retn
-
-	+	" 00"                           //Just a gap in between
-
-	+	"127.000.000.001\x00".toHex()   //ipAddr ; Putting enough space for 4*3 digits  + 3 Dots + 1 NULL at the end
 	;
-	const fullSize = dnsCode.byteCount();
-	const csize = fullSize - (3*1 + 4*3 + 1); //(3 Dots, 4x3 digits, NULL)
 
-	$$(_ + '3.3 - Allocate space to add our function')
-	const [free, freeVir] = Exe.FindSpace(fullSize, 0x10);
-
-	$$(_ + '3.4 - Fill in the blanks')
-	dnsCode = SwapFillers( dnsCode,
+	$$(_ + '3.3 - Prepare the arguments for auto-hook')
+	const args =
 	{
-		1 : gResMgr - (freeVir + 5),
-		2 : freeVir + csize
-	});
+		targets : { 1 : g_resMgr },
+		isCall : true
+	};
 
-	$$(_ + '3.5 - Add the function at the allocated space')
-	Exe.AddHex(free, dnsCode);
-
-	$$(_ + '3.6 - Swap g_ResMgr CALL with our function')
-	Exe.SetTgtAddr(addr + 1, freeVir);
+	$$(_ + '3.4 - Add our code and call it from addr')
+	AutoHook(addr, prefix, args);
 
 	return true;
 };

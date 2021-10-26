@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-08-24                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -53,17 +53,9 @@ CustomAuraSprites = function()
 
 	const ppika2 = addr.toHex();
 
-	$$(_ + '2.1 - Prepare replacement strings')
-	const strAF = "effect\\aurafloat.tga\x00";
-	const strAR = "effect\\auraring.bmp\x00";
-	const size = strAF.length + strAR.length;
-
-	$$(_ + '2.2 - Allocate space to add the strings')
-	const [free, offsetAF] = Exe.FindSpace(size);
-	const offsetAR = offsetAF + strAF.length;
-
-	$$(_ + '2.3 - Add the strings there (since there are null characters in between we will convert to hex and add)')
-	Exe.AddHex(free, (strAF + strAR).toHex());
+	$$(_ + '1.3 - Add the replacement strings')
+	const [, addrAF] = Exe.AddText("effect\\aurafloat.tga");
+	const [, addrAR] = Exe.AddText("effect\\auraring.bmp");
 
 	$$(_ + '3.1 - Find the first pattern (original strings are PUSHed to display the aura)')
 	const template =
@@ -98,8 +90,8 @@ CustomAuraSprites = function()
 		throw Error("First PUSHes not found");
 
 	$$(_ + '3.2 - Update the string addrs')
-	Exe.SetInt32(addr + offRB, offsetAF);
-	Exe.SetInt32(addr + offPP, offsetAR);
+	Exe.SetInt32(addr + offRB, addrAF);
+	Exe.SetInt32(addr + offPP, addrAR);
 
 	///===========================================///
 	/// For new clients above is left unused but  ///
@@ -140,8 +132,8 @@ CustomAuraSprites = function()
 			throw Error("Second PUSHes not found");
 
 		$$(_ + '4.3 - Update the string addrs')
-		Exe.SetInt32(offRB + 1, offsetAF);
-		Exe.SetInt32(offPP + 1, offsetAR);
+		Exe.SetInt32(offRB + 1, addrAF);
+		Exe.SetInt32(offPP + 1, addrAR);
 	}
 
 	return true;
@@ -471,7 +463,7 @@ CustomAuraLimits = function()
 
 	$$(_ + '5.2 - Allocate space to add the code and the table data')
 	const size = tblSize + parts.byteCount() + 8 * AuraSpec.length + 4;
-	const [free, freeVir] = Exe.FindSpace(size);
+	const [free, freeVir] = Exe.Allocate(size);
 
 	$$(_ + '5.3 - Fill in the blanks')
 
@@ -556,7 +548,7 @@ CustomAuraLimits = function()
 		Cancel("No complete elements found");
 
 	$$(_ + '5.11 - Add everything at the allocated space')
-	Exe.AddHex(free, code + mapData + ALL00 + tblData);
+	Exe.SetHex(free, code + mapData + ALL00 + tblData);
 
 	// Again we need to diverge based on directCMP
 

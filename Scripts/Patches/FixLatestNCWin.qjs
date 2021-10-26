@@ -1,0 +1,93 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2021 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind                                               *
+*   Created Date  : 2021-10-03                                             *
+*   Last Modified : 2021-10-23	                                           *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Makes the client use null ptr address for the bg and modifies the y value of UINewCharWnd ptr
+///
+FixLatestNCWin = function()
+{
+	const _ = 'FixLatestNCWin : ';
+
+	$$(_ + '1.1 - Find the string reference')
+	let addr = Exe.FindHex( PUSH(this.BgAddr) + CALL()); //push <bg_back2 string>
+	                                                     //call func#1
+	if (addr < 0)
+		throw Error("Bg not used");
+
+	$$(_ + '1.2 - Change the pushed address')
+	Exe.SetInt32(addr + 1, this.BgAddr - 1); //use 1 address less which will be pointing to NULL
+
+	$$(_ + '2.1 - Find the second reference')
+	let code =
+		PUSH(0x11)  //push 11h
+	+	PUSH(0x2C)  //push 2Ch
+	+	CALL()      //CALL UINewCharWnd::func
+	;
+	addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("Second reference missing");
+
+	addr += code.byteCount();
+
+	$$(_ + '2.2 - Extract the original function')
+	const origFunc = Exe.GetTgtAddr(addr);
+
+	$$(_ + '3.1 - Construct our function')
+	code =
+		CMP(ECX, [Filler(1)])  //cmp ecx, dword ptr [prevAddr]
+	+	JE(Filler(2))          //je <origFunc>
+	+	ADD([ECX, 0x20], 0x40) //add dword ptr [ecx + 20h], 40h
+	+	MOV([Filler(1)], ECX)  //mov dword ptr [prevAddr], ecx
+	+	JMP(Filler(2))         //jmp <origFunc>
+	+	ALL00                  // ; prevAddr
+	;
+	const allocSize = code.byteCount();
+
+	$$(_ + '3.2 - Prepare the arguments for auto-hook')
+	const args =
+	{
+		allocSize,
+		localVals : { 1 : allocSize - 4 },  // prevAddr
+		targets : { 2 : origFunc },
+		isCall : true
+	};
+
+	$$(_ + '3.3 - Add our code and call it from addr')
+	AutoHook(addr - 1, code, args);
+
+	return true;
+};
+
+///
+/// \brief Disable for clients without the latest 'new character window'
+///
+FixLatestNCWin.validate = function()
+{
+	this.BgAddr = Exe.FindText("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\make_character_ver2\\bg_back2.tga", CASE_INSENSITIVE);
+	return (this.BgAddr > 0);
+};

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144)                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-08-24                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -43,7 +43,7 @@ DisConnToLogin = function()
 
 	let addrs = Exe.FindHexN(2, 2, PUSH(0x635) );
 	if (addrs.isEmpty())
-		addrs = Exe.FindHexN(2, 2, PUSH(0x7E5) ); //new clients have different ID
+		addrs = Exe.FindHexN(2, 2, PUSH(0x7E5) + CALL()); //new clients have different ID
 
 	if (addrs.isEmpty())
 		throw Error("Expected 2 MsgString ID PUSHes");
@@ -125,13 +125,10 @@ DisConnToLogin = function()
 	+	JMP([EAX, 0x18])                   //jmp dword ptr [eax+18h]
 	;
 
-	$$(_ + '4.2 - Allocate space to add our code')
-	let [free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
+	$$(_ + '4.2 - Add the code')
+	let [, freeVir] = Exe.AddHex(code, 0x10);
 
-	$$(_ + '4.3 - Add the code at the space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '4.4 - Change the MOV instruction to a JMP to our code and NOP out rest of the stuff between jmpAddr & retnAddr')
+	$$(_ + '4.3 - Change the MOV instruction to a JMP to our code and NOP out rest of the stuff between jmpAddr & retnAddr')
 	Exe.SetJMP(jmpAddr, freeVir, retnAddr - (jmpAddr + 5));
 
 	/******* Next we will work on Disconnection from Map server during Gameplay *******/
@@ -139,7 +136,7 @@ DisConnToLogin = function()
 	$$(_ + '5.1 - Check if there is a short Jump right after the MsgString ID PUSH. If its there go to the address')
 	if (Exe.GetUint8(mapAddr) === 0xEB)
 	{
-		addr = Exe.GetTgtAddr(mapAddr + 1, PHYSICAL, 1);
+		addr2 = Exe.GetTgtAddr(mapAddr + 1, PHYSICAL, 1);
 	}
 	else
 	{
@@ -149,7 +146,7 @@ DisConnToLogin = function()
 			throw Error("JMP to Mode changer CALL location not found");
 
 		$$(_ + '5.3 - Goto the JMP address')
-		addr = Exe.GetTgtAddr(addr + 1, PHYSICAL);
+		addr2 = Exe.GetTgtAddr(addr + 1, PHYSICAL);
 	}
 
 	$$(_ + '5.4 - Find the CALL to ErrorMsg function (i.e. Error Message Window displayer function) after the addr')
@@ -159,7 +156,7 @@ DisConnToLogin = function()
 	;
 	let offset = 10;
 
-	addr = Exe.FindHex(code, addr, addr + 0x100);
+	addr = Exe.FindHex(code, addr2, addr2 + 0x100);
 	if (addr < 0)
 	{
 		code =
@@ -167,6 +164,8 @@ DisConnToLogin = function()
 		+	MOV(EAX, [EDI]) //mov eax, dword ptr [edi]
 		;
 		offset = 5;
+
+		addr = Exe.FindHex(code, addr2, addr2 + 0x100);
 	}
 	if (addr < 0)
 		throw Error("ErrorMsg CALL not found");
@@ -200,7 +199,12 @@ DisConnToLogin = function()
 		{
 			code =
 				PUSH_2               //push 2
-			+	MOV(ECX, EDI)        //mov ecx, edi
+			+	(Exe.Version === 11
+			?
+				MOV(ECX, EDI)        //mov ecx, edi
+			:
+				''
+			)
 			+	CALL([EAX, 0x18])    //call dword ptr [eax+18h]
 			;
 			break;
@@ -230,13 +234,10 @@ DisConnToLogin = function()
 	+	JMP([EAX, 0x18])                     //jmp dword ptr [eax+18h]
 	;
 
-	$$(_ + '7.2 - Allocate space to add our code');
-	[free, freeVir] = Exe.FindSpace(code.byteCount(), 0x10);
+	$$(_ + '7.2 - Add the code');
+	[, freeVir] = Exe.AddHex(code, 0x10);
 
-	$$(_ + '7.3 - Add the code at the space')
-	Exe.AddHex(free, code);
-
-	$$(_ + '7.4 - Change the instruction from PUSH 2 onwards into a JMP to our code')
+	$$(_ + '7.3 - Change the instruction from PUSH 2 onwards into a JMP to our code')
 	Exe.SetJMP(jmpAddr, freeVir, retnAddr - (jmpAddr + 5));
 
 	return true;

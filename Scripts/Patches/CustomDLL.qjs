@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -102,7 +102,7 @@ CustomDLL = function()
 	dirSize += 20; //Accomodate for IAT End Entry
 
 	$$(_ + '3.1 - Allocate space to add the new table')
-	const [free, freeVir] = Exe.FindSpace(strSize + dirSize);
+	const [free, freeVir] = Exe.Allocate(strSize + dirSize);
 
 	$$(_ + '3.2 - Construct the new Import table using the dllSpec object')
 	const strRVA  = freeVir - Exe.ImageBase;
@@ -192,7 +192,7 @@ CustomDLL.stage = tblData =>
 	const impInfo = CACHE.get('ImpInfo');
 	if (impInfo)
 	{
-		Exe.AddHex(
+		Exe.SetHex(
 			impInfo.Addr,
 			impInfo.Strings +
 			impInfo.Entries +

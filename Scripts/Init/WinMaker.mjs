@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-10-01                                             *
-*   Last Modified : 2021-10-02                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -158,7 +158,7 @@ function setup()
 	Exe.BeginTag("New_Win_Maker", true);
 
 	$$(_ + '1.3 - Allocate space for it')
-	const [free, freeVir] = Exe.FindSpace(parts.byteCount());
+	const [free, freeVir] = Exe.Allocate(parts.byteCount());
 
 	$$(_ + '2.1 - Fill in respective blanks if any')
 	const offsets = MapAddrs(freeVir, parts);
@@ -184,7 +184,7 @@ function setup()
 	}
 
 	$$(_ + '2.2 - Add at allocated space')
-	Exe.AddHex(free, parts.join(''));
+	Exe.SetHex(free, parts.join(''));
 
 	$$(_ + '2.3 - Update the CALL')
 	Exe.SetCALL(HookAddr, freeVir, 1);

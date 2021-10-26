@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-21                                             *
-*   Last Modified : 2021-04-10                                             *
+*   Last Modified : 2021-10-03                                             *
 *                                                                          *
 ****************************************************************************
 ]]--
@@ -149,11 +149,8 @@ GetPCNameOvrd = function(jobid, gender, lt)
 	-- Prepare the key for Langtype override
 	local ltKey = "LT_" .. lt
 
-	-- Add 3950 to Job id to get the proper value
-	local jobid_final = (jobid > 50 and jobid + 3950 or jobid)
-
 	-- Check if langtype override exists for the base table
-	local need_lang = (PCNames[ltKey] ~= nil and PCNames[ltKey][jobid_final] ~= nil)
+	local need_lang = (PCNames[ltKey] ~= nil and PCNames[ltKey][jobid] ~= nil)
 
 	-- Retrieve the gender override table
 	local ovrdtbl = (gender == 0 and PCNames_F or PCNames_M)
@@ -162,14 +159,14 @@ GetPCNameOvrd = function(jobid, gender, lt)
 	local val
 	if ovrdtbl[ltKey] ~= nil
 	then
-		val = ovrdtbl[ltKey][jobid_final]
+		val = ovrdtbl[ltKey][jobid]
 	end
 
 	-- If not present & base didn't have any langtype overrides,
 	-- retrieve the generic gender override value
 	if val == nil and not need_lang
 	then
-		val = ovrdtbl[jobid_final]
+		val = ovrdtbl[jobid]
 	end
 
 	-- If no value was found, then check for any inheritance mapping

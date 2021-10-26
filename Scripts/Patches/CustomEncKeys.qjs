@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shakto, Neo-Mind                                       *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -217,7 +217,7 @@ CustomEncKeys.obfuscate = function(patchName)
 	const [free, freeVir] = CACHE.allocate(cacheKey, 'Obfuscate', code);
 
 	$$(_ + '2.3 - Add the code at allocated space')
-	Exe.AddHex(free, code);
+	Exe.SetHex(free, code);
 
 	$$(_ + '2.4 - Create a JMP to the allocated space from PACKET.Assigner')
 	Exe.SetJMP(PACKET.Assigner, freeVir);

@@ -22,14 +22,9 @@
 *                                                                          *
 *   Author(s)     : Andre (4144)                                           *
 *   Created Date  : 2020-10-02                                             *
-*   Last Modified : 2021-10-02                                             *
+*   Last Modified : 2021-10-26                                             *
 *                                                                          *
 \**************************************************************************/
-
-///
-/// \brief Data needed for the 2 patches
-///
-CSlp_Patches = ["AddInpDelay", "CustomGameLoopDelay"];
 
 ///
 /// \brief Changes the Sleep function references to custom function which alters the delay value provided before jumping to Sleep.
@@ -39,7 +34,7 @@ CustomSleep = function(patchName)
 	const _ = patchName + ' : ';
 
 	$$(_ + '1 - Get the delay value from user')
-	const idx = CSlp_Patches.indexOf(patchName);
+	const idx = this.Names.indexOf(patchName);
 	const val = Exe.GetUserInput('$newSleepDelay' + idx, D_Uint16, "Delay input", "Enter the new delay (in ms)", idx, {max : 1000});
 	if (val === false)
 		Cancel("Delay", idx);
@@ -54,11 +49,17 @@ CustomSleep = function(patchName)
 };
 
 ///
+/// \brief Data needed for the 2 patches
+///
+CustomSleep.Names = ["AddInpDelay", "CustomGameLoopDelay"];
+
+
+///
 /// \brief Undo the staging
 ///
 CustomSleep.cleanup = function(patchName)
 {
-	CACHE.del('CSlp_Delay' + CSlp_Patches.indexOf(patchName));
+	CACHE.del('CSlp_Delay' + this.Names.indexOf(patchName));
 	this.setup();
 };
 
@@ -105,14 +106,14 @@ CustomSleep.setup = function()
 	Exe.BeginTag("Adjust_Sleep", true);
 
 	$$(_ + '2.3 - Allocate the space for it')
-	const [free, freeVir] = Exe.FindSpace(4 + code.byteCount());
+	const [free, freeVir] = Exe.Allocate(4 + code.byteCount());
 
 	$$(_ + '2.4 - Add at allocated space')
-	Exe.AddHex(free, (freeVir + 4).toHex() + code);
+	Exe.SetHex(free, (freeVir + 4).toHex() + code);
 
 	$$(_ + '2.5 - Change the references to access our function instead')
 	for (const addr of refAddrs)
-		Exe.SetInt32(addr, freeVir);
+		Exe.SetUint32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
 };
 
 ///

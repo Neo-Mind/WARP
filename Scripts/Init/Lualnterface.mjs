@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-08-20                                             *
-*   Last Modified : 2021-08-31                                             *
+*   Last Modified : 2021-10-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -479,7 +479,7 @@ export function addLoaders(arg1, arg2, arg3, arg4)
 	if (tgt > 0)
 		tgtVir = Exe.Phy2Vir(tgt);
 	else
-		[tgt, tgtVir] = Exe.FindSpace(csize + ssize, 0x10); //snapping to 0x10 since its going to be like a function
+		[tgt, tgtVir] = Exe.Allocate(csize + ssize, 0x10); //snapping to 0x10 since its going to be like a function
 
 	$$(_ + '3.1 - Initialize the code variable, set the initial CALL distance and address of first string')
 	let code = "";
@@ -527,7 +527,7 @@ export function addLoaders(arg1, arg2, arg3, arg4)
 	code += JMP(retnVir, tgtVir + csize - 7) + " 00 00";
 
 	$$(_ + '4.1 - Add the code & strings to the executable')
-	Exe.AddHex(tgt, code + strings, csize + ssize);
+	Exe.SetHex(tgt, code + strings, csize + ssize);
 
 	$$(_ + '4.2 - Enforce a JMP from hookAddr to target (NOP out all code in between)')
 	Exe.SetJMP(hookAddr, tgtVir, retnPhy - (hookAddr + 5));
