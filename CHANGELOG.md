@@ -28,17 +28,19 @@
 
   `initvars` need to be of the form `["name1", value1, "name2", value2...]`
 
+## Script Updates
+- Fixed bug in **`UserChoice`** function
 
 # 2021-10-26 Changes
 
 ## Script Updates
-- Added new function `AutoHook` to group together all the common steps involved in hooking & addition of code.
+- Added new function **`AutoHook`** to group together all the common steps involved in hooking & addition of code.
 
 
 # 2021-10-02 Changes
 	
 ## Script Updates
-- Added new function `GetImpRefs` to get references of Imported function
+- Added new function **`GetImpRefs`** to get references of Imported function
 
 
 # 2021-09-26 Changes
