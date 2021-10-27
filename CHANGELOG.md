@@ -31,6 +31,9 @@
 ## Script Updates
 - Fixed bug in **`UserChoice`** function
 
+## Patch Updates
+- Updated patch **`Enable DNS Support`** to fix[Issue #77](https://github.com/Neo-Mind/WARP/issues/77)
+
 
 # 2021-10-26 Changes
 
