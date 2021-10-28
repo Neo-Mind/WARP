@@ -1,3 +1,9 @@
+# 2021-10-28 Changes
+
+## Patch Updates
+- Fixed the order in `Enable Multiple GRFs` patch.
+
+
 # 2021-10-27 Changes
 
 ## Tool Updates (v1.5.2)
