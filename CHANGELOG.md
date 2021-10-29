@@ -1,3 +1,9 @@
+# 2021-10-29 Changes
+
+## Script Updates
+- Updated **`AutoHook`** function to allow for multiple from addresses & source offset(s)
+
+
 # 2021-10-28 Changes
 
 ## Patch Updates

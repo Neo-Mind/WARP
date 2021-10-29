@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-10-27                                             *
+*   Last Modified : 2021-10-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -603,7 +603,7 @@ AutoHook = (fromAddr, codes, argMap) =>
 	const _ = Log.dive(`AutoHook at [${fromAddr}] :`);
 
 	$$(_ + '1.1 - Retrieve the arguments')
-	const {allocSize, localVals, localTgts, values, targets, postProc, procArgs, isCall, nops, snap, jcOffset} = argMap;
+	const {allocSize, localVals, localTgts, values, targets, postProc, procArgs, isCall, isPtr, nops, snap, srcOffset, jcOffset} = argMap;
 
 	$$(_ + '1.2 - Allocate space')
 	const allocation = Exe.Allocate(allocSize ?? codes.byteCount(), snap ?? 0x10);
@@ -651,22 +651,44 @@ AutoHook = (fromAddr, codes, argMap) =>
 
 	$$(_ + '2.2 - Call any post processing function defined')
 	if (typeof postProc === 'function')
-		finalCode = postProc(finalCode, freeVir, procArgs, fromAddr);
+		finalCode = postProc(finalCode, freeVir, procArgs, argMap);
 
 	$$(_ + '2.3 - Put the final code at allocated space')
 	Exe.SetHex(free, finalCode);
 
-	$$(_ + '2.4 - Call/Jump from specified address to the code')
+	$$(_ + '2.4 - Call/Jump from specified address to the code OR update reference for Ptr calls/jmps/moves')
 	if (fromAddr)
 	{
+		const srcOff = srcOffset ?? 0;
 		const tgtOff = jcOffset ?? 0;
 
-		if (Exe.GetUint8(fromAddr) === (0xE8 + (isCall ? 0 : 1)))
-			Exe.SetTgtAddr(fromAddr + 1, freeVir + tgtOff);
-		else if (isCall)
-			Exe.SetCALL(fromAddr, freeVir + tgtOff, nops ?? 0);
-		else
-			Exe.SetJMP(fromAddr, freeVir + tgtOff, nops ?? 0);
+		const _hook_ = (src) =>
+		{
+			if (isPtr)
+			{
+				Exe.SetUint32(Instr.FromAddr(src).NextAddr - 4, freeVir + tgtOff);
+			}
+			else
+			{
+				if (Exe.GetUint8(src) === (0xE8 + (isCall ? 0 : 1)))
+					Exe.SetTgtAddr(src + 1, freeVir + tgtOff);
+				else if (isCall)
+					Exe.SetCALL(src, freeVir + tgtOff, nops ?? 0);
+				else
+					Exe.SetJMP(src, freeVir + tgtOff, nops ?? 0);
+			}
+		};
+
+		if (IsArr(fromAddr))
+		{
+			fromAddr.forEach( (memAddr, idx) =>
+				_hook_(memAddr + (IsArr(srcOff) ? srcOff[idx] : srcOff))
+			);
+		}
+		else if (IsNum(fromAddr))
+		{
+			_hook_(fromAddr + srcOff);
+		}
 	}
 
 	$$(_ + '2.5 - Return the allocated addresses & size')

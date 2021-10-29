@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Ai4rei/AN                                    *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-10-23                                             *
+*   Last Modified : 2021-10-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -321,7 +321,7 @@ EnableUnknCmds = function()
 		if (ins.Codes[0] === 0xE9)
 		{
 			count--;
-			hookAddrs.push(ins.Addr + 1);
+			hookAddrs.push(ins.Addr);
 		}
 		else if (ins.Codes[0] === 0x83 && ins.Immd === -1 )
 		{
@@ -334,7 +334,7 @@ EnableUnknCmds = function()
 	}
 
 	$$(_ + '2.4 - Extract the jump target')
-	let retnAddr = Exe.GetTgtAddr(hookAddrs[0]);
+	let retnAddr = Exe.GetTgtAddr(hookAddrs[0] + 1);
 
 	$$(_ + '2.5 - Check if the instruction at the target is OR regA, -1')
 	ins = Instr.FromAddr(retnAddr, VIRTUAL);
@@ -353,19 +353,8 @@ EnableUnknCmds = function()
 	+	JMP(Filler(1)) //jmp <retnAddr>
 	;
 
-	$$(_ + '3.2 - Prepare the arguments for auto-hook')
-	const args =
-	{
-		snap : 1,
-		targets : {1 : retnAddr}
-	};
-
-	$$(_ + '3.3 - Add our code')
-	const [, fnVir] = AutoHook(null, code, args);
-
-	$$(_ + '3.4 - Update the JMP targets')
-	for (const addr of hookAddrs)
-		Exe.SetTgtAddr(addr, fnVir);
+	$$(_ + '3.2 - Add our code and update the jump targets')
+	AutoHook(hookAddrs, code, { targets : { 1 : retnAddr } });
 
 	return true;
 };

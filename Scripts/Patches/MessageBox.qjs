@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-10-01                                             *
-*   Last Modified : 2021-10-26	                                           *
+*   Last Modified : 2021-10-29	                                           *
 *                                                                          *
 \**************************************************************************/
 
@@ -96,15 +96,12 @@ MsgBox2Beep = function()
 		},
 		localTgts : {
 			'3,1' : _loaded
-		}
+		},
+		isPtr : true
 	};
 
-	$$(_ + '2.4 - Add our code')
-	const [, freeVir] = AutoHook(null, parts, args);
-
-	$$(_ + '2.5 - Replace the references')
-	for (const addr of refAddrs)
-		Exe.SetUint32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
+	$$(_ + '2.4 - Add our code and update the references')
+	AutoHook(refAddrs, parts, args);
 
 	return true;
 };
@@ -129,20 +126,25 @@ ShowMsgIcon = function()
 
 	$$(_ + '2.2 - Construct the new function')
 	const code =
-		MOV(EAX, [ESP, 0x10])   //mov eax, dword ptr [ARG.4]
+		Filler(1)               // ; points to function below
+	+	MOV(EAX, [ESP, 0x10])   //mov eax, dword ptr [ARG.4]
 	+	AND(EAX, ~0x70)         //and eax, FFFFFF8Fh ; masking off
 	+	OR(EAX, MB_Types[key])  //or eax, <msgIconType>
 	+	MOV([ESP, 0x10], EAX)   //mov dword ptr [ARG.4], eax
 	+	JMP([ROC.MsgBoxA])      //jmp dword ptr [<&USER32.MessageBoxA>]
 	;
 
-	$$(_ + '2.3 - Add the code')
-	const [free, freeVir] = Exe.Allocate(4 + code.byteCount());
-	Exe.SetHex(free, (freeVir + 4).toHex() + code);
+	$$(_ + '2.3 - Prepare the arguments for auto-hook')
+	const args =
+	{
+		localVals : {
+			1 : 4 //fnAddr
+		},
+		isPtr : true
+	};
 
-	$$(_ + '2.4 - Replace the references')
-	for (const addr of refAddrs)
-		Exe.SetUint32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
+	$$(_ + '2.4 - Add the code and update the references')
+	AutoHook(refAddrs, code, args);
 
 	return true;
 };
@@ -168,18 +170,23 @@ NoMsgBox = function()
 
 	$$(_ + '2.1 - Prepare the new function')
 	const code =
-		XOR(EAX, EAX) //xor eax, eax
+		Filler(1)     // ; points to function below
+	+	XOR(EAX, EAX) //xor eax, eax
 	+	INC(EAX)      //inc eax
 	+	RETN(0x10)    //retn 10h
 	;
 
-	$$(_ + '2.2 - Add the code')
-	const [free, freeVir] = Exe.Allocate(4 + code.byteCount());
-	Exe.SetHex(free, (freeVir + 4).toHex() + code);
+	$$(_ + '2.2 - Prepare the arguments for auto-hook')
+	const args =
+	{
+		localVals : {
+			1 : 4 //fnAddr
+		},
+		isPtr : true
+	};
 
-	$$(_ + '2.3 - Replace the references')
-	for (const addr of refAddrs)
-		Exe.SetUint32(Instr.FromAddr(addr).NextAddr - 4, freeVir);
+	$$(_ + '2.3 - Add the code and update the references')
+	AutoHook(refAddrs, code, args);
 
 	return true;
 };

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-10-27                                             *
+*   Last Modified : 2021-10-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -131,15 +131,13 @@ EnableDnsSupport = function()
 		targets : {
 			1 : assignFunc,
 			2 : FindChild
-		}
+		},
+		isCall : true,
+		srcOffset : csize - 1
 	};
 
-	$$(_ + '3.6 - Add the code')
-	const [, newTgtAddr] = AutoHook(null, code, args);
-
-	$$(_ + '3.7 - Update the targets')
-	for (const addr of addrs)
-		Exe.SetTgtAddr(addr + csize, newTgtAddr);
+	$$(_ + '3.6 - Add the code & update the CALL targets')
+	AutoHook(addrs, code, args);
 
 	$$(_ + '4.1 - Find \'ws2_32.dll\'')
 	const ws2Str = Exe.FindText("ws2_32.dll");
