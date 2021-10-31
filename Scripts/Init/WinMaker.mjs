@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-10-01                                             *
-*   Last Modified : 2021-10-22                                             *
+*   Last Modified : 2021-10-31                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -42,6 +42,7 @@ const Codes = new Map();
 const FillMaps = new Map();
 const TgtMaps = new Map();
 var HookAddr;
+var WndAddr;
 
 var ErrMsg;
 var Valid;
@@ -52,6 +53,7 @@ var Valid;
 export function init()
 {
 	HookAddr = -1;
+	WndAddr = -1;
 	Codes.clear();
 	FillMaps.clear();
 	TgtMaps.clear();
@@ -87,18 +89,26 @@ export function load()
 
 	$$(_ + '2.2 - Find the location where the client window gets created')
 	const code = PUSH(" 00 00 C? 02");
-	const result = Exe.FindHexN( CALL([ROC.CreateWin]) ).find( addr =>
+	let addr = Exe.FindHexN( CALL([ROC.CreateWin]) ).find( addr =>
 	{
 		const found = Exe.FindLastHex(code, addr, addr - 0x20);
 		return (found > 0);
 	});
-	if (result == undefined)
+	if (addr == undefined)
 		throw Log.rise(Error = new Error("Window creation CALL missing"));
 
 	$$(_ + '2.3 - Save the address')
-	HookAddr = result;
+	HookAddr = addr;
 
-	$$(_ + '2.4 - Set validity to true')
+	$$(_ + '2.4 - Find the assignment of the CALL result')
+	addr = Exe.FindHex(MOV([POS4WC], EAX), addr, addr + 16);
+	if (addr < 0)
+		throw Log.rise(Error = new Error("Result Assignment missing"));
+	
+	$$(_ + '2.5 - Save the location')
+	WndAddr = Exe.GetInt32(addr + 1);
+	
+	$$(_ + '2.6 - Set validity to true')
 	return Log.rise(Valid = true);
 }
 
