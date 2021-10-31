@@ -34,6 +34,11 @@
 // -----------------------
 
 ///
+/// \brief Exported data members
+///
+export var WndAddr;
+
+///
 /// \brief Local data members
 ///
 const self = 'WINMKR';
@@ -42,7 +47,6 @@ const Codes = new Map();
 const FillMaps = new Map();
 const TgtMaps = new Map();
 var HookAddr;
-var WndAddr;
 
 var ErrMsg;
 var Valid;
