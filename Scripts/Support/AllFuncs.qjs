@@ -700,6 +700,26 @@ AutoHook = (fromAddr, codes, argMap) =>
 	return Log.rise(allocation);
 };
 
+///
+/// \brief Higher level wrapper for allocating contiguous position in DIFF instead of seperate allocations for multiple variables.
+///        It returns the various VIRTUAL address in an array (same order as the size provided)
+///
+MultiAlloc = (...sizes) =>
+{
+	if (sizes.length === 0) //avoid non-empty
+		return [];
+	
+	let total = 0;
+	let addrs = sizes.map(elem => total += elem);
+	
+	const firstVir = Exe.Allocate(total)[1];
+	
+	addrs.forEach( (elem, idx) => addrs[idx] += firstVir);
+	addrs.unshift(firstVir);
+	
+	return addrs;
+};
+
   //===========//
  // Utilities //
 //===========//
@@ -976,7 +996,7 @@ for (const name of
 	'Wrap', 'BitWidth', 'Distance',
 	'PatchReporter', 'MakeMap', 'ReloadPatch',
 	'CaseAddr', 'ParseData', 'GetImpRefs',
-	'FindInstr', 'GetInstr', 'AutoHook',
+	'FindInstr', 'GetInstr', 'AutoHook', 'MultiAlloc',
 	'Identify', 'IdentifyClass', 'IdentifyObj',
 	'Assign', 'AssignStr',
 
