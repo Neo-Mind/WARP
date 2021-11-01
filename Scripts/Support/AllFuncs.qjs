@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-10-29                                             *
+*   Last Modified : 2021-11-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -603,7 +603,7 @@ AutoHook = (fromAddr, codes, argMap) =>
 	const _ = Log.dive(`AutoHook at [${fromAddr}] :`);
 
 	$$(_ + '1.1 - Retrieve the arguments')
-	const {allocSize, localVals, localTgts, values, targets, postProc, procArgs, isCall, isPtr, nops, snap, srcOffset, jcOffset} = argMap;
+	const {allocSize, localVals, localTgts, values, targets, postProc, procThis, procArgs, isCall, isPtr, nops, snap, srcOffset, jcOffset} = argMap;
 
 	$$(_ + '1.2 - Allocate space')
 	const allocation = Exe.Allocate(allocSize ?? codes.byteCount(), snap ?? 0x10);
@@ -651,7 +651,12 @@ AutoHook = (fromAddr, codes, argMap) =>
 
 	$$(_ + '2.2 - Call any post processing function defined')
 	if (typeof postProc === 'function')
-		finalCode = postProc(finalCode, freeVir, procArgs, argMap);
+	{
+		if (procThis)
+			finalCode = postProc.call(procThis, finalCode, freeVir, procArgs, argMap);
+		else
+			finalCode = postProc(finalCode, freeVir, procArgs, argMap);
+	}
 
 	$$(_ + '2.3 - Put the final code at allocated space')
 	Exe.SetHex(free, finalCode);
