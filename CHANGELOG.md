@@ -2,7 +2,7 @@
 
 ## Patch Updates
 - Fixed [bug in Enable Proxy Support patch](https://github.com/Neo-Mind/WARP/issues/80)
-
+- Fixed [bug in Allow Guild activities in clan patch](https://github.com/Neo-Mind/WARP/issues/75)
 
 # 2021-10-29 Changes
 
