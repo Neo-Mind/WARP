@@ -1,7 +1,16 @@
+# 2021-11-04 Changes
+
+## Patch Updates
+- Fixed [bug in Enable Proxy Support patch](https://github.com/Neo-Mind/WARP/issues/80)
+
+
 # 2021-10-29 Changes
 
 ## Script Updates
-- Updated **`AutoHook`** function to allow for multiple from addresses & source offset(s)
+- Updated **`AutoHook`** function to allow for multiple from addresses & source offset(s). Also added 'this' pointer support for post processing function.
+
+
+- Added **`MultiAlloc`** function to perform contiguous DIFF allocation for storing multiple values. It accepts the sizes needed and returns corresponding **`VIRTUAL`** addresses.
 
 
 # 2021-10-28 Changes
