@@ -84,7 +84,7 @@ CustomMerchantURL = function()
 			Loader.urlRefs.add(addr + 1);
 
 			Saver.lenRefs.add(addr + csize + 1);
-			Saver.urlRefs.add(addr + csize + 5);
+			Saver.urlRefs.add(addr + csize + 6);
 		}
 	}
 
