@@ -1,3 +1,9 @@
+# 2021-11-11 Changes
+
+## Patch Updates
+- Fixed bug in **`Custom MerchantURLs`** patch.
+
+
 # 2021-11-04 Changes
 
 ## Patch Updates
