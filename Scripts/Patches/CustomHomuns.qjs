@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-10-27                                             *
+*   Last Modified : 2021-11-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -76,10 +76,11 @@ CustomHomuns = function()
 			{
 				if (ins.Codes[0] === 0x8D && ins.MRM.Mode === 1 && ins.MRM.RegO === 0 && Exe.GetUint8(ins.NextAddr) === 0x50) //lea eax, [LOCAL.x]
 				{                                                                                                             //push eax
-					let opcode = Exe.GetUint8(ins.NextAddr + 1);
+					const opcode = Exe.GetUint8(ins.NextAddr + 1);
 					return (opcode === 0x6A || //followed by ( push immA )
 							opcode === 0x68 ||
-							opcode === 0x56 ); //OR by       ( push esi )
+							opcode === 0x56 || //OR by       ( push esi )
+							opcode === 0x8D ); //OR by       ( lea esi, [ebx + dispA])
 				}
 			}
 			return false;

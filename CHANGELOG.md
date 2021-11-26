@@ -1,3 +1,24 @@
+# 2021-11-26 Changes
+
+## Patch Updates
+- Fixed the following patches for latest clients (2021-11-10+)
+	- **`Enforce 0 C in Cash Shop`**
+	- **`Custom Exp Bar Limits`**
+	- **`Enable Custom Homunculi`**
+	- **`Enable Custom Jobs`**
+	- **`Enable Custom Shields`**
+	- **`Allow 65k hair styles`**
+	- **`Increase hair styles`**
+	- **`Always see hidden/cloaked objects`**
+	- **`Load iteminfo per server`**
+	- **`Always load korea ExternalSettings lua file`**
+	- **`Remove Adventurer Agency from party`**
+
+- Disabled **`Translate Taekwon`** patch for new clients, since it is picked up from msg table and therefore can be altered there instead.
+
+- Fixed bug in **`Custom Font Weight for all`** patch
+
+
 # 2021-11-11 Changes
 
 ## Patch Updates
