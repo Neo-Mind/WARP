@@ -13,6 +13,7 @@
 	- **`Load iteminfo per server`**
 	- **`Always load korea ExternalSettings lua file`**
 	- **`Remove Adventurer Agency from party`**
+	- All path customization patches
 
 - Disabled **`Translate Taekwon`** patch for new clients, since it is picked up from msg table and therefore can be altered there instead.
 
