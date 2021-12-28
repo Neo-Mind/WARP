@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-10-26                                             *
+*   Last Modified : 2021-11-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -75,24 +75,23 @@ function ItemInfoPerServer()
 
 	$$(_ + '2.2 - Find the loader CALL before the PUSH')
 	code =
-		CALL(ALLWC)         //call <iteminfoPrep>
-	+	MOV(ECX, [POS4WC])  //mov ecx, dword ptr [refAddr]
+		MOV(ECX, [POS4WC])  //mov ecx, dword ptr [refAddr]
 	+	CALL()              //call <iteminfoLoader>
 	;
 
-	addr = Exe.FindHex(code, addr - 0x30, addr);
+	addr = Exe.FindLastHex(code, addr, addr - 0x30);
 	if (addr < 0)
 		throw Error("ItemInfo loader missing");
 
 	$$(_ + '2.4 - Extract the MOV ECX statement')
-	const refMOV = Exe.GetHex(addr + 5, 6);
+	const refMOV = Exe.GetHex(addr, 6);
 
 	$$(_ + '2.5 - Change the MOV statement to JMP for skipping the loader. Also set AL to 1 (faux return value from the loader)')
 	const code2 =
 		MOV(AL, 1)  //mov al, 1
 	+	JMP(7)      //jmp _skip ; to location after 'call <iteminfoLoader>'
 	;
-	Exe.SetHex(addr + 5, code2);
+	Exe.SetHex(addr, code2);
 
 	$$(_ + '2.6 - Set addr to location of the iteminfoLoader function')
 	addr = Exe.GetTgtAddr(addr + code.byteCount(), PHYSICAL);

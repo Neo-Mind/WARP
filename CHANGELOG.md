@@ -1,3 +1,52 @@
+# 2021-11-26 Changes
+
+## Patch Updates
+- Fixed the following patches for latest clients (2021-11-10+)
+	- **`Enforce 0 C in Cash Shop`**
+	- **`Custom Exp Bar Limits`**
+	- **`Enable Custom Homunculi`**
+	- **`Enable Custom Jobs`**
+	- **`Enable Custom Shields`**
+	- **`Allow 65k hair styles`**
+	- **`Increase hair styles`**
+	- **`Always see hidden/cloaked objects`**
+	- **`Load iteminfo per server`**
+	- **`Always load korea ExternalSettings lua file`**
+	- **`Remove Adventurer Agency from party`**
+	- All path customization patches
+
+- Disabled **`Translate Taekwon`** patch for new clients, since it is picked up from msg table and therefore can be altered there instead.
+
+- Fixed bug in **`Custom Font Weight for all`** patch
+
+
+# 2021-11-11 Changes
+
+## Patch Updates
+- Fixed bug in **`Custom MerchantURLs`** patch.
+
+
+# 2021-11-04 Changes
+
+## Patch Updates
+- Fixed [bug in Enable Proxy Support patch](https://github.com/Neo-Mind/WARP/issues/80)
+- Fixed [bug in Allow Guild activities in clan patch](https://github.com/Neo-Mind/WARP/issues/75)
+
+# 2021-10-29 Changes
+
+## Script Updates
+- Updated **`AutoHook`** function to allow for multiple from addresses & source offset(s). Also added 'this' pointer support for post processing function.
+
+
+- Added **`MultiAlloc`** function to perform contiguous DIFF allocation for storing multiple values. It accepts the sizes needed and returns corresponding **`VIRTUAL`** addresses.
+
+
+# 2021-10-28 Changes
+
+## Patch Updates
+- Fixed the order in `Enable Multiple GRFs` patch.
+
+
 # 2021-10-27 Changes
 
 ## Tool Updates (v1.5.2)
@@ -30,6 +79,9 @@
 
 ## Script Updates
 - Fixed bug in **`UserChoice`** function
+
+## Patch Updates
+- Updated patch **`Enable DNS Support`** to fix[Issue #77](https://github.com/Neo-Mind/WARP/issues/77)
 
 
 # 2021-10-26 Changes

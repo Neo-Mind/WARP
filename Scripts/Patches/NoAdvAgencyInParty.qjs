@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, X-EcutiOnner                                   *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2021-11-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -38,6 +38,10 @@ NoAdvAgencyInParty = function()
 	$$(_ + '1 - Find the button prep inside the function')
 	const template =
 		MOV(ECX, [EDI, POS3WC]) //mov ecx, dword ptr [edi + UIMessengerGroupWnd.m_mesbtn]
+	+	(Exe.BuildDate > 20211000
+	?	PUSH_0
+	:	''
+	)
 	+	PUSH(' [000000..]')     //push 0/1/2
 	+	PUSH(Filler(1))         //push offset <string>
 	+	CALL(ALLWC)             //call UIBitmapButton::SetBitmapName

@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Secret, Andrei (4144), X-EcutiOnner                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-08-24                                             *
+*   Last Modified : 2021-11-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -45,10 +45,10 @@ LoadKrExtSettings = function()
 
 	$$(_ + '2.1 - Find the LANGTYPE comparison (for old clients)')
 	let code =
-		MOV(EDI, ECX)         //mov edi, ecx
-	+	MOV(EAX, [LANGTYPE])  //mov eax, dword ptr [g_serviceType]
-	+	CMP(EAX, 0x12)        //cmp eax, 12h
-	+	JA()                  //ja _skip
+		MOV(EDI, ECX)           //mov edi, ecx
+	+	MOV(EAX, [LANGTYPE])    //mov eax, dword ptr [g_serviceType]
+	+	CMP(EAX, ' [00010..0]') //cmp eax, 12h or 14h
+	+	JA()                    //ja _skip
 	;
 
 	const addr = Exe.FindHex(code, refAddr - 0x80, refAddr);

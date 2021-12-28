@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-10-23                                             *
+*   Last Modified : 2021-10-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -65,7 +65,7 @@ ShowBGEmblem = function()
 		throw Error("Mode checker not found");
 
 	$$(_ + '1.2 - Save the address to be hookAddrs')
-	let hookAddrs = [matchAddr + 6];
+	let hookAddrs = [matchAddr + 5];
 
 	$$(_ + '1.3 - Skip the 2nd CALL if present (same pattern as before except there is a JNZ at end)')
 	const csize = code.byteCount();
@@ -106,14 +106,14 @@ ShowBGEmblem = function()
 
 		$$(_ + '2.2 - Add the last entry to the hookAddrs')
 		const memAddr = addrs.last();
-		if (hookAddrs.indexOf(memAddr + 8) < 0)
+		if (hookAddrs.indexOf(memAddr + 7) < 0)
 		{
-			hookAddrs.push(memAddr + 8);
+			hookAddrs.push(memAddr + 7);
 
 			$$(_ + '2.3 - Look for the additional comparison before the current one within the same function.. ugh!')
 			const addr = Exe.FindLastHex(code + JE(POS2WC), memAddr - 0x80, memAddr - 0x180);
 			if (addr > 0)
-				hookAddrs.push(addr + 6);
+				hookAddrs.push(addr + 5);
 
 			else if (Exe.Version < 9)
 				throw Error("Additional pattern missing");
@@ -134,7 +134,7 @@ ShowBGEmblem = function()
 			if (addrs.length !== 1)
 				throw Error("3rd pattern missing or too many matches");
 
-			hookAddrs.push(addrs[0] + 6);
+			hookAddrs.push(addrs[0] + 5);
 		}
 	}
 
@@ -150,12 +150,17 @@ ShowBGEmblem = function()
 	+	RETN()                      //retn ; _skipMov
 	;
 
-	$$(_ + '3.2 - Add the code')
-	const [, freeVir] = AutoHook(null, code, {targets : {1 : GetGameMode}});
+	$$(_ + '3.2 - Prepare the arguments for auto-hook')
+	const args =
+	{
+		targets : {
+			1 : GetGameMode
+		},
+		isCall : true
+	};
 
-	$$(_ + '3.3 - Change the targets of all hookAddrs')
-	for (const addr of hookAddrs)
-		Exe.SetTgtAddr(addr, freeVir);
+	$$(_ + '3.3 - Add the code and update the call targets')
+	AutoHook(hookAddrs, code, args);
 
 	return true;
 };

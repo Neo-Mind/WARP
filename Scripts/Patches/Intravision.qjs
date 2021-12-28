@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Secret, A.K.M., Neo-Mind                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2021-11-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,10 +35,10 @@ Intravision = function()
 	const _ = 'Intravision : ';
 
 	$$(_ + '1 - Find the comparison loop')
-	let code;
+	let parts;
 	if (!ROC.Post2010)
 	{
-		code =
+		parts =
 			JNE(2)						//jne short _skip
 		+	MOV(BL, 1)					//mov bl, 1
 		+	INC(ECX)					//inc ecx ; _skip
@@ -48,19 +48,28 @@ Intravision = function()
 	}
 	else
 	{
-		code =
-			JZ(ALLWC)					//JZ _next
-		+	ADD(EAX, WCp)				//add eax, imm8A  ; 14h in 2017 clients
+		parts =
+		[
+			JZ(ALLWC)					//jz _next
+		,
+			ADD(EAX, WCp)				//add eax, imm8A  ; 14h in 2017 clients
 		+	CMP(EAX, ECX)				//cmp eax, ecx
 		+	JNZ(WCn)					//jnz short _loop
-		;
+		];
 	}
-	const addrs = Exe.FindHexN(code);
+
+	let addrs = Exe.FindHexN(parts);
+	if (addrs.isEmpty() && Exe.BuildDate > 20210000)
+	{
+		parts[0] = JZ(WCp); //jz short _next
+		addrs = Exe.FindHexN(parts);
+	}
+
 	if (addrs.isEmpty())
 		throw Error("Comparison missing");
 
 	$$(_ + '2 - Change the JZ/JNE SHORT to JMP for the right match')
-	code =
+	const code =
 		PUSH_2							//push 2
 	+	MOV(ECX, ESI)					//mov ecx, esi
 	+	CALL()							//call func#1

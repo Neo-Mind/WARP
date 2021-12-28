@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-10-26                                             *
+*   Last Modified : 2021-11-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -689,12 +689,18 @@ CustomJobs = function()
 		const hookAddr = endIns.NextAddr;
 
 		$$(_ + '6.2 - Find the ECX assignment after it')
+		let tblReg = EDI;
 		let addr = Exe.FindHex(LEA(ECX, [EBX, POS2WC]), hookAddr, hookAddr + 0x30); //lea ecx, [ebx + dispA]
+		if (addr < 0 && Exe.BuildDate > 20210000)
+		{
+			tblReg = ESI;
+			addr = Exe.FindHex(MOV(ECX, EDI), hookAddr, hookAddr + 0x30);
+		}
 		if (addr < 0)
 			throw Error("Object assignment missing");
 
 		$$(_ + '6.3 - Save the instruction')
-		const leaECX = Instr.FromAddr(addr);
+		const ecxAssign = Instr.FromAddr(addr);
 
 		$$(_ + '6.4 - Find the string assignment to stack location')
 		addr = Exe.FindHex(MOV([EBP, WCn], tgAddr), hookAddr, hookAddr + 0x90);  //mov dword ptr [LOCAL.x], offset "TaeKwon Girl"
@@ -713,30 +719,39 @@ CustomJobs = function()
 		const idxLoc = [EBP, Instr.FromAddr(addr).Disp];
 
 		$$(_ + '6.8 - Find the additional stack location PUSH after it (not sure why it is needed)')
-		let code =
+		let parts =
+		[
 			LEA(EAX, [EBP, WCn]) //lea eax, [LOCAL.y]
-		+	PUSH_EAX             //push eax
-		;
-		const csize = code.byteCount();
+		,
+			''
+		,
+			PUSH_EAX             //push eax
+		];
 
-		addr = Exe.FindHex(code, addr + 8, hookAddr + 0x30);
-		if (addr > 0)
+		let addr2 = Exe.FindHex(parts, addr + 8, hookAddr + 0x30);
+		if (addr2 < 0)
 		{
-			const disp = Instr.FromAddr(addr).Disp;
-			if (disp === idxLoc[1] || disp === strLoc[1]) //this is the wrong PUSH, so search again
-				addr = Exe.FindHex(code, addr + csize, hookAddr + 0x30);
+			parts[1] = ecxAssign.toString();
+			addr2 = Exe.FindHex(parts, addr + 8, hookAddr + 0x30);
 		}
+		const csize = parts.byteCount();
 
-		if (addr < 0)
+		if (addr2 > 0)
+		{
+			const disp = Instr.FromAddr(addr2).Disp;
+			if (disp === idxLoc[1] || disp === strLoc[1]) //this is the wrong PUSH, so search again
+				addr2 = Exe.FindHex(parts, addr2 + csize, hookAddr + 0x30);
+		}
+		if (addr2 < 0)
 			throw Error("Mem PUSH missing");
 
-		$$(_ + '6.9 - Save the 2 instructions')
-		const pushMEM = Exe.GetHex(addr, csize);
+		$$(_ + '6.9 - Save the instructions')
+		const pushMEM = Exe.GetHex(addr2, parts.byteCount(0)) + PUSH_EAX;
 
 		$$(_ + '6.10 - Look for the function CALL after the PUSH (either its directly after or the LEA is in between)')
-		addr += csize;
-		if (addr === leaECX.Addr)
-			addr = leaECX.NextAddr;
+		addr = addr2 + csize;
+		if (addr === ecxAssign.Addr)
+			addr = ecxAssign.NextAddr;
 
 		let ins = Instr.FromAddr(addr);
 		if (ins.Codes[0] !== 0xE8) //a mov dword ptr instruction can also come in between
@@ -746,10 +761,10 @@ CustomJobs = function()
 			throw Error("Function CALL missing");
 
 		$$(_ + '6.11 - Retrieve the target VIRTUAL address')
-		const Overrider = Exe.GetTgtAddr(ins.Addr + 1);
+		const Overrider = Exe.Phy2Vir(ins.NextAddr + ins.Immd, CODE);
 
 		$$(_ + '6.12 - Find the ending address of the table')
-		addr = Exe.FindHex(MOV(R32, 0x2D), addr + 0x200, addr + 0x400);
+		addr = Exe.FindHex(MOV(R32, 0x2D) + NOP2, addr + 0x200, addr + (Exe.BuildDate > 20211000 ? 0x1000 : 0x400));
 		if (addr < 0)
 			throw Error("Ending address missing for new overrides");
 
@@ -765,7 +780,7 @@ CustomJobs = function()
 		const [    , mainM,        ] = LUA.createCaller(["GetPCNameOvrd", AltFuncs[0]], "ddd>s", EDI, 1, [LANGTYPE], EAX);
 		const [prep, mainF, restore] = LUA.createCaller(["GetPCNameOvrd", AltFuncs[0]], "ddd>s", EDI, 0, [LANGTYPE], EAX);
 
-		let parts =
+		parts =
 		[//0
 			MOV(EDI, Filler(1))      //mov edi, <startingValue> ; serves as idx
 		+	MOV(ESI, Filler(2))      //mov esi, <endingValue>
@@ -776,7 +791,7 @@ CustomJobs = function()
 		+	MOV(CL, [EAX])           //mov cl, dword ptr [eax]
 		+	TEST(CL, CL)             //test cl, cl
 		+	JE(7)                    //je short _skip
-		+	MOV(ECX, [ESP, 0x24])    //mov ecx, dword ptr [esp+24h]
+		+	MOV(ECX, [ESP, 0x24])    //mov ecx, dword ptr [esp+24h] ; table address
 		+	MOV([4, EDI, ECX], EAX)  //mov dword ptr [4*edi + ecx], eax
 
 		+	mainF                    //LUA function caller for Female ; _skip
@@ -785,14 +800,14 @@ CustomJobs = function()
 		+	JE(Filler(6,1))          //je short _idxInc
 		+	MOV(strLoc, EAX)         //mov dword ptr [LOCAL.z], eax
 
-		+	PUSH_EAX                 //push eax   ; the name
+		+	MOV(ECX, [ESP, 0x28])    //mov dword ptr ecx, [esp+28h] ; object address
+		+   PUSH_EAX                 //push eax   ; the name
 		+	LEA(EAX, idxLoc)         //lea eax, [LOCAL.x]
 		+	MOV([EAX], EDI)          //mov dword ptr [eax], edi
 		+	PUSH_EAX                 //push eax   ; the index location
 		+	PUSH_0                   //push 0
 		+	pushMEM                  //lea eax, [LOCAL.y]
 			                         //push eax   ; the mem location
-		+	leaECX                   //lea ecx, [ebx + dispA]
 		+	CALL(Filler(4))          //call <Overrider>
 
 		,//2
@@ -813,8 +828,10 @@ CustomJobs = function()
 		$$(_ + '6.15 - Construct the code in parts')
 		parts =
 		[
-			PUSH([EDI]) //push dword ptr [edi] ; currently the starting address is inside [edi] but it may change in future
-		+	PUSHAD      //pushad
+			ecxAssign      //either lea OR mov to ecx
+		+	PUSH(ECX)      //push ecx
+		+	PUSH([tblReg]) //push dword ptr [edi] or [esi] ; table address
+		+	PUSHAD         //pushad
 		];
 
 		for (const template of templates)
@@ -831,14 +848,14 @@ CustomJobs = function()
 
 		parts.push(
 			POPAD            //popad
-		+	ADD(ESP, 4)      //add esp, 4
+		+	ADD(ESP, 8)      //add esp, 8
 		+	JMP(Filler(3))   //jmp <endVir>
 		);
 
 		$$(_ + '6.16 - Fill in the blanks')
 		const hookVir = Exe.Phy2Vir(hookAddr, CODE);
 
-		code = LUA.finalize(parts, hookVir,
+		const code = LUA.finalize(parts, hookVir,
 		{
 			3 : endVir,
 			4 : Overrider

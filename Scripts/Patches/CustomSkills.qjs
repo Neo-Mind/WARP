@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Unknown                                                *
 *   Created Date  : 2021-06-11                                             *
-*   Last Modified : 2021-10-22                                             *
+*   Last Modified : 2021-11-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -51,7 +51,21 @@ CustomSkills = function(patchName)
 	if (IsNum(suffix))
 		suffix = data[suffix]; //option to inherit from another version
 
-	const fnBegin = Exe.FindHex(prefix + suffix);
+	let fnBegin = Exe.FindHex(prefix + suffix);
+	if (fnBegin < 0 && Exe.BuildDate > 20211000 && data.extra_2021)
+	{
+		const addr = Exe.FindHex(data.extra_2021);
+		if (addr < 0)
+			throw Error("ID Comparison missing");
+
+		prefix =
+			FP_START      //push ebp
+			              //mov ebp, esp
+		+	PUSH(-1)      //push -1
+		+	PUSH(POS3WC)  //push <addr>
+		;
+		fnBegin = Exe.FindLastHex(prefix, addr, addr - 0x50);
+	}
 	if (fnBegin < 0)
 		throw Error("ID Checker missing");
 
@@ -153,15 +167,21 @@ CustomSkills.Data = MakeMap(
 	'CustomPlayerSkills',
 	{
 		6:
-			CMP(EAX, 0x27D)  //CMP EAX, 27D
-		+	JG(POS2WC)       //JG skip
-		+	CMP(EAX, 0x27C)  //CMP EAX, 27C
+			CMP(EAX, 0x27D)  //cmp eax, 27Dh
+		+	JG(POS2WC)       //jg _skip
+		+	CMP(EAX, 0x27C)  //cmp eax, 27Ch
 		,
 
 		default:
-			CMP(EAX, 0x106)  //CMP EAX, 106
-		+	JG(WC)           //JG SHORT skip
-		+	JE(POS2WC)       //JE valid
+			CMP(EAX, 0x106)  //cmp eax, 106h
+		+	JG(WC)           //jg short _skip
+		+	JE(POS2WC)       //je _valid
+		,
+
+		extra_2021:
+			CMP(R32, 0x106)  //cmp eax, 106h
+		+	JG(WC)           //jg short _skip
+		+	JE(POS2WC)       //je _valid
 		,
 
 		funcName: "IsPlayerSkill"
@@ -170,19 +190,19 @@ CustomSkills.Data = MakeMap(
 	'CustomHomunSkills',
 	{
 		6:
-			CMP(EAX, 0x1F40)
-		+	JL(WC)
-		+	CMP(EAX, 0x1F51)
+			CMP(EAX, 0x1F40)       //cmp eax, 1F40h
+		+	JL(WC)                 //jl short _skip
+		+	CMP(EAX, 0x1F51)       //cmp eax, 1F51h
 		,
 
 		14:
-			MOV(ECX, 0x2C)
-		+	ADD(EAX, -0x1F40)
+			MOV(ECX, ' [001.1100] 00 00 00')  //mov ecx, 2Ch or 3Ch (for new clients)
+		+	ADD(EAX, -0x1F40)      //add eax, -1F40h
 		,
 
 		default:
-			ADD(EAX, -0x1F40)
-		+	MOV(ECX, 0x2C)
+			ADD(EAX, -0x1F40)      //add eax, -1F40h
+		+	MOV(ECX, 0x2C)         //mov ecx, 2Ch
 		,
 
 		funcName: "IsHomunSkill"
@@ -191,14 +211,14 @@ CustomSkills.Data = MakeMap(
 	'CustomMerceSkills',
 	{
 		6:
-			CMP(EAX, 0x2008)
-		+	JL(WC)
-		+	CMP(EAX, 0x2031)
+			CMP(EAX, 0x2008)       //cmp eax, 2008h
+		+	JL(WC)                 //jl short _skip
+		+	CMP(EAX, 0x2031)       //cmp eax, 2031h
 		,
 
 		default:
-			LEA(R32, [R32, -0x2008])
-		+	CMP(R32, ' [0010100.]') //28 or 29
+			LEA(R32, [R32, -0x2008])  //lea regA, [regB - 2008h]
+		+	CMP(R32, ' [0010100.]')   //cmp regA, 28h or 29h
 		,
 
 		funcName: "IsMercenarySkill"
