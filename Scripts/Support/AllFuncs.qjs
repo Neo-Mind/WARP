@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-10-27                                             *
+*   Last Modified : 2021-11-01                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -603,7 +603,7 @@ AutoHook = (fromAddr, codes, argMap) =>
 	const _ = Log.dive(`AutoHook at [${fromAddr}] :`);
 
 	$$(_ + '1.1 - Retrieve the arguments')
-	const {allocSize, localVals, localTgts, values, targets, postProc, procArgs, isCall, nops, snap, jcOffset} = argMap;
+	const {allocSize, localVals, localTgts, values, targets, postProc, procThis, procArgs, isCall, isPtr, nops, snap, srcOffset, jcOffset} = argMap;
 
 	$$(_ + '1.2 - Allocate space')
 	const allocation = Exe.Allocate(allocSize ?? codes.byteCount(), snap ?? 0x10);
@@ -651,26 +651,73 @@ AutoHook = (fromAddr, codes, argMap) =>
 
 	$$(_ + '2.2 - Call any post processing function defined')
 	if (typeof postProc === 'function')
-		finalCode = postProc(finalCode, freeVir, procArgs, fromAddr);
+	{
+		if (procThis)
+			finalCode = postProc.call(procThis, finalCode, freeVir, procArgs, argMap);
+		else
+			finalCode = postProc(finalCode, freeVir, procArgs, argMap);
+	}
 
 	$$(_ + '2.3 - Put the final code at allocated space')
 	Exe.SetHex(free, finalCode);
 
-	$$(_ + '2.4 - Call/Jump from specified address to the code')
+	$$(_ + '2.4 - Call/Jump from specified address to the code OR update reference for Ptr calls/jmps/moves')
 	if (fromAddr)
 	{
+		const srcOff = srcOffset ?? 0;
 		const tgtOff = jcOffset ?? 0;
 
-		if (Exe.GetUint8(fromAddr) === (0xE8 + (isCall ? 0 : 1)))
-			Exe.SetTgtAddr(fromAddr + 1, freeVir + tgtOff);
-		else if (isCall)
-			Exe.SetCALL(fromAddr, freeVir + tgtOff, nops ?? 0);
-		else
-			Exe.SetJMP(fromAddr, freeVir + tgtOff, nops ?? 0);
+		const _hook_ = (src) =>
+		{
+			if (isPtr)
+			{
+				Exe.SetUint32(Instr.FromAddr(src).NextAddr - 4, freeVir + tgtOff);
+			}
+			else
+			{
+				if (Exe.GetUint8(src) === (0xE8 + (isCall ? 0 : 1)))
+					Exe.SetTgtAddr(src + 1, freeVir + tgtOff);
+				else if (isCall)
+					Exe.SetCALL(src, freeVir + tgtOff, nops ?? 0);
+				else
+					Exe.SetJMP(src, freeVir + tgtOff, nops ?? 0);
+			}
+		};
+
+		if (IsArr(fromAddr))
+		{
+			fromAddr.forEach( (memAddr, idx) =>
+				_hook_(memAddr + (IsArr(srcOff) ? srcOff[idx] : srcOff))
+			);
+		}
+		else if (IsNum(fromAddr))
+		{
+			_hook_(fromAddr + srcOff);
+		}
 	}
 
 	$$(_ + '2.5 - Return the allocated addresses & size')
 	return Log.rise(allocation);
+};
+
+///
+/// \brief Higher level wrapper for allocating contiguous position in DIFF instead of seperate allocations for multiple variables.
+///        It returns the various VIRTUAL address in an array (same order as the size provided)
+///
+MultiAlloc = (...sizes) =>
+{
+	if (sizes.length === 0) //avoid non-empty
+		return [];
+	
+	let total = 0;
+	let addrs = sizes.map(elem => total += elem);
+	
+	const firstVir = Exe.Allocate(total)[1];
+	
+	addrs.forEach( (elem, idx) => addrs[idx] += firstVir);
+	addrs.unshift(firstVir);
+	
+	return addrs;
 };
 
   //===========//
@@ -949,7 +996,7 @@ for (const name of
 	'Wrap', 'BitWidth', 'Distance',
 	'PatchReporter', 'MakeMap', 'ReloadPatch',
 	'CaseAddr', 'ParseData', 'GetImpRefs',
-	'FindInstr', 'GetInstr', 'AutoHook',
+	'FindInstr', 'GetInstr', 'AutoHook', 'MultiAlloc',
 	'Identify', 'IdentifyClass', 'IdentifyObj',
 	'Assign', 'AssignStr',
 
