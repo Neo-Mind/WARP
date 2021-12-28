@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2021-10-26                                             #
+#   Last Modified : 2021-10-29                                             #
 #                                                                          #
 ############################################################################
 
@@ -75,16 +75,16 @@ CustomNW:
             desc : Remove hardcoded connection addresses and ports.
         
         - EnableHttpEmblem:
-            title : Enable HTTP emblem in client
+            title : Fix HTTP emblem in client
             recommend : no
             author : CH.C (jchcc)
-            desc : Enable HTTP Emblem on RO client (HTTP service is required).
+            desc : Fix HTTP Emblem on clients with cheat defender (HTTP service is required).
             
         - NoGNJoyLaunch:
             title : Disable kRO site launch
             recommend : no
             author : mrjnumber1
-            desc : Disable <b>ro.gnjoy.com</b> launching after in-game settings change.
+            desc : Disable <b>ro.gnjoy.com</b> and other similar sites launching after in-game settings change.
         
         - CustomMerchantURL:
             title : Customize Merchant store URLs

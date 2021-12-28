@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2021-10-22                                             *
+*   Last Modified : 2021-11-26                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -265,13 +265,18 @@ CustomShields = function()
 		code =
 			PUSH_EAX      //push eax
 		+	PUSH(5)       //push 5
-		+ 	(Exe.Version > 11 && (!ROC.IsZero || Exe.BuildDate > 20190910)
+		+	(Exe.BuildDate > 20211000
+		?
+			MOV([EBP, WCn], POS4WC)
+		:
+			''
+		)
+		+	(Exe.Version > 11 && (!ROC.IsZero || Exe.BuildDate > 20190910)
 		?
 			CALL(POS3WC)  //call <allocator>
 		:
 			MOV(ECX, R32) //mov ecx, regA
-		)
-		;
+		);
 
 		addr = Exe.FindHex(code, hookReq - 0x30, hookReq);
 		if (addr < 0)

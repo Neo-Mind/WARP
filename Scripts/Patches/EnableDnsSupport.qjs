@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-10-26                                             *
+*   Last Modified : 2021-10-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,57 +35,21 @@ EnableDnsSupport = function()
 {
 	const _ = 'EnableDnsSupport : ';
 
-	$$(_ + '1.1 - Ensure the WINMGR object has been loaded')
-	WINMGR.load();
-
-	$$(_ + '1.2 - Find the common IP address across all clients')
+	$$(_ + '1.1 - Find the common IP address across all clients')
 	let addr = Exe.FindText("211.172.247.115");
 	if (addr < 0)
 		throw Error("Common IP not found");
 
-	$$(_ + '1.3 - Find the g_accountAddr assignment to the IP')
+	$$(_ + '1.2 - Find the g_accountAddr assignment to the IP')
 	addr = Exe.FindHex( MOV([POS3WC], addr) ); //mov dword ptr [g_accountAddr], offset "211.172.247.115"
 	if (addr < 0)
 		throw Error("g_accountAddr assignment not found");
 
-	$$(_ + '1.4 - Extract g_accountAddr')
+	$$(_ + '1.3 - Extract g_accountAddr')
 	const AccountAddr = Exe.GetHex(addr + 2, 4);
 
-	$$(_ + '2.1 - Find the code to hook our function to')
-	let prefix =
-		CALL(NEG3WC)             //call g_resMgr
-	+	MOV(ECX, EAX)            //mov ecx, eax
-	+	CALL(NEG3WC)             //call CResMgr::Get
-	+	PUSH_EAX                 //push eax
-	+	WINMGR.MovECX            //mov ecx, <g_windowMgr>
-	+	CALL(NEG3WC)             //call UIWindowMgr::SetWallpaper
-	;
-
-	let suffix = MOV(
-		Exe.Version === 9 || Exe.Version === 10 ? EAX : R32, //mov eax, dword ptr [g_accountAddr]
-		                                                     //   OR
-		[AccountAddr]                                        //mov regB, dword ptr [g_accountAddr]
-	);
-
-	addr = Exe.FindHex(prefix + suffix);
-
-	if (addr < 0 && Exe.BuildDate > 20180000)
-	{
-		suffix =
-			MOV(ECX, [POS4WC])   //mov ecx, dword ptr [g_CCheatDefenderMgr]
-		+	CALL(ALLWC)          //call CCheatDefenderMgr::init
-		+	suffix               //mov regB, dword ptr [g_accountAddr]
-		;
-		addr = Exe.FindHex(prefix + suffix);
-	}
-	if (addr < 0)
-		throw Error("Function not found");
-
-	$$(_ + '2.2 - Extract g_resMgr')
-	const g_resMgr = Exe.GetTgtAddr(addr + 1);
-
-	$$(_ + '3.1 - Find some essential addresses for our function')
-
+	$$(_ + '2.1 - Find essential improts & strings')
+	
 	// gethostbyname
 	const GetHostByName = Exe.FindFunc("gethostbyname", 52, "ws2_32.dll");//(#52 when imported by ordinal)
 	if (GetHostByName < 0)
@@ -98,18 +62,21 @@ EnableDnsSupport = function()
 	const IPformat = Exe.FindText("%d.%d.%d.%d");
 	if (IPformat < 0)
 		throw Error("IP format not found");
-
-	$$(_ + '3.2 - Setup the ipaddress')
+	
+	$$(_ + '2.2 - Setup the ip address')
 	const [, ipAddr] = Exe.Allocate(15); //3 dots + 4 * 3 digits
 
-	$$(_ + '3.3 - Construct our code')
-	prefix =
-		CALL(Filler(1))                 //call g_resMgr ; call the actual function that was supposed to be run
-	+	PUSHAD                          //pushad
+	$$(_ + '2.3 - Construct the function')
+	let code =
+		PUSHAD                          //pushad
 	+	MOV(ESI, [AccountAddr])         //mov esi, dword ptr [g_accountAddr]
 	+	PUSH(ESI)                       //push esi
 	+	CALL([GetHostByName])           //call dword ptr [<&WS2_32.#52>] ; WS2_32.gethostbyname()
-	+	MOV(ECX, [EAX, 0xC])            //mov ecx, dword ptr [eax+0Ch]
+	+	TEST(EAX, EAX)                  //test eax, eax
+	+	JNZ(2)                          //jnz short _proceed
+	+	POPAD                           //popad
+	+	RETN()                          //retn
+	+	MOV(ECX, [EAX, 0xC])            //mov ecx, dword ptr [eax+0Ch] ; _proceed
 	+	MOV(EDX, [ECX])                 //mov edx, dword ptr [ecx]
 	+	MOV(EAX, EDX)                   //mov eax, edx
 	+	MOVZX(ECX, BYTE_PTR, [EAX, 3])  //movzx ecx, byte ptr [eax+3]
@@ -129,15 +96,83 @@ EnableDnsSupport = function()
 	+	RETN()                          //retn
 	;
 
-	$$(_ + '3.3 - Prepare the arguments for auto-hook')
+	$$(_ + '2.4 - Add the code')
+	const [, assignFunc] = Exe.AddHex(code, 0x10);
+
+	$$(_ + '3.1 - Find \'port\'')
+	addr = Exe.FindText("port");
+	if (addr < 0)
+		throw Error("'port' missing");
+
+	$$(_ + '3.2 - Find it\'s references')
+	code =
+		PUSH(addr)      //push "port"
+	+	MOV(ECX, R32)   //mov ecx, regA
+	+	CALL()          //call XMLElement::FindChild
+	;
+
+	let addrs = Exe.FindHexN(1, 3, code);
+	if (addrs.isEmpty())
+		throw Error("Unexpected no of 'port' references");
+	
+	$$(_ + '3.3 - Extract the FindChild address')
+	const csize = code.byteCount();
+	const FindChild = Exe.GetTgtAddr(addrs[0] + csize);
+
+	$$(_ + '3.4 - Construct the first caller code')
+	code =
+		CALL(Filler(1))  //call <assignFunc>
+	+	JMP(Filler(2))   //jmp XMLElement::FindChild
+	;
+
+	$$(_ + '3.5 - Prepare the arguments for auto-hook')
 	const args =
 	{
-		targets : { 1 : g_resMgr },
-		isCall : true
+		targets : {
+			1 : assignFunc,
+			2 : FindChild
+		},
+		isCall : true,
+		srcOffset : csize - 1
 	};
 
-	$$(_ + '3.4 - Add our code and call it from addr')
-	AutoHook(addr, prefix, args);
+	$$(_ + '3.6 - Add the code & update the CALL targets')
+	AutoHook(addrs, code, args);
+
+	$$(_ + '4.1 - Find \'ws2_32.dll\'')
+	const ws2Str = Exe.FindText("ws2_32.dll");
+	if (ws2Str < 0)
+		throw Error("ws2_32 not found");
+	
+	$$(_ + '4.2 - Find it\'s reference')
+	code =
+		PUSH(ws2Str)        //push "ws2_32.dll"
+	+	CALL(R32)           //call regA
+	;
+	addr = Exe.FindHex(code);
+	if (addr < 0)
+	{
+		code =
+			PUSH(ws2Str)    //push "ws2_32.dll"
+		+	CALL([POS3WC])  //call dword ptr [<&KERNEL32.LoadLibraryA>]
+		;
+		addr = Exe.FindHex(code);
+	}
+	if (addr < 0)
+		throw Error("ws2_32 not PUSHed");
+
+	$$(_ + '4.3 - Get the next address')
+	const retnAddr = Exe.Phy2Vir(addr + 5, CODE);
+
+	$$(_ + '4.4 - Construct the second caller code')
+	code =
+		PUSH(ws2Str)      //push "ws2_32.dll"
+	+	PUSH(retnAddr)    //push <retnAddr>
+	+	JMP(Filler(1))    //jmp <assignFunc>
+	;
+
+	$$(_ + '4.5 - Add the code and jump to it from addr')
+	AutoHook(addr, code, { targets : {1 : assignFunc} });
 
 	return true;
 };
