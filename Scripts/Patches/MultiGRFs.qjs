@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-07                                             *
-*   Last Modified : 2021-10-23                                             *
+*   Last Modified : 2021-10-28                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -306,7 +306,7 @@ MultiGRFs.embedList = (callAddr, AddPak) =>
 	let parts = [];
 	for (const name of grfNames )
 	{
-		parts.push(
+		parts.unshift(
 			CALL(name.length + 1) //push <nextAddr> + jmp
 		+	name.toHex() + ' 00'  //ASCII <name>
 		+	suffix

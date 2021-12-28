@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-02                                             *
-*   Last Modified : 2021-10-23                                             *
+*   Last Modified : 2021-10-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -434,16 +434,10 @@ IncrNewCharHairs.fixSB = function(type, oldLimit, newLimit)
 	+	RETN()              //retn
 	;
 
-	$$(_ + '2.2 - Prepare the arguments for auto-hook')
-	const args = {
-		snap : 1,
-		targets : { 1 : SB_Create }
-	}
+	$$(_ + '2.2 - Add our code')
+	const [, freeVir] = AutoHook(null, code, { targets : { 1 : SB_Create } });
 
-	$$(_ + '2.3 - Add our code')
-	const [, freeVir] = AutoHook(null, code, args);
-
-	$$(_ + '2.4 - Create a NOP sequence & change the CALL target to our code')
+	$$(_ + '2.3 - Create a NOP sequence & change the CALL target to our code')
 	for (const addr of addrs)
 	{
 		Exe.SetNOPs(addr, csize - 1);

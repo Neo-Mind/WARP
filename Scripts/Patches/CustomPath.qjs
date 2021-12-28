@@ -88,6 +88,11 @@ CustomPath.validate = function(patchName)
 			name = pref + suf;
 			addr = Exe.FindText(name, CASE_INSENSITIVE);
 		}
+		if (addr < 0 && Exe.BuildDate > 20211000)
+		{
+			name = pref.replace("/", "\\") + "_" + (ROC.IsRenewal ? sakSuf : truSuf);;
+			addr = Exe.FindText(name, CASE_INSENSITIVE);
+		}
 
 		if (addr > 0)
 		{
@@ -98,10 +103,18 @@ CustomPath.validate = function(patchName)
 	}
 	else //name is provided directly
 	{
-		const addr = Exe.FindText(data.name, CASE_INSENSITIVE);
+		let name = data.knownName;
+		let addr = Exe.FindText(name, CASE_INSENSITIVE);
+
+		if (addr < 0 && Exe.BuildDate > 20211000)
+		{
+			name = name.replace("/", "\\");
+			addr = Exe.FindText(name, CASE_INSENSITIVE);
+		}
 		if (addr > 0)
 		{
 			data.nameAddr = addr;
+			data.name = name;
 			return true;
 		}
 	}
@@ -159,7 +172,7 @@ CustomPath.Data = MakeMap(
 		strType : "Path",
 		varName : '$newBGMPath',
 		prefix : "Default BGM",
-		name : "bgm\\01.mp3"
+		knownName : "bgm\\01.mp3"
 	},
 
 	'CustomItemInfoLub',
@@ -175,7 +188,7 @@ CustomPath.Data = MakeMap(
 		strType : "Path",
 		varName : '$newAchieveList',
 		prefix : "Achievement List Lua",
-		name : "system\\Achievement_list.lub"
+		knownName : "system\\Achievement_list.lub"
 	},
 
 	'CustomMonSizeEffLub',
@@ -190,7 +203,7 @@ CustomPath.Data = MakeMap(
 		strType : "Path",
 		varName : '$newTownInfo',
 		prefix : "Town Info Lua",
-		name : "System/Towninfo.lub"
+		knownName : "System/Towninfo.lub"
 	},
 
 	'CustomPetEvoClnLub',
@@ -206,7 +219,7 @@ CustomPath.Data = MakeMap(
 		strType : "Path",
 		varName : '$newTipBox',
 		prefix : "Tip Box Lua",
-		name : "System/tipbox.lub"
+		knownName : "System/tipbox.lub"
 	},
 
 	'CustomCheckAttLub',
@@ -214,7 +227,7 @@ CustomPath.Data = MakeMap(
 		strType : "Path",
 		varName : '$newCheckAtt',
 		prefix : "Check Attendance Lua",
-		name : "System/CheckAttendance.lub"
+		knownName : "System/CheckAttendance.lub"
 	},
 
 	'CustomPrivAirplaneLub',

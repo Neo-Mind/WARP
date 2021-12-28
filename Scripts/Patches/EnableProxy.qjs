@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-10-23                                             *
+*   Last Modified : 2021-11-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -136,7 +136,7 @@ EnableProxy = function()
 
 	$$(_ + '2.5 - Extract address of ws2_32.connect')
 	const connAddr = indirectCALL
-		? Exe.GetInt32(callAddr + 1)
+		? Exe.GetInt32(callAddr + 2)
 		: Exe.GetTgtAddr(callAddr + 1)
 		;
 
