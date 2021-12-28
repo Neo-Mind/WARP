@@ -1,3 +1,11 @@
+# 2021-10-29 Changes
+
+## Script Updates
+- Updated **`AutoHook`** function to allow for multiple from addresses & source offset(s). Also added 'this' pointer support for post processing function.
+
+- Added **`MultiAlloc`** function to perform contiguous DIFF allocation for storing multiple values. It accepts the sizes needed and returns corresponding **`VIRTUAL`** addresses.
+
+
 # 2021-10-27 Changes
 
 ## Tool Updates (v1.5.2)
