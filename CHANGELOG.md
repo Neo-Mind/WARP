@@ -1,3 +1,13 @@
+# 2021-12-29 Changes
+
+## Tool Updates (v1.5.3)
+- Fixed Bug in `Exe.Allocate` function when no active patch is available.
+
+- Fixed `Exe.FindFunc` function to use look up table instead of thunk table.
+
+- Fixed issue with `Drag & Drop` for Session files & Tester Directory.
+
+
 # 2021-10-29 Changes
 
 ## Script Updates
