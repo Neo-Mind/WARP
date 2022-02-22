@@ -1,10 +1,10 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2021 Neo-Mind                                       *
-*   Copyright (C) 2018-2021 Jian                                           *
+*   Copyright (C) 2013-2022 Neo-Mind                                       *
+*   Copyright (C) 2018-2022 Jian                                           *
 *   Copyright (C) 2017 Secret                                              *
-*   Copyright (C) 2017-2021 Andrei Karas (4144)                            *
-*   Copyright (C) 2020-2021 X-EcutiOnner                                   *
+*   Copyright (C) 2017-2022 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2022 X-EcutiOnner                                   *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -26,7 +26,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Jian, Secret, Andrei (4144), X-EcutiOnner    *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-10-22                                             *
+*   Last Modified : 2022-02-22                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -78,26 +78,28 @@ CustomPath.validate = function(patchName)
 
 	if ('parts' in data) //need to derive the name from parts and then find its address.
 	{
-		const [pref, sakSuf, truSuf, suf] = data.parts;
+		const [pref, sakSufs, mainSufs] = data.parts;
+		const sufs = Wrap(ROC.IsRenewal ? sakSufs : mainSufs);
 
-		let name = pref + "_" + (ROC.IsRenewal ? sakSuf : truSuf);
-		let addr = Exe.FindText(name, CASE_INSENSITIVE);
+		const result = sufs.findAs( suf =>
+		{
+			let name = pref + suf;
+			let addr = Exe.FindText(name, CASE_INSENSITIVE);
 
-		if (addr < 0)
-		{
-			name = pref + suf;
-			addr = Exe.FindText(name, CASE_INSENSITIVE);
-		}
-		if (addr < 0 && Exe.BuildDate > 20211000)
-		{
-			name = pref.replace("/", "\\") + "_" + (ROC.IsRenewal ? sakSuf : truSuf);;
-			addr = Exe.FindText(name, CASE_INSENSITIVE);
-		}
+			if (addr < 0 && Exe.BuildDate > 20211000)
+			{
+				name = pref.replace("/", "\\") + suf;
+				addr = Exe.FindText(name, CASE_INSENSITIVE);
+			}
 
-		if (addr > 0)
+			if (addr > 0)
+				return [name, addr];
+			else
+				return null;
+		});
+		if (result)
 		{
-			data.nameAddr = addr;
-			data.name = name;
+			[data.name, data.nameAddr] = result;
 			return true;
 		}
 	}
@@ -136,8 +138,7 @@ CustomPrivAirplaneLub  = CustomPath;
 CustomMapInfoLub       = CustomPath;
 CustomOngQuestInfoLub  = CustomPath;
 CustomRcmdQuestInfoLub = CustomPath;
-
-CustomMonSizeEffLub = CustomPath;
+CustomMonSizeEffLub    = CustomPath;
 
 ///
 /// \brief Data to be used for the above patches
@@ -156,7 +157,7 @@ CustomPath.Data = MakeMap(
 		strType : "Path",
 		varName : '$newItemInfo',
 		prefix : "ItemInfo Lua",
-		parts : ["System/iteminfo", "Sak.lub", "true.lub", ".lub"]
+		parts : ["System/iteminfo", ["_Sak.lub", ".lub"], ["_true.lub", ".lub"]]
 	},
 
 	'CustomAchieveLub',
@@ -172,7 +173,7 @@ CustomPath.Data = MakeMap(
 		strType : "Path",
 		varName : '$newMonSizeEffect',
 		prefix : "Monster Size Effect Lua",
-		parts : ["System/monster_size_effect", "sak_new.lub", "new.lub", ".lub"]
+		parts : ["System/monster_size_effect", ["_sak_new.lub", "_sak.lub", ".lub"], ["_new.lub", ".lub"]]
 	},
 
 	'CustomTownInfoLub',
@@ -188,7 +189,7 @@ CustomPath.Data = MakeMap(
 		strType : "Path",
 		varName : '$newPetEvoCln',
 		prefix : "Pet Evolution Lua",
-		parts : ["system\\PetEvolutionCln", "sak.lub", "true.lub", ".lub"]
+		parts : ["system\\PetEvolutionCln", ["_sak.lub", ".lub"], ["_true.lub", ".lub"]]
 	},
 
 	'CustomTipboxLub',
@@ -212,7 +213,7 @@ CustomPath.Data = MakeMap(
 		strType : "Path",
 		varName : '$newPrivAirplane',
 		prefix : "Private Airplane Lua",
-		parts : ["System\\PrivateAirplane", "Sakray.lub", "True.lub", ""]
+		parts : ["System\\PrivateAirplane", "_Sakray.lub", "_True.lub"]
 	},
 
 	'CustomMapInfoLub',
@@ -220,7 +221,7 @@ CustomPath.Data = MakeMap(
 		strType : "Path",
 		varName : '$newMapInfo',
 		prefix : "MapInfo Lua",
-		parts : ["system\\mapInfo", "sak.lub", "true.lub", ""]
+		parts : ["system\\mapInfo", "_sak.lub", "_true.lub"]
 	},
 
 	'CustomOngQuestInfoLub',
@@ -228,7 +229,7 @@ CustomPath.Data = MakeMap(
 		strType : "Prefix",
 		varName : '$newOngQInfoList',
 		prefix : "Ongoing QuestInfoList Lua",
-		parts : ["system\\OngoingQuestInfoList", "Sakray", "True", ""]
+		parts : ["system\\OngoingQuestInfoList", "_Sakray", "_True"]
 	},
 
 	'CustomRcmdQuestInfoLub',
@@ -236,7 +237,7 @@ CustomPath.Data = MakeMap(
 		strType : "Prefix",
 		varName : '$newRcmdQInfoList',
 		prefix : "Recommended QuestInfoList Lua",
-		parts : ["system\\RecommendedQuestInfoList", "Sakray", "True", ""]
+		parts : ["system\\RecommendedQuestInfoList", "_Sakray", "_True"]
 	},
 );
 

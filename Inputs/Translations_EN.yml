@@ -1,6 +1,6 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) 2020-2021 Neo-Mind                                       #
+#   Copyright (C) 2020-2022 Neo-Mind                                       #
 #   Copyright (C) 2021 Everade                                             #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
@@ -23,7 +23,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind, Everade                                      #
 #   Created Date  : 2020-11-10                                             #
-#   Last Modified : 2021-06-03                                             #
+#   Last Modified : 2022-02-22                                             #
 #                                                                          #
 ############################################################################
 -
@@ -1730,3 +1730,10 @@
   find : <C4 AB C6 AE 20 C7 D8 C1 A6>
   replace : "Cart Off"
   startDate : 20190904
+
+-
+  #################################
+  desc : No Color
+  #################################
+  find : <BF B0 BB F6 C1 A6 B0 C5>
+  replace : "No Color"

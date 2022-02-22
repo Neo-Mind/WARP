@@ -1,7 +1,7 @@
 --[[
 ****************************************************************************
 *                                                                          *
-*   Copyright (C) 2021 Neo-Mind                                            *
+*   Copyright (C) 2021-2022 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-21                                             *
-*   Last Modified : 2021-10-03                                             *
+*   Last Modified : 2022-02-22                                             *
 *                                                                          *
 ****************************************************************************
 ]]--
@@ -95,6 +95,7 @@ PCImfs =
 	--------------------------
 	-- Extended 2nd Classes --
 	--------------------------
+	[PCIds.HYPER_NOVICE] = "HYPER_NOVICE",
 	[PCIds.REBELLION]    = "rebellion",
 
 	-----------------
@@ -107,6 +108,13 @@ PCImfs =
 
 	[PCIds.SORCERER]      = "ÇÁ·ÎÆä¼­",
 
+	--------------------------
+	-- Extended 3rd Classes --
+	--------------------------
+	[PCIds.NIGHT_WATCH]    = "NIGHT_WATCH",
+	[PCIds.SHINKIRO]       = "SHINKIRO",
+	[PCIds.SHIRANUI]       = "SHIRANUI",
+	
 	-----------------
 	-- 4th Classes --
 	-----------------
@@ -132,12 +140,18 @@ PCImfs =
 	--------------
 	[PCIds.MARRIED]      = "°áÈ¥",
 
-	-------------------
-	-- Doram Classes --
-	-------------------
+	-----------------------
+	-- Doram 1st Classes --
+	-----------------------
 	[PCIds.SUMMONER]   = "summoner",
 	[PCIds.SUMM_MOUNT] = "cart_summoner",
 
+	-----------------------
+	-- Doram 2nd Classes --
+	-----------------------
+	[PCIds.SPIRIT_HANDLER]   = "SPIRIT_HANDLER",
+	[PCIds.SP_HANDLER_MOUNT] = "SPIRIT_HANDLER_RIDING",
+	
 	--[[
 	 __  __   ___   _   _  _  _  _____     ___  ___   ___
 	|  \/  | / _ \ | | | || \| ||_   _|   |_ _||   \ / __|
@@ -203,6 +217,7 @@ PCImfs =
 	--------------------------
 	-- Extended 2nd Classes --
 	--------------------------
+	[PCMounts.PORING_H_NOVICE]  = "HYPER_NOVICE_RIDING",
 	[PCMounts.BIKE_REBELLION]   = "peco_rebellion",
 	[PCMounts.FROG_KAGEROU]     = "frog_kagerou",
 	[PCMounts.FROG_OBORO]       = "frog_oboro",
@@ -226,6 +241,13 @@ PCImfs =
 	[PCMounts.PIG_GENETIC]       = "Á¦³×¸¯¸äµÅÁö",
 	[PCMounts.HYENA_S_CHASER]    = "ÄÌº£·Î½º½¦µµ¿ìÃ¼ÀÌ¼­",
 
+	--------------------------
+	-- Extended 3rd Classes --
+	--------------------------
+	[PCMounts.BIKE_NIGHT_WATCH]      = "NIGHT_WATCH_RIDING",
+	[PCMounts.FROG_SHINKIRO]         = "SHINKIRO_RIDING",
+	[PCMounts.FROG_SHIRANUI]         = "SHIRANUI_RIDING",
+	
 	-----------------
 	-- 4th Classes --
 	-----------------

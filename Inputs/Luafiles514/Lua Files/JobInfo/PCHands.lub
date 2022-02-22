@@ -1,7 +1,7 @@
 --[[
 ****************************************************************************
 *                                                                          *
-*   Copyright (C) 2021 Neo-Mind                                            *
+*   Copyright (C) 2021-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-21                                             *
-*   Last Modified : 2021-04-05                                             *
+*   Last Modified : 2022-02-22                                             *
 *                                                                          *
 ****************************************************************************
 ]]--
@@ -89,6 +89,7 @@ PCHands =
 	--------------------------
 	-- Extended 2nd Classes --
 	--------------------------
+	[PCIds.HYPER_NOVICE] = "HYPER_NOVICE\\HYPER_NOVICE",
 	[PCIds.REBELLION]    = "rebellion\\rebellion",
 	[PCIds.KAGEROU]      = "kagerou\\kagerou",
 	[PCIds.OBORO]        = "oboro\\oboro",
@@ -98,7 +99,14 @@ PCHands =
 	-----------------
 	[PCIds.RANGER_MOUNT]   = "레인져늑대\\레인져늑대",
 	[PCIds.MADOGEAR]       = "마도기어\\마도기어",
-
+	
+	--------------------------
+	-- Extended 3rd Classes --
+	--------------------------
+	[PCIds.NIGHT_WATCH]    = "NIGHT_WATCH\\NIGHT_WATCH",
+	[PCIds.SHINKIRO]       = "SHINKIRO\\SHINKIRO",
+	[PCIds.SHIRANUI]       = "SHIRANUI\\SHIRANUI",
+	
 	-----------------
 	-- 4th Classes --
 	-----------------
@@ -124,12 +132,18 @@ PCHands =
 	--------------
 	[PCIds.MARRIED]    = "결혼\\결혼",
 
-	-------------------
-	-- Doram Classes --
-	-------------------
+	-----------------------
+	-- Doram 1st Classes --
+	-----------------------
 	[PCIds.SUMMONER]   = "summoner\\summoner",
 	[PCIds.SUMM_MOUNT] = "summoner\\cart_summoner",
 
+	-----------------------
+	-- Doram 2nd Classes --
+	-----------------------
+	[PCIds.SPIRIT_HANDLER]   = "SPIRIT_HANDLER\\SPIRIT_HANDLER",
+	[PCIds.SP_HANDLER_MOUNT] = "SPIRIT_HANDLER\\SPIRIT_HANDLER_RIDING",
+	
 	--[[
 	 __  __   ___   _   _  _  _  _____     ___  ___   ___
 	|  \/  | / _ \ | | | || \| ||_   _|   |_ _||   \ / __|
