@@ -1,3 +1,13 @@
+# 2022-02-22 Changes
+
+## Patch Updates
+- Updated LUA files for **`Custom Job`** patch
+
+- Added new translation [as requested](https://github.com/Neo-Mind/WARP/issues/89)
+
+- Updated Custom Path patches to handle the various suffixes with a slightly better approach.
+
+
 # 2021-12-29 Changes
 
 ## Tool Updates (v1.5.3)

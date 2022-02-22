@@ -126,7 +126,13 @@ PCHands =
 	[PCIds.INQUISITOR]      = "INQUISITOR\\INQUISITOR",
 	[PCIds.TROUBADOUR]      = "TROUBADOUR\\TROUBADOUR",
 	[PCIds.TROUVERE]        = "TROUVERE\\TROUVERE",
-
+	
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	[PCIds.SKY_EMPEROR]   = "SKY_EMPEROR\\SKY_EMPEROR",
+	[PCIds.SOUL_ASCETIC]  = "SOUL_ASCETIC\\SOUL_ASCETIC",
+	
 	--------------
 	-- Costumes --
 	--------------
@@ -375,6 +381,11 @@ PCHandInheritTbl =
 	[PCIds.ARCH_MAGE]       = PCIds.WIZARD,
 	[PCIds.ELEMENT_MASTER]  = PCIds.SAGE,
 
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	[PCIds.SKY_EMPEROR2]   = PCIds.SKY_EMPEROR,
+	
 	--------------
 	-- Costumes --
 	--------------
@@ -581,4 +592,10 @@ PCHandInheritTbl =
 	-----------------
 	[PCMounts.FOX_ARCH_MAGE]        = PCIds.WIZARD,
 	[PCMounts.FOX_ELEMENT_MASTER]   = PCIds.SAGE,
+	
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	[PCIds.HAETAE_SKY_EMPEROR]   = PCIds.SKY_EMPEROR,
+	[PCIds.HAETAE_SOUL_ASCETIC]  = PCIds.SOUL_ASCETIC,
 }

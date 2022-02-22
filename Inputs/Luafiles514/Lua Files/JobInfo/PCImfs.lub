@@ -135,6 +135,13 @@ PCImfs =
 	[PCIds.TROUBADOUR]      = "TROUBADOUR",
 	[PCIds.TROUVERE]        = "TROUVERE",
 
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	[PCIds.SKY_EMPEROR]   = "SKY_EMPEROR",
+	[PCIds.SKY_EMPEROR_F] = "SKY_EMPEROR2",
+	[PCIds.SOUL_ASCETIC]  = "SOUL_ASCETIC",
+	
 	--------------
 	-- Costumes --
 	--------------
@@ -265,6 +272,12 @@ PCImfs =
 	[PCMounts.SHEEP_INQUISITOR]     = "INQUISITOR_RIDING",
 	[PCMounts.OSTRICH_TROUBADOUR]   = "TROUBADOUR_RIDING",
 	[PCMounts.OSTRICH_TROUVERE]     = "TROUVERE_RIDING",
+	
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	[PCIds.HAETAE_SKY_EMPEROR]   = "SKY_EMPEROR_RIDING",
+	[PCIds.HAETAE_SOUL_ASCETIC]  = "SOUL_ASCETIC_RIDING",
 }
 
 --[[
