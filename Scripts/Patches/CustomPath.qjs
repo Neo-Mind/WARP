@@ -137,31 +137,7 @@ CustomMapInfoLub       = CustomPath;
 CustomOngQuestInfoLub  = CustomPath;
 CustomRcmdQuestInfoLub = CustomPath;
 
-CustomMonSizeEffLub = patchName => CustomPath.self(patchName);
-
-CustomMonSizeEffLub.validate = function(patchName)
-{
-	const suf = (ROC.IsRenewal ? "_sak" : "");
-
-	let name = "System/monster_size_effect" + suf + "_new.lub";
-	let addr = Exe.FindText(name, CASE_INSENSITIVE);
-	if (addr < 0)
-	{
-		name = "System/monster_size_effect" + suf + ".lub";
-		addr = Exe.FindText(name, CASE_INSENSITIVE);
-	}
-
-	if (addr > 0)
-	{
-		let data = CustomPath.Data.get(patchName);
-		data.nameAddr = addr;
-		data.name = name;
-
-		return true;
-	}
-
-	return false;
-};
+CustomMonSizeEffLub = CustomPath;
 
 ///
 /// \brief Data to be used for the above patches
@@ -195,7 +171,8 @@ CustomPath.Data = MakeMap(
 	{
 		strType : "Path",
 		varName : '$newMonSizeEffect',
-		prefix : "Monster Size Effect Lua"
+		prefix : "Monster Size Effect Lua",
+		parts : ["System/monster_size_effect", "sak_new.lub", "new.lub", ".lub"]
 	},
 
 	'CustomTownInfoLub',
