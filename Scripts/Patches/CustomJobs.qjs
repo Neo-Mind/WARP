@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*   Copyright (C) 2013-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-19                                             *
-*   Last Modified : 2021-11-26                                             *
+*   Last Modified : 2022-02-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -689,36 +689,42 @@ CustomJobs = function()
 		const hookAddr = endIns.NextAddr;
 
 		$$(_ + '6.2 - Find the ECX assignment after it')
-		let tblReg = EDI;
 		let addr = Exe.FindHex(LEA(ECX, [EBX, POS2WC]), hookAddr, hookAddr + 0x30); //lea ecx, [ebx + dispA]
+
 		if (addr < 0 && Exe.BuildDate > 20210000)
-		{
-			tblReg = ESI;
 			addr = Exe.FindHex(MOV(ECX, EDI), hookAddr, hookAddr + 0x30);
-		}
+
 		if (addr < 0)
 			throw Error("Object assignment missing");
-
+		
 		$$(_ + '6.3 - Save the instruction')
 		const ecxAssign = Instr.FromAddr(addr);
 
-		$$(_ + '6.4 - Find the string assignment to stack location')
+		$$(_ + '6.4 - Find the table assignment before hookAddr')
+		addr = Exe.FindLastHex( MOV(R32, [R32]) + MOV([R32, POS2WC], POS4WC), hookAddr, hookAddr - 0x100);
+		if (addr < 0)
+			throw Error("Table assignment missing");
+
+		$$(_ + '6.5 - Extract the memory register used')
+		const tblReg = Instr.FromAddr(addr).MRM.getReg('M');
+
+		$$(_ + '6.6 - Find the string assignment to stack location')
 		addr = Exe.FindHex(MOV([EBP, WCn], tgAddr), hookAddr, hookAddr + 0x90);  //mov dword ptr [LOCAL.x], offset "TaeKwon Girl"
 		if (addr < 0)
 			throw Error("Taekwon girl not referenced");
 
-		$$(_ + '6.5 - Save the stack location used')
+		$$(_ + '6.7 - Save the stack location used')
 		const strLoc = [EBP, Instr.FromAddr(addr).Disp];
 
-		$$(_ + '6.6 - Find the index assignment to stack location')
+		$$(_ + '6.8 - Find the index assignment to stack location')
 		addr = Exe.FindHex(MOV([EBP, WCn], 0xFD2), hookAddr, hookAddr + 0x90); //mov dword ptr [LOCAL.x], 0FD2h
 		if (addr < 0)
 			throw Error("Index PUSH missing");
 
-		$$(_ + '6.7 - Save the stack location used')
+		$$(_ + '6.9 - Save the stack location used')
 		const idxLoc = [EBP, Instr.FromAddr(addr).Disp];
 
-		$$(_ + '6.8 - Find the additional stack location PUSH after it (not sure why it is needed)')
+		$$(_ + '6.10 - Find the additional stack location PUSH after it (not sure why it is needed)')
 		let parts =
 		[
 			LEA(EAX, [EBP, WCn]) //lea eax, [LOCAL.y]
@@ -745,10 +751,10 @@ CustomJobs = function()
 		if (addr2 < 0)
 			throw Error("Mem PUSH missing");
 
-		$$(_ + '6.9 - Save the instructions')
+		$$(_ + '6.11 - Save the instructions')
 		const pushMEM = Exe.GetHex(addr2, parts.byteCount(0)) + PUSH_EAX;
 
-		$$(_ + '6.10 - Look for the function CALL after the PUSH (either its directly after or the LEA is in between)')
+		$$(_ + '6.12 - Look for the function CALL after the PUSH (either its directly after or the LEA is in between)')
 		addr = addr2 + csize;
 		if (addr === ecxAssign.Addr)
 			addr = ecxAssign.NextAddr;
@@ -760,17 +766,17 @@ CustomJobs = function()
 		if (ins.Codes[0] !== 0xE8)
 			throw Error("Function CALL missing");
 
-		$$(_ + '6.11 - Retrieve the target VIRTUAL address')
+		$$(_ + '6.14 - Retrieve the target VIRTUAL address')
 		const Overrider = Exe.Phy2Vir(ins.NextAddr + ins.Immd, CODE);
 
-		$$(_ + '6.12 - Find the ending address of the table')
+		$$(_ + '6.15 - Find the ending address of the table')
 		addr = Exe.FindHex(MOV(R32, 0x2D) + NOP2, addr + 0x200, addr + (Exe.BuildDate > 20211000 ? 0x1000 : 0x400));
 		if (addr < 0)
 			throw Error("Ending address missing for new overrides");
 
 		const endVir = Exe.Phy2Vir(addr, CODE);
 
-		$$(_ + '6.14 - Construct the template (the first one need to be done manually since the way we code is different)')
+		$$(_ + '6.16 - Construct the template (the first one need to be done manually since the way we code is different)')
 		const templates = this.generate(
 			null,
 			[["MapPCJobName", MapFuncs[4]], "dd>d", EDI, [LANGTYPE], EAX],
@@ -825,7 +831,7 @@ CustomJobs = function()
 			'6,1' : _idxInc
 		});
 
-		$$(_ + '6.15 - Construct the code in parts')
+		$$(_ + '6.17 - Construct the code in parts')
 		parts =
 		[
 			ecxAssign      //either lea OR mov to ecx
@@ -852,7 +858,7 @@ CustomJobs = function()
 		+	JMP(Filler(3))   //jmp <endVir>
 		);
 
-		$$(_ + '6.16 - Fill in the blanks')
+		$$(_ + '6.18 - Fill in the blanks')
 		const hookVir = Exe.Phy2Vir(hookAddr, CODE);
 
 		const code = LUA.finalize(parts, hookVir,
@@ -861,7 +867,7 @@ CustomJobs = function()
 			4 : Overrider
 		});
 
-		$$(_ + '6.17 - Replace at hook address')
+		$$(_ + '6.19 - Replace at hook address')
 		Exe.SetHex(hookAddr, code);
 	}
 

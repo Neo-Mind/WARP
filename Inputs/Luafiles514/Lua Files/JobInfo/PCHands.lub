@@ -384,7 +384,7 @@ PCHandInheritTbl =
 	--------------------------
 	-- Extended 4th Classes --
 	--------------------------
-	[PCIds.SKY_EMPEROR2]   = PCIds.SKY_EMPEROR,
+	[PCIds.SKY_EMPEROR_F]   = PCIds.SKY_EMPEROR,
 	
 	--------------
 	-- Costumes --
@@ -596,6 +596,6 @@ PCHandInheritTbl =
 	--------------------------
 	-- Extended 4th Classes --
 	--------------------------
-	[PCIds.HAETAE_SKY_EMPEROR]   = PCIds.SKY_EMPEROR,
-	[PCIds.HAETAE_SOUL_ASCETIC]  = PCIds.SOUL_ASCETIC,
+	[PCMounts.HAETAE_SKY_EMPEROR]   = PCIds.SKY_EMPEROR,
+	[PCMounts.HAETAE_SOUL_ASCETIC]  = PCIds.SOUL_ASCETIC,
 }

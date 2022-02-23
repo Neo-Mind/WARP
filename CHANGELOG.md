@@ -1,7 +1,13 @@
+# 2022-02-23 Changes
+
+## Patch Updates
+- Fixed crash in **`Custom Job`** patch.
+
+
 # 2022-02-22 Changes
 
 ## Patch Updates
-- Updated LUA files for **`Custom Job`** patch
+- Updated LUA files for **`Custom Job`** patch.
 
 - Added new translation [as requested](https://github.com/Neo-Mind/WARP/issues/89)
 

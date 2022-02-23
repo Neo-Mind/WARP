@@ -257,8 +257,8 @@ PCPals =
 	--------------------------
 	-- Extended 4th Classes --
 	--------------------------
-	[PCIds.HAETAE_SKY_EMPEROR]   = "SKY_EMPEROR_RIDING",
-	[PCIds.HAETAE_SOUL_ASCETIC]  = "SOUL_ASCETIC_RIDING",
+	[PCMounts.HAETAE_SKY_EMPEROR]   = "SKY_EMPEROR_RIDING",
+	[PCMounts.HAETAE_SOUL_ASCETIC]  = "SOUL_ASCETIC_RIDING",
 }
 
 --[[
