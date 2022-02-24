@@ -5,6 +5,8 @@
 
 - Fixed [issue in Draw Shield on Top patch](https://github.com/Neo-Mind/WARP/issues/83)
 
+- Updated **`Disconnect to Login Window`** patch [for newer clients](https://github.com/Neo-Mind/WARP/issues/81)
+
 
 # 2022-02-22 Changes
 

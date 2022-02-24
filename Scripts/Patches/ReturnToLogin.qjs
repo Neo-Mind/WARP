@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2021 Neo-Mind                                       *
-*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2013-2022 Neo-Mind                                       *
+*   Copyright (C) 2018-2022 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,11 +23,9 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144)                                *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-10-26                                             *
+*   Last Modified : 2022-02-24                                             *
 *                                                                          *
 \**************************************************************************/
-
-//TODO - Need to fix for the new login window
 
 ///
 /// \brief Change the PUSHed argument & mode value to Mode Setting calls after disconnection
@@ -37,209 +35,241 @@ DisConnToLogin = function()
 {
 	const _ = 'DisConnToLogin : ';
 
-	$$(_ + '1.1 - Find all locations where the MsgString ID (635) is PUSHed for the specific error message')
-	///       "Sorry the character you are trying to use is banned for testing connection."
-	///       We expect 2 matches 1 for Login/Char & 1 for Map server disconnection
-
-	let addrs = Exe.FindHexN(2, 2, PUSH(0x635) );
-	if (addrs.isEmpty())
-		addrs = Exe.FindHexN(2, 2, PUSH(0x7E5) + CALL()); //new clients have different ID
-
-	if (addrs.isEmpty())
-		throw Error("Expected 2 MsgString ID PUSHes");
-
-	$$(_ + '1.2 - Save location after the PUSH for both addrs')
-	const mapAddr = addrs[0] + 5; //for Map
-	const lcAddr  = addrs[1] + 5; //for Login/Char
-
-	/******* First we will work on Disconnection from Login/Char Server ********/
-
-	$$(_ + '2.1 - Find the format string used for error message')
-	let addr = Exe.FindText("%s(%d)");
-	if (addr < 0)
-		throw Error("Format string not found");
-
-	$$(_ + '2.2 - Find where its used in a PUSH after the MsgString ID PUSH (within 0x120 bytes)')
-	addr = Exe.FindHex( PUSH(addr), lcAddr, lcAddr + 0x120);
-	if (addr < 0)
-		throw Error("Format string not used");
-
-	$$(_ + '2.3 - Find the refAddr movement after it (We will inject a Jump to our code here)')
-	code =
-		CALL(NEG3WC)             //CALL func#1
-	+	MOV(ECX, [POS3WC])       //mov ecx, dword ptr [refAddr]
-	;
-	let addr2 = Exe.FindHex(code, addr + 0x5, addr + 0x80);
-
-	if (addr2 < 0)
+	if (Exe.Version < 11)
 	{
+		$$(_ + '1.1 - Find all locations where the MsgString ID (635) is PUSHed for the specific error message')
+		///   "Sorry the character you are trying to use is banned for testing connection."
+		///   We expect 2 matches 1 for Login/Char & 1 for Map server disconnection
+
+		let addrs = Exe.FindHexN(2, 2, PUSH(0x635) );
+		if (addrs.isEmpty())
+			addrs = Exe.FindHexN(2, 2, PUSH(0x7E5) + CALL()); //new clients have different ID
+	
+		if (addrs.isEmpty())
+			throw Error("Expected 2 MsgString ID PUSHes");
+	
+		$$(_ + '1.2 - Save location after the PUSH for both addrs')
+		const mapAddr = addrs[0] + 5; //for Map
+		const lcAddr  = addrs[1] + 5; //for Login/Char
+	
+		/******* First we will work on Disconnection from Login/Char Server ********/
+	
+		$$(_ + '2.1 - Find the format string used for error message')
+		let addr = Exe.FindText("%s(%d)");
+		if (addr < 0)
+			throw Error("Format string not found");
+	
+		$$(_ + '2.2 - Find where its used in a PUSH after the MsgString ID PUSH (within 0x120 bytes)')
+		addr = Exe.FindHex( PUSH(addr), lcAddr, lcAddr + 0x120);
+		if (addr < 0)
+			throw Error("Format string not used");
+	
+		$$(_ + '2.3 - Find the refAddr movement after it (We will inject a Jump to our code here)')
 		code =
-			RETN(4)              //retn 4
-		+	MOV(ECX, [POS3WC])   //mov ecx, dword ptr [refAddr]
-		+	PUSH_0               //push 0
+			CALL(NEG3WC)             //CALL func#1
+		+	MOV(ECX, [POS3WC])       //mov ecx, dword ptr [refAddr]
 		;
-		addr2 = Exe.FindHex(code, addr + 0x5, addr + 0xB0);
-	}
-	if (addr2 < 0)
-		throw Error("Reference Address assignment missing");
-
-	$$(_ + '2.4 - Save location of the MOV ECX instruction')
-	let jmpAddr = Instr.FromAddr(addr2).NextAddr;
-
-	$$(_ + '2.5 - Extract the MOV instruction')
-	const MovECX = Exe.GetHex(jmpAddr, 6);
-
-	$$(_ + '3.1 - Find the Mode changer CALL after jmpAddr')
-	code =
-		PUSH_2     //push 2
-	+	CALL(EAX)  //call eax
-	;
-	addr = Exe.FindHex(code, jmpAddr + 0x6, jmpAddr + 0x20);
-	if (addr < 0)
-	{
-		code = code.replace( CALL(EAX), CALL([EAX, 0x18]) ); //Change CALL EAX to CALL dword ptr [EAX+18]
+		let addr2 = Exe.FindHex(code, addr + 0x5, addr + 0x80);
+	
+		if (addr2 < 0)
+		{
+			code =
+				RETN(4)              //retn 4
+			+	MOV(ECX, [POS3WC])   //mov ecx, dword ptr [refAddr]
+			+	PUSH_0               //push 0
+			;
+			addr2 = Exe.FindHex(code, addr + 0x5, addr + 0xB0);
+		}
+		if (addr2 < 0)
+			throw Error("Reference Address assignment missing");
+	
+		$$(_ + '2.4 - Save location of the MOV ECX instruction')
+		let jmpAddr = Instr.FromAddr(addr2).NextAddr;
+	
+		$$(_ + '2.5 - Extract the MOV instruction')
+		const MovECX = Exe.GetHex(jmpAddr, 6);
+	
+		$$(_ + '3.1 - Find the Mode changer CALL after jmpAddr')
+		code =
+			PUSH_2     //push 2
+		+	CALL(EAX)  //call eax
+		;
 		addr = Exe.FindHex(code, jmpAddr + 0x6, jmpAddr + 0x20);
-	}
-	if (addr < 0)
-		throw Error("Mode changer CALL missing");
-
-	$$(_ + '3.2 - Get the number of PUSH 0 instructions between the Mode Change and refAddr assignment before')
-	///       We need to push the same number in our code
-	const zeros = Exe.FindHexN( PUSH_0, jmpAddr + 6, addr );
-	if (zeros.isEmpty())
-		throw Error("PUSH 0s not found");
-
-	const PUSH0s = PUSH_0.repeat(zeros.length);
-
-	$$(_ + '3.3 - Save location after the CALL (the address we need to return to after Mode Changer call)')
-	let retnAddr = addr + code.byteCount();
-
-	$$(_ + '4.1 - Prepare our code (same as what was there but arg1 will be 271D and [this + 3] is assigned 3 before the call)')
-	code =
-		MovECX                             //mov ecx, dword ptr [refAddr]
-	+	MOV(EAX, [ECX])                    //mov eax, dword ptr [ecx]
-	+	PUSH0s                             //push 0 - n times
-	+	PUSH(0x271D)                       //push 271Dh
-	+	MOV([ECX, 0xC], 3)                 //mov dword ptr [ecx+0Ch], 3
-	+	PUSH(Exe.Phy2Vir(retnAddr, CODE))  //push <retnAddr>
-	+	JMP([EAX, 0x18])                   //jmp dword ptr [eax+18h]
-	;
-
-	$$(_ + '4.2 - Add the code')
-	let [, freeVir] = Exe.AddHex(code, 0x10);
-
-	$$(_ + '4.3 - Change the MOV instruction to a JMP to our code and NOP out rest of the stuff between jmpAddr & retnAddr')
-	Exe.SetJMP(jmpAddr, freeVir, retnAddr - (jmpAddr + 5));
-
-	/******* Next we will work on Disconnection from Map server during Gameplay *******/
-
-	$$(_ + '5.1 - Check if there is a short Jump right after the MsgString ID PUSH. If its there go to the address')
-	if (Exe.GetUint8(mapAddr) === 0xEB)
-	{
-		addr2 = Exe.GetTgtAddr(mapAddr + 1, PHYSICAL, 1);
+		if (addr < 0)
+		{
+			code = code.replace( CALL(EAX), CALL([EAX, 0x18]) ); //Change CALL EAX to CALL dword ptr [EAX+18]
+			addr = Exe.FindHex(code, jmpAddr + 0x6, jmpAddr + 0x20);
+		}
+		if (addr < 0)
+			throw Error("Mode changer CALL missing");
+	
+		$$(_ + '3.2 - Get the number of PUSH 0 instructions between the Mode Change and refAddr assignment before')
+		///       We need to push the same number in our code
+		const zeros = Exe.FindHexN( PUSH_0, jmpAddr + 6, addr );
+		if (zeros.isEmpty())
+			throw Error("PUSH 0s not found");
+	
+		const PUSH0s = PUSH_0.repeat(zeros.length);
+	
+		$$(_ + '3.3 - Save location after the CALL (the address we need to return to after Mode Changer call)')
+		let retnAddr = addr + code.byteCount();
+	
+		$$(_ + '4.1 - Prepare our code (same as what was there but arg1 will be 271D and [this + 3] is assigned 3 before the call)')
+		code =
+			MovECX                             //mov ecx, dword ptr [refAddr]
+		+	MOV(EAX, [ECX])                    //mov eax, dword ptr [ecx]
+		+	PUSH0s                             //push 0 - n times
+		+	PUSH(0x271D)                       //push 271Dh
+		+	MOV([ECX, 0xC], 3)                 //mov dword ptr [ecx+0Ch], 3
+		+	PUSH(Exe.Phy2Vir(retnAddr, CODE))  //push <retnAddr>
+		+	JMP([EAX, 0x18])                   //jmp dword ptr [eax+18h]
+		;
+	
+		$$(_ + '4.2 - Add the code')
+		let [, freeVir] = Exe.AddHex(code, 0x10);
+	
+		$$(_ + '4.3 - Change the MOV instruction to a JMP to our code and NOP out rest of the stuff between jmpAddr & retnAddr')
+		Exe.SetJMP(jmpAddr, freeVir, retnAddr - (jmpAddr + 5));
+	
+		/******* Next we will work on Disconnection from Map server during Gameplay *******/
+	
+		$$(_ + '5.1 - Check if there is a short Jump right after the MsgString ID PUSH. If its there go to the address')
+		if (Exe.GetUint8(mapAddr) === 0xEB)
+		{
+			addr2 = Exe.GetTgtAddr(mapAddr + 1, PHYSICAL, 1);
+		}
+		else
+		{
+			$$(_ + '5.2 - If not look for a Long Jump after the PUSH')
+			addr = Exe.FindHex( JMP(POS2WC), mapAddr, mapAddr + 0x100);
+			if (addr < 0)
+				throw Error("JMP to Mode changer CALL location not found");
+	
+			$$(_ + '5.3 - Goto the JMP address')
+			addr2 = Exe.GetTgtAddr(addr + 1, PHYSICAL);
+		}
+	
+		$$(_ + '5.4 - Find the CALL to ErrorMsg function (i.e. Error Message Window displayer function) after the addr')
+		code =
+			MOV(ECX, POS3WC)    //mov ecx, <g_windowMgr>
+		+	CALL(NEG3WC)        //call UIWindowMgr::ErrorMsg
+		;
+		let offset = 10;
+	
+		addr = Exe.FindHex(code, addr2, addr2 + 0x100);
+		if (addr < 0)
+		{
+			code =
+				CALL(NEG3WC)    //call UIWindowMgr::ErrorMsg
+			+	MOV(EAX, [EDI]) //mov eax, dword ptr [edi]
+			;
+			offset = 5;
+	
+			addr = Exe.FindHex(code, addr2, addr2 + 0x100);
+		}
+		if (addr < 0)
+			throw Error("ErrorMsg CALL not found");
+	
+		$$(_ + '5.5 - Save location after the CALL')
+		jmpAddr = addr + offset;
+	
+		$$(_ + '6.1 - Find the Mode changer CALL after <addr>')
+		switch (Exe.Version)
+		{
+			case 9: //VC9
+			{
+				code =
+					PUSH_2               //push 2
+				+	MOV(ECX, EDI)        //mov ecx, edi
+				+	CALL(EAX)            //call eax
+				;
+				break;
+			}
+	
+			case 10: //VC10
+			{
+				code =
+					PUSH_2               //push 2
+				+	CALL(EDX)            //call edx
+				;
+				break;
+			}
+	
+			default: //VC6 & VC11+
+			{
+				code =
+					PUSH_2               //push 2
+				+	(Exe.Version === 11
+				?
+					MOV(ECX, EDI)        //mov ecx, edi
+				:
+					''
+				)
+				+	CALL([EAX, 0x18])    //call dword ptr [eax+18h]
+				;
+				break;
+			}
+		}
+	
+		retnAddr = Exe.FindHex(code, addr, addr + 0x20);
+		if (retnAddr < 0 && Exe.Version === 9) //VC9 2nd format
+		{
+			code = code.replace( MOV(ECX, EDI), MOV(ECX, EBP) ); //Change EDI to EBP in ECX assignment
+			retnAddr = Exe.FindHex(code, addr, addr + 0x20);
+		}
+		if (retnAddr < 0)
+			throw Error("Mode changer CALL not found");
+	
+		$$(_ + '6.2 - Set retnAddr to location after the CALL. This is the Return address')
+		retnAddr += code.byteCount();
+	
+		$$(_ + '7.1 - Prepare our 2nd code. Similar to 1st one we have done few changes')
+		///           (arg1 is 8D and ECX is loaded from refAddr instead of depending on some local - value will be same either way)
+		code =
+			MovECX                               //mov ecx, dword ptr [refAddr]
+		+	MOV(EAX, [ECX])                      //mov eax, dword ptr [ecx]
+		+	PUSH0s                               //push 0 - n times
+		+	PUSH(0x8D)                           //push 8Dh
+		+	PUSH(Exe.Phy2Vir(retnAddr, CODE))    //push retnAddr
+		+	JMP([EAX, 0x18])                     //jmp dword ptr [eax+18h]
+		;
+	
+		$$(_ + '7.2 - Add the code');
+		[, freeVir] = Exe.AddHex(code, 0x10);
+	
+		$$(_ + '7.3 - Change the instruction from PUSH 2 onwards into a JMP to our code')
+		Exe.SetJMP(jmpAddr, freeVir, retnAddr - (jmpAddr + 5));
 	}
 	else
 	{
-		$$(_ + '5.2 - If not look for a Long Jump after the PUSH')
-		addr = Exe.FindHex( JMP(POS2WC), mapAddr, mapAddr + 0x100);
-		if (addr < 0)
-			throw Error("JMP to Mode changer CALL location not found");
+		$$(_ + '8.1 - Find all locations where the MsgString ID (718) is PUSHed')
+		///    "Sorry the character you are trying to use is banned for testing connection."
+		///       We expect 2 matches 1 for Login/Char & 1 for Map server disconnection
 
-		$$(_ + '5.3 - Goto the JMP address')
-		addr2 = Exe.GetTgtAddr(addr + 1, PHYSICAL);
-	}
-
-	$$(_ + '5.4 - Find the CALL to ErrorMsg function (i.e. Error Message Window displayer function) after the addr')
-	code =
-		MOV(ECX, POS3WC)    //mov ecx, <g_windowMgr>
-	+	CALL(NEG3WC)        //call UIWindowMgr::ErrorMsg
-	;
-	let offset = 10;
-
-	addr = Exe.FindHex(code, addr2, addr2 + 0x100);
-	if (addr < 0)
-	{
+		let addrs = Exe.FindHexN(PUSH(0x718) + CALL());
+		if (addrs.isEmpty())
+			throw Error("Msg ID PUSHes missing");
+		
+		$$(_ + '8.2 - Find the correct one amongst the matches')
+		let code = PUSH_0.repeat(4) + PUSH_2;
+		let addr = addrs.findAs( memAddr => {
+			const addr = Exe.FindHex(code, memAddr + 20, memAddr + 0x100);
+			return (addr > 0 ? addr : null);
+		});
+		
+		$$(_ + '9.1 - Create the new code which changes the second last argument')
 		code =
-			CALL(NEG3WC)    //call UIWindowMgr::ErrorMsg
-		+	MOV(EAX, [EDI]) //mov eax, dword ptr [edi]
+			PUSH_0.repeat(4) //push 0
+			                 //push 0
+			                 //push 0
+			                 //push 0
+		+	PUSH(0x8D)       //push 8Dh
+		+	JMP(Filler(1))   //jmp <retnAddr>
 		;
-		offset = 5;
-
-		addr = Exe.FindHex(code, addr2, addr2 + 0x100);
+		
+		$$(_ + '9.2 - Insert and jump to it from the address found')
+		AutoHook(addr, code, { targets: { 1 : Exe.Phy2Vir(addr + 10) } });
 	}
-	if (addr < 0)
-		throw Error("ErrorMsg CALL not found");
-
-	$$(_ + '5.5 - Save location after the CALL')
-	jmpAddr = addr + offset;
-
-	$$(_ + '6.1 - Find the Mode changer CALL after <addr>')
-	switch (Exe.Version)
-	{
-		case 9: //VC9
-		{
-			code =
-				PUSH_2               //push 2
-			+	MOV(ECX, EDI)        //mov ecx, edi
-			+	CALL(EAX)            //call eax
-			;
-			break;
-		}
-
-		case 10: //VC10
-		{
-			code =
-				PUSH_2               //push 2
-			+	CALL(EDX)            //call edx
-			;
-			break;
-		}
-
-		default: //VC6 & VC11+
-		{
-			code =
-				PUSH_2               //push 2
-			+	(Exe.Version === 11
-			?
-				MOV(ECX, EDI)        //mov ecx, edi
-			:
-				''
-			)
-			+	CALL([EAX, 0x18])    //call dword ptr [eax+18h]
-			;
-			break;
-		}
-	}
-
-	retnAddr = Exe.FindHex(code, addr, addr + 0x20);
-	if (retnAddr < 0 && Exe.Version === 9) //VC9 2nd format
-	{
-		code = code.replace( MOV(ECX, EDI), MOV(ECX, EBP) ); //Change EDI to EBP in ECX assignment
-		retnAddr = Exe.FindHex(code, addr, addr + 0x20);
-	}
-	if (retnAddr < 0)
-		throw Error("Mode changer CALL not found");
-
-	$$(_ + '6.2 - Set retnAddr to location after the CALL. This is the Return address')
-	retnAddr += code.byteCount();
-
-	$$(_ + '7.1 - Prepare our 2nd code. Similar to 1st one we have done few changes')
-	///           (arg1 is 8D and ECX is loaded from refAddr instead of depending on some local - value will be same either way)
-	code =
-		MovECX                               //mov ecx, dword ptr [refAddr]
-	+	MOV(EAX, [ECX])                      //mov eax, dword ptr [ecx]
-	+	PUSH0s                               //push 0 - n times
-	+	PUSH(0x8D)                           //push 8Dh
-	+	PUSH(Exe.Phy2Vir(retnAddr, CODE))    //push retnAddr
-	+	JMP([EAX, 0x18])                     //jmp dword ptr [eax+18h]
-	;
-
-	$$(_ + '7.2 - Add the code');
-	[, freeVir] = Exe.AddHex(code, 0x10);
-
-	$$(_ + '7.3 - Change the instruction from PUSH 2 onwards into a JMP to our code')
-	Exe.SetJMP(jmpAddr, freeVir, retnAddr - (jmpAddr + 5));
-
 	return true;
 };
 

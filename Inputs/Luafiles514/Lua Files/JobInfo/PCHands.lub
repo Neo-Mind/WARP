@@ -113,7 +113,7 @@ PCHands =
 	[PCIds.DRAGON_KNIGHT]   = "DRAGON_KNIGHT\\DRAGON_KNIGHT",
 	[PCIds.DRAGON_MOUNT]    = "DRAGON_KNIGHT_CHICKEN\\DRAGON_KNIGHT_CHICKEN",
 	[PCIds.MEISTER]         = "MEISTER\\MEISTER",
-	[PCIds.MEISTER_MADO]    = "MEISTER_MADOGEAR1\\MEISTER_MADOGEAR1",
+	[PCIds.MEISTER_MADO]    = "MEISTER_MADOGEAR\\MEISTER_MADOGEAR1",
 	[PCIds.SHADOW_CROSS]    = "SHADOW_CROSS\\SHADOW_CROSS",
 	[PCIds.CARDINAL]        = "CARDINAL\\CARDINAL",
 	[PCIds.WINDHAWK]        = "WINDHAWK\\WINDHAWK",
@@ -131,6 +131,7 @@ PCHands =
 	-- Extended 4th Classes --
 	--------------------------
 	[PCIds.SKY_EMPEROR]   = "SKY_EMPEROR\\SKY_EMPEROR",
+	[PCIds.SKY_EMPEROR_F] = "SKY_EMPEROR\\SKY_EMPEROR2",
 	[PCIds.SOUL_ASCETIC]  = "SOUL_ASCETIC\\SOUL_ASCETIC",
 	
 	--------------
@@ -157,7 +158,19 @@ PCHands =
 	|_|  |_| \___/  \___/ |_|\_|  |_|     |___||___/ |___/
 
 	]]--
-
+	
+	--------------------------
+	-- Extended 2nd Classes --
+	--------------------------
+	[PCMounts.PORING_H_NOVICE]     = "HYPER_NOVICE\\HYPER_NOVICE_RIDING",
+	
+	--------------------------
+	-- Extended 3rd Classes --
+	--------------------------
+	[PCMounts.BIKE_NIGHT_WATCH]    = "NIGHT_WATCH\\NIGHT_WATCH_RIDING",
+	[PCMounts.FROG_SHINKIRO]       = "SHINKIRO\\SHINKIRO_RIDING",
+	[PCMounts.FROG_SHIRANUI]       = "SHIRANUI\\SHIRANUI_RIDING",
+	
 	-----------------
 	-- 4th Classes --
 	-----------------
@@ -173,6 +186,12 @@ PCHands =
 	[PCMounts.SHEEP_INQUISITOR]     = "INQUISITOR\\INQUISITOR_RIDING",
 	[PCMounts.OSTRICH_TROUBADOUR]   = "TROUBADOUR\\TROUBADOUR_RIDING",
 	[PCMounts.OSTRICH_TROUVERE]     = "TROUVERE\\TROUVERE_RIDING",
+	
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	[PCMounts.HAETAE_SKY_EMPEROR]   = "SKY_EMPEROR\\SKY_EMPEROR_RIDING",
+	[PCMounts.HAETAE_SOUL_ASCETIC]  = "SOUL_ASCETIC\\SOUL_ASCETIC_RIDING",
 }
 
 --[[
@@ -380,11 +399,6 @@ PCHandInheritTbl =
 	-----------------
 	[PCIds.ARCH_MAGE]       = PCIds.WIZARD,
 	[PCIds.ELEMENT_MASTER]  = PCIds.SAGE,
-
-	--------------------------
-	-- Extended 4th Classes --
-	--------------------------
-	[PCIds.SKY_EMPEROR_F]   = PCIds.SKY_EMPEROR,
 	
 	--------------
 	-- Costumes --
@@ -592,10 +606,4 @@ PCHandInheritTbl =
 	-----------------
 	[PCMounts.FOX_ARCH_MAGE]        = PCIds.WIZARD,
 	[PCMounts.FOX_ELEMENT_MASTER]   = PCIds.SAGE,
-	
-	--------------------------
-	-- Extended 4th Classes --
-	--------------------------
-	[PCMounts.HAETAE_SKY_EMPEROR]   = PCIds.SKY_EMPEROR,
-	[PCMounts.HAETAE_SOUL_ASCETIC]  = PCIds.SOUL_ASCETIC,
 }
