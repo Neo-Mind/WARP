@@ -7,6 +7,8 @@
 
 - Updated **`Disconnect to Login Window`** patch [for newer clients](https://github.com/Neo-Mind/WARP/issues/81)
 
+- Fixed [bug in Increase Zoom Out patch](https://github.com/Neo-Mind/WARP/issues/44).
+
 
 # 2022-02-22 Changes
 
