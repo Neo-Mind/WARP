@@ -3,6 +3,8 @@
 ## Patch Updates
 - Fixed crash in **`Custom Job`** patch.
 
+- Fixed [issue in Draw Shield on Top patch](https://github.com/Neo-Mind/WARP/issues/83)
+
 
 # 2022-02-22 Changes
 
