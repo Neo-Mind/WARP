@@ -1,7 +1,7 @@
 --[[
 ****************************************************************************
 *                                                                          *
-*   Copyright (C) 2021 Neo-Mind                                            *
+*   Copyright (C) 2021-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-21                                             *
-*   Last Modified : 2021-04-05                                             *
+*   Last Modified : 2022-02-22                                             *
 *                                                                          *
 ****************************************************************************
 ]]--
@@ -79,6 +79,7 @@ PCPals =
 	--------------------------
 	-- Extended 2nd Classes --
 	--------------------------
+	[PCIds.HYPER_NOVICE] = "HYPER_NOVICE",
 	[PCIds.REBELLION]    = "리벨리온",
 	[PCIds.KAGEROU]      = "KAGEROU",
 	[PCIds.OBORO]        = "OBORO",
@@ -108,6 +109,9 @@ PCPals =
 	--------------------------
 	-- Extended 3rd Classes --
 	--------------------------
+	[PCIds.NIGHT_WATCH]    = "NIGHT_WATCH",
+	[PCIds.SHINKIRO]       = "SHINKIRO",
+	[PCIds.SHIRANUI]       = "SHIRANUI",
 	[PCIds.STAR_EMPEROR]   = "성제",
 	[PCIds.SOUL_REAPER]    = "소울리퍼",
 
@@ -132,18 +136,31 @@ PCPals =
 	[PCIds.INQUISITOR]      = "INQUISITOR",
 	[PCIds.TROUBADOUR]      = "TROUBADOUR",
 	[PCIds.TROUVERE]        = "TROUVERE",
-
+	
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	[PCIds.SKY_EMPEROR]   = "SKY_EMPEROR",
+	[PCIds.SKY_EMPEROR_F] = "SKY_EMPEROR2",
+	[PCIds.SOUL_ASCETIC]  = "SOUL_ASCETIC",
+	
 	--------------
 	-- Costumes --
 	--------------
 	[PCIds.MARRIED]      = "결혼",
 
-	-------------------
-	-- Doram Classes --
-	-------------------
+	-----------------------
+	-- Doram 1st Classes --
+	-----------------------
 	[PCIds.SUMMONER]   = "묘족",
 	[PCIds.SUMM_MOUNT] = "고양이카트",
 
+	-----------------------
+	-- Doram 2nd Classes --
+	-----------------------
+	[PCIds.SPIRIT_HANDLER]   = "SPIRIT_HANDLER",
+	[PCIds.SP_HANDLER_MOUNT] = "SPIRIT_HANDLER_RIDING",
+	
 	--[[
 	 __  __   ___   _   _  _  _  _____     ___  ___   ___
 	|  \/  | / _ \ | | | || \| ||_   _|   |_ _||   \ / __|
@@ -189,6 +206,7 @@ PCPals =
 	--------------------------
 	-- Extended 2nd Classes --
 	--------------------------
+	[PCMounts.PORING_H_NOVICE]  = "HYPER_NOVICE_RIDING",
 	[PCMounts.PORING_STAR]      = "권성",
 
 	--------------------------------------------------
@@ -212,6 +230,9 @@ PCPals =
 	--------------------------
 	-- Extended 3rd Classes --
 	--------------------------
+	[PCMounts.BIKE_NIGHT_WATCH]      = "NIGHT_WATCH_RIDING",
+	[PCMounts.FROG_SHINKIRO]         = "SHINKIRO_RIDING",
+	[PCMounts.FROG_SHIRANUI]         = "SHIRANUI_RIDING",
 	[PCMounts.HAETAE_STAR_EMPEROR]   = "해태성제",
 	[PCMounts.HAETAE_SOUL_REAPER]    = "해태소울리퍼",
 
@@ -232,6 +253,12 @@ PCPals =
 	[PCMounts.SHEEP_INQUISITOR]     = "INQUISITOR_RIDING",
 	[PCMounts.OSTRICH_TROUBADOUR]   = "TROUBADOUR_RIDING",
 	[PCMounts.OSTRICH_TROUVERE]     = "TROUVERE_RIDING",
+	
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	[PCMounts.HAETAE_SKY_EMPEROR]   = "SKY_EMPEROR_RIDING",
+	[PCMounts.HAETAE_SOUL_ASCETIC]  = "SOUL_ASCETIC_RIDING",
 }
 
 --[[

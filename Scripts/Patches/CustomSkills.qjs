@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2018-2021 Unknown                                        *
+*   Copyright (C) 2018-2022 Unknown                                        *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Unknown                                                *
 *   Created Date  : 2021-06-11                                             *
-*   Last Modified : 2021-11-26                                             *
+*   Last Modified : 2022-03-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -96,7 +96,7 @@ CustomSkills = function(patchName)
 		Exe.SetHex(fnBegin, code);
 
 		$$(_ + '2.3 - Set luaLoadAddr to address after the code')
-		luaLoadAddr = fnBegin + csize;
+		luaLoadAddr = fnBegin + csize + 4;
 	}
 	else
 	{
@@ -122,10 +122,13 @@ CustomSkills = function(patchName)
 
 	if (noPrevUsers)  //if it's the first user then we need to perform the loading
 	{
+		$$(_ + '3.1 - Activate the global patch')
 		Exe.ActivateGlobal();
 
+		$$(_ + '3.2 - Start the tag')
 		Exe.BeginTag(CACHE.getTag(cacheKey));
 
+		$$(_ + '3.3 - Add the Lua loaders')
 		const prefix = "Lua Files\\SkillInfo" + (Exe.BuildDate > 20100400 ? 'z\\' : '\\');
 		LUA.addLoaders(
 			prefix + "SkillInfo_F",
@@ -135,6 +138,12 @@ CustomSkills = function(patchName)
 			],
 			luaLoadAddr
 		);
+		
+		$$(_ + '3.4 - Finish the tag')
+		Exe.EndTag();
+		
+		$$(_ + '3.5 - Revert to the active patch we started with')
+		Exe.SetActivePatch(patchName);
 	}
 
 	return true;
@@ -148,10 +157,9 @@ CustomSkills.validate = IsPost2010;
 ///
 /// \brief Delete the patch name from the users list and clear out the tag if no users remain.
 ///
-CustomSkills.cleanup = function(patchName)
-{
+CustomSkills.cleanup = patchName =>
 	CACHE.delUser('CSK', patchName); //will auto-clean the tag if the last user has pulled out.
-};
+
 
 ///
 /// \brief Wrappers for individual patches

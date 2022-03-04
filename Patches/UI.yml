@@ -104,12 +104,6 @@ CustomUI:
             author : CH.C (jchcc) , Neo-Mind
             desc : Change the Maximum no of items displayed in inventory to user specified value (Need to be changed server-side as well).
         
-        - InsensitiveStorageSearch:
-            title : Case-Insensitive storage search
-            recommend : no
-            author : CH.C (jchcc)
-            desc : Make the search in storage UI, case-insensitive.
-        
         - DeleteCharWithEmail:
             title : Always use email for Char Deletion
             recommend : no
@@ -145,7 +139,13 @@ CustomUI:
             recommend : no
             author : Neo-Mind
             desc : Enables the full use of Mail Boxes and @mail commands (write is disabled for few Langtypes by default in 2013 Clients).
-            
+        
+        - EnableNoticeMails:
+            title: Enable "Notice" email section
+            recommend : no
+            author : Neo-Mind
+            desc : Enables the use of the "Notice" section in the new Mail Window for RE clients. This will allow for Admins to send specific e-mails (like bulletins) to users.
+        
         - MoveUpItemCount:
             title : Move Item Count Upwards
             recommend : no
@@ -230,6 +230,23 @@ CustomUI:
             author : CH.C (jchcc)
             desc : Fix issue in homunculus AI which prevents automatic attacks (present in clients 20170920 clients and newer).
 
+CaseInsensitiveSearch:
+    title: CASE INSENSITIVE SEARCH
+    mutex: false
+    
+    patches:
+        - InsensitiveStorageSearch:
+            title : Case-Insensitive storage search
+            recommend : no
+            author : CH.C (jchcc), Neo-Mind
+            desc : Make the search in Storage Window, case-insensitive.
+        
+        - InsensitiveShopSearch:
+            title : Case-Insensitive cash shop search
+            recommend : no
+            author : Neo-Mind
+            desc : Make the search in Cash Shop Window, case-insensitive.
+        
 SelectLoginBG:
     title : LOGIN BACKGROUND
     mutex : true
