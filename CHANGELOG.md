@@ -1,3 +1,9 @@
+# 2022-04-03 Changes
+
+## Script Updates
+- Added **`PUSH_STR`** function to perform a `PUSH+JMP` for pushing strings .
+
+
 # 2021-12-29 Changes
 
 ## Tool Updates (v1.5.3)
