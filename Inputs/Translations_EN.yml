@@ -1,6 +1,6 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) 2020-2022 Neo-Mind                                       #
+#   Copyright (C) 2020-2023 Neo-Mind                                       #
 #   Copyright (C) 2021 Everade                                             #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
@@ -23,7 +23,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind, Everade                                      #
 #   Created Date  : 2020-11-10                                             #
-#   Last Modified : 2022-02-22                                             #
+#   Last Modified : 2023-03-03                                             #
 #                                                                          #
 ############################################################################
 -
@@ -1737,3 +1737,4 @@
   #################################
   find : <BF B0 BB F6 C1 A6 B0 C5>
   replace : "No Color"
+  startDate : 20211100

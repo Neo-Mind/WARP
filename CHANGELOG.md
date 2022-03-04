@@ -1,3 +1,16 @@
+# 2022-04-03 Changes
+
+## Patch Updates
+- Added new patches.
+	- [Case-Insensitive cash shop search](https://github.com/Neo-Mind/WARP/issues/13)
+	- [Enable "Notice" email section](https://github.com/Neo-Mind/WARP/issues/41)
+
+- Added the start date for "No Color" translation.
+
+## Script Updates
+- Added **`PUSH_STR`** function to perform a `PUSH+JMP` for pushing strings .
+
+
 # 2022-02-23 Changes
 
 ## Patch Updates

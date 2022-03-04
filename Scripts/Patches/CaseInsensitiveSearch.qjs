@@ -1,0 +1,331 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2019-2021 CH.C (jchcc)                                   *
+*   Copyright (C) 2021-2022 Neo-Mind                                       *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
+*   Created Date  : 2020-11-12                                             *
+*   Last Modified : 2022-04-03                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Common function to add the shared 'case-insensitive search routine' to the client.
+///
+CaseInsensitiveSearch = patchName =>
+{
+	const _ = patchName + ' (CIS) : ';
+	
+	$$(_ + '1.1 - Check for existing users')
+	const cacheKey = 'CIS';
+	const noPrevUsers = !CACHE.hasUsers(cacheKey);
+	
+	$$(_ + '1.2 - Add the patch name to user list')
+	CACHE.addUser(cacheKey, patchName);
+	
+	if (noPrevUsers)
+	{
+		$$(_ + '2.1 - Ensure the required functions are available')
+		ROC.findImports();
+		const strstr = Exe.FindFunc("strstr");
+		if (strstr < 0)
+			throw Error("strstr function missing");
+		
+		$$(_ + '2.2 - Construct the function for case-insensitive search')
+		const parts =
+		[//0
+			FP_START                  //push ebp
+			                          //mov ebp, esp
+		+	CMP([Filler(1)], 0)       //cmp dword ptr [StrStrIA], 0
+		+	JNE(Filler(2,1))          //jne short _strAvailable
+		+	PUSH_STR("Shlwapi.dll")   //push "Shlwapi.dll" + jmp
+		+	CALL([ROC.GetModHandle])  //call dword ptr [<&KERNEL32.GetModuleHandleA>]
+		+	PUSH_STR("StrStrIA")      //push "StrStrIA" + jmp
+		+	PUSH_EAX                  //push eax
+		+	CALL([ROC.GetProcAddr])   //call dword ptr [<&KERNEL32.GetProcAddress>]
+		+	TEST(EAX, EAX)            //test eax, eax
+		+	JNE(Filler(3,1))          //jne short _gotStr
+		+	PUSH([EBP, 0xC])          //push dword ptr [ARG.2]
+		+	PUSH([EBP, 0x8])          //push dword ptr [ARG.1]
+		+	CALL([strstr])            //call dword ptr [<&msvcr##.strstr>]
+		+	FP_STOP                   //mov esp, ebp
+			                          //pop ebp
+		+	RETN()                    //retn
+		
+		,//1
+			MOV([Filler(1)], EAX)     //mov dword ptr [StrStrIA], eax ; _gotStr
+		
+		,//2
+			PUSH([EBP, 0xC])          //push dword ptr [ARG.2]
+		+	PUSH([EBP, 0x8])          //push dword ptr [ARG.1]
+		+	CALL([Filler(1)])         //call dword ptr [StrStrIA] ; _strAvailable
+		+	FP_STOP                   //mov esp, ebp
+			                          //pop ebp
+		+	RETN()                    //retn
+		
+		,//3
+			ALL00                     //used to store StrStrIA
+		];
+		
+		const [,_gotStr, _strAvailable, StrStrIA, allocSize] = MapAddrs(parts);
+	
+		$$(_ + '2.3 - Prepare the arguments for auto-hook')
+		const args =
+		{
+			allocSize,
+			localVals : {
+				1 : StrStrIA
+			},
+			localTgts : {
+				'2,1' : _strAvailable,
+				'3,1' : _gotStr
+			}
+		};
+		
+		$$(_ + '3.1 - Activate the global patch')
+		Exe.ActivateGlobal();
+
+		$$(_ + '3.2 - Start the tag')
+		Exe.BeginTag(CACHE.getTag(cacheKey));
+		
+		$$(_ + '3.3 - Add the code and save it\'s address')
+		const [, fnAddr] = AutoHook(null, parts, args);
+		
+		$$(_ + '3.4 - Save the address')
+		CACHE.put('CIS_Func', fnAddr);
+		
+		$$(_ + '3.5 - Finish the tag')
+		Exe.EndTag();
+		
+		$$(_ + '3.6 - Revert control back to the patch')
+		Exe.ActivePatch = patchName;
+	}
+	
+	$$(_ + '4 - Return the function address')
+	return CACHE.get('CIS_Func');
+};
+
+///
+/// \brief Make the client use StrStrIA to enable case-insensitive search 
+///        instead of the default one using memchr & direct byte-wise comparison for Cash Shop
+///
+InsensitiveShopSearch = patchName =>
+{
+	const _ = patchName + ' : ';
+	
+	$$(_ + '1.1 - Add the case insensitive search function')
+	const fnAddr = CaseInsensitiveSearch(patchName);
+	
+	$$(_ + '1.2 - Find the reference code')
+	const code =
+		PUSH(0x42D) //push 42Dh
+	+	CALL()      //call MsgStr
+	;
+	const addrs = Exe.FindHexN(code);
+	
+	if (Exe.Version > 11)
+	{
+		$$(_ + '2.1 - Find the first comparison before the reference code')
+		let code =
+			CALL(ALLWC)    //call <jmp.&vcruntime##.memchr>
+		+	MOV(EDI, EAX)  //mov edi, eax
+		+	ADD(ESP, 0xC)  //add esp, 0xC
+		+	TEST(EDI, EDI) //test edi, edi
+		+	JE(POS2WC)     //je _skip
+		;
+		
+		const hookAddr = addrs.findAs( memAddr => {
+			const addr = Exe.FindHex(code, memAddr - 0x300, memAddr - 0x200);
+			return addr > 0 ? addr : null;
+		});
+		if (!hookAddr)
+			throw Error("Initial comparison missing");
+		
+		const retnAddr = Exe.Phy2Vir(hookAddr + 5, CODE);
+		const nextAddr = hookAddr + code.byteCount();
+		
+		$$(_ + '2.2 - Ensure ESI is the register containing the search pattern')
+		
+		code =
+			MOV(R32, ESI) //mov regA, esi
+		+	MOV(R32, EDI) //mov regB, edi
+		;
+		const addr = Exe.FindHex(code, nextAddr, nextAddr + 10);
+		if (addr < 0)
+			throw Error("Register is incorrect");
+		
+		$$(_ + '2.3 - Find the code after comparison loop')
+		code =
+			SUB(EDI, [EBP, NEG2WC]) //sub edi, dword ptr [LOCAL.x]
+		+	CMP(EDI, -1)            //cmp edi, -1
+		+	JE(WCp)                 //je short _skip2
+		;
+		
+		const jmpAddr = Exe.FindHex(code, addr + 10, hookAddr + 0x100);
+		if (jmpAddr < 0)
+			throw Error("Jump target missing");
+		
+		$$(_ + '3.1 - Construct the reroute code')
+		code =
+			MOV([ESP, 4], ESI)  //mov dword ptr [ARG.2], esi
+		+	PUSH(retnAddr)      //push <retnAddr>
+		+	JMP(Filler(1))      //jmp <fnAddr>
+		;
+		
+		$$(_ + '3.2 - Add the code and jump to it from hookAddr')
+		AutoHook(hookAddr, code, {targets : {1 : fnAddr}});
+		
+		$$(_ + '3.3 - Setup the direct jump after JE')
+		Exe.SetJMP(nextAddr, jmpAddr, PHYSICAL);
+	}
+	else
+	{
+		$$(_ + '4.1 - Find the correct reference pattern amongst the matches')
+		let addr = addrs.length > 1 ?
+			addrs.find(memAddr => Exe.FindHex(PUSH(5) + PUSH(0) + PUSH(0xCE5), memAddr + 10, memAddr + 0x80) > 0) :
+			addrs[0];
+		
+		if (!addr)
+			throw Error("No valid reference found");
+		
+		$$(_ + '4.2 - Find the comparison before the reference')
+		let parts =
+		[//0
+			PUSH_0                  //push 0
+		+	PUSH_EAX                //push eax
+		+	LEA(ECX, [EBP, NEG2WC]) //lea ecx, [LOCAL.x]
+		
+		,//1
+			CALL(ALLWC)             //call cmpFunc
+		+	CMP(EAX, -1)            //cmp eax, -1
+		+	JE(WCp)                 //je short _skip
+		];
+		addr = Exe.FindHex(parts, addr - 0x200, addr - 0x80);
+		if (addr < 0)
+			throw Error("Comparison missing");
+		
+		$$(_ + '4.3 - Calculate the argCount')
+		const opcode = Exe.GetUint8(addr - 1);
+		const argCount = (opcode >= 0x50 && opcode <= 0x57) ? 3 : 2;
+		
+		$$(_ + '4.4 - Calculate the hookAddr & retnAddr')
+		const hookAddr = addr + parts.byteCount(0);
+		const retnAddr = Exe.Phy2Vir(hookAddr + 5, CODE);
+		
+		$$(_ + '5.1 - Construct the reroute code')
+		parts =
+		[//0
+			PUSH(ECX)                      //push ecx
+		+	CALL(Filler(1))                //call <fnAddr>
+		+	TEST(EAX, EAX)                 //test eax, eax
+		+	JNZ(Filler(2,1))               //jnz short _found
+		+	OR(EAX, -1)                    //or eax, -1
+		+	JMP(Filler(3,1))                //jz short _restore
+		
+		,//1
+			SUB(EAX, [ESP])                //sub eax, dword ptr [esp] ; _found
+		
+		,//2
+			ADD(ESP, 4 * (argCount + 1))   //add esp, <stkConst> ;  _restore
+		+	JMP(Filler(4))                 //jmp <retnAddr>
+		];
+		
+		const [, _found, _restore, allocSize] = MapAddrs(parts);
+		
+		$$(_ + '5.2 - Prepare the arguments for auto-hook')
+		const args =
+		{
+			localTgts : {
+				'2,1' : _found,
+				'3,1' : _restore
+			},
+			targets : {
+				1 : fnAddr,
+				4 : retnAddr
+			}
+		}
+		
+		$$(_ + '5.3 - Add the code and jump to it from hookAddr')
+		AutoHook(hookAddr, parts, args);
+	}
+	
+	return true;
+};
+
+
+///
+/// \brief Make the client use StrStrIA to enable case-insensitive search 
+///        instead of the _mbsstr for Storage
+///
+InsensitiveStorageSearch = patchName =>
+{
+	const _ = patchName + ' : ';
+	
+	$$(_ + '1 - Add the case insensitive search function')
+	const fnAddr = CaseInsensitiveSearch(patchName);
+	
+	$$(_ + '2.1 - Find string search for storage')
+	const prefix =
+		PUSH(ECX)               //push ecx
+	+	(Exe.Version > 11
+	?
+		CMOVNB(EAX, [EBP, WCn]) //cmovnb eax, dword ptr [ebp - dispA]
+	:
+		''
+	)
+	+	PUSH_EAX                //push eax
+	;
+
+	const suffix =
+		CALL([POS4WC])          //call dword ptr [_mbsstr]
+	+	ADD(ESP, 8)             //add esp, 8
+	+	TEST(EAX, EAX)          //test eax, eax
+	+	JE(4)                   //je short _skip ; after the JMP below
+	+	MOV(ESI, [ESI])         //mov esi, dword ptr [ESI]
+	+	JMP(WCp)                //jmp short _next
+	;
+
+	let addr = Exe.FindHex(prefix + suffix);
+	if (addr < 0)
+		throw Error("String search not found");
+	
+	addr += prefix.byteCount();
+	
+	$$(_ + '2.2 - Redirect the call to our function')
+	Exe.SetCALL(addr, fnAddr, 1); //1 NOP afterwards
+	
+	return true;
+}
+
+///
+/// \brief Disable for older clients. _mbsstr is not being used in them
+///
+InsensitiveStorageSearch.validate = () =>
+	Exe.BuildDate > 20150512;
+
+///
+/// \brief Delete the patch name from the users list and clear out the tag if no users remain.
+///
+_CIS_cleanup = patchName =>
+	CACHE.delUser('CIS', patchName); //will auto-clean the tag if the last user has pulled out.
+
+InsensitiveShopSearch.cleanup    = _CIS_cleanup;
+InsensitiveStorageSearch.cleanup = _CIS_cleanup;
