@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2021 Andrei Karas (4144)                                 *
+*   Copyright (C) 2021-2022 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-10-01                                             *
-*   Last Modified : 2021-10-29	                                           *
+*   Last Modified : 2022-04-03	                                           *
 *                                                                          *
 \**************************************************************************/
 
@@ -68,11 +68,9 @@ MsgBox2Beep = function()
 		MOV(EAX, [Filler(2)])      //mov eax, dword ptr [beepFnAddr]
 	+	TEST(EAX, EAX)             //test eax, eax
 	+	JNZ(Filler(3,1))           //jnz short _loaded
-	+	CALL(11)                   //push <nextAddr> + jmp
-	+	"USER32.dll\x00".toHex()   //ASCII "USER32.dll"
+	+	PUSH_STR("USER32.dll")     //push "USER32.dll" + jmp
 	+	CALL([ROC.GetModHandle])   //call dword ptr [<&KERNEL32.GetModuleHandle>]
-	+	CALL(12)                   //push <nextAddr> + jmp
-	+	"MessageBeep\x00".toHex()  //ASCII "MessageBeep"
+	+	PUSH_STR("MessageBeep")    //push "MessageBeep" + jmp
 	+	PUSH_EAX                   //push eax
 	+	CALL([ROC.GetProcAddr])    //call dword ptr [<&KERNEL32.GetProcAddress>]
 	+	MOV([Filler(2)], EAX)      //mov dword ptr [beepFnAddr], eax

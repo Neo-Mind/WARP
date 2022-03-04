@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
-*   Copyright (C) 2020-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2022 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Andrei (4144)                                 *
 *   Created Date  : 2020-11-06                                             *
-*   Last Modified : 2021-08-24                                             *
+*   Last Modified : 2022-02-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -46,7 +46,7 @@ IncrZoom = function(patchName)
 		throw Error("FAR_DIST storage not found");
 
 	$$(_ + '1.2 - Retrieve the new distance for the patch')
-	const newDist = this.Data.get(patchName); //IZ_Data[patchName];
+	const newDist = this.Data.get(patchName);
 
 	$$(_ + '1.3 - Change to the value specified')
 	Exe.SetFloat(addr + 4, newDist);
@@ -78,8 +78,6 @@ IncrZoom = function(patchName)
 
 		$$(_ + '2.6 - Repeat 2.4 for this set of addresses')
 		addrs.forEach( updater );
-
-		/* - Doesn't look like this step is needed.
 
 		$$(_ + '3.1 - Find the \'/zoom\' enabled/disabled load configuration (in CSession_lua_configuration)')
 		const parts = [
@@ -119,14 +117,15 @@ IncrZoom = function(patchName)
 		if (addr < 0)
 			throw Error("/zoom configuration missing");
 
-		$$(_ + '3.2 - Retrieve the zoom_max_load_enabled & zoom_max_load_disabled VIRTUAL addresses')
-		const enbAddr = Instr.FromAddr(addr).Disp;
-		const disAddr = Instr.FromAddr(addr + parts.byteCount(0, 1)).Disp;
-
-		$$(_ + '3.3 - Overwrite the values at both locations with the new distance')
-		Exe.SetFloat(Exe.Vir2Phy(enbAddr), newDist);
-		Exe.SetFloat(Exe.Vir2Phy(disAddr), newDist);
-		*/
+		$$(_ + '3.2 - Insert the new distance')
+		const [, newDistAddr] = Exe.AddFloat(newDist);
+		
+		$$(_ + '3.3 - Change the 2 locations used with the new distance address')
+		addr += parts.byteCount(0) - 4;
+		Exe.SetInt32(addr, newDistAddr);
+		
+		addr += parts.byteCount(1, 2);
+		Exe.SetInt32(addr, newDistAddr);
 	}
 
 	return true;

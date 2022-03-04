@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Ai4rei/AN                                     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-10-23                                             *
+*   Last Modified : 2022-03-04                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -96,12 +96,10 @@ NoMultiWindow = function()
 	+	XOR(ESI, ESI)                  //xor esi, esi
 	+	PUSH(ROC.Kernel32)             //push offset "KERNEL32.dll"
 	+	CALL([ROC.GetModHandle])       //call dword ptr [<&KERNEL32.GetModuleHandleA>]
-	+	CALL(0x0D)                     //push &JMP
-	+	"CreateMutexA\x00".toHex()     //db "CreateMutexA", 0
+	+	PUSH_STR("CreateMutexA")       //push "CreateMutexA" + jmp
 	+	PUSH_EAX                       //push eax
 	+	CALL([ROC.GetProcAddr])        //call dword ptr [<&KERNEL32.GetProcAddress>]
-	+	CALL(0x0F)                     //push &JMP
-	+	"Global\\Surface\x00".toHex()  //db "Global\Surface",0
+	+	PUSH_STR("Global\\Surface")    //push "Global\Surface" + jmp
 	+	PUSH(ESI)                      //push esi
 	+	PUSH(ESI)                      //push esi
 	+	CALL(EAX)                      //call eax
@@ -116,8 +114,7 @@ NoMultiWindow = function()
 	,//1
 		PUSH(ROC.Kernel32)             //push offset "KERNEL32.dll" ; _quit
 	+	CALL([ROC.GetModHandle])       //call dword ptr [<&KERNEL32.GetModuleHandleA>]
-	+	CALL(0x0C)                     //push &JMP
-	+	"ExitProcess\x00".toHex()      //db "ExitProcess", 0
+	+	PUSH_STR("ExitProcess")        //push "ExitProcess" + jmp
 	+	PUSH_EAX                       //push eax
 	+	CALL([ROC.GetProcAddr])        //call dword ptr [<&KERNEL32.GetProcAddress>]
 	+	PUSH(ESI)                      //push esi

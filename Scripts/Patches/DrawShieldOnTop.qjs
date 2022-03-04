@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2018-2022 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-06-15                                             *
-*   Last Modified : 2021-10-26                                             *
+*   Last Modified : 2022-02-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -149,7 +149,7 @@ DrawShieldOnTop = function()
 
 	$$(_ + '2.2 - Construct the new code to be added')
 	parts =
-	[
+	[//0
         MOV(EAX, [EBP, cntLoc])  // mov eax, dword ptr [ebp + cnt]
 	+	CMP(EAX, 0)              // cmp eax, 0
     +	JNZ(Filler(1,1))         // jnz short _skip
@@ -161,7 +161,8 @@ DrawShieldOnTop = function()
 	+	MOVSS(XMM0, [EAX, 0x14]) // movss xmm0, dword ptr [eax + oowUp]
 	+	ADDSS(XMM0, [floatAddr]) // addss xmm0, dword ptr [floatAddr]
 	+	MOVSS([EAX, 0x14], XMM0) // movss dword ptr [eax + oowUp], xmm0
-	,
+	
+	,//1
 		PUSH(Filler(2))          // push retnAddr ; _skip
     +	MOV(EAX, Filler(3))      // mov eax, <CRenderObject::RenderSprite/RenderSprite2>
 	+	JMP(EAX)                 // jmp eax
@@ -183,7 +184,7 @@ DrawShieldOnTop = function()
 		};
 
 		$$(_ + '2.6 - Add our code and jump to it from hookAddr')
-		AutoHook(hookAddr, code, args);
+		AutoHook(hookAddr, template, args);
 	}
 
 	return true;

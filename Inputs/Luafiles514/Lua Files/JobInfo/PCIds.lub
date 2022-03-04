@@ -1,7 +1,7 @@
 --[[
 ****************************************************************************
 *                                                                          *
-*   Copyright (C) 2021 Neo-Mind                                            *
+*   Copyright (C) 2021-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-21                                             *
-*   Last Modified : 2021-04-10                                             *
+*   Last Modified : 2022-02-22                                             *
 *                                                                          *
 ****************************************************************************
 ]]--
@@ -154,6 +154,7 @@ PCIds =
 	--------------------------
 	-- Extended 2nd Classes --
 	--------------------------
+	HYPER_NOVICE = 4307,
 	REBELLION    = 4215,
 	KAGEROU      = 4211,
 	OBORO        = 4212,
@@ -248,6 +249,9 @@ PCIds =
 	--------------------------
 	-- Extended 3rd Classes --
 	--------------------------
+	NIGHT_WATCH    = 4306,
+	SHINKIRO       = 4304,
+	SHIRANUI       = 4305,
 	STAR_EMPEROR   = 4239,
 	STAR_EMPEROR_F = 4243, --Union mode (Flying)
 	SOUL_REAPER    = 4240,
@@ -281,6 +285,13 @@ PCIds =
 	TROUBADOUR      = 4263,
 	TROUVERE        = 4264,
 
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	SKY_EMPEROR   = 4302,
+	SKY_EMPEROR_F = 4316,
+	SOUL_ASCETIC  = 4303,
+	
 	--------------
 	-- Costumes --
 	--------------
@@ -299,17 +310,23 @@ PCIds =
 	DEATHKNIGHT = 4051,
 	COLLECTOR   = 4052,
 
-	-------------------
-	-- Doram Classes --
-	-------------------
+	-----------------------
+	-- Doram 1st Classes --
+	-----------------------
 	SUMMONER   = 4218,
 	SUMM_MOUNT = 4219, --Cart mount
 
-	------------------------
-	-- Baby Doram Classes --
-	------------------------
+	----------------------------
+	-- Baby Doram 1st Classes --
+	----------------------------
 	SUMMONER_B   = 4220,
 	SUMM_MOUNT_B = 4221, --Cart mount
+	
+	-----------------------
+	-- Doram 2nd Classes --
+	-----------------------
+	SPIRIT_HANDLER   = 4308,
+	SP_HANDLER_MOUNT = 4315, --Cart mount
 }
 
 --[[
@@ -432,6 +449,7 @@ PCMounts =
 	--------------------------
 	-- Extended 2nd Classes --
 	--------------------------
+	PORING_H_NOVICE       = 4314,
 	BIKE_REBELLION        = 4216,
 	FROG_KAGEROU          = 4213,
 	FROG_OBORO            = 4214,
@@ -486,6 +504,9 @@ PCMounts =
 	--------------------------
 	-- Extended 3rd Classes --
 	--------------------------
+	BIKE_NIGHT_WATCH      = 4313,
+	FROG_SHINKIRO         = 4311,
+	FROG_SHIRANUI         = 4312,
 	HAETAE_STAR_EMPEROR   = 4245, --same one is used for Union mode
 	HAETAE_SOUL_REAPER    = 4246,
 
@@ -512,6 +533,12 @@ PCMounts =
 	SHEEP_INQUISITOR      = 4275,
 	OSTRICH_TROUBADOUR    = 4276,
 	OSTRICH_TROUVERE      = 4277,
+	
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	HAETAE_SKY_EMPEROR    = 4309,
+	HAETAE_SOUL_ASCETIC   = 4310,
 }
 
 --[[
@@ -636,6 +663,7 @@ Halter_Table =
 	--------------------------
 	-- Extended 2nd Classes --
 	--------------------------
+	[PCIds.HYPER_NOVICE] = PCMounts.PORING_H_NOVICE,
 	[PCIds.REBELLION]    = PCMounts.BIKE_REBELLION,
 	[PCIds.KAGEROU]      = PCMounts.FROG_KAGEROU,
 	[PCIds.OBORO]        = PCMounts.FROG_OBORO,
@@ -710,6 +738,9 @@ Halter_Table =
 	--------------------------
 	-- Extended 3rd Classes --
 	--------------------------
+	[PCIds.NIGHT_WATCH]    = PCMounts.BIKE_NIGHT_WATCH,
+	[PCIds.SHINKIRO]       = PCMounts.FROG_SHINKIRO,
+	[PCIds.SHIRANUI]       = PCMounts.FROG_SHIRANUI,
 	[PCIds.STAR_EMPEROR]   = PCMounts.HAETAE_STAR_EMPEROR,
 	[PCIds.STAR_EMPEROR_F] = PCMounts.HAETAE_STAR_EMPEROR,
 	[PCIds.SOUL_REAPER]    = PCMounts.HAETAE_SOUL_REAPER,
@@ -858,7 +889,7 @@ Shrink_Map =
 	[PCIds.SOUL_REAPER_B]    = Scales[2],
 
 	------------------------
-	-- Baby Doram Classes --
+	-- Baby Doram 1st Classes --
 	------------------------
 	[PCIds.SUMMONER_B]   = Scales[3],
 	[PCIds.SUMM_MOUNT_B] = Scales[3],
