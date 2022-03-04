@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2021 Neo-Mind                                            *
+*   Copyright (C) 2021-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -15,14 +15,14 @@
 *   GNU General Public License for more details.                           *
 *                                                                          *
 *   You should have received a copy of the GNU General Public License      *
-*   along with program.  If not, see <http://www.gnu.org/licenses/>.  *
+*   along with program.  If not, see <http://www.gnu.org/licenses/>.       *
 *                                                                          *
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-08-20                                             *
-*   Last Modified : 2021-10-22                                             *
+*   Last Modified : 2022-04-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -256,7 +256,7 @@ export function createCaller(name, format)
 	}
 	else //not a pre-existing one so use a CALL to PUSH the next few bytes as the string
 	{
-		PUSH_fmt = CALL(format.length + 1) + format.toHex() + ' 00';
+		PUSH_fmt = PUSH_STR(format);
 	}
 
 	$$(_ + '1.3 - Calculate the number of arguments for input & output')
@@ -279,7 +279,7 @@ export function createCaller(name, format)
 		if (addr > 0)
 			PUSH_name = PUSH(addr);
 		else
-			PUSH_name = CALL(name.length + 1) + name.toHex() + ' 00';
+			PUSH_name = PUSH_STR(name);
 	}
 
 	$$(_ + '2 - Now we construct the code in stages')

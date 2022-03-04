@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020-2022 Neo-Mind                                       *
+*   Copyright (C) 2022 Neo-Mind                                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -21,78 +21,49 @@
 |**************************************************************************|
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
-*   Created Date  : 2021-08-21                                             *
+*   Created Date  : 2022-04-03                                             *
 *   Last Modified : 2022-04-03                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Initialize the Cache module
+/// \brief NOP out the jump which skips changing to the "Notice" tab
 ///
-CACHE.init();
-
-///
-/// \brief Load the ROC module with all the misc goodies from ROClient
-///
-ROC.load();
-
-///
-/// \brief Initialize the remaining modules
-///
-DGRF.init();
-WINMGR.init();
-LANGTYPE.init();
-SRVRTYPE.init();
-LUA.init();
-PACKET.init();
-MBAR.init();
-FONTAIN.init();
-WINMKR.init();
-
-///
-/// \brief Set up options & tag for Case Insensitive patches
-///
-CACHE.setup('CIS', 'CaseInsensFn',
+EnableNoticeMails = () =>
 {
-	cleanTag_after_userDel: false,
-});
+	$$(_ + '1 - Find the code which ignores the click for Notice tab')
+	const parts =
+	[
+		CALL([EAX, POS1WC])        //call dword ptr [eax + dispA]
+	+	JMP(POS2WC)                //jmp _next
+	+	(Exe.BuildDate > 20211000
+	?
+		MOV(R32, R32)              //mov regB, regA
+	:
+		''
+	)
+	+	CMP(R32, [R32, POS2WC])    //cmp regB, dword ptr [regC + dispC]
+	,
+		JE(POS2WC)                 //je _skip
+	+	MOV(R32, [R32, POS2WC])    //mov regD, dword ptr [regC + dispD]
+	+	PUSH_0.repeat(3)           //push 0
+	                               //push 0
+	                               //push 0
+	];
+	
+	const addr = Exe.FindHex(parts);
+	if (addr < 0)
+		throw Error("Pattern not found");
+	
+	$$(_ + '2 - NOP out the JE')
+	Exe.SetNOPs(addr + parts.byteCount(0), 6);
+	
+	return true;
+};
 
 ///
-/// \brief Set up options & tag for Custom Skill patches
+/// \brief Disable for non-RE clients and those which don't have the new window
 ///
-CACHE.setup('CSK', 'SkillInfo',
-{
-	cleanTag_after_userDel: false,
-});
-
-///
-/// \brief Set up options & tag for Custom Encryption Key patches
-///
-CACHE.setup('PACKET', 'EncKeys',
-{
-	cleanTag_after_restore: false,
-	cleanTag_after_userDel: false,
-	dealloc_after_restore: false,
-});
-
-///
-/// \brief Set up options & tag for Resize Mob bar patches
-///
-CACHE.setup('MBAR', 'MobHP',
-{
-	cleanTag_after_restore: false,
-	dealloc_after_restore: false,
-});
-
-///
-/// \brief Set up options & tag for New Button visibility patches
-///
-CACHE.setup('NBV', 'ButtonTbl',
-{
-	dealloc_after_tagClean: true,
-});
-
-///
-/// \brief Initializes the FnStore map used with GetImpRefs
-///
-InitFnStore();
+EnableNoticeMails.validate = () =>
+	ROC.IsRenewal &&
+	Exe.FindText("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\rodexsystem\\renewal\\btn_listtab_empty_out.bmp", CASE_INSENSITIVE) > 0 ;

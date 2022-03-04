@@ -1,3 +1,48 @@
+# 2022-04-03 Changes
+
+## Patch Updates
+- Added new patches.
+	- [Case-Insensitive cash shop search](https://github.com/Neo-Mind/WARP/issues/13)
+	- [Enable "Notice" email section](https://github.com/Neo-Mind/WARP/issues/41)
+
+- Added the start date for "No Color" translation.
+
+## Script Updates
+- Added **`PUSH_STR`** function to perform a `PUSH+JMP` for pushing strings .
+
+
+# 2022-02-23 Changes
+
+## Patch Updates
+- Fixed crash in **`Custom Job`** patch.
+
+- Fixed [issue in Draw Shield on Top patch](https://github.com/Neo-Mind/WARP/issues/83)
+
+- Updated **`Disconnect to Login Window`** patch [for newer clients](https://github.com/Neo-Mind/WARP/issues/81)
+
+- Fixed [bug in Increase Zoom Out patch](https://github.com/Neo-Mind/WARP/issues/44).
+
+
+# 2022-02-22 Changes
+
+## Patch Updates
+- Updated LUA files for **`Custom Job`** patch.
+
+- Added new translation [as requested](https://github.com/Neo-Mind/WARP/issues/89)
+
+- Updated Custom Path patches to handle the various suffixes with a slightly better approach.
+
+
+# 2021-12-29 Changes
+
+## Tool Updates (v1.5.3)
+- Fixed Bug in `Exe.Allocate` function when no active patch is available.
+
+- Fixed `Exe.FindFunc` function to use look up table instead of thunk table.
+
+- Fixed issue with `Drag & Drop` for Session files & Tester Directory.
+
+
 # 2021-11-26 Changes
 
 ## Patch Updates
