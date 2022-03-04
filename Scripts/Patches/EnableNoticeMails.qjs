@@ -31,6 +31,8 @@
 ///
 EnableNoticeMails = () =>
 {
+	const _ = 'EnableNoticeMails : ';
+	
 	$$(_ + '1 - Find the code which ignores the click for Notice tab')
 	const parts =
 	[
