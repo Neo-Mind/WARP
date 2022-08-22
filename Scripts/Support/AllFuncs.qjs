@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020-2021 Neo-Mind                                       *
+*   Copyright (C) 2020-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-10-29                                             *
-*   Last Modified : 2021-11-01                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -929,7 +929,7 @@ ReloadPatch = (name, ...args) =>
 
 		cmd += `${args})`;
 
-		eval(cmd);
+		return eval(cmd);
 	}
 };
 

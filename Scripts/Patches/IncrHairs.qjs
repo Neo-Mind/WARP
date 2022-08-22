@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2013-2021 Ai4rei/AN                                      *
-*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*   Copyright (C) 2013-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
 *   Created Date  : 2021-02-24                                             *
-*   Last Modified : 2021-11-26                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -72,34 +72,48 @@ IncrHairs.stage1 = patchName =>
 	$$(_ + '1.5 - Add to the strAddrs')
 	strAddrs.push(addr);
 
-	$$(_ + '1.6 - Get the limit from user or set it to 65k based on the patch')
-	const isPalShared = Warp.GetPatchState("HeadPalMF") || Warp.GetPatchState("HeadPalUnisex");
-	if (patchName === "IncrHairStyles")
+	$$(_ + '1.6 - Get the status of shared head palette patches')
+	const isPalShared = Warp.GetPatchState("HeadPalMF") || Warp.GetPatchState("HeadPalUnisex"); Debug(isPalShared);
+
+	$$(_ + '1.7 - Get the limit from user or set it to 65k based on the patch')
+	let maxHairs;
+	switch (patchName)
 	{
-		IH_Max = Exe.GetUserInput('$maxHairs', D_Uint16, "Limit input", "Enter the maximum no of hairstyles", 100, {saveDefault: true});
-		if (IH_Max === false)
-			Cancel("Limit reverted to default");
-		
-		IH_Max = parseInt(IH_Max); //temporary fix for strings
+		case "IncrHairStyles":
+		{
+			maxHairs = Exe.GetUserInput('$maxHairs', D_Uint16, "Limit input", "Enter the maximum no of hairstyles", 100, {saveDefault: true});
+			if (maxHairs === false)
+				Cancel("Limit reverted to default");
+
+			maxHairs = parseInt(maxHairs); //temporary fix for strings
+			break;
+		}
+		case "Allow65kHairs":
+		{
+			maxHairs = 65535;
+			break;
+		}
+		default:
+		{
+			maxHairs = CACHE.get('IH_Max');
+			break;
+		}
 	}
-	else if (patchName === "Allow65kHairs")
-	{
-		IH_Max = 65535;
-	}
+	CACHE.put('IH_Max', maxHairs);
 
 	$$(_ + '2 - Prep the lambda function for fixing comparisons')
 	const fixCmp = (addr) =>
 	{
-		if (IH_Max === 65535)
+		if (maxHairs === 65535)
 		{
 			$$(_ + '2.1 - For highest limit just enforce the conditional jump after the CMP')
 			Exe.SetJMP(addr + 3);
 		}
 
-		else if (IH_Max <= 0x7F)
+		else if (maxHairs <= 0x7F)
 		{
 			$$(_ + '2.2 - For 1 byte limits directly alter the limit value used')
-			Exe.SetInt16(addr + 2, IH_Max | 0x7C00); //7C to make it JLE in case it isnt.
+			Exe.SetInt16(addr + 2, maxHairs | 0x7C00); //7C to make it JLE in case it isnt.
 		}
 
 		else
@@ -109,7 +123,7 @@ IncrHairs.stage1 = patchName =>
 
 			$$(_ + '2.4 - Construct the code for comparison')
 			code =
-				CMP(reg, IH_Max) //cmp reg, <maxHairs>
+				CMP(reg, maxHairs) //cmp reg, <maxHairs>
 			+	JA(Filler(1))    //ja <defAddr>
 			+	JMP(Filler(2))   //jmp <validAddr>
 			;
@@ -296,6 +310,9 @@ IncrHairs.stage1 = patchName =>
 
 		if (!isLast || !isPalShared)
 		{
+			if (isLast)
+				Exe.BeginTag('SHP');
+
 			$$(__ + '5.1 - Calculate the base stack offset for retrieving the argument')
 			let offset;
 			if (ROC.HasFP)
@@ -424,6 +441,9 @@ IncrHairs.stage1 = patchName =>
 					AutoHook(newHookAddr, code, args);
 				}
 			}
+
+			if (isLast)
+				Exe.EndTag();
 		}
 	});
 };
