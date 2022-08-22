@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2021 Neo-Mind                                            *
+*   Copyright (C) 2021-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,43 +22,9 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-09-28                                             *
-*   Last Modified : 2021-11-26                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 \**************************************************************************/
-
-///
-/// \brief Data for Font height patches
-///
-FH_Data =
-{
-	CustomFontHeight :
-	{
-		varName : '$newFontHgt',
-		prompt : "Character height",
-		defVal : 10
-	},
-
-	CustomFontCellHeight :
-	{
-		varName : '$newFontCellHgt',
-		prompt : "Character cell height",
-		defVal : 10
-	},
-
-	CustomFontHgtOffset:
-	{
-		varName : '$fontHgtOff',
-		prompt : "Height adjustment",
-		defVal : 0
-	},
-
-	CustomFontHgtLimits :
-	{
-		varName : ['$fontHgtLimitL', '$fontHgtLimitH'],
-		prompt : ["Min Character cell height", "Max Character cell height"],
-		defVal : 10
-	},
-};
 
 ///
 /// \brief Modifies the height being fed to CreateFontA function in the client.
@@ -66,11 +32,11 @@ FH_Data =
 FontHeight = function(patchName)
 {
 	const _ = patchName + ' : ';
-
+	
 	if (!Warp.TestMode)
 	{
 		$$(_ + '1.1 - Deactivate other patches')
-		for (const name in FH_Data)
+		for (const name of this.Data.keys())
 		{
 			if (name !== patchName)
 				Warp.SetPatchState(name, false);
@@ -81,12 +47,12 @@ FontHeight = function(patchName)
 	FONTAIN.load();
 
 	$$(_ + '1.3 - Retrieve patch specific constants')
-	const {varName, prompt, defVal} = FH_Data[patchName];
+	const {varName, prompt, defVal} = this.Data.get(patchName);
 	
 	if (patchName === "CustomFontHgtLimits")
 	{
 		$$(_ + '2.1 - Retrieve the limits from user')
-		const [limitL, limitH] = varName.filter( (name, idx) =>
+		const [limitL, limitH] = varName.map( (name, idx) =>
 		{
 			return Exe.GetUserInput(name, D_FontSize, "Font Height Limit", "Enter the new " + prompt[idx], defVal, {sampleName: "Tahoma"});
 		});
@@ -135,6 +101,39 @@ FontHeight = function(patchName)
 };
 
 ///
+/// \brief Data for Font height patches
+///
+FontHeight.Data = MakeMap(
+	'CustomFontHeight',
+	{
+		varName : '$newFontHgt',
+		prompt : "Character height",
+		defVal : 10
+	},
+
+	'CustomFontCellHeight', 
+	{
+		varName : '$newFontCellHgt',
+		prompt : "Character cell height",
+		defVal : 10
+	},
+
+	'CustomFontHgtOffset',
+	{
+		varName : '$fontHgtOff',
+		prompt : "Height adjustment",
+		defVal : 0
+	},
+
+	'CustomFontHgtLimits',
+	{
+		varName : ['$fontHgtLimitL', '$fontHgtLimitH'],
+		prompt : ["Min Character cell height", "Max Character cell height"],
+		defVal : 10
+	}
+);
+
+///
 /// \brief Cleans up the staging done in the patch.
 ///
 FontHeight.cleanup = function(patchName)
@@ -144,18 +143,18 @@ FontHeight.cleanup = function(patchName)
 		case "CustomFontHeight" :
 		case "CustomFontCellHeight" :
 		{
-			FONTAIN.setHeight();
+			FONTAIN.setHeight(null);
 			break;
 		}
 		case "CustomFontHgtOffset" :
 		{
-			FONTAIN.setHgtOff();
+			FONTAIN.setHgtOff(null);
 			break;
 		}
 		case "CustomFontHgtLimits" :
 		{
-			FONTAIN.setMinHgt;
-			FONTAIN.setMaxHgt;
+			FONTAIN.setMinHgt(null);
+			FONTAIN.setMaxHgt(null);
 			break;
 		}
 	}
@@ -172,44 +171,6 @@ CustomFontHgtOffset  = FontHeight;
 CustomFontHgtLimits  = FontHeight;
 
 ///
-/// \brief Data for Font weight patches
-///
-FW_Data =
-{
-	CustomFontWeight :
-	{
-		varName : '$newfontWgt',
-		limits : [0, 1000],
-		prompt : "Font Weight",
-		defVal : 400
-	},
-
-	CustomFontWgtOffset :
-	{
-		varName : '$newFontWgtOff',
-		limits : [-1000, 1000],
-		prompt : "Font Weight adjustment",
-		defVal : 0
-	},
-
-	CustomNormalFontWeight :
-	{
-		varName : '$newNormFontWgt',
-		limits : [100, 540],
-		prompt : "Normal Font Weight",
-		defVal : 400
-	},
-
-	CustomBoldFontWeight :
-	{
-		varName : '$newBoldFontWgt',
-		limits : [550, 900],
-		prompt : "Bold Font Weight",
-		defVal : 700
-	}
-};
-
-///
 /// \brief Modifies the font weight being fed to CreateFontA function in the client.
 ///
 FontWeight = function(patchName)
@@ -219,7 +180,7 @@ FontWeight = function(patchName)
 	if (!Warp.TestMode)
 	{
 		$$(_ + '1.1 - Deactivate other patches')
-		for (const name in FW_Data)
+		for (const name in this.Data.keys())
 		{
 			if (name !== patchName &&
 				!((name === "CustomNormalFontWeight" && patchName === "CustomBoldFontWeight") || (patchName === "CustomNormalFontWeight" && name === "CustomBoldFontWeight"))
@@ -232,7 +193,8 @@ FontWeight = function(patchName)
 	FONTAIN.load();
 
 	$$(_ + '2.1 - Get the new weight/weight offset from user')
-	const {varName, limits, defVal, prompt} = FW_Data[patchName];
+	const {varName, limits, defVal, prompt} = this.Data.get(patchName);
+	
 	const val = Exe.GetUserInput(varName, D_Int16, "Font Weight", "Enter the new " + prompt, defVal, {
 		min: limits[0],
 		max: limits[1],
@@ -271,6 +233,43 @@ FontWeight = function(patchName)
 };
 
 ///
+/// \brief Data for Font weight patches
+///
+FontWeight.Data = MakeMap(
+	'CustomFontWeight',
+	{
+		varName : '$newfontWgt',
+		limits : [0, 1000],
+		prompt : "Font Weight",
+		defVal : 400
+	},
+
+	'CustomFontWgtOffset',
+	{
+		varName : '$newFontWgtOff',
+		limits : [-1000, 1000],
+		prompt : "Font Weight adjustment",
+		defVal : 0
+	},
+
+	'CustomNormalFontWeight',
+	{
+		varName : '$newNormFontWgt',
+		limits : [100, 540],
+		prompt : "Normal Font Weight",
+		defVal : 400
+	},
+
+	'CustomBoldFontWeight',
+	{
+		varName : '$newBoldFontWgt',
+		limits : [550, 900],
+		prompt : "Bold Font Weight",
+		defVal : 700
+	}
+);
+
+///
 /// \brief Cleanup the staging done in the patch.
 ///
 FontWeight.cleanup = function(patchName)
@@ -279,18 +278,18 @@ FontWeight.cleanup = function(patchName)
 	{
 		case "CustomFontWgtOffset" :
 		{
-			FONTAIN.setWgtOff();
+			FONTAIN.setWgtOff(null);
 			break;
 		}
 		case "CustomFontWeight" :
 		{
-			FONTAIN.setWeight();
+			FONTAIN.setWeight(null);
 			break;
 		}
 		case "CustomNormalFontWeight" :
 		case "CustomBoldFontWeight" :
 		{
-			FONTAIN.changeWeight(FW_Data[patchName].defVal);
+			FONTAIN.changeWeight(this.Data.get(patchName).defVal);
 			break;
 		}
 	}
@@ -359,40 +358,8 @@ CustomFontName = function(patchName)
 ///
 CustomFontName.cleanup = patchName =>
 {
-	FONTAIN.setNameAddr();
+	FONTAIN.setNameAddr(null);
 	FONTAIN.unstage(patchName);
-};
-
-///
-/// \brief Data used by Charset patch
-///
-FC_Data =
-{
-	ANSI : 0,
-	BALTIC : 186,
-	CHINESEBIG5 : 136,
-	DEFAULT : 1,
-	EASTEUROPE : 238,
-	GB2312 : 134,
-	GREEK : 161,
-	HANGUL : 129,
-	MAC : 77,
-	OEM : 255,
-	RUSSIAN : 204,
-	SHIFTJIS : 128,
-	SYMBOL : 2,
-	TURKISH : 162,
-	VIETNAMESE : 163,
-
-	///Needs Korean language edition
-	JOHAB : 130,
-
-	///Needs Middle East language edition
-	ARABIC : 178,
-	HEBREW : 177,
-
-	///Needs Thai language edition
-	THAI : 222,
 };
 
 ///
@@ -408,16 +375,48 @@ CustomFontCharset = function(patchName)
 
 	$$(_ + '1.2 - Get the Font charset from user')
 	const varName = '$newFontCharset';
-	const key = Exe.GetUserInput(varName, D_Choice, "Font input", "Select the new Font Charset", "DEFAULT", {choices: Object.getOwnPropertyNames(FC_Data)});
+	const key = Exe.GetUserInput(varName, D_Choice, "Font input", "Select the new Font Charset", "DEFAULT", {choices: Object.getOwnPropertyNames(this.Data)});
 	if (key === false)
 		Cancel("Font charset reverted");
 
 	$$(_ + '2.1 - Setup the value')
-	FONTAIN.setCharset(FC_Data[key]);
+	FONTAIN.setCharset(this.Data[key]);
 
 	$$(_ + '2.2 - Stage the changes')
 	FONTAIN.stage(patchName);
 	return true;
+};
+
+///
+/// \brief Data used by Charset patch
+///
+CustomFontCharset.Data = 
+{
+	ANSI:           0,
+	BALTIC:       186,
+	CHINESEBIG5:  136,
+	DEFAULT:        1,
+	EASTEUROPE:   238,
+	GB2312:       134,
+	GREEK:        161,
+	HANGUL:       129,
+	MAC:           77,
+	OEM:          255,
+	RUSSIAN:      204,
+	SHIFTJIS:     128,
+	SYMBOL:         2,
+	TURKISH:      162,
+	VIETNAMESE:   163,
+
+	///Needs Korean language edition
+	JOHAB:        130,
+
+	///Needs Middle East language edition
+	ARABIC:       178,
+	HEBREW:       177,
+
+	///Needs Thai language edition
+	THAI:         222
 };
 
 ///

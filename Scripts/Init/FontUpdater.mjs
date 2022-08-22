@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2021 Neo-Mind                                            *
+*   Copyright (C) 2021-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-09-28                                             *
-*   Last Modified : 2021-10-22                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -187,7 +187,7 @@ function setup()
 			+	MOV(EAX, MaxHgt) //mov eax, <FONT_MaxHeight>
 			;
 		}
-		prefix = SetFillTargets(prefix, 1, {'1,1' : parts.byteCount()});
+		prefix = SetFillTargets(prefix, 1, {'1,1' : prefix.byteCount()});
 
 		parts.push(
 			prefix
