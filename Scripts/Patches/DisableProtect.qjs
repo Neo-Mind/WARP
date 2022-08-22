@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Ai4rei/AN                                         *
-*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*   Copyright (C) 2013-2022 Neo-Mind                                       *
 *   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
 *   Copyright (C) 2020-2021 X-EcutiOnner                                   *
 *                                                                          *
@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind, Andrei (4144), X-EcutiOnner       *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -259,13 +259,13 @@ NoHShield.cleanup = () =>
 NoGGuard = function()
 {
 	const _ = 'NoGGuard : ';
-
+	
 	$$(_ + '1 - Find where the error string is used in a PUSH (inside ProcessFindHack)')
 	let addr = Exe.FindHex( PUSH(this.FmtAddr) );
 	if (addr < 0)
 		throw Error("GameGuard Error string not PUSHed");
-
-	$$(_ + '2.1 - Find the starting location of ProcessFindHack (should be within 0x160 bytes before the PUSH)')
+	
+	$$(_ + '2.1 - Find the starting location of ProcessFindHack (should be within 0x160-0x1F0 bytes before the PUSH)')
 	let code =
 		FP_START        //push ebp
 	;	                //mov ebp, esp
@@ -276,7 +276,7 @@ NoGGuard = function()
 			PUSH(-1)    //push -1
 		+	PUSH()      //push immA
 		;
-		addr = Exe.FindHex(code, addr - 0x160, addr);
+		addr = Exe.FindHex(code, addr - (Exe.Version > 11 ? 0x260 : 0x160), addr);
 	}
 	else
 	{
@@ -315,16 +315,16 @@ NoGGuard = function()
 	const addrs = Exe.FindHexN(code);
 	if (addrs.isEmpty())
 		throw Error("'nProtect GameGuard' not used");
-
+	
 	/// 3.3 - Find the conditional jump (JE) before the PUSH (within 50h bytes)
 	if (Exe.Version >= 10) //VC10+
 	{
 		code =
-			TEST(AL, AL)       //test al, al
-		+	JE(WCp)            //je short _skip#2
-		+	CALL(NEG3WC)       //call func#1
-		+	MOV(ECX, EAX)      //mov ecx, eax
-		+	CALL()             //call func#2
+			TEST(AL, AL)                             //test al, al
+		+	JE(Exe.Version > 11 ? POS2WC : WCp)      //je _skip#2
+		+	CALL(Exe.Version > 11 ? POS3WC : NEG3WC) //call func#1
+		+	MOV(ECX, EAX)                            //mov ecx, eax
+		+	CALL()                                   //call func#2
 		;
 	}
 	else
