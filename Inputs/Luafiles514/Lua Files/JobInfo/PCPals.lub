@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-21                                             *
-*   Last Modified : 2022-02-22                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 ****************************************************************************
 ]]--
@@ -136,14 +136,14 @@ PCPals =
 	[PCIds.INQUISITOR]      = "INQUISITOR",
 	[PCIds.TROUBADOUR]      = "TROUBADOUR",
 	[PCIds.TROUVERE]        = "TROUVERE",
-	
+
 	--------------------------
 	-- Extended 4th Classes --
 	--------------------------
 	[PCIds.SKY_EMPEROR]   = "SKY_EMPEROR",
 	[PCIds.SKY_EMPEROR_F] = "SKY_EMPEROR2",
 	[PCIds.SOUL_ASCETIC]  = "SOUL_ASCETIC",
-	
+
 	--------------
 	-- Costumes --
 	--------------
@@ -153,14 +153,12 @@ PCPals =
 	-- Doram 1st Classes --
 	-----------------------
 	[PCIds.SUMMONER]   = "묘족",
-	[PCIds.SUMM_MOUNT] = "고양이카트",
 
 	-----------------------
 	-- Doram 2nd Classes --
 	-----------------------
 	[PCIds.SPIRIT_HANDLER]   = "SPIRIT_HANDLER",
-	[PCIds.SP_HANDLER_MOUNT] = "SPIRIT_HANDLER_RIDING",
-	
+
 	--[[
 	 __  __   ___   _   _  _  _  _____     ___  ___   ___
 	|  \/  | / _ \ | | | || \| ||_   _|   |_ _||   \ / __|
@@ -253,12 +251,22 @@ PCPals =
 	[PCMounts.SHEEP_INQUISITOR]     = "INQUISITOR_RIDING",
 	[PCMounts.OSTRICH_TROUBADOUR]   = "TROUBADOUR_RIDING",
 	[PCMounts.OSTRICH_TROUVERE]     = "TROUVERE_RIDING",
-	
+
 	--------------------------
 	-- Extended 4th Classes --
 	--------------------------
 	[PCMounts.HAETAE_SKY_EMPEROR]   = "SKY_EMPEROR_RIDING",
 	[PCMounts.HAETAE_SOUL_ASCETIC]  = "SOUL_ASCETIC_RIDING",
+
+	-----------------------
+	-- Doram 1st Classes --
+	-----------------------
+	[PCMounts.SUMM_MOUNT] = "고양이카트",
+
+	-----------------------
+	-- Doram 2nd Classes --
+	-----------------------
+	[PCMounts.SP_HANDLER_MOUNT] = "SPIRIT_HANDLER_RIDING",
 }
 
 --[[
@@ -541,7 +549,6 @@ PCPalInheritTbl =
 	-- Baby Doram Classes --
 	------------------------
 	[PCIds.SUMMONER_B]   = PCIds.SUMMONER,
-	[PCIds.SUMM_MOUNT_B] = PCIds.SUMM_MOUNT,
 
 	--[[
 	 __  __   ___   _   _  _  _  _____     ___  ___   ___
@@ -673,6 +680,11 @@ PCPalInheritTbl =
 	-------------------------------
 	[PCMounts.HAETAE_STAR_EMPEROR_B] = PCMounts.HAETAE_STAR_EMPEROR,
 	[PCMounts.HAETAE_SOUL_REAPER_B]  = PCMounts.HAETAE_SOUL_REAPER,
+
+	------------------------
+	-- Baby Doram Classes --
+	------------------------
+	[PCMounts.SUMM_MOUNT_B] = PCMounts.SUMM_MOUNT,
 }
 
 --[[

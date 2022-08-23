@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-21                                             *
-*   Last Modified : 2022-02-22                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 ****************************************************************************
 ]]--
@@ -114,7 +114,7 @@ PCImfs =
 	[PCIds.NIGHT_WATCH]    = "NIGHT_WATCH",
 	[PCIds.SHINKIRO]       = "SHINKIRO",
 	[PCIds.SHIRANUI]       = "SHIRANUI",
-	
+
 	-----------------
 	-- 4th Classes --
 	-----------------
@@ -141,7 +141,7 @@ PCImfs =
 	[PCIds.SKY_EMPEROR]   = "SKY_EMPEROR",
 	[PCIds.SKY_EMPEROR_F] = "SKY_EMPEROR2",
 	[PCIds.SOUL_ASCETIC]  = "SOUL_ASCETIC",
-	
+
 	--------------
 	-- Costumes --
 	--------------
@@ -151,14 +151,12 @@ PCImfs =
 	-- Doram 1st Classes --
 	-----------------------
 	[PCIds.SUMMONER]   = "summoner",
-	[PCIds.SUMM_MOUNT] = "cart_summoner",
 
 	-----------------------
 	-- Doram 2nd Classes --
 	-----------------------
 	[PCIds.SPIRIT_HANDLER]   = "SPIRIT_HANDLER",
-	[PCIds.SP_HANDLER_MOUNT] = "SPIRIT_HANDLER_RIDING",
-	
+
 	--[[
 	 __  __   ___   _   _  _  _  _____     ___  ___   ___
 	|  \/  | / _ \ | | | || \| ||_   _|   |_ _||   \ / __|
@@ -254,7 +252,7 @@ PCImfs =
 	[PCMounts.BIKE_NIGHT_WATCH]      = "NIGHT_WATCH_RIDING",
 	[PCMounts.FROG_SHINKIRO]         = "SHINKIRO_RIDING",
 	[PCMounts.FROG_SHIRANUI]         = "SHIRANUI_RIDING",
-	
+
 	-----------------
 	-- 4th Classes --
 	-----------------
@@ -272,12 +270,22 @@ PCImfs =
 	[PCMounts.SHEEP_INQUISITOR]     = "INQUISITOR_RIDING",
 	[PCMounts.OSTRICH_TROUBADOUR]   = "TROUBADOUR_RIDING",
 	[PCMounts.OSTRICH_TROUVERE]     = "TROUVERE_RIDING",
-	
+
 	--------------------------
 	-- Extended 4th Classes --
 	--------------------------
 	[PCMounts.HAETAE_SKY_EMPEROR]   = "SKY_EMPEROR_RIDING",
 	[PCMounts.HAETAE_SOUL_ASCETIC]  = "SOUL_ASCETIC_RIDING",
+
+	-----------------------
+	-- Doram 1st Classes --
+	-----------------------
+	[PCMounts.SUMM_MOUNT] = "cart_summoner",
+
+	-----------------------
+	-- Doram 2nd Classes --
+	-----------------------
+	[PCMounts.SP_HANDLER_MOUNT] = "SPIRIT_HANDLER_RIDING",
 }
 
 --[[
@@ -504,8 +512,7 @@ PCImfInheritTbl =
 	------------------------
 	-- Baby Doram Classes --
 	------------------------
-	[PCIds.SUMMONER_B]   = PCIds.SUMMONER,
-	[PCIds.SUMM_MOUNT_B] = PCIds.SUMM_MOUNT,
+	[PCIds.SUMMONER_B]  = PCIds.SUMMONER,
 
 	--[[
 	 __  __   ___   _   _  _  _  _____     ___  ___   ___
@@ -617,4 +624,9 @@ PCImfInheritTbl =
 	-------------------------------
 	[PCMounts.HAETAE_STAR_EMPEROR_B] = PCIds.TAEKWON,
 	[PCMounts.HAETAE_SOUL_REAPER_B]  = PCIds.TAEKWON,
+
+	------------------------
+	-- Baby Doram Classes --
+	------------------------
+	[PCMounts.SUMM_MOUNT_B] = PCMounts.SUMM_MOUNT,
 }

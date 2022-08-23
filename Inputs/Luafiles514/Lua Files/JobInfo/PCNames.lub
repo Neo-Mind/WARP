@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-03-21                                             *
-*   Last Modified : 2022-02-22                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 ****************************************************************************
 ]]--
@@ -199,6 +199,11 @@ PCNames =
 	[PCIds.ABYSS_CHASER]    = "Abyss Chaser",
 	[PCIds.INQUISITOR]      = "Inquisitor",
 
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	[PCIds.SOUL_ASCETIC]    = "Soul Ascetic",
+
 	---------------------
 	-- Unused classes? --
 	---------------------
@@ -214,7 +219,7 @@ PCNames =
 	-- Baby Doram 1st Classes --
 	------------------------
 	[PCIds.SUMMONER_B]   = "Baby Summoner",
-	
+
 	-----------------------
 	-- Doram 2nd Classes --
 	-----------------------
@@ -516,11 +521,11 @@ PCNames_F =
 	--------------------------
 	[PCIds.SHIRANUI]       = "Shiranui",
 	[PCIds.STAR_EMPEROR]   = "Star Empress",
-	
+
 	-------------------------------
 	-- Baby Extended 3rd Classes --
 	-------------------------------
-	[PCIds.STAR_EMPEROR_B]   = "Baby Star Empress",
+	[PCIds.STAR_EMPEROR_B]  = "Baby Star Empress",
 
 	-----------------
 	-- 4th Classes --
@@ -529,6 +534,11 @@ PCNames_F =
 
 	[PCIds.ELEMENT_MASTER]  = "Elemental Mistress",
 	[PCIds.TROUVERE]        = "Trouvere",
+
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	[PCIds.SKY_EMPEROR]     = "Sky Empress",
 
 	---------------------
 	-- Unused classes? --
@@ -753,6 +763,11 @@ PCNames_M =
 
 	[PCIds.ELEMENT_MASTER]  = "Elemental Master",
 	[PCIds.TROUBADOUR]      = "Troubadour",
+
+	--------------------------
+	-- Extended 4th Classes --
+	--------------------------
+	[PCIds.SKY_EMPEROR]     = "Sky Emperor",
 
 	---------------------
 	-- Unused classes? --
@@ -1019,19 +1034,4 @@ PCNameInheritTbl =
 	[PCIds.WINDHAWK_MOUNT]  = PCIds.WINDHAWK,
 
 	[PCIds.IMPERIAL_MOUNT]  = PCIds.IMPERIAL_GUARD,
-
-	-----------------------
-	-- Doram 1st Classes --
-	-----------------------
-	[PCIds.SUMM_MOUNT]   = PCIds.SUMMONER,
-
-	----------------------------
-	-- Baby Doram 1st Classes --
-	----------------------------
-	[PCIds.SUMM_MOUNT_B] = PCIds.SUMMONER_B,
-	
-	-----------------------
-	-- Doram 2nd Classes --
-	-----------------------
-	[PCIds.SP_HANDLER_MOUNT] = PCIds.SPIRIT_HANDLER,
 }
