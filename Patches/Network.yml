@@ -1,6 +1,6 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) ?-2021 *Various authors*                                 #
+#   Copyright (C) ?-2022 *Various authors*                                 #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2021-10-29                                             #
+#   Last Modified : 2022-08-23                                             #
 #                                                                          #
 ############################################################################
 
@@ -137,19 +137,26 @@ DisableEncr:
     
     patches:
         - NoLoginEncr:
-            title : Disable Login encryption
+            title : Disable Login password encryption
             recommend : yes
             author : Neo-Mind
-            desc : Disable encryption in Login Packet 0x2b0.
+            desc : Disable encryption in Login Packet 0x2b0 for old clients.
         
         - NoPacketEncr:
-            title : Disable Packet encryption
+            title : Disable Map packet encryption
             recommend : no
             author : Ai4rei/AN
-            desc : Disable kRO Packet ID encryption. Patch is also known as Skip Packet Obfuscation.
+            desc : Disable usage of Packet encryption for sending packets to map server.<br> Patch is also known as Skip Packet Obfuscation.
         
         - NoEncrForLC:
-            title : Disable Login/Char encryption
+            title : Disable Login/Char packet encryption
             recommend : no
             author : Neo-Mind
             desc : Disable usage of Packet encryption for sending packets to login & char server.
+        
+        - NoPassEncr:
+            title : Disable Login password encryption
+            recommend : no
+            author : Andrei Karas (4144) , Jchcc
+            desc : Disable encryption of password in login packet 0x64 for langtypes 4 & 7.
+            needs : UseOldLogin

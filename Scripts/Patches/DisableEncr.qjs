@@ -1,7 +1,9 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2021 Ai4rei/AN                                         *
-*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*   Copyright (C) 2013-2022 Neo-Mind                                       *
+*   Copyright (C) 2017-2022 Andrei Karas (4144)                            *
+*   Copyright (C) 2017-2022 Jchcc                                          *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -21,9 +23,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Ai4rei/AN, Neo-Mind                                    *
+*   Author(s)     : Ai4rei/AN, Neo-Mind, Andrei (4144), Jchcc              *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-10-22                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -215,3 +217,64 @@ NoEncrForLC = function()
 ///
 NoEncrForLC.validate = () =>
 	Exe.BuildDate > 20180309;
+
+///
+/// \brief Enforce the jumps after comparisons with Langtypes 7 and 4.
+///
+NoPassEncr = function()
+{
+	const _ = 'NoPassEncr : ';
+
+	$$(_ + '1.1 - Ensure the LANGTYPE is loaded')
+	LANGTYPE.load();
+
+	$$(_ + '1.2 - Find the langtype comparison for sending login packet inside CLoginMode::ChangeState')
+	let code =
+		CMP(BYTE_PTR, [POS4WC], 0) //cmp byte ptr [g_passwordencrypt], 0
+	+	JNE(POS2WC)                //jne _skip
+	+	MOV(R32, [LANGTYPE])       //mov regA, dword ptr [g_serviceType]
+	+	TEST(R32, R32)             //test regA, regA
+	+	JZ(POS2WC)                 //jz _sendSSO -> Send SSO Packet (ID = 0x825. was 0x2B0 in Old clients)
+	+	CMP(R32, 0x12)             //cmp regA, 12h
+	+	JZ(POS2WC)                 //jz _sendSSO
+	;
+
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("Langtype comparison missing");
+
+	$$(_ + '1.3 - Move address to after the code')
+	addr += code.byteCount();
+
+	$$(_ + '2.1 - Find the langtype comparison with 7')
+	code =
+		CMP(R32, 7)  //cmp regA, 7
+	+	JNE(WCp)     //jne short _to_nextcmp
+	;
+	addr = Exe.FindHex(code, addr, addr + 0x50);
+	if (addr < 0)
+		throw Error("Comparison with 7 missing");
+
+	$$(_ + '2.2 - Enforce the conditional jump')
+	Exe.SetJMP(addr + 3);
+
+	$$(_ + '2.3 - Find the langtype comparison with 4 after it')
+	code =
+		CMP(R32, 4)  //cmp regA, 7
+	+	JNE(WCp)     //jne short _skip#2
+	;
+	addr = Exe.FindHex(code, addr + 4, addr + 0x50);
+	if (addr < 0)
+		throw Error("Comparison with 4 missing");
+
+	$$(_ + '2.4 - Enforce the conditional jump')
+	Exe.SetJMP(addr + 3);
+
+	return true;
+};
+
+///
+/// \brief Disable for older clients which didnt have the issue
+///
+NoPassEncr.validate = () =>
+	!ROC.HasLWhidden && Exe.BuildDate > 20170000;
