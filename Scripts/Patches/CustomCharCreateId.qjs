@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2018-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2018-2022 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-09-11                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -55,11 +55,9 @@ CustomCharCreateId = function()
 		throw Error("Expected exactly 1 match for Char create");
 
 	$$(_ + '2.1 - Retrieve the new value from user')
-	let newId = Exe.GetUserInput('$newJobVal', D_Uint16, "Job Id Input", "Enter the new job id", 1, {saveDefault: true});
+	const newId = Exe.GetUserInput('$newJobVal', D_Uint16, "Job Id Input", "Enter the new job id", 1, {saveDefault: true});
 	if (newId === false)
 		Cancel("User didn't provide any inputs");
-
-	newId = parseInt(newId); //temporary fix for strings
 	
 	$$(_ + '2.2 - Change the assignment of job id')
 	Exe.SetHex(addrs[0] + prefix.byteCount(), MOV(EAX, newId) + NOP + NOP);

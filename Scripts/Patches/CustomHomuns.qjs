@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2021 Neo-Mind                                            *
+*   Copyright (C) 2021-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-11-26                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,7 +50,7 @@ CustomHomuns = function()
 	$$(_ + '1.4 - Get the register containing the base address')
 	let refReg = ins.MRM.getReg('M');
 
-	if (!CACHE.has('CH_Infos'))
+	if (!CACHE.has('CH_Data'))
 	{
 		$$(_ + '2.1 - Ensure LANGTYPE is loaded . Needed by FetchTillEnd')
 		LANGTYPE.load();
@@ -88,21 +88,19 @@ CustomHomuns = function()
 		if (overflow)
 			throw Error("Unable to find end of assignments");
 
-		CACHE.put('CH_Infos', [endIns, retainer]);
+		CACHE.put('CH_Data', [endIns, retainer]);
 	}
 
 	$$(_ + '2.3 - Get the max homunculi limit from user')
-	let MaxHomun = Exe.GetUserInput('$maxHomun', D_Int16, "Limit Input", "Enter the maximum homunculus ID required", 6080, {min: 6080, max: 7000, saveDefault: true});
+	const MaxHomun = Exe.GetUserInput('$maxHomun', D_Int16, "Limit Input", "Enter the maximum homunculus ID required", 6080, {min: 6080, max: 7000, saveDefault: true});
 	if (MaxHomun === false)
 		Cancel("No Max Limit specified");
-
-	MaxHomun = parseInt(MaxHomun); //temporary fix for strings
 	
 	$$(_ + '2.4 - Ensure LUA object is loaded')
 	LUA.load();
 
-	$$(_ + '2.5 - Retrieve the infos from CACHE')
-	const [endIns, retainer] = CACHE.get('CH_Infos');
+	$$(_ + '2.5 - Retrieve the saved data from CACHE')
+	const [endIns, retainer] = CACHE.get('CH_Data');
 
 	$$(_ + '2.6 - Prepare the code to call LUA function for loading tables')
 	const funcName = "ReqJobName";

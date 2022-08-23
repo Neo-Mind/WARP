@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN                                              *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-09-11                                             *
+*   Last Modified : 2022-08-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -60,8 +60,6 @@ CustomSSQuality = function()
 	let newValue = Exe.GetUserInput('$ssQuality', D_Int8, "Screenshot Quality", "Enter the new quality factor", 50, {min:0, max:100});
 	if (newValue === false)
 		Cancel("Quality factor", 50);
-
-	newValue = parseInt(newValue); //temporary fix for string
 	
 	$$(_ + '2.1 - Get the jquality addr = DIBChannels displacement + 60')
 	const jqAddr = Instr.FromAddr(addr).Disp + 60;

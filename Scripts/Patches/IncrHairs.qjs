@@ -85,7 +85,6 @@ IncrHairs.stage1 = patchName =>
 			if (maxHairs === false)
 				Cancel("Limit reverted to default");
 
-			maxHairs = parseInt(maxHairs); //temporary fix for strings
 			break;
 		}
 		case "Allow65kHairs":
