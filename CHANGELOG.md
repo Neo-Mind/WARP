@@ -1,7 +1,13 @@
+# 2022-09-06 Changes
+
+## Patch Updates
+- Fixed [bug with Custom Captcha decompression patch](https://github.com/Neo-Mind/WARP/issues/103)
+
+
 # 2022-08-24 Changes
 
 ## Extension Updates
-- Updated 'Extract msgstringtable' extension for latest client
+- Updated **`Extract msgstringtable`** extension for latest client
 
 
 # 2022-08-23 Changes
