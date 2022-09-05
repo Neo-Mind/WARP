@@ -1,3 +1,31 @@
+# 2022-08-24 Changes
+
+## Extension Updates
+- Updated 'Extract msgstringtable' extension for latest client
+
+
+# 2022-08-23 Changes
+
+## Patch Updates
+- Fixed [crashes with Custom Shield patch](https://github.com/Neo-Mind/WARP/issues/97)
+
+- Fixed [crashes with Custom Font Height patches](https://github.com/Neo-Mind/WARP/issues/92)
+
+- Added patch to [Disable password encryption in login packet for new clients](https://github.com/Neo-Mind/WARP/issues/94)
+
+- Fixed [conflict in Shared head palette patches](https://github.com/Neo-Mind/WARP/issues/84)
+
+- Updated Lua files for Custom Job patch with [missing entries for new jobs](https://github.com/Neo-Mind/WARP/issues/98)
+  and [correct mappings for doram race](https://github.com/Neo-Mind/WARP/issues/96)
+  
+- Partially fixed Gameguard patch. Still needs more work. 
+
+- Removed unnecessary parseInt calls from scripts
+
+## Script Updates
+- Updated **`ReloadPatch`** function to return the value of the called patch function.
+
+
 # 2022-04-03 Changes
 
 ## Patch Updates
