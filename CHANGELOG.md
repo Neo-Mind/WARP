@@ -1,13 +1,21 @@
 # 2022-09-06 Changes
 
 ## Patch Updates
+- Updated [Skill spam patch](https://github.com/Neo-Mind/WARP/issues/102) for newer clients.
+
+- Updated copyrights for all patch definition yml files.
+
+
+# 2022-09-06 Changes
+
+## Patch Updates
 - Fixed [bug with Custom Captcha decompression patch](https://github.com/Neo-Mind/WARP/issues/103)
 
 
 # 2022-08-24 Changes
 
 ## Extension Updates
-- Updated **`Extract msgstringtable`** extension for latest client
+- Updated **`Extract msgstringtable`** extension for latest client.
 
 
 # 2022-08-23 Changes
@@ -26,7 +34,7 @@
   
 - Partially fixed Gameguard patch. Still needs more work. 
 
-- Removed unnecessary parseInt calls from scripts
+- Removed unnecessary parseInt calls from scripts.
 
 ## Script Updates
 - Updated **`ReloadPatch`** function to return the value of the called patch function.

@@ -1,6 +1,6 @@
 ############################################################################
 #                                                                          #
-#   Copyright (C) ?-2021 *Various authors*                                 #
+#   Copyright (C) ?-2022 *Various authors*                                 #
 #                                                                          #
 #   This file is a part of WARP project (specific to RO clients)           #
 #                                                                          #
@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2021-09-26                                             #
+#   Last Modified : 2022-09-07                                             #
 #                                                                          #
 ############################################################################
 
@@ -78,7 +78,7 @@ CustomChar:
         - AllowSkillSpam:
             title : Allow spam skills by hotkey
             recommend : no
-            author : Functor , Andrei Karas (4144)
+            author : Neo-Mind, Functor , Andrei Karas (4144)
             desc : Allow spamming of skills by continuous press of hotkey.
         
         - AllowGuildInClan:

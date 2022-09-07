@@ -2,6 +2,7 @@
 *                                                                          *
 *   Copyright (C) 2019 Functor                                             *
 *   Copyright (C) 2019-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2021-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -21,7 +22,7 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Functor, Andrei (4144)                                 *
+*   Author(s)     : Functor, Andrei (4144), Neo-Mind                       *
 *   Created Date  : 2020-11-22                                             *
 *   Last Modified : 2021-07-25                                             *
 *                                                                          *
@@ -37,66 +38,115 @@ AllowSkillSpam = function()
 	const _ = 'AllowSkillSpam : ';
 
 	$$(_ + '1 - Find the comparison')
-	let prefix =
+	let parts =
+	[
 		MOV(EAX, [POS4WC])    //mov eax, dword ptr [g_session.virtual_key_code]
-	;
-	let suffix =
+	,
 		CMP(EBX, 0x7F4)       //cmp ebx, 7F4h
-	+	CMOVZ(EAX, [POS4WC])  //cmovz eax, dword ptr [g_session.field_5ADC]
+	,
+		CMOVZ(EAX, [POS4WC])  //cmovz eax, dword ptr [g_session.field_5ADC]
 	+	MOV([POS4WC], EAX)    //mov dword ptr [g_session.virtual_key_code], eax
-	;
+	];
 
-	let addr = Exe.FindHex(prefix + suffix);
+	let addr = Exe.FindHex(parts);
 	if (addr < 0 && ROC.IsZero)
 	{
-		prefix = "";
-		suffix =
+		parts =
+		[
+			""
+		,
 			CMP(R32, 0x7F4)       //cmp regA, 7F4h
-		+	MOV(EAX, [POS4WC])    //mov eax, dword ptr [g_session.virtual_key_code]
+		,
+			MOV(EAX, [POS4WC])    //mov eax, dword ptr [g_session.virtual_key_code]
 		+	MOV(R32, 0x5D)        //mov regB, 5Dh
 		+	CMOVE(EAX, [POS4WC])  //cmovz eax, dword ptr [g_session.field_5ADC]
 		+	MOV([POS4WC], EAX)    //mov dword ptr [g_session.virtual_key_code], eax
-		;
-		addr = Exe.FindHex(prefix + suffix);
+		];
+		addr = Exe.FindHex(parts);
 	}
-
-	if (addr < 0 && Exe.BuildDate > 20180000)
+	if (addr > 0)
 	{
-		prefix = "";
-		suffix =
+		$$(_ + '2.1 - Prepare replacement code - CMP is for triggering Zero Flag')
+		const code =
+			CMP(EBX, EBX)  //cmp ebx, ebx
+		+	NOPs(parts.byteCount(1) - 2) //4 or 3 byte NOP
+		;
+
+		$$(_ + '2.2 - Overwrite the original CMP')
+		Exe.SetHex(addr + parts.byteCount(0), code);
+	}
+	else if (Exe.BuildDate < 20180700)
+	{
+		throw Error("Pattern not found");
+	}
+	else
+	{
+		$$(_ + '3.1 - Find the new comparison')
+		let code =
 			CMP(Exe.Version < 14 ? R32 : EAX, 0x7F4) //cmp regA, 7F4h ; regA = EAX for VC14.16
 		+	JE(WCp)                  //je _skip
 		+	MOV(R32, [EBP, NEG2WC])  //mov regB, dword ptr [LOCAL.x]
 		+	MOV(R32, 0x438)          //mov regC, 438h
 		+	MOV([EBP, NEG2WC], R16)  //mov word ptr [LOCAL.y], reg16D
 		;
-		addr = Exe.FindHex(prefix + suffix);
+
+		addr = Exe.FindHex(code);
+		if (addr < 0)
+			throw Error("New Pattern not found");
+
+		$$(_ + '3.2 - Extract the comparison')
+		const cmp74 = Instr.FromAddr(addr);
+
+		$$(_ + '3.3 - Find the code where the comparison with the virtual_key_code is made')
+		code =
+			TEST(R32, R32)     //test regA, regA
+		+	JZ(WCp)            //jz short _skip
+		+	CMP([POS4WC], R32) //cmp dword ptr [tgt], regB
+		+	JE(WCp)            //je short _assign
+		+	MOV(ECX, POS4WC)   //mov ecx, offset#1
+		+	CALL(ALLWC)        //call assigner
+		+	MOV([POS4WC], R32) //mov dword ptr [src], regB ; _assign
+		;
+		addr = Exe.FindHex(code);
+		if (addr < 0)
+			throw Error("virtual_key_code reference missing");
+
+		$$(_ + '3.4 - Extract the first 4 instructions')
+		const test0 = Instr.FromAddr(addr);
+		let jz1 = test0.getNext();
+		const rcmp = jz1.getNext();
+		let jz2 = rcmp.getNext();
+
+		$$(_ + '3.5 - Update the jumps')
+		jz1.Immd -= (rcmp.Size + jz2.Size);
+		jz2.Immd += (test0.Size + jz1.Size);
+
+		$$(_ + '3.6 - Reorder and apply')
+		Exe.SetHex(addr, rcmp + jz2 + test0 + jz1);
+
+		$$(_ + '3.7 - Extract the target address')
+		const tgt = rcmp.Disp;
+
+		$$(_ + '4.1 - Construct the new function')
+		code =
+			PUSH_EAX             //push eax
+		+	MOV(EAX, [tgt + 4])  //mov eax, dword ptr [src]
+		+	MOV([tgt], EAX)      //mov dword ptr [tgt], eax
+		+	POP_EAX              //pop eax
+		+	cmp74                //cmp regA, 7F4h ; regA = EAX for VC14.16
+		+	RETN()               //retn
+		;
+
+		$$(_ + '4.2 - Prepare the arguments for auto-hook')
+		const args =
+		{
+			isCall: true,
+			nops: cmp74.Size - 5
+		};
+
+		$$(_ + '4.3 - Add our code and call it from the original comparison address')
+		AutoHook(cmp74.Addr, code, args);
 	}
-
-	if (addr < 0)
-		throw Error("Pattern not found");
-
-	/* No need of this since we are not getting any false matches. But keeping it as a backup for future.
-
-	$$(_ + '1.2 - Save the location after the pattern')
-	let endAddr = addr + code.byteCount();
-
-	$$(_ + '1.3 - Ensure the pattern is not a false match')
-	if (Exe.GetUint32(addr + 1) !== Exe.GetUint32(endAddr - 4))
-		throw Error("False match found (key code isnt correct)");
-
-	if ((Exe.GetUint32(addr + 1) + 4) !== Exe.GetUint32(endAddr - 9))
-		throw Error("False match found (2nd offset mismatch)");
-	*/
-
-	$$(_ + '2.1 - Prepare replacement code - CMP is for triggering Zero Flag')
-	code =
-		CMP(EBX, EBX)  //cmp ebx, ebx
-	+	NOP4           //4 byte NOP
-	;
-
-	$$(_ + '2.2 - Overwrite the original CMP')
-	Exe.SetHex(addr + prefix.byteCount(), code);
 
 	return true;
 };
