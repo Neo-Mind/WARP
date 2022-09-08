@@ -1,9 +1,11 @@
-# 2022-09-06 Changes
+# 2022-09-08 Changes
 
 ## Patch Updates
-- Updated [Skill spam patch](https://github.com/Neo-Mind/WARP/issues/102) for newer clients.
+- Updated [Skill spam patch for newer clients](https://github.com/Neo-Mind/WARP/issues/102).
 
 - Updated copyrights for all patch definition yml files.
+
+- Updated [Disable Gameguard patch for 2022 clients](https://github.com/Neo-Mind/WARP/issues/95)
 
 
 # 2022-09-06 Changes
