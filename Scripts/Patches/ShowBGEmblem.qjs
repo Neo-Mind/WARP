@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2014-2021 Neo-Mind                                       *
+*   Copyright (C) 2014-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2021-10-29                                             *
+*   Last Modified : 2022-09-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,7 +33,10 @@ ShowBGEmblem = function()
 {
 	const _ = 'ShowBGEmblem : ';
 
-	$$(_ + '1.1 - Find the Mode checker pattern used in the emblem display function.')
+	$$(_ + '1 - Load the SSN')
+	SSN.load();
+
+	$$(_ + '2.1 - Find the Mode checker pattern used in the emblem display function.')
 	const plus110 = Exe.Version < 11  //(regA is usually ESI)
 	?
 		ADD(R32, 0x110)               //add regA, 110h ; for VC9-VC10
@@ -49,10 +52,10 @@ ShowBGEmblem = function()
 		throw Error("Reference pattern missing");
 
 	let code =
-		MOV(ECX, POS4WC)  //mov ecx, <g_session>
-	+	CALL(POS3WC)      //call CSession::IsSiegeMode
-	+	TEST(EAX, EAX)    //test eax, eax
-	+	JZ(WCp)           //jz short _skip
+		MOV(ECX, SSN)  //mov ecx, <g_session>
+	+	CALL(POS3WC)   //call CSession::IsSiegeMode
+	+	TEST(EAX, EAX) //test eax, eax
+	+	JZ(WCp)        //jz short _skip
 	;
 
 	const matchAddr = addrs.findAs( memAddr =>
@@ -72,8 +75,7 @@ ShowBGEmblem = function()
 	if (Exe.GetUint8(matchAddr + csize) === 0xB9)
 		Exe.SetNOPs(matchAddr + csize, csize);
 
-	$$(_ + '1.4 - Save the values needed to find the 2nd pattern')
-	const movSession = Exe.GetHex(matchAddr, 5);
+	$$(_ + '1.4 - Save the Function address')
 	const IsSiegeMode = Exe.GetTgtAddr(matchAddr + 6);
 
 	$$(_ + '1.5 - Extract the needed stuff from inside the function (always has the same form)')
@@ -92,7 +94,7 @@ ShowBGEmblem = function()
 	{
 		$$(_ + '2.1 - Find the second pattern')
 		code =
-			movSession      //mov ecx, <g_session>
+			MOV(ECX, SSN)   //mov ecx, <g_session>
 		+	CALL(ALLWC)     //call CSession::IsSiegeMode
 		+	TEST(EAX, EAX)  //test eax, eax
 		;
@@ -123,7 +125,7 @@ ShowBGEmblem = function()
 		if (Exe.Version === 9)
 		{
 			code =
-				movSession      //mov ecx, <g_session>
+				MOV(ECX, SSN)   //mov ecx, <g_session>
 			+	CALL(ALLWC)     //call CSession::IsSiegeMode
 			+	POP_R           //pop regA
 			+	TEST(EAX, EAX)  //test eax, eax

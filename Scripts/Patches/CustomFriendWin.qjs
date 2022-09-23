@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020-2021 Andrei Karas (4144)                            *
+*   Copyright (C) 2020-2022 Andrei Karas (4144)                            *
 *   Copyright (C) 2020-2021 X-EcutiOnner (xex.ecutionner@gmail.com)        *
 *   Copyright (C) 2019-2021 CH.C (jchcc)                                   *
 *                                                                          *
@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144), X-EcutiOnner, CH.C (jchcc)              *
 *   Created Date  : 2021-01-22                                             *
-*   Last Modified : 2021-08-25                                             *
+*   Last Modified : 2022-09-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -40,12 +40,13 @@ CustomFriendsLimit = function()
 	let code;
 	if (Exe.BuildDate > 20170000)
 	{
+		const reg = Exe.BuildDate > 20220000 ? EBX : EDI;
 		code =
-			MOV(EAX, [EDI, POS1WC]) // 00 mov eax, [edi+98h]
+			MOV(EAX, [reg, POS1WC]) // 00 mov eax, [regA+98h] ; regA = ebx (for 2022 client) or edi
 		+	MOV(EAX, [EAX, 0x18])   // 06 mov eax, [eax+18h]
 		+	CDQ                     // 09 cdq
-		+	IDIV([EDI, POS2WC])     // 10 idiv dword ptr [edi+100h]
-		+	MOV([EDI, POS1WC], EAX) // 16 mov [edi+0F8h], eax
+		+	IDIV([reg, POS2WC])     // 10 idiv dword ptr [edi+100h]
+		+	MOV([reg, POS1WC], EAX) // 16 mov [edi+0F8h], eax
 		;
 	}
 	else if (Exe.BuildDate > 20131200)
@@ -102,15 +103,6 @@ CustomFriendsLimit = function()
 	const addr = Exe.FindHex(prefix + code + suffix, refAddr, refAddr + 0xBC);
 	if (addr < 0)
         throw Error("PUSH Pattern missing");
-
-    /*
-	if (sprintfOffset[1] === true)
-        logVaFunc("sprintf", offset, sprintfOffset[0]);
-    else
-        logRawFunc("sprintf", offset, sprintfOffset[0]);
-
-    logVal("max friends count", offset, [repLoc, 1]);
-	*/
 
 	$$(_ + '2.1 - Get the new limit from user')
 	const varName = '$maxFriends';

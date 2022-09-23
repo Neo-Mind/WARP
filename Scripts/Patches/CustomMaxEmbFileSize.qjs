@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020-2022 Neo-Mind                                       *
+*   Copyright (C) 2022 Andrei Karas (4144)                            *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -11,7 +11,7 @@
 *                                                                          *
 *   This program is distributed in the hope that it will be useful,        *
 *   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   MERCHANT??ILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
 *   GNU General Public License for more details.                           *
 *                                                                          *
 *   You should have received a copy of the GNU General Public License      *
@@ -20,80 +20,53 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Neo-Mind                                               *
-*   Created Date  : 2021-08-21                                             *
-*   Last Modified : 2022-09-23                                             *
+*   Author(s)     : Andrei (4144)                                          *
+*   Created Date  : 2022-09-15                                             *
+*   Last Modified : 2022-09-15                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Initialize the Cache module
+/// \brief Change the buffer size being used while calling uncompress function for 
+///        guild emblem files
 ///
-CACHE.init();
-
-///
-/// \brief Load the ROC module with all the misc goodies from ROClient
-///
-ROC.load();
-
-///
-/// \brief Initialize the remaining modules
-///
-DGRF.init();
-WINMGR.init();
-LANGTYPE.init();
-SRVRTYPE.init();
-LUA.init();
-PACKET.init();
-MBAR.init();
-FONTAIN.init();
-WINMKR.init();
-SSN.init();
-
-///
-/// \brief Set up options & tag for Case Insensitive patches
-///
-CACHE.setup('CIS', 'CaseInsensFn',
+CustomMaxEmbFileSize = function()
 {
-	cleanTag_after_userDel: false,
-});
+	const _ = 'CustomMaxEmbFileSize	: ';
+	
+	$$(_ + '1 - Find the locations where the size is moved/compared')
+	const parts =
+	[
+		PUSH(POS4WC)                //push addr#1
+	+	PUSH(0x2C)                  //push 2C
+	+	MOV([R32, WCp], 0xC800)     //mov dword ptr [LOCAL.x], 0C800
+	,
+		MOV(BYTE_PTR, [R32, 4], 0)  //mov byte ptr [regA+4], 0
+	+	CALL()                      //call func#1
+	];
+	
+	
+	const addrs = Exe.FindHexN(1, 2, parts);
+	if (addrs.isEmpty())
+		throw Error("Found inadequate or excess no. of matches");
+	
+	const offset = parts.byteCount(0) - 4;
+	
+	$$(_ + '2.1 - Get the new max value from user')
+	const varName = '$maxEmblemSize';
+    const value = Exe.GetUserInput(varName, D_Int32, "Max Emblem size", "Enter Max file size for guild emblem", 0xC800, {min: 1});
+	if (value === false)
+		Cancel("Max Size", 0xC800);
+
+    $$(_ + '2.2 - Replace the 0xC800 value')
+	for (const addr in addrs)
+		Exe.SetFromVar(addr + offset, varName);
+	
+	return true;
+};
 
 ///
-/// \brief Set up options & tag for Custom Skill patches
+/// \brief Disable for older clients
 ///
-CACHE.setup('CSK', 'SkillInfo',
-{
-	cleanTag_after_userDel: false,
-});
-
-///
-/// \brief Set up options & tag for Custom Encryption Key patches
-///
-CACHE.setup('PACKET', 'EncKeys',
-{
-	cleanTag_after_restore: false,
-	cleanTag_after_userDel: false,
-	dealloc_after_restore: false,
-});
-
-///
-/// \brief Set up options & tag for Resize Mob bar patches
-///
-CACHE.setup('MBAR', 'MobHP',
-{
-	cleanTag_after_restore: false,
-	dealloc_after_restore: false,
-});
-
-///
-/// \brief Set up options & tag for New Button visibility patches
-///
-CACHE.setup('NBV', 'ButtonTbl',
-{
-	dealloc_after_tagClean: true,
-});
-
-///
-/// \brief Initializes the FnStore map used with GetImpRefs
-///
-InitFnStore();
+CustomMaxEmbFileSize.validate = () =>
+	Exe.BuildDate > 20190700;

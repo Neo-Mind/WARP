@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2022-09-07                                             #
+#   Last Modified : 2022-09-24                                             #
 #                                                                          #
 ############################################################################
 
@@ -32,6 +32,18 @@ CustomData:
     color : deepskyblue
     
     patches:
+        - CustomMaxEmbFileSize:
+            title : Customize Max Emblem file size
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Change the maximum limit used for guild emblem's file size.
+        
+        - CustomRodexTax:
+            title : Customize Rodex tax
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Change the tax deducted while sending items by rodex.
+        
         - CustomGuildExpLimit:
             title : Customize guild exp limit
             recommend : no

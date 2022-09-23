@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2022-08-23                                             *
+*   Last Modified : 2022-09-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -169,28 +169,31 @@ CustomShields = function()
 	// Find second inject location - CSession::GetShieldType. //
 	//========================================================//
 
+	$$(_ + '3.1 - Load the SSN')
+	SSN.load();
+
 	let refAddr;
 	if (Exe.BuildDate < 20170700)
 	{
-		$$(_ + '3.1 - Find location where the GetShieldType is called - there are multiple matches but all of them are same')
+		$$(_ + '3.2 - Find location where the GetShieldType is called - there are multiple matches but all of them are same')
 		code =
-			CMP(EAX, 0x7D0)  //cmp eax, 7D0h
-		+	JLE(WCp)         //jle short addr1
-		+	PUSH(EAX)        //push eax
-		+	MOV(ECX, POS4WC) //mov ecx, <g_session> ; Note: this is the reference value for all the tables
-		+	CALL()           //call CSession::GetShieldType
+			CMP(EAX, 0x7D0) //cmp eax, 7D0h
+		+	JLE(WCp)        //jle short addr1
+		+	PUSH(EAX)       //push eax
+		+	MOV(ECX, SSN)   //mov ecx, <g_session> ; Note: this is the reference value for all the tables
+		+	CALL()          //call CSession::GetShieldType
 		;
 
-		const addrs = Exe.FindHexN(code);
-		if (addrs.isEmpty())
+		const addr = Exe.FindHex(code);
+		if (addr < 0)
 			throw Error("GetShieldType call missing");
 
-		$$(_ + '3.2 - Save the address of the CALL')
-		refAddr = addrs[0] + code.byteCount() - 1;
+		$$(_ + '3.3 - Save the address of the CALL')
+		refAddr = addr + code.byteCount() - 1;
 	}
 	else
 	{
-		$$(_ + '3.3 - Find location where the GetShieldType is called (Only 1 match now)')
+		$$(_ + '3.4 - Find location where the GetShieldType is called (Only 1 match now)')
 		code =
 			MOV(BYTE_PTR, [EBP, WCn], 3) //mov byte ptr [LOCAL.x], 3
 		+	(Exe.Version === 11
@@ -199,7 +202,7 @@ CustomShields = function()
 		:
 			''
 		)
-		+	MOV(ECX, POS4WC)             //mov ecx, <g_session>
+		+	MOV(ECX, SSN)                //mov ecx, <g_session>
 		+	(Exe.Version > 11
 		?
 			PUSH([EBP, NEG2WC])          //push dword ptr [LOCAL.y]
@@ -222,11 +225,11 @@ CustomShields = function()
 		if (addr < 0)
 			throw Error("GetShieldType call missing (New)");
 
-		$$(_ + '3.4 - Save the location of the CALL')
+		$$(_ + '3.5 - Save the location of the CALL')
 		refAddr = addr + code.byteCount();
 	}
 
-	$$(_ + '3.5 - Extract the PHYSICAL address of the GetShieldType function')
+	$$(_ + '3.6 - Extract the PHYSICAL address of the GetShieldType function')
 	const hookMap = Exe.GetTgtAddr(refAddr + 1, PHYSICAL);
 
 	$$(_ + '4.1 - Construct the code to be injected')

@@ -1,3 +1,23 @@
+# 2022-09-24 Changes
+
+## Patch Updates
+- Added new module for capturing session value & related functions
+
+- Added new patches to
+
+	- Enable preview for equipments in NPC shops. Requires 2017+ clients.
+	
+	- Customize guild emblem file size.
+	
+	- Customize error message displayed when client runs without launcher.
+	
+	- Customize tax value used for mail (Rodex)
+	
+- Adapted some patches for latest clients (more to come soon).
+
+- Updated copyright date for a few patches (more to be updated soon).
+
+
 # 2022-09-08 Changes
 
 ## Patch Updates

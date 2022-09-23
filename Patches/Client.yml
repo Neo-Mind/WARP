@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2022-09-07                                             #
+#   Last Modified : 2022-09-24                                             #
 #                                                                          #
 ############################################################################
 
@@ -187,12 +187,23 @@ CashShop:
             recommend : no
             author : CH.C (jchcc)
             desc : Open URL in the cashshop window with default web browser instead of IExplore.
-        
+
+EquipPreview:
+    title : SHOP EQ PREVIEW
+    mutex : false
+    
+    patches:
         - PreviewInShop:
-            title : Enable item preview in Cash Shop
+            title : Enable equipment preview in Cash Shop
             recommend : no
             author : Andrei Karas (4144) , Neo-Mind
-            desc: Add support for preview button in cash shop (right click the items to see the button)
+            desc: Add support for preview button in cash shop (right click the items to see the button). Needs the switch enabled in server-side too.
+        
+        - PreviewInDealer:
+            title : Enable equipment preview in NPC Shop
+            recommend : no
+            author : Andrei Karas (4144) , Neo-Mind
+            desc: Add support for preview button in NPC shops like Armor Dealer (right click the items to see the button). Needs the switch enabled in server-side too.
 
 CashShopVis:
     title : CASH SHOP VISIBILITY

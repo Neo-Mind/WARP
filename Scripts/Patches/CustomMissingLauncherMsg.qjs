@@ -1,0 +1,95 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2022 Neo-Mind                                            *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Neo-Mind,                                              *
+*   Created Date  : 2022-09-20                                             *
+*   Last Modified : 2022-09-20                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Swap out the blank string being PUSHed as error message when 1rag1 
+///        type parameters are missing with a user specified string
+///
+CustomMissingLauncherMsg = function()
+{
+	const _ = 'CustomMissingLauncherMsg : ';
+	
+	$$(_ + '1.1 - Find the code where the string is assigned to an address')
+	let code = MOV([POS4WC], this.StrAddr); //mov dword ptr [PLEASE_EXCUTE_LAUNCHER], "Please run Ragnarok[_RE].exe"
+	let addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("String not assigned");
+	
+	$$(_ + '1.2 - Use the assigned address and find where it gets pushed as the error message')
+	code =
+		Exe.GetHex(addr + 2, 4)          //[PLEASE_EXCUTE_LAUNCHER]
+	+	(Exe.Version < 11 ? PUSH_R : '') //push regA or none
+	+	CALL(ALLWC)                      //call MsgBox
+	+	ADD(ESP, ' 0?')                  //add esp, 4 or 8
+	;
+	addr = Exe.FindHex(code) ;
+	if (addr < 0)
+		throw Error("String not being extracted as message");
+	
+	$$(_ + '2.1 - Get the new string from user')
+	const varName = '$missingLauncherMsg';
+	const result = Exe.GetUserInput(varName, D_Text, "New error message to show", "Enter the error message to be displayed for non-launcher invocation", "Please run Patcher.exe instead", {saveDefault: true});
+	if (result === "")
+		Cancel("Empty message provided");
+	
+	$$(_ + '2.2 - Place the new message string in the exe')
+	const [, newStr] = Exe.AddFromVar(varName);
+	
+	if (Exe.Version > 10)
+	{
+		$$(_ + '2.3 - For newer clients just directly push the string')
+		Exe.SetHex(addr - 2, PUSH(newStr) + NOP);
+	}
+	else if (Exe.GetUint8(addr - 1) === 0xA1) //register is EAX
+	{
+		$$(_ + '2.4 - Assign the string to EAX')
+		Exe.SetHex(addr - 1, MOV(EAX, newStr));
+	}
+	else //register is something else
+	{
+		$$(_ + '2.5 - Extract the register')
+		const reg = Instr.FromAddr(addr - 2).MRM.getReg('O');
+		
+		$$(_ + '2.6 - Assign the string to it directly')
+		Exe.SetHex(addr - 2, MOV(reg, newStr) + NOP);
+	}
+	
+	return true;
+};
+
+///
+/// \brief Disable for 2010+ clients without the message string
+///
+CustomMissingLauncherMsg.validate = function()
+{
+	if (!ROC.Post2010)
+		return false;
+	
+	this.StrAddr = Exe.FindText("Please run Ragnarok" + (ROC.IsRenewal ? "_RE" : '') + ".exe");
+	return this.StrAddr > 0;
+};

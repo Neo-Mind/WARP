@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2022-09-07                                             #
+#   Last Modified : 2022-09-20                                             #
 #                                                                          #
 ############################################################################
 
@@ -32,6 +32,12 @@ CustomUI:
     color : orangered
     
     patches:
+        - CustomMissingLauncherMsg:
+            title : Customize missing launcher message
+            recommend : no
+            author : Neo-Mind
+            desc : Allows changing the blank message to user specified string when the client runs without a launcher.
+        
         - TildeForMatk:
             title : Use Tilde for Matk
             recommend : no

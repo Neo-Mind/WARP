@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
-*   Copyright (C) 2013-2021 Neo-Mind                                       *
+*   Copyright (C) 2013-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Shinryo, Neo-Mind                                      *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2021-10-22                                             *
+*   Last Modified : 2022-09-23                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -192,7 +192,10 @@ CustomAuraLimits = function()
 
 	// Now we need to diverge to determine all the needed info
 
-	let cmpBegin, cmpEnd, MovSSN, GetJobID, gLevel, AuraConsts = [], PUSH0s, AssgnZero;
+	$$(_ + '2 - Load the SSN')
+	SSN.load();
+
+	let cmpBegin, cmpEnd, GetJobID, gLevel, AuraConsts = [], PUSH0s, AssgnZero;
 
 	const directCMP = Exe.BuildDate < 20130000;
 	if (directCMP) //aura constants are assigned in here itself
@@ -210,22 +213,17 @@ CustomAuraLimits = function()
 		if (addr < 0)
 			throw Error("Second JE not found");
 
-		$$(_ + '2.6 - Save JE\'s target address (PHYSICAL) as the beginning address of comparison')
+		$$(_ + '2.4 - Save JE\'s target address (PHYSICAL) as the beginning address of comparison')
 		cmpBegin = Exe.GetTgtAddr(addr + 2, PHYSICAL);
 
-		$$(_ + '2.7 - Extract the instruction at cmpBegin and ensure it is MOV ECX, g_session')
-		MovSSN = Instr.FromAddr(cmpBegin);
-		if (MovSSN.Codes[0] !== 0xB9)
-			throw Error("Unexpected instruction found");
+		$$(_ + '2.5 - Ensure the instructions at cmpBegin are MOV ECX, g_session followed by CALL CSession::GetJobID')
+		if (Exe.GetUint8(cmpBegin) !== 0xB9 || Exe.GetUint8(cmpBegin + 5) !== 0xE8)
+			throw Error("Unexpected instructions found");
 
-		$$(_ + '2.8 - Next instruction should be CALL GetJobID')
-		if (Exe.GetUint8(MovSSN.NextAddr) != 0xE8)
-			throw Error("Function CALL missing");
+		$$(_ + '2.6 - Get the function address from SSN');
+		({GetJobID} = SSN.Funcs);
 
-		$$(_ + '2.19 - Save the target address')
-		GetJobID = Exe.GetTgtAddr(MovSSN.NextAddr + 1);
-
-		$$(_ + '2.10 - Now we need to find the level comparison')
+		$$(_ + '2.7 - Now we need to find the level comparison')
 		const code = Exe.Version === 6 || Exe.BuildDate > 20120716
 		?
 			MOV(EAX, [POS3WC])     //mov eax, dword ptr [g_level] ; EAX is compared afterwards
@@ -237,10 +235,10 @@ CustomAuraLimits = function()
 		if (addr < 0)
 			throw Error("Level comparison missing");
 
-		$$(_ + '2.11 - Extract the displacement i.e. g_level')
+		$$(_ + '2.8 - Extract the displacement i.e. g_level')
 		gLevel = Instr.FromAddr(addr).Disp;
 
-		$$(_ + '2.12 - Now we find the CALL to Aura Displayer (dunno the name of the function)')
+		$$(_ + '2.9 - Now we find the CALL to Aura Displayer (dunno the name of the function)')
 		const pushZero = Exe.Version === 6 ? PUSH(EBX) : PUSH_0;
 
 		let parts = [
@@ -265,21 +263,21 @@ CustomAuraLimits = function()
 		if (addr < 0)
 			throw Error("Aura Call not found");
 
-		$$(_ + '2.14 - Extract the constant PUSHed which is the Aura constant for 1st and 2nd levels')
+		$$(_ + '2.10 - Extract the constant PUSHed which is the Aura constant for 1st and 2nd levels')
 		const arg = Exe.GetHex(addr + pushZero.byteCount() + 1, 1);
 
-		$$(_ + '2.15 - Save to AuraConsts array')
+		$$(_ + '2.11 - Save to AuraConsts array')
 		AuraConsts[0] = AuraConsts[1] = arg;
 		AuraConsts[2] = AuraConsts[2] || arg;
 		AuraConsts[3] = AuraConsts[2];
 
-		$$(_ + '2.16 - Get the number of zero pushes before the aura const push')
+		$$(_ + '2.12 - Get the number of zero pushes before the aura const push')
 		const addrs = Exe.FindHexN(pushZero, addr - 10, addr + 4);
 
-		$$(_ + '2.17 - Construct the PUSH0s for use later')
+		$$(_ + '2.14 - Construct the PUSH0s for use later')
 		PUSH0s = pushZero.repeat(addrs.length);
 
-		$$(_ + '2.18 - Setup AssgnZero code to be empty')
+		$$(_ + '2.15 - Setup AssgnZero code to be empty')
 		AssgnZero = '';
 	}
 	else //uses a seperate function
@@ -317,26 +315,21 @@ CustomAuraLimits = function()
 		addr = Exe.GetTgtAddr(cmpEnd - 4, PHYSICAL);
 
 		$$(_ + '3.6 - Find the GetJobID CALL & g_session assignment afterwards')
-		const prefix =
-			CALL(ALLWC)         //call GetJobID
-		+	PUSH_EAX            //push eax
-		;
-		const suffix =
-			MOV(ECX, POS4WC)    //mov ecx, <g_session>
-		+	CALL()              //call func#3
+		code =
+			CALL(ALLWC)    //call GetJobID (different from CSession::GetJobID)
+		+	PUSH_EAX       //push eax
+		+	MOV(ECX, SSN)  //mov ecx, <g_session>
+		+	CALL()         //call func#3
 		;
 
-		addr = Exe.FindHex(prefix + suffix, addr, addr + 0x50);
+		addr = Exe.FindHex(code, addr, addr + 0x50);
 		if (addr < 0)
 			throw Error("Function CALL missing");
 
 		$$(_ + '3.7 - Extract the target')
 		GetJobID = Exe.GetTgtAddr(addr + 1);
 
-		$$(_ + '3.8 - Extract g_session movement')
-		MovSSN = Instr.FromAddr(addr + prefix.byteCount());
-
-		$$(_ + '3.9 - Find the zero assignment at the end of the function')
+		$$(_ + '3.8 - Find the zero assignment at the end of the function')
 		code =
 			MOV([ESI, POS2WC], 0) //mov dword ptr [esi + dispD], 0
 		+	POP(ESI)              //pop esi
@@ -347,10 +340,10 @@ CustomAuraLimits = function()
 		if (addr < 0)
 			throw Error("Zero assignment missing");
 
-		$$(_ + '3.10 - Save it as AssgnZero')
+		$$(_ + '3.9 - Save it as AssgnZero')
 		AssgnZero = Instr.FromAddr(addr);
 
-		$$(_ + '3.11 - Setup AuraConsts & PUSH0s')
+		$$(_ + '3.10 - Setup AuraConsts & PUSH0s')
 		AuraConsts = [' 7D', ' 93', ' 92', ' 96'];
 
 		PUSH0s = PUSH_0.repeat(4);
@@ -386,7 +379,7 @@ CustomAuraLimits = function()
 	+	MOV(ESI, ECX)                   //mov esi, ecx
 	+	PUSH(EDX)                       //push edx
 	+	PUSH(EBX)                       //push ebx
-	+	MovSSN                          //mov ecx, <g_session>
+	+	MOV(ECX, SSN)                   //mov ecx, <g_session>
 	+	CALL(Filler(1))                 //call GetJobID
 	+	MOV(EBX, Filler(2))             //mov ebx, <tblAddr>
 

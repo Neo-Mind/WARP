@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2020-2022 Neo-Mind                                       *
+*   Copyright (C) 2022 Andrei Karas (4144)                                 *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -11,7 +11,7 @@
 *                                                                          *
 *   This program is distributed in the hope that it will be useful,        *
 *   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   MERCHANT??ILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
 *   GNU General Public License for more details.                           *
 *                                                                          *
 *   You should have received a copy of the GNU General Public License      *
@@ -20,80 +20,44 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Neo-Mind                                               *
-*   Created Date  : 2021-08-21                                             *
-*   Last Modified : 2022-09-23                                             *
+*   Author(s)     : Andrei (4144)                                          *
+*   Created Date  : 2022-09-18                                             *
+*   Last Modified : 2022-09-18                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Initialize the Cache module
+/// \brief Change the value being multiplied 
 ///
-CACHE.init();
-
-///
-/// \brief Load the ROC module with all the misc goodies from ROClient
-///
-ROC.load();
-
-///
-/// \brief Initialize the remaining modules
-///
-DGRF.init();
-WINMGR.init();
-LANGTYPE.init();
-SRVRTYPE.init();
-LUA.init();
-PACKET.init();
-MBAR.init();
-FONTAIN.init();
-WINMKR.init();
-SSN.init();
-
-///
-/// \brief Set up options & tag for Case Insensitive patches
-///
-CACHE.setup('CIS', 'CaseInsensFn',
+CustomRodexTax = function()
 {
-	cleanTag_after_userDel: false,
-});
+	const _ = 'CustomRodexTax : ';
+
+	$$(_ + "1 - Find the location where the tax value is multiplied")
+	const code =
+		MOV(ECX, POS4WC)      //mov ecx, offset#1
+	+	CALL(ALLWC)           //call func#1
+	+	IMUL(EAX, EAX, 0x9C4) //imul eax, eax, 9C4h
+	;
+	
+	const addr = Exe.FindHex(code);
+	if (addr < 0)
+		throw Error("Tax multiplication not found");
+
+	$$(_ + "2.1 - Get the new value from user")
+	const varName = '$RodexTax';
+    const value = Exe.GetUserInput(varName, D_Int32, "Rodex Tax", "Enter the rodex tax per item", 0x9C4, {min: 1});
+	if (value === false)
+		Cancel("Tax", 0x9C4);
+
+    $$(_ + '2.2 - Replace with the new multiplier')
+    Exe.SetFromVar(addr + code.byteCount() - 4, varName);
+
+	return true;
+};
 
 ///
-/// \brief Set up options & tag for Custom Skill patches
+/// \brief Disable for older clients and ROZero ones (only 2 of them work)
 ///
-CACHE.setup('CSK', 'SkillInfo',
-{
-	cleanTag_after_userDel: false,
-});
-
-///
-/// \brief Set up options & tag for Custom Encryption Key patches
-///
-CACHE.setup('PACKET', 'EncKeys',
-{
-	cleanTag_after_restore: false,
-	cleanTag_after_userDel: false,
-	dealloc_after_restore: false,
-});
-
-///
-/// \brief Set up options & tag for Resize Mob bar patches
-///
-CACHE.setup('MBAR', 'MobHP',
-{
-	cleanTag_after_restore: false,
-	dealloc_after_restore: false,
-});
-
-///
-/// \brief Set up options & tag for New Button visibility patches
-///
-CACHE.setup('NBV', 'ButtonTbl',
-{
-	dealloc_after_tagClean: true,
-});
-
-///
-/// \brief Initializes the FnStore map used with GetImpRefs
-///
-InitFnStore();
+CustomRodexTax.validate = () =>
+	Exe.BuildDate > 20150000 && !ROC.IsZero;
