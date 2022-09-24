@@ -40,10 +40,11 @@ IgnoreDebugger = function()
 
 	$$(_ + '2 - Add our function')
 	const [, newFuncAddr] = Exe.AddHex(XOR(EAX, EAX) + RETN()); //xor eax, eax followed by retn
+	const [, newFuncPtr] = Exe.AddUint32(newFuncAddr);
 
 	$$(_ + '3 - Replace the references')
 	for (const addr of refAddrs)
-		Exe.SetUint32(Instr.FromAddr(addr).NextAddr - 4, newFuncAddr);
+		Exe.SetUint32(Instr.FromAddr(addr).NextAddr - 4, newFuncPtr);
 
 	return true;
 };

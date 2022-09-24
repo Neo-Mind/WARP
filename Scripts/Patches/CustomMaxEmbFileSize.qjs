@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2022-09-15                                             *
-*   Last Modified : 2022-09-15                                             *
+*   Last Modified : 2022-09-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -59,7 +59,7 @@ CustomMaxEmbFileSize = function()
 		Cancel("Max Size", 0xC800);
 
     $$(_ + '2.2 - Replace the 0xC800 value')
-	for (const addr in addrs)
+	for (const addr of addrs)
 		Exe.SetFromVar(addr + offset, varName);
 	
 	return true;
