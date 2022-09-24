@@ -128,6 +128,6 @@ NoLetterLimit = function(patchName)
 ///
 /// \brief Wrappers for individual patches
 ///
-NoCharnameLimit = No4LetterLimit;
-NoUsernameLimit = No4LetterLimit;
-NoPasswordLimit = No4LetterLimit;
+NoCharnameLimit = NoLetterLimit;
+NoUsernameLimit = NoLetterLimit;
+NoPasswordLimit = NoLetterLimit;
