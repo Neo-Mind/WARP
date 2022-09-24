@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
 *   Copyright (C) 2017 Secret, A.K.M.                                      *
-*   Copyright (C) 2020 Neo-Mind                                            *
+*   Copyright (C) 2020-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Secret, A.K.M., Neo-Mind                               *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2021-11-26                                             *
+*   Last Modified : 2022-09-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -48,11 +48,12 @@ Intravision = function()
 	}
 	else
 	{
+		const imm8A = (Exe.BuildDate >= 20120700 || (ROC.IsRenewal && Exe.BuildDate >= 20120300 )) ? ' [00010.00]' : ' 0C';
 		parts =
 		[
 			JZ(ALLWC)					//jz _next
 		,
-			ADD(EAX, WCp)				//add eax, imm8A  ; 14h in 2017 clients
+			ADD(EAX, imm8A)				//add eax, imm8A  ; 14h in 2017 clients
 		+	CMP(EAX, ECX)				//cmp eax, ecx
 		+	JNZ(WCn)					//jnz short _loop
 		];
@@ -64,7 +65,6 @@ Intravision = function()
 		parts[0] = JZ(WCp); //jz short _next
 		addrs = Exe.FindHexN(parts);
 	}
-
 	if (addrs.isEmpty())
 		throw Error("Comparison missing");
 

@@ -73,7 +73,7 @@ IncrHairs.stage1 = patchName =>
 	strAddrs.push(addr);
 
 	$$(_ + '1.6 - Get the status of shared head palette patches')
-	const isPalShared = Warp.GetPatchState("HeadPalMF") || Warp.GetPatchState("HeadPalUnisex"); Debug(isPalShared);
+	const isPalShared = Warp.GetPatchState("HeadPalMF") || Warp.GetPatchState("HeadPalUnisex");
 
 	$$(_ + '1.7 - Get the limit from user or set it to 65k based on the patch')
 	let maxHairs;

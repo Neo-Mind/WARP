@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Shinryo, Andrei (4144), X-EcutiOnner        *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2022-09-20                                             *
+*   Last Modified : 2022-09-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -129,7 +129,7 @@ NoEarthQuake = function()
 			XOR(EAX, EAX)  //xor eax, eax
 		+	JMP(POS2WC)    //jmp _next#2
 		;
-		quakeAddr = Exe.FindHex(code, addr - 0xA0, addr);
+		quakeAddr = Exe.FindHex(code, addr - 0xC0, addr);
 	}
 
 	if (quakeAddr < 0)

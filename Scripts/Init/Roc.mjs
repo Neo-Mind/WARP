@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2021 Neo-Mind                                            *
+*   Copyright (C) 2021-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-08-21                                             *
-*   Last Modified : 2021-10-02                                             *
+*   Last Modified : 2022-09-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -91,7 +91,7 @@ export function load()
 
 	$$(_ + '1.5 - Check for Frame Pointer by searching for the characteristic PUSH EBP & MOV EBP, ESP as the first statement of a function')
 	$$(_ + '      To avoid false match we will prefix sequence of INTs (some clients have NOPs instead)')
-	const fromAddr = Exe.GetSectBegin(CODE);
+	const fromAddr = Exe.GetSectBegin(CODE) + (Exe.BuildDate > 20220000 && 0x3000);
 	const toAddr = fromAddr + 0x500;
 
 	let addr = Exe.FindHex(INT3.repeat(5) + FP_START, fromAddr, toAddr); //int3 x5 times

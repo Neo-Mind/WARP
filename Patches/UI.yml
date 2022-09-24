@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2022-09-20                                             #
+#   Last Modified : 2022-09-24                                             #
 #                                                                          #
 ############################################################################
 
@@ -32,6 +32,12 @@ CustomUI:
     color : orangered
     
     patches:
+        - AllowShortcutsInWine:
+            title : Allow shortcuts in WINE [Experimental]
+            recommend : no
+            author : Andrei Karas (4144)
+            desc : Allows usage of keyboard shortcuts in wine. Still experimental, so it may or may not work at this time.
+        
         - CustomMissingLauncherMsg:
             title : Customize missing launcher message
             recommend : no

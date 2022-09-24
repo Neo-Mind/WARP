@@ -1,7 +1,7 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2021 Andrei Karas (4144)                                 *
-*   Copyright (C) 2021 X-EcutiOnner (xex.ecutionner@gmail.com)             *
+*   Copyright (C) 2021-2022 Andrei Karas (4144)                            *
+*   Copyright (C) 2021-2022 X-EcutiOnner (xex.ecutionner@gmail.com)        *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Andrei, X-EcutiOnner                                   *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2021-11-26                                             *
+*   Last Modified : 2022-09-24                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,8 +36,9 @@ NoAdvAgencyInParty = function()
 	const _ = 'NoAdvAgencyInParty : ';
 
 	$$(_ + '1 - Find the button prep inside the function')
+	const reg = Exe.BuildDate > 20220000 ? EBX : EDI;
 	const template =
-		MOV(ECX, [EDI, POS3WC]) //mov ecx, dword ptr [edi + UIMessengerGroupWnd.m_mesbtn]
+		MOV(ECX, [reg, POS2WC]) //mov ecx, dword ptr [edi/ebx + UIMessengerGroupWnd.m_mesbtn]
 	+	(Exe.BuildDate > 20211000
 	?	PUSH_0
 	:	''
@@ -47,40 +48,35 @@ NoAdvAgencyInParty = function()
 	+	CALL(ALLWC)             //call UIBitmapButton::SetBitmapName
 	;
 
-	const prefix =
-		MOV(BYTE_PTR, [ECX, POS3WC], 0)            //mov byte ptr [ecx + UIBitmapButton.button_flag], 0
+	const code =
+		MOV(BYTE_PTR, [ECX, POS2WC], 0)            //mov byte ptr [ecx + UIBitmapButton.button_flag], 0
 	+	CALL([EAX, POS3WC])                        //call dword ptr [eax + UIBitmapButton_vtable.UIWindow_SendMsg]
-	+	SwapFillers( template, {1: this.BmpAddr} ) //mov ecx, dword ptr [edi + UIMessengerGroupWnd.m_mesbtn]
+	+	SwapFillers( template, {1: this.BmpAddr} ) //mov ecx, dword ptr [edi/ebx + UIMessengerGroupWnd.m_mesbtn]
 	                                               //push 0
 	                                               //push offset aIBasicInterfac_1 ; "유저인터페이스\\basic_interface\\mesbtn_partymaster_01.bmp"
 	                                               //call UIBitmapButton::SetBitmapName
-	+	SwapFillers( template, {1: POS4WC} )       //mov ecx, dword ptr [edi + UIMessengerGroupWnd.m_mesbtn]
+	+	SwapFillers( template, {1: POS4WC} )       //mov ecx, dword ptr [edi/ebx + UIMessengerGroupWnd.m_mesbtn]
 	                                               //push 1
 	                                               //push offset aPFBasic_interfaceMesbtn_partyma_0
 	                                               //call UIBitmapButton::SetBitmapName
-	+	SwapFillers( template, {1: POS4WC} )       //mov ecx, dword ptr [edi + UIMessengerGroupWnd.m_mesbtn]
+	+	SwapFillers( template, {1: POS4WC} )       //mov ecx, dword ptr [edi/ebx + UIMessengerGroupWnd.m_mesbtn]
 	                                               //push 2
 	                                               //push offset aPFBasic_interfaceMesbtn_partyma_1
 	                                               //call UIBitmapButton::SetBitmapName
 	+	PUSH(0xDBA)                                //push 0DBAh
 	+	CALL(ALLWC)                                //call MsgStr
-	+	MOV(ECX, [EDI, POS3WC])                    //mov ecx, dword ptr [edi + UIMessengerGroupWnd.m_mesbtn]
+	+	MOV(ECX, [reg, POS2WC])                    //mov ecx, dword ptr [edi/ebx + UIMessengerGroupWnd.m_mesbtn]
 	+	ADD(ESP, 4)                                //add esp, 4
 	+	PUSH_EAX                                   //push eax
 	+	CALL(ALLWC)                                //call UIBitmapButton::SetText
 	;
 
-	const suffix =
-		XOR(EAX, EAX)                              //xor eax, eax
-	+	JMP(POS3WC)                                //jmp _next
-	;
-
-	const addr = Exe.FindHex(prefix + suffix);
+	const addr = Exe.FindHex(code);
 	if (addr < 0)
 		throw Error("Function not found");
-
+	
 	$$(_ + '2 - NOP out the creation')
-	Exe.SetNOPs(addr, prefix.byteCount());
+	Exe.SetNOPs(addr, code.byteCount());
 
 	return true;
 };

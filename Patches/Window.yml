@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2022-09-07                                             #
+#   Last Modified : 2022-09-24                                             #
 #                                                                          #
 ############################################################################
 
@@ -195,25 +195,25 @@ ShowButton:
             author : Neo-Mind
             desc : Makes the client always show register button on Login Window for all Langtypes. Clicking the button will open <registrationweb> from clientinfo and closes the client.
 
-No4LetterLimit:
-    title : 4 LETTER LIMIT REMOVAL
+NoLetterLimit:
+    title : 4/6 LETTER LIMIT REMOVAL
     mutex : false
     
     patches:
         - NoCharnameLimit:
-            title : Remove 4 letter Character Name limit
+            title : Remove 4/6 letter Character Name limit
             recommend : no
             author : Shinryo
             desc : Will allow people to use character names shorter than 4 letters.
         
         - NoUsernameLimit:
-            title : Remove 4 letter User Name limit
+            title : Remove 4/6 letter User Name limit
             recommend : no
             author : Shinryo
             desc : Will allow people to use account names shorter than 4 letters.
         
         - NoPasswordLimit:
-            title : Remove 4 letter Password limit
+            title : Remove 4/6 letter Password limit
             recommend : no
             author : Shinryo
             desc : Will allow people to use passwords shorter than 4 letters.

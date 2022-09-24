@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) ?-2021 Shinryo                                           *
+*   Copyright (C) ?-2022 Shinryo                                           *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,15 +22,15 @@
 *                                                                          *
 *   Author(s)     : Shinryo                                                *
 *   Created Date  : 2020-11-09                                             *
-*   Last Modified : 2021-07-25                                             *
+*   Last Modified : 2022-09-24                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Find the minimum length comparisons of Username/Password/Charname with 4 & change it to 0
+/// \brief Find the minimum length comparisons of Username/Password/Charname with 4/6 & change it to 0
 ///        Any non-empty string is valid now
 ///
-No4LetterLimit = function(patchName)
+NoLetterLimit = function(patchName)
 {
 	const _ = patchName + ' : ';
 
