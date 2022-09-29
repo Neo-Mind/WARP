@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2021 llchrisll                                           *
+*   Copyright (C) 2021-2022 llchrisll                                      *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : llchrisll                                              *
 *   Created Date  : 2021-07-15                                             *
-*   Last Modified : 2021-07-28                                             *
+*   Last Modified : 2022-09-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -33,94 +33,257 @@ AddLuaOverrides = function()
 {
 	const _ = 'AddLuaOverrides : ';
 
-	$$(_ + '1 - Setup the file replacements. This is simpler since we dont have multiple files in the original\'s place')
-	const pairs1 =
-	[
-		["Lua Files\\DataInfo\\accName_F", "lua files\\cls\\accname_f"],
-		["Lua Files\\DataInfo\\jobName_F", "lua files\\cls\\jobname_f"],
-		["Lua Files\\DataInfo\\QuestInfo_f", "lua files\\cls\\questinfo_f"],
-		["Lua Files\\DataInfo\\AddRandomOption_F", "lua files\\cls\\addrandomoption_f"],
-		["Lua Files\\DataInfo\\ShadowTable_F", "lua files\\cls\\shadowtable_f"],
-		["Lua Files\\DataInfo\\SpriteRobeName_F", "lua files\\cls\\spriterobename_f"],
-		["Lua Files\\transparentItem\\transparentItem_f", "lua files\\cls\\transparentitem_f"],
-		["Lua Files\\DataInfo\\WeaponTable_F", "lua files\\cls\\weapontable_f"],
-	];
+	$$(_ + '1.1 - Get the map file from user')
+	const inFile = Exe.GetUserInput('$luaOvrdFile', D_InFile, "Lua Mapping", "Enter the override mapping file", "Inputs/LuaOvrdSpec.yml", {filters: YMLFILTER});
+	if (inFile === false)
+		Cancel("No translation file specified");
 
-	const failedPairs1 = pairs1.filter( (pair, idx) =>
-	{
-		const __ = `${_} [${idx}] `;
-
-		const [oldPre, newPre] = pair;
-
-		$$(__ + '1.1 - Find the original file prefix')
-		const addr = Exe.FindText(oldPre, CASE_INSENSITIVE, PHYSICAL);
-		if (addr < 0)
-			return true;
-
-		$$(__ + '1.2 - Replace with the new prefix')
-		Exe.SetText(addr, newPre);
-
+	$$(_ + '1.2 - Load the mapping')
+	const LuaOvrds = Warp.LoadYaml(inFile);
+	if (LuaOvrds === false)
 		return false;
-	});
 
-	$$(_ + '2 - Ensure LUA object is loaded')
-	LUA.load();
+	else if (LuaOvrds.Swap == undefined && LuaOvrds.LoadAfter == undefined)
+		throw Error("Either Swap or LoadAfter should be present as a list of file mappings");
 
-	$$(_ + '3 - Setup the additional file loading')
-	const pairs2 =
-	[
-		//Existing file                                   The file to be loaded after it
-		["Lua Files\\DataInfo\\accName",                  "lua files\\cls\\accname"],
-		["Lua Files\\DataInfo\\AccessoryId",              "lua files\\cls\\accessoryid"],
-		["Lua Files\\DataInfo\\EnumVAR",                  "lua files\\cls\\enumvar"],
-		["Lua Files\\HatEffectInfo\\HatEffectInfo",       "lua files\\cls\\hateffectinfo"],
-		["Lua Files\\DataInfo\\jobName",                  "lua files\\cls\\jobname"],
-		["Lua Files\\DataInfo\\NPCIdentity",              "lua files\\cls\\npcidentity"],
-		["Lua Files\\DataInfo\\PetInfo",                  "lua files\\cls\\petinfo"],
-		["Lua Files\\datainfo\\LapineDdukDDakBox",        "lua files\\cls\\lapineddukddakbox"],
-		["Lua Files\\datainfo\\LapineUpgradeBox",         "lua files\\cls\\lapineupgradebox"],
-		["Lua Files\\DataInfo\\AddRandomOptionNameTable", "lua files\\cls\\randomoption"],
-		["Lua Files\\DataInfo\\ShadowTable",              "lua files\\cls\\shadowtable"],
-		["Lua Files\\DataInfo\\SpriteRobeId",             "lua files\\cls\\spriterobeid"],
-		["Lua Files\\DataInfo\\SpriteRobeName",           "lua files\\cls\\spriterobename"],
-		["Lua Files\\DataInfo\\TB_Layer_Priority",        "lua files\\cls\\tb_layer_priority"],
-		["Lua Files\\DataInfo\\TitleTable",               "lua files\\cls\\titletable"],
-		["Lua Files\\transparentItem\\transparentItem",   "lua files\\cls\\transparentitem"],
-		["Lua Files\\DataInfo\\WeaponTable",              "lua files\\cls\\weapontable"]
-	];
-
-	const failedPairs2 = pairs2.filter( pair =>
+	$$(_ + '2 - Parse the Swap set')
+	const prefix = "Lua Files\\";
+	let failedList = [];
+	let passedList = [];
+	for (const src in LuaOvrds.Swap)
 	{
-		const [oldPre, newPre] = pair;
+		const __ = `${_} [${src}] `;
+		
+		$$(__ + '2.1 - Find the original prefix')
+		let addr = Exe.FindText(prefix + src, CASE_INSENSITIVE);
+		if (addr < 0)
+		{
+			failedList.push(src);
+			continue;
+		}
+		
+		$$(__ + '2.2 - Retrieve the replacement prefix')
+		const tgt = LuaOvrds.Swap[src];
+		if (src.length >= tgt.length)
+		{
+			$$(__ + '2.3 - If length is feasible overwrite the original')
+			Exe.SetText(Exe.Vir2Phy(addr), prefix + tgt);
+		}
+		else
+		{
+			$$(__ + '2.4 - Find the PUSH')
+			addr = Exe.FindHex(PUSH(addr));
+			if (addr < 0)
+			{
+				failedList.push(src);
+				continue;
+			}
+			
+			$$(__ + '2.5 - Insert the new text')
+			const [, strAddr] = Exe.AddText(prefix + tgt);
+			
+			$$(__ + '2.6 - Replace the reference')
+			Exe.SetUint32(addr + 1, strAddr);
+		}
+		
+		$$(__ + '2.7 - Add to pass list')
+		passedList.push(src);
+	}
+	
+	$$(_ + '3.1 - Prepare the Lambda function to perform the regular overloading ')
+	const ovrload1 = (src, tgt) =>
+	{
+		const __ = `${_} [${src}] `;
+		
+		$$(__ + 'L1.1 - Add loaders as usual with LUA')
 		try {
-			return (LUA.addLoaders(oldPre, [newPre]) < 0);
+			return (LUA.addLoaders(prefix + src, [prefix + tgt]) > 0);
 		}
 		catch (e) {
-			return true;
+			return false;
 		}
-	});
-
-	if (pairs1.length === failedPairs1.length && pairs2.length === failedPairs2.length)
-		throw Error("Failed to find any files");
-
-	if (!failedPairs1.isEmpty() || !failedPairs2.isEmpty())
+	};
+	
+	$$(_ + '3.2 - Prepare the Lambda function to perform the custom overloading ')
+	const ovrload2 = (src, tgt, testAL) =>
 	{
-		const failedPres = [
-			...failedPairs1,
-			...failedPairs2
-		].map(pair => pair[0]);
-
-		if (Warp.TestMode)
-			return "<b>The following file prefixes were not found :</b> " + failedPres;
+		const __ = `${_} [${src}] `;
+		const strAddr = LUA.FLRefAddr;
+		
+		$$(__ + 'L2.1 - Check for the old pattern')
+		let addr = Exe.FindHex(PUSH_0 + PUSH_1 + PUSH(strAddr));
+		if (addr > 0)
+		{
+			$$(__ + 'L2.2 - Extract the instruction after the string PUSH')
+			let ins = Instr.FromAddr(addr + 9);
+			switch (ins.Codes[0])
+			{
+				case 0x8B: //mov ecx, regA
+					if (ins.MRM.Mode === 3 && ins.MRM.getReg('O').is(ECX))
+					{
+						$$(__ + 'L2.3 - Find the CALL after ECX assignment')
+						let ins2 = ins.getNext();
+						if (ins2.Codes[0] !== 0xE8)
+							ins2.moveToNext();
+						
+						$$(__ + 'L2.4 - Load the lua file hooking the CALL')
+						return (LUA.loadLuaAfter(ins2.Addr, [prefix + tgt], ins, testAL) > 0);
+					}
+					break;
+					
+				case 0xE9: //jmp <_proceed>
+					$$(__ + 'L2.5 - Go to the JMP target')
+					addr = ins.NextAddr + ins.Immd; //The jump target (PHYSICAL) address
+					
+					$$(__ + 'L2.6 - Find the ECX assignment afterwards')
+					let addr2 = Exe.FindHex(MOV(ECX, [R32, POS2WC]), addr, addr + 10);
+					if (addr2 < 0)
+						return false;
+					
+					$$(__ + 'L2.7 - Save the instruction')
+					ins = Instr.FromAddr(addr2);
+					
+					$$(__ + 'L2.8 - Load the lua file hooking the CALL (which is the next instruction)')
+					const state = (LUA.loadLuaAfter(ins.NextAddr, [prefix + tgt], ins, testAL) > 0);
+					if (state)
+						fixedAddr = addr; //save for processing in the loop
+					
+					return state;
+					
+				case 0x89: //mov dword ptr [LOCAL.x], regA ; same is assigned to ECX before this
+					if (ins.MRM.Mode === 2 && ins.MRM.getReg('M').is(EBP))
+					{
+						$$(__ + 'L2.9 - Construct the ECX move using the register assigned in MOV [LOCAL.x], regA')
+						let ins2 = MOV(ECX, ins.MRM.getReg('O'));
+						
+						$$(__ + 'L2.10 - Move to the CALL afterwards')
+						ins.moveToNext();
+					
+						$$(__ + 'L2.11 - Load the lua file hooking the CALL')
+						return (LUA.loadLuaAfter(ins.Addr, [prefix + tgt], ins2, testAL) > 0);
+					}
+					break;
+			}
+			
+			return false;
+		}
+		
+		$$(_ + 'L2.12 - Find the register movement in new clients')
+		addr = Exe.FindHex(MOV(R32, strAddr) + MOV(R32));
+		if (addr < 0)
+			addr = Exe.FindHex(MOV(R32, strAddr) + JMP());
+		
+		if (addr < 0)
+			return false;
+		
+		$$(_ + 'L2.14 - Extract the register used')
+		let ins = Instr.FromAddr(addr);
+		let reg = R32.List[ins.Codes[0] - 0xB8];
+		
+		$$(_ + 'L2.15 - Skip over all succeeding assignments')
+		while (ins.Codes[0] >= 0xB8 && ins.Codes[0] <= 0xBF)
+			ins.moveToNext();
+		
+		$$(_ + 'L2.16 - Ensure the current instruction is a JMP')
+		if (ins.Codes[0] !== 0xE9)
+			return false;
+		
+		$$(_ + 'L2.17 - Go to the JMP target')
+		addr = ins.NextAddr + ins.Immd;
+		
+		$$(_ + 'L2.18 - Find the ECX assignment')
+		addr = Exe.FindHex(MOV(ECX, [R32, POS2WC]), addr, addr + 10);
+		if (addr < 0)
+			return false;
+		
+		$$(_ + 'L2.19 - Save the instruction')
+		ins = Instr.FromAddr(addr);
+		
+		$$(_ + 'L2.20 - Find the CALL afterwards')
+		let code = PUSH_1 + PUSH(reg) + CALL();
+		let addr2 = Exe.FindHex(code, addr + 10, addr + 0x50);
+		
+		if (addr2 < 0)
+		{
+			code = PUSH([EBP, WCn]) + PUSH(reg) + CALL();
+			addr2 = Exe.FindHex(code, addr + 10, addr + 0x50);
+		}
+		
+		if (addr2 < 0)
+			return false;
+		
+		$$(_ + 'L2.21 - Load the lua file hooking the CALL')
+		const state = (LUA.loadLuaAfter(addr2 + code.byteCount() - 1, [prefix + tgt], ins, testAL) > 0);
+		if (state)
+			fixedAddr = addr2;
+		
+		return state;
+	};
+	
+	
+	$$(_ + '4 - Load the LUA object & Parse the LoadAfter set')
+	LUA.load(); 
+	for (const src in LuaOvrds.LoadAfter)
+	{
+		const __ = `${_} [${src}] `;
+		
+		$$(__ + '4.1 - Retrieve the overloading prefix')
+		const tgt = LuaOvrds.LoadAfter[src];
+		
+		let state;
+		if (src.indexOf("Navigation") >= 0)
+		{
+			$$(__ + '4.2 - Perform the overload for Sak files');
+			const fixedAddr = -1;
+			state = ovrload1(src + "Sak", tgt) || ovrload2(src + "Sak", tgt);
+			
+			$$(__ + '4.3 - Perform the overload for pri files');
+			if (!state || fixedAddr < 0)
+				state = ovrload1(src + "pri", tgt) || ovrload2(src + "pri", tgt);
+		}
 		else
-			Warp.WarnUser(
-				"Add Chris' lua overrides",
-				"<b>The following file prefixes were not found :</b><br><br>" + failedPres.join('<br>')
-			);
+		{
+			$$(__ + '4.4 - If the string does not contains Navigation run the lambdas directly');
+			state = ovrload1(src, tgt) || ovrload2(src, tgt, src.indexOf("worldviewdata") >= 0);
+		}
+		
+		$$(__ + '4.5 - Add to pass OR fail list based on state')
+		if (state)
+			passedList.push(src);
+		else
+			failedList.push(src);
+	}
+	
+	$$(_ + '5.1 - Ensure atleast one of them passed')
+	if (passedList.isEmpty())
+		throw Error("None of the files could be found");
+	
+	if (!failedList.isEmpty())
+	{
+		if (Warp.TestMode)
+		{
+			return "<b>The following file prefixes were not found/referenced :</b><br> " + failedList.join(" , ");
+		}
+		else
+		{
+			$$(_ + '5.2 - Save the failed list to a file')
+			let fp = new TextFile(OUTDIR + "FailedLuaOverrides_" + ROC.BaseName + ".txt", 'w');
+			if (!fp.Valid)
+				throw Error("Unable to create FailedLuaOverrides Output file");
+	
+			for (const str of failedList)
+				fp.WriteLine(str);
+			
+			fp.Close();
+			
+			$$(_ + '5.3 - Inform the user and ask whether they want to see the list file')	
+			if (UserChoice("Show Failures", "Some file prefixes were found/referenced. Would you like to view the list?"))
+				Warp.Show(fp.Path);
+		}
 	}
 
 	return true;
-};
+};	
 
 ///
 /// \brief Disable for unsupported clients (Need Lua interface)

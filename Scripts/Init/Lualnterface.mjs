@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-08-20                                             *
-*   Last Modified : 2022-04-03                                             *
+*   Last Modified : 2022-09-29                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,8 +36,9 @@
 ///
 /// \brief Exported data members
 ///
-export var ReqJN; //The VIRTUAL address of "ReqJobName"
+export var ReqJN;      //The VIRTUAL address of "ReqJobName"
 export var FnInvoker;  //The VIRTUAL address of the function which invokes the "Lua function" already PUSHed as argument
+export var FLRefAddr;  //The VIRTUAL address of the reference string used in the last call of addLoaders function below.
 
 ///
 /// \brief Local data members
@@ -75,6 +76,7 @@ export function init()
 	Al_Type    = UnknFn;
 	Allocator  = -1;
 	FnInvoker  = -1;
+	FLRefAddr  = -1;
 	FileLoader = -1;
 	FL_movECX  = '';
 
@@ -438,12 +440,12 @@ export function addLoaders(arg1, arg2, arg3, arg4)
 		throw Log.rise(ErrMsg);
 
 	$$(_ + '1.2 - Find the string inside refName')
-	const refAddr = Exe.FindText(refName, CASE_INSENSITIVE);
-	if (refAddr < 0)
-		throw Log.rise(Error(`${self} - Reference file (" + refName + ") missing`));
+	FLRefAddr = Exe.FindText(refName, CASE_INSENSITIVE);
+	if (FLRefAddr < 0)
+		throw Log.rise(Error(`${self} - Reference file ( ${refName} ) missing`));
 
 	$$(_ + '1.3 - Find where its used in a PUSH (it should be immediately followed by a CALL)')
-	let addr = Exe.FindHex( PUSH(refAddr) + CALL() );
+	let addr = Exe.FindHex( PUSH(FLRefAddr) + CALL() );
 	if (addr < 0)
 		throw Log.rise(Error(`${self} - Reference file not used`));
 
@@ -491,7 +493,7 @@ export function addLoaders(arg1, arg2, arg3, arg4)
 	{
 		code += SwapFillers( template, 1,
 		{
-			1 : refAddr,
+			1 : FLRefAddr,
 			2 : dist,
 		});
 
@@ -518,7 +520,7 @@ export function addLoaders(arg1, arg2, arg3, arg4)
 	if (!skipOrig && loadNewFirst)
 	{
 		code += SwapFillers( template, 1, {
-			1 : refAddr,
+			1 : FLRefAddr,
 			2 : dist,
 		});
 	}
@@ -533,5 +535,80 @@ export function addLoaders(arg1, arg2, arg3, arg4)
 	Exe.SetJMP(hookAddr, tgtVir, retnPhy - (hookAddr + 5));
 
 	$$(_ + '4.3 - Return the target address')
+	return Log.rise(tgt);
+}
+
+///
+/// \brief Specific form of above function needed for some strings in recent clients (used in AddLuaOverrides patch)
+///
+export function loadLuaAfter(hookAddr, newFiles, movECX, testAL)
+{
+	/// 0 - Sanity check
+	if (Exe.GetUint8(hookAddr) !== 0xE8)
+		return -1;
+	
+	const _ = Log.dive(self, 'loadLuaAfter');
+	
+	$$(_ + '1.1 - Prepare the template to use for each file & save its size')
+	let template =
+		(testAL
+	?
+		TEST(AL, AL)
+	+	JZ(Filler(3,1))
+	:
+		''
+	)
+	+	movECX                                 //mov ecx, <src> ; src could be a register or memory pointer
+	+	PUSH_0                                 //push 0
+	+	PUSH_1                                 //push 1
+	+	PUSH(Filler(1))                        //push offset <filePrefix>
+	+	CALL(Filler(2))                        //call CLua::Load
+	;
+	
+	const tsize = template.byteCount();
+	if (testAL)
+		template = SetFillTargets(template, {'3,1' : tsize});
+
+	$$(_ + '1.2 - Calculate total code size')
+	const csize = tsize * newFiles.length + 12; //5 for the CALL at the beginning, 5 for JMP at the end and 2 NULL bytes for seperation between code and strings
+	
+	$$(_ + '1.3 - Prepare the strings to be appended at the end of the code')
+	const strings = newFiles.join('\x00').toHex() + ' 00';
+	const ssize = strings.byteCount();
+	
+	$$(_ + '1.4 - Allocate space for both')
+	const [tgt, tgtVir] = Exe.Allocate(csize + ssize, 0x10); //snapping to 0x10 since its going to be like a function
+	
+	$$(_ + '2.1 - Initialize the code variable, set the initial CALL distance and address of first string')
+	let dist = FileLoader - (tgtVir + 5);
+	let code = CALL(dist);
+	let strAddr = tgtVir + csize;
+	
+	for (const file of newFiles)
+	{
+		$$(_ + '2.2 - Update the distance for the next CALL')
+		dist -= tsize;
+
+		$$(_ + '2.3 - Fill the template with the string address & distance and append to the code (' + file + ')')
+		code += SwapFillers( template, 1,
+		{
+			1 : strAddr,
+			2 : dist,
+		});
+
+		$$(_ + '2.4 - Update the strAddr to the next string location')
+		strAddr += file.length + 1;
+	}
+	
+	$$(_ + '2.5 - Append the JMP at the end along with the 2 NULLs')
+	code += JMP(Exe.Phy2Vir(hookAddr + 5, CODE), tgtVir + csize - 7) + " 00 00";
+	
+	$$(_ + '3.1 - Add the code & strings to the executable')
+	Exe.SetHex(tgt, code + strings, csize + ssize);
+
+	$$(_ + '3.2 - JMP to our code from the hookAddr')
+	Exe.SetJMP(hookAddr, tgtVir);
+	
+	$$(_ + '3.3 - Return the target address')
 	return Log.rise(tgt);
 }

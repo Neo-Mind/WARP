@@ -1,6 +1,15 @@
 # 2022-09-24 Changes
 
 ## Patch Updates
+- Updated Chris' lua override patch to work with a mapping file and work properly on more recent clients.
+
+## Tool Updates
+- Added **`LUA.loadLuaAfter`** function to support the branched loading in recent clients (used by `AddLuaOverrides` patch)
+
+
+# 2022-09-24 Changes
+
+## Patch Updates
 - Added new module for capturing session value & related functions
 
 - Added new patches to
