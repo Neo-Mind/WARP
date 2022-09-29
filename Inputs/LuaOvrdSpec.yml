@@ -1,0 +1,93 @@
+############################################################################
+#                                                                          #
+#   Copyright (C) 2022 Neo-Mind                                            #
+#                                                                          #
+#   This file is a part of WARP project (specific to RO clients)           #
+#                                                                          #
+#   WARP is free software: you can redistribute it and/or modify           #
+#   it under the terms of the GNU General Public License as published by   #
+#   the Free Software Foundation, either version 3 of the License, or      #
+#   (at your option) any later version.                                    #
+#                                                                          #
+#   This program is distributed in the hope that it will be useful,        #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of         #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          #
+#   GNU General Public License for more details.                           #
+#                                                                          #
+#   You should have received a copy of the GNU General Public License      #
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.  #
+#                                                                          #
+#                                                                          #
+############################################################################
+#                                                                          #
+#   Author(s)     : Neo-Mind                                               #
+#   Created Date  : 2022-09-29                                             #
+#   Last Modified : 2022-09-29                                             #
+#                                                                          #
+############################################################################
+
+##===========================================================================##
+## NOTE : Do not put the "Lua files\" prefix in either original or new name. ##
+##        It is auto-added in code.                                          ##
+##===========================================================================##
+
+## Put all the lua file names to be replaced in this group
+Swap:
+    DataInfo\accName_F: cls\accname_f
+    DataInfo\jobName_F: cls\jobname_f
+    DataInfo\QuestInfo_f: cls\questinfo_f
+    DataInfo\AddRandomOption_F: cls\addrandomoption_f
+    DataInfo\ShadowTable_F: cls\shadowtable_f
+    DataInfo\SpriteRobeName_F: cls\spriterobename_f
+    transparentItem\transparentItem_f: cls\transparentitem_f
+    DataInfo\WeaponTable_F: cls\weapontable_f
+    SignBoardList_F: cls\signboardlist_f
+
+## Put all the lua file names to be loaded after the original in this group
+LoadAfter:
+    # hat effect overrides
+    HatEffectInfo\HatEffectInfo: cls\hateffectinfo
+    
+    # headgear overrides
+    DataInfo\accName: cls\accname
+    DataInfo\AccessoryId: cls\accessoryid
+    DataInfo\TB_Layer_Priority: cls\tb_layer_priority
+    
+    # lapine overrides
+    datainfo\LapineDdukDDakBox: cls\lapineddukddakbox
+    datainfo\LapineUpgradeBox: cls\lapineupgradebox
+    
+    # NPC & Mob overrides
+    DataInfo\jobName: cls\jobname
+    DataInfo\NPCIdentity: cls\npcidentity
+    DataInfo\PetInfo: cls\petinfo
+    DataInfo\ShadowTable: cls\shadowtable
+    
+    # Navigation overrides (Sak & pri suffixes for the keys are automatically added in code)
+    Navigation\Navi_Map_kr: cls\navi_map
+    Navigation\Navi_Npc_kr: cls\navi_npc
+    Navigation\Navi_Mob_kr: cls\navi_mob
+    Navigation\Navi_Link_kr: cls\navi_link
+    Navigation\Navi_LinkDistance_kr: cls\navi_linkdistance
+    Navigation\Navi_NpcDistance_kr: cls\navi_npcdistance
+    Navigation\navi_picknpc_kr: cls\navi_picknpc
+    Navigation\Navi_Scroll_kr: cls\navi_scroll
+    
+    # Random option overrides
+    DataInfo\EnumVAR: cls\enumvar
+    DataInfo\AddRandomOptionNameTable: cls\randomoption
+    
+    # Robe overrides
+    DataInfo\SpriteRobeId: cls\spriterobeid
+    DataInfo\SpriteRobeName: cls\spriterobename
+    transparentItem\transparentItem: cls\transparentitem
+    
+    # World view overrides
+    worldviewdata\worldviewdata_Language: cls\worldviewdata_language
+    worldviewdata\worldviewdata_list: cls\worldviewdata_list
+    worldviewdata\worldviewdata_table: cls\worldviewdata_table
+
+    # Other Table overrides 
+    SignBoardList: cls\signboardlist
+    DataInfo\TitleTable: cls\titletable
+    DataInfo\WeaponTable: cls\weapontable
