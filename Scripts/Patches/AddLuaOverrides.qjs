@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : llchrisll                                              *
 *   Created Date  : 2021-07-15                                             *
-*   Last Modified : 2022-09-29                                             *
+*   Last Modified : 2022-09-30                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -67,7 +67,7 @@ AddLuaOverrides = function()
 		if (src.length >= tgt.length)
 		{
 			$$(__ + '2.3 - If length is feasible overwrite the original')
-			Exe.SetText(Exe.Vir2Phy(addr), prefix + tgt);
+			Exe.SetText(Exe.Vir2Phy(addr), prefix + tgt + "\x00");
 		}
 		else
 		{
