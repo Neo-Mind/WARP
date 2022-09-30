@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2022-09-24                                             #
+#   Last Modified : 2022-09-30                                             #
 #                                                                          #
 ############################################################################
 
@@ -199,11 +199,11 @@ EquipPreview:
             author : Andrei Karas (4144) , Neo-Mind
             desc: Add support for preview button in cash shop (right click the items to see the button). Needs the switch enabled in server-side too.
         
-        - PreviewInDealer:
-            title : Enable equipment preview in NPC Shop
+        - PreviewInTrader:
+            title : Enable equipment preview in Trader Shop
             recommend : no
             author : Andrei Karas (4144) , Neo-Mind
-            desc: Add support for preview button in NPC shops like Armor Dealer (right click the items to see the button). Needs the switch enabled in server-side too.
+            desc: Add support for preview button in older style trader cash shops (right click the items to see the button). Needs the switch enabled in server-side too.
 
 CashShopVis:
     title : CASH SHOP VISIBILITY

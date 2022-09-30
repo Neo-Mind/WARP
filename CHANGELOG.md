@@ -14,7 +14,7 @@
 
 - Added new patches to
 
-	- Enable preview for equipments in NPC shops. Requires 2017+ clients.
+	- Enable preview for equipments in Trader cash shops. Requires 2017+ clients.
 	
 	- Customize guild emblem file size.
 	
