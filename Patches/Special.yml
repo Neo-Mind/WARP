@@ -22,7 +22,7 @@
 #                                                                          #
 #   Author(s)     : Neo-Mind                                               #
 #   Created Date  : 2020-08-26                                             #
-#   Last Modified : 2022-09-07                                             #
+#   Last Modified : 2022-09-30                                             #
 #                                                                          #
 ############################################################################
 
@@ -54,7 +54,7 @@ CustomSpecials:
             title : Add Chris' lua overrides [Experimental]
             recommend : no
             author : llchrisll , Neo-Mind
-            desc : Adds the <a href="https://github.com/llchrisll/ROenglishRE/tree/master/Custom%20Lua%20Files">lua files provided by llchrisll</a> to override the existing lua tables and functions. Please check the link for more details.
+            desc : Adds the lua files provided by llchrisll to override the existing lua tables and functions. Please check this <a href="https://github.com/llchrisll/ROenglishRE/wiki/Addons-and-Customization#custom-lua-support">link</a> for more details.
 
 CustomSkills:
     title : SKILL CUSTOMIZATIONS
