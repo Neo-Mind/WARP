@@ -1,9 +1,28 @@
+# 2022-10-05 Changes
+
+## Patch Updates
+- Updated Restore App Icon & Customize App icon patches
+
+	- Restore enables the new bigger icon in latest clients
+	
+	- Custom icon has no limits now aside from anything Windows imposes.
+
+## Extension Updates
+- Fixed **`DumpImportTable`** extension for certain clients where LUT address is set as 0.
+
+## Script Updates
+- Updated **`RsrcEntry`** class with better traverse function & a dump function to report the hierarchy.
+
+## Tool Updates
+- Fixed minor bugs in GATE (similar issue as **`DumpImportTable`**)
+
+
 # 2022-09-24 Changes
 
 ## Patch Updates
 - Updated Chris' lua override patch to work with a mapping file and work properly on more recent clients.
 
-## Tool Updates
+## Script Updates
 - Added **`LUA.loadLuaAfter`** function to support the branched loading in recent clients (used by `AddLuaOverrides` patch)
 
 

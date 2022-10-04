@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2013-2021 Neo Mind                                       *
+*   Copyright (C) 2013-2022 Neo Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-19                                             *
-*   Last Modified : 2021-12-29                                             *
+*   Last Modified : 2022-10-02                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -60,11 +60,13 @@ DumpImportTable = function()
 	for ( ;true; addr += 20)
 	{
 		$$(_ + '2.2 - Iterate through each IMAGE_IMPORT_DESCRIPTOR')
-		const lutRva = Exe.GetUint32(addr);      //Lookup Table address (RVA)
+		let lutRva = Exe.GetUint32(addr);      //Lookup Table address (RVA)
 		const ts     = Exe.GetUint32(addr + 4);  //TimeStamp
 		const fchain = Exe.GetUint32(addr + 8);  //Forwarder Chain
 		const dllRva = Exe.GetUint32(addr + 12); //DLL Name address (RVA)
 		const iatRva = Exe.GetUint32(addr + 16); //Import Address Table (RVA) <- points to the First Thunk
+		if (lutRva == 0)
+			lutRva = iatRva;
 
 		$$(_ + '2.3 - Ensure we have not reached the end - DLL name addr would be zero')
 		if (dllRva <= 0)
@@ -74,13 +76,15 @@ DumpImportTable = function()
 		const dllPhy = Exe.Rva2Phy(dllRva); //need the PHYSICAL address of the string
 		const dllName = Exe.GetText(dllPhy);
 		const iatVir = iatRva + Exe.ImageBase;
+
+		const lutVir = lutRva + Exe.ImageBase;
 		const lutPhy = Exe.Rva2Phy(lutRva);
 
 		$$(_ + '2.5 - Write the Descriptor Info to file')
 		fp.Write("\tLookup Table Address = 0x" + (lutRva + Exe.ImageBase).toHex(true) + " (0x" + Exe.Rva2Phy(lutRva).toHex(true) + ")");
 		fp.Write(", TimeStamp = " + ts + ", Forwarder = " + fchain);
 		fp.Write(", Name = " + dllName + " (0x" +  dllPhy + ")");
-		fp.WriteLine(", Import Address Table = 0x" + iatVir.toHex(true) + " (0x" + lutPhy.toHex(true) + ")");
+		fp.WriteLine(", Import Address Table = 0x" + iatVir.toHex(true) + " (0x" + Exe.Rva2Phy(iatRva).toHex(true) + ")");
 
 		// Now we move on to the functions starting from the first thunk
 		for (let offset = 0; true; offset += 4)
@@ -99,7 +103,7 @@ DumpImportTable = function()
 			}
 			else
 			{
-				fp.Write("\t\tThunk Address = 0x" + (iatVir + offset).toHex(true) + " (0x" + (lutPhy + offset).toHex(true) + ")");
+				fp.Write("\t\t0x" + (lutVir + offset).toHex(true) + " (0x" + (lutPhy + offset).toHex(true) + ") ::: Function address = " + (iatVir + offset).toHex(true));
 				if (thunkData > 0) //By Name
 				{
 					const funcPhy = Exe.Rva2Phy(thunkData);

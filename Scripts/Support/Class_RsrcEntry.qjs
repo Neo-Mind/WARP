@@ -1,6 +1,6 @@
 /**************************************************************************\
 *                                                                          *
-*   Copyright (C) 2021 Neo-Mind                                            *
+*   Copyright (C) 2021-2022 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project                                    *
 *                                                                          *
@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2021-04-04                                             *
-*   Last Modified : 2021-08-23                                             *
+*   Last Modified : 2022-10-05                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -48,11 +48,11 @@ if (typeof RsrcEntry === 'undefined') //avoid redefinition
 			{
 				this.Entries = [];
 
-				const count = Exe.GetInt16(this.Addr + 12) + Exe.GetInt16(this.Addr + 14);
+				const count = Exe.GetUint16(this.Addr + 12) + Exe.GetUint16(this.Addr + 14);
 				let pos = this.Addr + 16;
 				for (let i = 0; i < count; i++, pos += 8)
 				{
-					id = Exe.GetInt32(pos);
+					id = Exe.GetUint32(pos);
 					offset = Exe.GetInt32(pos + 4);
 					this.Entries[i] = new RsrcEntry(id, rootAddr, offset & 0x7FFFFFFF, offset >= 0);
 					this.Entries[i].Pos = pos;
@@ -60,26 +60,41 @@ if (typeof RsrcEntry === 'undefined') //avoid redefinition
 			}
 		}
 
-		traverse(hierarchy)
+		traverse(id, ...rest)
 		{
-			if (Array.isArray(hierarchy) && hierarchy.isEmpty())
+			if (!this.IsFile)
 			{
-				return this;
-			}
-			else if (!this.IsFile)
-			{
-				const id = Array.isArray(hierarchy) ? hierarchy[0] : hierarchy;
 				const entry = this.Entries.find(e => e.ID === id);
-
 				if (entry != undefined)
 				{
-					if (Array.isArray(hierarchy))
-						return entry.traverse(hierarchy.slice(1));
+					if (rest.length > 0)
+						return entry.traverse(...rest);
 					else
 						return entry;
 				}
 			}
 			return false;
+		}
+		
+		dump(prefix = '')
+		{
+			console.info(prefix, "ID = ", this.ID, ", Addr =", this.Addr.toHex(true));
+			
+			if (this.IsFile)
+			{
+				console.info(prefix, "DataAddr =", this.DataAddr.toHex(true), ", DataSize = ", this.DataSize);
+			}
+			else
+			{
+				console.info(prefix, "Entry count = ", this.Entries.length);
+				
+				prefix += "\t";
+				for (const e of this.Entries)
+				{
+					console.info(prefix, "- Pos =", e.Pos.toHex(true));
+					e.dump(prefix + "  ");
+				}
+			}
 		}
 	};
 }
