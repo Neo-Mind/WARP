@@ -24,7 +24,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, Andrei (4144), CH.C (jchcc)                  *
 *   Created Date  : 2020-11-08                                             *
-*   Last Modified : 2022-09-24                                             *
+*   Last Modified : 2022-12-28                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -159,7 +159,7 @@ ZeroCinShop = function()
 	const prefix =
 		MOV(ECX, ESI)       //mov ecx, esi
 	+	PUSH_EAX            //push eax
-	+	PUSH(' [11010010] 01 00 00') //push 1C2h or 1D2h (in newer clients)
+	+	PUSH(' [110.0010] 01 00 00') //push 1C2h or 1D2h (in newer clients)
 	+	PUSH(0x226)         //push 226h
 	+	CALL(ALLWC)         //call UICashShopWnd::virt68 ; dunno the name
 	;

@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc)                                           *
 *   Created Date  : 2021-06-14                                             *
-*   Last Modified : 2022-09-24                                             *
+*   Last Modified : 2022-12-28                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -104,4 +104,4 @@ FixHomunAI = function()
 /// \brief Disable for unsupported clients
 ///
 FixHomunAI.validate = () =>
-	Exe.BuildDate > 20170920;
+	Exe.BuildDate > 20170920 && Exe.BuildDate < 20210000;

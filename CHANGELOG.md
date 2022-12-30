@@ -1,9 +1,19 @@
+# 2022-12-30 Changes
+
+## Patch Updates
+- Fixed bug in [Enforce 0 C in Cash Shop](https://github.com/Neo-Mind/WARP/issues/115) patch.
+
+- Updated valid build dates for [Fix Homunculi AI](https://github.com/Neo-Mind/WARP/issues/93) patch.
+
+- Fixed bug in [Increase Headgear View ID](https://discord.com/channels/780647066871136266/1051858994584633404) patch.
+
+
 # 2022-10-05 Changes
 
 ## Patch Updates
-- Updated Restore App Icon & Customize App icon patches
+- Updated Restore App Icon & Customize App icon patches.
 
-	- Restore enables the new bigger icon in latest clients
+	- Restore enables the new bigger icon in latest clients.
 	
 	- Custom icon has no limits now aside from anything Windows imposes.
 
