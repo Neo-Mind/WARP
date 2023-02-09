@@ -1,0 +1,93 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2023 Jittapan Pluemsumran (Secret)                       *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Jittapan (Secret)                                      *
+*   Created Date  : 2023-02-09                                             *
+*   Last Modified : 2023-02-09                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Makes the Trait Status button in the status window do nothing
+///
+DisableTraitStatusButton = function()
+{
+    const _ = 'DisableTraitStatusButton : ';
+
+    $$(_ + '1.1 Find the UUID comparison')
+    let parts =
+    [
+        CMP(EAX, 0x21E)
+    ,
+        JG(POS3WC)
+    +   JZ(POS3WC)
+    ];
+
+    let addr = Exe.FindHex(parts);
+    if (addr < 0)
+		throw Error('UIID comparison not found.');
+    
+    $$(_ + '1.2 - NOP the jumps out')
+    Exe.SetNOPs(addr + parts.byteCount(0), parts.byteCount(1)); // 6 for each jumps (12)
+
+    return true;
+}
+
+///
+/// \brief Disable for unsupported clients.
+///
+DisableTraitStatusButton.validate = function()
+{
+	return Exe.BuildDate >= 20200916; // Roughly this date, still needs confirmation
+};
+
+///
+/// \brief Hides the Trait Status button from the status window
+///
+HideTraitStatusButton = function()
+{
+    const _ = 'HideTraitStatusButton : ';
+
+    $$(_ + '1.1 - Find the UIWindow::AddChild call')
+    parts =
+    [
+        MOV([EAX, WC], 0x21E)
+    +   PUSH([ESI, POS2WC])
+    ,   CALL(ALLWC)
+    ];
+    addr = Exe.FindHex(parts);
+    if (addr < 0)
+        throw Error('UIWindow::AddChild call not found.' + parts);
+    
+    $$(_ + '1.2 - NOP the call')
+    Exe.SetNOPs(addr + parts.byteCount(0), parts.byteCount(1)); // 5 for the call
+
+    return true;
+};
+
+///
+/// \brief Disable for unsupported clients.
+///
+HideTraitStatusButton.validate = function()
+{
+	return Exe.BuildDate >= 20200916; // Roughly this date, still needs confirmation
+};
