@@ -322,7 +322,7 @@ NoGGuard = function()
 		code =
 			TEST(AL, AL)                             //test al, al
 		+	JE(Exe.Version > 11 ? POS2WC : WCp)      //je _skip#2
-		+	CALL(Exe.Version > 11 ? POS3WC : NEG3WC) //call func#1
+		+	CALL(Exe.Version > 11 ? ALLWC : NEG3WC) //call func#1
 		+	MOV(ECX, EAX)                            //mov ecx, eax
 		+	CALL()                                   //call func#2
 		;
@@ -338,7 +338,7 @@ NoGGuard = function()
 
 	const found = addrs.filter( memAddr =>
 	{
-		addr = Exe.FindHex(code, memAddr - 0x50, memAddr);
+		addr = Exe.FindHex(code, memAddr - 0x100, memAddr);
 
 		$$(_ + '3.4 - Change the conditional jump')
 		if (addr > 0)
