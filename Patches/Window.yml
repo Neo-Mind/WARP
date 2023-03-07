@@ -235,3 +235,20 @@ LicenseScreenVis:
             recommend : no
             author : Neo-Mind
             desc : Makes the client always show the license for all langtypes.
+
+TraitStatusButton:
+    title: TRAIT STATUS BUTTON BEHAVIOR
+    mutex: false
+    
+    patches:
+        - DisableTraitStatusButton:
+            title : Disable Trait Status Button
+            recommend : no
+            author : Secret
+            desc : Make the Trait Status button do nothing.
+        
+        - HideTraitStatusButton:
+            title : Hide Trait Status Button
+            recommend : no
+            author : Secret
+            desc : Hide the Trait Status Expansion Button in the Status Window.
