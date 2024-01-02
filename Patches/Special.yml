@@ -54,7 +54,7 @@ CustomSpecials:
             title : Add Chris' lua overrides [Experimental]
             recommend : no
             author : llchrisll , Neo-Mind
-            desc : Adds the lua files provided by llchrisll to override the existing lua tables and functions. Please check this <a href="https://github.com/llchrisll/ROenglishRE/wiki/Addons-and-Customization#custom-lua-support">link</a> for more details.
+            desc : Adds the lua files provided by llchrisll to override the existing lua tables and functions. Please check this <a href="https://llchrisll.github.io/ROTPDocs/addons/#custom-lua-support">link</a> for more details.
 
 CustomSkills:
     title : SKILL CUSTOMIZATIONS
