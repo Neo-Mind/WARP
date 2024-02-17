@@ -3,7 +3,7 @@
 *   Copyright (C) 2020-2022 Functor                                        *
 *   Copyright (C) 2020-2022 CH.C (jchcc)                                   *
 *   Copyright (C) 2020-2022 Andrei Karas (4144)                            *
-*   Copyright (C) 2020-2022 X-EcutiOnner (xex.ecutionner@gmail.com)        *
+*   Copyright (C) 2020-2024 X-EcutiOnner (xex.ecutionner@gmail.com)        *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -25,91 +25,107 @@
 *                                                                          *
 *   Author(s)     : Functor, CH.C (jchcc), Andrei (4144), X-EcutiOnner     *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2022-09-24                                             *
+*   Last Modified : 2024-02-17                                             *
 *                                                                          *
 \**************************************************************************/
 
+///======================================================================///
 ///
 /// \brief Change the coords used for equipment swap button both on the
 ///        equipment window and costume window inside SWAPEQUIPMENTWNDINFO function.
 ///
+///======================================================================///
 NoEquipSwap = function()
 {
-	const _ = 'NoEquipSwap : ';
+    const _ = 'NoEquipSwap : ';
 
-	$$(_ + '1.1 - Find the location where equipment function is called')
-	let prefix =
-		CALL(NEG3WC)            //call func#1
-	+	MOV(EAX, [EDI, 0x18])   //mov eax, dword ptr [edi + 18h]
-	+	MOV(ECX, [EDI, POS2WC]) //mov ecx, dword ptr [edi + dispA]
-	;
+    let addr, code, prefix, suffix;
 
-	let suffix =
-		SUB(EAX, 0x14)          //sub eax, 14h
-	+	(Exe.Version <= 11
-	?
-		MOV(EDX, [ECX])         //mov edx, dword ptr [ecx]
-	:
-		''
-	)
-	+	PUSH_EAX                //push eax
-	;
-	let addr = Exe.FindHex(prefix + suffix);
-	if (addr > 0)
-	{
-		$$(_ + '1.2 - Change the SUB to ADD')
-		Exe.SetHex(addr + prefix.byteCount(), ADD(EAX, 0x14));
-	}
-	else if (Exe.BuildDate > 20210100)
-	{
-		prefix =
-			MOV(ECX, [EDI, POS2WC]) //mov ecx, dword ptr [edi + dispA]
-		;
+    $$(_ + '1.1 - Find the location where equipment function is called')
+    prefix =
+        CALL(NEG3WC)             //call func#1
+    +   MOV(EAX, [EDI, 0x18])    //mov eax, dword ptr [edi + 18h]
+    +   MOV(ECX, [EDI, POS2WC])  //mov ecx, dword ptr [edi + dispA]
+    ;
 
-		suffix =
-			PUSH(0xA7)              //push A7h
-		+	PUSH(0xC1)              //push C1h
-		+	MOV(EAX, [ECX])         //mov eax, dword ptr [ecx]
-		;
+    suffix =
+        SUB(EAX, 0x14)           //sub eax, 14h
+    +   (Exe.Version <= 11
+    ?   MOV(EDX, [ECX])          //mov edx, dword ptr [ecx]
+    :   ''
+    )
+    +   PUSH_EAX                 //push eax
+    ;
 
-		addr = Exe.FindHex(prefix + suffix);
-		if (addr > 0)
-		{
-			$$(_ + '1.2 - Change the A7 to CF')
-			Exe.SetUint32(addr + prefix.byteCount() + 1, 0xCF);
-		}
-	}
-	if (addr < 0)
-		throw Error("Equip Function CALL missing");
+    addr = Exe.FindHex(prefix + suffix);
 
-	// TODO - This half needs live running to determine the coords
+    if (addr > 0)
+    {
+        $$(_ + '1.2 - Change the SUB to ADD')
+        Exe.SetHex(addr + prefix.byteCount(), ADD(EAX, 0x14));
+    }
+    else if (Exe.BuildDate > 20210100)
+    {
+        prefix =
+            MOV(ECX, [EDI, POS2WC])  //mov ecx, dword ptr [edi + dispA]
+        ;
 
-	$$(_ + '2.1 - Find the location where costume function is called')
-	const code =
-		MOV(ECX, [ESI, POS2WC]) //mov ecx, dword ptr [esi + dispB]
-	+	TEST(ECX, ECX)          //test ecx, ecx
-	+	JZ(0x6F)                //jz short _skip
-	+	MOV(EAX, [ESI, POS1WC]) //mov eax, dword ptr [esi + dispC] ; dispC < dispB
-	+	MOV(EDX, [ECX])         //mov edx, dword ptr [ecx]
-	+	ADD(EAX, 0x93)          //add eax, 93h
-	+	PUSH_EAX                //push eax
-	;
+        suffix =
+            PUSH(0xA7)               //push A7h
+        +   PUSH(0xC1)               //push C1h
+        +   MOV(EAX, [ECX])          //mov eax, dword ptr [ecx]
+        ;
 
-	addr = Exe.FindHex(code);
-	if (addr < 0)
-		throw Error("Costume function CALL missing");
+        addr = Exe.FindHex(prefix + suffix);
 
-	$$(_ + '2.2 - Change 93h to FFh')
-	Exe.SetUint8(addr + code.byteCount() - 5, 0xFF);
+        if (addr < 0)
+        {
+            prefix = MOV(ECX, [ESI, POS2WC]);  //mov ecx, dword ptr [esi + dispA]
+            addr = Exe.FindHex(prefix + suffix);
+        }
 
-	return true;
+        if (addr > 0)
+        {
+            $$(_ + '1.2 - Change the A7 to CF')
+            Exe.SetUint32(addr + prefix.byteCount() + 1, 0xCF);
+        }
+    }
+
+    if (addr < 0)
+        throw Error("Equip Function CALL missing");
+
+    // TODO: This half needs live running to determine the coords
+
+    $$(_ + '2.1 - Find the location where costume function is called')
+    if (Exe.BuildDate < 20211101 && Exe.BuildDate > 20230427)
+    {
+        code =
+            MOV(ECX, [ESI, POS2WC])  //mov ecx, dword ptr [esi + dispB]
+        +   TEST(ECX, ECX)           //test ecx, ecx
+        +   JZ(0x6F)                 //jz short _skip
+        +   MOV(EAX, [ESI, POS1WC])  //mov eax, dword ptr [esi + dispC] ; dispC < dispB
+        +   MOV(EDX, [ECX])          //mov edx, dword ptr [ecx]
+        +   ADD(EAX, 0x93)           //add eax, 93h
+        +   PUSH_EAX                 //push eax
+        ;
+
+        addr = Exe.FindHex(code);
+
+        if (addr < 0)
+            throw Error("Costume function CALL missing");
+
+        $$(_ + '2.2 - Change 93h to FFh')
+        Exe.SetUint8(addr + code.byteCount() - 5, 0xFF);
+    }
+
+    return true;
 };
 
-///
-/// \brief Disable for Unsupported Clients - Check for Reference
-///
+///++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++///
+/// \brief Disable for unsupported clients.
+///++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++///
 NoEquipSwap.validate = () =>
-	Exe.BuildDate >= 20170208;
+    Exe.BuildDate >= 20170208;
 
 ///
 /// \brief Change the JNZ after comparison to remove title window button
