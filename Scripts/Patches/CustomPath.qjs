@@ -45,7 +45,7 @@ CustomPath = function(_)
 	$$(_, 1.3, `Find location where the string is PUSHed`)
 	const addr = Exe.FindHex( PUSH(nameAddr) );
 	if (addr < 0)
-		throw Error(`'${name} not used`);
+		throw Error(`'${name}' not used`);
 
 	$$(_, 1.4, `Get the new file name from user`)
 	const suf = strType === "Prefix" ? "without .lub" : "";
@@ -148,6 +148,7 @@ CustomRuneSetInfoLub   = CustomPath;
 CustomRuneSystemTableLub = CustomPath;
 CustomRuneSystemIdLub  = CustomPath;
 CustomRuneSystemInfoLub = CustomPath;
+CustomRuneRewardLub = CustomPath;
 
 ///
 /// \brief Data to be used for the above patches
@@ -260,9 +261,9 @@ CustomPath.Data = MakeMap(
 	'CustomChangeMatLub',
 	{
 		strType : "Path",
-		varName : '$newspopup',
-		prefix : "spopup Lua",
-		knownName : "System\\ChangeMaterial.lub"
+		varName : '$newchangemat',
+		prefix : "ChangeMaterial Lua",
+		knownName : "System/ChangeMaterial.lub"
 	},
 	
 	'CustomQuestQualiLub',
@@ -277,7 +278,7 @@ CustomPath.Data = MakeMap(
 	{
 		strType : "Path",
 		varName : '$newRuneDesc',
-		prefix : "Rune\rune_desc Lua",
+		prefix : "rune_desc Lua",
 		knownName : "System\\Rune\\rune_desc.lub"
 	},
 	
@@ -285,7 +286,7 @@ CustomPath.Data = MakeMap(
 	{
 		strType : "Path",
 		varName : '$newRuneSetDesc',
-		prefix : "Rune\runeset_desc Lua",
+		prefix : "runeset_desc Lua",
 		knownName : "System\\Rune\\runeset_desc.lub"
 	},
 	
@@ -293,7 +294,7 @@ CustomPath.Data = MakeMap(
 	{
 		strType : "Path",
 		varName : '$newitemDecom',
-		prefix : "Rune\itemDecom Lua",
+		prefix : "itemDecom Lua",
 		knownName : "System\\Rune\\itemDecom.lub"
 	},
 	
@@ -301,7 +302,7 @@ CustomPath.Data = MakeMap(
 	{
 		strType : "Path",
 		varName : '$newruneinfo',
-		prefix : "Rune\rune_info Lua",
+		prefix : "rune_info Lua",
 		knownName : "System\\Rune\\rune_info.lub"
 	},
 	
@@ -309,7 +310,7 @@ CustomPath.Data = MakeMap(
 	{
 		strType : "Path",
 		varName : '$newrunesetinfo',
-		prefix : "Rune\runeset_info Lua",
+		prefix : "runeset_info Lua",
 		knownName : "System\\Rune\\runeset_info.lub"
 	},
 	
@@ -317,7 +318,7 @@ CustomPath.Data = MakeMap(
 	{
 		strType : "Path",
 		varName : '$newruneSystable',
-		prefix : "Rune\runeSystem_table Lua",
+		prefix : "runeSystem_table Lua",
 		knownName : "System\\Rune\\runeSystem_table.lub"
 	},
 	
@@ -325,7 +326,7 @@ CustomPath.Data = MakeMap(
 	{
 		strType : "Path",
 		varName : '$newrunesysid',
-		prefix : "Rune\runesystemid Lua",
+		prefix : "runesystemid Lua",
 		knownName : "System\\Rune\\runesystemid.lub"
 	},
 	
@@ -333,8 +334,15 @@ CustomPath.Data = MakeMap(
 	{
 		strType : "Path",
 		varName : '$newrunesysInfo',
-		prefix : "Rune\runesystemInfo Lua",
+		prefix : "runesystemInfo Lua",
 		knownName : "System\\Rune\\runesystemInfo.lub"
+	},
+	'CustomRuneRewardLub',
+	{
+		strType : "Path",
+		varName : '$newrunerewInfo',
+		prefix : "runeset_reward Lua",
+		knownName : "System\\Rune\\runeset_reward.lub"
 	},
 );
 
