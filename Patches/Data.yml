@@ -344,7 +344,67 @@ CustomPath:
             title : Customize RecommendedQuestInfoList lub
             recommend : no
             author : Jian
-            desc : Make the client load user specified lua file instead of <b>RecommendedQuestInfoList*.lub</b>.
+            desc : Make the client load user specified lua file instead of <b>RecommendedQuestInfoList*.lub</b>.     
+
+        - CustomChangeMatLub:
+            title : Customize ChangeMaterial lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>ChangeMaterial.lub</b>.
+        
+        - CustomRuneDescLub:
+            title : Customize Rune\rune_desc lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>Rune\rune_desc.lub</b>.
+
+        - CustomRuneSetDescLub:
+            title : Customize Rune\runeset_desc lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>Rune\runeset_desc.lub</b>.
+
+        - CustomitemDecomLub:
+            title : Customize Rune\itemDecom lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>Rune\itemDecom.lub</b>.
+
+        - CustomRuneInfoLub:
+            title : Customize Rune\rune_info lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>Rune\rune_info.lub</b>.
+
+        - CustomRuneSetInfoLub:
+            title : Customize Rune\runeset_info lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>Rune\runeset_info.lub</b>.
+
+        - CustomRuneSystemTableLub:
+            title : Customize Rune\runeSystem_table lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>Rune\runeSystem_table.lub</b>.
+
+        - CustomRuneSystemIdLub:
+            title : Customize Rune\runesystemid lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>Rune\runesystemid.lub</b>.
+
+        - CustomRuneSystemInfoLub:
+            title : Customize Rune\runesystemInfo lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>Rune\runesystemInfo.lub</b>.
+
+        - CustomRuneRewardLub:
+            title : Customize Rune\runeset_reward lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>Rune\runeset_reward.lub</b>.
 
         - CustomLicenseTxt:
             title : Customize License File
