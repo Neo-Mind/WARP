@@ -137,9 +137,7 @@ CustomMapInfoLub       = CustomPath;
 CustomOngQuestInfoLub  = CustomPath;
 CustomRcmdQuestInfoLub = CustomPath;
 CustomMonSizeEffLub    = CustomPath;
-CustomspopupLub        = CustomPath;
 CustomChangeMatLub     = CustomPath;
-CustomQuestQualiLub    = CustomPath;
 CustomRuneDescLub      = CustomPath;
 CustomRuneSetDescLub   = CustomPath;
 CustomitemDecomLub     = CustomPath;
@@ -250,28 +248,12 @@ CustomPath.Data = MakeMap(
 		parts : ["system\\RecommendedQuestInfoList", "_Sakray", "_True"]
 	},
 	
-	'CustomspopupLub',
-	{
-		strType : "Path",
-		varName : '$newspopup',
-		prefix : "spopup Lua",
-		knownName : "System\\spopup.lub"
-	},
-	
 	'CustomChangeMatLub',
 	{
 		strType : "Path",
 		varName : '$newchangemat',
 		prefix : "ChangeMaterial Lua",
 		knownName : "System/ChangeMaterial.lub"
-	},
-	
-	'CustomQuestQualiLub',
-	{
-		strType : "Path",
-		varName : '$newQuestQuali',
-		prefix : "QuestClassificationInfo Lua",
-		knownName : "System\\QuestClassificationInfo.lub"
 	},
 	
 	'CustomRuneDescLub',
