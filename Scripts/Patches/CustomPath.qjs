@@ -77,7 +77,7 @@ CustomPath = function(_)
 			refAddrs = MapAddrs(addr, parts);
 	}
 	if (addr < 0)
-		throw Error(`'${name} not used`);
+		throw Error(`'${name}' not used`);
 
 	$$(_, 1.4, `Get the new file name from user`)
 	const suf = strType === "Prefix" ? "without .lub" : "";
@@ -213,6 +213,18 @@ CustomMapInfoLub       = CustomPath;
 CustomOngQuestInfoLub  = CustomPath;
 CustomRcmdQuestInfoLub = CustomPath;
 CustomMonSizeEffLub    = CustomPath;
+CustomspopupLub        = CustomPath;
+CustomChangeMatLub     = CustomPath;
+CustomQuestQualiLub    = CustomPath;
+CustomRuneDescLub      = CustomPath;
+CustomRuneSetDescLub   = CustomPath;
+CustomitemDecomLub     = CustomPath;
+CustomRuneInfoLub      = CustomPath;
+CustomRuneSetInfoLub   = CustomPath;
+CustomRuneSystemTableLub = CustomPath;
+CustomRuneSystemIdLub  = CustomPath;
+CustomRuneSystemInfoLub = CustomPath;
+CustomRuneRewardLub = CustomPath;
 
 ///
 /// \brief Data to be used for the above patches
@@ -312,6 +324,101 @@ CustomPath.Data = MakeMap(
 		varName : '$newRcmdQInfoList',
 		prefix : "Recommended QuestInfoList Lua",
 		parts : ["system\\RecommendedQuestInfoList", "_Sakray", "_True"]
+	},
+	
+	'CustomspopupLub',
+	{
+		strType : "Path",
+		varName : '$newspopup',
+		prefix : "spopup Lua",
+		knownName : "System\\spopup.lub"
+	},
+	
+	'CustomChangeMatLub',
+	{
+		strType : "Path",
+		varName : '$newchangemat',
+		prefix : "ChangeMaterial Lua",
+		knownName : "System/ChangeMaterial.lub"
+	},
+	
+	'CustomQuestQualiLub',
+	{
+		strType : "Path",
+		varName : '$newQuestQuali',
+		prefix : "QuestClassificationInfo Lua",
+		knownName : "System\\QuestClassificationInfo.lub"
+	},
+	
+	'CustomRuneDescLub',
+	{
+		strType : "Path",
+		varName : '$newRuneDesc',
+		prefix : "rune_desc Lua",
+		knownName : "System\\Rune\\rune_desc.lub"
+	},
+	
+	'CustomRuneSetDescLub',
+	{
+		strType : "Path",
+		varName : '$newRuneSetDesc',
+		prefix : "runeset_desc Lua",
+		knownName : "System\\Rune\\runeset_desc.lub"
+	},
+	
+	'CustomitemDecomLub',
+	{
+		strType : "Path",
+		varName : '$newitemDecom',
+		prefix : "itemDecom Lua",
+		knownName : "System\\Rune\\itemDecom.lub"
+	},
+	
+	'CustomRuneInfoLub',
+	{
+		strType : "Path",
+		varName : '$newruneinfo',
+		prefix : "rune_info Lua",
+		knownName : "System\\Rune\\rune_info.lub"
+	},
+	
+	'CustomRuneSetInfoLub',
+	{
+		strType : "Path",
+		varName : '$newrunesetinfo',
+		prefix : "runeset_info Lua",
+		knownName : "System\\Rune\\runeset_info.lub"
+	},
+	
+	'CustomRuneSystemTableLub',
+	{
+		strType : "Path",
+		varName : '$newruneSystable',
+		prefix : "runeSystem_table Lua",
+		knownName : "System\\Rune\\runeSystem_table.lub"
+	},
+	
+	'CustomRuneSystemIdLub',
+	{
+		strType : "Path",
+		varName : '$newrunesysid',
+		prefix : "runesystemid Lua",
+		knownName : "System\\Rune\\runesystemid.lub"
+	},
+	
+	'CustomRuneSystemInfoLub',
+	{
+		strType : "Path",
+		varName : '$newrunesysInfo',
+		prefix : "runesystemInfo Lua",
+		knownName : "System\\Rune\\runesystemInfo.lub"
+	},
+	'CustomRuneRewardLub',
+	{
+		strType : "Path",
+		varName : '$newrunerewInfo',
+		prefix : "runeset_reward Lua",
+		knownName : "System\\Rune\\runeset_reward.lub"
 	},
 );
 
