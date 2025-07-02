@@ -338,13 +338,25 @@ CustomPath:
             title : Customize RecommendedQuestInfoList lub
             recommend : no
             author : Jian
-            desc : Make the client load user specified lua file instead of <b>RecommendedQuestInfoList*.lub</b>.     
+            desc : Make the client load user specified lua file instead of <b>RecommendedQuestInfoList*.lub</b>.
+
+        - CustomspopupLub:
+            title : Customize spopup lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>spopup.lub</b>.
 
         - CustomChangeMatLub:
             title : Customize ChangeMaterial lub
             recommend : no
             author : llchrisll
             desc : Make the client load user specified lua file instead of <b>ChangeMaterial.lub</b>.
+
+        - CustomQuestQualiLub:
+            title : Customize QuestClassificationInfo lub
+            recommend : no
+            author : llchrisll
+            desc : Make the client load user specified lua file instead of <b>QuestClassificationInfo.lub</b>.
         
         - CustomRuneDescLub:
             title : Customize Rune\rune_desc lub
