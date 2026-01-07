@@ -36,13 +36,8 @@ DetectAppliedPatches = function(_)
     if (Exe.FileSize == 0)
         throw NO_EXE;
 
-    $$(_, 1.2, `Open the output file for writing`)
-    const fileName = Exe.GetUserInput("$$detectOutput", D_OutFile, "Target File",
-        "Enter the output file path", OUTDIR + "DetectedPatches_" + ROC.BaseName + ".txt");
-
-    if (fileName === false)
-        return true;
-
+    $$(_, 1.2, `Open the output file for writing - auto-generate without prompting`)
+    const fileName = OUTDIR + "DetectedPatches_" + ROC.BaseName + ".txt";
     let fp = new TextFile(fileName, 'w');
     if (!fp.Valid)
         throw NO_OUTPUT;
@@ -383,11 +378,11 @@ DetectAppliedPatches = function(_)
 
     fp.Close();
 
-    $$(_, 5.2, `Show the file`)
-    if (!Warp.TestMode && UserChoice("Show File", "Display the generated report?"))
+    $$(_, 5.2, `Automatically show the report`)
+    if (!Warp.TestMode)
     {
         Warp.Show(fp.Path);
     }
 
-    return true;
+    return "Report saved to: " + fileName;
 };
