@@ -47,163 +47,261 @@ DetectAppliedPatches = function(_)
     if (!fp.Valid)
         throw NO_OUTPUT;
 
-    $$(_, 2.1, `Write header`)
-    fp.WriteLine("=".repeat(70));
+    $$(_, 2.1, `Define all patches by category`)
+    const patchCategories = {
+        "DATA": [
+            "CustomMaxEmbFileSize", "CustomRodexTax", "CustomGuildExpLimit", "CustomAdvAgencyLimits",
+            "EnableEotFonts", "FixFontsCharset", "AlwaysAscii", "CustomSSQuality",
+            "CallKoreaClientInfo", "RestoreClientInfo", "DataFolderFirst", "PlainTextDesc",
+            "LoadKrExtSettings", "IncrViewID", "No3DBoneLimit", "CustomQuestLua",
+            "IncrMapQuality", "EnableEffectTool", "ItemInfoPerServer", "UseStateLubIcon",
+            "FixActDelay", "CustomDLL", "HideBuildInfo", "NoCameraLock",
+            "NoMapInfo", "FixArrowsCharset", "BossDropIdentified", "TranslateClient",
+            "TranslateTaekwon", "CustomCaptchaDecomp", "SkipSignBoard", "SkipTownInfo",
+            "MsgStrings", "QuestDisplay", "CustomDefaultBGM", "CustomItemInfoLub",
+            "CustomAchieveLub", "CustomMonSizeEffLub", "CustomTownInfoLub", "CustomPetEvoClnLub",
+            "CustomTipboxLub", "CustomCheckAttLub", "CustomPrivAirplaneLub", "CustomMapInfoLub",
+            "CustomOngQuestInfoLub", "CustomRcmdQuestInfoLub", "CustomLicenseTxt", "CustomClientInfo",
+            "BodyPalMF", "BodyPalUnisex", "HeadPalMF", "HeadPalUnisex",
+            "GRFsFromIni", "GRFsEmbedded"
+        ],
+
+        "PROTECTION": [
+            "NoHShield", "NoGGuard", "NoCDefender"
+        ],
+
+        "UI": [
+            "AllowShortcutsInWine", "CustomMissingLauncherMsg", "TildeForMatk", "NoSwearFilter",
+            "SkipServiceSelect", "OpenToServiceSelect", "GuildBrackets", "FixChatAt",
+            "AlwaysOfficialBG", "NoHourly", "EnableFlagEmotes", "NoSerialDisplay",
+            "AllowSpaceInGName", "CustomInventoryLimit", "DeleteCharWithEmail", "CustomVendingLimit",
+            "NoHelpMsg", "HideWorldView", "CloseCutinOnEsc", "EnableMailAccess",
+            "EnableNoticeMails", "MoveUpItemCount", "IncrDigits", "CustomFadeDelay",
+            "RemoveBookingJobs", "RelativeDelay4CharDel", "RestoreChatFocus", "FixItemDescBug",
+            "NoEquipPreview", "HideZeroDateInGuildWin", "CustomSlotHLColor", "ShortcutForAll",
+            "FixAchieveCounters", "HideGameWindows", "FixHomunAI", "InsensitiveStorageSearch",
+            "InsensitiveShopSearch", "OnlyFirstBG", "OnlySecondBG", "NoGravityAds",
+            "NoGravityLogo", "CustomFontName", "CustomFontHeight", "CustomFontCellHeight",
+            "CustomFontHgtOffset", "CustomFontHgtLimits", "CustomFontWeight", "CustomNormalFontWeight",
+            "CustomBoldFontWeight", "CustomFontWgtOffset", "CustomFontCharset",
+            "IgnoreRsrcErr", "IgnorePalErr", "IgnoreLuaErr", "IgnoreQuestErr",
+            "IgnoreEntryQueueErr", "MsgBox2Beep", "ShowMsgIcon", "NoMsgBox"
+        ],
+
+        "CHARACTER": [
+            "OfficialPal", "NoGMSprite", "ShowBGEmblem", "RestoreModelCulling",
+            "Intravision", "CustomQSDelay", "AllowPL2Leave", "AllowSkillSpam",
+            "AllowGuildInClan", "RestoreAutoFollow", "CustomAFStopDelay", "DrawShieldOnTop",
+            "ShowGvGDamage", "Allow65kHairs", "IncrHairStyles", "NoAutoFollow",
+            "DecrAFDelay", "CustomAuraSprites", "CustomAuraLimits", "CustomGMColor",
+            "CustomGuildColor", "CustomPartyColor", "CustomPartyColorSelf", "CustomPublicColor",
+            "CustomPublicColorSelf", "SkipInFriendList", "SkipInGuildList", "NoWalkDelay",
+            "CustomWalkDelay", "HideResButton", "ShowResButton"
+        ],
+
+        "WINDOW": [
+            "HideOldButtons", "HideNewButtons", "ShowNewButtons", "CustomNewCharNameHeight",
+            "IncrNewCharHairs", "CustomCharCreateId", "FixLatestNCWin", "CustomCharCreateSecond",
+            "NoDoramCreation", "CustomFriendsLimit", "CustomPartyLimit", "NoAdvAgencyInParty",
+            "NoEquipSwap", "NoEquipWinTitle", "CustomBarLimits", "ShowExpNumbers",
+            "DisConnToLogin", "CancelToLogin", "ShowReplayBtn", "ShowCancelBtn",
+            "ShowRegisterBtn", "NoCharnameLimit", "NoUsernameLimit", "NoPasswordLimit",
+            "HideLicense", "ShowLicense", "DisableTraitStatusButton", "HideTraitStatusButton"
+        ],
+
+        "CLIENT": [
+            "ResizePlayerBar", "ResizeNormalBar", "ResizeMiniBossBar", "ResizeBossBar",
+            "NoEarthQuake", "NoWavyScreen", "NoBlindness", "EnableWho",
+            "EnableShowName", "EnableUnknCmds", "NoDancerScream", "NoBardFrostJoke",
+            "ResizeChatBox", "ResizeChatRoomBox", "ResizePMBox", "ResizeNpcBox",
+            "HideRoulette", "ShowRoulette", "MoveShopIcon", "ZeroCinShop",
+            "DefShopBrowser", "PreviewInShop", "PreviewInTrader", "HideCashShop",
+            "ShowCashShop", "LowCamAngle", "MediumCamAngle", "HighCamAngle",
+            "Zoom25Percent", "Zoom50Percent", "Zoom75Percent", "ZoomMax",
+            "RestoreLoginWindow", "UseSSOLogin", "UseOldLogin", "UnlimitedChatRepeat",
+            "LimitedChatRepeat", "AddInpDelay", "CustomGameLoopDelay"
+        ],
+
+        "SOUND": [
+            "Enable44kHzAudio", "AutoMute", "NoBGMAudio", "RestoreSongsEffect"
+        ],
+
+        "ENVIRONMENT": [
+            "NoFilenameCheck", "HKLMtoHKCU", "UseDefaultBrowser", "NoAdminNeeded",
+            "LoadClientPlugins", "NoMultiWindow", "CustomMinResolution", "IgnoreDebugger",
+            "EnableSysMenu", "UseMiniTitle", "CustomWinTitle", "BorderlessFSW",
+            "No1and1Arg", "IgnoreAccArg", "RestoreIcon", "CustomIcon",
+            "Idle2NormalPriority", "Normal2HighPriority"
+        ],
+
+        "NETWORK": [
+            "EnableDnsSupport", "SendMD5Hash", "NoNagle", "NoLoginOTP",
+            "EnableProxy", "NoHardCodedIP", "NoHardCodedAddr", "EnableHttpEmblem",
+            "NoGNJoyLaunch", "CustomMerchantURL", "HidePacketsFromPEEK", "SendClientFlags",
+            "CustomFirstKey", "CustomSecondKey", "CustomThirdKey",
+            "NoLoginEncr", "NoPacketEncr", "NoEncrForLC", "NoPassEncr"
+        ],
+
+        "SPECIAL": [
+            "CustomShields", "CustomJobs", "CustomHomuns", "AddLuaOverrides",
+            "CustomPlayerSkills", "CustomHomunSkills", "CustomMerceSkills"
+        ]
+    };
+
+    $$(_, 2.2, `Write header`)
+    fp.WriteLine("=".repeat(80));
     fp.WriteLine("  WARP Patch Detection Report");
-    fp.WriteLine("  Exe: " + ROC.BaseName);
-    fp.WriteLine("  Date: " + Exe.BuildDate);
-    fp.WriteLine("  Scanned: " + new Date().toISOString());
-    fp.WriteLine("=".repeat(70));
+    fp.WriteLine("=".repeat(80));
+    fp.WriteLine("  Exe File   : " + ROC.BaseName);
+    fp.WriteLine("  Build Date : " + Exe.BuildDate);
+    fp.WriteLine("  Version    : " + Exe.Version + "." + (Exe.MinorVer || 0));
+    fp.WriteLine("  Is Renewal : " + (ROC.IsRenewal ? "YES" : "NO"));
+    fp.WriteLine("  Scanned    : " + new Date().toISOString());
+    fp.WriteLine("=".repeat(80));
     fp.WriteLine("");
 
-    $$(_, 2.2, `Get list of all patch names from global scope`)
-    // These are the common patches we want to test
-    const patchNames = [
-        // Data patches
-        "NoMapInfo", "GRFsFromIni", "DataFolderFirst", "NoFilenameCheck",
-        "TranslateClient", "TranslateTaekwon", "MsgStrings", "QuestDisplay",
-        "CallKoreaClientInfo", "PlainTextDesc", "AlwaysAscii",
-        "CustomItemInfoLub", "HideBuildInfo",
+    let results = {
+        notFound: [],       // Patterns not found (likely patched)
+        found: [],          // Patterns found (not patched)
+        notAvailable: [],   // Validate failed (feature not in client)
+        errors: []          // Other errors
+    };
 
-        // Network patches
-        "NoNagle", "EnableDnsSupport", "EnableProxy", "NoHardCodedIP",
-        "NoHardCodedAddr", "NoPacketEncr", "NoEncrForLC", "NoLoginEncr",
-        "NoLoginOTP", "SendClientFlags", "HidePacketsFromPEEK",
+    let totalPatches = 0;
+    let processedPatches = 0;
 
-        // UI patches
-        "NoGravityAds", "NoGravityLogo", "NoSwearFilter", "NoHourly",
-        "NoSerialDisplay", "NoHelpMsg", "GuildBrackets", "FixChatAt",
-        "EnableWho", "EnableShowName", "UnlimitedChatRepeat",
-        "ResizeChatBox", "ResizePMBox", "ResizeChatRoomBox", "ResizeNpcBox",
+    // Count total patches
+    for (const category in patchCategories)
+        totalPatches += patchCategories[category].length;
 
-        // Window patches
-        "CustomWinTitle", "EnableSysMenu", "BorderlessFSW", "No1and1Arg",
-        "HKLMtoHKCU", "NoAdminNeeded", "RestoreLoginWindow",
-        "HideLicense", "SkipServiceSelect", "CustomIcon",
-
-        // Character patches
-        "IncrDigits", "AllowSkillSpam", "FixHomunAI", "IncrNewCharHairs",
-        "IncrViewID", "No3DBoneLimit", "CustomVendingLimit",
-        "NoEquipSwap", "DeleteCharWithEmail",
-
-        // Client patches
-        "DisConnToLogin", "CancelToLogin", "UseDefaultBrowser",
-        "IgnoreLuaErr", "IgnoreRsrcErr", "IgnoreQuestErr",
-        "NoWavyScreen", "NoBlindness", "NoEarthQuake",
-
-        // Camera patches
-        "MediumCamAngle", "LowCamAngle", "HighCamAngle",
-        "Zoom75Percent", "Zoom150Percent", "ZoomMax", "NoCameraLock",
-
-        // Sound patches
-        "Enable44kHzAudio", "RestoreSongsEffect",
-
-        // Special patches
-        "CustomShields", "CustomJobs", "CustomHomuns",
-        "BodyPalMF", "HeadPalMF", "OfficialPal",
-
-        // Protection patches
-        "NoHShield", "NoGGuard", "NoCDefender"
-    ];
-
-    let notFound = [];      // Patterns not found (likely patched)
-    let found = [];         // Patterns found (not patched)
-    let notAvailable = [];  // Validate failed (feature not in client)
-    let errors = [];        // Other errors
-
-    $$(_, 3.1, `Test each patch`)
-    for (const name of patchNames)
+    $$(_, 3.1, `Test each patch by category`)
+    for (const category in patchCategories)
     {
-        try
-        {
-            // Check if the patch function exists
-            const patchFunc = eval(name);
-            if (typeof patchFunc !== 'function')
-            {
-                notAvailable.push({name: name, reason: "Function not defined"});
-                continue;
-            }
+        const patches = patchCategories[category];
 
-            // Check validate function if exists
-            if (typeof patchFunc.validate === 'function')
+        for (const name of patches)
+        {
+            processedPatches++;
+
+            try
             {
-                try
+                // Check if the patch function exists
+                let patchFunc;
+                try {
+                    patchFunc = eval(name);
+                } catch (e) {
+                    results.notAvailable.push({name: name, category: category, reason: "Function not defined"});
+                    continue;
+                }
+
+                if (typeof patchFunc !== 'function')
                 {
-                    if (!patchFunc.validate(name))
+                    results.notAvailable.push({name: name, category: category, reason: "Not a function"});
+                    continue;
+                }
+
+                // Check validate function if exists
+                if (typeof patchFunc.validate === 'function')
+                {
+                    try
                     {
-                        notAvailable.push({name: name, reason: "Validation failed"});
+                        if (!patchFunc.validate(name))
+                        {
+                            results.notAvailable.push({name: name, category: category, reason: "Validation failed"});
+                            continue;
+                        }
+                    }
+                    catch (e)
+                    {
+                        results.notAvailable.push({name: name, category: category, reason: "Validate error: " + e.message});
                         continue;
                     }
                 }
+
+                // Try to run the patch - changes will be discarded via tag system
+                Exe.BeginTag(name + "_detect_test", true);
+                try
+                {
+                    patchFunc(name);
+                    // If we get here, pattern was found = NOT patched yet
+                    results.found.push({name: name, category: category});
+                }
                 catch (e)
                 {
-                    notAvailable.push({name: name, reason: "Validate error: " + e.message});
-                    continue;
+                    const errMsg = e.message.toLowerCase();
+                    if (errMsg.includes("not found") ||
+                        errMsg.includes("missing") ||
+                        errMsg.includes("no match") ||
+                        errMsg.includes("couldn't find") ||
+                        errMsg.includes("could not find") ||
+                        errMsg.includes("unable to find"))
+                    {
+                        // Pattern not found = likely ALREADY PATCHED
+                        results.notFound.push({name: name, category: category, error: e.message});
+                    }
+                    else if (errMsg.includes("cancel") || errMsg.includes("reverted"))
+                    {
+                        // User cancelled or value reverted - treat as found/available
+                        results.found.push({name: name, category: category});
+                    }
+                    else
+                    {
+                        results.errors.push({name: name, category: category, error: e.message});
+                    }
                 }
-            }
-
-            // Try to run the patch (in test mode - Exe changes will be discarded)
-            // We're looking for "not found" errors which indicate already patched
-            Exe.BeginTag(name + "_test", true);
-            try
-            {
-                patchFunc(name);
-                // If we get here, pattern was found = NOT patched
-                found.push(name);
+                Exe.ClearPatch(name + "_detect_test");
             }
             catch (e)
             {
-                const errMsg = e.message.toLowerCase();
-                if (errMsg.includes("not found") ||
-                    errMsg.includes("missing") ||
-                    errMsg.includes("no match"))
-                {
-                    // Pattern not found = likely ALREADY PATCHED
-                    notFound.push({name: name, error: e.message});
-                }
-                else
-                {
-                    errors.push({name: name, error: e.message});
-                }
+                results.errors.push({name: name, category: category, error: "Outer: " + e.message});
             }
-            Exe.ClearPatch(name + "_test");
-        }
-        catch (e)
-        {
-            errors.push({name: name, error: "Outer: " + e.message});
         }
     }
 
     $$(_, 4.1, `Write results - Likely Already Patched`)
     fp.WriteLine("");
-    fp.WriteLine("=" .repeat(70));
-    fp.WriteLine("  LIKELY ALREADY PATCHED (Pattern Not Found)");
-    fp.WriteLine("=".repeat(70));
-    if (notFound.length > 0)
+    fp.WriteLine("*".repeat(80));
+    fp.WriteLine("  LIKELY ALREADY PATCHED (Original Pattern Not Found)");
+    fp.WriteLine("*".repeat(80));
+    if (results.notFound.length > 0)
     {
-        for (const item of notFound)
+        let lastCategory = "";
+        for (const item of results.notFound)
         {
+            if (item.category !== lastCategory)
+            {
+                fp.WriteLine("");
+                fp.WriteLine("  --- " + item.category + " ---");
+                lastCategory = item.category;
+            }
             fp.WriteLine("  [X] " + item.name);
-            fp.WriteLine("      Error: " + item.error);
+            fp.WriteLine("      -> " + item.error);
         }
     }
     else
     {
-        fp.WriteLine("  (none detected)");
+        fp.WriteLine("  (none detected - exe appears to be clean/unpatched)");
     }
     fp.WriteLine("");
-    fp.WriteLine("  Total: " + notFound.length + " patches appear to be already applied");
+    fp.WriteLine("  TOTAL: " + results.notFound.length + " patches appear to be already applied");
 
-    $$(_, 4.2, `Write results - Not Patched`)
+    $$(_, 4.2, `Write results - Not Patched (Available)`)
     fp.WriteLine("");
-    fp.WriteLine("=".repeat(70));
+    fp.WriteLine("*".repeat(80));
     fp.WriteLine("  NOT PATCHED (Pattern Found - Can Be Applied)");
-    fp.WriteLine("=".repeat(70));
-    if (found.length > 0)
+    fp.WriteLine("*".repeat(80));
+    if (results.found.length > 0)
     {
-        for (const name of found)
+        let lastCategory = "";
+        for (const item of results.found)
         {
-            fp.WriteLine("  [ ] " + name);
+            if (item.category !== lastCategory)
+            {
+                fp.WriteLine("");
+                fp.WriteLine("  --- " + item.category + " ---");
+                lastCategory = item.category;
+            }
+            fp.WriteLine("  [ ] " + item.name);
         }
     }
     else
@@ -211,53 +309,77 @@ DetectAppliedPatches = function(_)
         fp.WriteLine("  (none)");
     }
     fp.WriteLine("");
-    fp.WriteLine("  Total: " + found.length + " patches can still be applied");
+    fp.WriteLine("  TOTAL: " + results.found.length + " patches can still be applied");
 
     $$(_, 4.3, `Write results - Not Available`)
     fp.WriteLine("");
-    fp.WriteLine("=".repeat(70));
-    fp.WriteLine("  NOT AVAILABLE (Feature Not In This Client)");
-    fp.WriteLine("=".repeat(70));
-    if (notAvailable.length > 0)
+    fp.WriteLine("*".repeat(80));
+    fp.WriteLine("  NOT AVAILABLE (Feature Not In This Client Version)");
+    fp.WriteLine("*".repeat(80));
+    if (results.notAvailable.length > 0)
     {
-        for (const item of notAvailable)
+        let lastCategory = "";
+        for (const item of results.notAvailable)
         {
-            fp.WriteLine("  [-] " + item.name + " - " + item.reason);
+            if (item.category !== lastCategory)
+            {
+                fp.WriteLine("");
+                fp.WriteLine("  --- " + item.category + " ---");
+                lastCategory = item.category;
+            }
+            fp.WriteLine("  [-] " + item.name + " : " + item.reason);
         }
     }
     else
     {
-        fp.WriteLine("  (none)");
+        fp.WriteLine("  (all patches available)");
     }
     fp.WriteLine("");
-    fp.WriteLine("  Total: " + notAvailable.length + " patches not available for this client");
+    fp.WriteLine("  TOTAL: " + results.notAvailable.length + " patches not available for this client");
 
     $$(_, 4.4, `Write results - Errors`)
-    if (errors.length > 0)
+    if (results.errors.length > 0)
     {
         fp.WriteLine("");
-        fp.WriteLine("=".repeat(70));
-        fp.WriteLine("  ERRORS (Could Not Determine)");
-        fp.WriteLine("=".repeat(70));
-        for (const item of errors)
+        fp.WriteLine("*".repeat(80));
+        fp.WriteLine("  ERRORS (Could Not Determine Status)");
+        fp.WriteLine("*".repeat(80));
+        let lastCategory = "";
+        for (const item of results.errors)
         {
+            if (item.category !== lastCategory)
+            {
+                fp.WriteLine("");
+                fp.WriteLine("  --- " + item.category + " ---");
+                lastCategory = item.category;
+            }
             fp.WriteLine("  [?] " + item.name);
-            fp.WriteLine("      Error: " + item.error);
+            fp.WriteLine("      -> " + item.error);
         }
         fp.WriteLine("");
-        fp.WriteLine("  Total: " + errors.length + " patches had errors");
+        fp.WriteLine("  TOTAL: " + results.errors.length + " patches had errors during detection");
     }
 
     $$(_, 5.1, `Write summary`)
     fp.WriteLine("");
-    fp.WriteLine("=".repeat(70));
+    fp.WriteLine("=".repeat(80));
     fp.WriteLine("  SUMMARY");
-    fp.WriteLine("=".repeat(70));
-    fp.WriteLine("  Likely Already Patched: " + notFound.length);
-    fp.WriteLine("  Can Still Be Applied:   " + found.length);
-    fp.WriteLine("  Not Available:          " + notAvailable.length);
-    fp.WriteLine("  Errors:                 " + errors.length);
-    fp.WriteLine("=".repeat(70));
+    fp.WriteLine("=".repeat(80));
+    fp.WriteLine("");
+    fp.WriteLine("  Total Patches Scanned    : " + totalPatches);
+    fp.WriteLine("");
+    fp.WriteLine("  [X] Likely Already Patched : " + results.notFound.length);
+    fp.WriteLine("  [ ] Can Still Be Applied   : " + results.found.length);
+    fp.WriteLine("  [-] Not Available          : " + results.notAvailable.length);
+    fp.WriteLine("  [?] Errors                 : " + results.errors.length);
+    fp.WriteLine("");
+    fp.WriteLine("=".repeat(80));
+    fp.WriteLine("");
+    fp.WriteLine("  NOTE: 'Likely Already Patched' means the original code pattern was not found.");
+    fp.WriteLine("        This usually indicates the patch was already applied, but could also");
+    fp.WriteLine("        mean the code was modified differently by another tool.");
+    fp.WriteLine("");
+    fp.WriteLine("=".repeat(80));
 
     fp.Close();
 
