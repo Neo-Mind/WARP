@@ -1,0 +1,46 @@
+===============================================================================
+  DetectAppliedPatches Extension - Installation Instructions
+===============================================================================
+
+STEP 1: Copy the file
+---------------------
+Copy "DetectAppliedPatches.qjs" to your WARP folder:
+
+    YOUR_WARP_FOLDER/Scripts/Extensions/DetectAppliedPatches.qjs
+
+
+STEP 2: Edit Extensions.yml
+---------------------------
+Open "Extensions.yml" in your WARP folder and add this BEFORE the "# - Trial:" line:
+
+DetectAppliedPatches:
+    title : Detect Applied Patches [Expt.]
+    tooltip : Scans the loaded exe to detect which patches appear to be already applied by checking if original patterns can still be found
+    author : Claude AI, User
+    icon : Inputs/import.png
+
+
+STEP 3: Restart WARP
+--------------------
+Close and reopen WARP to load the new extension.
+
+
+STEP 4: Use the Extension
+-------------------------
+1. Load any exe (patched or clean)
+2. Click "Extensions" button (or menu)
+3. Find "Detect Applied Patches [Expt.]"
+4. Run it and choose output file location
+5. View the report!
+
+
+===============================================================================
+  What the Report Shows
+===============================================================================
+
+[X] = LIKELY ALREADY PATCHED (original pattern not found)
+[ ] = NOT PATCHED (pattern found, can be applied)
+[-] = NOT AVAILABLE (feature not in this client version)
+[?] = ERROR (could not determine)
+
+===============================================================================
