@@ -1,0 +1,271 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2024 Claude AI / User                                    *
+*                                                                          *
+*   This file is a part of WARP project                                    *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Claude AI, User                                        *
+*   Created Date  : 2024-01-07                                             *
+*   Last Modified : 2024-01-07                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Scans the loaded exe to detect which patches appear to be already applied
+///        by checking if the original patterns can still be found.
+///
+DetectAppliedPatches = function(_)
+{
+    $$(_, 1.1, `Need a valid Exe loaded`)
+    if (Exe.FileSize == 0)
+        throw NO_EXE;
+
+    $$(_, 1.2, `Open the output file for writing`)
+    const fileName = Exe.GetUserInput("$$detectOutput", D_OutFile, "Target File",
+        "Enter the output file path", OUTDIR + "DetectedPatches_" + ROC.BaseName + ".txt");
+
+    if (fileName === false)
+        return true;
+
+    let fp = new TextFile(fileName, 'w');
+    if (!fp.Valid)
+        throw NO_OUTPUT;
+
+    $$(_, 2.1, `Write header`)
+    fp.WriteLine("=".repeat(70));
+    fp.WriteLine("  WARP Patch Detection Report");
+    fp.WriteLine("  Exe: " + ROC.BaseName);
+    fp.WriteLine("  Date: " + Exe.BuildDate);
+    fp.WriteLine("  Scanned: " + new Date().toISOString());
+    fp.WriteLine("=".repeat(70));
+    fp.WriteLine("");
+
+    $$(_, 2.2, `Get list of all patch names from global scope`)
+    // These are the common patches we want to test
+    const patchNames = [
+        // Data patches
+        "NoMapInfo", "GRFsFromIni", "DataFolderFirst", "NoFilenameCheck",
+        "TranslateClient", "TranslateTaekwon", "MsgStrings", "QuestDisplay",
+        "CallKoreaClientInfo", "PlainTextDesc", "AlwaysAscii",
+        "CustomItemInfoLub", "HideBuildInfo",
+
+        // Network patches
+        "NoNagle", "EnableDnsSupport", "EnableProxy", "NoHardCodedIP",
+        "NoHardCodedAddr", "NoPacketEncr", "NoEncrForLC", "NoLoginEncr",
+        "NoLoginOTP", "SendClientFlags", "HidePacketsFromPEEK",
+
+        // UI patches
+        "NoGravityAds", "NoGravityLogo", "NoSwearFilter", "NoHourly",
+        "NoSerialDisplay", "NoHelpMsg", "GuildBrackets", "FixChatAt",
+        "EnableWho", "EnableShowName", "UnlimitedChatRepeat",
+        "ResizeChatBox", "ResizePMBox", "ResizeChatRoomBox", "ResizeNpcBox",
+
+        // Window patches
+        "CustomWinTitle", "EnableSysMenu", "BorderlessFSW", "No1and1Arg",
+        "HKLMtoHKCU", "NoAdminNeeded", "RestoreLoginWindow",
+        "HideLicense", "SkipServiceSelect", "CustomIcon",
+
+        // Character patches
+        "IncrDigits", "AllowSkillSpam", "FixHomunAI", "IncrNewCharHairs",
+        "IncrViewID", "No3DBoneLimit", "CustomVendingLimit",
+        "NoEquipSwap", "DeleteCharWithEmail",
+
+        // Client patches
+        "DisConnToLogin", "CancelToLogin", "UseDefaultBrowser",
+        "IgnoreLuaErr", "IgnoreRsrcErr", "IgnoreQuestErr",
+        "NoWavyScreen", "NoBlindness", "NoEarthQuake",
+
+        // Camera patches
+        "MediumCamAngle", "LowCamAngle", "HighCamAngle",
+        "Zoom75Percent", "Zoom150Percent", "ZoomMax", "NoCameraLock",
+
+        // Sound patches
+        "Enable44kHzAudio", "RestoreSongsEffect",
+
+        // Special patches
+        "CustomShields", "CustomJobs", "CustomHomuns",
+        "BodyPalMF", "HeadPalMF", "OfficialPal",
+
+        // Protection patches
+        "NoHShield", "NoGGuard", "NoCDefender"
+    ];
+
+    let notFound = [];      // Patterns not found (likely patched)
+    let found = [];         // Patterns found (not patched)
+    let notAvailable = [];  // Validate failed (feature not in client)
+    let errors = [];        // Other errors
+
+    $$(_, 3.1, `Test each patch`)
+    for (const name of patchNames)
+    {
+        try
+        {
+            // Check if the patch function exists
+            const patchFunc = eval(name);
+            if (typeof patchFunc !== 'function')
+            {
+                notAvailable.push({name: name, reason: "Function not defined"});
+                continue;
+            }
+
+            // Check validate function if exists
+            if (typeof patchFunc.validate === 'function')
+            {
+                try
+                {
+                    if (!patchFunc.validate(name))
+                    {
+                        notAvailable.push({name: name, reason: "Validation failed"});
+                        continue;
+                    }
+                }
+                catch (e)
+                {
+                    notAvailable.push({name: name, reason: "Validate error: " + e.message});
+                    continue;
+                }
+            }
+
+            // Try to run the patch (in test mode - Exe changes will be discarded)
+            // We're looking for "not found" errors which indicate already patched
+            Exe.BeginTag(name + "_test", true);
+            try
+            {
+                patchFunc(name);
+                // If we get here, pattern was found = NOT patched
+                found.push(name);
+            }
+            catch (e)
+            {
+                const errMsg = e.message.toLowerCase();
+                if (errMsg.includes("not found") ||
+                    errMsg.includes("missing") ||
+                    errMsg.includes("no match"))
+                {
+                    // Pattern not found = likely ALREADY PATCHED
+                    notFound.push({name: name, error: e.message});
+                }
+                else
+                {
+                    errors.push({name: name, error: e.message});
+                }
+            }
+            Exe.ClearPatch(name + "_test");
+        }
+        catch (e)
+        {
+            errors.push({name: name, error: "Outer: " + e.message});
+        }
+    }
+
+    $$(_, 4.1, `Write results - Likely Already Patched`)
+    fp.WriteLine("");
+    fp.WriteLine("=" .repeat(70));
+    fp.WriteLine("  LIKELY ALREADY PATCHED (Pattern Not Found)");
+    fp.WriteLine("=".repeat(70));
+    if (notFound.length > 0)
+    {
+        for (const item of notFound)
+        {
+            fp.WriteLine("  [X] " + item.name);
+            fp.WriteLine("      Error: " + item.error);
+        }
+    }
+    else
+    {
+        fp.WriteLine("  (none detected)");
+    }
+    fp.WriteLine("");
+    fp.WriteLine("  Total: " + notFound.length + " patches appear to be already applied");
+
+    $$(_, 4.2, `Write results - Not Patched`)
+    fp.WriteLine("");
+    fp.WriteLine("=".repeat(70));
+    fp.WriteLine("  NOT PATCHED (Pattern Found - Can Be Applied)");
+    fp.WriteLine("=".repeat(70));
+    if (found.length > 0)
+    {
+        for (const name of found)
+        {
+            fp.WriteLine("  [ ] " + name);
+        }
+    }
+    else
+    {
+        fp.WriteLine("  (none)");
+    }
+    fp.WriteLine("");
+    fp.WriteLine("  Total: " + found.length + " patches can still be applied");
+
+    $$(_, 4.3, `Write results - Not Available`)
+    fp.WriteLine("");
+    fp.WriteLine("=".repeat(70));
+    fp.WriteLine("  NOT AVAILABLE (Feature Not In This Client)");
+    fp.WriteLine("=".repeat(70));
+    if (notAvailable.length > 0)
+    {
+        for (const item of notAvailable)
+        {
+            fp.WriteLine("  [-] " + item.name + " - " + item.reason);
+        }
+    }
+    else
+    {
+        fp.WriteLine("  (none)");
+    }
+    fp.WriteLine("");
+    fp.WriteLine("  Total: " + notAvailable.length + " patches not available for this client");
+
+    $$(_, 4.4, `Write results - Errors`)
+    if (errors.length > 0)
+    {
+        fp.WriteLine("");
+        fp.WriteLine("=".repeat(70));
+        fp.WriteLine("  ERRORS (Could Not Determine)");
+        fp.WriteLine("=".repeat(70));
+        for (const item of errors)
+        {
+            fp.WriteLine("  [?] " + item.name);
+            fp.WriteLine("      Error: " + item.error);
+        }
+        fp.WriteLine("");
+        fp.WriteLine("  Total: " + errors.length + " patches had errors");
+    }
+
+    $$(_, 5.1, `Write summary`)
+    fp.WriteLine("");
+    fp.WriteLine("=".repeat(70));
+    fp.WriteLine("  SUMMARY");
+    fp.WriteLine("=".repeat(70));
+    fp.WriteLine("  Likely Already Patched: " + notFound.length);
+    fp.WriteLine("  Can Still Be Applied:   " + found.length);
+    fp.WriteLine("  Not Available:          " + notAvailable.length);
+    fp.WriteLine("  Errors:                 " + errors.length);
+    fp.WriteLine("=".repeat(70));
+
+    fp.Close();
+
+    $$(_, 5.2, `Show the file`)
+    if (!Warp.TestMode && UserChoice("Show File", "Display the generated report?"))
+    {
+        Warp.Show(fp.Path);
+    }
+
+    return true;
+};

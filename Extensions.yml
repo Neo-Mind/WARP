@@ -53,7 +53,13 @@ GenMapEffectPlugin:
     title : Generate MapEffect Plugin [Expt.]
     tooltip : Generates Curiosity's mapeffect plugin for the loaded client (as rdll2_<filename>.asi which needs to be placed in your client area)
     author : Neo-Mind
- 
+
+DetectAppliedPatches:
+    title : Detect Applied Patches [Expt.]
+    tooltip : Scans the loaded exe to detect which patches appear to be already applied by checking if original patterns can still be found
+    author : Claude AI, User
+    icon : Inputs/import.png
+
 # - Trial:
     # title : Trial Extension
     # tooltip : Just intended for some trials with Exe & Warp
