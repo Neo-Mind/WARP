@@ -1,0 +1,2145 @@
+############################################################################
+#                                                                          #
+#   Author(s)     : Darknessfmy (rA)                                       #
+#   Created Date  : 2026-05-06                                             #
+#   Last Modified : 2026-05-06                                             #
+#                                                                          #
+############################################################################
+
+#############################################
+# Spanish Latin American Translation (ES-LA)#
+#############################################
+
+RTL: no
+
+tabs:
+    - Parches
+    - Extensiones
+    - Pruebas
+    - Resultados
+
+dialogs:
+    dir: Elegir directorio con los archivos exe de prueba
+    src: Elegir el archivo exe de origen
+    tgt: Elegir el archivo exe de destino
+    loadS: Elegir el archivo de sesion a cargar
+    saveS: Elegir el archivo de sesion para guardar como
+
+actions:
+
+    getPatches:
+        title: Obtener<br>Parches
+        tooltip: Llena la Lista de Parches con todos los parches definidos
+
+    selVisiblePatches:
+        title: Seleccionar<br>Visibles
+        tooltip: Selecciona todos los parches actualmente visibles
+
+    clearSelPatches:
+        title: Limpiar<br>Seleccion
+        tooltip: Limpia todos los parches seleccionados
+
+    getExtns:
+        title: Obtener<br>Extensiones
+        tooltip: Llena la Lista de Extensiones con todas las extensiones definidas
+
+    selVisibleExtns:
+        title: Seleccionar<br>Visibles
+        tooltip: Selecciona todas las extensiones actualmente visibles
+
+    clearSelExtns:
+        title: Limpiar<br>Seleccion
+        tooltip: Limpia todas las extensiones seleccionadas
+
+    getExes:
+        title: Obtener Exes
+        tooltip: Llena la Lista de Exes con todos los archivos .exe encontrados en el directorio de Prueba
+
+    selVisibleExes:
+        title: Seleccionar<br>Visibles
+        tooltip: Selecciona todos los archivos exe actualmente visibles
+
+    clearSelExes:
+        title: Limpiar<br>Seleccion
+        tooltip: Limpia todos los archivos exe seleccionados
+
+    runTest:
+        title: Ejecutar Prueba
+        tooltip: Prueba los parches y extensiones seleccionados en la lista de exes y muestra los resultados en la pestana 'Resultados'
+
+    showScriptWin:
+        title: Mostrar Ventana de Scripts
+        tooltip: Muestra (Alt+W) la ventana de scripts para pruebas rapidas
+
+    loadSrcExe:
+        title: Cargar<br>Origen
+        tooltip: Carga el archivo exe de origen (y los scripts si aun no se han cargado)
+
+    applyPatches:
+        title: Aplicar<br>Parches
+        tooltip: Aplica los parches seleccionados al exe cargado y lo guarda como archivo de destino
+
+    selectPrev:
+        title: Seleccionar<br>Anteriores
+        tooltip: Selecciona todos los parches aplicados la ultima vez
+
+    selectRcmd:
+        title: Seleccionar<br>Recomendados
+        tooltip: Selecciona todos los parches marcados como 'recomendados'
+
+    loadChangedScripts:
+        title: Cargar<br>Scripts
+        tooltip: Carga/Recarga (Alt+C) todos los archivos .qjs modificados desde la ultima carga en las subcarpetas 'Patches', 'Support' y 'Extensions' dentro de 'Scripts'
+
+    clearOutput:
+        title: Limpiar
+        tooltip: Limpia la vista de 'Salida'
+
+    evalScript:
+        title: Evaluar
+        tooltip: Evalua (Ctrl+R) el script en el Editor y vuelca el resultado en la Salida
+
+    clearEditor:
+        title: Limpiar
+        tooltip: Limpia el editor de scripts
+
+    rexBtn:
+        tooltip: Selecciona si usar Expresiones Regulares o coincidencia estilo glob
+
+    csBtn:
+        tooltip: Selecciona si buscar con o sin distincion entre mayusculas y minusculas
+
+    loadPatchScripts:
+        title: Cargar desde <b>'Patches'</b>
+        tooltip: Carga/Recarga (Alt+P) todos los archivos .qjs dentro de 'Scripts/Patches'
+
+    loadExtnScripts:
+        title: Cargar desde <b>'Extensions'</b>
+        tooltip: Carga/Recarga (Alt+E) todos los archivos .qjs dentro de 'Scripts/Extensions'
+
+    loadSuppScripts:
+        title: Cargar desde <b>'Support'</b>
+        tooltip: Carga/Recarga (Alt+S) todos los archivos .qjs dentro de 'Scripts/Support'
+
+    loadAllScripts:
+        title: Cargar <b>Todos</b> los Scripts
+        tooltip: Carga/Recarga (Alt+A) todos los archivos .qjs en las subcarpetas 'Patches', 'Support' y 'Extensions' dentro de 'Scripts'
+
+    loadSession:
+        title: Cargar archivo de sesion
+        tooltip: Carga selecciones de parches e inputs desde el archivo de sesion especificado
+
+    saveSession:
+        title: Guardar archivo de sesion
+        tooltip: Guarda selecciones de parches e inputs en el archivo de sesion especificado
+
+    refreshLanguages:
+        title: Actualizar Idiomas
+        tooltip: Carga la lista de idiomas desde los archivos .yml en la carpeta 'Languages'
+
+    refreshStyles:
+        title: Actualizar Estilos
+        tooltip: Carga la lista de estilos desde los archivos .yml en la carpeta 'Styles'
+
+    loadExtns:
+        title: Cargar Extensiones
+        tooltip: Llena el panel de Extensiones con todas las extensiones definidas
+
+    pro2Session:
+        title: Convertir Perfil a Sesion
+        tooltip: Convierte un perfil NEMO en un archivo de sesion para usar en WARP
+
+    genSecFile:
+        title: Generar Archivo de Seguridad
+        tooltip: Genera un archivo de seguridad con varios hashes de un archivo de entrada (puede o no ser ejecutable)
+
+    saveResolution:
+        title: Guardar Resolucion
+        tooltip: Guarda la resolucion actual de la ventana de Pruebas como predeterminada
+
+    keepTestInputs:
+        title: Mantener inputs de prueba
+        tooltip: Opcion para mantener los inputs guardados previamente en cada prueba siguiente
+
+    stopAtError:
+        title: Detener en Error
+        tooltip: Opcion para detener la ejecucion de pruebas al encontrar el primer error
+
+    saveResolutions:
+        title: Guardar Resoluciones
+        tooltip: Guarda la resolucion actual de las ventanas Principal y de Script como predeterminada
+
+    showVersion:
+        title: Mostrar version cargada
+        tooltip: Marcalo para mostrar la version de compilacion y fecha del exe cargado
+
+    enableEpi:
+        title: Habilitar EPI
+        tooltip: Habilita la generacion y carga de archivos EPI junto con los exe correspondientes. Usar con precaucion.
+
+    genTgtSecure:
+        title: Generar <destino>.secure.txt
+        tooltip: Habilita la generacion del archivo de seguridad (.secure.txt) junto con el Exe de destino parcheado
+
+    genTgtSession:
+        title: "Generar sesion del destino"
+        tooltip: Habilita la generacion del archivo de sesion (para uso posterior) junto con el Exe de destino parcheado
+
+    keepInputs:
+        title: Mantener inputs de sesion
+        tooltip: Opcion para mantener los inputs guardados al cargar archivos de sesion en lugar de preguntar uno por uno
+
+messages:
+
+    success: Informacion
+    query: Consulta
+    warn: Advertencia
+    error: Error
+
+    errS: Error de Script
+
+    warnP: "Advertencia de Parche : <b>'%0'</b>"
+    errP: "Error de Parche : <b>'%0'</b>"
+
+    infoE: "Info de Extension : <b>'%0'</b>"
+    warnE: "Advertencia de Extension : <b>'%0'</b>"
+    errE: "Error de Extension : <b>'%0'</b>"
+
+    btnOK: Aceptar
+    btnCANC: Cancelar
+    btnYES: "Si"
+    btnNO: No
+    btnLOAD: Cargar
+    btnSAVE: Guardar
+    btnSEL: Seleccionar Actual
+
+    noAccess: "<b>'%0'</b> no es accesible"
+    noWrite: "No se pudo abrir <b>'%0'</b> para escritura"
+
+    wrongSig: "La firma de <b>'%0'</b> es invalida"
+    wrongPE: "Encabezado PE no encontrado en <b>'%0'</b>"
+    need32: "Solo los exe de 32 bits pueden usarse como <b>'%0'</b>"
+
+    yamlErr: "Error al parsear YAML (%0) : <b>%1</b>"
+    evalErr: "Error en la linea %0 de %1 : <b>%2</b>"
+    grpErr: "<b>'groups'</b> debe estar presente como un array/secuencia"
+    extErr: "Las extensiones deben proveerse como un array/secuencia"
+
+    loadFail: "Fallo la carga de <b>'%0'</b>"
+    callFail: "<b>La Funcion de Parche</b> no pudo ser llamada"
+    applyFail: "<b>Los Parches</b> no pudieron aplicarse"
+    tgtFail: "<b>El Exe de Destino</b> no pudo escribirse"
+    funcFail: "<b>%0 Funcion</b> faltante o no invocable"
+    allocFail: "Fallo la asignacion de espacio"
+    dependFail: "La dependencia '<b>%0</b>' no pudo seleccionarse"
+
+    empty: "<b>'%0'</b> esta vacio"
+    noneLoaded: "No se ha cargado ningun Exe"
+    skipWarn: "Ciertos <b>%0</b> fueron omitidos por varias razones (funciones faltantes, sintaxis incorrecta, etc.)"
+    retnFalse: "La funcion retorno <b>false</b>"
+    noExes: "No hay Exes seleccionados para Prueba"
+    noPatExts: "No hay Parches o Extensiones seleccionados para Prueba"
+    setNoSave: "La configuracion <b>'%0'</b> no pudo guardarse"
+
+    ready: "<b>'%0'</b> cargado exitosamente"
+    tgtReady: "Los Parches fueron escritos en el <b>Exe de Destino</b>"
+    patSuccess: "El Parche fue exitoso"
+    extnSuccess: "La Extension fue exitosa"
+
+    patInfo: "Probando Parche : <b>%0</b>"
+    exeInfo: "Trabajando en <b>'%0'</b>\n"
+    extnInfo: "Probando Extension : <b>%0</b>"
+    extnOutput: "<b>Resultado => %0</b>"
+    patIgnored: "El Parche fue ignorado para esta fecha de compilacion"
+    userInterrupt: "<b>El usuario interrumpio la prueba</b>"
+
+    srcQuery: "Actualizar la ruta del Exe de destino?"
+
+texts:
+
+    selCount: "Parches Seleccionados"
+    extnSelCount: "Extensiones Seleccionadas"
+    exeSelCount: "Exes Seleccionados"
+    loadDate: "Fecha Cargada"
+    loadVersion: "& Version"
+
+    srcEntry: Origen
+    tgtEntry: Destino
+    dirEntry: Directorio de Prueba
+
+    exePath: Ruta del Exe
+    filter: Expresion de Filtro
+    path: Ruta
+    find: Expresion de Busqueda
+
+    actionFrame: Acciones Rapidas
+    patchFrame: Lista de Parches
+    extnFrame: Lista de Extensiones
+    exeFrame: Lista de Exes
+    fontFrame: Nombres de Fuente
+    demoFrame: Demo
+    choiceFrame: Opciones
+
+    scriptEditor: Editor de Scripts
+    outputView: Salida
+
+    cutPrompt: Cortar
+    copyPrompt: Copiar
+    pastePrompt: Pegar
+    delPrompt: Eliminar
+    clrPrompt: Limpiar
+    undoPrompt: Deshacer
+    redoPrompt: Rehacer
+    deselPrompt: Deseleccionar
+    selAllPrompt: Seleccionar Todo
+
+    fontSizePrompt: "Tamano de Fuente :"
+    fontNamePrompt: "Nombre de Fuente :"
+    langPrompt: "Idioma :"
+    stylePrompt: "Estilo :"
+
+##===========================================================#
+## All translations (including UI, Patches, Extensions etc.) #
+##===========================================================#
+
+translations:
+
+    #========================#
+    #           UI           #
+    #========================#
+
+    - find: Settings
+      replace: Configuracion
+
+    - find: Title
+      replace: Titulo
+
+    - find: Group
+      replace: Grupo
+
+    - find: Author
+      replace: Autor
+
+    - find: Description
+      replace: Descripcion
+
+    - find: Selected
+      replace: Seleccionado
+
+    - find: Tooltip
+      replace: Informacion
+
+    - find: FileName
+      replace: Nombre de Archivo
+
+    - find: Inbuilt
+      replace: Integrado
+
+    - find: From Scripts
+      replace: Desde Scripts
+
+    - find: Refresh
+      replace: Actualizar
+
+    - find: Session
+      replace: Sesion
+
+    - find: Find
+      replace: Buscar
+
+    - find: Sort
+      replace: Ordenar
+
+    - find: by
+      replace: por
+
+    - find: None
+      replace: Ninguno
+
+    - find: Options
+      replace: Opciones
+
+    - find: Actions
+      replace: Acciones
+
+    - find: Enter the target file path
+      replace: Ingresar la ruta del archivo de destino
+
+    - find: Target File
+      replace: Archivo de Destino
+
+    - find: Recommended
+      replace: Recomendado
+
+    #========================#
+    #      SOUND / SONIDO    #
+    #========================#
+
+    - find: SOUND CUSTOMIZATION
+      replace: PERSONALIZACION DE SONIDO
+
+    - find: Enable 44.1 kHz audio sampling frequency
+      replace: Habilitar frecuencia de muestreo de audio de 44.1 kHz
+
+    - find: Boosts the audio sampling frequency to 44.1 kHz, improving the audio quality in the game.
+      replace: Aumenta la frecuencia de muestreo de audio a 44.1 kHz, mejorando la calidad de audio en el juego.
+
+    - find: Auto mute audio [Experimental]
+      replace: Silenciar audio automaticamente [Experimental]
+
+    - find: Auto mute audio when game window is not active.
+      replace: Silencia el audio automaticamente cuando la ventana del juego no esta activa.
+
+    - find: Disable BGM audio
+      replace: Deshabilitar audio de fondo (BGM)
+
+    - find: Disable the use of mp3NameTable.txt to pick & play audio files as BGM.
+      replace: Deshabilita el uso de mp3NameTable.txt para seleccionar y reproducir archivos de audio como BGM.
+
+    - find: Restore songs effect
+      replace: Restaurar efecto de canciones
+
+    - find: Restore ground effects of Bard/Dancer songs on latest clients.
+      replace: Restaura los efectos de suelo de las canciones de Bardo/Bailarina en los clientes mas recientes.
+
+    #========================#
+    #    NETWORK / RED       #
+    #========================#
+
+    - find: NETWORK CUSTOMIZATION
+      replace: PERSONALIZACION DE RED
+
+    - find: Enable DNS support
+      replace: Habilitar soporte DNS
+
+    - find: Enable DNS support for URL specified in <b>clientinfo.xml</b>.
+      replace: Habilita soporte DNS para la URL especificada en <b>clientinfo.xml</b>.
+
+    - find: Send MD5 hash packet
+      replace: Enviar paquete con hash MD5
+
+    - find: Makes the client send a packet with it's MD5 hash for all LangTypes. Only use if you have enabled it in your server.
+      replace: Hace que el cliente envie un paquete con su hash MD5 para todos los LangTypes. Usar solo si esta habilitado en el servidor.
+
+    - find: Disable nagle algorithm
+      replace: Deshabilitar algoritmo de Nagle
+
+    - find: Disables the Nagle Algorithm which queues packets before they are sent in order to minimize protocol overhead. Disabling the algorithm will slightly increase network traffic, but it will decrease latency as well.
+      replace: Deshabilita el Algoritmo de Nagle que acumula paquetes antes de enviarlos para minimizar la sobrecarga del protocolo. Deshabilitarlo aumenta levemente el trafico de red pero reduce la latencia.
+
+    - find: Disable OTP login packet
+      replace: Deshabilitar paquete de login OTP
+
+    - find: Disable OTP Login Packet, which causes connection issue after disconnect.
+      replace: Deshabilita el paquete de Login OTP, que causa problemas de conexion al reconectar.
+
+    - find: Enable proxy support
+      replace: Habilitar soporte de proxy
+
+    - find: Ignores server-provided IP addresses when changing servers.
+      replace: Ignora las direcciones IP provistas por el servidor al cambiar de servidor.
+
+    - find: Remove hardcoded HTTP IP
+      replace: Eliminar IP HTTP codificada en duro
+
+    - find: Remove hardcoded HTTP service ip address to prevent client from sending HTTP request to official server.
+      replace: Elimina la direccion IP del servicio HTTP codificada en duro para evitar que el cliente envie solicitudes al servidor oficial.
+
+    - find: Remove hardcoded address/port
+      replace: Eliminar direccion/puerto codificados en duro
+
+    - find: Remove hardcoded connection addresses and ports.
+      replace: Elimina las direcciones y puertos de conexion codificados en duro.
+
+    - find: Fix HTTP emblem in client
+      replace: Corregir emblema HTTP en el cliente
+
+    - find: Fix HTTP Emblem on clients with cheat defender (HTTP service is required).
+      replace: Corrige el Emblema HTTP en clientes con cheat defender (requiere servicio HTTP).
+
+    - find: Disable kRO site launch
+      replace: Deshabilitar apertura del sitio kRO
+
+    - find: Disable <b>ro.gnjoy.com</b> and other similar sites launching after in-game settings change.
+      replace: Deshabilita la apertura de <b>ro.gnjoy.com</b> y sitios similares al cambiar configuraciones en el juego.
+
+    - find: Customize Merchant store URLs
+      replace: Personalizar URLs de la tienda Merchant
+
+    - find: Change the hardcoded URL used for MerchantStore save and load (HTTP service required).
+      replace: Cambia la URL codificada en duro usada para guardar y cargar en MerchantStore (requiere servicio HTTP).
+
+    - find: Send client flags
+      replace: Enviar flags del cliente
+
+    - find: Update the version to send the clients flag to server. Helps to avoid flag incongruency between client & server.
+      replace: Actualiza la version para enviar los flags del cliente al servidor. Ayuda a evitar incongruencias de flags entre cliente y servidor.
+
+    - find: Hide packets from PEEK & BPE
+      replace: Ocultar paquetes de PEEK y BPE
+
+    - find: Disable PEEK & BPE tools from discovering the essentials needed to track/extract packets.
+      replace: Impide que las herramientas PEEK y BPE descubran los datos necesarios para rastrear o extraer paquetes.
+
+    - find: ENCRYPTION KEY CUSTOMIZATION
+      replace: PERSONALIZACION DE CLAVES DE ENCRIPTACION
+
+    - find: Customize Packet Key (1st)
+      replace: Personalizar Clave de Paquete (1ra)
+
+    - find: Change the 1st key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
+      replace: Cambia la 1ra clave usada para encriptacion de paquetes. No seleccionar el parche Deshabilitar Encriptacion si se usa este. No usar si no sabes lo que haces.
+
+    - find: Customize Packet Key (2nd)
+      replace: Personalizar Clave de Paquete (2da)
+
+    - find: Change the 2nd key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
+      replace: Cambia la 2da clave usada para encriptacion de paquetes. No seleccionar el parche Deshabilitar Encriptacion si se usa este. No usar si no sabes lo que haces.
+
+    - find: Customize Packet Key (3rd)
+      replace: Personalizar Clave de Paquete (3ra)
+
+    - find: Change the 3rd key used for packet encryption. Dont select the patch Disable Packet Encryption if you are using this. Don't use it if you don't know what you are doing.
+      replace: Cambia la 3ra clave usada para encriptacion de paquetes. No seleccionar el parche Deshabilitar Encriptacion si se usa este. No usar si no sabes lo que haces.
+
+    - find: DISABLE ENCRYPTION
+      replace: DESHABILITAR ENCRIPTACION
+
+    - find: Disable Login password encryption
+      replace: Deshabilitar encriptacion de contrasena de Login
+
+    - find: Disable encryption in Login Packet 0x2b0 for old clients.
+      replace: Deshabilita la encriptacion en el Paquete de Login 0x2b0 para clientes antiguos.
+
+    - find: Disable Map packet encryption
+      replace: Deshabilitar encriptacion de paquetes de Mapa
+
+    - find: Disable usage of Packet encryption for sending packets to map server.<br> Patch is also known as Skip Packet Obfuscation.
+      replace: Deshabilita el uso de encriptacion de paquetes para enviar paquetes al servidor de mapa.<br> Tambien conocido como Saltar Ofuscacion de Paquetes.
+
+    - find: Disable Login/Char packet encryption
+      replace: Deshabilitar encriptacion de paquetes Login/Char
+
+    - find: Disable usage of Packet encryption for sending packets to login & char server.
+      replace: Deshabilita el uso de encriptacion de paquetes para el servidor de login y de personajes.
+
+    - find: Disable encryption of password in login packet 0x64 for langtypes 4 & 7.
+      replace: Deshabilita la encriptacion de contrasena en el paquete de login 0x64 para langtypes 4 y 7.
+
+    #========================#
+    #   CHARACTER / PERSONAJE#
+    #========================#
+
+    - find: CHARACTER CUSTOMIZATION
+      replace: PERSONALIZACION DE PERSONAJE
+
+    - find: Use official cloth palettes
+      replace: Usar paletas de ropa oficiales
+
+    - find: Use Official Cloth Palette on all Langtypes. Cannot use this if you are using the <b>Enable Custom Jobs</b> patch.
+      replace: Usa la Paleta de Ropa Oficial en todos los LangTypes. No compatible con el parche <b>Habilitar Clases Personalizadas</b>.
+
+    - find: Disable GM sprite
+      replace: Deshabilitar sprite de GM
+
+    - find: Disable GM sprites whilst keeping all the functionality intact like Yellow name and Admin right click menu.
+      replace: Deshabilita los sprites de GM manteniendo toda la funcionalidad como el nombre amarillo y el menu de clic derecho de administrador.
+
+    - find: Enable Emblem hover for BG [Experimental]
+      replace: Habilitar emblema al pasar el cursor en BG [Experimental]
+
+    - find: Makes the client show the Emblem on top of the character for Battleground mode as well along with GvG.
+      replace: Hace que el cliente muestre el Emblema sobre el personaje tambien en modo Battleground ademas de GvG.
+
+    - find: Restore model culling
+      replace: Restaurar culling de modelos
+
+    - find: Culls models in front of player by turning them transparent.
+      replace: Vuelve transparentes los modelos que se encuentran frente al jugador.
+
+    - find: Always see hidden/cloaked objects
+      replace: Ver siempre objetos ocultos/camuflados
+
+    - find: Always see black silhouette of hidden objects as if the player has intravision status.
+      replace: Muestra siempre la silueta negra de objetos ocultos como si el jugador tuviera el estado intravision.
+
+    - find: Customize Quick Switch delay
+      replace: Personalizar retardo de cambio rapido
+
+    - find: Change quick item switch delay ticks with user specified value.
+      replace: Cambia los ticks de retardo del cambio rapido de item al valor especificado.
+
+    - find: Allow party leader to leave
+      replace: Permitir que el lider del grupo abandone
+
+    - find: Allow leader to leave the party if no members are on map.
+      replace: Permite al lider abandonar el grupo si no hay miembros en el mapa.
+
+    - find: Allow spam skills by hotkey
+      replace: Permitir spam de habilidades con tecla rapida
+
+    - find: Allow spamming of skills by continuous press of hotkey.
+      replace: Permite usar habilidades repetidamente manteniendo presionada la tecla rapida.
+
+    - find: Allow guild activities in clan
+      replace: Permitir actividades de guild en el clan
+
+    - find: Remove restriction of guild functionality while being a member of a clan.
+      replace: Elimina la restriccion de funcionalidad de guild al ser miembro de un clan.
+
+    - find: Restore auto follow
+      replace: Restaurar seguimiento automatico
+
+    - find: Restore the auto follow functionality in RO-zero clients.
+      replace: Restaura la funcionalidad de seguimiento automatico en clientes RO-zero.
+
+    - find: Customize auto follow stop delay
+      replace: Personalizar retardo de detencion del seguimiento automatico
+
+    - find: Set the auto-follow stopping delay (not starting delay) to user specified value.
+      replace: Establece el retardo de detencion del seguimiento automatico (no el de inicio) al valor especificado.
+
+    - find: Draw Shield on top
+      replace: Dibujar escudo encima
+
+    - find: Moves the shield sprite closer to camera for drawing on top of other player sprites.
+      replace: Mueve el sprite del escudo mas cerca de la camara para dibujarlo sobre los sprites de otros jugadores.
+
+    - find: Show Damage for GvG
+      replace: Mostrar dano en GvG
+
+    - find: Enables the display of damage digits on GvG maps.
+      replace: Habilita la visualizacion de los numeros de dano en mapas GvG.
+
+    - find: INCREASE HAIRS
+      replace: AUMENTAR ESTILOS DE CABELLO
+
+    - find: Allow 65k hair styles
+      replace: Permitir 65k estilos de cabello
+
+    - find: Raises the maximum hairstyle limit to 65535 from the default value.
+      replace: Aumenta el limite maximo de estilos de cabello a 65535 desde el valor predeterminado.
+
+    - find: Increase hair styles
+      replace: Aumentar estilos de cabello
+
+    - find: Raises the maximum hairstyle limit to user specified value (upto 65535).
+      replace: Aumenta el limite maximo de estilos de cabello al valor especificado (hasta 65535).
+
+    - find: AUTO FOLLOW CUSTOMIZATION
+      replace: PERSONALIZACION DE SEGUIMIENTO AUTOMATICO
+
+    - find: Disable auto follow
+      replace: Deshabilitar seguimiento automatico
+
+    - find: Disables player auto follow on Shift + Right click.
+      replace: Deshabilita el seguimiento automatico de jugador con Shift + Clic derecho.
+
+    - find: Decrease auto follow delay
+      replace: Reducir retardo de seguimiento automatico
+
+    - find: Decrease the auto follow delay to user specified value.
+      replace: Reduce el retardo de seguimiento automatico al valor especificado.
+
+    - find: AURA CUSTOMIZATION
+      replace: PERSONALIZACION DE AURA
+
+    - find: Customize Aura sprites
+      replace: Personalizar sprites de Aura
+
+    - find: This option will make it so your warp portals will not be affected by your aura sprites. For this you will have to make aurafloat.tga and auraring.bmp and place them in your 'data\\texture\\effect' folder.
+      replace: Esta opcion hace que los portales de warp no sean afectados por los sprites de aura. Para esto se deben crear aurafloat.tga y auraring.bmp y colocarlos en la carpeta 'data\\texture\\effect'.
+
+    - find: Customize Aura display limits
+      replace: Personalizar limites de visualizacion de Aura
+
+    - find: Allows the client to display standard auras within user specified limits for Classes and Levels.
+      replace: Permite al cliente mostrar auras estandar dentro de los limites de Clases y Niveles especificados.
+
+    - find: Customize chat color (GM)
+      replace: Personalizar color de chat (GM)
+
+    - find: Changes the GM Chat color to the specified value. Default value is ffff00 (Yellow).
+      replace: Cambia el color del chat de GM al valor especificado. Predeterminado ffff00 (Amarillo).
+
+    - find: Customize chat color (Guild)
+      replace: Personalizar color de chat (Guild)
+
+    - find: Changes the Guild Chat color to the specified value. Default Value is b4ffb4 (Light Green).
+      replace: Cambia el color del chat de Guild al valor especificado. Predeterminado b4ffb4 (Verde claro).
+
+    - find: Customize chat color (Party - Others)
+      replace: Personalizar color de chat (Grupo - Otros)
+
+    - find: Changes the Party Chat color for other members to the specified value. Default value is ffc8c8 (Pinkish).
+      replace: Cambia el color del chat de Grupo para otros miembros. Predeterminado ffc8c8 (Rosado).
+
+    - find: Customize chat color (Party - Self)
+      replace: Personalizar color de chat (Grupo - Propio)
+
+    - find: Changes the Party Chat color for the playing character to the specified value. Default value is ffc800 (Orange).
+      replace: Cambia el color del chat de Grupo para el personaje del jugador. Predeterminado ffc800 (Naranja).
+
+    - find: Customize chat color (Public - Others)
+      replace: Personalizar color de chat (Publico - Otros)
+
+    - find: Changes the Public Chat color for other players to the specified value. Default value is ffffff (White).
+      replace: Cambia el color del chat Publico para otros jugadores. Predeterminado ffffff (Blanco).
+
+    - find: Customize chat color (Public - Self)
+      replace: Personalizar color de chat (Publico - Propio)
+
+    - find: Changes the Public Chat color for the playing character to the specified value. Default value is 00ff00 (Green).
+      replace: Cambia el color del chat Publico para el personaje del jugador. Predeterminado 00ff00 (Verde).
+
+    - find: SKIP CHEATER CHECK
+      replace: SALTAR VERIFICACION DE TRAMPA
+
+    - find: Skip Friend list cheat check
+      replace: Saltar verificacion de trampa en lista de amigos
+
+    - find: Prevents warnings during PM's when the sender has similar name to one of your friends.
+      replace: Evita advertencias en mensajes privados cuando el remitente tiene un nombre similar al de uno de tus amigos.
+
+    - find: Skip Guild Member cheat check
+      replace: Saltar verificacion de trampa en lista de guild
+
+    - find: Prevents warnings during PMs when the sender has similar name to one of your guild members.
+      replace: Evita advertencias en mensajes privados cuando el remitente tiene un nombre similar al de un miembro de tu guild.
+
+    - find: WALK DELAY
+      replace: RETARDO DE CAMINAR
+
+    - find: Remove Walk Delay
+      replace: Eliminar retardo de caminar
+
+    - find: Add no delay to walking clicks. But client may likely send more/duplicated packets.
+      replace: Elimina el retardo al hacer clic para caminar. Puede hacer que el cliente envie mas paquetes o duplicados.
+
+    - find: Customize Walk Delay
+      replace: Personalizar retardo de caminar
+
+    - find: Change the delay for walking clicks to user specified value. But client may likely send more/duplicated packets.
+      replace: Cambia el retardo al hacer clic para caminar al valor especificado. Puede hacer que el cliente envie mas paquetes o duplicados.
+
+    - find: RESURRECT BUTTON VISIBILITY
+      replace: VISIBILIDAD DEL BOTON DE RESURRECCION
+
+    - find: Skip Resurrection button
+      replace: Ocultar boton de Resurreccion
+
+    - find: Skip showing resurrection button when you die with Token of Ziegfried in inventory.
+      replace: Oculta el boton de resurreccion al morir con un Token de Ziegfried en el inventario.
+
+    - find: Always show Resurrection button
+      replace: Mostrar siempre el boton de Resurreccion
+
+    - find: Make the client always show Resurrection button with Token of Ziegfried in inventory irrespective of map type.
+      replace: Hace que el cliente muestre siempre el boton de Resurreccion con Token de Ziegfried en el inventario sin importar el tipo de mapa.
+
+    #========================#
+    #     CLIENT / CLIENTE   #
+    #========================#
+
+    - find: RESIZE HP BAR
+      replace: REDIMENSIONAR BARRA DE HP
+
+    - find: Resize Player HP/SP bar
+      replace: Redimensionar barra HP/SP del jugador
+
+    - find: Resize the HP/SP bar drawn for playing character as per user specified value.
+      replace: Redimensiona la barra HP/SP del personaje jugador al valor especificado.
+
+    - find: Resize Normal mob HP bar
+      replace: Redimensionar barra HP de monstruos normales
+
+    - find: Resize the HP bar drawn for regular monsters as per user specified value.
+      replace: Redimensiona la barra HP de los monstruos normales al valor especificado.
+
+    - find: Resize Mini-Boss mob HP bar
+      replace: Redimensionar barra HP de Mini-Boss
+
+    - find: Resize the HP bar drawn for Mini-Boss monsters as per user specified value.
+      replace: Redimensiona la barra HP de los monstruos Mini-Boss al valor especificado.
+
+    - find: Resize Boss mob HP bar
+      replace: Redimensionar barra HP de Boss
+
+    - find: Resize the HP bar drawn for Boss monsters as per user specified value.
+      replace: Redimensiona la barra HP de los monstruos Boss al valor especificado.
+
+    - find: DISABLE EFFECT
+      replace: DESHABILITAR EFECTO
+
+    - find: Disable Quake skill effect
+      replace: Deshabilitar efecto de habilidad Terremoto
+
+    - find: Disables the Earthquake skill effect.
+      replace: Deshabilita el efecto de la habilidad Terremoto.
+
+    - find: Disable Hallucination wavy screen
+      replace: Deshabilitar pantalla ondulada de Alucinacion
+
+    - find: Disables the Hallucination effect (screen becomes wavy and lags the client), used by baphomet, horongs, and such.
+      replace: Deshabilita el efecto de Alucinacion (la pantalla se ondula y genera lag), usado por Baphomet, Horong y similares.
+
+    - find: Disable Blind skills effect
+      replace: Deshabilitar efecto de habilidad Ceguera
+
+    - find: Disables the Blind skill effect (screen becomes dark).
+      replace: Deshabilita el efecto de la habilidad Ceguera (la pantalla se oscurece).
+
+    - find: SLASH COMMANDS
+      replace: COMANDOS SLASH
+
+    - find: Always enable '/who' command
+      replace: Habilitar siempre el comando '/who'
+
+    - find: Enable <b>/w</b> and <b>/who</b> command for all Langtypes.
+      replace: Habilita los comandos <b>/w</b> y <b>/who</b> para todos los LangTypes.
+
+    - find: Always enable '/showname' command
+      replace: Habilitar siempre el comando '/showname'
+
+    - find: Enables <b>/showname</b> command for all Langtypes
+      replace: Habilita el comando <b>/showname</b> para todos los LangTypes.
+
+    - find: Allow unknown '/command's [Experimental]
+      replace: Permitir comandos '/' desconocidos [Experimental]
+
+    - find: Sends all unknown '<b>/command</b>' sequences to server (for allowing server side '<b>/command</b>'s) instead of showing "Invalid command".
+      replace: Envia todas las secuencias '<b>/comando</b>' desconocidas al servidor en lugar de mostrar "Comando invalido".
+
+    - find: SKILL CHATTER REMOVAL
+      replace: ELIMINACION DE DIALOGO DE HABILIDADES
+
+    - find: Remove Dancer's Scream chatter
+      replace: Eliminar dialogo del Grito de la Bailarina
+
+    - find: Disable the random chat appearing due to Dancer's Scream skill from file dc_scream.txt .
+      replace: Deshabilita el chat aleatorio por la habilidad Grito de la Bailarina desde dc_scream.txt.
+
+    - find: Remove Bard's Frost Joke chatter
+      replace: Eliminar dialogo del Chiste Helado del Bardo
+
+    - find: Disable the random chat appearing due to Bard's Frost Joke skill from file ba_frostjoke.txt .
+      replace: Deshabilita el chat aleatorio por la habilidad Chiste Helado del Bardo desde ba_frostjoke.txt.
+
+    - find: RESIZE BOX
+      replace: REDIMENSIONAR CUADROS
+
+    - find: Resize Chat Box
+      replace: Redimensionar cuadro de chat
+
+    - find: Resize the Main/Battle chat box max input chars from <b>70</b> to user specified value (234 is usually used).
+      replace: Cambia el maximo de caracteres del cuadro de chat de <b>70</b> al valor especificado (234 es el mas usado).
+
+    - find: Resize Chat Room Box
+      replace: Redimensionar cuadro de sala de chat
+
+    - find: Resize the chat room box max input chars from <b>70</b> to user specified value (234 is usually used).
+      replace: Cambia el maximo de caracteres del cuadro de sala de chat de <b>70</b> al valor especificado (234 es el mas usado).
+
+    - find: Resize PM Box
+      replace: Redimensionar cuadro de mensaje privado
+
+    - find: Resize the PM chat box max input chars from <b>70</b> to user specified value (234 is usually used).
+      replace: Cambia el maximo de caracteres del cuadro de mensaje privado de <b>70</b> al valor especificado (234 es el mas usado).
+
+    - find: Resize NPC Dialog Box
+      replace: Redimensionar cuadro de dialogo de NPC
+
+    - find: Changes the Max input chars of NPC Dialog boxes to user specified value within (2052 - 4096).
+      replace: Cambia el maximo de caracteres del cuadro de dialogo de NPC al valor especificado entre 2052 y 4096.
+
+    - find: ROULETTE VISIBILITY
+      replace: VISIBILIDAD DE RULETA
+
+    - find: Hide Roulette icon
+      replace: Ocultar icono de Ruleta
+
+    - find: Hide Roulette Icon that is present in some clients.
+      replace: Oculta el icono de Ruleta presente en algunos clientes.
+
+    - find: Show Roulette icon
+      replace: Mostrar icono de Ruleta
+
+    - find: Restores the Roulette Icon that was removed in new clients.
+      replace: Restaura el icono de Ruleta que fue eliminado en clientes mas recientes.
+
+    - find: CASH SHOP CUSTOMIZATION
+      replace: PERSONALIZACION DE TIENDA DE CASH
+
+    - find: Move Cash Shop icon
+      replace: Mover icono de Tienda de Cash
+
+    - find: Move the Cash Shop icon to user specified co-ordinates. Positive values are relative to left and top, Negative values are relative to right and bottom.
+      replace: Mueve el icono de la Tienda de Cash a las coordenadas especificadas. Valores positivos son relativos a izquierda y arriba, negativos a derecha y abajo.
+
+    - find: Enforce 0 C in Cash Shop
+      replace: Forzar 0 C en Tienda de Cash
+
+    - find: Enforce the <b>C</b> field to use 0 instead of random values in cash shop.
+      replace: Fuerza el campo <b>C</b> a usar 0 en lugar de valores aleatorios en la tienda de cash.
+
+    - find: Use default web browser in Cash Shop
+      replace: Usar navegador predeterminado en Tienda de Cash
+
+    - find: Open URL in the cashshop window with default web browser instead of IExplore.
+      replace: Abre la URL de la tienda de cash con el navegador predeterminado en lugar de IExplore.
+
+    - find: SHOP EQ PREVIEW
+      replace: VISTA PREVIA DE EQUIPO EN TIENDA
+
+    - find: Enable equipment preview in Cash Shop
+      replace: Habilitar vista previa de equipo en Tienda de Cash
+
+    - find: Add support for preview button in cash shop (right click the items to see the button). Needs the switch enabled in server-side too.
+      replace: Agrega soporte para el boton de vista previa en la tienda de cash (clic derecho en los items). Requiere habilitarlo tambien en el servidor.
+
+    - find: Enable equipment preview in Trader Shop
+      replace: Habilitar vista previa de equipo en Tienda de Trader
+
+    - find: Add support for preview button in older style trader cash shops (right click the items to see the button). Needs the switch enabled in server-side too.
+      replace: Agrega soporte para el boton de vista previa en tiendas de cash estilo antiguo (clic derecho en los items). Requiere habilitarlo tambien en el servidor.
+
+    - find: CASH SHOP VISIBILITY
+      replace: VISIBILIDAD DE TIENDA DE CASH
+
+    - find: Hide Cash Shop icon
+      replace: Ocultar icono de Tienda de Cash
+
+    - find: Hide Cash Shop Icon in clients that already show them.
+      replace: Oculta el icono de Tienda de Cash en clientes que ya lo muestran.
+
+    - find: Show Cash Shop icon
+      replace: Mostrar icono de Tienda de Cash
+
+    - find: Restores the Cash Shop Icon in clients that can have them. (Primarily RE clients hide them).
+      replace: Restaura el icono de Tienda de Cash en clientes que pueden tenerlo (principalmente los clientes RE lo ocultan).
+
+    - find: CAMERA ANGLES
+      replace: ANGULOS DE CAMARA
+
+    - find: Increase Camera Angles (LOW)
+      replace: Aumentar angulos de camara (BAJO)
+
+    - find: Unlocks the possible camera angles to give more freedom of placement. Enables a lower range of around <b>30 degrees</b>.
+      replace: Desbloquea los angulos posibles de camara. Habilita un rango bajo de aproximadamente <b>30 grados</b>.
+
+    - find: Increase Camera Angles (MEDIUM)
+      replace: Aumentar angulos de camara (MEDIO)
+
+    - find: Unlocks the possible camera angles to give more freedom of placement. Enables a medium range of around <b>42 degrees</b>.
+      replace: Desbloquea los angulos posibles de camara. Habilita un rango medio de aproximadamente <b>42 grados</b>.
+
+    - find: Increase Camera Angles (HIGH)
+      replace: Aumentar angulos de camara (ALTO)
+
+    - find: Unlocks the possible camera angles to give more freedom of placement. Enables an almost ground-level camera of around <b>65 degrees</b>.
+      replace: Desbloquea los angulos posibles de camara. Habilita una camara casi a nivel del suelo de aproximadamente <b>65 grados</b>.
+
+    - find: ZOOM OUT
+      replace: ALEJAMIENTO DEL ZOOM
+
+    - find: Decrease Zoom Out (to 25%)
+      replace: Reducir alejamiento del Zoom (al 25%)
+
+    - find: Decreases the zoom-out range to approx. 25% of maximum.
+      replace: Reduce el rango de alejamiento del zoom a aprox. el 25% del maximo.
+
+    - find: Increase Zoom Out (to 50%)
+      replace: Aumentar alejamiento del Zoom (al 50%)
+
+    - find: Increases the zoom-out range to approx. 50% of Maximum.
+      replace: Aumenta el rango de alejamiento del zoom a aprox. el 50% del maximo.
+
+    - find: Increase Zoom Out (to 75%)
+      replace: Aumentar alejamiento del Zoom (al 75%)
+
+    - find: Increases the zoom-out range to approx. 75% of Maximum.
+      replace: Aumenta el rango de alejamiento del zoom a aprox. el 75% del maximo.
+
+    - find: Increase Zoom Out (to Max)
+      replace: Aumentar alejamiento del Zoom (al Maximo)
+
+    - find: Maximizes the zoom-out range.
+      replace: Maximiza el rango de alejamiento del zoom.
+
+    - find: LOGIN MODE
+      replace: MODO DE LOGIN
+
+    - find: Restore Login Window
+      replace: Restaurar ventana de Login
+
+    - find: Circumvents Gravity's new token-based login system and restores the normal login window.
+      replace: Evita el nuevo sistema de login por token de Gravity y restaura la ventana de login normal.
+
+    - find: Use SSO Login Packet
+      replace: Usar paquete de Login SSO
+
+    - find: Enable using SSO packet on all Langtype (to use login and pass with a launcher).
+      replace: Habilita el uso del paquete SSO en todos los LangTypes (para usar login y contrasena con un launcher).
+
+    - find: Use Old Login Packet
+      replace: Usar paquete de Login Antiguo
+
+    - find: Enable the old login packet (0x64) used for Login Window. Intended for new clients which cannot restore the login window anymore.
+      replace: Habilita el paquete de login antiguo (0x64) para la ventana de Login. Indicado para clientes nuevos que ya no pueden restaurar la ventana de login.
+
+    - find: CHAT REPEAT
+      replace: REPETICION DE CHAT
+
+    - find: Allow unlimited chat repeat
+      replace: Permitir repeticion ilimitada en chat
+
+    - find: Remove the clientside limitation for maximum repeated lines.
+      replace: Elimina la limitacion del cliente para el maximo de lineas repetidas.
+
+    - find: Customize chat repeat limit
+      replace: Personalizar limite de repeticion en chat
+
+    - find: Change the clientside limit for maximum repeated lines in chat box from 2 to user specified value.
+      replace: Cambia el limite de lineas repetidas en el chat de 2 al valor especificado.
+
+    - find: SLEEP DELAY CUSTOMIZATION
+      replace: PERSONALIZACION DE RETARDO DE ESPERA
+
+    - find: Add Input Delay
+      replace: Agregar retardo de entrada
+
+    - find: Adds the user specified value to input delay.
+      replace: Agrega el valor especificado al retardo de entrada.
+
+    - find: Customize game loop delay
+      replace: Personalizar retardo del bucle de juego
+
+    - find: Change the sleep delay inside of game loop to user specified value.
+      replace: Cambia el retardo de espera dentro del bucle de juego al valor especificado.
+
+    #========================#
+    #     DATA / DATOS       #
+    #========================#
+
+    - find: DATA CUSTOMIZATION
+      replace: PERSONALIZACION DE DATOS
+
+    - find: Customize Max Emblem file size
+      replace: Personalizar tamano maximo de archivo de emblema
+
+    - find: Change the maximum limit used for guild emblem's file size.
+      replace: Cambia el limite maximo del tamano de archivo del emblema de guild.
+
+    - find: Customize Rodex tax
+      replace: Personalizar impuesto de Rodex
+
+    - find: Change the tax deducted while sending items by rodex.
+      replace: Cambia el impuesto que se deduce al enviar items por rodex.
+
+    - find: Customize guild exp limit
+      replace: Personalizar limite de exp de guild
+
+    - find: Change guild exp limit percent. Default value is 50%.
+      replace: Cambia el porcentaje del limite de exp de guild. Valor predeterminado 50%.
+
+    - find: Customize adventurer agency levels
+      replace: Personalizar niveles de la Agencia de Aventureros
+
+    - find: Changes the default level range on the Adventure Agency.
+      replace: Cambia el rango de niveles predeterminado en la Agencia de Aventureros.
+
+    - find: Enable Official custom .eot Fonts
+      replace: Habilitar fuentes .eot personalizadas oficiales
+
+    - find: This option enables use of Official Custom Fonts (EOT fonts in data folder) for all Langtypes.
+      replace: Habilita el uso de Fuentes Personalizadas Oficiales (fuentes EOT en la carpeta data) para todos los LangTypes.
+
+    - find: Fix charset for Fonts
+      replace: Corregir charset para fuentes
+
+    - find: Make the client use correct charset for Official Custom Fonts (EOT & OTF fonts) on all Langtypes.
+      replace: Hace que el cliente use el charset correcto para las Fuentes Personalizadas Oficiales en todos los LangTypes.
+
+    - find: Use Ascii on All
+      replace: Usar ASCII en todo
+
+    - find: Makes the client Enable ASCII irrespective of Font or Langtypes.
+      replace: Hace que el cliente habilite ASCII sin importar la fuente o LangType.
+
+    - find: Customize screenshot quality
+      replace: Personalizar calidad de captura de pantalla
+
+    - find: Changes the JPEG quality parameter for screenshots to user specified value.
+      replace: Cambia el parametro de calidad JPEG de las capturas de pantalla al valor especificado.
+
+    - find: Always call SelectKoreaClientInfo()
+      replace: Llamar siempre a SelectKoreaClientInfo()
+
+    - find: Ensures SelectKoreaClientInfo() is called along with SelectClientInfo() allowing you to use features that would be only visible on Korean Service Type.
+      replace: Garantiza que SelectKoreaClientInfo() sea llamado junto con SelectClientInfo(), permitiendo usar funciones visibles solo en el Tipo de Servicio Coreano.
+
+    - find: Restore the use of clientinfo xml
+      replace: Restaurar el uso del xml clientinfo
+
+    - find: Restores the code loading a clientinfo.xml file (name can be customized) while disabling the hardcoded server address.
+      replace: Restaura el codigo que carga un archivo clientinfo.xml (nombre personalizable) deshabilitando la direccion de servidor codificada en duro.
+
+    - find: Read data folder first
+      replace: Leer la carpeta data primero
+
+    - find: Gives the 'data' directory contents priority over GRF contents.
+      replace: Da prioridad al contenido del directorio 'data' sobre el contenido del GRF.
+
+    - find: Use plain text descriptions
+      replace: Usar descripciones en texto plano
+
+    - find: Enforces client to treat txt file contents as ASCII, not encoded.
+      replace: Fuerza al cliente a tratar el contenido de los archivos txt como ASCII, no codificado.
+
+    - find: Always load korea ExternalSettings lua file
+      replace: Cargar siempre el archivo lua ExternalSettings de Corea
+
+    - find: Makes the client load Korea server's ExternalSettings file for all langtypes.
+      replace: Hace que el cliente cargue el archivo ExternalSettings del servidor de Corea para todos los langtypes.
+
+    - find: Increase headgear viewID limit
+      replace: Aumentar limite de viewID de accesorios
+
+    - find: Changes the limit for the headgear ViewIDs from default (1000-3000 depending on client) to User Defined value (max 64000).
+      replace: Cambia el limite de ViewIDs de accesorios del valor predeterminado (1000-3000 segun cliente) al valor definido por el usuario (max 64000).
+
+    - find: Remove 3D bones limit
+      replace: Eliminar limite de huesos 3D
+
+    - find: Enables the use of custom 3D monsters (Granny) by removing the Hard-coded ID limit.
+      replace: Habilita el uso de monstruos 3D personalizados (Granny) eliminando el limite de ID codificado en duro.
+
+    - find: Load custom Quest Lua/Lub files
+      replace: Cargar archivos Lua/Lub de quests personalizadas
+
+    - find: Enables loading of custom lua files used for quests. You need to specify the list of files via a YAML file. All the files need to be inside 'lua files\\quest' folder.
+      replace: Habilita la carga de archivos lua personalizados para quests. La lista de archivos se especifica en un archivo YAML. Todos deben estar dentro de 'lua files\\quest'.
+
+    - find: Increase map quality
+      replace: Aumentar calidad del mapa
+
+    - find: Makes client use 32 bit color maps for Map Textures.
+      replace: Hace que el cliente use mapas de color de 32 bits para las Texturas del Mapa.
+
+    - find: Enable effect for all maps
+      replace: Habilitar efectos en todos los mapas
+
+    - find: Make the client load the corresponding file in EffectTool folder for all maps.
+      replace: Hace que el cliente cargue el archivo correspondiente en la carpeta EffectTool para todos los mapas.
+
+    - find: Load iteminfo based on char server
+      replace: Cargar iteminfo segun servidor de personajes
+
+    - find: Load ItemInfo file and call main function with selected char server name as argument.
+      replace: Carga el archivo ItemInfo y llama a la funcion principal con el nombre del servidor de personajes seleccionado como argumento.
+
+    - find: Use icons from stateiconimginfo.lub
+      replace: Usar iconos desde stateiconimginfo.lub
+
+    - find: Disable hardcoded status icons and read them only from stateiconimginfo.lub.
+      replace: Deshabilita los iconos de estado codificados en duro y los lee solo desde stateiconimginfo.lub.
+
+    - find: Fix act delay
+      replace: Corregir retardo de act
+
+    - find: Fix act delay for act files with big amount of frames.
+      replace: Corrige el retardo de act para archivos act con gran cantidad de frames.
+
+    - find: Add custom DLLs
+      replace: Agregar DLLs personalizados
+
+    - find: Makes the hexed client load the specified DLL and functions.
+      replace: Hace que el cliente parcheado cargue el DLL y las funciones especificadas.
+
+    - find: Hide build info
+      replace: Ocultar informacion de compilacion
+
+    - find: Hide the actual build info in client by 'NULL' ifying all related values.
+      replace: Oculta la informacion real de compilacion del cliente dejando en 'NULL' todos los valores relacionados.
+
+    - find: Disable camera lock
+      replace: Deshabilitar bloqueo de camara
+
+    - find: Disable locking of camera viewpoint rotation using ViewPointTable.txt
+      replace: Deshabilita el bloqueo de rotacion del punto de vista de la camara usando ViewPointTable.txt.
+
+    - find: Disable map signs
+      replace: Deshabilitar senales de mapa
+
+    - find: Disable the use of mapInfo lub file to display map signs when player enters map.
+      replace: Deshabilita el uso del archivo lub mapInfo para mostrar senales de mapa al entrar a un mapa.
+
+    - find: Translate arrows to English
+      replace: Traducir flechas al espanol
+
+    - find: Translate arrows & menu button texts in hotkey setting UI from korean to english
+      replace: Traduce las flechas y textos de botones de menu en la UI de teclas rapidas del coreano al espanol.
+
+    - find: Use 'identified' drops for Boss (MVP) mob
+      replace: Usar drops 'identificados' para monstruos Boss (MVP)
+
+    - find: Enforce MVP to drop item with the identified names.
+      replace: Fuerza a los MVP a soltar items con los nombres identificados.
+
+    - find: Translate client
+      replace: Traducir cliente
+
+    - find: Translates some of the Hard-coded Korean phrases using a user specified mapping file (defaults to <b>Translations_EN.yml</b>).
+      replace: Traduce algunas de las frases coreanas codificadas en duro usando un archivo de mapeo especificado (por defecto <b>Translations_EN.yml</b>).
+
+    - find: Translate taekwon names
+      replace: Traducir nombres de Taekwon
+
+    - find: Translates the korean names of the Taekwon branch to English.
+      replace: Traduce los nombres coreanos de la rama Taekwon al ingles.
+
+    - find: Customize Captcha Decomp size
+      replace: Personalizar tamano de descompresion de Captcha
+
+    - find: Changes the default zlib max decompression size used for captcha images to user specified value.
+      replace: Cambia el tamano maximo de descompresion zlib predeterminado para imagenes captcha al valor especificado.
+
+    - find: DISABLE PROTECTION
+      replace: DESHABILITAR PROTECCION
+
+    - find: Disable HShield
+      replace: Deshabilitar HShield
+
+    - find: Disables HackShield from clients that use it.
+      replace: Deshabilita HackShield de los clientes que lo usan.
+
+    - find: Disable Game Guard
+      replace: Deshabilitar Game Guard
+
+    - find: Disables Game Guard from clients that use it (Renewal clients have them).
+      replace: Deshabilita Game Guard de los clientes que lo usan (los clientes Renewal lo tienen).
+
+    - find: Disable Cheat Defender Game Guard
+      replace: Deshabilitar Cheat Defender Game Guard
+
+    - find: Disables Cheat Defender Game Guard from new clients.
+      replace: Deshabilita el Cheat Defender Game Guard de los clientes nuevos.
+
+    - find: SKIP LUB
+      replace: SALTAR LUB
+
+    - find: Skip SignBoard lubs
+      replace: Saltar lubs de SignBoard
+
+    - find: Makes the client skip loading SignBoardList related lub files
+      replace: Hace que el cliente salte la carga de los archivos lub relacionados con SignBoardList.
+
+    - find: Skip Towninfo lub
+      replace: Saltar lub de Towninfo
+
+    - find: Makes the client skip loading Towninfo.lub file
+      replace: Hace que el cliente salte la carga del archivo Towninfo.lub.
+
+    - find: READ .txt FILE
+      replace: LEER ARCHIVO .txt
+
+    - find: Always read msgstringtable.txt
+      replace: Leer siempre msgstringtable.txt
+
+    - find: This option will force the client to read all the user interface messages from msgstringtable.txt instead of displaying the Korean messages.
+      replace: Fuerza al cliente a leer todos los mensajes de la interfaz desde msgstringtable.txt en lugar de mostrar los mensajes en coreano.
+
+    - find: Always read questid2display.txt
+      replace: Leer siempre questid2display.txt
+
+    - find: Makes the client to load questid2display.txt on all Langtypes (instead of only 0).
+      replace: Hace que el cliente cargue questid2display.txt en todos los LangTypes (en lugar de solo el 0).
+
+    - find: PATH CUSTOMIZATION
+      replace: PERSONALIZACION DE RUTAS
+
+    - find: Customize Default BGM file
+      replace: Personalizar archivo BGM predeterminado
+
+    - find: Make the client load user specified MP3 file as default BGM used upon login to account instead of <b>bgm\01.mp3</b>.
+      replace: Hace que el cliente cargue el archivo MP3 especificado como BGM predeterminado al iniciar sesion en lugar de <b>bgm\01.mp3</b>.
+
+    - find: Customize Iteminfo lub
+      replace: Personalizar lub de Iteminfo
+
+    - find: Make the client load user specified lua file instead of <b>Iteminfo*.lub</b>.
+      replace: Hace que el cliente cargue el archivo lua especificado en lugar de <b>Iteminfo*.lub</b>.
+
+    - find: Customize AchievementList lub
+      replace: Personalizar lub de AchievementList
+
+    - find: Make the client load user specified lua file instead of <b>AchievementList*.lub</b>.
+      replace: Hace que el cliente cargue el archivo lua especificado en lugar de <b>AchievementList*.lub</b>.
+
+    - find: Customize MonsterSizeEffect lub
+      replace: Personalizar lub de MonsterSizeEffect
+
+    - find: Make the client load user specified lua file instead of <b>MonsterSizeEffect*.lub</b>.
+      replace: Hace que el cliente cargue el archivo lua especificado en lugar de <b>MonsterSizeEffect*.lub</b>.
+
+    - find: Customize Towninfo lub
+      replace: Personalizar lub de Towninfo
+
+    - find: Make the client load user specified lua file instead of <b>Towninfo*.lub</b>.
+      replace: Hace que el cliente cargue el archivo lua especificado en lugar de <b>Towninfo*.lub</b>.
+
+    - find: Customize PetEvolutionCln lub
+      replace: Personalizar lub de PetEvolutionCln
+
+    - find: Make the client load user specified lua file instead of <b>PetEvolutionCln*.lub</b>.
+      replace: Hace que el cliente cargue el archivo lua especificado en lugar de <b>PetEvolutionCln*.lub</b>.
+
+    - find: Customize Tipbox lub
+      replace: Personalizar lub de Tipbox
+
+    - find: Make the client load user specified lua file instead of <b>Tipbox*.lub</b>.
+      replace: Hace que el cliente cargue el archivo lua especificado en lugar de <b>Tipbox*.lub</b>.
+
+    - find: Customize CheckAttendance lub
+      replace: Personalizar lub de CheckAttendance
+
+    - find: Make the client load user specified lua file instead of <b>CheckAttendance*.lub</b>.
+      replace: Hace que el cliente cargue el archivo lua especificado en lugar de <b>CheckAttendance*.lub</b>.
+
+    - find: Customize PrivateAirplane lub
+      replace: Personalizar lub de PrivateAirplane
+
+    - find: Make the client load user specified lua file instead of <b>PrivateAirplane*.lub</b>.
+      replace: Hace que el cliente cargue el archivo lua especificado en lugar de <b>PrivateAirplane*.lub</b>.
+
+    - find: Customize MapInfo lub
+      replace: Personalizar lub de MapInfo
+
+    - find: Make the client load user specified lua file instead of <b>MapInfo*.lub</b>.
+      replace: Hace que el cliente cargue el archivo lua especificado en lugar de <b>MapInfo*.lub</b>.
+
+    - find: Customize OngoingQuestInfoList lub
+      replace: Personalizar lub de OngoingQuestInfoList
+
+    - find: Make the client load user specified lua file instead of <b>OngoingQuestInfoList*.lub</b>.
+      replace: Hace que el cliente cargue el archivo lua especificado en lugar de <b>OngoingQuestInfoList*.lub</b>.
+
+    - find: Customize RecommendedQuestInfoList lub
+      replace: Personalizar lub de RecommendedQuestInfoList
+
+    - find: Make the client load user specified lua file instead of <b>RecommendedQuestInfoList*.lub</b>.
+      replace: Hace que el cliente cargue el archivo lua especificado en lugar de <b>RecommendedQuestInfoList*.lub</b>.
+
+    - find: Customize License File
+      replace: Personalizar archivo de Licencia
+
+    - find: Change the filename used for EULA from <b>..\licence.txt</b> to user specified name (Path is relative to Data folder).
+      replace: Cambia el nombre del archivo EULA de <b>..\licence.txt</b> al nombre especificado (ruta relativa a la carpeta Data).
+
+    - find: Customize ClientInfo file
+      replace: Personalizar archivo ClientInfo
+
+    - find: Change the clientinfo XML file loaded from *clientinfo.xml to user specified name.
+      replace: Cambia el archivo XML clientinfo cargado desde *clientinfo.xml al nombre especificado.
+
+    - find: SHARED BODY PALETTES
+      replace: PALETAS DE CUERPO COMPARTIDAS
+
+    - find: Enable shared body palettes - Male & Female
+      replace: Habilitar paletas de cuerpo compartidas - Masculino y Femenino
+
+    - find: Makes the client use a single cloth palette set (body_%s_%d.pal) for all job classes but separate for both genders.
+      replace: Hace que el cliente use un unico conjunto de paletas de ropa (body_%s_%d.pal) para todas las clases pero separado por genero.
+
+    - find: Enable shared body palettes - Unisex
+      replace: Habilitar paletas de cuerpo compartidas - Unisex
+
+    - find: Makes the client use a single cloth palette set (body_%d.pal) for all job classes & genders.
+      replace: Hace que el cliente use un unico conjunto de paletas de ropa (body_%d.pal) para todas las clases y generos.
+
+    - find: SHARED HEAD PALETTES
+      replace: PALETAS DE CABEZA COMPARTIDAS
+
+    - find: Enable shared head palettes - Male & Female
+      replace: Habilitar paletas de cabeza compartidas - Masculino y Femenino
+
+    - find: Makes the client use a single hair palette set (head_%s_%d.pal) for all hair styles but separate for both genders.
+      replace: Hace que el cliente use un unico conjunto de paletas de cabello (head_%s_%d.pal) para todos los estilos pero separado por genero.
+
+    - find: Enable shared head palettes - Unisex
+      replace: Habilitar paletas de cabeza compartidas - Unisex
+
+    - find: Makes the client use a single hair palette set (head_%d.pal) for all hair styles and genders.
+      replace: Hace que el cliente use un unico conjunto de paletas de cabello (head_%d.pal) para todos los estilos y generos.
+
+    - find: MULTIPLE GRFS
+      replace: MULTIPLES GRF
+
+    - find: Enable Multiple GRFs ( INI )
+      replace: Habilitar multiples GRF ( INI )
+
+    - find: Enables the use of multiple grf files by putting them in an INI file in your client folder. You can load upto 10 GRFs in total.
+      replace: Habilita el uso de multiples archivos grf poniendolos en un archivo INI en la carpeta del cliente. Se pueden cargar hasta 10 GRF en total.
+
+    - find: Enable Multiple GRFs ( Embedded )
+      replace: Habilitar multiples GRF ( Embebido )
+
+    - find: Enables the use of multiple grf files without needing INI file in client folder. Instead you specify the INI file as input to the patch so it can embed the names.
+      replace: Habilita el uso de multiples archivos grf sin necesitar un archivo INI en la carpeta del cliente. Se especifica el archivo INI como entrada al parche para que pueda embeber los nombres.
+
+    #========================#
+    #   ENVIRONMENT / ENTORNO#
+    #========================#
+
+    - find: ENVIRONMENT CUSTOMIZATION
+      replace: PERSONALIZACION DE ENTORNO
+
+    - find: Disable filename check
+      replace: Deshabilitar verificacion de nombre de archivo
+
+    - find: Disables the check that forces the client to quit if not called an official name like ragexe.exe for all Langtypes.
+      replace: Deshabilita la verificacion que fuerza al cliente a cerrarse si no tiene un nombre oficial como ragexe.exe para todos los LangTypes.
+
+    - find: HKLM To HKCU
+      replace: HKLM a HKCU
+
+    - find: This makes the client use HK_CURRENT_USER registry entries instead of HK_LOCAL_MACHINE. Necessary for users who have no admin privileges on their computer.
+      replace: Hace que el cliente use entradas de registro HK_CURRENT_USER en lugar de HK_LOCAL_MACHINE. Necesario para usuarios sin privilegios de administrador.
+
+    - find: Use default browser for &lt;URL&gt;
+      replace: Usar navegador predeterminado para &lt;URL&gt;
+
+    - find: Use default web browser to open &lt;URL&gt; instead of built-in ROWebBrowser.
+      replace: Usa el navegador predeterminado para abrir &lt;URL&gt; en lugar del ROWebBrowser integrado.
+
+    - find: Remove admin privilege requirement
+      replace: Eliminar requerimiento de privilegios de administrador
+
+    - find: Removes the explicit requirement for user access elevation (i.e. Admin privileges) from the client
+      replace: Elimina el requerimiento explicito de elevacion de acceso de usuario (privilegios de administrador) del cliente.
+
+    - find: Always load client plugins [Experimental]
+      replace: Cargar siempre plugins del cliente [Experimental]
+
+    - find: Makes the client load client plug-ins regardless of its sound settings.
+      replace: Hace que el cliente cargue los plugins sin importar la configuracion de sonido.
+
+    - find: Disable multiple windows
+      replace: Deshabilitar multiples ventanas
+
+    - find: Prevents the client from creating more than one Client Window on all Langtypes.
+      replace: Evita que el cliente cree mas de una ventana de Cliente en todos los LangTypes.
+
+    - find: Customize minimum screen resolution
+      replace: Personalizar resolucion minima de pantalla
+
+    - find: Change minimum client resolution (width & height) to user specified values from (default of 1024x768).
+      replace: Cambia la resolucion minima del cliente (ancho y alto) a los valores especificados desde el predeterminado (1024x768).
+
+    - find: Ignore Debugger
+      replace: Ignorar Depurador
+
+    - find: Skips checking for a debugger using the 'IsDebuggerPresent' function. Not advisable for use on final clients.
+      replace: Salta la verificacion de depurador usando la funcion 'IsDebuggerPresent'. No recomendado para clientes en produccion.
+
+    - find: WINDOW FRAME CUSTOMIZATION
+      replace: PERSONALIZACION DEL MARCO DE VENTANA
+
+    - find: Enable title buttons
+      replace: Habilitar botones de barra de titulo
+
+    - find: Enable Title Bar Menu (Reduce, Maximize, Close) buttons and the window icon.
+      replace: Habilita los botones del Menu de Barra de Titulo (Minimizar, Maximizar, Cerrar) y el icono de ventana.
+
+    - find: Use Miniature title bar
+      replace: Usar barra de titulo miniatura
+
+    - find: Makes the client window use a small title bar.
+      replace: Hace que la ventana del cliente use una barra de titulo pequena.
+
+    - find: Customize Window title
+      replace: Personalizar titulo de ventana
+
+    - find: Changes the window title to user specified string.
+      replace: Cambia el titulo de la ventana al texto especificado por el usuario.
+
+    - find: Enable Borderless full screen
+      replace: Habilitar pantalla completa sin bordes
+
+    - find: Removes borders from the client window when the resolution is set to the screen resolution (commonly known as Borderless Full screen window).
+      replace: Elimina los bordes de la ventana del cliente cuando la resolucion coincide con la de la pantalla (pantalla completa sin bordes).
+
+    - find: CLIENT ARGUMENTS
+      replace: ARGUMENTOS DEL CLIENTE
+
+    - find: Disable '1*1' arguments
+      replace: Deshabilitar argumentos '1*1'
+
+    - find: Disable all 1*1 arguments such as 1rag1, 1sak1 etc. in order to launch the client directly without launching the patcher.
+      replace: Deshabilita todos los argumentos 1*1 como 1rag1, 1sak1, etc. para iniciar el cliente directamente sin el patcher.
+
+    - find: Ignore '/account:' argument
+      replace: Ignorar argumento '/account:'
+
+    - find: Makes the client ignore <b>/account:</b> command line argument to prevent custom clientinfo.xml from being used.
+      replace: Hace que el cliente ignore el argumento <b>/account:</b> para evitar el uso de un clientinfo.xml personalizado.
+
+    - find: ENABLE ICON
+      replace: HABILITAR ICONO
+
+    - find: Restore Inbuilt App icon
+      replace: Restaurar icono de aplicacion integrado
+
+    - find: Makes the client use the inbuilt icon instead of the generic Win32 app icon.
+      replace: Hace que el cliente use el icono integrado en lugar del icono generico de aplicacion Win32.
+
+    - find: Customize App icon
+      replace: Personalizar icono de aplicacion
+
+    - find: Makes the client use the User specified icon (any size and bit depth). For Win7 & higher suggested spec is <b><font color='deepskyblue'>256x256 32bit along with a 16x16 one</b><font>.<br><br>For older clients, you would need to select images from the icon since there is a limit of 3.
+      replace: Hace que el cliente use el icono especificado. Para Win7 y superiores se sugiere <b><font color='deepskyblue'>256x256 32bit junto con uno de 16x16</b><font>.<br><br>Para clientes mas antiguos hay un limite de 3 imagenes en el icono.
+
+    - find: PRIORITY ALTERATION
+      replace: ALTERACION DE PRIORIDAD
+
+    - find: Change Priority (Idle to Normal)
+      replace: Cambiar prioridad (Inactivo a Normal)
+
+    - find: Change the thread priority of inactive window to normal.
+      replace: Cambia la prioridad de hilo de la ventana inactiva a normal.
+
+    - find: Change Priority (Normal to High)
+      replace: Cambiar prioridad (Normal a Alta)
+
+    - find: Change the thread priority for active client to high.
+      replace: Cambia la prioridad de hilo del cliente activo a alta.
+
+    #========================#
+    #    WINDOW / VENTANA    #
+    #========================#
+
+    - find: BASIC BUTTON VISIBILITY
+      replace: VISIBILIDAD BASICA DE BOTONES
+
+    - find: Hide Buttons (Old UI)
+      replace: Ocultar Botones (Interfaz Antigua)
+
+    - find: Hide the various buttons in the Basic Info Window under the HP/SP Bars.
+      replace: Oculta los distintos botones en la Ventana de Informacion Basica debajo de las Barras de HP/SP.
+
+    - find: Hide Buttons (New UI)
+      replace: Ocultar Botones (Interfaz Nueva)
+
+    - find: Show Buttons (New UI)
+      replace: Mostrar Botones (Interfaz Nueva)
+
+    - find: Shows some of the various hidden buttons in the Basic Info Window under the HP/SP Bars.
+      replace: Muestra algunos de los botones ocultos en la Ventana de Informacion Basica debajo de las Barras de HP/SP.
+
+    - find: CHARACTER CREATION
+      replace: CREACION DE PERSONAJE
+
+    - find: Customize new Char Name field height
+      replace: Personalizar altura del campo de Nombre en creacion de Personaje
+
+    - find: Changes the height in input field of the new char creation dialog to user specified value.
+      replace: Cambia la altura del campo de entrada del dialogo de creacion de nuevo personaje al valor especificado.
+
+    - find: Increase char create Hair limits
+      replace: Aumentar limites de cabello en creacion de personaje
+
+    - find: Increase the Hair Style and Color limits used in Make Character Window to user specified values.
+      replace: Aumenta los limites de Estilo y Color de cabello de la Ventana de Creacion de Personaje a los valores especificados.
+
+    - find: Customize job id in char create dialog
+      replace: Personalizar ID de clase en dialogo de creacion de personaje
+
+    - find: Override selected job id in character creation packet with user specified value.
+      replace: Reemplaza el ID de clase seleccionado en el paquete de creacion de personaje con el valor especificado.
+
+    - find: Fix latest new char window
+      replace: Corregir ventana de creacion de personaje mas reciente
+
+    - find: Fix the latest new character window (removes the misaligned background and centers the actual window)
+      replace: Corrige la ventana de creacion de personaje mas reciente (elimina el fondo desalineado y centra la ventana).
+
+    - find: CHARACTER CREATION (DORAM)
+      replace: CREACION DE PERSONAJE (DORAM)
+
+    - find: Customize second job id in char create dialog
+      replace: Personalizar clase secundaria en dialogo de creacion de personaje
+
+    - find: Change doram to user specified job id in character creation window.
+      replace: Cambia doram por el ID de clase especificado en la ventana de creacion de personaje.
+
+    - find: Disable Doram character creation UI [Experimental]
+      replace: Deshabilitar interfaz de creacion de personaje Doram [Experimental]
+
+    - find: Disable Doram race in the character creation UI. Server-side disabling is also recommended.
+      replace: Deshabilita la raza Doram en la interfaz de creacion de personaje. Tambien se recomienda deshabilitarla en el servidor.
+
+    - find: FRIEND/PARTY WINDOW CUSTOMIZATION
+      replace: PERSONALIZACION DE VENTANA DE AMIGOS/GRUPO
+
+    - find: Customize max friends
+      replace: Personalizar maximo de amigos
+
+    - find: Change the maximum no of friends displayed on Alt+H to user specified value
+      replace: Cambia el numero maximo de amigos mostrados en Alt+H al valor especificado.
+
+    - find: Customize party limit
+      replace: Personalizar limite de grupo
+
+    - find: Change the maximum no of party members displayed on Alt+Z to user specified value.
+      replace: Cambia el numero maximo de miembros de grupo mostrados en Alt+Z al valor especificado.
+
+    - find: Remove Adventurer Agency from Party
+      replace: Eliminar Agencia de Aventureros del Grupo
+
+    - find: Remove the Adventurer Agency button from the party window.
+      replace: Elimina el boton de Agencia de Aventureros de la ventana de grupo.
+
+    - find: EQUIP WINDOW CUSTOMIZATION
+      replace: PERSONALIZACION DE VENTANA DE EQUIPO
+
+    - find: Remove Eq Swap button
+      replace: Eliminar boton de intercambio de equipo
+
+    - find: Remove equipment swap button on the equipment window.
+      replace: Elimina el boton de intercambio de equipo de la ventana de equipamiento.
+
+    - find: Remove Eq Window title
+      replace: Eliminar titulo de ventana de equipo
+
+    - find: Remove equipment UI title on the equipment window.
+      replace: Elimina el titulo de la interfaz de equipamiento de la ventana de equipo.
+
+    - find: EXP BAR CUSTOMIZATION
+      replace: PERSONALIZACION DE BARRA DE EXPERIENCIA
+
+    - find: Customize Experience bar limits
+      replace: Personalizar limites de barra de experiencia
+
+    - find: Allows client to use custom limits for Base and Job experience bars as per user specified input file.
+      replace: Permite al cliente usar limites personalizados para las barras de experiencia Base y de Clase segun el archivo de entrada especificado.
+
+    - find: Show Experience numbers
+      replace: Mostrar numeros de experiencia
+
+    - find: Show Base and Job Experience numbers on top of the respective exp bars in Basic Info Window.
+      replace: Muestra los numeros de Experiencia Base y de Clase sobre las barras de exp en la Ventana de Informacion Basica.
+
+    - find: RETURN TO LOGIN
+      replace: VOLVER AL LOGIN
+
+    - find: Disconnect to Login Window
+      replace: Desconectar a la ventana de Login
+
+    - find: Make the client return to Login Window upon disconnection.
+      replace: Hace que el cliente vuelva a la Ventana de Login al desconectarse.
+
+    - find: Cancel to Login Window
+      replace: Cancelar a la ventana de Login
+
+    - find: Makes the Cancel button in Character selection window return to login window instead of Quitting.
+      replace: Hace que el boton Cancelar en la ventana de seleccion de personaje vuelva a la ventana de login en lugar de salir.
+
+    - find: SHOW BUTTON
+      replace: MOSTRAR BOTON
+
+    - find: Always show Replay button in Service Select
+      replace: Mostrar siempre el boton de Replay en Seleccion de Servicio
+
+    - find: Makes the client show Replay button on Service Select screen that opens the Replay File List window.
+      replace: Hace que el cliente muestre el boton de Replay en la pantalla de Seleccion de Servicio que abre la lista de Replays.
+
+    - find: Always show Cancel button in Login
+      replace: Mostrar siempre el boton Cancelar en Login
+
+    - find: Restores the Cancel button in Login Window for switching back to Service Select Window. The button will be placed in between Login and Exit buttons.
+      replace: Restaura el boton Cancelar en la Ventana de Login para volver a Seleccion de Servicio. Se ubica entre los botones Login y Salir.
+
+    - find: Always show Register button in Login
+      replace: Mostrar siempre el boton Registrar en Login
+
+    - find: Makes the client always show register button on Login Window for all Langtypes. Clicking the button will open <registrationweb> from clientinfo and closes the client.
+      replace: Hace que el cliente siempre muestre el boton de registro en la Ventana de Login. Al hacer clic abre <registrationweb> del clientinfo y cierra el cliente.
+
+    - find: 4/6 LETTER LIMIT REMOVAL
+      replace: ELIMINACION DEL LIMITE DE 4/6 LETRAS
+
+    - find: Remove 4/6 letter Character Name limit
+      replace: Eliminar limite de 4/6 letras en Nombre de Personaje
+
+    - find: Will allow people to use character names shorter than 4 letters.
+      replace: Permite usar nombres de personaje mas cortos de 4 letras.
+
+    - find: Remove 4/6 letter User Name limit
+      replace: Eliminar limite de 4/6 letras en Nombre de Usuario
+
+    - find: Will allow people to use account names shorter than 4 letters.
+      replace: Permite usar nombres de cuenta mas cortos de 4 letras.
+
+    - find: Remove 4/6 letter Password limit
+      replace: Eliminar limite de 4/6 letras en Contrasena
+
+    - find: Will allow people to use passwords shorter than 4 letters.
+      replace: Permite usar contrasenas mas cortas de 4 letras.
+
+    - find: LICENSE SCREEN VISIBILITY
+      replace: VISIBILIDAD DE PANTALLA DE LICENCIA
+
+    - find: Always hide License Screen
+      replace: Ocultar siempre la pantalla de Licencia
+
+    - find: Make the client skip the license screen and go directly to the Service Select screen.
+      replace: Hace que el cliente salte la pantalla de licencia e ingrese directamente a la pantalla de Seleccion de Servicio.
+
+    - find: Always show License Screen
+      replace: Mostrar siempre la pantalla de Licencia
+
+    - find: Makes the client always show the license for all langtypes.
+      replace: Hace que el cliente muestre siempre la licencia para todos los langtypes.
+
+    - find: TRAIT STATUS BUTTON BEHAVIOR
+      replace: COMPORTAMIENTO DEL BOTON DE ESTADO DE RASGO
+
+    - find: Disable Trait Status Button
+      replace: Deshabilitar boton de Estado de Rasgo
+
+    - find: Make the Trait Status button do nothing.
+      replace: Hace que el boton de Estado de Rasgo no haga nada.
+
+    - find: Hide Trait Status Button
+      replace: Ocultar boton de Estado de Rasgo
+
+    - find: Hide the Trait Status Expansion Button in the Status Window.
+      replace: Oculta el boton de expansion de Estado de Rasgo en la Ventana de Estado.
+
+    #========================#
+    #      UI / INTERFAZ     #
+    #========================#
+
+    - find: UI CUSTOMIZATION
+      replace: PERSONALIZACION DE INTERFAZ
+
+    - find: Allow shortcuts in WINE [Experimental]
+      replace: Permitir atajos en WINE [Experimental]
+
+    - find: Allows usage of keyboard shortcuts in wine. Still experimental, so it may or may not work at this time.
+      replace: Permite el uso de atajos de teclado en wine. Aun experimental, puede o no funcionar en este momento.
+
+    - find: Customize missing launcher message
+      replace: Personalizar mensaje de launcher faltante
+
+    - find: Allows changing the blank message to user specified string when the client runs without a launcher.
+      replace: Permite cambiar el mensaje en blanco al texto especificado cuando el cliente se ejecuta sin launcher.
+
+    - find: Use Tilde for Matk
+      replace: Usar Tilde para M.Atk
+
+    - find: Make the client use tilde <b>(~)</b> symbol for Matk in Stats Window instead of Plus <b>(+)</b>.
+      replace: Hace que el cliente use el simbolo tilde <b>(~)</b> para el M.Atk en la Ventana de Estadisticas en lugar del signo Mas <b>(+)</b>.
+
+    - find: Disable Swear Filter
+      replace: Deshabilitar filtro de insultos
+
+    - find: Will allow people to chat using swear words ignoring the contents of <b>manner.txt</b>.
+      replace: Permite chatear con palabras inadecuadas ignorando el contenido de <b>manner.txt</b>.
+
+    - find: Skip service selection screen
+      replace: Saltar pantalla de seleccion de servicio
+
+    - find: Jumps directly to the login interface without asking to select a service.
+      replace: Salta directamente a la interfaz de login sin pedir seleccionar un servicio.
+
+    - find: Use 'Opening' for service selection
+      replace: Usar 'Opening' para seleccion de servicio
+
+    - find: Enables the 'Opening' button in the new login screen to open the service selection screen again.
+      replace: Habilita el boton 'Opening' en la nueva pantalla de login para abrir nuevamente la pantalla de seleccion de servicio.
+
+    - find: Use normal guild brackets
+      replace: Usar corchetes normales de guild
+
+    - find: On Langtype 0, instead of square-brackets, japanese style brackets are used, this option reverts that behaviour to the normal square brackets i.e. '[ ]'.
+      replace: En LangType 0 se usan corchetes estilo japones; esta opcion revierte eso a los corchetes normales '[ ]'.
+
+    - find: '@ Bug fix'
+      replace: "Correccion del bug '@'"
+
+    - find: Fixes the bug which prevents writing @ in chat window.
+      replace: Corrige el bug que impide escribir @ en la ventana de chat.
+
+    - find: Use official login BG
+      replace: Usar fondo de login oficial
+
+    - find: Use Official login background for all Langtypes.
+      replace: Usa el fondo de login oficial para todos los LangTypes.
+
+    - find: Remove Hourly announcement
+      replace: Eliminar anuncio por hora
+
+    - find: Remove hourly game grade and hourly play time minder announcements.
+      replace: Elimina los anuncios horarios de calificacion del juego y recordatorios de tiempo de juego.
+
+    - find: Enable flag emoticons
+      replace: Habilitar emoticones de banderas
+
+    - find: Enable Selected Flag Emoticons for all Langtypes. You need to specify a txt file as input with the flag constants assigned to 1-9.
+      replace: Habilita los Emoticones de Banderas para todos los LangTypes. Se debe especificar un archivo txt con las constantes de banderas asignadas al 1-9.
+
+    - find: Remove serial display
+      replace: Eliminar visualizacion del serial
+
+    - find: Removes the display of the client serial number in the login window (bottom right corner).
+      replace: Elimina la visualizacion del numero serial del cliente en la ventana de login (esquina inferior derecha).
+
+    - find: Allow blank space in guild name
+      replace: Permitir espacio en blanco en nombre de guild
+
+    - find: Allow player to create a guild with space in the name (<b>/guild "Spaced Name"</b>).
+      replace: Permite al jugador crear una guild con espacio en el nombre (<b>/guild "Nombre con Espacio"</b>).
+
+    - find: Custom inventory limit
+      replace: Limite de inventario personalizado
+
+    - find: Change the Maximum no of items displayed in inventory to user specified value (Need to be changed server-side as well).
+      replace: Cambia el numero maximo de items mostrados en el inventario al valor especificado (tambien debe cambiarse en el servidor).
+
+    - find: Always use email for Char Deletion
+      replace: Usar siempre email para eliminar Personaje
+
+    - find: Makes the Client use email as deletion password for all Langtypes.
+      replace: Hace que el cliente use el email como contrasena de eliminacion para todos los LangTypes.
+
+    - find: Customize vending limit
+      replace: Personalizar limite de venta
+
+    - find: Change the Vending Limit of 1 Billion zeny to user specified value.
+      replace: Cambia el limite de Venta de 1.000 millones de zeny al valor especificado.
+
+    - find: No Help Message on Login
+      replace: Sin mensaje de ayuda al iniciar sesion
+
+    - find: Prevents the Help Message being shown on Login for all Langtypes.
+      replace: Evita que se muestre el Mensaje de Ayuda al iniciar sesion para todos los LangTypes.
+
+    - find: Hide World View Interface
+      replace: Ocultar interfaz de Vista Mundial
+
+    - find: Hide the World View (Full Map) Interface that is usually shown at the top right.
+      replace: Oculta la interfaz de Vista Mundial (Mapa Completo) que generalmente se muestra en la esquina superior derecha.
+
+    - find: Close cutin on Esc key
+      replace: Cerrar cutin con tecla Esc
+
+    - find: Allow closing of cutin window by pressing ESC key.
+      replace: Permite cerrar la ventana de cutin presionando la tecla ESC.
+
+    - find: Enable Mail Box access for All Langtypes
+      replace: Habilitar acceso al Buzon de Correo para todos los LangTypes
+
+    - find: Enables the full use of Mail Boxes and @mail commands (write is disabled for few Langtypes by default in 2013 Clients).
+      replace: Habilita el uso completo de los Buzones de Correo y comandos @mail (la escritura esta deshabilitada en algunos LangTypes por defecto en clientes 2013).
+
+    - find: Enable "Notice" email section
+      replace: Habilitar seccion de correos "Aviso"
+
+    - find: Enables the use of the "Notice" section in the new Mail Window for RE clients. This will allow for Admins to send specific e-mails (like bulletins) to users.
+      replace: Habilita la seccion "Aviso" en la nueva Ventana de Correo para clientes RE. Permite a los Administradores enviar correos especificos (como boletines) a los usuarios.
+
+    - find: Move Item Count Upwards
+      replace: Mover contador de items hacia arriba
+
+    - find: Move Item Count upwards in Shortcut Window so as to align with Skill Level display.
+      replace: Mueve el contador de items hacia arriba en la Ventana de Accesos Directos para alinearlo con el Nivel de Habilidad.
+
+    - find: Increase Digit Display
+      replace: Aumentar visualizacion de digitos
+
+    - find: Increases the limit of digits displayed while attacking from 6 to 10.
+      replace: Aumenta el limite de digitos mostrados al atacar de 6 a 10.
+
+    - find: Customize fade in/out delay
+      replace: Personalizar retardo de fundido de entrada/salida
+
+    - find: Change fade in/out time in warps on same map.
+      replace: Cambia el tiempo de fundido de entrada/salida en los warps dentro del mismo mapa.
+
+    - find: Remove Jobs from Booking Window
+      replace: Eliminar clases de la Ventana de Reservas
+
+    - find: Removes user specified set of Job Names from Party Booking Window.
+      replace: Elimina el conjunto de Nombres de Clase especificados de la Ventana de Reservas de Grupo.
+
+    - find: Change Deletion time to relative
+      replace: Cambiar tiempo de eliminacion a relativo
+
+    - find: Change character display deletion time from actual date & time to remaining time.
+      replace: Cambia el tiempo de eliminacion de personaje mostrado de fecha y hora real al tiempo restante.
+
+    - find: Restore chat focus
+      replace: Restaurar foco del chat
+
+    - find: Restore input focus from left mouse click.
+      replace: Restaura el foco de entrada desde el clic izquierdo del raton.
+
+    - find: Fix item description bug
+      replace: Corregir bug de descripcion de item
+
+    - find: Fix item description '[' bug
+      replace: Corrige el bug del caracter '[' en la descripcion de items.
+
+    - find: Disable equipment preview
+      replace: Deshabilitar vista previa de equipo
+
+    - find: Remove equipment preview button on the items description window
+      replace: Elimina el boton de vista previa de equipo en la ventana de descripcion de items.
+
+    - find: Hide Zero Date in Guild Window
+      replace: Ocultar fecha cero en Ventana de Guild
+
+    - find: Hide Zero Date (1969-01-01) in guild members window.
+      replace: Oculta la Fecha Cero (1969-01-01) en la ventana de miembros de guild.
+
+    - find: Customize skill slot highlight
+      replace: Personalizar resaltado de slot de habilidad
+
+    - find: Changes the highlight color for skill slot to user specified value.
+      replace: Cambia el color de resaltado del slot de habilidad al valor especificado.
+
+    - find: Allow all items in Shortcut
+      replace: Permitir todos los items en Acceso Directo
+
+    - find: Allow players to put all type of items on the shortcut window (makes it easy to trace).
+      replace: Permite a los jugadores poner todo tipo de items en la ventana de accesos directos (facilita el seguimiento).
+
+    - find: Fix Achievement counters
+      replace: Corregir contadores de Logros
+
+    - find: Fix achievement counters for each type of achievement
+      replace: Corrige los contadores de logros para cada tipo de logro.
+
+    - find: Hide in-game windows
+      replace: Ocultar ventanas dentro del juego
+
+    - find: Allows user to hide specific in-game windows. User needs to provide a YAML file containing the list of Window IDs to be hidden.
+      replace: Permite al usuario ocultar ventanas especificas dentro del juego. Se debe proveer un archivo YAML con la lista de IDs de Ventanas a ocultar.
+
+    - find: Fix homunculus attack AI
+      replace: Corregir IA de ataque del homunculus
+
+    - find: Fix issue in homunculus AI which prevents automatic attacks (present in clients 20170920 clients and newer).
+      replace: Corrige el problema en la IA del homunculus que impide los ataques automaticos (presente en clientes 20170920 y mas nuevos).
+
+    - find: CASE INSENSITIVE SEARCH
+      replace: BUSQUEDA SIN DISTINCION DE MAYUSCULAS
+
+    - find: Case-Insensitive storage search
+      replace: Busqueda en almacenamiento sin distincion de mayusculas
+
+    - find: Make the search in Storage Window, case-insensitive.
+      replace: Hace que la busqueda en la Ventana de Almacenamiento sea sin distincion de mayusculas.
+
+    - find: Case-Insensitive cash shop search
+      replace: Busqueda en tienda de cash sin distincion de mayusculas
+
+    - find: Make the search in Cash Shop Window, case-insensitive.
+      replace: Hace que la busqueda en la Ventana de Tienda de Cash sea sin distincion de mayusculas.
+
+    - find: LOGIN BACKGROUND
+      replace: FONDO DE LOGIN
+
+    - find: Use only first login BG
+      replace: Usar solo el primer fondo de login
+
+    - find: Always display only the first login background.
+      replace: Muestra siempre solo el primer fondo de login.
+
+    - find: Use only second login BG
+      replace: Usar solo el segundo fondo de login
+
+    - find: Always display only the second login background.
+      replace: Muestra siempre solo el segundo fondo de login.
+
+    - find: GRAVITY IMAGE REMOVAL
+      replace: ELIMINACION DE IMAGENES DE GRAVITY
+
+    - find: Remove gravity ads
+      replace: Eliminar publicidad de Gravity
+
+    - find: Avoids displaying Gravity ads on the login background.
+      replace: Evita mostrar la publicidad de Gravity en el fondo de login.
+
+    - find: Remove gravity logo
+      replace: Eliminar logo de Gravity
+
+    - find: Avoids displaying Gravity logo on the login background.
+      replace: Evita mostrar el logo de Gravity en el fondo de login.
+
+    - find: FONT CUSTOMIZATION
+      replace: PERSONALIZACION DE FUENTE
+
+    - find: Customize Font name
+      replace: Personalizar nombre de fuente
+
+    - find: Makes the client use the user specified font for all Langtypes. The Langtype specific charset is still being enforced, so if the selected font does not support it, the system falls back to a font that does.
+      replace: Hace que el cliente use la fuente especificada para todos los LangTypes. Si la fuente no soporta el charset del LangType, el sistema usa una que si lo haga.
+
+    - find: Customize Font height (Character)
+      replace: Personalizar altura de fuente (Caracter)
+
+    - find: Changes the height of all fonts used to the user specified value (expressed as character height).
+      replace: Cambia la altura de todas las fuentes usadas al valor especificado (expresado como altura de caracter).
+
+    - find: Customize Font Height (Cell)
+      replace: Personalizar altura de fuente (Celda)
+
+    - find: Changes the height of all fonts used to the user specified value (expressed as cell height).
+      replace: Cambia la altura de todas las fuentes usadas al valor especificado (expresado como altura de celda).
+
+    - find: Customize Font Height (Offset)
+      replace: Personalizar altura de fuente (Desplazamiento)
+
+    - find: Adds the user specified value to all the font heights used.
+      replace: Agrega el valor especificado a todas las alturas de fuente usadas.
+
+    - find: Enable Font Height Limits
+      replace: Habilitar limites de altura de fuente
+
+    - find: Restricts the font heights used to user specified values.
+      replace: Restringe las alturas de fuente usadas a los valores especificados.
+
+    - find: Customize Font Weight (All)
+      replace: Personalizar grosor de fuente (Todos)
+
+    - find: Changes the weight value (boldness) of all fonts used to the user specified value.
+      replace: Cambia el valor de grosor (negrita) de todas las fuentes usadas al valor especificado.
+
+    - find: Customize Font Weight (Normal)
+      replace: Personalizar grosor de fuente (Normal)
+
+    - find: Changes the weight value (boldness) of all normal fonts used to the user specified value.
+      replace: Cambia el valor de grosor de todas las fuentes normales al valor especificado.
+
+    - find: Customize Font Weight (Bold)
+      replace: Personalizar grosor de fuente (Negrita)
+
+    - find: Changes the weight value (boldness) of all Bold fonts used to the user specified value.
+      replace: Cambia el valor de grosor de todas las fuentes en negrita al valor especificado.
+
+    - find: Customize Font Weight (Offset)
+      replace: Personalizar grosor de fuente (Desplazamiento)
+
+    - find: Adds the user specified value to all the weights used.
+      replace: Agrega el valor especificado a todos los grosores usados.
+
+    - find: Customize Font charset
+      replace: Personalizar charset de fuente
+
+    - find: Changes the charset used for all fonts to user specified one.
+      replace: Cambia el charset usado para todas las fuentes al especificado.
+
+    - find: IGNORE ERRORS
+      replace: IGNORAR ERRORES
+
+    - find: Ignore Resource errors
+      replace: Ignorar errores de Recursos
+
+    - find: Prevents the client from displaying a variety of Error messages (but not all of them) including missing files. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of missing files.
+      replace: Evita que el cliente muestre varios mensajes de Error incluyendo archivos faltantes. Los mensajes se envian al depurador. No garantiza que el cliente funcione a pesar de los archivos faltantes.
+
+    - find: Ignore Palette errors
+      replace: Ignorar errores de Paleta
+
+    - find: Prevents the client from displaying error messages about missing palettes. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of missing files.
+      replace: Evita que el cliente muestre mensajes de error sobre paletas faltantes. Los mensajes se envian al depurador. No garantiza que el cliente funcione a pesar de los archivos faltantes.
+
+    - find: Ignore Lua errors
+      replace: Ignorar errores de Lua
+
+    - find: Prevents the client from displaying error messages from lua code like 'attempt to call nil value'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+      replace: Evita que el cliente muestre mensajes de error de codigo lua. Los mensajes se envian al depurador. No garantiza que el cliente funcione a pesar de los errores.
+
+    - find: Ignore Quest errors
+      replace: Ignorar errores de Quest
+
+    - find: Prevents the client from displaying error messages like 'Not found Quest Info = XXXX'. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+      replace: Evita que el cliente muestre mensajes de error como 'Not found Quest Info = XXXX'. Los mensajes se envian al depurador. No garantiza que el cliente funcione a pesar de los errores.
+
+    - find: Ignore Entry Queue errors
+      replace: Ignorar errores de Cola de Entrada
+
+    - find: Prevents the client from displaying error messages related to Entry Queue. Messages are sent to debugger instead. This does not guarantee the client will work in-spite of the errors.
+      replace: Evita que el cliente muestre mensajes de error relacionados con la Cola de Entrada. Los mensajes se envian al depurador.
+
+    - find: MSGBOX CUSTOMIZATIONS
+      replace: PERSONALIZACION DE CUADROS DE MENSAJE
+
+    - find: Change MessageBox to Beep
+      replace: Cambiar MessageBox por sonido
+
+    - find: Makes the client produce the user specified sound (using MessageBeep function) instead of showing a MessageBox.
+      replace: Hace que el cliente produzca el sonido especificado (usando MessageBeep) en lugar de mostrar un MessageBox.
+
+    - find: Show icon in MessageBox
+      replace: Mostrar icono en MessageBox
+
+    - find: Makes the client show the user specified icon inside MessageBoxes along with the message text.
+      replace: Hace que el cliente muestre el icono especificado dentro de los MessageBox junto con el texto del mensaje.
+
+    - find: Disable MessageBoxes
+      replace: Deshabilitar MessageBoxes
+
+    #========================#
+    #   SPECIAL / ESPECIALES #
+    #========================#
+
+    - find: SPECIAL CUSTOMIZATIONS
+      replace: PERSONALIZACIONES ESPECIALES
+
+    - find: Enable Custom Shields
+      replace: Habilitar Escudos Personalizados
+
+    - find: Enables the use of Custom Shield Types (using Lua Files similar to Xray).
+      replace: Habilita el uso de Tipos de Escudo Personalizados (usando archivos Lua similares a Xray).
+
+    - find: Enable Custom Jobs
+      replace: Habilitar Clases Personalizadas
+
+    - find: Enables the use of Custom Jobs (using Lua Files similar to Xray).
+      replace: Habilita el uso de Clases Personalizadas (usando archivos Lua similares a Xray).
+
+    - find: Enable Custom Homunculi
+      replace: Habilitar Homunculus Personalizados
+
+    - find: Enables the use of Custom Homunculus (using Lua Files). The <b>'ReqJobName'</b> function is used for homunculus as well, so no extra files needed.
+      replace: Habilita el uso de Homunculus Personalizados (usando archivos Lua). La funcion <b>'ReqJobName'</b> se usa tambien para homunculus, no se necesitan archivos extra.
+
+    - find: Add Chris' lua overrides [Experimental]
+      replace: Agregar sobreescrituras lua de Chris [Experimental]
+
+    - find: Adds the lua files provided by llchrisll to override the existing lua tables and functions. Please check this <a href="https://llchrisll.github.io/ROTPDocs/addons/#custom-lua-support">link</a> for more details.
+      replace: Agrega los archivos lua provistos por llchrisll para sobreescribir las tablas y funciones lua existentes. Ver este <a href="https://llchrisll.github.io/ROTPDocs/addons/#custom-lua-support">enlace</a> para mas detalles.
+
+    - find: SKILL CUSTOMIZATIONS
+      replace: PERSONALIZACION DE HABILIDADES
+
+    - find: Enable Custom Player skills [Experimental]
+      replace: Habilitar Habilidades Personalizadas de Jugador [Experimental]
+
+    - find: Enables the use of custom skills castable on players (using Lua Files).
+      replace: Habilita el uso de habilidades personalizadas lanzables sobre jugadores (usando archivos Lua).
+
+    - find: Enable Custom Homunculus skills [Experimental]
+      replace: Habilitar Habilidades Personalizadas de Homunculus [Experimental]
+
+    - find: Enables the use of custom skills for Homunculus (using Lua Files).
+      replace: Habilita el uso de habilidades personalizadas para Homunculus (usando archivos Lua).
+
+    - find: Enable Custom Mercenary skills [Experimental]
+      replace: Habilitar Habilidades Personalizadas de Mercenario [Experimental]
+
+    - find: Enables the use of custom skills for Mercenaries (using Lua Files).
+      replace: Habilita el uso de habilidades personalizadas para Mercenarios (usando archivos Lua).
