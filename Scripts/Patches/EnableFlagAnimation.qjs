@@ -1,0 +1,62 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2025                                                      *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Sapito Sucio                                            *
+*   Created Date  : 2025-01-11                                             *
+*   Last Modified : 2025-01-11                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Change the PUSH 5 to PUSH 1 for guild flag animation
+///
+EnableFlagAnimation = function()
+{
+    const _ = 'EnableFlagAnimation : ';
+
+    $$(_ + '1.1 - Find the guild flag model string reference')
+    const addr = Exe.FindText("model\\3dmob\\guildflag90_1.gr2");
+    if (addr < 0)
+        throw Error("Guild flag model string not found");
+
+    $$(_ + '1.2 - Find where it is used in a PUSH')
+    const code =
+        PUSH_0              //push 0
+    +   PUSH(5)            //push 5
+    +   PUSH(addr)         //push offset "model\3dmob\guildflag90_1.gr2"
+    ;
+
+    const pushAddr = Exe.FindHex(code);
+    if (pushAddr < 0)
+        throw Error("Pattern not found");
+
+    $$(_ + '2 - Change PUSH 5 to PUSH 1')
+    Exe.SetUint8(pushAddr + 3, 1);
+
+    return true;
+};
+
+///
+/// \brief Disable for unsupported clients
+///
+EnableFlagAnimation.validate = () =>
+    true; // Patch should work on all clients

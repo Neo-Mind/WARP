@@ -242,6 +242,12 @@ CustomUI:
             author : CH.C (jchcc)
             desc : Fix issue in homunculus AI which prevents automatic attacks (present in clients 20170920 clients and newer).
 
+        - EnableFlagAnimation:
+            title : Enable WoE Flag Animation
+            recommend : no
+            author : Sapito Sucio
+            desc : Restores WoE flag's animation, disabled by Gravity long ago.
+
 CaseInsensitiveSearch:
     title: CASE INSENSITIVE SEARCH
     mutex: false
